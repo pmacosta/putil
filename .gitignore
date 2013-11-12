@@ -1,0 +1,13 @@
+# putil .gitignore file
+*.cache
+*.pid
+*.ckt
+*.nod
+*.swp
+*.o
+*.png
+*.ps
+*.log
+*.swo
+*.rot
+*.pyc
