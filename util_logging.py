@@ -6,6 +6,7 @@ import os
 import sys
 import logging
 
+# StackOverflow question: http://stackoverflow.com/questions/3311255/how-to-get-file-the-python-logging-module-is-currently-logging-to
 def _find_logger_basefilename(logger):
 	"""
 	Finds the logger base filename(s) currently there is only one
@@ -37,7 +38,7 @@ def _setup_logging(name, log_level, log_file):
 	return logger
 
 
-class Plogger(object):
+class _Plogger(object):
 	"""
 	Creates or modifies logger. If logger is done log_level and log_file arguments are ignored
 	"""
@@ -132,7 +133,7 @@ class Plogger(object):
 				if isinstance(self.current_logger, logging.Logger) is True:
 					self.current_logger.error(msg)
 				raise TypeError(msg)
-			if os.path.exists(log_file) is False:
+			if os.path.isfile(log_file) is False:
 				try:
 					file_handle = open(log_file, 'a')
 					file_handle.close()
@@ -142,20 +143,39 @@ class Plogger(object):
 					if isinstance(self.current_logger, logging.Logger) is True:
 						self.current_logger.error(msg)
 					raise IOError(msg)
-			print log_file
 			self.current_log_file = log_file
-			print log_file
 			# Change log file maintaining current log level and format
 			if isinstance(self.current_logger, logging.Logger) is True:
 				current_format = self.current_logger.handlers[0].formatter._fmt	#pylint: disable-msg=W0212
 				current_level = self.log_level_int()
-				self.current_logger.handlers[0].stream.close()
+				if _find_logger_basefilename(self.current_logger) != 'sys.stdout':
+					self.current_logger.handlers[0].stream.close()
 				self.current_logger.removeHandler(self.current_logger.handlers[0])
 				file_handler = logging.FileHandler(log_file)
 				file_handler.setLevel(current_level)
 				formatter = logging.Formatter(current_format)
 				file_handler.setFormatter(formatter)
 				self.current_logger.addHandler(file_handler)
-				print 'TETO'
-				print log_file
 				self.current_log_file = _find_logger_basefilename(self.current_logger)
+
+	def __str__(self):
+		"""
+		Prints configuration nicely formatted
+		"""
+		ret = 'Logger configuration'+'\n'
+		ret += 'Name.....: '+self.name()+'\n'
+		ret += 'Log level: '+self.log_level()+'\n'
+		ret += 'Log file.: '+self.log_file()
+		return ret
+
+	def __repr__(self):
+		"""
+		Retuns object id
+		"""
+		return self.__str__()
+
+	def copy(self):
+		"""
+		Creates a copy of the current logger
+		"""
+		return _Plogger(logger=self.logger())
