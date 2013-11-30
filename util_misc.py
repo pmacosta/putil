@@ -3,6 +3,7 @@ Miscellaneous utility classes, methods, functions and constants
 """
 
 import numpy
+import inspect
 
 def pcolor(text, color, tab=0):
 	"""
@@ -51,3 +52,18 @@ def per(numa, numb):
 		min_vector = 1e-20*numpy.ones(len(num_max))
 		num_min = numpy.where(num_min != 0, num_min, min_vector)
 		return (num_max/num_min)-1
+
+def get_method_obj(req_class_obj, method_name):
+	"""
+	Returns method executable object from a given class
+	"""
+	class_methods = inspect.getmembers(req_class_obj, predicate=inspect.ismethod)
+	method_obj = None
+	method_found = False
+	for (name, method_obj) in class_methods:
+		if name == method_name:
+			method_found = True
+			break
+	if method_found is False:
+		raise RuntimeError('method not found in class')
+	return method_obj
