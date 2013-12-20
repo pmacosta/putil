@@ -111,10 +111,3 @@ class CsvFile(object):
 		else:
 			msg = 'Invalid column(s) type'
 			raise TypeError(msg)
-
-TETO = CsvFile('data/tx_lut_lckt.csv')
-TETO.set_filter({'pvt_corner':0})
-TETO.add_filter({'drv_iden_start':17})
-print TETO.header()
-print TETO.filtered_data(['vo_se','predrv0_ibop'])
-
