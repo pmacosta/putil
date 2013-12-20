@@ -98,7 +98,16 @@ class CsvFile(object):
 			col_num = self.header().index(col)
 			return [row[col_num] for row in data_pointer()]
 		elif isinstance(col, list) is True:
-			return [data_pointer(col_item.upper()) for col_item in col]
+			col_list = col[:]
+			for col in col_list:
+				if isinstance(col, str) is False:
+					msg = 'col must be a list of strings'
+					raise TypeError(msg)
+				if col.upper() not in self.header():
+					msg = col.upper()+' not in CSV file header'
+					raise RuntimeError(msg)
+			col_index_list = [self.header().index(col.upper()) for col in col_list]
+			return [[row[index] for index in col_index_list] for row in data_pointer()]
 		else:
 			msg = 'Invalid column(s) type'
 			raise TypeError(msg)
