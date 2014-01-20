@@ -9,7 +9,7 @@ def pcolor(text, color, tab=0):
 	"""
 	Print to terminal in a limited amount of colors
 	"""
-	esc_dict = {'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35, 'cyan':36, 'white':37}
+	esc_dict = {'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35, 'cyan':36, 'white':37, 'none':-1}
 	if isinstance(text, str) is False:
 		raise TypeError('text has to be a string in pcolor function')
 	if isinstance(color, str) is False:
@@ -18,8 +18,36 @@ def pcolor(text, color, tab=0):
 		raise TypeError('tab has to be an intenger in pcolor function')
 	color = color.lower()
 	if color not in esc_dict.keys():
-		raise RuntimeError('Color '+color+' not supported by pcolor function')
-	return '\033['+str(esc_dict[color])+'m'+' '*tab+text+'\033[0m'
+		raise RuntimeError('Color "'+color+'" not supported by pcolor function')
+	return '\033['+str(esc_dict[color])+'m'+' '*tab+text+'\033[0m' if esc_dict[color] != -1 else (' '*tab)+text
+
+def print_octal(text):
+	"""
+	Prints binary string in octal representation replacing typical codes with their escape sequences
+	"""
+	out = list()
+	for char in text:
+		if ord(char) == 0:			# Null char
+			out.append('\\0')
+		elif ord(char) == 7:		# Bell/alarm
+			out.append('\\a')
+		elif ord(char) == 8:		# Back space
+			out.append('\\b')
+		elif ord(char) == 9:		# Horizontal tab
+			out.append('\\t')
+		elif ord(char) == 10:		# Line feed
+			out.append('\\n')
+		elif ord(char) == 11:		# Vertical tab
+			out.append('\\v')
+		elif ord(char) == 12:		# Form feed
+			out.append('\\f')
+		elif ord(char) == 13:		# Carriage return
+			out.append('\\r')
+		elif (ord(char) >= 32) and (ord(char) <= 126):
+			out.append(char)
+		else:
+			out.append('\\'+str(oct(ord(char))).lstrip("0"))
+	return ''.join(out)
 
 def isnumber(num):
 	"""
@@ -45,13 +73,13 @@ def per(numa, numb):
 		num_max = max(numa, numb)
 		num_min = min(numa, numb)
 		num_min = num_min if num_min != 0 else 1e-20
-		return (num_max/num_min)-1
+		return 0 if numa == numb else (num_max/num_min)-1
 	else:
 		num_max = numpy.maximum(numa, numb)
 		num_min = numpy.minimum(numa, numb)
-		min_vector = 1e-20*numpy.ones(len(num_max))
-		num_min = numpy.where(num_min != 0, num_min, min_vector)
-		return (num_max/num_min)-1
+		delta_vector = 1e-20*numpy.ones(len(num_max))
+		num_min = numpy.where(num_min != 0, num_min, delta_vector)
+		return numpy.where(numa == numb, 0, (num_max/num_min)-1)
 
 def get_method_obj(req_class_obj, method_name):
 	"""
