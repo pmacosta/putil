@@ -65,16 +65,21 @@ def per(numa, numb):
 	"""
 	Calculates percentage difference between two numbers
 	"""
+	prec = 10
 	numa_type = 1 if isreal(numa) is True else (2 if (isinstance(numa, numpy.ndarray) is True) or (isinstance(numa, list) is True) else 0)
 	numb_type = 1 if isreal(numb) is True else (2 if (isinstance(numb, numpy.ndarray) is True) or (isinstance(numb, list) is True) else 0)
 	if numa_type != numb_type:
 		raise TypeError('Arguments are not of the same type in function per')
 	if numa_type == 1:
+		numa = round(numa, prec)
+		numb = round(numa, prec)
 		num_max = max(numa, numb)
 		num_min = min(numa, numb)
 		num_min = num_min if num_min != 0 else 1e-20
 		return 0 if numa == numb else (num_max/num_min)-1
 	else:
+		numa = numpy.round(numa, prec)
+		numb = numpy.round(numb, prec)
 		num_max = numpy.maximum(numa, numb)
 		num_min = numpy.minimum(numa, numb)
 		delta_vector = 1e-20*numpy.ones(len(num_max))
