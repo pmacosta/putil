@@ -95,3 +95,22 @@ def get_method_obj(req_class_obj, method_name):
 	if method_found is False:
 		raise RuntimeError('method not found in class')
 	return method_obj
+
+class Bundle(object):
+	"""
+	Bundle a collection of variables in one object
+	"""
+	def __init__(self, **kwds):
+		self.__dict__.update(kwds)
+
+	def __getitem__(self, elem):
+		return self.__dict__[elem]
+
+	def __setitem__(self, elem, value):
+		self.__dict__[elem] = value
+
+	def __delitem__(self, elem):
+		self.__dict__.pop(elem)
+
+	def __len__(self):
+		return len(self.__dict__)
