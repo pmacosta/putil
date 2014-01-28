@@ -61,11 +61,10 @@ def isreal(num):
 	"""
 	return True if (isinstance(num, int) is True) or (isinstance(num, float) is True) else False
 
-def per(numa, numb):
+def per(numa, numb, prec=10):
 	"""
 	Calculates percentage difference between two numbers
 	"""
-	prec = 10
 	numa_type = 1 if isreal(numa) is True else (2 if (isinstance(numa, numpy.ndarray) is True) or (isinstance(numa, list) is True) else 0)
 	numb_type = 1 if isreal(numb) is True else (2 if (isinstance(numb, numpy.ndarray) is True) or (isinstance(numb, list) is True) else 0)
 	if numa_type != numb_type:
