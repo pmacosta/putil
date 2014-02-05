@@ -21,33 +21,26 @@ def pcolor(text, color, tab=0):
 		raise RuntimeError('Color "'+color+'" not supported by pcolor function')
 	return '\033['+str(esc_dict[color])+'m'+' '*tab+text+'\033[0m' if esc_dict[color] != -1 else (' '*tab)+text
 
-def print_octal(text):
+def __binary_string_to_octal_string__(text):	#pylint: disable-msg=C0103
 	"""
 	Prints binary string in octal representation replacing typical codes with their escape sequences
 	"""
-	out = list()
-	for char in text:
-		if ord(char) == 0:			# Null char
-			out.append('\\0')
-		elif ord(char) == 7:		# Bell/alarm
-			out.append('\\a')
-		elif ord(char) == 8:		# Back space
-			out.append('\\b')
-		elif ord(char) == 9:		# Horizontal tab
-			out.append('\\t')
-		elif ord(char) == 10:		# Line feed
-			out.append('\\n')
-		elif ord(char) == 11:		# Vertical tab
-			out.append('\\v')
-		elif ord(char) == 12:		# Form feed
-			out.append('\\f')
-		elif ord(char) == 13:		# Carriage return
-			out.append('\\r')
-		elif (ord(char) >= 32) and (ord(char) <= 126):
-			out.append(char)
-		else:
-			out.append('\\'+str(oct(ord(char))).lstrip("0"))
-	return ''.join(out)
+	octal_alphabet = [chr(num) if (num >= 32) and (num <=126) else '\\'+str(oct(num)).lstrip('0') for num in xrange(0, 256)]
+	octal_alphabet[0] = '\\0'	# Null character
+	octal_alphabet[7] = '\\a'	# Bell/alarm
+	octal_alphabet[8] = '\\b'	# Back space
+	octal_alphabet[9] = '\\t'	# Horizontal tab
+	octal_alphabet[10] = '\\n'	# Line feed
+	octal_alphabet[11] = '\\v'	# Vertical tab
+	octal_alphabet[12] = '\\f'	# Form feed
+	octal_alphabet[13] = '\\r'	# Carriage return
+	return ''.join([octal_alphabet[ord(char)] for char in text])
+
+def __char_to_decimal__(text):
+	"""
+	Converts a string to its decimal ASCII representation, with spaces between characters
+	"""
+	return ' '.join([str(ord(char)) for char in text])
 
 def isnumber(num):
 	"""
