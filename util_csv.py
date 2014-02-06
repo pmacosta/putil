@@ -5,6 +5,20 @@ Utility classes, methods and functions to handle comma-delimited file as a quasi
 import os
 import csv
 
+def write_file(file_name, row_list, append=True):
+	"""
+	Save (potentially incrementally) CSV file
+	"""
+	try:
+		file_handle = open(file_name, 'wb' if append is False else 'ab')
+		csv_handle = csv.writer(file_handle, delimiter=',')
+		for row in row_list:
+			csv_handle.writerow(row)
+		file_handle.close()
+	except:
+		raise IOError('File {0} could not be created'.format(file_name))
+
+
 class CsvFile(object):
 	"""
 	Read CSV files, filter and retrieve information. First row must contain headers, the rest of the data must be numbers

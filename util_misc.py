@@ -21,7 +21,7 @@ def pcolor(text, color, tab=0):
 		raise RuntimeError('Color "'+color+'" not supported by pcolor function')
 	return '\033['+str(esc_dict[color])+'m'+' '*tab+text+'\033[0m' if esc_dict[color] != -1 else (' '*tab)+text
 
-def __binary_string_to_octal_string__(text):	#pylint: disable-msg=C0103
+def binary_string_to_octal_string(text):	#pylint: disable-msg=C0103
 	"""
 	Prints binary string in octal representation replacing typical codes with their escape sequences
 	"""
