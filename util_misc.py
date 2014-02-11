@@ -36,7 +36,7 @@ def binary_string_to_octal_string(text):	#pylint: disable-msg=C0103
 	octal_alphabet[13] = '\\r'	# Carriage return
 	return ''.join([octal_alphabet[ord(char)] for char in text])
 
-def __char_to_decimal__(text):
+def char_to_decimal(text):
 	"""
 	Converts a string to its decimal ASCII representation, with spaces between characters
 	"""
@@ -111,3 +111,11 @@ class Bundle(object):
 
 	def __len__(self):
 		return len(self.__dict__)
+
+def b2s(var):
+	"""
+	Translates 1s and 0s to True's and False's
+	"""
+	if isinstance(var, bool) is False:
+		raise TypeError('argument has to be boolean in function b2s')
+	return 'True' if var is True else 'False'
