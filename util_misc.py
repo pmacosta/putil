@@ -2,6 +2,7 @@
 Miscellaneous utility classes, methods, functions and constants
 """
 
+import os
 import numpy
 import inspect
 
@@ -119,3 +120,11 @@ def b2s(var):
 	if isinstance(var, bool) is False:
 		raise TypeError('argument has to be boolean in function b2s')
 	return 'True' if var is True else 'False'
+
+def make_dir(file_name):
+	"""
+	Creates the directory of a fully qualified file name if it does not exists
+	"""
+	file_path, file_name = os.path.split(file_name)
+	if os.path.exists(file_path) is False:
+		os.makedirs(file_path)
