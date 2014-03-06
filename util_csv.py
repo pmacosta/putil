@@ -5,19 +5,23 @@ Utility classes, methods and functions to handle comma-delimited file as a quasi
 import os
 import csv
 
+import util_misc
+
 def write_file(file_name, row_list, append=True):
 	"""
 	Save (potentially incrementally) CSV file
 	"""
 	try:
+		util_misc.make_dir(file_name)
 		file_handle = open(file_name, 'wb' if append is False else 'ab')
 		csv_handle = csv.writer(file_handle, delimiter=',')
 		for row in row_list:
 			csv_handle.writerow(row)
 		file_handle.close()
-	except:
-		raise IOError('File {0} could not be created'.format(file_name))
-
+	except IOError as msg:
+		raise IOError('File {0} could not be created: {1}'.format(file_name, msg))
+	except Exception as msg:
+		raise RuntimeError('Unknown error: {0}'.format(msg))
 
 class CsvFile(object):
 	"""
