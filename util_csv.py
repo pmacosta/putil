@@ -44,7 +44,13 @@ class CsvFile(object):
 			raise IOError(msg)
 		self.current_header = [col.upper() for col in self.current_data[0]]
 		self.current_data = [[float(col) for col in row] for row in self.current_data[1:]]
-		self.current_filtered_data = self.current_data
+		self.current_filtered_data = self.current_data[:]
+
+	def reset_filter(self):
+		"""
+		Reset filter
+		"""
+		self.current_filtered_data = self.current_data[:]
 
 	def set_filter(self, current_filter):
 		"""
