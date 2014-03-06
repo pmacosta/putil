@@ -5,6 +5,7 @@ Miscellaneous utility classes, methods, functions and constants
 import os
 import numpy
 import inspect
+import fractions
 
 def pcolor(text, color, tab=0):
 	"""
@@ -26,7 +27,7 @@ def binary_string_to_octal_string(text):	#pylint: disable-msg=C0103
 	"""
 	Prints binary string in octal representation replacing typical codes with their escape sequences
 	"""
-	octal_alphabet = [chr(num) if (num >= 32) and (num <=126) else '\\'+str(oct(num)).lstrip('0') for num in xrange(0, 256)]
+	octal_alphabet = [chr(num) if (num >= 32) and (num <= 126) else '\\'+str(oct(num)).lstrip('0') for num in xrange(0, 256)]
 	octal_alphabet[0] = '\\0'	# Null character
 	octal_alphabet[7] = '\\a'	# Bell/alarm
 	octal_alphabet[8] = '\\b'	# Back space
@@ -59,8 +60,8 @@ def per(numa, numb, prec=10):
 	"""
 	Calculates percentage difference between two numbers
 	"""
-	numa_type = 1 if isreal(numa) is True else (2 if (isinstance(numa, numpy.ndarray) is True) or (isinstance(numa, list) is True) else 0)
-	numb_type = 1 if isreal(numb) is True else (2 if (isinstance(numb, numpy.ndarray) is True) or (isinstance(numb, list) is True) else 0)
+	numa_type = 1 if isreal(numa) is True else (2 if (isinstance(numa, numpy.ndarray) is True) or (isinstance(numa, list) is True) else 0)	#pylint: disable-msg=E1101
+	numb_type = 1 if isreal(numb) is True else (2 if (isinstance(numb, numpy.ndarray) is True) or (isinstance(numb, list) is True) else 0)	#pylint: disable-msg=E1101
 	if numa_type != numb_type:
 		raise TypeError('Arguments are not of the same type in function per')
 	if numa_type == 1:
@@ -73,11 +74,11 @@ def per(numa, numb, prec=10):
 	else:
 		numa = numpy.round(numa, prec)
 		numb = numpy.round(numb, prec)
-		num_max = numpy.maximum(numa, numb)
-		num_min = numpy.minimum(numa, numb)
-		delta_vector = 1e-20*numpy.ones(len(num_max))
-		num_min = numpy.where(num_min != 0, num_min, delta_vector)
-		return numpy.where(numa == numb, 0, (num_max/num_min)-1)
+		num_max = numpy.maximum(numa, numb)	#pylint: disable-msg=E1101
+		num_min = numpy.minimum(numa, numb)	#pylint: disable-msg=E1101
+		delta_vector = 1e-20*numpy.ones(len(num_max))	#pylint: disable-msg=E1101
+		num_min = numpy.where(num_min != 0, num_min, delta_vector)	#pylint: disable-msg=E1101
+		return numpy.where(numa == numb, 0, (num_max/num_min)-1)	#pylint: disable-msg=E1101
 
 def get_method_obj(req_class_obj, method_name):
 	"""
@@ -94,7 +95,7 @@ def get_method_obj(req_class_obj, method_name):
 		raise RuntimeError('method not found in class')
 	return method_obj
 
-class Bundle(object):
+class Bundle(object):	#pylint: disable-msg=R0903
 	"""
 	Bundle a collection of variables in one object
 	"""
@@ -128,3 +129,27 @@ def make_dir(file_name):
 	file_path, file_name = os.path.split(file_name)
 	if os.path.exists(file_path) is False:
 		os.makedirs(file_path)
+
+def normalize(value, series, offset=0):
+	"""
+	Normalize a value based on the minimum and maximum of a series
+	"""
+	return offset+(((value-min(series))/float(max(series)-min(series)))/(1.0-offset))
+
+def gcd(vector):
+	"""
+	Calculates the greatest common divisor of an integer vector
+	"""
+	if len(vector) == 0:
+		return None
+	elif len(vector) == 1:
+		return vector[0]
+	elif len(vector) == 2:
+		return fractions.gcd(vector[0], vector[1])
+	else:
+		current_gcd = fractions.gcd(vector[0], vector[1])
+		for element in vector[2:]:
+			current_gcd = fractions.gcd(current_gcd, element)
+		return current_gcd
+
+
