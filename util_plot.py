@@ -115,13 +115,13 @@ def series_threshold(indep_var, dep_var, threshold, threshold_type):
 	dep_var = numpy.array(dep_var)[indexes]  #pylint: disable-msg=E1101
 	return indep_var, dep_var
 
-def get_series_from_csv(master_source_list, master_filter_list, master_indep_col_list, master_dep_col_list, master_proc_list, indep_min=None, indep_max=None):	#pylint: disable-msg=R0913,R0914
+def get_series_from_csv(source_array, filter_array, indep_col_array, dep_col_array, proc_array, indep_min=None, indep_max=None):	#pylint: disable-msg=R0913,R0914
 	"""
 	Get series for plotting from a CSV file
 	"""
-	master_indep_var_list = list()
-	master_dep_var_list = list()
-	for source_list, filter_list, indep_col_list, dep_col_list, proc_list in zip(master_source_list, master_filter_list, master_indep_col_list, master_dep_col_list, master_proc_list):
+	indep_var_array = list()
+	dep_var_array = list()
+	for source_list, filter_list, indep_col_list, dep_col_list, proc_list in zip(source_array, filter_array, indep_col_array, dep_col_array, proc_array):
 		raw_indep_var_list = list()
 		raw_dep_var_list = list()
 		for num, (dsource, dfilter, dindep_col, ddep_col, dproc) in enumerate(zip(source_list, filter_list, indep_col_list, dep_col_list, proc_list)):
@@ -139,19 +139,17 @@ def get_series_from_csv(master_source_list, master_filter_list, master_indep_col
 				indep_var, dep_var = series_threshold(indep_var, dep_var, indep_max, 'MAX')
 			raw_indep_var_list.append(indep_var)
 			raw_dep_var_list.append(dep_var)
-		master_indep_var_list.append(raw_indep_var_list)
-		master_dep_var_list.append(raw_dep_var_list)
+		indep_var_array.append(raw_indep_var_list)
+		dep_var_array.append(raw_dep_var_list)
+	return indep_var_array, dep_var_array
 
-	return master_indep_var_list, master_dep_var_list
-
-def plot_single_pane_from_csv(source_list, filter_list, indep_col_list, dep_col_list, label_list, color_list, proc_list, label_prop_list,	#pylint: disable-msg=R0913,R0914
-		 indep_var_label, indep_var_units, dep_var_label, dep_var_units, title_text, log_plot, output_file_name, indep_min=None, indep_max=None):
+def plot_single_panel_from_csv(source_array, filter_array, indep_col_array, dep_col_array, proc_array, label_array, color_array, dep_var_label_array, dep_var_units_array, legend_prop_array,	#pylint: disable-msg=R0913,R0914
+		indep_var_label, indep_var_units, title_text, log_plot, output_file_name, indep_min=None, indep_max=None):
 	"""
 	Plot multiple series extracted from CSV file(s) in one panel
 	"""
-	(raw_indep_var_list, raw_dep_var_list) = get_series_from_csv(source_list, filter_list, indep_col_list, dep_col_list, proc_list, indep_min, indep_max)
-	plot_single_panel(raw_indep_var_list, raw_dep_var_list, label_list, color_list, dep_var_label, dep_var_units, label_prop_list, indep_var_label, indep_var_units, title_text, log_plot, output_file_name)
-
+	indep_var_array, dep_var_array = get_series_from_csv(source_array, filter_array, indep_col_array, dep_col_array, proc_array, indep_min, indep_max)
+	plot_single_panel(indep_var_array, dep_var_array, label_array, color_array, dep_var_label_array, dep_var_units_array, legend_prop_array, indep_var_label, indep_var_units, title_text, log_plot, output_file_name)
 
 def process_panel_series(raw_indep_var_list, raw_dep_var_list, dep_var_label, dep_var_units, label_list, color_list, legend_prop):	#pylint: disable-msg=R0913,R0914
 	"""
@@ -206,31 +204,12 @@ def get_panel_prop(fig, axarr):
 	bbox = axarr.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
 	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
 
-def plot_single_panel(master_indep_var_list, master_dep_var_list, master_label_list, master_color_list, master_dep_var_label_list, master_dep_var_units_list, master_legend_prop_list,	#pylint: disable-msg=R0912,R0913,R0914,R0915
-		indep_var_label, indep_var_units, title_text, log_plot, output_file_name):
+def draw_panels(axarr, panel_dicts, indep_var_div, log_plot):	#pylint: disable-msg=R0914
 	"""
-	Plot multiple series in one panel
+	Draw panels in a canvas
 	"""
 	legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
-	panel_dicts = [process_panel_series(raw_indep_var_list, raw_dep_var_list, dep_var_label, dep_var_units, label_list, color_list, legend_prop) for \
-			raw_indep_var_list, raw_dep_var_list, dep_var_label, dep_var_units, label_list, color_list, legend_prop in \
-			zip(master_indep_var_list, master_dep_var_list, master_dep_var_label_list, master_dep_var_units_list, master_label_list, master_color_list, master_legend_prop_list)]
-	num_panels = len(panel_dicts)
-	# Determine horizontal axis
-	master_indep_var = list()
-	for panel_dict in panel_dicts:
-		master_indep_var = numpy.unique(numpy.append(master_indep_var, numpy.round(panel_dict['master_indep_var'], 10)))  #pylint: disable-msg=E1101
-	(indep_var_min, indep_var_max, indep_var_div, indep_var_unit_scale, scaled_indep_var) = scale_series(series=master_indep_var, scale=True, scale_type='delta')
-	(indep_var_locs, indep_var_labels, indep_var_min, indep_var_max) = intelligent_ticks(scaled_indep_var, min(scaled_indep_var), max(scaled_indep_var), tight=True, calc_ticks=False)
-
-	plt.close('all')
-	#fig = plt.figure()
-	#axarr = num_panels*[0]
-	(fig, axarr) = plt.subplots(num_panels, sharex=True)	#pylint: disable-msg=W0612
-	max_ytitle_height = 0
-	max_ytitle_width = 0
-	max_ylabel_width = 0
-	max_panel_height = 0
+	ylabel_obj_list = list()
 	for panel_num, panel_dict in enumerate(panel_dicts):
 		#axarr[panel_num] = fig.add_subplot(num_panels, 1, panel_num, sharex=True)	#pylint: disable-msg=W0612
 		for raw_indep_var, raw_dep_var, smooth_indep_var, smooth_dep_var, color, label_text in \
@@ -251,16 +230,9 @@ def plot_single_panel(master_indep_var_list, master_dep_var_list, master_label_l
 		axarr[panel_num].grid(True, 'both')
 		plt.ylim((panel_dict['dep_var_props']['dep_var_min'], panel_dict['dep_var_props']['dep_var_max']), emit=True, auto=False)
 		plt.yticks(panel_dict['dep_var_props']['dep_var_locs'], panel_dict['dep_var_props']['dep_var_labels'])
-		ylabel = axarr[panel_num].set_ylabel(panel_dict['dep_var_props']['dep_var_label']+' ['+panel_dict['dep_var_props']['dep_var_unit_scale']+ \
-				('-' if panel_dict['dep_var_props']['dep_var_units'] is None else panel_dict['dep_var_props']['dep_var_units'])+']', fontdict={'fontsize':18})
+		ylabel_obj_list.append(axarr[panel_num].set_ylabel(panel_dict['dep_var_props']['dep_var_label']+' ['+panel_dict['dep_var_props']['dep_var_unit_scale']+ \
+			('-' if panel_dict['dep_var_props']['dep_var_units'] is None else panel_dict['dep_var_props']['dep_var_units'])+']', fontdict={'fontsize':18}))
 		axarr[panel_num].tick_params(axis='both', which='major', labelsize=14)
-		ylabel_height = get_text_prop(fig, ylabel)['height']	# Text is rotated
-		panel_height = get_panel_prop(fig, axarr[panel_num])['height']
-		panel_width = get_panel_prop(fig, axarr[panel_num])['width']
-		max_ytitle_height = max(max_ytitle_height, ylabel_height)
-		max_ylabel_width = max(max_ylabel_width, get_text_prop(fig, ylabel)['width'])
-		max_ytitle_width = max(max_ytitle_width, get_text_prop(fig, ylabel)['width'])
-		max_panel_height = max(max_panel_height, panel_height)
 		# Print legends
 		if len(panel_dict['raw_indep_var_list']) > 1:
 			handles, labels = axarr[panel_num].get_legend_handles_labels()	#pylint: disable-msg=W0612
@@ -268,26 +240,69 @@ def plot_single_panel(master_indep_var_list, master_dep_var_list, master_label_l
 			if 'cols' in panel_dict['legend_prop']:
 				axarr[panel_num].legend(leg_artist, labels, ncol=panel_dict['legend_prop']['cols'] if 'cols' in panel_dict['legend_prop'] else len(labels),
 					loc=legend_pos_list[legend_pos_list.index(panel_dict['legend_prop']['pos'])], numpoints=1)
-	# Calculate maximum panel height
-	common_panel_height = max(max_ytitle_height, max_panel_height)
+	return ylabel_obj_list
+
+def plot_single_panel(master_indep_var_list, master_dep_var_list, master_label_list, master_color_list, master_dep_var_label_list, master_dep_var_units_list, master_legend_prop_list,	#pylint: disable-msg=R0912,R0913,R0914,R0915
+		indep_var_label, indep_var_units, title_text, log_plot, output_file_name):
+	"""
+	Plot multiple series in one panel
+	"""
+	panel_dicts = [process_panel_series(raw_indep_var_list, raw_dep_var_list, dep_var_label, dep_var_units, label_list, color_list, legend_prop) for \
+			raw_indep_var_list, raw_dep_var_list, dep_var_label, dep_var_units, label_list, color_list, legend_prop in \
+			zip(master_indep_var_list, master_dep_var_list, master_dep_var_label_list, master_dep_var_units_list, master_label_list, master_color_list, master_legend_prop_list)]
+	num_panels = len(panel_dicts)
+	# Determine horizontal axis
+	master_indep_var = list()
+	for panel_dict in panel_dicts:
+		master_indep_var = numpy.unique(numpy.append(master_indep_var, numpy.round(panel_dict['master_indep_var'], 10)))  #pylint: disable-msg=E1101
+	(indep_var_min, indep_var_max, indep_var_div, indep_var_unit_scale, scaled_indep_var) = scale_series(series=master_indep_var, scale=True, scale_type='delta')
+	(indep_var_locs, indep_var_labels, indep_var_min, indep_var_max) = intelligent_ticks(scaled_indep_var, min(scaled_indep_var), max(scaled_indep_var), tight=True, calc_ticks=False)
+
+	plt.close('all')
+	#fig = plt.figure()
+	#axarr = num_panels*[0]
+	(fig, axarr) = plt.subplots(num_panels, sharex=True)	#pylint: disable-msg=W0612
+	axarr = axarr if isinstance(axarr, list) is True else [axarr]
+	ylabel_obj_list = draw_panels(axarr, panel_dicts, indep_var_div, log_plot)
+
+	#plt.tight_layout()
+
+	#max_ytitle_height = max_ytitle_width = max_ylabel_width = max_panel_height = 0
+	#for ax_obj, ylabel in zip(axarrt, ylabel_obj_list):
+	#	ylabel_height = get_text_prop(figt, ylabel)['height']	# Text is rotated
+	#	panel_height = get_panel_prop(figt, ax_obj)['height']
+	#	panel_width = get_panel_prop(figt, ax_obj)['width']
+	#	max_ytitle_height = max(max_ytitle_height, ylabel_height)
+	#	max_ylabel_width = max(max_ylabel_width, get_text_prop(figt, ylabel)['width'])
+	#	max_ytitle_width = max(max_ytitle_width, get_text_prop(figt, ylabel)['width'])
+	#	max_panel_height = max(max_panel_height, panel_height)
+	## Calculate maximum panel height
+	#common_panel_height = max(max_ytitle_height, max_panel_height)/figt.dpi
+	#(fig, axarr) = plt.subplots(num_panels, sharex=True)	#pylint: disable-msg=W0612
+	#for num in range(len(axarr)):
+	#	axarr[num].patch.set_height(common_panel_height)
+	#ylabel_obj_list = draw_panels(axarr, panel_dicts, indep_var_div, log_plot)
+
 	#  Print independent variable tick marks and label
 	plt.xlim((indep_var_min, indep_var_max), emit=True, auto=False)
 	plt.xticks(indep_var_locs, indep_var_labels)
 	plt.xlabel(indep_var_label +' ['+indep_var_unit_scale+('-' if indep_var_units is None else indep_var_units)+']', fontdict={'fontsize':18})
 	# Calculate width of panel to avoid overlapping labels
-	tot_width = 0
-	(fig2, axarr2) = plt.subplots(1, sharex=True)
-	for label in indep_var_labels:
-		tlabel = axarr2.text(1, 1, label, fontdict={'fontsize':18})
-		tot_width += (18+get_panel_prop(fig2, tlabel)['width'])
-	tot_width += max_ylabel_width+max_ytitle_width+2*18
-	tot_width /= fig.dpi
+	#tot_width = 0
+	#(fig2, axarr2) = plt.subplots(1, sharex=True)
+	#for label in indep_var_labels:
+	#	tlabel = axarr2.text(1, 1, label, fontdict={'fontsize':18})
+	#	tot_width += (18+get_panel_prop(fig2, tlabel)['width'])
+	#tot_width += max_ylabel_width+max_ytitle_width+2*18
+	#tot_width /= fig.dpi
 	# Print title
 	if title_text is not None:
 		fig.suptitle('\n'.join(title_text), horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=24)
 	# Save or show plot
 	if output_file_name is not None:
-		height = 1+(num_panels*(0.5+(common_panel_height/fig.dpi)))
+		#height = 1+(num_panels*(0.5+(common_panel_height)))
+		tot_width = 24
+		height = tot_width/3.0
 		fig.set_size_inches(tot_width, height)
 		util_misc.make_dir(output_file_name)
 		fig.savefig(output_file_name, bbox_inches='tight', dpi=fig.dpi)
