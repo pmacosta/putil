@@ -144,12 +144,13 @@ def get_series_from_csv(source_array, filter_array, indep_col_array, dep_col_arr
 	return indep_var_array, dep_var_array
 
 def plot_single_panel_from_csv(source_array, filter_array, indep_col_array, dep_col_array, proc_array, label_array, color_array, dep_var_label_array, dep_var_units_array, legend_prop_array,	#pylint: disable-msg=R0913,R0914
-		indep_var_label, indep_var_units, title_text, log_plot, output_file_name, indep_min=None, indep_max=None):
+		indep_var_label, indep_var_units, title_text, log_plot, output_file_name, indep_min=None, indep_max=None, fig_height=None, fig_width=None):
 	"""
 	Plot multiple series extracted from CSV file(s) in one panel
 	"""
 	indep_var_array, dep_var_array = get_series_from_csv(source_array, filter_array, indep_col_array, dep_col_array, proc_array, indep_min, indep_max)
-	plot_single_panel(indep_var_array, dep_var_array, label_array, color_array, dep_var_label_array, dep_var_units_array, legend_prop_array, indep_var_label, indep_var_units, title_text, log_plot, output_file_name)
+	plot_single_panel(indep_var_array, dep_var_array, label_array, color_array, dep_var_label_array, dep_var_units_array, legend_prop_array, indep_var_label, indep_var_units, title_text, log_plot, output_file_name,
+		fig_height, fig_width)
 
 def process_panel_series(raw_indep_var_list, raw_dep_var_list, dep_var_label, dep_var_units, label_list, color_list, legend_prop):	#pylint: disable-msg=R0913,R0914
 	"""
@@ -236,14 +237,15 @@ def draw_panels(axarr, panel_dicts, indep_var_div, log_plot):	#pylint: disable-m
 		# Print legends
 		if len(panel_dict['raw_indep_var_list']) > 1:
 			handles, labels = axarr[panel_num].get_legend_handles_labels()	#pylint: disable-msg=W0612
-			leg_artist = [plt.Line2D((0, 1), (0, 0), color=color, marker='o', linestyle='-', linewidth=2.5, markeredgecolor=color, markersize=14, markeredgewidth=5, markerfacecolor='w') for color in panel_dict['color_list']]
-			if 'cols' in panel_dict['legend_prop']:
-				axarr[panel_num].legend(leg_artist, labels, ncol=panel_dict['legend_prop']['cols'] if 'cols' in panel_dict['legend_prop'] else len(labels),
-					loc=legend_pos_list[legend_pos_list.index(panel_dict['legend_prop']['pos'])], numpoints=1)
+			legend_scale = 1.5
+			leg_artist = [plt.Line2D((0, 1), (0, 0), color=color, marker='o', linestyle='-', linewidth=2.5/legend_scale, markeredgecolor=color, markersize=14/legend_scale, markeredgewidth=5/legend_scale,
+				markerfacecolor='w') for color in panel_dict['color_list']]
+			axarr[panel_num].legend(leg_artist, labels, ncol=panel_dict['legend_prop']['cols'] if 'cols' in panel_dict['legend_prop'] else len(labels),
+				loc=legend_pos_list[legend_pos_list.index(panel_dict['legend_prop']['pos'])], numpoints=1, fontsize=18/legend_scale)
 	return ylabel_obj_list
 
 def plot_single_panel(master_indep_var_list, master_dep_var_list, master_label_list, master_color_list, master_dep_var_label_list, master_dep_var_units_list, master_legend_prop_list,	#pylint: disable-msg=R0912,R0913,R0914,R0915
-		indep_var_label, indep_var_units, title_text, log_plot, output_file_name):
+		indep_var_label, indep_var_units, title_text, log_plot, output_file_name, fig_height=None, fig_width=None):
 	"""
 	Plot multiple series in one panel
 	"""
@@ -301,9 +303,9 @@ def plot_single_panel(master_indep_var_list, master_dep_var_list, master_label_l
 	# Save or show plot
 	if output_file_name is not None:
 		#height = 1+(num_panels*(0.5+(common_panel_height)))
-		tot_width = 24
-		height = tot_width/3.0
-		fig.set_size_inches(tot_width, height)
+		fig_width = 24 if fig_width is None else fig_width
+		fig_height = fig_width/3.0 if fig_height is None else fig_height
+		fig.set_size_inches(fig_width, fig_height)
 		util_misc.make_dir(output_file_name)
 		fig.savefig(output_file_name, bbox_inches='tight', dpi=fig.dpi)
 		#fig.clear()
@@ -311,8 +313,11 @@ def plot_single_panel(master_indep_var_list, master_dep_var_list, master_label_l
 	else:
 		plt.show()
 
-def parametrized_color_space(series, offset=0):
+def parametrized_color_space(series, offset=0, color='binary'):
 	"""
 	Computes a colors space where lighter colors correspond to lower parameter values
 	"""
-	return [plt.cm.YlOrBr(util_misc.normalize(value, series, offset)) for value in series]	#pylint: disable-msg=E1101
+	color_dict = {'binary':plt.cm.binary, 'Blues':plt.cm.Blues, 'BuGn':plt.cm.BuGn, 'BuPu':plt.cm.BuPu, 'gist_yarg':plt.cm.gist_yarg, 'GnBu':plt.cm.GnBu, 'Greens':plt.cm.Greens, 'Greys':plt.cm.Greys,	#pylint: disable-msg=E1101
+			'Oranges':plt.cm.Oranges, 'OrRd':plt.cm.OrRd, 'PuBu':plt.cm.PuBu, 'PuBuGn':plt.cm.PuBuGn, 'PuRd':plt.cm.PuRd, 'Purples':plt.cm.Purples, 'RdPu':plt.cm.RdPu, 'Reds':plt.cm.Reds,	#pylint: disable-msg=E1101
+			'YlGn':plt.cm.YlGn, 'YlGnBu':plt.cm.YlGnBu, 'YlOrBr':plt.cm.YlOrBr, 'YlOrRd':plt.cm.YlOrRd}	#pylint: disable-msg=E1101
+	return [color_dict[color](util_misc.normalize(value, series, offset)) for value in series]	#pylint: disable-msg=E1101
