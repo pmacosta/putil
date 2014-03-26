@@ -156,4 +156,8 @@ def isalpha(text):
 	"""
 	Returns True if the text has at least one alphabetic character
 	"""
-	return True if (text.isalpha() is True) or ((text.isalnum() is True) and (text.isalpha() is False) and (text.isdigit() is False)) else False
+	try:
+		float(text)
+		return True
+	except ValueError:
+		return False
