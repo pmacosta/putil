@@ -3,6 +3,7 @@ Miscellaneous utility classes, methods, functions and constants
 """
 
 import os
+import math
 import numpy
 import inspect
 import fractions
@@ -161,3 +162,20 @@ def isalpha(text):
 		return True
 	except ValueError:
 		return False
+
+def ishex(char):
+	"""
+	Returns True if character is a valid hexadecimal digit
+	"""
+	return True if (isinstance(char, str) is True) and (len(char) == 1) and (char.upper() in '0123456789ABCDEF') else False
+
+def smart_round(num, ndigits):
+	"""
+	Rounds a floating point number
+	"""
+	if num == 0:
+		return num
+	else:
+		sign = -1.0 if num < 0.0 else +1
+		exp = int(math.log10(abs(num)))
+		return sign*round(abs(num)*(10**-exp), ndigits)*(10**exp)
