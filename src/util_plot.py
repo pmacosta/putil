@@ -18,7 +18,11 @@ class RawSource(object):
 	"""
 	Container to hold data sets intended for plotting
 
-	:param	indep_min:			minimum independent variable value
+	:param	indep_var:			independent variable vector
+	:param	indep_var:			Numpy vector
+	:param	dep_var:			dependent variable vector
+	:param	dep_var:			Numpy vector
+	:type	indep_min:			number
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
@@ -36,6 +40,7 @@ class RawSource(object):
 		"""
 		Returns the independent variable data (if loaded)
 
+		:rtype:		Numpy vector
 		:raises:	RuntimeError (No independent variable data set loaded)
 		"""
 		if self.current_indep_var is None:
@@ -47,6 +52,7 @@ class RawSource(object):
 		"""
 		Returns the independent variable data (if loaded)
 
+		:rtype:		Numpy vector
 		:raises:	RuntimeError (No dependent variable data set loaded)
 		"""
 		if self.current_dep_var is None:
@@ -100,7 +106,24 @@ class RawSource(object):
 
 	def load_data(self, indep_var, dep_var):	#pylint: disable-msg=R0912,R0915
 		"""
-		Loads series data
+		Retrieves data from file based on specified parameters
+
+		:raises:
+		 * RuntimeError (Independent variable data set is empty)
+
+		 * ValueError (Independent data set element *[number]* (*[value]*) is not a number)
+
+		 * RuntimeError (Dependent variable data set is empty)
+
+		 * ValueError (Dependent data set element *[number]* (*[value]*) is not a number)
+
+		 * RuntimeError (Independent variable data set is empty after indep_min thresholding)
+
+		 * RuntimeError (Dependent variable data set is empty after indep_min thresholding)
+
+		 * RuntimeError (Independent variable data set is empty after indep_max thresholding)
+
+		 * RuntimeError (Dependent variable data set is empty after indep_max thresholding)
 		"""
 		# Retrieve data and check data integrity
 		self.current_indep_var = numpy.array(indep_var)
@@ -121,13 +144,13 @@ class RawSource(object):
 			self.current_dep_var = self.current_dep_var[::-1]
 		# Apply minimum/maximum global filters
 		if self.current_indep_min is not None:
-			self.current_indep_var, self.current_dep_var = series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_min, 'MIN')
+			self.current_indep_var, self.current_dep_var = _series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_min, 'MIN')
 		if len(self.current_indep_var) == 0:
 			raise RuntimeError('Independent variable data set is empty after indep_min thresholding')
 		if len(self.current_dep_var) == 0:
 			raise RuntimeError('Dependent variable data set is empty after indep_min thresholding')
 		if self.current_indep_max is not None:
-			self.current_indep_var, self.current_dep_var = series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_max, 'MAX')
+			self.current_indep_var, self.current_dep_var = _series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_max, 'MAX')
 		if len(self.current_indep_var) == 0:
 			raise RuntimeError('Independent variable data set is empty after indep_max thresholding')
 		if len(self.current_dep_var) == 0:
@@ -165,7 +188,7 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 
 	:param	file_name:			comma-separated file name
 	:type	file_name:			string
-	:param	fdef:				filter definition
+	:param	fdef:				data filter definition. See :py:meth:`util_plot.CsvSource.data_filter()`
 	:type	fdef:				dictionary
 	:param	indep_col_label:	independent variable column label
 	:type	indep_col_label:	string
@@ -175,30 +198,26 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
-	:param	fproc				processing function
-	:type	fproc				function pointer
-	:param	fproc_eargs			processing function extra arguments
-	:type	fproc_eargs			dictionary
+	:param	fproc:				processing function. See :py:meth:`util_plot.CsvSource.processing_function()`
+	:type	fproc:				function pointer
+	:param	fproc_eargs:		processing function extra arguments. See :py:meth:`util_plot.CsvSource.processing_function_extra_arguments()`
+	:type	fproc_eargs:		dictionary
 	:raises:
-	 * Same as :py.meth:`util_plot.CsvSource.file_name()`
+	 * Same as :py:meth:`util_plot.CsvSource.file_name()`
 
-	 * Same as :py.meth:`util_plot.CsvSource.data_filter()`
+	 * Same as :py:meth:`util_plot.CsvSource.data_filter()`
 
-	 * Same as :py.meth:`util_plot.CsvSource.indep_col_label()`
+	 * Same as :py:meth:`util_plot.CsvSource.indep_col_label()`
 
-	 * Same as :py.meth:`util_plot.CsvSource.dep_col_label()`
+	 * Same as :py:meth:`util_plot.CsvSource.dep_col_label()`
 
-	 * Same as :py.meth:`util_plot.CsvSource.indep_min()`
+	 * Same as :py:meth:`util_plot.CsvSource.indep_min()`
 
-	 * Same as :py.meth:`util_plot.CsvSource.indep_max()`
+	 * Same as :py:meth:`util_plot.CsvSource.indep_max()`
 
-	 * Same as :py.meth:`util_plot.CsvSource.processing_function()`
+	 * Same as :py:meth:`util_plot.CsvSource.processing_function()`
 
-	 * Same as :py.meth:`util_plot.CsvSource.processing_function_extra_arguments()`
-
-	 ..note:: The processing function is useful to do "light" data massaging, like scaling, etc. The processing function is given two arguments, the independent variable array (first argument) and the dependent variable array
-	 (second argument); it expects a two-element tuple, its first element being the processed independent variable array, and the second being the processed dependent variable array. The processing function is called after the
-	 data has been retrieved from the comma-separated value and the resulting filtered data set has been thresholded by the **indep_var_min** and **dep_var_min** (if applicable).
+	 * Same as :py:meth:`util_plot.CsvSource.processing_function_extra_arguments()`
 	"""
 	def __init__(self, file_name, indep_col_label, dep_col_label, fdef=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable-msg=R0913
 		self.current_file_name = None
@@ -257,12 +276,11 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 		:raises:
 		 * RuntimeError (Illegal number of parameters)
 
-		 * TypeError (Comma-separated file fdef must be a string)
+		 * TypeError (Filter definition must be a dictionary)
 
-		 * IOError (Comma-separated file **fdef** could not be found)
-
-		.. note:: The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter value
+		.. note:: The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter value \
 		for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
+
 		"""
 		if len(fdef) == 0:
 			return self.current_data_filter
@@ -361,13 +379,21 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 		"""
 		Sets or returns the data processing function pointer
 
-		:param	fproc	processing function
-		:type	fproc	function pointer
+		:param	fproc:	processing function
+		:type	fproc:	function pointer
 		:rtype:			function pointer
 		:raises:
 		 * RuntimeError (Illegal number of parameters)
 
-		* TypeError (Processing function parameter must be a function pointer)
+		 * TypeError (Processing function parameter must be a function pointer)
+
+		.. note::
+		   The processing function is useful to do "light" data massaging, like scaling, etc; it is called after the data has been retrieved from the comma-separated value and the resulting filtered data set has been \
+		   thresholded by **indep_var_min** and **dep_var_min** (if applicable).
+
+		   The processing function is given two arguments, a Numpy vector representing the independent variable array (first argument) and a \
+		   Numpy vector representing the dependent variable array (second argument). The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second \
+		   element being the processed dependent variable array.
 		"""
 		if len(fproc) == 0:
 			return self.current_fproc
@@ -382,13 +408,20 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 		"""
 		Sets or returns the extra arguments for the data processing function
 
-		:param	eargs	extra arguments
-		:type	eargs	dictionary
+		:param	eargs:	extra arguments
+		:type	eargs:	dictionary
 		:rtype:			dictionary
 		:raises:
 		 * RuntimeError (Illegal number of parameters)
 
-		* TypeError (Processing function extra arguments must be a dictionary)
+		 * TypeError (Processing function extra arguments must be a dictionary)
+
+		.. note::
+		   Extra parameters can be passed to the processing function using **fproc_eargs**. For example, if **fproc_eargs** is ``{'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
+
+		       def my_proc_func(indep_var, dep_var, par1, part):
+		           # Do some data processing
+		           return indep_var, dep_var
 		"""
 		if len(eargs) == 0:
 			return self.current_fproc_eargs
@@ -403,6 +436,7 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 		"""
 		Returns the independent variable data (if loaded)
 
+		:rtype:		Numpy vector
 		:raises:	RuntimeError (No independent variable data set loaded)
 		"""
 		if self.current_indep_var is None:
@@ -414,6 +448,7 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 		"""
 		Returns the independent variable data (if loaded)
 
+		:rtype:		Numpy vector
 		:raises:	RuntimeError (No dependent variable data set loaded)
 		"""
 		if self.current_dep_var is None:
@@ -423,7 +458,38 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 
 	def load_data(self):	#pylint: disable-msg=R0912,R0915
 		"""
-		Loads series data
+		Retrieves data from file based on specified parameters
+
+		:raises:
+		 * RuntimeError (Filter column *[column header]* not found in comma-separated file *[file name]* header)
+
+		 * RuntimeError (Filtered independent variable data set is empty)
+
+		 * ValueError (Independent data set element *[index]* (*[value]*) is not a number)
+
+		 * RuntimeError (Filtered dependent variable data set is empty)
+
+		 * ValueError (Dependent data set element *[index]* (*[value]*) is not a number)
+
+		 * RuntimeError (Illegal number of parameters returned by processing function)
+
+		 * RuntimeError (Independent variable data set is empty after external function processing)
+
+		 * ValueError (Independent data set element *[index]* (*[value]*) is not a number after external function processing)
+
+		 * RuntimeError (Dependent variable data set is empty after external function processing)
+
+		 * ValueError (Dependent data set element *[index]* (*[value]*) is not a number after external function processing)
+
+		 * RuntimeError (Size of independent and dependent data sets is not the same after external function processing)
+
+		 * RuntimeError (Independent variable data set is empty after **indep_min** thresholding)
+
+		 * RuntimeError (Dependent variable data set is empty after **indep_min** thresholding)
+
+		 * RuntimeError (Independent variable data set is empty after **indep_max** thresholding)
+
+		 * RuntimeError (Dependent variable data set is empty after **indep_max** thresholding)
 		"""
 		if self._complete() is True:
 			csv_obj = util_csv.CsvFile(self.file_name())
@@ -476,13 +542,13 @@ class CsvSource(object):	#pylint: disable-msg=R0902
 				if len(self.current_indep_var) != len(self.current_dep_var):
 					raise RuntimeError('Size of independent and dependent data sets is not the same after external function processing')
 			if self.current_indep_min is not None:
-				self.current_indep_var, self.current_dep_var = series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_min, 'MIN')
+				self.current_indep_var, self.current_dep_var = _series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_min, 'MIN')
 			if len(self.current_indep_var) == 0:
 				raise RuntimeError('Independent variable data set is empty after indep_min thresholding')
 			if len(self.current_dep_var) == 0:
 				raise RuntimeError('Dependent variable data set is empty after indep_min thresholding')
 			if self.current_indep_max is not None:
-				self.current_indep_var, self.current_dep_var = series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_max, 'MAX')
+				self.current_indep_var, self.current_dep_var = _series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_max, 'MAX')
 			if len(self.current_indep_var) == 0:
 				raise RuntimeError('Independent variable data set is empty after indep_max thresholding')
 			if len(self.current_dep_var) == 0:
@@ -527,12 +593,12 @@ class Series(object):	#pylint: disable-msg=R0902
 	Specifies a series within a panel
 
 	:param	data_source:	data source object
-	:type	data_source:	object
+	:type	data_source:	:py:class:`util_plot.RawSource()` object or :py:class:`util_plot.CsvSource()` object or others conforming to the data source specification
 	:param	label:			series label
 	:type	label:			string
 	:param	color:			series color
 	:type	color:			Matplotlib color
-	:param	marker:			plot markers flag
+	:param	marker:			plot data markers flag
 	:type	marker:			boolean
 	:param	interp:			interpolation option, one of NONE, STRAIGHT, STEP, CUBIC or LINREG (case insensitive)
 	:type	interp:			string
@@ -541,19 +607,19 @@ class Series(object):	#pylint: disable-msg=R0902
 	:param	secondary_axis:	secondary axis flag
 	:type	secondary_axis:	boolean
 	:raises:
-	 * Same as :py.meth:`util_plot.Series.data_source()`
+	 * Same as :py:meth:`util_plot.Series.data_source()`
 
-	 * Same as :py.meth:`util_plot.Series.label()`
+	 * Same as :py:meth:`util_plot.Series.label()`
 
-	 * Same as :py.meth:`util_plot.Series.color()`
+	 * Same as :py:meth:`util_plot.Series.color()`
 
-	 * Same as :py.meth:`util_plot.Series.marker()`
+	 * Same as :py:meth:`util_plot.Series.marker()`
 
-	 * Same as :py.meth:`util_plot.Series.interp()`
+	 * Same as :py:meth:`util_plot.Series.interp()`
 
-	 * Same as :py.meth:`util_plot.Series.line_style()`
+	 * Same as :py:meth:`util_plot.Series.line_style()`
 
-	 * Same as :py.meth:`util_plot.Series.secondary_axis()`
+	 * Same as :py:meth:`util_plot.Series.secondary_axis()`
 	"""
 	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable-msg=R0913
 		self.interp_options = ['NONE', 'STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
@@ -585,7 +651,7 @@ class Series(object):	#pylint: disable-msg=R0902
 		Sets or returns data set source object. The independent and dependent data sets are obtained once the data source is set.
 
 		:param	data_source:	data source object
-		:type	data_source:	object
+		:type	data_source:	:py:class:`util_plot.RawSource()` object, :py:class:`util_plot.CsvSource()` object or others conforming to the data source specification
 		:raises:
 		 * RuntimeError (Illegal number of parameters)
 
@@ -595,11 +661,12 @@ class Series(object):	#pylint: disable-msg=R0902
 
 		 * RuntimeError (Data source object is not fully specified)
 
-		 * Same as :py.meth:`util_plot.Source.indep_var()`
+		 * Same as :py:meth:`util_plot.RawSource.indep_var()` or :py:meth:`util_plot.CsvSource.indep_var()` or exceptions thrown by custom data source class while handling independent variable retrieval
 
-		 * Same as :py.meth:`util_plot.Source.dep_var()`
+		 * Same as :py:meth:`util_plot.RawSource.dep_var()` or :py:meth:`util_plot.CsvSource.dep_var()` or exceptions thrown by custom data source class while handling dependent variable retrieval
 
-		..note:: The data source object must have a `indep_var()` and `dep_var()` methods returning Numpy vectors to be valid.
+		.. note:: The data source object must have ``indep_var()`` and ``dep_var()`` methods returning Numpy vectors to be valid.
+
 		"""
 		if len(data_source) == 0:
 			return self.current_data_source
@@ -630,7 +697,7 @@ class Series(object):	#pylint: disable-msg=R0902
 
 		 * RuntimeError (Independent variable data set is empty)
 
-		 * RuntimeError (Independent data set element **number** (**value**) is not a number)
+		 * RuntimeError (Independent data set element *[number]* (*[value]*) is not a number)
 		"""
 		if len(vector) == 0:
 			return self.current_indep_var
@@ -664,7 +731,7 @@ class Series(object):	#pylint: disable-msg=R0902
 
 		 * RuntimeError (Dependent variable data set is empty)
 
-		 * RuntimeError (Dependent data set element **number** (**value**) is not a number)
+		 * RuntimeError (Dependent data set element *[number]* (*[value]*) is not a number)
 		"""
 		if len(vector) == 0:
 			return self.current_dep_var
@@ -771,9 +838,9 @@ class Series(object):	#pylint: disable-msg=R0902
 
 	def marker(self, *flag):
 		"""
-		Sets or returns the plot markers flag
+		Sets or returns the plot data markers flag
 
-		:param	flag:	plot markers flag
+		:param	flag:	plot data markers flag
 		:type	flag:	boolean
 		:rtype:			boolean
 		:raises:
@@ -799,7 +866,7 @@ class Series(object):	#pylint: disable-msg=R0902
 		:raises:
 		 * RuntimeError (Illegal number of parameters)
 
-		 * TypeError (Interpolation option not a string)
+		 * TypeError (Interpolation option is not a string)
 
 		 * ValueError (Interpolation option not one of NONE, STRAIGHT, STEP, CUBIC or LINREG)
 		"""
@@ -809,7 +876,7 @@ class Series(object):	#pylint: disable-msg=R0902
 			raise RuntimeError('Illegal number of parameters')
 		self.current_interp = option[0]
 		if isinstance(self.current_interp, str) is False:
-			raise TypeError('Interpolation option not a string')
+			raise TypeError('Interpolation option is not a string')
 		self.current_interp = self.current_interp.upper()
 		if self.current_interp not in self.interp_options:
 			raise ValueError('Interpolation option not one of NONE, STRAIGHT, STEP, CUBIC or LINREG')
@@ -937,7 +1004,8 @@ class Series(object):	#pylint: disable-msg=R0902
 
 class Panel(object):	#pylint: disable-msg=R0902
 	"""
-	Defines properties of a figure panel and contains series within it
+	Defines properties of a panel within a figure
+
 	:param	series:					one or more data series
 	:type	series:					:py:class:`util_plot.Series()` object or list of :py:class:`util_plot.Series()` objects
 	:param	primary_axis_label:		primary axis label
@@ -950,26 +1018,25 @@ class Panel(object):	#pylint: disable-msg=R0902
 	:type	secondary_axis_units:	string
 	:param	log_dep_axis:			logarithmic dependent (primary and/or secondary) axis flag
 	:type	log_dep_axis:			boolean
-	:param	legend_props:			legend properties
+	:param	legend_props:			legend properties. See :py:meth:`util_plot.Panel.legend_props()`
 	:type	legend_props:			dictionary
 	:raises:
-	 * Same as :py.meth:`util_plot.Panel.add_series()`
+	 * Same as :py:meth:`util_plot.Panel.add_series()`
 
-	 * Same as :py.meth:`util_plot.Panel.primary_axis_label()`
+	 * Same as :py:meth:`util_plot.Panel.primary_axis_label()`
 
-	 * Same as :py.meth:`util_plot.Panel.primary_axis_units()`
+	 * Same as :py:meth:`util_plot.Panel.primary_axis_units()`
 
-	 * Same as :py.meth:`util_plot.Panel.log_primary_axis()`
+	 * Same as :py:meth:`util_plot.Panel.log_dep_axis()`
 
-	 * Same as :py.meth:`util_plot.Panel.secondary_axis_label()`
+	 * Same as :py:meth:`util_plot.Panel.secondary_axis_label()`
 
-	 * Same as :py.meth:`util_plot.Panel.secondary_axis_units()`
+	 * Same as :py:meth:`util_plot.Panel.secondary_axis_units()`
 
-	 * Same as :py.meth:`util_plot.Panel.log_secondary_axis()`
-
-	 * Same as :py.meth:`util_plot.Panel.legend_props()`
+	 * Same as :py:meth:`util_plot.Panel.legend_props()`
 	"""
 	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=dict()):	#pylint: disable-msg=W0102,R0913
+		self.legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
 		self.panel_has_primary_axis = False
 		self.panel_has_secondary_axis = False
 		self.primary_dep_var_min = None
@@ -1004,7 +1071,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 
 	def series(self):	#pylint: disable-msg=R0912,R0915
 		"""
-		Returns the list objects in the panel
+		Returns the data series objects attached to the panel
 
 		:rtype:			:py:class:`util_plot.Series()` object or list of :py:class:`util_plot.Series()` objects
 		"""
@@ -1012,7 +1079,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 
 	def add_series(self, series):	#pylint: disable-msg=R0912,R0915
 		"""
-		Adds series to panel
+		Adds data series to panel
 
 		:param	series: one or more data series
 		:type	series:	:py:class:`util_plot.Series()` object or list of :py:class:`util_plot.Series()` objects
@@ -1022,7 +1089,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 
 		 * TypeError (Series element is not a Series object)
 
-		 * RuntimeError (Series element **number** is not fully specified)
+		 * RuntimeError (Series element *[index]* is not fully specified)
 		"""
 		if series is not None:
 			series = [series] if isinstance(series, Series) is True else series
@@ -1058,19 +1125,19 @@ class Panel(object):	#pylint: disable-msg=R0902
 			# Primary axis
 			if self.panel_has_primary_axis is True:
 				self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale, self.primary_scaled_dep_var = \
-					scale_series(series=global_primary_dep_var, scale=True, scale_type='delta')
+					_scale_series(series=global_primary_dep_var, scale=True, scale_type='delta')
 				self.primary_dep_var_min = util_misc.smart_round(self.primary_dep_var_min, 10)
 				self.primary_dep_var_max = util_misc.smart_round(self.primary_dep_var_max, 10)
 				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max = \
-					intelligent_ticks(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
+					_intelligent_ticks(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
 			# Secondary axis
 			if self.panel_has_secondary_axis is True:
 				self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale, self.secondary_scaled_dep_var = \
-					scale_series(series=global_secondary_dep_var, scale=True, scale_type='delta')
+					_scale_series(series=global_secondary_dep_var, scale=True, scale_type='delta')
 				self.secondary_dep_var_min = util_misc.smart_round(self.secondary_dep_var_min, 10)
 				self.secondary_dep_var_max = util_misc.smart_round(self.secondary_dep_var_max, 10)
 				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max = \
-					intelligent_ticks(self.secondary_scaled_dep_var, min(self.secondary_scaled_dep_var), max(self.secondary_scaled_dep_var), tight=False)
+					_intelligent_ticks(self.secondary_scaled_dep_var, min(self.secondary_scaled_dep_var), max(self.secondary_scaled_dep_var), tight=False)
 			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval
 			if (self.panel_has_primary_axis is True) and (self.panel_has_secondary_axis is True):
 				max_ticks = max(len(self.primary_dep_var_locs), len(self.secondary_dep_var_locs))-1
@@ -1083,8 +1150,8 @@ class Panel(object):	#pylint: disable-msg=R0902
 				for num in range(max_ticks+1):
 					self.primary_dep_var_locs.append(primary_start+(num*primary_delta))
 					self.secondary_dep_var_locs.append(secondary_start+(num*secondary_delta))
-				self.primary_dep_var_locs, self.primary_dep_var_labels = uniquify_tick_labels(self.primary_dep_var_locs, self.primary_dep_var_locs[0], self.primary_dep_var_locs[-1])
-				self.secondary_dep_var_locs, self.secondary_dep_var_labels = uniquify_tick_labels(self.secondary_dep_var_locs, self.secondary_dep_var_locs[0], self.secondary_dep_var_locs[-1])
+				self.primary_dep_var_locs, self.primary_dep_var_labels = _uniquify_tick_labels(self.primary_dep_var_locs, self.primary_dep_var_locs[0], self.primary_dep_var_locs[-1])
+				self.secondary_dep_var_locs, self.secondary_dep_var_labels = _uniquify_tick_labels(self.secondary_dep_var_locs, self.secondary_dep_var_locs[0], self.secondary_dep_var_locs[-1])
 			#
 			self._scale_dep_var(self.primary_dep_var_div, self.secondary_dep_var_div)
 
@@ -1204,7 +1271,21 @@ class Panel(object):	#pylint: disable-msg=R0902
 
 		 * TypeError (Legend properties must be a dictionary)
 
-		 * ValueError (Illegal legend property: **prop**)
+		 * ValueError (Illegal legend property *[prop]*)
+
+		 * TypeError (Legend position has to be a string)
+
+		 * ValueError (Illegal position specification)
+
+		 * TypeError (Number of legend columns has to be a positive integer)
+
+		.. note:: No legend is shown if a panel has only one series in it
+
+		.. note:: Currently supported properties are
+
+		     * **pos** (*string*) -- legend position, one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive).
+
+		     * **cols** (integer) -- number of columns in the legend box
 		"""
 		if len(props) == 0:
 			return self.current_legend_props
@@ -1213,9 +1294,15 @@ class Panel(object):	#pylint: disable-msg=R0902
 		self.current_legend_props = props[0]
 		if isinstance(self.current_legend_props, dict) is False:
 			raise TypeError('Legend properties must be a dictionary')
-		for key in self.current_legend_props:
+		for key, value in self.current_legend_props.iteritems():
 			if key not in self.legend_props_list:
-				raise ValueError('Illegal legend property: {0}'.format(key))
+				raise ValueError('Illegal legend property {0}'.format(key))
+			elif (key == 'pos') and isinstance(value, str) is False:
+				raise TypeError('Legend position has to be a string')
+			elif (key == 'pos') and (value.lower() not in self.legend_pos_list):
+				raise ValueError('Illegal position specification')
+			elif ((key == 'cols') and (isinstance(value, int) is False)) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
+				raise TypeError('Number of legend columns has to be a positive integer')
 
 	def __str__(self):
 		"""
@@ -1290,16 +1377,16 @@ class Panel(object):	#pylint: disable-msg=R0902
 			axarr.yaxis.set_ticklabels(self.primary_dep_var_labels)
 			axarr.tick_params(axis='y', which='major', labelsize=14)
 			# Calculate minimum pane height from primary axis
-			primary_height = ((len(self.primary_dep_var_labels))+(len(self.primary_dep_var_labels)-1))*get_text_prop(fig, axarr.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
-			primary_width = max([get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
+			primary_height = ((len(self.primary_dep_var_labels))+(len(self.primary_dep_var_labels)-1))*_get_text_prop(fig, axarr.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
+			primary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
 		else:
 			axarr.yaxis.set_ticklabels([])
 		if (self.primary_axis_label() != '') or (self.primary_axis_units() != ''):
 			unit_scale = '' if self.primary_dep_var_unit_scale is None else self.primary_dep_var_unit_scale
 			axarr.yaxis.set_label_text(self.primary_axis_label() + ('' if (unit_scale == '') and (self.primary_axis_units() == '') else \
 				(' ['+unit_scale+('-' if self.primary_axis_units() == '' else self.primary_axis_units())+']')), fontdict={'fontsize':18})
-			primary_height = max(primary_height, get_text_prop(fig, axarr.yaxis.get_label())['height'])
-			primary_width += 1.5*get_text_prop(fig, axarr.yaxis.get_label())['width']
+			primary_height = max(primary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
+			primary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
 		# Secondary axis
 		if self.panel_has_secondary_axis is True:
 			axarr_sec.yaxis.grid(True, 'both')
@@ -1308,17 +1395,16 @@ class Panel(object):	#pylint: disable-msg=R0902
 			axarr_sec.yaxis.set_ticklabels(self.secondary_dep_var_labels)
 			axarr_sec.tick_params(axis='y', which='major', labelsize=14)
 			# Calculate minimum pane height from primary axis
-			secondary_height = ((len(self.secondary_dep_var_labels))+(len(self.secondary_dep_var_labels)-1))*get_text_prop(fig, axarr_sec.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
-			secondary_width = max([get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
+			secondary_height = ((len(self.secondary_dep_var_labels))+(len(self.secondary_dep_var_labels)-1))*_get_text_prop(fig, axarr_sec.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
+			secondary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
 		if (self.secondary_axis_label() != '') or (self.secondary_axis_units() != ''):
 			unit_scale = '' if self.secondary_dep_var_unit_scale is None else self.secondary_dep_var_unit_scale
 			axarr_sec.yaxis.set_label_text(self.secondary_axis_label() + ('' if (unit_scale == '') and (self.secondary_axis_units() == '') else \
 				(' ['+unit_scale+('-' if self.secondary_axis_units() == '' else self.secondary_axis_units())+']')), fontdict={'fontsize':18})
-			secondary_height = max(secondary_height, get_text_prop(fig, axarr.yaxis.get_label())['height'])
-			secondary_width += 1.5*get_text_prop(fig, axarr.yaxis.get_label())['width']
+			secondary_height = max(secondary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
+			secondary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
 		# Print legends
 		if (len(self.current_series_list) > 1) and (len(self.legend_props()) > 0):
-			legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
 			primary_labels = []
 			secondary_labels = []
 			if self.panel_has_primary_axis is True:
@@ -1334,7 +1420,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 					legend_scale = 1.5
 					leg_artist = [series_obj._legend_artist(legend_scale) for series_obj in self.current_series_list]	#pylint: disable-msg=W0212
 					axarr.legend(leg_artist, labels, ncol=self.legend_props()['cols'] if 'cols' in self.legend_props() else len(labels),
-						loc=legend_pos_list[legend_pos_list.index(self.legend_props()['pos'] if 'pos' in self.legend_props() else 'lower left')], numpoints=1, fontsize=18/legend_scale)
+						loc=self.legend_pos_list[self.legend_pos_list.index(self.legend_props()['pos'].lower() if 'pos' in self.legend_props() else 'lower left')], numpoints=1, fontsize=18/legend_scale)
 					break
 		#  Print independent axis tick marks and label
 		indep_var_min = indep_axis_dict['indep_var_min']
@@ -1349,14 +1435,14 @@ class Panel(object):	#pylint: disable-msg=R0902
 		axarr.tick_params(axis='x', which='major', labelsize=14)
 		if ('indep_var_labels' in indep_axis_dict) and (indep_axis_dict['indep_var_labels'] is not None):
 			axarr.xaxis.set_ticklabels(indep_axis_dict['indep_var_labels'], fontsize=14)
-			indep_height = get_text_prop(fig, axarr.xaxis.get_ticklabels()[0])['height']
-			min_width_label = min([get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
-			indep_width = ((len(indep_axis_dict['indep_var_labels'])-1)*min_width_label)+sum([get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
+			indep_height = _get_text_prop(fig, axarr.xaxis.get_ticklabels()[0])['height']
+			min_width_label = min([_get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
+			indep_width = ((len(indep_axis_dict['indep_var_labels'])-1)*min_width_label)+sum([_get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
 		if (indep_axis_label != '') or (indep_axis_units != ''):
 			axarr.xaxis.set_label_text(indep_axis_label + ('' if (indep_axis_unit_scale == '') and (indep_axis_units == '') else \
 				(' ['+indep_axis_unit_scale+('-' if indep_axis_units == '' else indep_axis_units)+']')), fontdict={'fontsize':18})
-			indep_height += 1.5*get_text_prop(fig, axarr.xaxis.get_label())['height']	# Allow for half a line of spacing between tick labels and axis labels
-			indep_width = max(indep_width, get_text_prop(fig, axarr.xaxis.get_label())['width'])
+			indep_height += 1.5*_get_text_prop(fig, axarr.xaxis.get_label())['height']	# Allow for half a line of spacing between tick labels and axis labels
+			indep_width = max(indep_width, _get_text_prop(fig, axarr.xaxis.get_label())['width'])
 		min_panel_height = max(primary_height, secondary_height)+indep_height
 		min_panel_width = primary_width+secondary_width+indep_width
 		return {'primary':None if self.panel_has_primary_axis is False else axarr, 'secondary':None if self.panel_has_secondary_axis is False else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
@@ -1366,14 +1452,14 @@ class Figure(object):	#pylint: disable-msg=R0902
 	"""
 	Automagically generate presentation-quality plots
 
-	:param	panel:				one or more data panel
-	:type	panel:				:py:class:`util_plot.panel()` object or list of :py:class:`util_plot.panel()` objects
+	:param	panel:				one or more data panels
+	:type	panel:				:py:class:`util_plot.Panel()` object or list of :py:class:`util_plot.Panel()` objects
 	:param	indep_var_label:	independent variable label
 	:type	indep_var_label:	string
 	:param	indep_var_units:	independent variable units
 	:type	indep_var_units:	string
 	:param	fig_width:			hardcopy plot width
-	:type	fig_width:			positive number, float or integer
+	:type	fig_width:			positive number
 	:param	fig_height:			hardcopy plot height
 	:type	fig_height:			positive number
 	:param	title:				plot title
@@ -1381,21 +1467,22 @@ class Figure(object):	#pylint: disable-msg=R0902
 	:param	log_indep:			logarithmic independent axis flag
 	:type	log_indep:			boolean
 	:raises:
-	 * Same as :py.meth:`util_plot.Figure.add_panel()`
+	 * Same as :py:meth:`util_plot.Figure.add_panel()`
 
-	 * Same as :py.meth:`util_plot.Figure.indep_var_label()`
+	 * Same as :py:meth:`util_plot.Figure.indep_var_label()`
 
-	 * Same as :py.meth:`util_plot.Figure.indep_var_units()`
+	 * Same as :py:meth:`util_plot.Figure.indep_var_units()`
 
-	 * Same as :py.meth:`util_plot.Figure.title()`
+	 * Same as :py:meth:`util_plot.Figure.title()`
 
-	 * Same as :py.meth:`util_plot.Figure.log_indep()`
+	 * Same as :py:meth:`util_plot.Figure.log_indep()`
 
-	 * Same as :py.meth:`util_plot.Figure.indep_max()`
+	 * Same as :py:meth:`util_plot.Figure.figure_width()`
 
-	 * Same as :py.meth:`util_plot.Figure.figure_width()`
+	 * Same as :py:meth:`util_plot.Figure.figure_height()`
 
-	 * Same as :py.meth:`util_plot.Figure.figure_height()`
+	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be retrieved using \
+	:py:meth:`util_plot.Figure.figure_width()` and/or :py:meth:`util_plot.Figure.figure_height()` methods.
 	"""
 	def __init__(self, panel=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep=False):	#pylint: disable-msg=R0913
 		self.fig = None
@@ -1434,14 +1521,13 @@ class Figure(object):	#pylint: disable-msg=R0902
 		Adds panel to current panel list
 
 		:param	panel:	one or more data panel
-		:type	panel:	:py:class:`util_plot.panel()` object or list of :py:class:`util_plot.panel()` objects
-		:rtype:			:py:class:`util_plot.panel()` object or list of :py:class:`util_plot.panel()` objects
+		:type	panel:	:py:class:`util_plot.Panel()` object or list of :py:class:`util_plot.panel()` objects
 		:raises:
 		 * TypeError (Panels must be provided in list form)
 
 		 * TypeError (Panel element is not a panel object)
 
-		 * RuntimeError (Panel element **number** is not fully specified)
+		 * RuntimeError (Panel element *[number]* is not fully specified)
 		"""
 		if panel is not None:
 			panel = [panel] if isinstance(panel, Panel) is True else panel
@@ -1615,10 +1701,10 @@ class Figure(object):	#pylint: disable-msg=R0902
 		for panel_obj in self.current_panel_list:
 			for series_obj in panel_obj.current_series_list:
 				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([util_misc.smart_round(element, 10) for element in series_obj.indep_var()])))
-		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = scale_series(series=global_indep_var, scale=True, scale_type='delta')
+		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = _scale_series(series=global_indep_var, scale=True, scale_type='delta')
 		self.indep_var_min = util_misc.smart_round(self.indep_var_min, 10)
 		self.indep_var_max = util_misc.smart_round(self.indep_var_max, 10)
-		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = intelligent_ticks(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
+		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = _intelligent_ticks(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
 		# Scale all panel series
 		for panel_obj in self.current_panel_list:
 			panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable-msg=W0212
@@ -1634,59 +1720,62 @@ class Figure(object):	#pylint: disable-msg=R0902
 		self.title_width = 0
 		if self.title() != '':
 			title_obj = self.axarr[0].set_title(self.title(), horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=24)
-			self.title_height = get_text_prop(self.fig, title_obj)['height']
-			self.title_width = get_text_prop(self.fig, title_obj)['width']
+			self.title_height = _get_text_prop(self.fig, title_obj)['height']
+			self.title_width = _get_text_prop(self.fig, title_obj)['width']
 
 	def fig_handle(self):
 		"""
-		Returns the Matplotlib figure handle
+		Returns the Matplotlib figure handle. Useful if annotations or further customizations to the figure are needed.
 		"""
 		return self.fig
 
 	def axis_list(self):
 		"""
-		Returns the Matplotlib figure axes handle vector
+		Returns the Matplotlib figure axes handle vector. Useful if annotations or further customizations to the panel(s) are needed.
 		"""
 		return self.axarr_list
 
 	def show(self):	#pylint: disable-msg=R0201
 		"""
-		Display figure
+		Displays figure
+
+		:raises:
+		 * Same as :py:meth:`util_plot.Figure.draw()`
 		"""
+		if self.fig is None:
+			self.draw()
 		plt.show()
 
 	def save(self, file_name):
 		"""
-		Save figure
+		Saves figure
 
 		:param	file_name:	File name of the hardcopy PNG
 		:type	file_name:	string
 		:raises:
 		 * TypeError (File name must be a string)
+
+		 * Same as :py:meth:`util_plot.Figure.draw()`
 		"""
 		if isinstance(file_name, str) is False:
 			raise TypeError('File name must be a string')
+		if self.fig is None:
+			self.draw()
 		# Calculate minimum figure dimensions
 		axarr = self.axarr_list[0]['primary']
 		legend_obj = axarr.get_legend()	#pylint: disable-msg=W0612
-		for element in self.axarr_list:
-			print element
-		print self.fig.dpi
 		min_fig_width = (max(self.title_width, max([panel_dict['min_width'] for panel_dict in self.axarr_list])))/float(self.fig.dpi)
 		min_fig_height = ((len(self.axarr_list)-1)*0.00)+(((len(self.axarr_list)*max([panel_dict['min_height'] for panel_dict in self.axarr_list]))+self.title_height)/float(self.fig.dpi))
-		print self.figure_height()
-		print min_fig_height
-		if (self.figure_width() is not None) and (self.figure_height() is not None):
-			self.fig.set_size_inches(max(min_fig_width, self.figure_width()), max(min_fig_height, self.figure_height()))
-		else:
-			self.fig.set_size_inches(min_fig_width, min_fig_height)
+		self.figure_width(min_fig_width if self.figure_width() is None else self.figure_width())
+		self.figure_height(min_fig_height if self.figure_height() is None else self.figure_height())
+		self.fig.set_size_inches(max(min_fig_width, self.figure_width()), max(min_fig_height, self.figure_height()))
 		file_name = os.path.expanduser(file_name)	# Matplotlib seems to have a problem with ~/, expand it to $HOME
 		util_misc.make_dir(file_name)
 		self.fig.savefig(file_name, dpi=self.fig.dpi)
 		self.fig.savefig(file_name, bbox_inches='tight', dpi=self.fig.dpi)
 		plt.close('all')
 
-def scale_series(series, scale=False, series_min=None, series_max=None, scale_type='delta'):	#pylint: disable-msg=R0913
+def _scale_series(series, scale=False, series_min=None, series_max=None, scale_type='delta'):	#pylint: disable-msg=R0913
 	"""
 	Scales series, 'delta' with the series span, 'min' with the series minimum
 	"""
@@ -1706,7 +1795,7 @@ def scale_series(series, scale=False, series_min=None, series_max=None, scale_ty
 
 	return (series_min, series_max, div, unit.replace('u', '$\\mu$').strip(), series)
 
-def process_ticks(locs, min_lim, max_lim, mant):
+def _process_ticks(locs, min_lim, max_lim, mant):
 	"""
 	Returns pretty-printed tick locations that are within the given bound
 	"""
@@ -1715,17 +1804,18 @@ def process_ticks(locs, min_lim, max_lim, mant):
 	raw_labels = [util_eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(util_misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
 
-def intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable-msg=R0912,R0914,R0915
+def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable-msg=R0912,R0914,R0915
 	"""
 	Calculates ticks 'intelligently', trying to calculate sane tick spacing
 	"""
 	ideal_num_ticks = 8
-	series_delta = series_max-series_min
+	series_delta = float(series_max-series_min)
 	num_ticks = 0
 	sdiff = [1 if int(element) == element else 0 for element in [util_misc.smart_round(element, 10) for element in numpy.diff(series)]]	#pylint: disable-msg=E1101
 	int_scale = True if sum(sdiff) == len(sdiff) else False
 	min_num_ticks = 2 if series_delta == 0 else (ideal_num_ticks if int_scale is False else min(ideal_num_ticks, series_delta))
 	div = 1 if (series_delta == 0) or (int_scale is True) else 10.0
+	tick_list = None
 	if calc_ticks is False:
 		# Calculate spacing between points
 		tspace = numpy.diff(series)	#pylint: disable-msg=E1101
@@ -1735,21 +1825,22 @@ def intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=Tru
 		tspace_div = min(divs)
 		scaled_tspace = numpy.round(numpy.array(tspace)/tspace_div, 10)	#pylint: disable-msg=E1101
 		tspace_gcd = 0.5*util_misc.gcd(scaled_tspace)
-		num_ticks = 20
-		while num_ticks > 19:
+		num_ticks = 1
+		while num_ticks > min_num_ticks:
 			tspace_gcd = 2*tspace_gcd
 			# Find out number of ticks with the minimum common spacing
 			num_ticks = round(1+((series_max-series_min)/(tspace_div*float(tspace_gcd))), 10)
-			if (round(float(int(round(num_ticks, 10))), 10) == round(num_ticks, 10)) and (int(round(num_ticks, 10)) >= min_num_ticks):
+			if (int(util_misc.smart_round(num_ticks, 10)) == round(num_ticks, 10)) and (int(util_misc.smart_round(num_ticks, 10)) >= min_num_ticks):
 				num_ticks = int(round(num_ticks, 10))
 				tstop = series[-1]
 				tspace = tspace_gcd*tspace_div
 				tick_list = numpy.linspace(series_min, series_max, num_ticks)	#pylint: disable-msg=E1101
 				calc_ticks = False
+	calc_ticks = True if tick_list is None else calc_ticks
 	if calc_ticks is True:
 		if (series_delta != 0) and (int_scale is True):
 			step = 1 if series_delta <= ideal_num_ticks else math.ceil((series_max-series_min)/ideal_num_ticks)
-			tick_list = [series_min-step]+[series_min+num*step for num in range(1+(len(series) if series_delta <= ideal_num_ticks else ideal_num_ticks))]
+			tick_list = [series_min-step]+[series_min+num*step for num in range(1+int(util_misc.smart_round(series_delta, 10)) if series_delta <= ideal_num_ticks else ideal_num_ticks)]
 			tstart = tick_list[0]
 			tstop = tick_list[-1]
 		else:
@@ -1775,10 +1866,10 @@ def intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=Tru
 				num_ticks = int(round((tstop-tstart)/tspace))+1
 				div = 2.0*div if num_ticks < min_num_ticks else div
 			tick_list = ([series_min] if tight is True else [])+[tstart+(n*tspace) for n in range(0, num_ticks)]+([series_max] if tight is True else [])
-	loc, labels = uniquify_tick_labels(tick_list, series_min if tight is True else tstart, series_max if tight is True else tstop)
+	loc, labels = _uniquify_tick_labels(tick_list, series_min if tight is True else tstart, series_max if tight is True else tstop)
 	return (loc, labels, tstart if series_delta == 0 else series_min, tstop if series_delta == 0 else series_max)
 
-def uniquify_tick_labels(tick_list, tmin, tmax):
+def _uniquify_tick_labels(tick_list, tmin, tmax):
 	"""
 	Calculate minimum tick mantissa given tick spacing
 	"""
@@ -1790,18 +1881,18 @@ def uniquify_tick_labels(tick_list, tmin, tmax):
 	# Step 2: Confirm labels are unique
 	unique_mant_found = False
 	while mant >= 0:
-		loc, labels = process_ticks(tick_list, tmin, tmax, mant)
+		loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
 		if sum([1 if labels[index] != labels[index+1] else 0 for index in range(0, len(labels[:-1]))]) == len(labels)-1:
 			unique_mant_found = True if unique_mant_found is False else unique_mant_found
 			mant -= 1
 		else:
 			mant += 1
 			if unique_mant_found is True:
-				loc, labels = process_ticks(tick_list, tmin, tmax, mant)
+				loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
 				break
 	return loc, labels
 
-def series_threshold(indep_var, dep_var, threshold, threshold_type):
+def _series_threshold(indep_var, dep_var, threshold, threshold_type):
 	"""
 	Chops series given a threshold
 	"""
@@ -1810,7 +1901,7 @@ def series_threshold(indep_var, dep_var, threshold, threshold_type):
 	dep_var = numpy.array(dep_var)[indexes]  #pylint: disable-msg=E1101
 	return indep_var, dep_var
 
-def get_text_prop(fig, text_obj):
+def _get_text_prop(fig, text_obj):
 	"""
 	Return length of text in pixels
 	"""
@@ -1818,7 +1909,7 @@ def get_text_prop(fig, text_obj):
 	bbox = text_obj.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
 	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
 
-def get_panel_prop(fig, axarr):
+def _get_panel_prop(fig, axarr):
 	"""
 	Return height of (sub)panel in pixels
 	"""
@@ -1829,8 +1920,48 @@ def get_panel_prop(fig, axarr):
 def parametrized_color_space(series, offset=0, color='binary'):
 	"""
 	Computes a colors space where lighter colors correspond to lower parameter values
+
+	:param	series:	data series
+	:type	series:	Numpy vector
+	:param	offset:	offset of the first (lightest) color
+	:type	offset: float between 0 and 1
+	:param	color:	color pallete. One of binary, Blues, BuGn, BuPu, gist_yarg, GnBu, Greens, Greys, Oranges, OrRd, PuBu, PuBuGn, PuRd, Purples, RdPu, Reds, YlGn, YlGnBu, YlOrBr, YlOrRd (case sensitive). \
+	See `<http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_ for a visual description of the colors.
+	:type	color:	string
+	:rtype:			Matplotlib color
+	:raises:
+	 * raise TypeError (Series has to be a list)
+
+	 * raise RuntimeError (Series is empty)
+
+	 * raise TypeError (Element *[index]* (*[value]*) is not a number)
+
+	 * raise ValueError (Element *[index]* (*[value]*) is out of normal range [0, 1])
+
+	 * raise TypeError (Offset has to be a number)
+
+	 * raise ValueError (Offset is out of normal range [0, 1])
 	"""
-	color_dict = {'binary':plt.cm.binary, 'Blues':plt.cm.Blues, 'BuGn':plt.cm.BuGn, 'BuPu':plt.cm.BuPu, 'gist_yarg':plt.cm.gist_yarg, 'GnBu':plt.cm.GnBu, 'Greens':plt.cm.Greens, 'Greys':plt.cm.Greys,	#pylint: disable-msg=E1101
-			'Oranges':plt.cm.Oranges, 'OrRd':plt.cm.OrRd, 'PuBu':plt.cm.PuBu, 'PuBuGn':plt.cm.PuBuGn, 'PuRd':plt.cm.PuRd, 'Purples':plt.cm.Purples, 'RdPu':plt.cm.RdPu, 'Reds':plt.cm.Reds,	#pylint: disable-msg=E1101
-			'YlGn':plt.cm.YlGn, 'YlGnBu':plt.cm.YlGnBu, 'YlOrBr':plt.cm.YlOrBr, 'YlOrRd':plt.cm.YlOrRd}	#pylint: disable-msg=E1101
+	if isinstance(series, list) is False:
+		raise TypeError('Series has to be a list')
+	if len(series) == 0:
+		raise RuntimeError('Series is empty')
+	for num, element in enumerate(series):
+		if util_misc.isnumber(element) is False:
+			raise TypeError('Element {0} ({1}) is not a number'.format(num, element))
+		if (element < 0) or (element > 1):
+			raise ValueError('Element {0} ({1}) is out of normal range [0, 1]'.format(num, element))
+	if util_misc.isnumber(offset) is False:
+		raise TypeError('Offset has to be a number')
+	if (offset < 0) or (offset > 1):
+		raise ValueError('Offset is out of normal range [0, 1]')
+	color_name_list = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
+	color_pallete_list = [plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.gist_yarg, plt.cm.GnBu, plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,	#pylint: disable-msg=E1101
+					   plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds, plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd]	#pylint: disable-msg=E1101
+	if color not in color_name_list:
+		raise ValueError('Color pallete is not valid')
+	color_dict = dict(zip(color_name_list, color_pallete_list))
+	#color_dict = {'binary':plt.cm.binary, 'Blues':plt.cm.Blues, 'BuGn':plt.cm.BuGn, 'BuPu':plt.cm.BuPu, 'gist_yarg':plt.cm.gist_yarg, 'GnBu':plt.cm.GnBu, 'Greens':plt.cm.Greens, 'Greys':plt.cm.Greys,	#pylint: disable-msg=E1101
+	#		'Oranges':plt.cm.Oranges, 'OrRd':plt.cm.OrRd, 'PuBu':plt.cm.PuBu, 'PuBuGn':plt.cm.PuBuGn, 'PuRd':plt.cm.PuRd, 'Purples':plt.cm.Purples, 'RdPu':plt.cm.RdPu, 'Reds':plt.cm.Reds,	#pylint: disable-msg=E1101
+	#		'YlGn':plt.cm.YlGn, 'YlGnBu':plt.cm.YlGnBu, 'YlOrBr':plt.cm.YlOrBr, 'YlOrRd':plt.cm.YlOrRd}	#pylint: disable-msg=E1101
 	return [color_dict[color](util_misc.normalize(value, series, offset)) for value in series]	#pylint: disable-msg=E1101

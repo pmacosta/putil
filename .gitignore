@@ -11,3 +11,4 @@
 *.swo
 *.rot
 *.pyc
+doc/_build
