@@ -994,7 +994,7 @@ class Series(object):	#pylint: disable-msg=R0902
 		label_printed = False
 		fplot = axarr.plot if (log_indep is False) and (log_dep is False) else (axarr.semilogx if (log_indep is True) and (log_dep is False) else (axarr.loglog if (log_indep is True) and (log_dep is True) else axarr.semilogy))
 		if (self.interp() == 'CUBIC') or (self.interp() == 'LINREG') and (self.line_style() != ''):
-			fplot(self.scaled_interp_curve_indep_var, self.scaled_interp_curve_dep_var, color=self.color(), linewidth=2.5, label=self.label() if self.label() != '' else None)
+			fplot(self.scaled_interp_curve_indep_var, self.scaled_interp_curve_dep_var, color=self.color(), linestyle=self.line_style(), linewidth=2.5, label=self.label() if self.label() != '' else None)
 			label_printed = True
 		if (self.marker() is True) or ((self.marker() is False) and ((self.interp() == 'STRAIGHT') or (self.interp() == 'STEP')) and (self.line_style() != '')):
 			fplot(self.scaled_indep_var, self.scaled_dep_var, color=self.color(), linestyle=self.line_style() if (self.line_style() != '') and ((self.interp() == 'STRAIGHT') or (self.interp() == 'STEP')) else '',
