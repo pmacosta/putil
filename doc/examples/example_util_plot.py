@@ -1,5 +1,5 @@
 """
-Plot eye opening
+util_plot library usage example
 """
 
 def main():
