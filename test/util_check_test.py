@@ -3,6 +3,8 @@ Decorators for API parameter checks
 """
 
 import pytest
+import decimal
+import fractions
 import functools
 
 import util_check
@@ -130,15 +132,99 @@ def test_create_parameter_dictionary_parameter_passed_by_position_and_keyword():
 		pass
 	assert orig_func(1, 2, ppar1=5) == {}	#pylint: disable-msg=E1124
 
-# Tests for check_type()
-@util_check.check_type('ppar1', int)
-def func_check_type(ppar1):	#pylint: disable-msg=C0111
-	print ppar1
+# Tests for type_match()
+def test_type_match_str():
+	"""
+	Test if function behaves proprely for string type
+	"""
+	assert (util_check.type_match('hello', str), util_check.type_match(135, str)) == (True, False)
 
+def test_type_match_float():
+	"""
+	Test if function behaves proprely for float type
+	"""
+	assert (util_check.type_match(1.5, float), util_check.type_match(135, float)) == (True, False)
+
+def test_type_match_int():
+	"""
+	Test if function behaves proprely for integer type
+	"""
+	assert (util_check.type_match(8, int), util_check.type_match(135.0, int)) == (True, False)
+
+def test_type_match_number():
+	"""
+	Test if function behaves proprely for number pseudo-type (integer, real or complex)
+	"""
+	assert (util_check.type_match(1, 'number'), util_check.type_match(135.0, 'number'), util_check.type_match(1+1j, 'number'), util_check.type_match('hello', 'number')) == (True, True, True, False)
+
+def test_type_match_real():
+	"""
+	Test if function behaves proprely for real pseudo-type (integer or real)
+	"""
+	assert (util_check.type_match(1, 'real'), util_check.type_match(135.0, 'real'), util_check.type_match(1+1j, 'real')) == (True, True, False)
+
+def test_type_match_boolean():
+	"""
+	Test if function behaves proprely for boolean type
+	"""
+	assert (util_check.type_match(True, bool), util_check.type_match(12.5, bool)) == (True, False)
+
+def test_type_match_decimal():
+	"""
+	Test if function behaves proprely for decimal type
+	"""
+	assert (util_check.type_match(decimal.Decimal(1.25), decimal.Decimal), util_check.type_match(12.5, decimal.Decimal)) == (True, False)
+
+def test_type_match_fraction():
+	"""
+	Test if function behaves proprely for fraction type
+	"""
+	assert (util_check.type_match(fractions.Fraction(4, 6), fractions.Fraction), util_check.type_match(12.5, fractions.Fraction)) == (True, False)
+
+def test_type_match_list():
+	"""
+	Test if function behaves proprely for list type
+	"""
+	assert (util_check.type_match([1, 2, 3], [int]), util_check.type_match('hello', [int])) == (True, False)
+
+def test_type_match_tuple():
+	"""
+	Test if function behaves proprely for list type
+	"""
+	assert (util_check.type_match((1, 2, 3), (int,)), util_check.type_match((1, 2, 'a'), (int,))) == (True, False)	# (1) is converted to the integer 1, (1,) is a one-elment tuple
+
+def test_type_match_set():
+	"""
+	Test if function behaves proprely for set type
+	"""
+	assert (util_check.type_match(set([1, 2, 3]), set([int])), util_check.type_match(set([1, 2, 'a']), set([int]))) == (True, False)
+
+def test_type_match_dict():
+	"""
+	Test if function behaves proprely for dictionary type
+	"""
+	assert (util_check.type_match({'a':'hello', 'b':12.5, 'c':[1]}, {'a':str, 'b':float, 'c':[int]}),	# 'Regular' match
+		 util_check.type_match({'a':'hello', 'c':[1]}, {'a':str, 'b':float, 'c':[int]}),	# One key-value pair missing in test object, useful where parameter is omitted to get default
+		 util_check.type_match({'x':'hello', 'y':{'n':[1.5, 2.3]}, 'z':[1]}, {'x':str, 'y':{'n':[float], 'm':str}, 'z':[int]}), # Nested
+		 util_check.type_match({'a':'hello', 'b':35, 'c':[1]}, {'a':str, 'b':float, 'c':[int]}),	# Value of one key in test object does not match
+		 util_check.type_match({'a':'hello', 'd':12.5, 'c':[1]}, {'a':str, 'b':float, 'c':[int]})) == (True, True, True, False, False)	# One key in test object does not appear in reference object
+
+def test_type_match_heterogeneous_iterable_specification():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves properl for a heterogeneous iterable specification
+	"""
+	with pytest.raises(SyntaxError) as excinfo:
+		util_check.type_match([1, 2, 3], [int, float, int])
+	assert excinfo.value.message == 'Heterogeneous iterable specification'
+
+# Tests for check_type()
 def test_check_type_simple_exception():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a sigle (wrong) type is given (string, number, etc.)
 	"""
+	@util_check.check_type('ppar1', int)
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
 	with pytest.raises(TypeError) as excinfo:
 		func_check_type('Hello world')
 	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
@@ -147,8 +233,38 @@ def test_check_type_simple_no_exception():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a sigle (right) type is given (string, number, etc.)
 	"""
-	@util_check.check_type('ppar1', 'number')
-	def func_check_type1(ppar1):	#pylint: disable-msg=C0111
+	@util_check.check_type(param_name='ppar1', param_type='number')
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
+	func_check_type(5.0)
 
-	func_check_type1(5.0)
+def test_check_type_parameter_not_specified():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when the parameter to be checked is not specified in the function call
+	"""
+	@util_check.check_type(param_name='ppar2', param_type='number')
+	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable-msg=C0111
+		print ppar1, ppar2, ppar3
+	func_check_type(3, ppar3=12)
+
+def test_check_type_parameter_specified_by_position_and_keyword():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is specified both by position and keyword
+	"""
+	@util_check.check_type(param_name='ppar2', param_type='number')
+	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable-msg=C0111
+		print ppar1, ppar2, ppar3
+	with pytest.raises(TypeError) as excinfo:
+		func_check_type(3, ppar3=12, ppar1=12)	#pylint: disable-msg=E1124
+	assert excinfo.value.message == "func_check_type() got multiple values for keyword argument 'ppar1'"
+
+def test_check_type_parameter_repeated_keyword_arguments():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is specified multiple times by keyword
+	"""
+	@util_check.check_type(param_name='ppar2', param_type='number')
+	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable-msg=C0111
+		print ppar1, ppar2, ppar3
+	with pytest.raises(TypeError) as excinfo:
+		func_check_type(3, ppar3=12, **{'ppar3':12})	#pylint: disable-msg=W0142
+	assert excinfo.value.message == "func_check_type() got multiple values for keyword argument 'ppar3'"
