@@ -179,3 +179,14 @@ def smart_round(num, ndigits):
 		sign = -1.0 if num < 0.0 else +1
 		exp = int(math.log10(abs(num)))
 		return sign*round(abs(num)*(10**-exp), ndigits)*(10**exp)
+
+def isiterable(obj):
+	"""
+	Tests whether an objects is an iterable
+	"""
+	try:
+		iter(obj)
+	except:	#pylint: disable-msg=W0702
+		return False
+	else:
+		return True
