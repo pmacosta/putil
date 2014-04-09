@@ -155,13 +155,14 @@ def test_type_match_number():
 	"""
 	Test if function behaves proprely for number pseudo-type (integer, real or complex)
 	"""
-	assert (util_check.type_match(1, 'number'), util_check.type_match(135.0, 'number'), util_check.type_match(1+1j, 'number'), util_check.type_match('hello', 'number')) == (True, True, True, False)
+	assert (util_check.type_match(1, util_check.Number()), util_check.type_match(135.0, util_check.Number()), util_check.type_match(1+1j, util_check.Number()), util_check.type_match('hello', util_check.Number())) == \
+		(True, True, True, False)
 
 def test_type_match_real():
 	"""
 	Test if function behaves proprely for real pseudo-type (integer or real)
 	"""
-	assert (util_check.type_match(1, 'real'), util_check.type_match(135.0, 'real'), util_check.type_match(1+1j, 'real')) == (True, True, False)
+	assert (util_check.type_match(1, util_check.Real()), util_check.type_match(135.0, util_check.Real()), util_check.type_match(1+1j, util_check.Real())) == (True, True, False)
 
 def test_type_match_boolean():
 	"""
@@ -181,23 +182,59 @@ def test_type_match_fraction():
 	"""
 	assert (util_check.type_match(fractions.Fraction(4, 6), fractions.Fraction), util_check.type_match(12.5, fractions.Fraction)) == (True, False)
 
-def test_type_match_list():
+def test_type_match_arbitrary_length_list():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for list type
+	Test if function behaves proprely for arbitrary length list type
 	"""
-	assert (util_check.type_match([1, 2, 3], [int]), util_check.type_match('hello', [int])) == (True, False)
+	assert (util_check.type_match([1, 2, 3], util_check.ArbitraryLengthList(int)), util_check.type_match('hello', util_check.ArbitraryLengthList(int))) == (True, False)
 
-def test_type_match_tuple():
+def test_type_match_arbitrary_length_tuple():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for list type
+	Test if function behaves proprely for arbitrary length tuple type
 	"""
-	assert (util_check.type_match((1, 2, 3), (int,)), util_check.type_match((1, 2, 'a'), (int,))) == (True, False)	# (1) is converted to the integer 1, (1,) is a one-elment tuple
+	assert (util_check.type_match((1, 2, 3), util_check.ArbitraryLengthTuple(int)), util_check.type_match((1, 2, 'a'), util_check.ArbitraryLengthTuple(int))) == (True, False)
 
-def test_type_match_set():
+def test_type_match_arbitrary_length_set():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for set type
+	Test if function behaves proprely for arbitrary length set type
 	"""
-	assert (util_check.type_match(set([1, 2, 3]), set([int])), util_check.type_match(set([1, 2, 'a']), set([int]))) == (True, False)
+	assert (util_check.type_match(set([1, 2, 3]), util_check.ArbitraryLengthSet(int)), util_check.type_match(set([1, 2, 'a']), util_check.ArbitraryLengthSet(int))) == (True, False)
+
+def test_type_match_fixed_length_list():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for fixed-length list type
+	"""
+	assert (util_check.type_match([1, 'a', 3.0], [int, str, float]), util_check.type_match([1, 'a', 3.0, 4.0], [int, str, float]), util_check.type_match([1, 'a', 3.0], [int, str, float, int]),
+		 util_check.type_match([1, 2, 3.0], [int, str, float])) == (True, False, False, False)
+
+def test_type_match_fixed_length_tuple():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for fixed-length tuple type
+	"""
+	assert (util_check.type_match((1, 'a', 3.0), (int, str, float)), util_check.type_match((1, 'a', 3.0, 4.0), (int, str, float)), util_check.type_match((1, 'a', 3.0), (int, str, float, int)),
+		 util_check.type_match((1, 2, 3.0), (int, str, float))) == (True, False, False, False)
+
+def test_type_match_fixed_length_set():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for fixed-length set type
+	"""
+	with pytest.raises(RuntimeError) as excinfo:
+		util_check.type_match(set([1, 'a', 3.0]), set([int, str, float]))
+	assert excinfo.value.message == 'Set is an un-ordered iterable, thus it cannot be type-checked against an ordered reference'
+
+
+def test_type_match_one_of():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for one of a fixed number of finite choices
+	"""
+	assert (util_check.type_match('HELLO', util_check.OneOf(['HELLO', 45, 'WORLD'])), util_check.type_match(45, util_check.OneOf(['HELLO', 45, 'WORLD'])), util_check.type_match(1.0, util_check.OneOf(['HELLO', 45, 'WORLD']))) == \
+		 (True, True, False)
+
+def test_type_match_range():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for a numeric range
+	"""
+	assert (util_check.type_match(12, util_check.Range(minimum=2, maximum=5)), util_check.type_match('a', util_check.Range(minimum=2, maximum=5))) == (True, False)
 
 def test_type_match_dict():
 	"""
@@ -205,17 +242,9 @@ def test_type_match_dict():
 	"""
 	assert (util_check.type_match({'a':'hello', 'b':12.5, 'c':[1]}, {'a':str, 'b':float, 'c':[int]}),	# 'Regular' match
 		 util_check.type_match({'a':'hello', 'c':[1]}, {'a':str, 'b':float, 'c':[int]}),	# One key-value pair missing in test object, useful where parameter is omitted to get default
-		 util_check.type_match({'x':'hello', 'y':{'n':[1.5, 2.3]}, 'z':[1]}, {'x':str, 'y':{'n':[float], 'm':str}, 'z':[int]}), # Nested
+		 util_check.type_match({'x':'hello', 'y':{'n':[1.5, 2.3]}, 'z':[1]}, {'x':str, 'y':{'n':util_check.ArbitraryLengthList(float), 'm':str}, 'z':[int]}), # Nested
 		 util_check.type_match({'a':'hello', 'b':35, 'c':[1]}, {'a':str, 'b':float, 'c':[int]}),	# Value of one key in test object does not match
 		 util_check.type_match({'a':'hello', 'd':12.5, 'c':[1]}, {'a':str, 'b':float, 'c':[int]})) == (True, True, True, False, False)	# One key in test object does not appear in reference object
-
-def test_type_match_heterogeneous_iterable_specification():	#pylint: disable-msg=C0103
-	"""
-	Test if function behaves properl for a heterogeneous iterable specification
-	"""
-	with pytest.raises(SyntaxError) as excinfo:
-		util_check.type_match([1, 2, 3], [int, float, int])
-	assert excinfo.value.message == 'Heterogeneous iterable specification'
 
 # Tests for check_type()
 def test_check_type_simple_exception():	#pylint: disable-msg=C0103
@@ -233,7 +262,7 @@ def test_check_type_simple_no_exception():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a sigle (right) type is given (string, number, etc.)
 	"""
-	@util_check.check_type(param_name='ppar1', param_type='number')
+	@util_check.check_type(param_name='ppar1', param_type=util_check.Number())
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
 	func_check_type(5.0)
@@ -242,7 +271,7 @@ def test_check_type_parameter_not_specified():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when the parameter to be checked is not specified in the function call
 	"""
-	@util_check.check_type(param_name='ppar2', param_type='number')
+	@util_check.check_type(param_name='ppar2', param_type=util_check.Number())
 	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable-msg=C0111
 		print ppar1, ppar2, ppar3
 	func_check_type(3, ppar3=12)
@@ -251,7 +280,7 @@ def test_check_type_parameter_specified_by_position_and_keyword():	#pylint: disa
 	"""
 	Test that function behaves properly when a parameter is specified both by position and keyword
 	"""
-	@util_check.check_type(param_name='ppar2', param_type='number')
+	@util_check.check_type(param_name='ppar2', param_type=util_check.Number())
 	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable-msg=C0111
 		print ppar1, ppar2, ppar3
 	with pytest.raises(TypeError) as excinfo:
@@ -262,7 +291,7 @@ def test_check_type_parameter_repeated_keyword_arguments():	#pylint: disable-msg
 	"""
 	Test that function behaves properly when a parameter is specified multiple times by keyword
 	"""
-	@util_check.check_type(param_name='ppar2', param_type='number')
+	@util_check.check_type(param_name='ppar2', param_type=util_check.Number())
 	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable-msg=C0111
 		print ppar1, ppar2, ppar3
 	with pytest.raises(TypeError) as excinfo:
