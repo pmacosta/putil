@@ -339,6 +339,13 @@ def test_type_match_dict():
 		 util_check.type_match({'a':'hello', 'b':35, 'c':[1]}, {'a':str, 'b':float, 'c':[int]}),	# Value of one key in test object does not match
 		 util_check.type_match({'a':'hello', 'd':12.5, 'c':[1]}, {'a':str, 'b':float, 'c':[int]})) == (True, True, True, False, False)	# One key in test object does not appear in reference object
 
+def test_type_match_polymorphic_type():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for polymorphic inputs
+	"""
+	assert (util_check.type_match('HELLO', util_check.PolymorphicType([str, int])), util_check.type_match(45, util_check.PolymorphicType([str, int])), util_check.type_match(1.5, util_check.PolymorphicType([str, int]))) \
+		== (True, True, False)
+
 # Tests for check_type()
 def test_check_type_simple_exception():	#pylint: disable-msg=C0103
 	"""

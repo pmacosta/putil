@@ -80,6 +80,22 @@ class Range(object):	#pylint: disable-msg=R0903
 		self.minimum = minimum
 		self.maximum = maximum
 
+class PolymorphicType(object):	#pylint: disable-msg=R0903
+	"""
+	Class for polymorphic parameters
+	"""
+	def __init__(self, types):
+		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
+			raise TypeError('object parameter has to be a list, tuple or set')
+		self.types = types
+		self._iter = iter(self.types)
+
+	def __iter__(self):
+		return self
+
+	def __next__(self):
+		self._iter.next()
+
 class Number(object):	#pylint: disable-msg=R0903
 	"""
 	Number class (integer, real or complex)
@@ -138,6 +154,12 @@ def type_match(test_obj, ref_obj):	#pylint: disable-msg=R0911,R0912
 	# Check for parameter being in a numeric range
 	if isinstance(ref_obj, Range):
 		return type(test_obj) == type(ref_obj.minimum if ref_obj.minimum is not None else ref_obj.maximum)
+	# Check for poly-morphic types
+	if isinstance(ref_obj, PolymorphicType):
+		for ref_subobj in ref_obj:
+			if type_match(test_obj, ref_subobj):
+				return True
+		return False
 	# Check for non-iterable types
 	arbitrary_length_iterable = type(ref_obj) in [ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet]
 	if ((not util_misc.isiterable(ref_obj)) and (not arbitrary_length_iterable) and (not isinstance(ref_obj, OneOf))) or isinstance(ref_obj, str):

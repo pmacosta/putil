@@ -13,6 +13,7 @@ from scipy.interpolate import interp1d  #pylint: disable-msg=E0611
 import util_csv
 import util_eng
 import util_misc
+import util_check
 
 class RawSource(object):
 	"""
@@ -27,38 +28,54 @@ class RawSource(object):
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
 	"""
-	def __init__(self, indep_var, dep_var, indep_min=None, indep_max=None):
-		self.current_indep_var = None
-		self.current_dep_var = None
-		self.current_indep_min = None
-		self.current_indep_max = None
-		self.indep_min(indep_min)
-		self.indep_max(indep_max)
-		self.load_data(indep_var, dep_var)
+	def __init__(self, indep_var=None, dep_var=None, indep_min=None, indep_max=None):
+		self.indep_min = property(self.get_indep_min, self.set_indep_min, doc='Minimum of independent variable')
+		self.indep_max = property(self.get_indep_max, self.set_indep_max, doc='Maximum of independent variable')
+		self.indep_var = property(self.get_indep_var, self.set_indep_var, doc='Independent variable Numpy vector')
+		self.indep_var = property(self.get_dep_var, self.set_dep_var, doc='Dependent variable Numpy vector')
+		self._indep_var, self.dep_var, self._indep_min, self._indep_max = None, None, None, None
+		self.indep_var = indep_var
+		self.dep_var = dep_var
+		self.indep_min = indep_min
+		self.indep_max = indep_max
 
-	def indep_var(self):
+	def get_indep_var(self):
 		"""
 		Returns the independent variable data (if loaded)
 
 		:rtype:		Numpy vector
 		:raises:	RuntimeError (No independent variable data set loaded)
 		"""
-		if self.current_indep_var is None:
-			raise RuntimeError('No independent variable data set loaded')
-		else:
-			return self.current_indep_var
+		return self._indep_var
 
-	def dep_var(self):
+	@util_check.check_parameter('indep_var', type(numpy.array([])))
+	def set_indep_var(self, indep_var):
 		"""
-		Returns the independent variable data (if loaded)
+		Assigns the independent variable data (if loaded)
+
+		:rtype:		Numpy vector
+		:raises:	TypeError (Parameter indep_var is of the wrong type)
+		"""
+		self._indep_var = indep_var
+
+	def get_dep_var(self):
+		"""
+		Returns the dependent variable data (if loaded)
 
 		:rtype:		Numpy vector
 		:raises:	RuntimeError (No dependent variable data set loaded)
 		"""
-		if self.current_dep_var is None:
-			raise RuntimeError('No dependent variable data set loaded')
-		else:
-			return self.current_dep_var
+		return self._dep_var
+
+	@util_check.check_parameter('dep_var', type(numpy.array([])))
+	def set_dep_var(self, dep_var):
+		"""
+		Assigns the dependent variable data (if loaded)
+
+		:rtype:		Numpy vector
+		:raises:	TypeError (Parameter dep_var is of the wrong type)
+		"""
+		self._dep_var = dep_var
 
 	def indep_min(self, *num):
 		"""
