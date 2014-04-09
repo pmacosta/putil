@@ -49,13 +49,13 @@ def isnumber(num):
 	"""
 	Checks if the argument is a number: complex, float or integer
 	"""
-	return True if (isinstance(num, int) is True) or (isinstance(num, float) is True) or (isinstance(num, complex) is True) else False
+	return (num is not None) and (not isinstance(num, bool)) and (isinstance(num, int) or isinstance(num, float) or isinstance(num, complex))
 
 def isreal(num):
 	"""
 	Checks if the argument is a real number: float or integer
 	"""
-	return True if (isinstance(num, int) is True) or (isinstance(num, float) is True) else False
+	return (num is not None) and (not isinstance(num, bool)) and (isinstance(num, int) or isinstance(num, float))
 
 def per(numa, numb, prec=10):
 	"""
