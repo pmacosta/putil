@@ -66,15 +66,17 @@ class Range(object):	#pylint: disable-msg=R0903
 	"""
 	Class for numeric parameters that can only take values in a certain range
 	"""
-	def __init__(self, minimum, maximum):
+	def __init__(self, minimum=None, maximum=None):
 		if (minimum is not None) and (not util_misc.isreal(minimum)):
 			raise TypeError('minimum parameter has to be None or a real number')
 		if (maximum is not None) and (not util_misc.isreal(maximum)):
 			raise TypeError('maximum parameter has to be None or a real number')
 		if (minimum is None) and (maximum is None):
 			raise TypeError('Either minimum or maximum parameters need to be specified')
-		if type(minimum) != type(maximum):
+		if (minimum is not None) and (maximum is not None) and (type(minimum) != type(maximum)):
 			raise TypeError('minimum and maximum parameters have different types, the both have to be integers or floats')
+		if (minimum is not None) and (maximum is not None) and (minimum>maximum):
+			raise ValueError('minimum greater than maximum')
 		self.minimum = minimum
 		self.maximum = maximum
 
@@ -212,12 +214,13 @@ def check_parameter(param_name, param_spec):
 				if not type_match(param, param_spec):
 					raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
 				# Check range (if specified)
-				if isinstance(param_spec, Range) and ((param_spec.minimum is not None) and (param < param_spec.minimum)) or ((param_spec.maximum is not None) and (param > param_spec.maximum)):
-					raise ValueError('Parameter {0} is not in the range [{1}, {2}]'.format(param_name, '-inf' if param_spec.minimum is None else param_spec.minimum, '+inf' if param_spec.maximum is None else param_spec.maximum))
+				if isinstance(param_spec, Range):
+					if ((param_spec.minimum is not None) and (param < param_spec.minimum)) or ((param_spec.maximum is not None) and (param > param_spec.maximum)):
+						raise ValueError('Parameter {0} is not in the range [{1}, {2}]'.format(param_name, '-inf' if param_spec.minimum is None else param_spec.minimum, '+inf' if param_spec.maximum is None else param_spec.maximum))
 				# Check one of finite number of choices (if specified)
 				if isinstance(param_spec, OneOf) and (param not in param_spec):
-					raise ValueError('Parameter {0} is not one of {1} {2}'.format(param_name, param_spec.choices,
-						('(case {0})'.format('sensitive' if param_spec.case_sensitive else 'insensitive')) if param_spec.case_sensitive is not None else ''))
+					raise ValueError('Parameter {0} is not one of {1}{2}'.format(param_name, param_spec.choices,
+						(' (case {0})'.format('sensitive' if param_spec.case_sensitive else 'insensitive')) if param_spec.case_sensitive is not None else ''))
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator

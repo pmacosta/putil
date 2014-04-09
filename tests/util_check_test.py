@@ -6,9 +6,102 @@ import pytest
 import decimal
 import fractions
 import functools
+import itertools
 
 import util_check
 
+# Test for ArbitraryLength class (applies to any ArbitraryLength* sub-classes)
+def test_arbitrary_length_class_no_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLength class behaves appropriately when proper parameters passed
+	"""
+	util_check.ArbitraryLength(str)
+
+def test_arbitrary_length_class_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLength class behaves appropriately when inproper parameter type is passed
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.ArbitraryLength('a')
+	assert excinfo.value.message == 'element_type parameter has to be a type'
+
+# Test for OneOf class
+def test_one_of_case_insensitive_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that OneOf class behaves properly when an improper case_insensitive type is given
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.OneOf(['a', 'b', 'c'], case_sensitive=3)
+	assert excinfo.value.message == 'case_sensitive parameter must be boolean'
+
+def test_one_of_case_insensitive_none_if_no_strings_in_choices():	#pylint: disable-msg=C0103
+	"""
+	Tests that OneOf class behaves properly when no string options given
+	"""
+	assert util_check.OneOf([1, 2, 3], case_sensitive=True).case_sensitive == None
+
+def test_one_of_infinite_iterable_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that OneOf class behaves properly when an improper iterable is given
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.OneOf(itertools.count(start=0, step=1))
+	assert excinfo.value.message == 'choices parameter has to be an iterable of finite length'
+
+def test_one_of_proper_type_extraction():	#pylint: disable-msg=C0103
+	"""
+	Tests that OneOf class behaves properly extracting type information
+	"""
+	assert util_check.OneOf(['a', 2, 3.0, 'a', util_check.Real()], case_sensitive=True).types == set([str, int, float, util_check.Real])
+
+def test_one_of_proper_contains_behavior():	#pylint: disable-msg=C0103
+	"""
+	Tests that OneOf class behaves properly extracting type information
+	"""
+	obj1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
+	obj2 = util_check.OneOf(['c', 'D'], case_sensitive=False)
+	assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2) == (True, True, True, True, False, False, False, True, True, False, False)
+
+# Test for Range classes
+def test_range_minimum_not_a_number():
+	"""
+	Tests that Range class behaves properly when minimum is not a number
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.Range(minimum=False, maximum=None)
+	assert excinfo.value.message == 'minimum parameter has to be None or a real number'
+
+def test_range_maximum_not_a_number():
+	"""
+	Tests that Range class behaves properly when maximum is not a number
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.Range(minimum=None, maximum=True)
+	assert excinfo.value.message == 'maximum parameter has to be None or a real number'
+
+def test_range_minimum_and_maximum_not_specified():	#pylint: disable-msg=C0103
+	"""
+	Tests that Range class behaves properly when neither minimum nor maximum are specified
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.Range(minimum=None, maximum=None)
+	assert excinfo.value.message == 'Either minimum or maximum parameters need to be specified'
+
+def test_range_minimum_and_maximum_are_of_different_type():	#pylint: disable-msg=C0103
+	"""
+	Tests that Range class behaves properly when minimum is either integer or float and maximum is either float or integer
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.Range(minimum=1.5, maximum=3)
+	assert excinfo.value.message == 'minimum and maximum parameters have different types, the both have to be integers or floats'
+
+def test_range_minimum_greater_than_maximum():	#pylint: disable-msg=C0103
+	"""
+	Tests that Range class behaves properly when minimum is greater than maximum
+	"""
+	with pytest.raises(ValueError) as excinfo:
+		util_check.Range(minimum=1.5, maximum=0.0)
+	assert excinfo.value.message == 'minimum greater than maximum'
 
 # Dummy functions representing the actual function to be decorated
 def func_all_positional_parameters(ppar1, ppar2, ppar3):	#pylint: disable-msg=C0111,W0613
@@ -297,3 +390,117 @@ def test_check_type_parameter_repeated_keyword_arguments():	#pylint: disable-msg
 	with pytest.raises(TypeError) as excinfo:
 		func_check_type(3, ppar3=12, **{'ppar3':12})	#pylint: disable-msg=W0142
 	assert excinfo.value.message == "func_check_type() got multiple values for keyword argument 'ppar3'"
+
+# Tests for check_parameter()
+def test_check_parameter_wrong_type():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a sigle (wrong) type is given (string, number, etc.)
+	"""
+	@util_check.check_parameter('ppar1', int)
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(TypeError) as excinfo:
+		func_check_type('Hello world')
+	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+
+def test_check_parameter_one_of_error_case_insensitive():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is outside fixed number of string choices list with case sensitivity
+	"""
+	@util_check.check_parameter('ppar1', util_check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(ValueError) as excinfo:
+		func_check_type('Hello world')
+	assert excinfo.value.message == "Parameter ppar1 is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)"
+
+def test_check_parameter_one_of_error_case_sensitive():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is outside fixed number of string choices list with case insensitivity
+	"""
+	@util_check.check_parameter('ppar1', util_check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=True))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(ValueError) as excinfo:
+		func_check_type('none')
+	assert excinfo.value.message == "Parameter ppar1 is not one of ['NONE', 'MANUAL', 'AUTO'] (case sensitive)"
+
+def test_check_parameter_one_of_error_no_case_sensitivity():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is outside fixed number of choices list
+	"""
+	@util_check.check_parameter('ppar1', util_check.OneOf(range(3), case_sensitive=True))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(ValueError) as excinfo:
+		func_check_type(10)
+	assert excinfo.value.message == 'Parameter ppar1 is not one of [0, 1, 2]'
+
+def test_check_parameter_one_of_no_error():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is one of a fixed number of choices list
+	"""
+	@util_check.check_parameter('ppar1', util_check.OneOf(range(3), case_sensitive=True))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	func_check_type(2)
+
+def test_check_parameter_range_no_maximum_out_of_range():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is out of range when no maximum is defined
+	"""
+	@util_check.check_parameter('ppar1', util_check.Range(minimum=10))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(ValueError) as excinfo:
+		func_check_type(1)
+	assert excinfo.value.message == 'Parameter ppar1 is not in the range [10, +inf]'
+
+def test_check_parameter_range_no_maximum_in_range():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is in range when no maximum is defined
+	"""
+	@util_check.check_parameter('ppar1', util_check.Range(minimum=10))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	func_check_type(20)
+
+def test_check_parameter_range_no_minimum_out_of_range():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is out of range when no minimum is defined
+	"""
+	@util_check.check_parameter('ppar1', util_check.Range(maximum=10))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(ValueError) as excinfo:
+		func_check_type(20)
+	assert excinfo.value.message == 'Parameter ppar1 is not in the range [-inf, 10]'
+
+def test_check_parameter_range_no_minimum_in_range():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is in range when no minimum is defined
+	"""
+	@util_check.check_parameter('ppar1', util_check.Range(maximum=10))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	func_check_type(5)
+
+def test_check_parameter_range_minimum_and_maximum_specified_out_of_range():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is out of range when no minimum is defined
+	"""
+	@util_check.check_parameter('ppar1', util_check.Range(minimum=5.0, maximum=10.0))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(ValueError) as excinfo:
+		func_check_type(3.1)
+	assert excinfo.value.message == 'Parameter ppar1 is not in the range [5.0, 10.0]'
+
+def test_check_parameter_range_minimum_and_maximum_specified_in_range():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is in range when no minimum is defined
+	"""
+	@util_check.check_parameter('ppar1', util_check.Range(minimum=100, maximum=200))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	func_check_type(150)
