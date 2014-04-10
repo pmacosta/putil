@@ -15,86 +15,65 @@ import util_eng
 import util_misc
 import util_check
 
-class RawSource(object):	#pylint: disable-msg=R0902,R0903
+PRECISION = 10	# Number of mantissa significant digits
+
+class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	"""
 	Container to hold data sets intended for plotting
 
 	:param	indep_var:			independent variable vector
-	:param	indep_var:			Numpy array
+	:type	indep_var:			Numpy array
 	:param	dep_var:			dependent variable vector
-	:param	dep_var:			Numpy array
-	:type	indep_min:			number
+	:type	dep_var:			Numpy array
+	:param	indep_min:			minimum independent variable value
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
-	:rtype:						:py:class:`util_plot.RawSource()` object
+	:rtype:						:py:class:`util_plot.BasicSource()` object
 	:raises:
-	 * Same as :py:attr:`util_plot.RawSource.indep_var`
+	 * Same as :py:attr:`util_plot.BasicSource.indep_var`
 
-	 * Same as :py:attr:`util_plot.RawSource.dep_var`
+	 * Same as :py:attr:`util_plot.BasicSource.dep_var`
 
-	 * Same as :py:attr:`util_plot.RawSource.indep_min`
+	 * Same as :py:attr:`util_plot.BasicSource.indep_min`
 
-	 * Same as :py:attr:`util_plot.RawSource.indep_max`
+	 * Same as :py:attr:`util_plot.BasicSource.indep_max`
 
 	"""
 	def __init__(self, indep_var=None, dep_var=None, indep_min=None, indep_max=None):
-		self.indep_min = property(self._get_indep_min, self._set_indep_min, doc='Minimum of independent variable')
-		"""
-		Minimum independent variable limit
-
-		:type:		real number
-		:rtype:		real number if set, otherwise None
-		:raises:	TypeError (Parameter indep_min is of the wrong type)
-		"""	#pylint: disable-msg=W0105
-
-		self.indep_max = property(self._get_indep_max, self._set_indep_max, doc='Maximum of independent variable')
-		"""
-		Maximum independent variable limit
-
-		:type:		real number
-		:rtype:		real number if set, otherwise None
-		:raises:	TypeError (Parameter indep_max is of the wrong type)
-		"""	#pylint: disable-msg=W0105
-
-		self.indep_var = property(self._get_indep_var, self._set_indep_var, doc='Independent variable Numpy vector')
-		"""
-		Independent variable data
-
-		:type:		Numpy array
-		:rtype:		Numpy array if set, otherwise None
-		:raises:	TypeError (Parameter indep_var is of the wrong type)
-		"""	#pylint: disable-msg=W0105
-
-		self.dep_var = property(self._get_dep_var, self._set_dep_var, doc='Dependent variable Numpy vector')
-		"""
-		Dependent variable data
-
-		:type:		Numpy array
-		:rtype:		Numpy array if set, otherwise None
-		:raises:	TypeError (Parameter dep_var is of the wrong type)
-		"""	#pylint: disable-msg=W0105
 		# Private attributes
 		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
 		# Public attributes
 		self._indep_var, self._dep_var, self._indep_min, self._indep_max = None, None, None, None
-		self.indep_var, self.dep_var, self.indep_min, self.indep_max = indep_var, dep_var, indep_min, indep_max
+		# Assign minimum and maximum first so as not to trigger unnecessary tresholding if the dependent and independent variables are already assigned
+		self._set_indep_min(indep_min)
+		self._set_indep_max(indep_max)
+		self._set_indep_var(indep_var)
+		self._set_dep_var(dep_var)
 
 	def _get_indep_var(self):	#pylint: disable-msg=C0111
 		return self._indep_var
 
-	@util_check.check_parameter('indep_var', util_check.IncreasingRealNumpyVector())
+	@util_check.check_parameter('indep_var', util_check.PolymorphicType([None, util_check.IncreasingRealNumpyVector()]))
 	def _set_indep_var(self, indep_var):	#pylint: disable-msg=C0111
-		self._raw_indep_var = indep_var
+		if (indep_var is not None) and (len(indep_var) == 0):
+			raise ValueError('indep_var is empty')
+		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
+			raise ValueError('indep_var and dep_var must have the same number of elements')
+		self._raw_indep_var = util_misc.smart_round(indep_var, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
 	def _get_dep_var(self):	#pylint: disable-msg=C0111
 		return self._dep_var
 
-	@util_check.check_parameter('dep_var', util_check.RealNumpyVector())
+	@util_check.check_parameter('dep_var', util_check.PolymorphicType([None, util_check.RealNumpyVector()]))
 	def _set_dep_var(self, dep_var):	#pylint: disable-msg=C0111
-		self._raw_dep_var = dep_var
+		if (dep_var is not None) and (len(dep_var) == 0):
+			raise ValueError('dep_var is empty')
+		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):
+			raise ValueError('indep_var and dep_var must have the same number of elements')
+		self._raw_dep_var = util_misc.smart_round(dep_var, PRECISION)
 		self._update_dep_var()
 
 	def _get_indep_min(self):	#pylint: disable-msg=C0111
@@ -102,32 +81,35 @@ class RawSource(object):	#pylint: disable-msg=R0902,R0903
 
 	@util_check.check_parameter('indep_min', util_check.PolymorphicType([None, util_check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable-msg=C0111
-		self._indep_min = indep_min
+		self._indep_min = util_misc.smart_round(indep_min, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
+		self._update_dep_var()
 
 	def _get_indep_max(self):	#pylint: disable-msg=C0111
 		return self._indep_max
 
 	@util_check.check_parameter('indep_max', util_check.PolymorphicType([None, util_check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable-msg=C0111
-		self._indep_max = indep_max
+		self._indep_max = util_misc.smart_round(indep_max, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
+		self._update_dep_var()
 
 	def _update_indep_var(self):
 		"""
 		Update independent variable according to its minimum and maximum limits
 		"""
-		self._indep_var_indexes = numpy.where((self._raw_indep_var >= self.indep_min if self.indep_min is not None else self._raw_indep_var[0]) &
-										(self._raw_indep_var <= self.indep_max if self.indep_max is not None else self._raw_indep_var[-1]))
-		self._indep_var = self._raw_indep_var[self._indep_var_indexes]
-		if len(self.indep_var) == 0:
-			raise RuntimeError('indep_var is empty after indep_min/indep_max thresholding')
+		if self._raw_indep_var is not None:
+			self._indep_var_indexes = numpy.where((self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0])) &
+											(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
+			self._indep_var = self._raw_indep_var[self._indep_var_indexes]
+			if len(self.indep_var) == 0:
+				raise ValueError('indep_var is empty after indep_min/indep_max thresholding')
 
 	def _update_dep_var(self):
 		"""
-		Update dependent variable to match the independent variable thresholding
+		Update dependent variable (if assigned) to match the independent variable thresholding
 		"""
-		if self._indep_var_indexes is not None:
+		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
 			self._dep_var = self._raw_dep_var[self._indep_var_indexes]
 
 	def __str__(self):
@@ -135,8 +117,8 @@ class RawSource(object):	#pylint: disable-msg=R0902,R0903
 		Print comma-separated value source information
 		"""
 		ret = ''
-		ret += 'Independent variable minimum: {0}\n'.format(self.indep_min)
-		ret += 'Independent variable maximum: {0}\n'.format(self.indep_max)
+		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)
+		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_min is None else self.indep_max)
 		ret += 'Independent variable: {0}\n'.format(self.indep_var)
 		ret += 'Dependent variable: {0}\n'.format(self.dep_var)
 		return ret
@@ -147,6 +129,56 @@ class RawSource(object):	#pylint: disable-msg=R0902,R0903
 		"""
 		return (self.indep_var is not None) and (self.dep_var is not None)
 
+	# Managed attributes
+	indep_min = property(_get_indep_min, _set_indep_min, doc='Minimum of independent variable')
+	"""
+	Minimum independent variable limit
+
+	:type:		real number
+	:raises:
+	 * TypeError (Parameter indep_min is of the wrong type)
+
+	 * ValueError (indep_var is empty after indep_min/indep_max thresholding)
+	"""	#pylint: disable-msg=W0105
+
+	indep_max = property(_get_indep_max, _set_indep_max, doc='Maximum of independent variable')
+	"""
+	Maximum independent variable limit
+
+	:type:		real number
+	:raises:
+	 * TypeError (Parameter indep_max is of the wrong type)
+
+	 * ValueError (indep_var is empty after indep_min/indep_max thresholding)
+	"""	#pylint: disable-msg=W0105
+
+	indep_var = property(_get_indep_var, _set_indep_var, doc='Independent variable Numpy vector')
+	"""
+	Independent variable data
+
+	:type:		Numpy array
+	:raises:
+	 * TypeError (Parameter indep_var is of the wrong type)
+
+	 * ValueError (indep_var is empty)
+
+	 * ValueError (indep_var and dep_var must have the same number of elements)
+
+	 * ValueError (indep_var is empty after indep_min/indep_max thresholding)
+	"""	#pylint: disable-msg=W0105
+
+	dep_var = property(_get_dep_var, _set_dep_var, doc='Dependent variable Numpy vector')
+	"""
+	Dependent variable data
+
+	:type:		Numpy array
+	:raises:
+	 * TypeError (Parameter dep_var is of the wrong type)
+
+	 * ValueError (dep_var is empty)
+
+		 * ValueError (indep_var and dep_var must have the same number of elements)
+		"""	#pylint: disable-msg=W0105
 
 class CsvSource(object):	#pylint: disable-msg=R0902
 	"""

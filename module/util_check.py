@@ -97,21 +97,6 @@ class Range(object):	#pylint: disable-msg=R0903
 		self.minimum = minimum
 		self.maximum = maximum
 
-class PolymorphicType(object):	#pylint: disable-msg=R0903
-	"""
-	Class for polymorphic parameters
-	"""
-	def __init__(self, types):
-		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
-			raise TypeError('object parameter has to be a list, tuple or set')
-		for element_type in types:
-			if (not isinstance(element_type, type)) and (element_type is not None):
-				raise TypeError('type element in types parameter has to be a type')
-		self.types = types
-
-	def __iter__(self):
-		return iter(self.types)
-
 class Number(object):	#pylint: disable-msg=R0903
 	"""
 	Number class (integer, real or complex)
@@ -123,6 +108,31 @@ class Real(object):	#pylint: disable-msg=R0903
 	Number class (integer or real)
 	"""
 	pass
+
+class PolymorphicType(object):	#pylint: disable-msg=R0903
+	"""
+	Class for polymorphic parameters
+	"""
+	def __init__(self, types):
+		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
+			raise TypeError('object parameter has to be a list, tuple or set')
+		custom_types = [ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, IncreasingRealNumpyVector, RealNumpyVector, OneOf, Range, Number, Real]
+		for element_type in types:
+			if (type(element_type) not in custom_types) and (not isinstance(element_type, type)) and (element_type is not None):
+				raise TypeError('type element in types parameter has to be a type')
+		self.types = types
+
+	def __iter__(self):
+		return iter(self.types)
+
+	def find(self, req_type):
+		"""
+		Find sub-type in type iterable. Cannot use find since set() is supported
+		"""
+		for sub_type in self.types:
+			if req_type == sub_type:
+				return sub_type
+		raise ValueError('Requested sub-type not found')
 
 def get_function_args(func):
 	"""
@@ -261,14 +271,18 @@ def check_parameter(param_name, param_spec):
 				# Check type and raise exception if necessary
 				if not type_match(param, param_spec):
 					raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
+				# Validate custom pseudo-types
+				sub_spec = param_spec if not isinstance(param_spec, PolymorphicType) else type(param)	# type_check ensured that the sub-types of PolymorphicType are valid
 				# Check range (if specified)
-				if isinstance(param_spec, Range):
-					if ((param_spec.minimum is not None) and (param < param_spec.minimum)) or ((param_spec.maximum is not None) and (param > param_spec.maximum)):
-						raise ValueError('Parameter {0} is not in the range [{1}, {2}]'.format(param_name, '-inf' if param_spec.minimum is None else param_spec.minimum, '+inf' if param_spec.maximum is None else param_spec.maximum))
+				if (isinstance(param_spec, Range)) or (isinstance(param_spec, PolymorphicType) and (Range in param_spec.types)):
+					sub_spec = param_spec if not isinstance(param_spec, PolymorphicType) else param_spec.find(Range)
+					if ((sub_spec.minimum is not None) and (param < sub_spec.minimum)) or ((sub_spec.maximum is not None) and (param > sub_spec.maximum)):
+						raise ValueError('Parameter {0} is not in the range [{1}, {2}]'.format(param_name, '-inf' if sub_spec.minimum is None else sub_spec.minimum, '+inf' if sub_spec.maximum is None else sub_spec.maximum))
 				# Check one of finite number of choices (if specified)
-				if isinstance(param_spec, OneOf) and (param not in param_spec):
-					raise ValueError('Parameter {0} is not one of {1}{2}'.format(param_name, param_spec.choices,
-						(' (case {0})'.format('sensitive' if param_spec.case_sensitive else 'insensitive')) if param_spec.case_sensitive is not None else ''))
+				if (isinstance(param_spec, OneOf) and (param not in param_spec)) or (isinstance(param_spec, PolymorphicType) and (OneOf in param_spec.types) and (param not in param_spec.find(OneOf))):
+					sub_spec = param_spec if not isinstance(param_spec, PolymorphicType) else param_spec.find(OneOf).choices
+					raise ValueError('Parameter {0} is not one of {1}{2}'.format(param_name, sub_spec.choices,
+						(' (case {0})'.format('sensitive' if sub_spec.case_sensitive else 'insensitive')) if sub_spec.case_sensitive is not None else ''))
 				# Check increasing real Numpy vector
 				if isinstance(param_spec, IncreasingRealNumpyVector):
 					if min(numpy.diff(param)) <= 0:

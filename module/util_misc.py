@@ -171,14 +171,23 @@ def ishex(char):
 
 def smart_round(num, ndigits):
 	"""
-	Rounds a floating point number
+	Rounds a floating point number or Numpy vector
 	"""
-	if num == 0:
+	if num is None:
 		return num
+	elif isinstance(num, numpy.ndarray):
+		num = num.astype(float)
+		sign = numpy.sign(num)	# sign() is zero where element is zero, will zero out results
+		num = numpy.where(num == 0, 1.0, num)	# Replace zero elements with a dummy value that will not produce an error with log10(), the values will be zero out in the result when multiplied by sign
+		exp = (numpy.log10(numpy.abs(num)).astype(int)).astype(float)
+		return sign*numpy.round(numpy.abs(num)*(10**-exp), ndigits)*(10**exp)
 	else:
-		sign = -1.0 if num < 0.0 else +1
-		exp = int(math.log10(abs(num)))
-		return sign*round(abs(num)*(10**-exp), ndigits)*(10**exp)
+		if num == 0:
+			return num
+		else:
+			sign = -1.0 if num < 0.0 else +1
+			exp = int(math.log10(abs(num)))
+			return sign*round(abs(num)*(10**-exp), ndigits)*(10**exp)
 
 def isiterable(obj):
 	"""

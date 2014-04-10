@@ -1,5 +1,5 @@
 ﻿"""
-Decorators for API parameter checks
+Decorators for API parameter checking unit tests
 """
 
 import numpy
@@ -127,7 +127,8 @@ def test_type_match_polymorphic_no_errors():	#pylint: disable-msg=C0103
 	"""
 	Test if function behaves proprely when parameter types are correct
 	"""
-	types = [str, int, None]
+	types = [str, int, None, util_check.ArbitraryLengthList, util_check.ArbitraryLengthTuple, util_check.ArbitraryLengthSet, util_check.IncreasingRealNumpyVector, util_check.RealNumpyVector, util_check.OneOf,
+		  util_check.Range, util_check.Number, util_check.Real]
 	obj = util_check.PolymorphicType(types)
 	assert obj.types == types
 
