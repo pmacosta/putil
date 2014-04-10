@@ -2,6 +2,7 @@
 Decorators for API parameter checks
 """
 
+import numpy
 import pytest
 import decimal
 import fractions
@@ -15,7 +16,9 @@ def test_arbitrary_length_class_no_exception():	#pylint: disable-msg=C0103
 	"""
 	Tests that ArbitraryLength class behaves appropriately when proper parameters passed
 	"""
-	util_check.ArbitraryLength(str)
+	obj_type = str
+	obj = util_check.ArbitraryLength(obj_type)
+	assert obj.element_type == obj_type
 
 def test_arbitrary_length_class_exception():	#pylint: disable-msg=C0103
 	"""
@@ -62,7 +65,7 @@ def test_one_of_proper_contains_behavior():	#pylint: disable-msg=C0103
 	obj2 = util_check.OneOf(['c', 'D'], case_sensitive=False)
 	assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2) == (True, True, True, True, False, False, False, True, True, False, False)
 
-# Test for Range classes
+# Test for Range class
 def test_range_minimum_not_a_number():
 	"""
 	Tests that Range class behaves properly when minimum is not a number
@@ -102,6 +105,31 @@ def test_range_minimum_greater_than_maximum():	#pylint: disable-msg=C0103
 	with pytest.raises(ValueError) as excinfo:
 		util_check.Range(minimum=1.5, maximum=0.0)
 	assert excinfo.value.message == 'minimum greater than maximum'
+
+# Test PolymorphicType class
+def test_type_match_polymorphic_type_wrong_type():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely when wrong type parameter is given
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.PolymorphicType('a')
+	assert excinfo.value.message == 'object parameter has to be a list, tuple or set'
+
+def test_type_match_polymorphic_subtype_wrong_type():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely when wrong sub-type parameter is given
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.PolymorphicType([str, int, 'a'])
+	assert excinfo.value.message == 'type element in types parameter has to be a type'
+
+def test_type_match_polymorphic_no_errors():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely when parameter types are correct
+	"""
+	types = [str, int, None]
+	obj = util_check.PolymorphicType(types)
+	assert obj.types == types
 
 # Dummy functions representing the actual function to be decorated
 def func_all_positional_parameters(ppar1, ppar2, ppar3):	#pylint: disable-msg=C0111,W0613
@@ -315,7 +343,6 @@ def test_type_match_fixed_length_set():	#pylint: disable-msg=C0103
 		util_check.type_match(set([1, 'a', 3.0]), set([int, str, float]))
 	assert excinfo.value.message == 'Set is an un-ordered iterable, thus it cannot be type-checked against an ordered reference'
 
-
 def test_type_match_one_of():	#pylint: disable-msg=C0103
 	"""
 	Test if function behaves proprely for one of a fixed number of finite choices
@@ -346,6 +373,21 @@ def test_type_match_polymorphic_type():	#pylint: disable-msg=C0103
 	assert (util_check.type_match('HELLO', util_check.PolymorphicType([str, int])), util_check.type_match(45, util_check.PolymorphicType([str, int])), util_check.type_match(1.5, util_check.PolymorphicType([str, int]))) \
 		== (True, True, False)
 
+def test_type_match_real_numpy_vector():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for an real Numpy vector
+	"""
+	assert (util_check.type_match(12, util_check.RealNumpyVector()), util_check.type_match(numpy.array([1, 2, 0]), util_check.RealNumpyVector()),
+		 util_check.type_match(numpy.array([[1, 2, 0], [1, 1, 2]]), util_check.RealNumpyVector())) == (False, True, False)
+
+def test_type_match_increasing_real_numpy_vector():	#pylint: disable-msg=C0103
+	"""
+	Test if function behaves proprely for an increasing real Numpy vector
+	"""
+	assert (util_check.type_match(12, util_check.IncreasingRealNumpyVector()), util_check.type_match(numpy.array([1, 2, 3]), util_check.IncreasingRealNumpyVector()),
+		 util_check.type_match(numpy.array([True, False, True]), util_check.IncreasingRealNumpyVector()),
+		 util_check.type_match(numpy.array([[1, 2, 3], [4, 5, 6]]), util_check.IncreasingRealNumpyVector())) == (False, True, False, False)
+
 # Tests for check_type()
 def test_check_type_simple_exception():	#pylint: disable-msg=C0103
 	"""
@@ -364,8 +406,8 @@ def test_check_type_simple_no_exception():	#pylint: disable-msg=C0103
 	"""
 	@util_check.check_type(param_name='ppar1', param_type=util_check.Number())
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
-		print ppar1
-	func_check_type(5.0)
+		return ppar1
+	assert func_check_type(5.0) == 5.0
 
 def test_check_type_parameter_not_specified():	#pylint: disable-msg=C0103
 	"""
@@ -373,8 +415,8 @@ def test_check_type_parameter_not_specified():	#pylint: disable-msg=C0103
 	"""
 	@util_check.check_type(param_name='ppar2', param_type=util_check.Number())
 	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable-msg=C0111
-		print ppar1, ppar2, ppar3
-	func_check_type(3, ppar3=12)
+		return ppar1, ppar2, ppar3
+	assert func_check_type(3, ppar3=12) == (3, None, 12)
 
 def test_check_type_parameter_specified_by_position_and_keyword():	#pylint: disable-msg=C0103
 	"""
@@ -449,8 +491,8 @@ def test_check_parameter_one_of_no_error():	#pylint: disable-msg=C0103
 	"""
 	@util_check.check_parameter('ppar1', util_check.OneOf(range(3), case_sensitive=True))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
-		print ppar1
-	func_check_type(2)
+		return ppar1
+	assert func_check_type(2) == 2
 
 def test_check_parameter_range_no_maximum_out_of_range():	#pylint: disable-msg=C0103
 	"""
@@ -469,8 +511,8 @@ def test_check_parameter_range_no_maximum_in_range():	#pylint: disable-msg=C0103
 	"""
 	@util_check.check_parameter('ppar1', util_check.Range(minimum=10))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
-		print ppar1
-	func_check_type(20)
+		return ppar1
+	assert func_check_type(20) == 20
 
 def test_check_parameter_range_no_minimum_out_of_range():	#pylint: disable-msg=C0103
 	"""
@@ -489,8 +531,8 @@ def test_check_parameter_range_no_minimum_in_range():	#pylint: disable-msg=C0103
 	"""
 	@util_check.check_parameter('ppar1', util_check.Range(maximum=10))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
-		print ppar1
-	func_check_type(5)
+		return ppar1
+	assert func_check_type(5) == 5
 
 def test_check_parameter_range_minimum_and_maximum_specified_out_of_range():	#pylint: disable-msg=C0103
 	"""
@@ -509,5 +551,76 @@ def test_check_parameter_range_minimum_and_maximum_specified_in_range():	#pylint
 	"""
 	@util_check.check_parameter('ppar1', util_check.Range(minimum=100, maximum=200))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		return ppar1
+	assert func_check_type(150) == 150
+
+def test_check_parameter_polymorphic_type_error():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is not in the polymorphic types allowed
+	"""
+	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, float]))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
-	func_check_type(150)
+	with pytest.raises(TypeError) as excinfo:
+		func_check_type('a')
+	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+
+def test_check_parameter_polymorphic_type_no_error():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is in the polymorphic types allowed
+	"""
+	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, float]))
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		return ppar1
+	assert (func_check_type(3.5), func_check_type(None)) == (3.5, None)
+
+def test_check_parameter_numpy_vector_wrong_type():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is not a Numpy vector
+	"""
+	@util_check.check_parameter('ppar1', util_check.RealNumpyVector())
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(TypeError) as excinfo:
+		func_check_type(numpy.array([False]))
+	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+
+def test_check_parameter_numpy_vector_no_error():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is proper Numpy vector
+	"""
+	@util_check.check_parameter('ppar1', util_check.RealNumpyVector())
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		return ppar1
+	func_check_type(numpy.array([1.0, 2.0, 1.0-1e-10]))
+
+def test_check_parameter_increasing_numpy_vector_wrong_type():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is not a Numpy vector
+	"""
+	@util_check.check_parameter('ppar1', util_check.IncreasingRealNumpyVector())
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(TypeError) as excinfo:
+		func_check_type(numpy.array([False]))
+	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+
+def test_check_parameter_incresing_numpy_vector_not_incresing():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is not an increasing Numpy vector
+	"""
+	@util_check.check_parameter('ppar1', util_check.IncreasingRealNumpyVector())
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(ValueError) as excinfo:
+		func_check_type(numpy.array([1.0, 2.0, 1.0-1e-10]))
+	assert excinfo.value.message == 'Parameter ppar1 is not an increasing Numpy vector'
+
+def test_check_parameter_incresing_numpy_vector_no_error():	#pylint: disable-msg=C0103
+	"""
+	Test that function behaves properly when a parameter is properly incresing Numpy vector
+	"""
+	@util_check.check_parameter('ppar1', util_check.IncreasingRealNumpyVector())
+	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+		return ppar1
+	func_check_type(numpy.array([1, 2, 3]))

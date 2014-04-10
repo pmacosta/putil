@@ -2,6 +2,7 @@
 Decorators for API parameter checks
 """
 
+import numpy
 import functools
 
 import util_misc
@@ -39,6 +40,22 @@ class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable-msg=R0903
 		ArbitraryLength.__init__(self, element_type)
 		self.iter_type = set
 
+class IncreasingRealNumpyVector(object):	#pylint: disable-msg=R0903
+	"""
+	Numpy vector where every element is a real number greater than the previous element
+	"""
+	def __init__(self):
+		self.iter_type = type(numpy.array([]))
+		self.element_type = Real()
+
+class RealNumpyVector(object):	#pylint: disable-msg=R0903
+	"""
+	Numpy vector where every element is a real number
+	"""
+	def __init__(self):
+		self.iter_type = type(numpy.array([]))
+		self.element_type = Real()
+
 class OneOf(object):	#pylint: disable-msg=R0903
 	"""
 	Class for parmeters that can only take a value from a finite set
@@ -75,7 +92,7 @@ class Range(object):	#pylint: disable-msg=R0903
 			raise TypeError('Either minimum or maximum parameters need to be specified')
 		if (minimum is not None) and (maximum is not None) and (type(minimum) != type(maximum)):
 			raise TypeError('minimum and maximum parameters have different types, the both have to be integers or floats')
-		if (minimum is not None) and (maximum is not None) and (minimum>maximum):
+		if (minimum is not None) and (maximum is not None) and (minimum > maximum):
 			raise ValueError('minimum greater than maximum')
 		self.minimum = minimum
 		self.maximum = maximum
@@ -87,14 +104,13 @@ class PolymorphicType(object):	#pylint: disable-msg=R0903
 	def __init__(self, types):
 		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
 			raise TypeError('object parameter has to be a list, tuple or set')
+		for element_type in types:
+			if (not isinstance(element_type, type)) and (element_type is not None):
+				raise TypeError('type element in types parameter has to be a type')
 		self.types = types
-		self._iter = iter(self.types)
 
 	def __iter__(self):
-		return self
-
-	def __next__(self):
-		self._iter.next()
+		return iter(self.types)
 
 class Number(object):	#pylint: disable-msg=R0903
 	"""
@@ -142,6 +158,9 @@ def type_match(test_obj, ref_obj):	#pylint: disable-msg=R0911,R0912
 	Heterogeneous iterables are not supported in part because there is no elegant way to distinguish, for example, between a 1-element list, a list of the type [str, float, int, str] and a list
 	with all elements of the same type but one in which the length of the list is not known a priori (like a list containing the independent variable of an experiment)
 	"""
+	# Check for None pseudo-type
+	if ref_obj is None:
+		return test_obj is None
 	# Check for pseudo-type 'number' (integer, float or complex)
 	if isinstance(ref_obj, Number):
 		return util_misc.isnumber(test_obj)
@@ -161,11 +180,18 @@ def type_match(test_obj, ref_obj):	#pylint: disable-msg=R0911,R0912
 				return True
 		return False
 	# Check for non-iterable types
-	arbitrary_length_iterable = type(ref_obj) in [ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet]
+	arbitrary_length_iterable = type(ref_obj) in [ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, RealNumpyVector, IncreasingRealNumpyVector]
 	if ((not util_misc.isiterable(ref_obj)) and (not arbitrary_length_iterable) and (not isinstance(ref_obj, OneOf))) or isinstance(ref_obj, str):
 		return isinstance(test_obj, ref_obj)
-	# Check that the iterable type is the same
-	if ((not arbitrary_length_iterable) and (not isinstance(test_obj, type(ref_obj)))) or (arbitrary_length_iterable and (not isinstance(test_obj, ref_obj.iter_type))):
+	# At this point only iterables and dictionaries are left
+	# Check build-in iterables (lists, tuples, sets, dictionaries, etc.) are of the same type
+	if (not arbitrary_length_iterable) and (not isinstance(test_obj, type(ref_obj))):
+		return False
+	# Check that the custom iterables are of the same type
+	if arbitrary_length_iterable and (not isinstance(test_obj, ref_obj.iter_type)):
+		return False
+	# Check that Numpy arrays are really vectors
+	if (type(ref_obj) in [RealNumpyVector, IncreasingRealNumpyVector]) and (len(test_obj.shape) > 1):
 		return False
 	# Recursively check iterable sub-types
 	if isinstance(ref_obj, dict):	# Dictionaries are a special case, have to check keys _and_ value type
@@ -243,6 +269,10 @@ def check_parameter(param_name, param_spec):
 				if isinstance(param_spec, OneOf) and (param not in param_spec):
 					raise ValueError('Parameter {0} is not one of {1}{2}'.format(param_name, param_spec.choices,
 						(' (case {0})'.format('sensitive' if param_spec.case_sensitive else 'insensitive')) if param_spec.case_sensitive is not None else ''))
+				# Check increasing real Numpy vector
+				if isinstance(param_spec, IncreasingRealNumpyVector):
+					if min(numpy.diff(param)) <= 0:
+						raise ValueError('Parameter {0} is not an increasing Numpy vector'.format(param_name))
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator
