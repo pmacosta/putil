@@ -276,7 +276,7 @@ def check_parameter(param_name, param_spec):
 				pseudo_types = [Range, OneOf, IncreasingRealNumpyVector]
 				# Determine if a PolymorphicType definition has pseudo-types that need to be checked
 				if isinstance(param_spec, PolymorphicType):
-					temp_param_spec = [sub_type for sub_type in param_spec.types if type(sub_type) not in pseudo_types]	# Make a list of all types in original definition excluding pseudo-types
+					temp_param_spec = [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if sub_type not in pseudo_types]	# Make a list of all types in original definition excluding pseudo-types
 					check_pseudo_types = True
 					if len(temp_param_spec) > 0:	# There are some sub-types in the polymorphic specification that are not pseudo-types
 						# Types matching means that there are some sub-types that match the original definition minus the pseudo-types, do not need to validate the parameter against pseudo-types
@@ -293,7 +293,7 @@ def check_parameter(param_name, param_spec):
 								raise ValueError(ret)
 							check_list.append(ret)
 					else:	# Polymorphic type did not find a valid sub-type
-						raise ValueError('\n'.join(check_list))
+						raise ValueError('\n'.join(check_list) if len(check_list) > 0 else check_list[0])
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator
@@ -318,4 +318,4 @@ def validate_increasingrealnumpyvector(param_name, param, spec):	#pylint: disabl
 	"""
 	Validate IncreasingRealNumpyVector pseudo-type
 	"""
-	return 'Parameter {0} is not an increasing Numpy vector'.format(param_name) if (isinstance(param, numpy.ndarray) and (min(numpy.diff(param)) <= 0)) else None
+	return 'Parameter {0} is not an increasing Numpy vector'.format(param_name) if (isinstance(param, numpy.ndarray) and (len(param) > 0) and (min(numpy.diff(param)) <= 0)) else None

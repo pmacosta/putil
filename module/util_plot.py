@@ -57,9 +57,9 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	@util_check.check_parameter('indep_var', util_check.PolymorphicType([None, util_check.IncreasingRealNumpyVector()]))
 	def _set_indep_var(self, indep_var):	#pylint: disable-msg=C0111
 		if (indep_var is not None) and (len(indep_var) == 0):
-			raise ValueError('indep_var is empty')
+			raise ValueError('Parameter indep_var is empty')
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
-			raise ValueError('indep_var and dep_var must have the same number of elements')
+			raise ValueError('Parameters indep_var and dep_var must have the same number of elements')
 		self._raw_indep_var = util_misc.smart_round(indep_var, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -70,9 +70,9 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	@util_check.check_parameter('dep_var', util_check.PolymorphicType([None, util_check.RealNumpyVector()]))
 	def _set_dep_var(self, dep_var):	#pylint: disable-msg=C0111
 		if (dep_var is not None) and (len(dep_var) == 0):
-			raise ValueError('dep_var is empty')
+			raise ValueError('Parameter dep_var is empty')
 		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):
-			raise ValueError('indep_var and dep_var must have the same number of elements')
+			raise ValueError('Parameters indep_var and dep_var must have the same number of elements')
 		self._raw_dep_var = util_misc.smart_round(dep_var, PRECISION)
 		self._update_dep_var()
 
@@ -81,6 +81,8 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 
 	@util_check.check_parameter('indep_min', util_check.PolymorphicType([None, util_check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable-msg=C0111
+		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
+			raise ValueError('Parameter indep_min is greater than parameter indep_max')
 		self._indep_min = util_misc.smart_round(indep_min, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -90,6 +92,8 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 
 	@util_check.check_parameter('indep_max', util_check.PolymorphicType([None, util_check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable-msg=C0111
+		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
+			raise ValueError('Parameter indep_min is greater than parameter indep_max')
 		self._indep_max = util_misc.smart_round(indep_max, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -103,7 +107,7 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 											(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
 			self._indep_var = self._raw_indep_var[self._indep_var_indexes]
 			if len(self.indep_var) == 0:
-				raise ValueError('indep_var is empty after indep_min/indep_max thresholding')
+				raise ValueError('Parameter indep_var is empty after indep_min/indep_max thresholding')
 
 	def _update_dep_var(self):
 		"""
@@ -138,7 +142,9 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	:raises:
 	 * TypeError (Parameter indep_min is of the wrong type)
 
-	 * ValueError (indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
+
+	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
 	"""	#pylint: disable-msg=W0105
 
 	indep_max = property(_get_indep_max, _set_indep_max, doc='Maximum of independent variable')
@@ -149,7 +155,9 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	:raises:
 	 * TypeError (Parameter indep_max is of the wrong type)
 
-	 * ValueError (indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
+
+	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
 	"""	#pylint: disable-msg=W0105
 
 	indep_var = property(_get_indep_var, _set_indep_var, doc='Independent variable Numpy vector')
@@ -160,11 +168,11 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	:raises:
 	 * TypeError (Parameter indep_var is of the wrong type)
 
-	 * ValueError (indep_var is empty)
+	 * ValueError (Parameter indep_var is empty)
 
-	 * ValueError (indep_var and dep_var must have the same number of elements)
+	 * ValueError (Parameter indep_var and dep_var must have the same number of elements)
 
-	 * ValueError (indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameters indep_var is empty after indep_min/indep_max thresholding)
 	"""	#pylint: disable-msg=W0105
 
 	dep_var = property(_get_dep_var, _set_dep_var, doc='Dependent variable Numpy vector')
@@ -175,10 +183,10 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	:raises:
 	 * TypeError (Parameter dep_var is of the wrong type)
 
-	 * ValueError (dep_var is empty)
+	 * ValueError (Parameter dep_var is empty)
 
-		 * ValueError (indep_var and dep_var must have the same number of elements)
-		"""	#pylint: disable-msg=W0105
+	 * ValueError (indep_var and dep_var must have the same number of elements)
+	"""	#pylint: disable-msg=W0105
 
 class CsvSource(object):	#pylint: disable-msg=R0902
 	"""
