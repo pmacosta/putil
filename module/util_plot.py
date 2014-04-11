@@ -16,6 +16,11 @@ import util_misc
 import util_check
 
 PRECISION = 10	# Number of mantissa significant digits
+"""
+Number of mantissa significant digits
+
+:type:	integer
+"""	#pylint: disable-msg=W0105
 
 class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	"""
@@ -83,7 +88,7 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	def _set_indep_min(self, indep_min):	#pylint: disable-msg=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
 			raise ValueError('Parameter indep_min is greater than parameter indep_max')
-		self._indep_min = util_misc.smart_round(indep_min, PRECISION)
+		self._indep_min = util_misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
@@ -94,7 +99,7 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	def _set_indep_max(self, indep_max):	#pylint: disable-msg=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
 			raise ValueError('Parameter indep_min is greater than parameter indep_max')
-		self._indep_max = util_misc.smart_round(indep_max, PRECISION)
+		self._indep_max = util_misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
@@ -113,6 +118,7 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 		"""
 		Update dependent variable (if assigned) to match the independent variable thresholding
 		"""
+		self._dep_var = self._raw_dep_var
 		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
 			self._dep_var = self._raw_dep_var[self._indep_var_indexes]
 
@@ -122,9 +128,9 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 		"""
 		ret = ''
 		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)
-		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_min is None else self.indep_max)
-		ret += 'Independent variable: {0}\n'.format(self.indep_var)
-		ret += 'Dependent variable: {0}\n'.format(self.dep_var)
+		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)
+		ret += 'Independent variable: {0}\n'.format(util_misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))
+		ret += 'Dependent variable: {0}'.format(util_misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))
 		return ret
 
 	def _complete(self):

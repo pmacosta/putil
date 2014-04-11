@@ -6,7 +6,10 @@ import os
 import math
 import numpy
 import inspect
+import textwrap
 import fractions
+
+import util_eng
 
 def pcolor(text, color, tab=0):
 	"""
@@ -199,3 +202,28 @@ def isiterable(obj):
 		return False
 	else:
 		return True
+
+def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=None):	#pylint: disable-msg=R0913
+	"""
+	Formats Numpy vectors for printing
+	"""
+	if vector is None:
+		return 'None'
+	mant = 3 if eng and (mant is None) else mant
+	token = '{0:.'+str(mant)+'f}' if (mant is not None) and (not eng) else '{0}'
+	if (not limit) or (limit and (len(vector) < 7)):
+		uret = '[ '+(', '.join([token.format(_oprint(element, eng, mant)) for element in vector]))+' ]'
+	else:
+		fstring = '[ '+(' '.join([token.replace('0:', str(num)+':') for num in range(3)]))+' ... '+(' '.join([token.replace('0:', str(num)+':') for num in range(3, 6)]))+' ]' \
+			if (mant is not None) and (not eng) else '[ {0} {1} {2} ... {3} {4} {5} ]'
+		uret = fstring.format(_oprint(vector[0], eng, mant), _oprint(vector[1], eng, mant), _oprint(vector[2], eng, mant), _oprint(vector[-3], eng, mant), _oprint(vector[-2], eng, mant), _oprint(vector[-1], eng, mant))
+	if width is None:
+		return uret
+	# Add indent for lines after first one, cannot use subsequent_indent of textwrap.wrap() method as this function counts the indent as part of the line
+	return '\n'.join([((indent+2)*' ')+line if num > 0 else line for num, line in enumerate(textwrap.wrap(uret, width=width))])
+
+def _oprint(element, eng, mant):
+	"""
+	Print a straigth number or one with engineering notation
+	"""
+	return element if not eng else util_eng.peng(element, mant, True)

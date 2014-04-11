@@ -117,7 +117,7 @@ def test_basic_source_indep_var_type():	#pylint: disable-msg=C0103
 	# Valid values, these should not raise any exception
 	comp.append(util_plot.BasicSource(indep_var=None).indep_var == None)
 	comp.append((util_plot.BasicSource(indep_var=numpy.array([1, 2, 3])).indep_var == numpy.array([1, 2, 3])).all())
-	comp.append((util_plot.BasicSource(indep_var=numpy.array([4.0, 5.0, 6.0])).indep_var == numpy.array([4.0, 5.0, 6.0])).all)
+	comp.append((util_plot.BasicSource(indep_var=numpy.array([4.0, 5.0, 6.0])).indep_var == numpy.array([4.0, 5.0, 6.0])).all())
 	# Invalid thresholding
 	# Assign indep_min via __init__ path
 	obj = util_plot.BasicSource(indep_min=45)
@@ -158,7 +158,102 @@ def test_basic_source_indep_var_type():	#pylint: disable-msg=C0103
 		obj.indep_var = numpy.array([])
 	comp.append(excinfo.value.message == 'Parameter indep_var is empty')
 	obj.indep_var = None
+	comp.append(obj.indep_var == None)
 	obj.indep_var = numpy.array([1, 2, 3])
+	comp.append((obj.indep_var == numpy.array([1, 2, 3])).all())
 	obj.indep_var = numpy.array([4.0, 5.0, 6.0])
-	assert comp == 14*[True]
+	comp.append((obj.indep_var == numpy.array([4.0, 5.0, 6.0])).all())
+	assert comp == 17*[True]
 
+def test_basic_source_dep_var_type():	#pylint: disable-msg=C0103
+	"""
+	Tests dep_var type validation
+	"""
+	comp = list()
+	# __init__ path
+	# Wrong type
+	with pytest.raises(TypeError) as excinfo:
+		util_plot.BasicSource(dep_var='a')
+	comp.append(excinfo.value.message == 'Parameter dep_var is of the wrong type')
+	# Empty vector
+	with pytest.raises(ValueError) as excinfo:
+		util_plot.BasicSource(dep_var=numpy.array([]))
+	comp.append(excinfo.value.message == 'Parameter dep_var is empty')
+	# Valid values, these should not raise any exception
+	comp.append(util_plot.BasicSource(dep_var=None).dep_var == None)
+	comp.append((util_plot.BasicSource(dep_var=numpy.array([1, 2, 3])).dep_var == numpy.array([1, 2, 3])).all())
+	comp.append((util_plot.BasicSource(dep_var=numpy.array([4.0, 5.0, 6.0])).dep_var == numpy.array([4.0, 5.0, 6.0])).all())
+	# Managed attribute path
+	obj = util_plot.BasicSource()
+	# Wrong type
+	with pytest.raises(TypeError) as excinfo:
+		util_plot.BasicSource(dep_var='a')
+	comp.append(excinfo.value.message == 'Parameter dep_var is of the wrong type')
+	# Empty vector
+	with pytest.raises(ValueError) as excinfo:
+		obj.dep_var = numpy.array([])
+	comp.append(excinfo.value.message == 'Parameter dep_var is empty')
+	obj.dep_var = None
+	comp.append(obj.dep_var == None)
+	obj.dep_var = numpy.array([1, 2, 3])
+	comp.append((obj.dep_var == numpy.array([1, 2, 3])).all())
+	obj.dep_var = numpy.array([4.0, 5.0, 6.0])
+	comp.append((obj.dep_var == numpy.array([4.0, 5.0, 6.0])).all())
+	assert comp == 10*[True]
+
+def test_basic_source_indep_var_and_dep_var_do_not_have_the_same_number_of_elements():	#pylint: disable-msg=C0103
+	"""
+	Tests dep_var type validation
+	"""
+	comp = list()
+	# indep_var set first
+	obj = util_plot.BasicSource(indep_var=numpy.array([10, 20, 30, 40, 50, 60]), indep_min=30, indep_max=50)
+	with pytest.raises(ValueError) as excinfo:
+		obj.dep_var = numpy.array([100, 200, 300])
+	comp.append(excinfo.value.message == 'Parameters indep_var and dep_var must have the same number of elements')
+	# dep_var set first
+	obj = util_plot.BasicSource(dep_var=numpy.array([100, 200, 300]), indep_min=30, indep_max=50)
+	with pytest.raises(ValueError) as excinfo:
+		obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
+	comp.append(excinfo.value.message == 'Parameters indep_var and dep_var must have the same number of elements')
+	assert comp == 2*[True]
+
+def test_basic_source_complete():	#pylint: disable-msg=C0103
+	"""
+	Test that _complete() method behaves correctly
+	"""
+	comp = list()
+	obj = util_plot.BasicSource(indep_min=0, indep_max=50)
+	comp.append(obj._complete() == False)	#pylint: disable-msg=W0212
+	obj.indep_var = numpy.array([1, 2, 3])
+	comp.append(obj._complete() == False)	#pylint: disable-msg=W0212
+	obj.indep_var = numpy.array([10, 20, 30])
+	comp.append(obj._complete() == False)	#pylint: disable-msg=W0212
+	assert comp == 3*[True]
+
+def test_basic_source_str():	#pylint: disable-msg=C0103
+	"""
+	Test that str behaves correctly
+	"""
+	comp = list()
+	# Null object
+	obj = str(util_plot.BasicSource())
+	ref = 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# indep_min set
+	obj = str(util_plot.BasicSource(indep_min=10))
+	ref = 'Independent variable minimum: 10\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# indep_max set
+	obj = str(util_plot.BasicSource(indep_min=10, indep_max=20))
+	ref = 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# indep_var set
+	obj = str(util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]), indep_min=-10, indep_max=20.0))
+	ref = 'Independent variable minimum: -10\nIndependent variable maximum: 20.0\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: None'
+	comp.append(obj == ref)
+	# dep_var set
+	obj = str(util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=-10, indep_max=20.0))
+	ref = 'Independent variable minimum: -10\nIndependent variable maximum: 20.0\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 10.0, 20.0, 30.0 ]'
+	comp.append(obj == ref)
+	assert comp == 5*[True]
