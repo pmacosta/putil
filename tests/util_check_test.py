@@ -130,6 +130,7 @@ def test_type_match_polymorphic_no_errors():	#pylint: disable-msg=C0103
 	types = [str, int, None, util_check.ArbitraryLengthList, util_check.ArbitraryLengthTuple, util_check.ArbitraryLengthSet, util_check.IncreasingRealNumpyVector, util_check.RealNumpyVector, util_check.OneOf,
 		  util_check.Range, util_check.Number, util_check.Real]
 	obj = util_check.PolymorphicType(types)
+	types[2] = type(None)
 	assert obj.types == types
 
 # Dummy functions representing the actual function to be decorated
@@ -560,20 +561,27 @@ def test_check_parameter_polymorphic_type_error():	#pylint: disable-msg=C0103
 	Test that function behaves properly when a parameter is not in the polymorphic types allowed
 	"""
 	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, float]))
-	def func_check_type(ppar1):	#pylint: disable-msg=C0111
+	def func_check_type1(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
-	with pytest.raises(TypeError) as excinfo:
-		func_check_type('a')
-	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, util_check.Range(minimum=5, maximum=10), util_check.OneOf(['HELLO', 'WORLD'])]))
+	def func_check_type2(ppar1):	#pylint: disable-msg=C0111
+		print ppar1
+	with pytest.raises(TypeError) as excinfo1:	# Type not in the definition
+		func_check_type1('a')
+	eobj1 = excinfo1.value.message == 'Parameter ppar1 is of the wrong type'
+	with pytest.raises(ValueError) as excinfo2:	# Type not in the definition
+		func_check_type2(2)
+	eobj2 = excinfo2.value.message == "Parameter ppar1 is not in the range [5, 10]\nParameter ppar1 is not one of ['HELLO', 'WORLD'] (case insensitive)"
+	assert (eobj1, eobj2) == (True, True)
 
 def test_check_parameter_polymorphic_type_no_error():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a parameter is in the polymorphic types allowed
 	"""
-	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, float]))
+	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, int, util_check.Range(minimum=5.0, maximum=10.0), util_check.OneOf(['HELLO', 'WORLD'])]))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		return ppar1
-	assert (func_check_type(3.5), func_check_type(None)) == (3.5, None)
+	assert (func_check_type(None), func_check_type(3), func_check_type(7.0), func_check_type('WORLD')) == (None, 3, 7.0, 'WORLD')
 
 def test_check_parameter_numpy_vector_wrong_type():	#pylint: disable-msg=C0103
 	"""

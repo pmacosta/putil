@@ -3,6 +3,7 @@ Decorators for API parameter checks
 """
 
 import numpy
+import pytest
 import functools
 
 import util_misc
@@ -120,7 +121,8 @@ class PolymorphicType(object):	#pylint: disable-msg=R0903
 		for element_type in types:
 			if (type(element_type) not in custom_types) and (not isinstance(element_type, type)) and (element_type is not None):
 				raise TypeError('type element in types parameter has to be a type')
-		self.types = types
+		self.instances = types
+		self.types = [sub_type if type(sub_type) == type else type(sub_type) for sub_type in types]
 
 	def __iter__(self):
 		return iter(self.types)
@@ -129,9 +131,9 @@ class PolymorphicType(object):	#pylint: disable-msg=R0903
 		"""
 		Find sub-type in type iterable. Cannot use find since set() is supported
 		"""
-		for sub_type in self.types:
+		for sub_type, sub_inst in zip(self.types, self.instances):
 			if req_type == sub_type:
-				return sub_type
+				return sub_inst
 		raise ValueError('Requested sub-type not found')
 
 def get_function_args(func):
@@ -182,10 +184,10 @@ def type_match(test_obj, ref_obj):	#pylint: disable-msg=R0911,R0912
 		return type(test_obj) in ref_obj.types
 	# Check for parameter being in a numeric range
 	if isinstance(ref_obj, Range):
-		return type(test_obj) == type(ref_obj.minimum if ref_obj.minimum is not None else ref_obj.maximum)
+		return util_misc.isreal(test_obj) and (type(test_obj) == type(ref_obj.minimum if ref_obj.minimum is not None else ref_obj.maximum))
 	# Check for poly-morphic types
 	if isinstance(ref_obj, PolymorphicType):
-		for ref_subobj in ref_obj:
+		for ref_subobj in ref_obj.instances:
 			if type_match(test_obj, ref_subobj):
 				return True
 		return False
@@ -271,23 +273,49 @@ def check_parameter(param_name, param_spec):
 				# Check type and raise exception if necessary
 				if not type_match(param, param_spec):
 					raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
-				# Validate custom pseudo-types
-				sub_spec = param_spec if not isinstance(param_spec, PolymorphicType) else type(param)	# type_check ensured that the sub-types of PolymorphicType are valid
-				# Check range (if specified)
-				if (isinstance(param_spec, Range)) or (isinstance(param_spec, PolymorphicType) and (Range in param_spec.types)):
-					sub_spec = param_spec if not isinstance(param_spec, PolymorphicType) else param_spec.find(Range)
-					if ((sub_spec.minimum is not None) and (param < sub_spec.minimum)) or ((sub_spec.maximum is not None) and (param > sub_spec.maximum)):
-						raise ValueError('Parameter {0} is not in the range [{1}, {2}]'.format(param_name, '-inf' if sub_spec.minimum is None else sub_spec.minimum, '+inf' if sub_spec.maximum is None else sub_spec.maximum))
-				# Check one of finite number of choices (if specified)
-				if (isinstance(param_spec, OneOf) and (param not in param_spec)) or (isinstance(param_spec, PolymorphicType) and (OneOf in param_spec.types) and (param not in param_spec.find(OneOf))):
-					sub_spec = param_spec if not isinstance(param_spec, PolymorphicType) else param_spec.find(OneOf).choices
-					raise ValueError('Parameter {0} is not one of {1}{2}'.format(param_name, sub_spec.choices,
-						(' (case {0})'.format('sensitive' if sub_spec.case_sensitive else 'insensitive')) if sub_spec.case_sensitive is not None else ''))
-				# Check increasing real Numpy vector
-				if isinstance(param_spec, IncreasingRealNumpyVector):
-					if min(numpy.diff(param)) <= 0:
-						raise ValueError('Parameter {0} is not an increasing Numpy vector'.format(param_name))
+				pseudo_types = [Range, OneOf, IncreasingRealNumpyVector]
+				# Determine if a PolymorphicType definition has pseudo-types that need to be checked
+				if isinstance(param_spec, PolymorphicType):
+					temp_param_spec = [sub_type for sub_type in param_spec.types if type(sub_type) not in pseudo_types]	# Make a list of all types in original definition excluding pseudo-types
+					check_pseudo_types = True
+					if len(temp_param_spec) > 0:	# There are some sub-types in the polymorphic specification that are not pseudo-types
+						# Types matching means that there are some sub-types that match the original definition minus the pseudo-types, do not need to validate the parameter against pseudo-types
+						check_pseudo_types = not type_match(param, PolymorphicType(temp_param_spec))
+				if (type(param_spec) in pseudo_types) or (isinstance(param_spec, PolymorphicType) and check_pseudo_types):
+					# Validate custom pseudo-types
+					check_list = list()
+					for pseudo_type, validate_function in zip([Range, OneOf, IncreasingRealNumpyVector], [validate_range, validate_oneof, validate_increasingrealnumpyvector]):
+						if (isinstance(param_spec, pseudo_type)) or (isinstance(param_spec, PolymorphicType) and (pseudo_type in param_spec.types)):
+							ret = validate_function(param_name, param, param_spec if not isinstance(param_spec, PolymorphicType) else param_spec.find(pseudo_type))
+							if ret is None:	# Not a polymorphic type and valid, or one of the polymorphic types and valid
+								break
+							if isinstance(param_spec, pseudo_type):	# Not a polymorphic type and invalid
+								raise ValueError(ret)
+							check_list.append(ret)
+					else:	# Polymorphic type did not find a valid sub-type
+						raise ValueError('\n'.join(check_list))
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator
 
+def validate_range(param_name, param, spec):
+	"""
+	Validate Range pseudo-type
+	"""
+	if (util_misc.isreal(param)) and (((spec.minimum is not None) and (param < spec.minimum)) or ((spec.maximum is not None) and (param > spec.maximum))):
+		return 'Parameter {0} is not in the range [{1}, {2}]'.format(param_name, '-inf' if spec.minimum is None else spec.minimum, '+inf' if spec.maximum is None else spec.maximum)
+	return None
+
+def validate_oneof(param_name, param, spec):
+	"""
+	Validate OneOf pseudo-type
+	"""
+	if param not in spec.choices:
+		return 'Parameter {0} is not one of {1}{2}'.format(param_name, spec.choices, (' (case {0})'.format('sensitive' if spec.case_sensitive else 'insensitive')) if spec.case_sensitive is not None else '')
+	return None
+
+def validate_increasingrealnumpyvector(param_name, param, spec):	#pylint: disable-msg=C0103,W0613
+	"""
+	Validate IncreasingRealNumpyVector pseudo-type
+	"""
+	return 'Parameter {0} is not an increasing Numpy vector'.format(param_name) if (isinstance(param, numpy.ndarray) and (min(numpy.diff(param)) <= 0)) else None
