@@ -3,10 +3,29 @@ Decorators for API parameter checks
 """
 
 import numpy
-import pytest
 import functools
 
 import util_misc
+
+class Number(object):	#pylint: disable-msg=R0903
+	"""
+	Number class (integer, real or complex)
+	"""
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		return util_misc.isnumber(test_obj)
+
+class Real(object):	#pylint: disable-msg=R0903
+	"""
+	Number class (integer or real)
+	"""
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		return util_misc.isreal(test_obj)
 
 class ArbitraryLength(object):	#pylint: disable-msg=R0903
 	"""
@@ -17,6 +36,17 @@ class ArbitraryLength(object):	#pylint: disable-msg=R0903
 			raise TypeError('element_type parameter has to be a type')
 		self.element_type = element_type
 
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		if not util_misc.isiterable(test_obj):
+			return False
+		for test_subobj in test_obj:
+			if type(test_subobj) != type(self.element_type):
+				return False
+		return True
+
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable-msg=R0903
 	"""
 	Arbitrary length lists
@@ -24,6 +54,12 @@ class ArbitraryLengthList(ArbitraryLength):	#pylint: disable-msg=R0903
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, element_type)
 		self.iter_type = list
+
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLengthList(self, test_obj)
 
 class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable-msg=R0903
 	"""
@@ -33,6 +69,12 @@ class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable-msg=R0903
 		ArbitraryLength.__init__(self, element_type)
 		self.iter_type = tuple
 
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLengthList(self, test_obj)
+
 class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable-msg=R0903
 	"""
 	Arbitrary length set
@@ -41,21 +83,11 @@ class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable-msg=R0903
 		ArbitraryLength.__init__(self, element_type)
 		self.iter_type = set
 
-class IncreasingRealNumpyVector(object):	#pylint: disable-msg=R0903
-	"""
-	Numpy vector where every element is a real number greater than the previous element
-	"""
-	def __init__(self):
-		self.iter_type = type(numpy.array([]))
-		self.element_type = Real()
-
-class RealNumpyVector(object):	#pylint: disable-msg=R0903
-	"""
-	Numpy vector where every element is a real number
-	"""
-	def __init__(self):
-		self.iter_type = type(numpy.array([]))
-		self.element_type = Real()
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLengthList(self, test_obj)
 
 class OneOf(object):	#pylint: disable-msg=R0903
 	"""
@@ -69,10 +101,15 @@ class OneOf(object):	#pylint: disable-msg=R0903
 			len(choices)
 		except:
 			raise TypeError('choices parameter has to be an iterable of finite length')
-		# Check that iterable implements the __contain__() method, for "in" comparisons
 		self.choices = choices
 		self.types = set([type(element) for element in self.choices])	# Make it a set to speed up type comparison if there are repeated types
 		self.case_sensitive = case_sensitive if str in self.types else None
+
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		return test_obj in self
 
 	def __contains__(self, value):
 		for obj in self.choices:
@@ -80,7 +117,7 @@ class OneOf(object):	#pylint: disable-msg=R0903
 				return True
 		return False
 
-class Range(object):	#pylint: disable-msg=R0903
+class NumberRange(object):	#pylint: disable-msg=R0903
 	"""
 	Class for numeric parameters that can only take values in a certain range
 	"""
@@ -98,17 +135,12 @@ class Range(object):	#pylint: disable-msg=R0903
 		self.minimum = minimum
 		self.maximum = maximum
 
-class Number(object):	#pylint: disable-msg=R0903
-	"""
-	Number class (integer, real or complex)
-	"""
-	pass
-
-class Real(object):	#pylint: disable-msg=R0903
-	"""
-	Number class (integer or real)
-	"""
-	pass
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		return util_misc.isreal(test_obj) and (type(test_obj) == type(self.minimum if self.minimum is not None else self.maximum)) and (test_obj >= self.minimum if self.minimum is not None else test_obj) and \
+			(test_obj <= self.maximum if self.maximum is not None else test_obj)
 
 class PolymorphicType(object):	#pylint: disable-msg=R0903
 	"""
@@ -117,24 +149,57 @@ class PolymorphicType(object):	#pylint: disable-msg=R0903
 	def __init__(self, types):
 		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
 			raise TypeError('object parameter has to be a list, tuple or set')
-		custom_types = [ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, IncreasingRealNumpyVector, RealNumpyVector, OneOf, Range, Number, Real]
+		pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector]
 		for element_type in types:
-			if (type(element_type) not in custom_types) and (not isinstance(element_type, type)) and (element_type is not None):
+			if (type(element_type) not in pseudo_types) and (not isinstance(element_type, type)) and (element_type is not None):
 				raise TypeError('type element in types parameter has to be a type')
 		self.instances = types
-		self.types = [sub_type if type(sub_type) == type else type(sub_type) for sub_type in types]
+		self.types = [sub_type if type(sub_type) == type else type(sub_type) for sub_type in types]	# Custom types are technically objects of a pseudo-type class, so true type extraction is necessary
 
 	def __iter__(self):
 		return iter(self.types)
 
 	def find(self, req_type):
 		"""
-		Find sub-type in type iterable. Cannot use find since set() is supported
+		Find sub-type in type iterable. Cannot use find() method since set() needs to be supported
 		"""
 		for sub_type, sub_inst in zip(self.types, self.instances):
 			if req_type == sub_type:
 				return sub_inst
 		raise ValueError('Requested sub-type not found')
+
+class RealNumpyVector(object):	#pylint: disable-msg=R0903
+	"""
+	Numpy vector where every element is a real number
+	"""
+	def __init__(self):
+		self.iter_type = type(numpy.array([]))
+		self.element_type = Real()
+
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		# Discard test object that are not Numpy arrays and Numpy arrays that are not Numpy vectors or zero length vectors
+		if (type(test_obj) != self.iter_type) or ((type(test_obj) == self.iter_type) and (len(test_obj.shape) > 1)) or ((type(test_obj) == self.iter_type) and (len(test_obj) == 0)):
+			return False
+		# By comparing to a Numpy array object the comparison is machine/implementation independent as to how many number of bits are used to represent integers or floats
+		return (test_obj.dtype.type == numpy.array([0]).dtype.type) or (test_obj.dtype.type == numpy.array([0.0]).dtype.type)
+
+class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable-msg=R0903
+	"""
+	Numpy vector where every element is a real number greater than the previous element
+	"""
+	def __init__(self):
+		RealNumpyVector.__init__(self)
+
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		if not RealNumpyVector.includes(self, test_obj):
+			return False
+		return False if min(numpy.diff(test_obj)) <= 0 else True
 
 def get_function_args(func):
 	"""
@@ -175,15 +240,15 @@ def type_match(test_obj, ref_obj):	#pylint: disable-msg=R0911,R0912
 		return test_obj is None
 	# Check for pseudo-type 'number' (integer, float or complex)
 	if isinstance(ref_obj, Number):
-		return util_misc.isnumber(test_obj)
+		return ref_obj.includes(test_obj)
 	# Check for pseudo-type 'real' (integer or float)
 	if isinstance(ref_obj, Real):
-		return util_misc.isreal(test_obj)
+		return ref_obj.includes(test_obj)
 	# Check for parameter being one of a finite number of choices defined in an iterable
 	if isinstance(ref_obj, OneOf):
 		return type(test_obj) in ref_obj.types
 	# Check for parameter being in a numeric range
-	if isinstance(ref_obj, Range):
+	if isinstance(ref_obj, NumberRange):
 		return util_misc.isreal(test_obj) and (type(test_obj) == type(ref_obj.minimum if ref_obj.minimum is not None else ref_obj.maximum))
 	# Check for poly-morphic types
 	if isinstance(ref_obj, PolymorphicType):
@@ -273,7 +338,7 @@ def check_parameter(param_name, param_spec):
 				# Check type and raise exception if necessary
 				if not type_match(param, param_spec):
 					raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
-				pseudo_types = [Range, OneOf, IncreasingRealNumpyVector]
+				pseudo_types = [NumberRange, OneOf, IncreasingRealNumpyVector]
 				# Determine if a PolymorphicType definition has pseudo-types that need to be checked
 				if isinstance(param_spec, PolymorphicType):
 					temp_param_spec = [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if sub_type not in pseudo_types]	# Make a list of all types in original definition excluding pseudo-types
@@ -284,7 +349,7 @@ def check_parameter(param_name, param_spec):
 				if (type(param_spec) in pseudo_types) or (isinstance(param_spec, PolymorphicType) and check_pseudo_types):
 					# Validate custom pseudo-types
 					check_list = list()
-					for pseudo_type, validate_function in zip([Range, OneOf, IncreasingRealNumpyVector], [validate_range, validate_oneof, validate_increasingrealnumpyvector]):
+					for pseudo_type, validate_function in zip([NumberRange, OneOf, IncreasingRealNumpyVector], [validate_range, validate_oneof, validate_increasingrealnumpyvector]):
 						if (isinstance(param_spec, pseudo_type)) or (isinstance(param_spec, PolymorphicType) and (pseudo_type in param_spec.types)):
 							ret = validate_function(param_name, param, param_spec if not isinstance(param_spec, PolymorphicType) else param_spec.find(pseudo_type))
 							if ret is None:	# Not a polymorphic type and valid, or one of the polymorphic types and valid
@@ -300,7 +365,7 @@ def check_parameter(param_name, param_spec):
 
 def validate_range(param_name, param, spec):
 	"""
-	Validate Range pseudo-type
+	Validate NumberRange pseudo-type
 	"""
 	if (util_misc.isreal(param)) and (((spec.minimum is not None) and (param < spec.minimum)) or ((spec.maximum is not None) and (param > spec.maximum))):
 		return 'Parameter {0} is not in the range [{1}, {2}]'.format(param_name, '-inf' if spec.minimum is None else spec.minimum, '+inf' if spec.maximum is None else spec.maximum)

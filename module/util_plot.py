@@ -43,7 +43,6 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	 * Same as :py:attr:`util_plot.BasicSource.indep_min`
 
 	 * Same as :py:attr:`util_plot.BasicSource.indep_max`
-
 	"""
 	def __init__(self, indep_var=None, dep_var=None, indep_min=None, indep_max=None):
 		# Private attributes
@@ -194,411 +193,318 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	 * ValueError (indep_var and dep_var must have the same number of elements)
 	"""	#pylint: disable-msg=W0105
 
-class CsvSource(object):	#pylint: disable-msg=R0902
+class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 	"""
 	Retrieves plot series data from a comma-separated file
 
 	:param	file_name:			comma-separated file name
 	:type	file_name:			string
-	:param	fdef:				data filter definition. See :py:meth:`util_plot.CsvSource.data_filter()`
-	:type	fdef:				dictionary
 	:param	indep_col_label:	independent variable column label
 	:type	indep_col_label:	string
 	:param	dep_col_label:		dependent variable column label
 	:type	dep_col_label:		string
+	:param	dfilter:			data filter definition. See :py:meth:`util_plot.CsvSource.data_filter()`
+	:type	dfilter:			dictionary
 	:param	indep_min:			minimum independent variable value
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
-	:param	fproc:				processing function. See :py:meth:`util_plot.CsvSource.processing_function()`
+	:param	fproc:				processing function
 	:type	fproc:				function pointer
-	:param	fproc_eargs:		processing function extra arguments. See :py:meth:`util_plot.CsvSource.processing_function_extra_arguments()`
+	:param	fproc_eargs:		processing function extra arguments
 	:type	fproc_eargs:		dictionary
+	:rtype:						:py:class:`util_plot.CsvSource()` object
 	:raises:
-	 * Same as :py:meth:`util_plot.CsvSource.file_name()`
+	 * Same as :py:attr:`util_plot.BasicSource.indep_var`
 
-	 * Same as :py:meth:`util_plot.CsvSource.data_filter()`
+	 * Same as :py:attr:`util_plot.BasicSource.dep_var`
 
-	 * Same as :py:meth:`util_plot.CsvSource.indep_col_label()`
+	 * Same as :py:attr:`util_plot.BasicSource.indep_min`
 
-	 * Same as :py:meth:`util_plot.CsvSource.dep_col_label()`
-
-	 * Same as :py:meth:`util_plot.CsvSource.indep_min()`
-
-	 * Same as :py:meth:`util_plot.CsvSource.indep_max()`
-
-	 * Same as :py:meth:`util_plot.CsvSource.processing_function()`
-
-	 * Same as :py:meth:`util_plot.CsvSource.processing_function_extra_arguments()`
+	 * Same as :py:attr:`util_plot.BasicSource.indep_max`
 	"""
-	def __init__(self, file_name, indep_col_label, dep_col_label, fdef=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable-msg=R0913
-		self.current_file_name = None
-		self.current_data_filter = None
-		self.current_indep_col_label = None
-		self.current_dep_col_label = None
-		self.current_indep_min = None
-		self.current_indep_max = None
-		self.current_fproc = None
-		self.current_fproc_eargs = None
-		self.current_indep_var = None
-		self.current_dep_var = None
-		self.file_name(file_name)
-		self.data_filter(fdef)
-		self.indep_col_label(indep_col_label)
-		self.dep_col_label(dep_col_label)
-		self.indep_min(indep_min)
-		self.indep_max(indep_max)
-		self.processing_function(fproc)
-		self.processing_function_extra_arguments(fproc_eargs)
-		self.load_data()
+	def __init__(self, file_name=None, indep_col_label=None, dep_col_label=None, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable-msg=R0913
+		BasicSource.__init__(self, indep_var=None, dep_var=None, indep_min=indep_min, indep_max=indep_max)
+		# Private attributes
+		self._csv_obj, self._fproc, self._fproc_eargs, self._reverse_data = None, None, None, False
+		# Public attributes
+		self._file_name, self._dfilter, self._indep_col_label, self._dep_col_label = None, None, None, None
+		self._set_indep_col_label(indep_col_label)
+		self._set_dep_col_label(dep_col_label)
+		self._set_fproc(fproc)
+		self._set_fproc_eargs(fproc_eargs)
+		self._set_dfilter(dfilter)
+		self._set_file_name(file_name)
 
-	def file_name(self, *name):
+	def _get_file_name(self):	#pylint: disable-msg=C0111
+		return self._file_name
+
+	@util_check.check_parameter('file_name', util_check.PolymorphicType([None, str]))
+	def _set_file_name(self, file_name):	#pylint: disable-msg=C0111
+		self._file_name = file_name
+		if file_name is not None:
+			if os.path.exists(file_name) is False:
+				raise IOError('Comma-separated file {0} could not be found)'.format(file_name))
+			self._csv_obj = util_csv.CsvFile(file_name)
+		self._apply_dfilter()	# This also gets indep_var and dep_var from file
+		self._process_data()
+
+	def _get_dfilter(self):	#pylint: disable-msg=C0111
+		return self._dfilter
+
+	@util_check.check_parameter('dfilter', util_check.PolymorphicType([None, dict]))
+	def _set_dfilter(self, dfilter):	#pylint: disable-msg=C0111
+		self._dfilter = dfilter
+		self._check_dfilter()
+		self._apply_dfilter()
+		self._process_data()
+
+	def _get_indep_col_label(self):	#pylint: disable-msg=C0111
+		return self._indep_col_label
+
+	@util_check.check_parameter('indep_col_label', util_check.PolymorphicType([None, str]))
+	def _set_indep_col_label(self, indep_col_label):	#pylint: disable-msg=C0111
+		self._indep_col_label = indep_col_label
+		self._check_indep_col_label()
+		self._apply_dfilter()
+		self._process_data()
+
+	def _get_dep_col_label(self):	#pylint: disable-msg=C0111
+		return self._dep_col_label
+
+	@util_check.check_parameter('dep_col_label', util_check.PolymorphicType([None, str]))
+	def _set_dep_col_label(self, dep_col_label):	#pylint: disable-msg=C0111
+		self._dep_col_label = dep_col_label
+		self._check_dep_col_label()
+		self._apply_dfilter()
+		self._process_data()
+
+	def _get_fproc(self):	#pylint: disable-msg=C0111
+		return self._fproc
+
+	def _set_fproc(self, fproc):	#pylint: disable-msg=C0111
+		if (fproc is not None) and (not hasattr(fproc, '__call__')):
+			raise TypeError('Parameter fproc is of the wrong type')
+		if (fproc is not None) and (len(util_check.get_function_args(fproc)) > 2):
+			raise ValueError('Parameter fproc (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
+		self._fproc = fproc
+		self._check_fproc_eargs()
+		self._process_data()
+
+	def _get_fproc_eargs(self):	#pylint: disable-msg=C0111
+		return self._fproc_eargs
+
+	@util_check.check_parameter('fproc_eargs', util_check.PolymorphicType([None, dict]))
+	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable-msg=C0111
+		# Check that extra argnuments to see if they are in the function definition
+		self._fproc_eargs = fproc_eargs
+		self._check_fproc_eargs()
+		self._process_data()
+
+	def _check_fproc_eargs(self):
 		"""
-		Sets or returns the comma-separated file from which a data series is going to be extracted
-
-		:param	name:	comma-separated file name
-		:type	name:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Comma-separated file name must be a string)
-
-		 * IOError (Comma-separated file **name** could not be found)
-
-		.. warning:: The first line of the comma-separated file must contain unique headers for each column
+		Checks that the extra arguments are in the processing function definition
 		"""
-		if len(name) == 0:
-			return self.current_file_name
-		if len(name) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_file_name = name[0]
-		if isinstance(self.current_file_name, str) is False:
-			raise TypeError('Comma-separated file name must be a string')
-		if os.path.exists(self.current_file_name) is False:
-			raise IOError('Comma-separated file {0} could not be found)'.format(name))
+		if self.fproc is not None:
+			args = util_check.get_function_args(self._fproc)
+			for key in self.fproc_eargs:
+				if key not in args:
+					raise RuntimeError('Extra argument {0} not found in parameter fproc (function {1}) definition'.format(key, self.fproc.__name__))
 
-	def data_filter(self, *fdef):
+	def _check_indep_col_label(self):
 		"""
-		Sets or returns the data filter
-
-		:param	fdef:	filter definition
-		:type	fdef:	dictionary
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Filter definition must be a dictionary)
-
-		.. note:: The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter value \
-		for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
-
+		Check that independent column label can be found in comma-separated file header
 		"""
-		if len(fdef) == 0:
-			return self.current_data_filter
-		if len(fdef) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_data_filter = fdef[0]
-		if self.current_data_filter is not None:
-			if isinstance(self.current_data_filter, dict) is False:
-				raise TypeError('Filter definition must be a dictionary')
+		if (self._csv_obj is not None) and (self.indep_col_label is not None) and (self.indep_col_label not in self._csv_obj.header()):
+			raise ValueError('Parameter indep_col_label could not be found in comma-separated file {0} header)'.format(self.file_name))
 
-	def indep_col_label(self, *label):
+	def _check_dep_col_label(self):
 		"""
-		Sets or returns the independent variable column label
-
-		:param	label:	independent variable column label
-		:type	label:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Independent variable column label must be a string)
+		Check that dependent column label can be found in comma-separated file header
 		"""
-		if len(label) == 0:
-			return self.current_indep_col_label
-		if len(label) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_indep_col_label = label[0]
-		if isinstance(self.current_indep_col_label, str) is False:
-			raise TypeError('Independent variable column label must be a string')
+		if (self._csv_obj is not None) and (self.dep_col_label is not None) and (self.dep_col_label not in self._csv_obj.header()):
+			raise ValueError('Parameter dep_col_label could not be found in comma-separated file {0} header)'.format(self.file_name))
 
-	def dep_col_label(self, *label):
+	def _check_dfilter(self):
 		"""
-		Sets or returns the dependent variable column label
-
-		:param	label:	dependent variable column label
-		:type	label:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Dependent variable column label must be a string)
+		Check that columns in filter specification can be found in comma-separated file header
 		"""
-		if len(label) == 0:
-			return self.current_dep_col_label
-		if len(label) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_dep_col_label = label[0]
-		if isinstance(self.current_dep_col_label, str) is False:
-			raise TypeError('Dependent variable column label must be a string')
+		if (self._csv_obj is not None) and (self.dfilter is not None):
+			for key in self.dfilter:
+				if key not in self._csv_obj.header():
+					raise ValueError('Column {0} not found in comma-separated file {1} header'.format(key, self.file_name))
 
-	def indep_min(self, *num):
+	def _apply_dfilter(self):
 		"""
-		Sets or returns the minimum independent variable limit
-
-		:param	num:	minimum independent variable limit
-		:type	num:	number
-		:rtype:			number
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Minimum independent variable limit must be number)
+		Apply data filters to loaded data
 		"""
-		if len(num) == 0:
-			return self.current_indep_min
-		if len(num) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_indep_min = num[0]
-		if self.current_indep_min is not None:
-			if util_misc.isnumber(self.current_indep_min) is False:
-				raise TypeError('Minimum independent variable limit must be number')
-			self.current_indep_min = float(self.current_indep_min)
+		if (self.dfilter is not None) and (len(self.dfilter) > 0) and (self._csv_obj is not None):
+			self._csv_obj.set_filter(self.dfilter)
+		elif self._csv_obj is not None:
+			self._csv_obj.reset_filter()
+		self._get_indep_var_from_file()
+		self._get_dep_var_from_file()
 
-	def indep_max(self, *num):
+	def _get_indep_var_from_file(self):
 		"""
-		Sets or returns the maximum independent variable limit
-
-		:param	num:	maximum independent variable limit
-		:type	num:	number
-		:rtype:			number
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Maximum independent variable limit must be number)
+		Retrieve independent data variable from comma-separated file
 		"""
-		if len(num) == 0:
-			return self.current_indep_max
-		if len(num) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_indep_max = num[0]
-		if self.current_indep_max is not None:
-			if util_misc.isnumber(self.current_indep_max) is False:
-				raise TypeError('Maximum independent variable limit must be number')
-			self.current_indep_max = float(self.current_indep_max)
-
-	def processing_function(self, *fproc):
-		"""
-		Sets or returns the data processing function pointer
-
-		:param	fproc:	processing function
-		:type	fproc:	function pointer
-		:rtype:			function pointer
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Processing function parameter must be a function pointer)
-
-		.. note::
-		   The processing function is useful to do "light" data massaging, like scaling, etc; it is called after the data has been retrieved from the comma-separated value and the resulting filtered data set has been \
-		   thresholded by **indep_var_min** and **dep_var_min** (if applicable).
-
-		   The processing function is given two arguments, a Numpy vector representing the independent variable array (first argument) and a \
-		   Numpy vector representing the dependent variable array (second argument). The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second \
-		   element being the processed dependent variable array.
-		"""
-		if len(fproc) == 0:
-			return self.current_fproc
-		if len(fproc) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_fproc = fproc[0]
-		if self.current_fproc is not None:
-			if hasattr(self.current_fproc, '__call__') is False:
-				raise TypeError('Processing function parameter msut be a function pointer')
-
-	def processing_function_extra_arguments(self, *eargs):	#pylint: disable-msg=C0103
-		"""
-		Sets or returns the extra arguments for the data processing function
-
-		:param	eargs:	extra arguments
-		:type	eargs:	dictionary
-		:rtype:			dictionary
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Processing function extra arguments must be a dictionary)
-
-		.. note::
-		   Extra parameters can be passed to the processing function using **fproc_eargs**. For example, if **fproc_eargs** is ``{'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
-
-		       def my_proc_func(indep_var, dep_var, par1, part):
-		           # Do some data processing
-		           return indep_var, dep_var
-		"""
-		if len(eargs) == 0:
-			return self.current_fproc_eargs
-		if len(eargs) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_fproc_eargs = eargs[0]
-		if self.current_fproc_eargs is not None:
-			if isinstance(self.current_fproc_eargs, dict) is False:
-				raise TypeError('Processing function extra arguments must be a dictionary')
-
-	def indep_var(self):
-		"""
-		Returns the independent variable data (if loaded)
-
-		:rtype:		Numpy vector
-		:raises:	RuntimeError (No independent variable data set loaded)
-		"""
-		if self.current_indep_var is None:
-			raise RuntimeError('No independent variable data set loaded')
-		else:
-			return self.current_indep_var
-
-	def dep_var(self):
-		"""
-		Returns the independent variable data (if loaded)
-
-		:rtype:		Numpy vector
-		:raises:	RuntimeError (No dependent variable data set loaded)
-		"""
-		if self.current_dep_var is None:
-			raise RuntimeError('No dependent variable data set loaded')
-		else:
-			return self.current_dep_var
-
-	def load_data(self):	#pylint: disable-msg=R0912,R0915
-		"""
-		Retrieves data from file based on specified parameters
-
-		:raises:
-		 * RuntimeError (Filter column *[column header]* not found in comma-separated file *[file name]* header)
-
-		 * RuntimeError (Filtered independent variable data set is empty)
-
-		 * ValueError (Independent data set element *[index]* (*[value]*) is not a number)
-
-		 * RuntimeError (Filtered dependent variable data set is empty)
-
-		 * ValueError (Dependent data set element *[index]* (*[value]*) is not a number)
-
-		 * RuntimeError (Illegal number of parameters returned by processing function)
-
-		 * RuntimeError (Independent variable data set is empty after external function processing)
-
-		 * ValueError (Independent data set element *[index]* (*[value]*) is not a number after external function processing)
-
-		 * RuntimeError (Dependent variable data set is empty after external function processing)
-
-		 * ValueError (Dependent data set element *[index]* (*[value]*) is not a number after external function processing)
-
-		 * RuntimeError (Size of independent and dependent data sets is not the same after external function processing)
-
-		 * RuntimeError (Independent variable data set is empty after **indep_min** thresholding)
-
-		 * RuntimeError (Dependent variable data set is empty after **indep_min** thresholding)
-
-		 * RuntimeError (Independent variable data set is empty after **indep_max** thresholding)
-
-		 * RuntimeError (Dependent variable data set is empty after **indep_max** thresholding)
-		"""
-		if self._complete() is True:
-			csv_obj = util_csv.CsvFile(self.file_name())
-			# Apply CSV data filters
-			if (self.data_filter() is not None) and (len(self.data_filter()) > 0):
-				for col in self.data_filter():
-					if col.upper() not in csv_obj.header():
-						raise RuntimeError('Filter column {0} not found in comma-separated file {1} header'.format(col, self.file_name()))
-				csv_obj.set_filter(self.data_filter())
-			else:
-				csv_obj.reset_filter()
-			# Retrieve data and check data integrity
-			self.current_indep_var = numpy.array(csv_obj.filtered_data(self.indep_col_label()))
-			if len(self.current_indep_var) == 0:
-				raise RuntimeError('Filtered independent variable data set is empty')
-			for index, num in enumerate(self.current_indep_var):
-				if util_misc.isnumber(num) is False:
-					raise ValueError('Independent data set element {0} ({1}) is not a number'.format(index, num))
-			self.current_dep_var = numpy.array(csv_obj.filtered_data(self.dep_col_label()))
-			if len(self.current_dep_var) == 0:
-				raise RuntimeError('Filtered dependent variable data set is empty')
-			for index, num in enumerate(self.current_dep_var):
-				if util_misc.isnumber(num) is False:
-					raise ValueError('Dependent data set element {0} ({1}) is not a number'.format(index, num))
+		if (self._csv_obj is not None) and (self.indep_col_label is not None):
+			data = numpy.array(self._csv_obj.filtered_data(self.indep_col_label))
+			if len(data) == 0:
+				raise ValueError('Filtered independent variable is empty')
 			# Flip data if it is in descending order (affects interpolation)
-			if self.current_indep_var[0] > self.current_indep_var[-1]:
-				self.current_indep_var = self.current_indep_var[::-1]
-				self.current_dep_var = self.current_dep_var[::-1]
-			# Apply minimum/maximum global filters
-			if self.processing_function() is not None:
-				if self.processing_function_extra_arguments() is None:
-					ret = self.processing_function()(self.current_indep_var, self.current_dep_var)
-				else:
-					ret = self.processing_function()(self.current_indep_var, self.current_dep_var, **self.processing_function_extra_arguments())
-				if len(ret) != 2:
-					raise RuntimeError('Illegal number of parameters returned by processing function')
-				self.current_indep_var = ret[0]
-				self.current_dep_var = ret[1]
-				# Check data integrity after external processing
-				if len(self.current_indep_var) == 0:
-					raise RuntimeError('Independent variable data set is empty after external function processing')
-				for index, num in enumerate(self.current_indep_var):
-					if util_misc.isnumber(num) is False:
-						raise ValueError('Independent data set element {0} ({1}) is not a number after external function processing'.format(index, num))
-				if len(self.current_dep_var) == 0:
-					raise RuntimeError('Dependent variable data set is empty after external function processing')
-				for index, num in enumerate(self.current_dep_var):
-					if util_misc.isnumber(num) is False:
-						raise ValueError('Dependent data set element {0} ({1}) is not a number after external function processing'.format(index, num))
-				if len(self.current_indep_var) != len(self.current_dep_var):
-					raise RuntimeError('Size of independent and dependent data sets is not the same after external function processing')
-			if self.current_indep_min is not None:
-				self.current_indep_var, self.current_dep_var = _series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_min, 'MIN')
-			if len(self.current_indep_var) == 0:
-				raise RuntimeError('Independent variable data set is empty after indep_min thresholding')
-			if len(self.current_dep_var) == 0:
-				raise RuntimeError('Dependent variable data set is empty after indep_min thresholding')
-			if self.current_indep_max is not None:
-				self.current_indep_var, self.current_dep_var = _series_threshold(self.current_indep_var, self.current_dep_var, self.current_indep_max, 'MAX')
-			if len(self.current_indep_var) == 0:
-				raise RuntimeError('Independent variable data set is empty after indep_max thresholding')
-			if len(self.current_dep_var) == 0:
-				raise RuntimeError('Dependent variable data set is empty after indep_max thresholding')
+			if max(numpy.diff(data)) < 0:
+				self._reverse_data = True
+				data = data[::-1]
+				if self.dep_var is not None:
+					self._set_dep_var(self.dep_var[::-1])
+			self._set_indep_var(data)
+
+	def _get_dep_var_from_file(self):
+		"""
+		Retrieve dependent data variable from comma-separated file
+		"""
+		if (self._csv_obj is not None) and (self.dep_col_label is not None):
+			data = numpy.array(self._csv_obj.filtered_data(self.dep_col_label))
+			if len(data) == 0:
+				raise ValueError('Filtered dependent variable is empty')
+			self._set_dep_var(data[::-1] if self._reverse_data else data)
+
+	def _process_data(self):
+		"""
+		Process data through call-back function
+		"""
+		if (self.fproc is not None) and (self.indep_var is not None) and (self.dep_var is not None):
+			ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
+			if len(ret) != 2:
+				raise RuntimeError('Parameter fproc (function {0}) returned an illegal number of parameters'.format(self.fproc.__name__))
+			indep_var = ret[0]
+			dep_var = ret[1]
+			self._check_var(indep_var, 'indep_var')
+			self._check_var(dep_var, 'dep_var')
+
+	def _check_var(self, var, name):
+		"""
+		Validate (in)dependent variable returned by processing function
+		"""
+		if len(var) == 0:
+			return ValueError('Parameter {0} is empty after function {1} processing'.format(name, self.fproc.__name__))
+		if not util_check.type_match(var, util_check.IncreasingRealNumpyVector if name == 'indep_var' else util_check.RealNumpyVector):
+			return ValueError('Parameter {0} is of the wrong type after function {1} processing'.format(name, self.fproc.__name__))
 
 	def __str__(self):
 		"""
 		Print comma-separated value source information
 		"""
 		ret = ''
-		ret += 'File name: {0}\n'.format(self.file_name())
-		ret += 'Data filter: {0}\n'.format('None' if self.data_filter() is None else '')
-		if self.data_filter() is not None:
-			for key, value in self.data_filter().iteritems():
+		ret += 'File name: {0}\n'.format(self.file_name)
+		ret += 'Data filter: {0}\n'.format(self.dfilter if self.dfilter is None else '')
+		if self.dfilter is not None:
+			for key, value in self.dfilter.iteritems():
 				ret += '   {0}: {1}\n'.format(key, value)
-		ret += 'Independent column label: {0}\n'.format(self.indep_col_label())
-		ret += 'Dependent column label: {0}\n'.format(self.dep_col_label())
-		ret += 'Independent variable minimum: {0}\n'.format(self.indep_min())
-		ret += 'Independent variable maximum: {0}\n'.format(self.indep_max())
-		ret += 'Processing function: {0}\n'.format('None' if self.processing_function() is None else self.processing_function().__name__)
-		ret += 'Independent variable: '
-		try:
-			ret += str(self.indep_var())+'\n'
-		except:	#pylint: disable-msg=W0702
-			ret += 'None\n'
-		ret += 'Dependent variable: '
-		try:
-			ret += str(self.dep_var())
-		except:	#pylint: disable-msg=W0702
-			ret += 'None'
+		ret += 'Independent column label: {0}\n'.format(self.indep_col_label)
+		ret += 'Dependent column label: {0}\n'.format(self.dep_col_label)
+		ret += 'Processing function: {0}\n'.format('None' if self.fproc is None else self.fproc.__name__)
+		ret += BasicSource.__str__(self)
 		return ret
 
 	def _complete(self):
 		"""
 		Returns True if object is fully specified, otherwise returns False
 		"""
-		return True if (self.file_name() is not None) and (self.indep_col_label() is not None) and (self.dep_col_label() is not None) else False
+		return (self.file_name is not None) and (self.indep_col_label is not None) and (self.dep_col_label is not None)
 
+	file_name = property(_get_file_name, _set_file_name, doc='Comma-separated file name')
+	"""
+	Comma-separated file from which data series is to be extracted
+
+	:type:		string
+	:raises:
+	 * TypeError (Parameter file_name is of the wrong type)
+
+	 * IOError (Comma-separated file *[file_name]* could not be found)
+
+	.. warning:: The first line of the comma-separated file must contain unique headers for each column
+	"""	#pylint: disable-msg=W0105
+
+	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
+	"""
+	Data filter
+
+	:type:		dictionary
+	:raises:
+	 * TypeError (Parameter dfilter is of the wrong type)
+
+	 * ValueError (Column *[column]* not found in comma-separated file *[file_name]* header)
+
+	.. note:: The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter value \
+	for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
+	"""	#pylint: disable-msg=W0105
+
+	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
+	"""
+	Independent variable column label (column name)
+
+	:type:	string
+	:raises:
+	 * TypeError (Parameter indep_col_label is of the wrong type)
+
+	 * ValueError (Parameter indep_col_label could not be found in comma-separated file *[file_name]* header)
+	"""	#pylint: disable-msg=W0105
+
+	dep_col_label = property(_get_dep_col_label, _set_dep_col_label, doc='Dependent column label (column name)')
+	"""
+	Dependent variable column label (column name)
+
+	:type:	string
+	:raises:
+	 * TypeError (Parameter dep_col_label is of the wrong type)
+
+	 * ValueError (Parameter dep_col_label could not be found in comma-separated file *[file_name]* header)
+	"""	#pylint: disable-msg=W0105
+
+	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
+	"""
+	Data processing function pointer
+
+	:type:	function pointer
+	:raises:
+	 * TypeError (Parameter fproc is of the wrong type)
+
+	 * ValueError (Parameter fproc (function *[function name]*) does not have at least 2 arguments)
+
+	.. note::
+	   The processing function is useful to do "light" data massaging, like scaling, etc; it is called after the data has been retrieved from the comma-separated value and the resulting filtered data set has been \
+	   thresholded by **indep_var_min** and **dep_var_min** (if applicable).
+
+	   The processing function is given two arguments, a Numpy vector representing the independent variable array (first argument) and a \
+	   Numpy vector representing the dependent variable array (second argument). The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second \
+	   element being the processed dependent variable array.
+	"""	#pylint: disable-msg=W0105
+
+	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
+	"""
+	Rxtra arguments for the data processing function
+
+	:type	eargs:	dictionary
+	:raises:
+	 * TypeError (Parameter fproc_eargs is of the wrong type)
+
+	 * ValueError (Parameter fproc (function {0}) does not have at least {1} arguments)
+	.. note::
+	   Extra parameters can be passed to the processing function using **fproc_eargs**. For example, if **fproc_eargs** is ``{'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
+
+	       def my_proc_func(indep_var, dep_var, par1, par2):
+	           # Do some data processing
+	           return indep_var, dep_var
+	"""	#pylint: disable-msg=W0105
+
+	# indep_var is read only
+	indep_var = property(BasicSource._get_indep_var, None, doc='Independent variable Numpy vector')	#pylint: disable-msg=E0602
+
+	# dep_var is read only
+	dep_var = property(BasicSource._get_dep_var, None, doc='Dependent variable Numpy vector')	#pylint: disable-msg=E0602
 
 class Series(object):	#pylint: disable-msg=R0902
 	"""

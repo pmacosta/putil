@@ -11,16 +11,37 @@ import itertools
 
 import util_check
 
-# Test for ArbitraryLength class (applies to any ArbitraryLength* sub-classes)
-def test_arbitrary_length_class_no_exception():	#pylint: disable-msg=C0103
+
+###
+# Test for Number class
+###
+def test_number_no_exception():
 	"""
-	Tests that ArbitraryLength class behaves appropriately when proper parameters passed
+	Test that Number class behaves appropriately when all parameters are correctly specified
+	"""
+	util_check.Number()
+
+###
+# Test for Real class
+###
+def test_real_no_exception():
+	"""
+	Test that Real class behaves appropriately when all parameters are correctly specified
+	"""
+	util_check.Real()
+
+###
+# Test for ArbitraryLength class
+###
+def test_arbitrary_length_no_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLength class behaves appropriately when all parameters are correctly specified
 	"""
 	obj_type = str
 	obj = util_check.ArbitraryLength(obj_type)
 	assert obj.element_type == obj_type
 
-def test_arbitrary_length_class_exception():	#pylint: disable-msg=C0103
+def test_arbitrary_length_exception():	#pylint: disable-msg=C0103
 	"""
 	Tests that ArbitraryLength class behaves appropriately when inproper parameter type is passed
 	"""
@@ -28,7 +49,66 @@ def test_arbitrary_length_class_exception():	#pylint: disable-msg=C0103
 		util_check.ArbitraryLength('a')
 	assert excinfo.value.message == 'element_type parameter has to be a type'
 
+###
+# Test for ArbitraryLengthList class
+###
+def test_arbitrary_length_list_no_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLengthList class behaves appropriately when all parameters are correctly specified
+	"""
+	obj_type = int
+	obj = util_check.ArbitraryLengthList(obj_type)
+	assert (obj.element_type == obj_type, obj.iter_type == list) == (True, True)
+
+def test_arbitrary_length_list_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLengthList class behaves appropriately when inproper parameter type is passed
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.ArbitraryLengthList('a')
+	assert excinfo.value.message == 'element_type parameter has to be a type'
+
+###
+# Test for ArbitraryLengthTuple class
+###
+def test_arbitrary_length_tuple_no_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLengthTuple class behaves appropriately when all parameters are correctly specified
+	"""
+	obj_type = int
+	obj = util_check.ArbitraryLengthTuple(obj_type)
+	assert (obj.element_type == obj_type, obj.iter_type == tuple) == (True, True)
+
+def test_arbitrary_length_tuple_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLengthTuple class behaves appropriately when inproper parameter type is passed
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.ArbitraryLengthTuple('a')
+	assert excinfo.value.message == 'element_type parameter has to be a type'
+
+###
+# Test for ArbitraryLengthSet class
+###
+def test_arbitrary_length_set_no_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLengthSet class behaves appropriately when all parameters are correctly specified
+	"""
+	obj_type = int
+	obj = util_check.ArbitraryLengthSet(obj_type)
+	assert (obj.element_type == obj_type, obj.iter_type == set) == (True, True)
+
+def test_arbitrary_length_set_exception():	#pylint: disable-msg=C0103
+	"""
+	Tests that ArbitraryLengthSet class behaves appropriately when inproper parameter type is passed
+	"""
+	with pytest.raises(TypeError) as excinfo:
+		util_check.ArbitraryLengthSet('a')
+	assert excinfo.value.message == 'element_type parameter has to be a type'
+
+###
 # Test for OneOf class
+###
 def test_one_of_case_insensitive_exception():	#pylint: disable-msg=C0103
 	"""
 	Tests that OneOf class behaves properly when an improper case_insensitive type is given
@@ -41,7 +121,7 @@ def test_one_of_case_insensitive_none_if_no_strings_in_choices():	#pylint: disab
 	"""
 	Tests that OneOf class behaves properly when no string options given
 	"""
-	assert util_check.OneOf([1, 2, 3], case_sensitive=True).case_sensitive == None
+	assert (util_check.OneOf([1, 2, 3], case_sensitive=True).case_sensitive == None, util_check.OneOf([1, 2, 3], case_sensitive=False).case_sensitive == None) == (True, True)
 
 def test_one_of_infinite_iterable_exception():	#pylint: disable-msg=C0103
 	"""
@@ -51,11 +131,13 @@ def test_one_of_infinite_iterable_exception():	#pylint: disable-msg=C0103
 		util_check.OneOf(itertools.count(start=0, step=1))
 	assert excinfo.value.message == 'choices parameter has to be an iterable of finite length'
 
-def test_one_of_proper_type_extraction():	#pylint: disable-msg=C0103
+def test_one_of_proper_no_errors():	#pylint: disable-msg=C0103
 	"""
-	Tests that OneOf class behaves properly extracting type information
+	Tests that OneOf class behaves properly when all parameters are correctly specified
 	"""
-	assert util_check.OneOf(['a', 2, 3.0, 'a', util_check.Real()], case_sensitive=True).types == set([str, int, float, util_check.Real])
+	test_choices = ['a', 2, 3.0, 'a', util_check.Real()]
+	obj = util_check.OneOf(test_choices, case_sensitive=True)
+	assert (obj.types == set([type(element) for element in test_choices]), obj.choices == test_choices, obj.case_sensitive == True) == (True, True, True)
 
 def test_one_of_proper_contains_behavior():	#pylint: disable-msg=C0103
 	"""
@@ -65,48 +147,59 @@ def test_one_of_proper_contains_behavior():	#pylint: disable-msg=C0103
 	obj2 = util_check.OneOf(['c', 'D'], case_sensitive=False)
 	assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2) == (True, True, True, True, False, False, False, True, True, False, False)
 
-# Test for Range class
+###
+# Test for NumberRange class
+###
 def test_range_minimum_not_a_number():
 	"""
-	Tests that Range class behaves properly when minimum is not a number
+	Tests that NumberRange class behaves properly when minimum is not a number
 	"""
 	with pytest.raises(TypeError) as excinfo:
-		util_check.Range(minimum=False, maximum=None)
+		util_check.NumberRange(minimum=False, maximum=None)
 	assert excinfo.value.message == 'minimum parameter has to be None or a real number'
 
 def test_range_maximum_not_a_number():
 	"""
-	Tests that Range class behaves properly when maximum is not a number
+	Tests that NumberRange class behaves properly when maximum is not a number
 	"""
 	with pytest.raises(TypeError) as excinfo:
-		util_check.Range(minimum=None, maximum=True)
+		util_check.NumberRange(minimum=None, maximum=True)
 	assert excinfo.value.message == 'maximum parameter has to be None or a real number'
 
 def test_range_minimum_and_maximum_not_specified():	#pylint: disable-msg=C0103
 	"""
-	Tests that Range class behaves properly when neither minimum nor maximum are specified
+	Tests that NumberRange class behaves properly when neither minimum nor maximum are specified
 	"""
 	with pytest.raises(TypeError) as excinfo:
-		util_check.Range(minimum=None, maximum=None)
+		util_check.NumberRange(minimum=None, maximum=None)
 	assert excinfo.value.message == 'Either minimum or maximum parameters need to be specified'
 
 def test_range_minimum_and_maximum_are_of_different_type():	#pylint: disable-msg=C0103
 	"""
-	Tests that Range class behaves properly when minimum is either integer or float and maximum is either float or integer
+	Tests that NumberRange class behaves properly when minimum is either integer or float and maximum is either float or integer
 	"""
 	with pytest.raises(TypeError) as excinfo:
-		util_check.Range(minimum=1.5, maximum=3)
+		util_check.NumberRange(minimum=1.5, maximum=3)
 	assert excinfo.value.message == 'minimum and maximum parameters have different types, the both have to be integers or floats'
 
 def test_range_minimum_greater_than_maximum():	#pylint: disable-msg=C0103
 	"""
-	Tests that Range class behaves properly when minimum is greater than maximum
+	Tests that NumberRange class behaves properly when minimum is greater than maximum
 	"""
 	with pytest.raises(ValueError) as excinfo:
-		util_check.Range(minimum=1.5, maximum=0.0)
+		util_check.NumberRange(minimum=1.5, maximum=0.0)
 	assert excinfo.value.message == 'minimum greater than maximum'
 
+def test_range_no_errors():	#pylint: disable-msg=C0103
+	"""
+	Tests that NumberRange class behaves properly when all parameters are correctly specified
+	"""
+	obj = util_check.NumberRange(minimum=10, maximum=20)
+	assert (obj.minimum == 10, obj.maximum == 20) == (True, True)
+
+###
 # Test PolymorphicType class
+###
 def test_type_match_polymorphic_type_wrong_type():	#pylint: disable-msg=C0103
 	"""
 	Test if function behaves proprely when wrong type parameter is given
@@ -125,13 +218,14 @@ def test_type_match_polymorphic_subtype_wrong_type():	#pylint: disable-msg=C0103
 
 def test_type_match_polymorphic_no_errors():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely when parameter types are correct
+	Test if function behaves proprely when all parameters are correctly specified
 	"""
-	types = [str, int, None, util_check.ArbitraryLengthList, util_check.ArbitraryLengthTuple, util_check.ArbitraryLengthSet, util_check.IncreasingRealNumpyVector, util_check.RealNumpyVector, util_check.OneOf,
-		  util_check.Range, util_check.Number, util_check.Real]
-	obj = util_check.PolymorphicType(types)
-	types[2] = type(None)
-	assert obj.types == types
+	test_instances = [str, int, None, util_check.ArbitraryLengthList, util_check.ArbitraryLengthTuple, util_check.ArbitraryLengthSet, util_check.IncreasingRealNumpyVector, util_check.RealNumpyVector, util_check.OneOf,
+		  util_check.NumberRange, util_check.Number, util_check.Real]
+	obj = util_check.PolymorphicType(test_instances)
+	test_types = test_instances[:]
+	test_types[2] = type(None)
+	assert (obj.instances == test_instances, obj.types == test_types) == (True, True)
 
 # Dummy functions representing the actual function to be decorated
 def func_all_positional_parameters(ppar1, ppar2, ppar3):	#pylint: disable-msg=C0111,W0613
@@ -356,7 +450,7 @@ def test_type_match_range():	#pylint: disable-msg=C0103
 	"""
 	Test if function behaves proprely for a numeric range
 	"""
-	assert (util_check.type_match(12, util_check.Range(minimum=2, maximum=5)), util_check.type_match('a', util_check.Range(minimum=2, maximum=5))) == (True, False)
+	assert (util_check.type_match(12, util_check.NumberRange(minimum=2, maximum=5)), util_check.type_match('a', util_check.NumberRange(minimum=2, maximum=5))) == (True, False)
 
 def test_type_match_dict():
 	"""
@@ -500,7 +594,7 @@ def test_check_parameter_range_no_maximum_out_of_range():	#pylint: disable-msg=C
 	"""
 	Test that function behaves properly when a parameter is out of range when no maximum is defined
 	"""
-	@util_check.check_parameter('ppar1', util_check.Range(minimum=10))
+	@util_check.check_parameter('ppar1', util_check.NumberRange(minimum=10))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
@@ -511,7 +605,7 @@ def test_check_parameter_range_no_maximum_in_range():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a parameter is in range when no maximum is defined
 	"""
-	@util_check.check_parameter('ppar1', util_check.Range(minimum=10))
+	@util_check.check_parameter('ppar1', util_check.NumberRange(minimum=10))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		return ppar1
 	assert func_check_type(20) == 20
@@ -520,7 +614,7 @@ def test_check_parameter_range_no_minimum_out_of_range():	#pylint: disable-msg=C
 	"""
 	Test that function behaves properly when a parameter is out of range when no minimum is defined
 	"""
-	@util_check.check_parameter('ppar1', util_check.Range(maximum=10))
+	@util_check.check_parameter('ppar1', util_check.NumberRange(maximum=10))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
@@ -531,7 +625,7 @@ def test_check_parameter_range_no_minimum_in_range():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a parameter is in range when no minimum is defined
 	"""
-	@util_check.check_parameter('ppar1', util_check.Range(maximum=10))
+	@util_check.check_parameter('ppar1', util_check.NumberRange(maximum=10))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		return ppar1
 	assert func_check_type(5) == 5
@@ -540,7 +634,7 @@ def test_check_parameter_range_minimum_and_maximum_specified_out_of_range():	#py
 	"""
 	Test that function behaves properly when a parameter is out of range when no minimum is defined
 	"""
-	@util_check.check_parameter('ppar1', util_check.Range(minimum=5.0, maximum=10.0))
+	@util_check.check_parameter('ppar1', util_check.NumberRange(minimum=5.0, maximum=10.0))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
@@ -551,7 +645,7 @@ def test_check_parameter_range_minimum_and_maximum_specified_in_range():	#pylint
 	"""
 	Test that function behaves properly when a parameter is in range when no minimum is defined
 	"""
-	@util_check.check_parameter('ppar1', util_check.Range(minimum=100, maximum=200))
+	@util_check.check_parameter('ppar1', util_check.NumberRange(minimum=100, maximum=200))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		return ppar1
 	assert func_check_type(150) == 150
@@ -563,7 +657,7 @@ def test_check_parameter_polymorphic_type_error():	#pylint: disable-msg=C0103
 	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, float]))
 	def func_check_type1(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
-	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, util_check.Range(minimum=5, maximum=10), util_check.OneOf(['HELLO', 'WORLD'])]))
+	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, util_check.NumberRange(minimum=5, maximum=10), util_check.OneOf(['HELLO', 'WORLD'])]))
 	def func_check_type2(ppar1):	#pylint: disable-msg=C0111
 		print ppar1
 	with pytest.raises(TypeError) as excinfo1:	# Type not in the definition
@@ -578,7 +672,7 @@ def test_check_parameter_polymorphic_type_no_error():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a parameter is in the polymorphic types allowed
 	"""
-	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, int, util_check.Range(minimum=5.0, maximum=10.0), util_check.OneOf(['HELLO', 'WORLD'])]))
+	@util_check.check_parameter('ppar1', util_check.PolymorphicType([None, int, util_check.NumberRange(minimum=5.0, maximum=10.0), util_check.OneOf(['HELLO', 'WORLD'])]))
 	def func_check_type(ppar1):	#pylint: disable-msg=C0111
 		return ppar1
 	assert (func_check_type(None), func_check_type(3), func_check_type(7.0), func_check_type('WORLD')) == (None, 3, 7.0, 'WORLD')
