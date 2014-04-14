@@ -14,6 +14,8 @@ import util_csv
 import util_eng
 import util_misc
 
+PRECISION = 10
+
 class RawSource(object):
 	"""
 	Container to hold data sets intended for plotting
@@ -1432,12 +1434,13 @@ class Panel(object):	#pylint: disable-msg=R0902
 		axarr.set_xlim((indep_var_min, indep_var_max), emit=True, auto=False)
 		axarr.xaxis.set_ticks(indep_var_locs)
 		axarr.xaxis.grid(True, 'both')
-		axarr.tick_params(axis='x', which='major', labelsize=14)
+		axarr.tick_params(axis='x', which='both', labelsize=14)
 		if ('indep_var_labels' in indep_axis_dict) and (indep_axis_dict['indep_var_labels'] is not None):
 			axarr.xaxis.set_ticklabels(indep_axis_dict['indep_var_labels'], fontsize=14)
 			indep_height = _get_text_prop(fig, axarr.xaxis.get_ticklabels()[0])['height']
 			min_width_label = min([_get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
 			indep_width = ((len(indep_axis_dict['indep_var_labels'])-1)*min_width_label)+sum([_get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
+		print '***********OOOH'
 		if (indep_axis_label != '') or (indep_axis_units != ''):
 			axarr.xaxis.set_label_text(indep_axis_label + ('' if (indep_axis_unit_scale == '') and (indep_axis_units == '') else \
 				(' ['+indep_axis_unit_scale+('-' if indep_axis_units == '' else indep_axis_units)+']')), fontdict={'fontsize':18})
@@ -1445,6 +1448,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 			indep_width = max(indep_width, _get_text_prop(fig, axarr.xaxis.get_label())['width'])
 		min_panel_height = max(primary_height, secondary_height)+indep_height
 		min_panel_width = primary_width+secondary_width+indep_width
+		print 'OOOH'
 		return {'primary':None if self.panel_has_primary_axis is False else axarr, 'secondary':None if self.panel_has_secondary_axis is False else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
 
 
@@ -1695,6 +1699,7 @@ class Figure(object):	#pylint: disable-msg=R0902
 		plt.close('all')
 		# Create required number of panels
 		self.fig, self.axarr = plt.subplots(num_panels, sharex=True)	#pylint: disable-msg=W0612
+		self.fig.set_size_inches(self.figure_width(), self.figure_height())
 		self.axarr = self.axarr if num_panels > 1 else [self.axarr]
 		global_indep_var = list()
 		# Find union of the independent variable data set of all panels
@@ -1704,18 +1709,22 @@ class Figure(object):	#pylint: disable-msg=R0902
 		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = _scale_series(series=global_indep_var, scale=True, scale_type='delta')
 		self.indep_var_min = util_misc.smart_round(self.indep_var_min, 10)
 		self.indep_var_max = util_misc.smart_round(self.indep_var_max, 10)
-		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = _intelligent_ticks(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
+		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = _intelligent_ticks(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True,\
+																								calc_ticks=False, log_indep=self.log_indep())
 		# Scale all panel series
 		for panel_obj in self.current_panel_list:
 			panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable-msg=W0212
 		# Draw panels
 		indep_axis_dict = {'indep_var_min':self.indep_var_min, 'indep_var_max':self.indep_var_max, 'indep_var_locs':indep_var_locs,
 					 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
+		print 'TETO'
 		for num, (panel_obj, axarr) in enumerate(zip(self.current_panel_list, self.axarr)):
 			panel_dict = panel_obj._draw_panel(self.fig, axarr, dict(indep_axis_dict, log_indep=self.log_indep(), indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable-msg=W0212,C0326
 												  indep_axis_label=self.indep_var_label() if num == num_panels-1 else None, indep_axis_units=self.indep_var_units() if num == num_panels-1 else None,
 												  indep_axis_unit_scale = self.indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable-msg=C0326
 			self.axarr_list.append({'panel':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary'], 'min_height':panel_dict['min_height'], 'min_width':panel_dict['min_width']})
+		print 'JEJO'
+
 		self.title_height = 0
 		self.title_width = 0
 		if self.title() != '':
@@ -1804,69 +1813,101 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	raw_labels = [util_eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(util_misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
 
-def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable-msg=R0912,R0914,R0915
+def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True, log_indep=False):	#pylint: disable-msg=R0912,R0913,R0914,R0915
 	"""
 	Calculates ticks 'intelligently', trying to calculate sane tick spacing
 	"""
-	ideal_num_ticks = 8
+	print series
+	print series_min
+	print series_max
 	series_delta = float(series_max-series_min)
-	num_ticks = 0
-	sdiff = [1 if int(element) == element else 0 for element in [util_misc.smart_round(element, 10) for element in numpy.diff(series)]]	#pylint: disable-msg=E1101
-	int_scale = True if sum(sdiff) == len(sdiff) else False
-	min_num_ticks = 2 if series_delta == 0 else (ideal_num_ticks if int_scale is False else min(ideal_num_ticks, series_delta))
-	div = 1 if (series_delta == 0) or (int_scale is True) else 10.0
-	tick_list = None
-	if calc_ticks is False:
-		# Calculate spacing between points
-		tspace = numpy.diff(series)	#pylint: disable-msg=E1101
-		# Find minimum common spacing
-		factors = [util_eng.peng_power(util_eng.peng(element, 3)) for element in tspace]
-		divs = [div for (unit, div) in factors]	#pylint: disable-msg=W0612
-		tspace_div = min(divs)
-		scaled_tspace = numpy.round(numpy.array(tspace)/tspace_div, 10)	#pylint: disable-msg=E1101
-		tspace_gcd = 0.5*util_misc.gcd(scaled_tspace)
-		num_ticks = 1
-		while num_ticks > min_num_ticks:
-			tspace_gcd = 2*tspace_gcd
-			# Find out number of ticks with the minimum common spacing
-			num_ticks = round(1+((series_max-series_min)/(tspace_div*float(tspace_gcd))), 10)
-			if (int(util_misc.smart_round(num_ticks, 10)) == round(num_ticks, 10)) and (int(util_misc.smart_round(num_ticks, 10)) >= min_num_ticks):
-				num_ticks = int(round(num_ticks, 10))
-				tstop = series[-1]
-				tspace = tspace_gcd*tspace_div
-				tick_list = numpy.linspace(series_min, series_max, num_ticks)	#pylint: disable-msg=E1101
-				calc_ticks = False
-	calc_ticks = True if tick_list is None else calc_ticks
-	if calc_ticks is True:
-		if (series_delta != 0) and (int_scale is True):
-			step = 1 if series_delta <= ideal_num_ticks else math.ceil((series_max-series_min)/ideal_num_ticks)
-			tick_list = [series_min-step]+[series_min+num*step for num in range(1+int(util_misc.smart_round(series_delta, 10)) if series_delta <= ideal_num_ticks else ideal_num_ticks)]
-			tstart = tick_list[0]
-			tstop = tick_list[-1]
-		else:
-			# round() allows for deltas closer to the next engineering unit to get the bigger scale while deltas closer to the smaller engineering scale get smaller scale
-			scale = 1.0 if (series_delta == 0) or (int_scale is True) else 10**(round(math.log10(util_eng.peng_int(util_eng.peng(series_delta, 3)))))
-			tight = False if (series_delta == 0) or (int_scale is True) else tight
-			while num_ticks < min_num_ticks:
-				tspace = scale/div
-				tstart = float(int(series_min/tspace)*tspace) if abs(int(series_min/tspace)) > 0 else -tspace
-				if tight is True:
-					tstart = tstart+tspace if tstart <= series_min else tstart				# Quantization of first tick could place it lower than the minimum, adjust for this case
-					tstart = tstart+tspace if tstart-series_min < (tspace/3) else tstart		# Avoid placing a tick mark less that 1/3 of the tick space
+	if log_indep:
+		# If series_delta == 0 one decade is going to be plotted
+		min_dec = int(math.log10(util_misc.smart_round(series_min, PRECISION)))
+		max_dec = int(math.log10(util_misc.smart_round(series_max, PRECISION)))
+		max_dec = max_dec-1 if util_misc.smart_round(series_max, PRECISION) == util_misc.smart_round(10**max_dec, PRECISION) else max_dec
+		tstart = 10**min_dec
+		tstop = 10**(max_dec+1)
+		loc = list()
+		labels = list()
+		for dec in range(min_dec-1, max_dec):
+			#loc += ((10**dec)*numpy.array([10, 20, 30, 40, 50, 60, 70, 80, 90])).tolist()
+			loc += [10**dec]
+			#labels += [str(10**(dec+1))]+(8*[''])
+			labels += [str(10**(dec))]
+		loc += [10**(max_dec+1)]
+		labels += [str(10**(max_dec+1))]
+		print loc
+		print labels
+	else:
+		ideal_num_ticks = 10
+		num_ticks = 0
+		sdiff = [1 if int(element) == element else 0 for element in [util_misc.smart_round(element, 10) for element in numpy.diff(series)]]	#pylint: disable-msg=E1101
+		int_scale = True if sum(sdiff) == len(sdiff) else False
+		min_num_ticks = 2 if series_delta == 0 else (ideal_num_ticks if int_scale is False else min(ideal_num_ticks, series_delta))
+		div = 1 if (series_delta == 0) or (int_scale is True) else 10.0
+		tick_list = None
+		if calc_ticks is False:
+			# Calculate spacing between points
+			tspace = numpy.diff(series)	#pylint: disable-msg=E1101
+			# Find minimum common spacing
+			factors = [util_eng.peng_power(util_eng.peng(element, 3)) for element in tspace]
+			divs = [div for (unit, div) in factors]	#pylint: disable-msg=W0612
+			tspace_div = min(divs)
+			scaled_tspace = numpy.round(numpy.array(tspace)/tspace_div, 10)	#pylint: disable-msg=E1101
+			tspace_gcd = 0.5*util_misc.gcd(scaled_tspace)
+			num_ticks = 1
+			while num_ticks > min_num_ticks:
+				tspace_gcd = 2*tspace_gcd
+				# Find out number of ticks with the minimum common spacing
+				num_ticks = round(1+((series_max-series_min)/(tspace_div*float(tspace_gcd))), 10)
+				if (int(util_misc.smart_round(num_ticks, 10)) == round(num_ticks, 10)) and (int(util_misc.smart_round(num_ticks, 10)) >= min_num_ticks):
+					num_ticks = int(round(num_ticks, 10))
+					tstop = series[-1]
+					tspace = tspace_gcd*tspace_div
+					tick_list = numpy.linspace(series_min, series_max, num_ticks)	#pylint: disable-msg=E1101
+					calc_ticks = False
+		calc_ticks = True if tick_list is None else calc_ticks
+		print tick_list
+		print tight
+		print int_scale
+		if calc_ticks is True:
+			if (series_delta != 0) and (int_scale is True):
+				if (len(series) <= ideal_num_ticks) and ((util_misc.smart_round(numpy.diff(numpy.diff(series)), PRECISION) == numpy.zeros(len(series))).all()):
+					tick_list = series
 				else:
-					tstart = tstart-tspace if tstart >= series_min else tstart				# Start at the grid tick immediately below the lowest data value
-					tstart = tstart-tspace if series_min-tstart <= (tspace/10) else tstart	# Add a tick mark if signal is really close to bottom tick
-				tstop = float(int(series_max/tspace)*tspace)
-				if tight is True:
-					tstop = tstop-tspace if tstop >= series_max else tstop					# Quantization of last tick could place it higher than the maximum, adjust for this case
-					tstop = tstop-tspace if series_max-tstop < (tspace/3) else tstop			# Avoid placing a tick mark less that 1/4 of the tick space
-				else:
-					tstop = tstop+tspace if tstop <= series_max else tstop					# Stop at the grid tick immediately above the highest data value
-					tstop = tstop+tspace if tstop-series_max <= (tspace/10) else tstop		# Add a tick mark if signal is really close to top tick
-				num_ticks = int(round((tstop-tstart)/tspace))+1
-				div = 2.0*div if num_ticks < min_num_ticks else div
-			tick_list = ([series_min] if tight is True else [])+[tstart+(n*tspace) for n in range(0, num_ticks)]+([series_max] if tight is True else [])
-	loc, labels = _uniquify_tick_labels(tick_list, series_min if tight is True else tstart, series_max if tight is True else tstop)
+					step = 1 if series_delta <= ideal_num_ticks else math.ceil((series_max-series_min)/ideal_num_ticks)
+					tick_list = [series_min-step]+[series_min+num*step for num in range(1+int(util_misc.smart_round(series_delta, 10)) if series_delta <= ideal_num_ticks else ideal_num_ticks)]
+				tstart = tick_list[0]
+				tstop = tick_list[-1]
+			else:
+				# round() allows for deltas closer to the next engineering unit to get the bigger scale while deltas closer to the smaller engineering scale get smaller scale
+				scale = 1.0 if (series_delta == 0) or (int_scale is True) else 10**(round(math.log10(util_eng.peng_int(util_eng.peng(series_delta, 3)))))
+				tight = False if (series_delta == 0) or (int_scale is True) else tight
+				while num_ticks < min_num_ticks:
+					tspace = scale/div
+					tstart = float(int(series_min/tspace)*tspace) if abs(int(series_min/tspace)) > 0 else -tspace
+					if tight is True:
+						tstart = tstart+tspace if tstart <= series_min else tstart				# Quantization of first tick could place it lower than the minimum, adjust for this case
+						tstart = tstart+tspace if tstart-series_min < (tspace/3) else tstart		# Avoid placing a tick mark less that 1/3 of the tick space
+					else:
+						tstart = tstart-tspace if tstart >= series_min else tstart				# Start at the grid tick immediately below the lowest data value
+						tstart = tstart-tspace if series_min-tstart <= (tspace/10) else tstart	# Add a tick mark if signal is really close to bottom tick
+					tstop = float(int(series_max/tspace)*tspace)
+					if tight is True:
+						tstop = tstop-tspace if tstop >= series_max else tstop					# Quantization of last tick could place it higher than the maximum, adjust for this case
+						tstop = tstop-tspace if series_max-tstop < (tspace/3) else tstop			# Avoid placing a tick mark less that 1/4 of the tick space
+					else:
+						tstop = tstop+tspace if tstop <= series_max else tstop					# Stop at the grid tick immediately above the highest data value
+						tstop = tstop+tspace if tstop-series_max <= (tspace/10) else tstop		# Add a tick mark if signal is really close to top tick
+					num_ticks = int(round((tstop-tstart)/tspace))+1
+					div = 2.0*div if num_ticks < min_num_ticks else div
+				tick_list = ([series_min] if tight is True else [])+[tstart+(n*tspace) for n in range(0, num_ticks)]+([series_max] if tight is True else [])
+				print tick_list
+		loc, labels = _uniquify_tick_labels(tick_list, series_min if tight is True else tstart, series_max if tight is True else tstop)
+		print loc
+		print labels
+		print
 	return (loc, labels, tstart if series_delta == 0 else series_min, tstop if series_delta == 0 else series_max)
 
 def _uniquify_tick_labels(tick_list, tmin, tmax):
