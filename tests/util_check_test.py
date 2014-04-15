@@ -21,6 +21,13 @@ def test_number_no_exception():
 	"""
 	util_check.Number()
 
+def test_number_includes():
+	"""
+	Test that the includes method of Number class behaves appropriately
+	"""
+	ref_obj = util_check.Number()
+	assert (ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (True, True, True, False, False)
+
 ###
 # Test for Real class
 ###
@@ -29,6 +36,13 @@ def test_real_no_exception():
 	Test that Real class behaves appropriately when all parameters are correctly specified
 	"""
 	util_check.Real()
+
+def test_real_includes():
+	"""
+	Test that the includes method of Real class behaves appropriately
+	"""
+	ref_obj = util_check.Real()
+	assert (ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (True, True, False, False, False)
 
 ###
 # Test for ArbitraryLength class
@@ -49,6 +63,13 @@ def test_arbitrary_length_exception():	#pylint: disable-msg=C0103
 		util_check.ArbitraryLength('a')
 	assert excinfo.value.message == 'element_type parameter has to be a type'
 
+def test_arbitrary_length_includes():
+	"""
+	Test that the includes method of ArbitraryLength class behaves appropriately
+	"""
+	ref_obj = util_check.ArbitraryLength(int)
+	assert (ref_obj.includes([1, 2]), ref_obj.includes(set([1.0, 2.0])), ref_obj.includes(1+2j), ref_obj.includes('a')) == (True, False, False, False)
+
 ###
 # Test for ArbitraryLengthList class
 ###
@@ -67,6 +88,13 @@ def test_arbitrary_length_list_exception():	#pylint: disable-msg=C0103
 	with pytest.raises(TypeError) as excinfo:
 		util_check.ArbitraryLengthList('a')
 	assert excinfo.value.message == 'element_type parameter has to be a type'
+
+def test_arbitrary_length_list_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of ArbitraryLengthList class behaves appropriately
+	"""
+	ref_obj = util_check.ArbitraryLengthList(int)
+	assert (ref_obj.includes([1, 2]), ref_obj.includes(set([1, 2])), ref_obj.includes((1, 2)), ref_obj.includes('a')) == (True, False, False, False)
 
 ###
 # Test for ArbitraryLengthTuple class
@@ -87,6 +115,13 @@ def test_arbitrary_length_tuple_exception():	#pylint: disable-msg=C0103
 		util_check.ArbitraryLengthTuple('a')
 	assert excinfo.value.message == 'element_type parameter has to be a type'
 
+def test_arbitrary_length_tuple_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of ArbitraryLengthTuple class behaves appropriately
+	"""
+	ref_obj = util_check.ArbitraryLengthTuple(float)
+	assert (ref_obj.includes((1.0, 2.0)), ref_obj.includes([1, 2]), ref_obj.includes(set([1, 2])), ref_obj.includes('a')) == (True, False, False, False)
+
 ###
 # Test for ArbitraryLengthSet class
 ###
@@ -105,6 +140,13 @@ def test_arbitrary_length_set_exception():	#pylint: disable-msg=C0103
 	with pytest.raises(TypeError) as excinfo:
 		util_check.ArbitraryLengthSet('a')
 	assert excinfo.value.message == 'element_type parameter has to be a type'
+
+def test_arbitrary_length_set_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of ArbitraryLengthSet class behaves appropriately
+	"""
+	ref_obj = util_check.ArbitraryLengthSet(float)
+	assert (ref_obj.includes(set([1.0, 2.0])), ref_obj.includes([1, 2]), ref_obj.includes((1, 2)), ref_obj.includes('a')) == (True, False, False, False)
 
 ###
 # Test for OneOf class
@@ -137,20 +179,30 @@ def test_one_of_proper_no_errors():	#pylint: disable-msg=C0103
 	"""
 	test_choices = ['a', 2, 3.0, 'a', util_check.Real()]
 	obj = util_check.OneOf(test_choices, case_sensitive=True)
-	assert (obj.types == set([type(element) for element in test_choices]), obj.choices == test_choices, obj.case_sensitive == True) == (True, True, True)
+	assert (obj.types == [type(element) for element in test_choices], obj.choices == test_choices, obj.case_sensitive == True) == (True, True, True)
 
 def test_one_of_proper_contains_behavior():	#pylint: disable-msg=C0103
 	"""
 	Tests that OneOf class behaves properly extracting type information
 	"""
 	obj1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
-	obj2 = util_check.OneOf(['c', 'D'], case_sensitive=False)
-	assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2) == (True, True, True, True, False, False, False, True, True, False, False)
+	obj2 = util_check.OneOf(['c', 'D', util_check.IncreasingRealNumpyVector()], case_sensitive=False)
+	assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2, numpy.array([1, 2, 3]) in obj2, numpy.array([1.0, 0.0, -1.0]) in obj2) == \
+		(True, True, True, True, False, False, False, True, True, False, False, True, False)
+
+def test_one_of_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of OneOf class behaves appropriately
+	"""
+	ref_obj1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
+	ref_obj2 = util_check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False)
+	assert (ref_obj1.includes('a'), ref_obj1.includes('b'), ref_obj1.includes(3.0), ref_obj1.includes(2), ref_obj1.includes(util_check.Number()), ref_obj1.includes('c'), ref_obj1.includes('A'),
+		 ref_obj2.includes('none'), ref_obj2.includes('autos')) == (True, True, True, True, False, False, False, True, False)
 
 ###
 # Test for NumberRange class
 ###
-def test_range_minimum_not_a_number():
+def test_number_range_minimum_not_a_number():	#pylint: disable-msg=C0103
 	"""
 	Tests that NumberRange class behaves properly when minimum is not a number
 	"""
@@ -158,7 +210,7 @@ def test_range_minimum_not_a_number():
 		util_check.NumberRange(minimum=False, maximum=None)
 	assert excinfo.value.message == 'minimum parameter has to be None or a real number'
 
-def test_range_maximum_not_a_number():
+def test_number_range_maximum_not_a_number():	#pylint: disable-msg=C0103
 	"""
 	Tests that NumberRange class behaves properly when maximum is not a number
 	"""
@@ -166,7 +218,7 @@ def test_range_maximum_not_a_number():
 		util_check.NumberRange(minimum=None, maximum=True)
 	assert excinfo.value.message == 'maximum parameter has to be None or a real number'
 
-def test_range_minimum_and_maximum_not_specified():	#pylint: disable-msg=C0103
+def test_number_range_minimum_and_maximum_not_specified():	#pylint: disable-msg=C0103
 	"""
 	Tests that NumberRange class behaves properly when neither minimum nor maximum are specified
 	"""
@@ -174,7 +226,7 @@ def test_range_minimum_and_maximum_not_specified():	#pylint: disable-msg=C0103
 		util_check.NumberRange(minimum=None, maximum=None)
 	assert excinfo.value.message == 'Either minimum or maximum parameters need to be specified'
 
-def test_range_minimum_and_maximum_are_of_different_type():	#pylint: disable-msg=C0103
+def test_number_range_minimum_and_maximum_are_of_different_type():	#pylint: disable-msg=C0103
 	"""
 	Tests that NumberRange class behaves properly when minimum is either integer or float and maximum is either float or integer
 	"""
@@ -182,7 +234,7 @@ def test_range_minimum_and_maximum_are_of_different_type():	#pylint: disable-msg
 		util_check.NumberRange(minimum=1.5, maximum=3)
 	assert excinfo.value.message == 'minimum and maximum parameters have different types, the both have to be integers or floats'
 
-def test_range_minimum_greater_than_maximum():	#pylint: disable-msg=C0103
+def test_number_range_minimum_greater_than_maximum():	#pylint: disable-msg=C0103
 	"""
 	Tests that NumberRange class behaves properly when minimum is greater than maximum
 	"""
@@ -190,12 +242,57 @@ def test_range_minimum_greater_than_maximum():	#pylint: disable-msg=C0103
 		util_check.NumberRange(minimum=1.5, maximum=0.0)
 	assert excinfo.value.message == 'minimum greater than maximum'
 
-def test_range_no_errors():	#pylint: disable-msg=C0103
+def test_number_range_no_errors():	#pylint: disable-msg=C0103
 	"""
 	Tests that NumberRange class behaves properly when all parameters are correctly specified
 	"""
 	obj = util_check.NumberRange(minimum=10, maximum=20)
 	assert (obj.minimum == 10, obj.maximum == 20) == (True, True)
+
+def test_number_range_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of NumberRange class behaves appropriately
+	"""
+	ref_obj1 = util_check.NumberRange(10, 15)
+	ref_obj2 = util_check.NumberRange(100.0, 200.0)
+	assert (ref_obj1.includes(5), ref_obj1.includes(10), ref_obj1.includes(13), ref_obj1.includes(15), ref_obj1.includes(20), ref_obj1.includes(13.0),
+		 ref_obj2.includes(75.1), ref_obj2.includes(100.0), ref_obj2.includes(150.0), ref_obj2.includes(200.0), ref_obj2.includes(200.1), ref_obj2.includes(200)) == \
+		 (False, True, True, True, False, False, False, True, True, True, False, False)
+
+###
+# Test RealNumpyVector class
+###
+def test_real_numpy_vector_no_exception():	#pylint: disable-msg=C0103
+	"""
+	Test that RealNumpyVector class behaves appropriately when all parameters are correctly specified
+	"""
+	util_check.RealNumpyVector()
+
+def test_real_numpy_vector_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of RealNumpyVector class behaves appropriately
+	"""
+	ref_obj = util_check.RealNumpyVector()
+	assert (ref_obj.includes('a'), ref_obj.includes([1, 2, 3]), ref_obj.includes(numpy.array([])), ref_obj.includes(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.includes(numpy.array(['a', 'b'])),
+		 ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0]))) == (False, False, False, False, False, True, True)
+
+###
+# Test IncreasingRealNumpyVector class
+###
+def test_increasing_real_numpy_vector_no_exception():	#pylint: disable-msg=C0103
+	"""
+	Test that IncreasingRealNumpyVector class behaves appropriately when all parameters are correctly specified
+	"""
+	util_check.IncreasingRealNumpyVector()
+
+def test_increasing_real_numpy_vector_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of IncreasingRealNumpyVector class behaves appropriately
+	"""
+	ref_obj = util_check.IncreasingRealNumpyVector()
+	assert (ref_obj.includes('a'), ref_obj.includes([1, 2, 3]), ref_obj.includes(numpy.array([])), ref_obj.includes(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.includes(numpy.array(['a', 'b'])),
+		 ref_obj.includes(numpy.array([1, 0, -3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0])), ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 12.1, 12.5]))) == \
+		(False, False, False, False, False, False, False, True, True)
 
 ###
 # Test PolymorphicType class
@@ -208,7 +305,7 @@ def test_type_match_polymorphic_type_wrong_type():	#pylint: disable-msg=C0103
 		util_check.PolymorphicType('a')
 	assert excinfo.value.message == 'object parameter has to be a list, tuple or set'
 
-def test_type_match_polymorphic_subtype_wrong_type():	#pylint: disable-msg=C0103
+def test_type_match_polymorphic_type_subtype_wrong_type():	#pylint: disable-msg=C0103
 	"""
 	Test if function behaves proprely when wrong sub-type parameter is given
 	"""
@@ -216,7 +313,7 @@ def test_type_match_polymorphic_subtype_wrong_type():	#pylint: disable-msg=C0103
 		util_check.PolymorphicType([str, int, 'a'])
 	assert excinfo.value.message == 'type element in types parameter has to be a type'
 
-def test_type_match_polymorphic_no_errors():	#pylint: disable-msg=C0103
+def test_type_match_polymorphic_type_no_errors():	#pylint: disable-msg=C0103
 	"""
 	Test if function behaves proprely when all parameters are correctly specified
 	"""
@@ -227,45 +324,57 @@ def test_type_match_polymorphic_no_errors():	#pylint: disable-msg=C0103
 	test_types[2] = type(None)
 	assert (obj.instances == test_instances, obj.types == test_types) == (True, True)
 
-# Dummy functions representing the actual function to be decorated
-def func_all_positional_parameters(ppar1, ppar2, ppar3):	#pylint: disable-msg=C0111,W0613
-	pass
+def test_polymorphic_type_includes():	#pylint: disable-msg=C0103
+	"""
+	Test that the includes method of PolymorphicType class behaves appropriately
+	"""
+	test_instances = [int, None, util_check.ArbitraryLengthList(int), util_check.ArbitraryLengthTuple(float), util_check.ArbitraryLengthSet(str), util_check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=True),
+		  util_check.NumberRange(1, 3), util_check.Number(), util_check.Real(), util_check.RealNumpyVector()]
+	ref_obj1 = util_check.PolymorphicType(test_instances)
+	ref_obj2 = util_check.PolymorphicType([float, util_check.IncreasingRealNumpyVector()])
+	assert (ref_obj1.includes(5), ref_obj1.includes(None), ref_obj1.includes([1, 2, 3]), ref_obj1.includes((2.0, 3.0)), ref_obj1.includes(set(['a', 'b', 'c'])), ref_obj1.includes('MANUAL'), ref_obj1.includes(2),
+		 ref_obj1.includes(100.0), ref_obj1.includes(10+20j), ref_obj1.includes(numpy.array([10, 0.0, 30])), ref_obj1.includes('hello world'), ref_obj1.includes([1.0, 2.0, 3.0]), ref_obj1.includes('auto'),
+		 ref_obj1.includes(numpy.array([])), ref_obj1.includes(numpy.array(['a', 'b', 'c'])), ref_obj2.includes(1), ref_obj2.includes(set([1, 2])), ref_obj2.includes(numpy.array([1, 0, -1])),
+		 ref_obj2.includes(numpy.array([10.0, 20.0, 30.0])), ref_obj2.includes(5.0)) == (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True)
 
-def func_all_keyword_parameters(kpar1=1, kpar2=2, kpar3=3):	#pylint: disable-msg=C0111,R0913,W0613
-	pass
-
-def func_positional_and_keyword_parameters(ppar1, ppar2, ppar3, kpar1=1, kpar2=2, kpar3=3):	#pylint: disable-msg=C0103,C0111,R0913,W0613
-	pass
-
-def func_no_parameters():	#pylint: disable-msg=C0111,R0913,W0613
-	pass
-
+##
 # Tests for get_function_args()
+###
 def test_get_function_args_all_positional_parameters():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when all parameters are positional parameters
 	"""
-	assert util_check.get_function_args(func_all_positional_parameters) == ('ppar1', 'ppar2', 'ppar3')
+	def func(ppar1, ppar2, ppar3):	#pylint: disable-msg=C0111,W0613
+		pass
+	assert util_check.get_function_args(func) == ('ppar1', 'ppar2', 'ppar3')
 
 def test_get_function_args_all_keyword_parameters():	#pylint: disable-msg=C0103,W0613
 	"""
 	Test that function behaves properly when all parameters are keywords parameters
 	"""
-	assert util_check.get_function_args(func_all_keyword_parameters) == ('kpar1', 'kpar2', 'kpar3')
+	def func(kpar1=1, kpar2=2, kpar3=3):	#pylint: disable-msg=C0111,R0913,W0613
+		pass
+	assert util_check.get_function_args(func) == ('kpar1', 'kpar2', 'kpar3')
 
 def test_get_function_args_positional_and_keyword_parameters():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when parameters are a mix of positional and keywords parameters
 	"""
-	assert util_check.get_function_args(func_positional_and_keyword_parameters) == ('ppar1', 'ppar2', 'ppar3', 'kpar1', 'kpar2', 'kpar3')
+	def func(ppar1, ppar2, ppar3, kpar1=1, kpar2=2, kpar3=3):	#pylint: disable-msg=C0103,C0111,R0913,W0613
+		pass
+	assert util_check.get_function_args(func) == ('ppar1', 'ppar2', 'ppar3', 'kpar1', 'kpar2', 'kpar3')
 
 def test_get_function_args_no_parameters():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when there are no parameters passed
 	"""
-	assert util_check.get_function_args(func_no_parameters) == ()
+	def func():	#pylint: disable-msg=C0111,R0913,W0613
+		pass
+	assert util_check.get_function_args(func) == ()
 
+###
 # Tests for create_parameter_dictionary()
+###
 def ret_func(par):
 	"""
 	Returns the passed parameter
@@ -349,7 +458,9 @@ def test_create_parameter_dictionary_parameter_passed_by_position_and_keyword():
 		pass
 	assert orig_func(1, 2, ppar1=5) == {}	#pylint: disable-msg=E1124
 
+###
 # Tests for type_match()
+###
 def test_type_match_str():
 	"""
 	Test if function behaves proprely for string type
@@ -370,14 +481,14 @@ def test_type_match_int():
 
 def test_type_match_number():
 	"""
-	Test if function behaves proprely for number pseudo-type (integer, real or complex)
+	Test if function behaves proprely for Number pseudo-type (integer, real or complex)
 	"""
 	assert (util_check.type_match(1, util_check.Number()), util_check.type_match(135.0, util_check.Number()), util_check.type_match(1+1j, util_check.Number()), util_check.type_match('hello', util_check.Number())) == \
 		(True, True, True, False)
 
 def test_type_match_real():
 	"""
-	Test if function behaves proprely for real pseudo-type (integer or real)
+	Test if function behaves proprely for Real pseudo-type (integer or real)
 	"""
 	assert (util_check.type_match(1, util_check.Real()), util_check.type_match(135.0, util_check.Real()), util_check.type_match(1+1j, util_check.Real())) == (True, True, False)
 
@@ -389,31 +500,31 @@ def test_type_match_boolean():
 
 def test_type_match_decimal():
 	"""
-	Test if function behaves proprely for decimal type
+	Test if function behaves proprely for Decimal type
 	"""
 	assert (util_check.type_match(decimal.Decimal(1.25), decimal.Decimal), util_check.type_match(12.5, decimal.Decimal)) == (True, False)
 
 def test_type_match_fraction():
 	"""
-	Test if function behaves proprely for fraction type
+	Test if function behaves proprely for Fraction type
 	"""
 	assert (util_check.type_match(fractions.Fraction(4, 6), fractions.Fraction), util_check.type_match(12.5, fractions.Fraction)) == (True, False)
 
 def test_type_match_arbitrary_length_list():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for arbitrary length list type
+	Test if function behaves proprely for ArbitraryLengthList pseudo-type
 	"""
 	assert (util_check.type_match([1, 2, 3], util_check.ArbitraryLengthList(int)), util_check.type_match('hello', util_check.ArbitraryLengthList(int))) == (True, False)
 
 def test_type_match_arbitrary_length_tuple():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for arbitrary length tuple type
+	Test if function behaves proprely for ArbitraryLengthTuple pseudo-type
 	"""
 	assert (util_check.type_match((1, 2, 3), util_check.ArbitraryLengthTuple(int)), util_check.type_match((1, 2, 'a'), util_check.ArbitraryLengthTuple(int))) == (True, False)
 
 def test_type_match_arbitrary_length_set():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for arbitrary length set type
+	Test if function behaves proprely for ArbitraryLengthSet pseudo-type
 	"""
 	assert (util_check.type_match(set([1, 2, 3]), util_check.ArbitraryLengthSet(int)), util_check.type_match(set([1, 2, 'a']), util_check.ArbitraryLengthSet(int))) == (True, False)
 
@@ -441,14 +552,14 @@ def test_type_match_fixed_length_set():	#pylint: disable-msg=C0103
 
 def test_type_match_one_of():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for one of a fixed number of finite choices
+	Test if function behaves proprely for OneOf pseudo-type
 	"""
 	assert (util_check.type_match('HELLO', util_check.OneOf(['HELLO', 45, 'WORLD'])), util_check.type_match(45, util_check.OneOf(['HELLO', 45, 'WORLD'])), util_check.type_match(1.0, util_check.OneOf(['HELLO', 45, 'WORLD']))) == \
 		 (True, True, False)
 
 def test_type_match_range():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for a numeric range
+	Test if function behaves proprely for NumberRange pseudo-type
 	"""
 	assert (util_check.type_match(12, util_check.NumberRange(minimum=2, maximum=5)), util_check.type_match('a', util_check.NumberRange(minimum=2, maximum=5))) == (True, False)
 
@@ -464,27 +575,29 @@ def test_type_match_dict():
 
 def test_type_match_polymorphic_type():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for polymorphic inputs
+	Test if function behaves proprely for PolymorphicType pseudo-type
 	"""
 	assert (util_check.type_match('HELLO', util_check.PolymorphicType([str, int])), util_check.type_match(45, util_check.PolymorphicType([str, int])), util_check.type_match(1.5, util_check.PolymorphicType([str, int]))) \
 		== (True, True, False)
 
 def test_type_match_real_numpy_vector():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for an real Numpy vector
+	Test if function behaves proprely for RealNumpyVector pseudo-type
 	"""
 	assert (util_check.type_match(12, util_check.RealNumpyVector()), util_check.type_match(numpy.array([1, 2, 0]), util_check.RealNumpyVector()),
 		 util_check.type_match(numpy.array([[1, 2, 0], [1, 1, 2]]), util_check.RealNumpyVector())) == (False, True, False)
 
 def test_type_match_increasing_real_numpy_vector():	#pylint: disable-msg=C0103
 	"""
-	Test if function behaves proprely for an increasing real Numpy vector
+	Test if function behaves proprely for IncreasingRealNumpyVector pseudo-type
 	"""
 	assert (util_check.type_match(12, util_check.IncreasingRealNumpyVector()), util_check.type_match(numpy.array([1, 2, 3]), util_check.IncreasingRealNumpyVector()),
 		 util_check.type_match(numpy.array([True, False, True]), util_check.IncreasingRealNumpyVector()),
 		 util_check.type_match(numpy.array([[1, 2, 3], [4, 5, 6]]), util_check.IncreasingRealNumpyVector())) == (False, True, False, False)
 
+###
 # Tests for check_type()
+###
 def test_check_type_simple_exception():	#pylint: disable-msg=C0103
 	"""
 	Test that function behaves properly when a sigle (wrong) type is given (string, number, etc.)

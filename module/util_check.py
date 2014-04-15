@@ -43,7 +43,7 @@ class ArbitraryLength(object):	#pylint: disable-msg=R0903
 		if not util_misc.isiterable(test_obj):
 			return False
 		for test_subobj in test_obj:
-			if type(test_subobj) != type(self.element_type):
+			if type(test_subobj) != self.element_type:
 				return False
 		return True
 
@@ -59,7 +59,7 @@ class ArbitraryLengthList(ArbitraryLength):	#pylint: disable-msg=R0903
 		"""
 		Test that an object belongs to the pseudo-type
 		"""
-		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLengthList(self, test_obj)
+		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLength.includes(self, test_obj)
 
 class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable-msg=R0903
 	"""
@@ -73,7 +73,7 @@ class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable-msg=R0903
 		"""
 		Test that an object belongs to the pseudo-type
 		"""
-		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLengthList(self, test_obj)
+		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLength.includes(self, test_obj)
 
 class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable-msg=R0903
 	"""
@@ -87,7 +87,7 @@ class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable-msg=R0903
 		"""
 		Test that an object belongs to the pseudo-type
 		"""
-		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLengthList(self, test_obj)
+		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLength.includes(self, test_obj)
 
 class OneOf(object):	#pylint: disable-msg=R0903
 	"""
@@ -101,8 +101,9 @@ class OneOf(object):	#pylint: disable-msg=R0903
 			len(choices)
 		except:
 			raise TypeError('choices parameter has to be an iterable of finite length')
+		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector]
 		self.choices = choices
-		self.types = set([type(element) for element in self.choices])	# Make it a set to speed up type comparison if there are repeated types
+		self.types = [type(element) for element in self.choices]
 		self.case_sensitive = case_sensitive if str in self.types else None
 
 	def includes(self, test_obj):	#pylint: disable-msg=R0201
@@ -112,8 +113,17 @@ class OneOf(object):	#pylint: disable-msg=R0903
 		return test_obj in self
 
 	def __contains__(self, value):
-		for obj in self.choices:
-			if ((isinstance(obj, str)) and (isinstance(value, str)) and (self.case_sensitive is not None) and (not self.case_sensitive) and (obj.upper() == value.upper())) or (obj == value):
+		for sub_type, sub_choice in zip(self.types, self.choices):
+			# Compare sub-types
+			if (sub_type in self.pseudo_types) and sub_choice.includes(value):
+				return True
+			# Compare string with and without case sensitivity
+			if (type(sub_choice) == type(value)) and (sub_type is str) and \
+					(((self.case_sensitive is not None) and (not self.case_sensitive) and (sub_choice.upper() == value.upper())) or \
+				     ((self.case_sensitive is not None) and self.case_sensitive and (sub_choice == value))):
+				return True
+			# Rest of types
+			if (type(sub_choice) == type(value)) and (sub_choice == value):
 				return True
 		return False
 
@@ -141,32 +151,6 @@ class NumberRange(object):	#pylint: disable-msg=R0903
 		"""
 		return util_misc.isreal(test_obj) and (type(test_obj) == type(self.minimum if self.minimum is not None else self.maximum)) and (test_obj >= self.minimum if self.minimum is not None else test_obj) and \
 			(test_obj <= self.maximum if self.maximum is not None else test_obj)
-
-class PolymorphicType(object):	#pylint: disable-msg=R0903
-	"""
-	Class for polymorphic parameters
-	"""
-	def __init__(self, types):
-		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
-			raise TypeError('object parameter has to be a list, tuple or set')
-		pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector]
-		for element_type in types:
-			if (type(element_type) not in pseudo_types) and (not isinstance(element_type, type)) and (element_type is not None):
-				raise TypeError('type element in types parameter has to be a type')
-		self.instances = types
-		self.types = [sub_type if type(sub_type) == type else type(sub_type) for sub_type in types]	# Custom types are technically objects of a pseudo-type class, so true type extraction is necessary
-
-	def __iter__(self):
-		return iter(self.types)
-
-	def find(self, req_type):
-		"""
-		Find sub-type in type iterable. Cannot use find() method since set() needs to be supported
-		"""
-		for sub_type, sub_inst in zip(self.types, self.instances):
-			if req_type == sub_type:
-				return sub_inst
-		raise ValueError('Requested sub-type not found')
 
 class RealNumpyVector(object):	#pylint: disable-msg=R0903
 	"""
@@ -199,7 +183,44 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable-msg=R0903
 		"""
 		if not RealNumpyVector.includes(self, test_obj):
 			return False
-		return False if min(numpy.diff(test_obj)) <= 0 else True
+		return not min(numpy.diff(test_obj)) <= 0
+
+class PolymorphicType(object):	#pylint: disable-msg=R0903
+	"""
+	Class for polymorphic parameters
+	"""
+	def __init__(self, types):
+		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
+			raise TypeError('object parameter has to be a list, tuple or set')
+		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector]
+		for element_type in types:
+			if (type(element_type) not in self.pseudo_types) and (not isinstance(element_type, type)) and (element_type is not None):
+				raise TypeError('type element in types parameter has to be a type')
+		self.instances = types
+		self.types = [sub_type if type(sub_type) == type else type(sub_type) for sub_type in types]	# Custom types are technically objects of a pseudo-type class, so true type extraction is necessary
+
+	def __iter__(self):
+		return iter(self.types)
+
+	def find(self, req_type):
+		"""
+		Find sub-type in type iterable. Cannot use find() method since set() needs to be supported
+		"""
+		for sub_type, sub_inst in zip(self.types, self.instances):
+			if req_type == sub_type:
+				return sub_inst
+		raise ValueError('Requested sub-type not found')
+
+	def includes(self, test_obj):	#pylint: disable-msg=R0201
+		"""
+		Test that an object belongs to the pseudo-type
+		"""
+		for sub_type, sub_inst in zip(self.types, self.instances):
+			if (sub_type in self.pseudo_types) and sub_inst.includes(test_obj):
+				return True
+			elif (sub_type not in self.pseudo_types) and isinstance(test_obj, sub_type):
+				return True
+		return False
 
 def get_function_args(func):
 	"""
