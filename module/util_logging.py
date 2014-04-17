@@ -51,8 +51,8 @@ class _Plogger(object):
 		self.current_logger = None
 		self.name(__name__ if name is None else name)
 		self.log_level(log_level if logger is None else logger.getEffectiveLevel() if isinstance(logger, logging.Logger) is True else None)
-		self.log_file(log_file if logger is None else _find_logger_basefilename(logger) if isinstance(logger, logging.Logger) is True else None)	#pylint: disable-msg=W0212
-		self.logger(logger if logger is not None else _setup_logging(name, self.log_level(), self.log_file()))	#pylint: disable-msg=W0212
+		self.log_file(log_file if logger is None else _find_logger_basefilename(logger) if isinstance(logger, logging.Logger) is True else None)	#pylint: disable=W0212
+		self.logger(logger if logger is not None else _setup_logging(name, self.log_level(), self.log_file()))	#pylint: disable=W0212
 
 	def name(self, name=None):
 		"""
@@ -85,7 +85,7 @@ class _Plogger(object):
 				raise TypeError(msg)
 			self.current_logger = logger
 			self.current_log_level = self.level_str_list[self.level_int_list.index(self.current_logger.getEffectiveLevel())]
-			self.current_log_file = _find_logger_basefilename(self.current_logger)	#pylint: disable-msg=W0212
+			self.current_log_file = _find_logger_basefilename(self.current_logger)	#pylint: disable=W0212
 			self.current_name = self.current_logger.name
 
 	def log_level(self, log_level=None):
@@ -146,7 +146,7 @@ class _Plogger(object):
 			self.current_log_file = log_file
 			# Change log file maintaining current log level and format
 			if isinstance(self.current_logger, logging.Logger) is True:
-				current_format = self.current_logger.handlers[0].formatter._fmt	#pylint: disable-msg=W0212
+				current_format = self.current_logger.handlers[0].formatter._fmt	#pylint: disable=W0212
 				current_level = self.log_level_int()
 				if _find_logger_basefilename(self.current_logger) != 'sys.stdout':
 					self.current_logger.handlers[0].stream.close()

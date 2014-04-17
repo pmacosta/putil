@@ -27,7 +27,7 @@ def pcolor(text, color, tab=0):
 		raise RuntimeError('Color "'+color+'" not supported by pcolor function')
 	return '\033['+str(esc_dict[color])+'m'+' '*tab+text+'\033[0m' if esc_dict[color] != -1 else (' '*tab)+text
 
-def binary_string_to_octal_string(text):	#pylint: disable-msg=C0103
+def binary_string_to_octal_string(text):	#pylint: disable=C0103
 	"""
 	Prints binary string in octal representation replacing typical codes with their escape sequences
 	"""
@@ -64,8 +64,8 @@ def per(numa, numb, prec=10):
 	"""
 	Calculates percentage difference between two numbers
 	"""
-	numa_type = 1 if isreal(numa) is True else (2 if (isinstance(numa, numpy.ndarray) is True) or (isinstance(numa, list) is True) else 0)	#pylint: disable-msg=E1101
-	numb_type = 1 if isreal(numb) is True else (2 if (isinstance(numb, numpy.ndarray) is True) or (isinstance(numb, list) is True) else 0)	#pylint: disable-msg=E1101
+	numa_type = 1 if isreal(numa) is True else (2 if (isinstance(numa, numpy.ndarray) is True) or (isinstance(numa, list) is True) else 0)	#pylint: disable=E1101
+	numb_type = 1 if isreal(numb) is True else (2 if (isinstance(numb, numpy.ndarray) is True) or (isinstance(numb, list) is True) else 0)	#pylint: disable=E1101
 	if numa_type != numb_type:
 		raise TypeError('Arguments are not of the same type in function per')
 	if numa_type == 1:
@@ -78,11 +78,11 @@ def per(numa, numb, prec=10):
 	else:
 		numa = numpy.round(numa, prec)
 		numb = numpy.round(numb, prec)
-		num_max = numpy.maximum(numa, numb)	#pylint: disable-msg=E1101
-		num_min = numpy.minimum(numa, numb)	#pylint: disable-msg=E1101
-		delta_vector = 1e-20*numpy.ones(len(num_max))	#pylint: disable-msg=E1101
-		num_min = numpy.where(num_min != 0, num_min, delta_vector)	#pylint: disable-msg=E1101
-		return numpy.where(numa == numb, 0, (num_max/num_min)-1)	#pylint: disable-msg=E1101
+		num_max = numpy.maximum(numa, numb)	#pylint: disable=E1101
+		num_min = numpy.minimum(numa, numb)	#pylint: disable=E1101
+		delta_vector = 1e-20*numpy.ones(len(num_max))	#pylint: disable=E1101
+		num_min = numpy.where(num_min != 0, num_min, delta_vector)	#pylint: disable=E1101
+		return numpy.where(numa == numb, 0, (num_max/num_min)-1)	#pylint: disable=E1101
 
 def get_method_obj(req_class_obj, method_name):
 	"""
@@ -99,7 +99,7 @@ def get_method_obj(req_class_obj, method_name):
 		raise RuntimeError('method not found in class')
 	return method_obj
 
-class Bundle(object):	#pylint: disable-msg=R0903
+class Bundle(object):	#pylint: disable=R0903
 	"""
 	Bundle a collection of variables in one object
 	"""
@@ -198,12 +198,12 @@ def isiterable(obj):
 	"""
 	try:
 		iter(obj)
-	except:	#pylint: disable-msg=W0702
+	except:	#pylint: disable=W0702
 		return False
 	else:
 		return True
 
-def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=None):	#pylint: disable-msg=R0913
+def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=None):	#pylint: disable=R0913
 	"""
 	Formats Numpy vectors for printing
 	"""

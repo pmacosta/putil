@@ -1,4 +1,4 @@
-﻿#pylint: disable-msg=C0302
+﻿#pylint: disable=C0302
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -8,7 +8,7 @@ import math
 import numpy
 from scipy import stats
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d  #pylint: disable-msg=E0611
+from scipy.interpolate import interp1d  #pylint: disable=E0611
 
 import util_csv
 import util_eng
@@ -20,9 +20,9 @@ PRECISION = 10	# Number of mantissa significant digits
 Number of mantissa significant digits
 
 :type:	integer
-"""	#pylint: disable-msg=W0105
+"""	#pylint: disable=W0105
 
-class BasicSource(object):	#pylint: disable-msg=R0902,R0903
+class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Container to hold data sets intended for plotting
 
@@ -55,11 +55,11 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 		self._set_indep_var(indep_var)
 		self._set_dep_var(dep_var)
 
-	def _get_indep_var(self):	#pylint: disable-msg=C0111
+	def _get_indep_var(self):	#pylint: disable=C0111
 		return self._indep_var
 
 	@util_check.check_parameter('indep_var', util_check.PolymorphicType([None, util_check.IncreasingRealNumpyVector()]))
-	def _set_indep_var(self, indep_var):	#pylint: disable-msg=C0111
+	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
 		if (indep_var is not None) and (len(indep_var) == 0):
 			raise ValueError('Parameter indep_var is empty')
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
@@ -68,11 +68,11 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
-	def _get_dep_var(self):	#pylint: disable-msg=C0111
+	def _get_dep_var(self):	#pylint: disable=C0111
 		return self._dep_var
 
 	@util_check.check_parameter('dep_var', util_check.PolymorphicType([None, util_check.RealNumpyVector()]))
-	def _set_dep_var(self, dep_var):	#pylint: disable-msg=C0111
+	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
 		if (dep_var is not None) and (len(dep_var) == 0):
 			raise ValueError('Parameter dep_var is empty')
 		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):
@@ -80,22 +80,22 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 		self._raw_dep_var = util_misc.smart_round(dep_var, PRECISION)
 		self._update_dep_var()
 
-	def _get_indep_min(self):	#pylint: disable-msg=C0111
+	def _get_indep_min(self):	#pylint: disable=C0111
 		return self._indep_min
 
 	@util_check.check_parameter('indep_min', util_check.PolymorphicType([None, util_check.Real()]))
-	def _set_indep_min(self, indep_min):	#pylint: disable-msg=C0111
+	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
 			raise ValueError('Parameter indep_min is greater than parameter indep_max')
 		self._indep_min = util_misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
-	def _get_indep_max(self):	#pylint: disable-msg=C0111
+	def _get_indep_max(self):	#pylint: disable=C0111
 		return self._indep_max
 
 	@util_check.check_parameter('indep_max', util_check.PolymorphicType([None, util_check.Real()]))
-	def _set_indep_max(self, indep_max):	#pylint: disable-msg=C0111
+	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
 			raise ValueError('Parameter indep_min is greater than parameter indep_max')
 		self._indep_max = util_misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
@@ -150,7 +150,7 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
 
 	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	indep_max = property(_get_indep_max, _set_indep_max, doc='Maximum of independent variable')
 	"""
@@ -163,7 +163,7 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
 
 	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	indep_var = property(_get_indep_var, _set_indep_var, doc='Independent variable Numpy vector')
 	"""
@@ -178,7 +178,7 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	 * ValueError (Parameter indep_var and dep_var must have the same number of elements)
 
 	 * ValueError (Parameters indep_var is empty after indep_min/indep_max thresholding)
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	dep_var = property(_get_dep_var, _set_dep_var, doc='Dependent variable Numpy vector')
 	"""
@@ -191,9 +191,9 @@ class BasicSource(object):	#pylint: disable-msg=R0902,R0903
 	 * ValueError (Parameter dep_var is empty)
 
 	 * ValueError (indep_var and dep_var must have the same number of elements)
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
-class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
+class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
 	Retrieves plot series data from a comma-separated file
 
@@ -223,7 +223,7 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 
 	 * Same as :py:attr:`util_plot.BasicSource.indep_max`
 	"""
-	def __init__(self, file_name=None, indep_col_label=None, dep_col_label=None, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable-msg=R0913
+	def __init__(self, file_name=None, indep_col_label=None, dep_col_label=None, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		BasicSource.__init__(self, indep_var=None, dep_var=None, indep_min=indep_min, indep_max=indep_max)
 		# Private attributes
 		self._csv_obj, self._fproc, self._fproc_eargs, self._reverse_data = None, None, None, False
@@ -236,11 +236,11 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 		self._set_dfilter(dfilter)
 		self._set_file_name(file_name)
 
-	def _get_file_name(self):	#pylint: disable-msg=C0111
+	def _get_file_name(self):	#pylint: disable=C0111
 		return self._file_name
 
 	@util_check.check_parameter('file_name', util_check.PolymorphicType([None, str]))
-	def _set_file_name(self, file_name):	#pylint: disable-msg=C0111
+	def _set_file_name(self, file_name):	#pylint: disable=C0111
 		self._file_name = file_name
 		if file_name is not None:
 			if os.path.exists(file_name) is False:
@@ -249,40 +249,40 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 		self._apply_dfilter()	# This also gets indep_var and dep_var from file
 		self._process_data()
 
-	def _get_dfilter(self):	#pylint: disable-msg=C0111
+	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
 
 	@util_check.check_parameter('dfilter', util_check.PolymorphicType([None, dict]))
-	def _set_dfilter(self, dfilter):	#pylint: disable-msg=C0111
+	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
 		self._dfilter = dfilter
 		self._check_dfilter()
 		self._apply_dfilter()
 		self._process_data()
 
-	def _get_indep_col_label(self):	#pylint: disable-msg=C0111
+	def _get_indep_col_label(self):	#pylint: disable=C0111
 		return self._indep_col_label
 
 	@util_check.check_parameter('indep_col_label', util_check.PolymorphicType([None, str]))
-	def _set_indep_col_label(self, indep_col_label):	#pylint: disable-msg=C0111
+	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
 		self._indep_col_label = indep_col_label
 		self._check_indep_col_label()
 		self._apply_dfilter()
 		self._process_data()
 
-	def _get_dep_col_label(self):	#pylint: disable-msg=C0111
+	def _get_dep_col_label(self):	#pylint: disable=C0111
 		return self._dep_col_label
 
 	@util_check.check_parameter('dep_col_label', util_check.PolymorphicType([None, str]))
-	def _set_dep_col_label(self, dep_col_label):	#pylint: disable-msg=C0111
+	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
 		self._dep_col_label = dep_col_label
 		self._check_dep_col_label()
 		self._apply_dfilter()
 		self._process_data()
 
-	def _get_fproc(self):	#pylint: disable-msg=C0111
+	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
 
-	def _set_fproc(self, fproc):	#pylint: disable-msg=C0111
+	def _set_fproc(self, fproc):	#pylint: disable=C0111
 		if (fproc is not None) and (not hasattr(fproc, '__call__')):
 			raise TypeError('Parameter fproc is of the wrong type')
 		if (fproc is not None) and (len(util_check.get_function_args(fproc)) > 2):
@@ -291,11 +291,11 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 		self._check_fproc_eargs()
 		self._process_data()
 
-	def _get_fproc_eargs(self):	#pylint: disable-msg=C0111
+	def _get_fproc_eargs(self):	#pylint: disable=C0111
 		return self._fproc_eargs
 
 	@util_check.check_parameter('fproc_eargs', util_check.PolymorphicType([None, dict]))
-	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable-msg=C0111
+	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable=C0111
 		# Check that extra argnuments to see if they are in the function definition
 		self._fproc_eargs = fproc_eargs
 		self._check_fproc_eargs()
@@ -426,7 +426,7 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 	 * IOError (Comma-separated file *[file_name]* could not be found)
 
 	.. warning:: The first line of the comma-separated file must contain unique headers for each column
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
 	"""
@@ -440,7 +440,7 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 
 	.. note:: The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter value \
 	for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
 	"""
@@ -451,7 +451,7 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 	 * TypeError (Parameter indep_col_label is of the wrong type)
 
 	 * ValueError (Parameter indep_col_label could not be found in comma-separated file *[file_name]* header)
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	dep_col_label = property(_get_dep_col_label, _set_dep_col_label, doc='Dependent column label (column name)')
 	"""
@@ -462,7 +462,7 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 	 * TypeError (Parameter dep_col_label is of the wrong type)
 
 	 * ValueError (Parameter dep_col_label could not be found in comma-separated file *[file_name]* header)
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
 	"""
@@ -481,7 +481,7 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 	   The processing function is given two arguments, a Numpy vector representing the independent variable array (first argument) and a \
 	   Numpy vector representing the dependent variable array (second argument). The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second \
 	   element being the processed dependent variable array.
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
 	"""
@@ -498,15 +498,15 @@ class CsvSource(BasicSource):	#pylint: disable-msg=R0902,R0903
 	       def my_proc_func(indep_var, dep_var, par1, par2):
 	           # Do some data processing
 	           return indep_var, dep_var
-	"""	#pylint: disable-msg=W0105
+	"""	#pylint: disable=W0105
 
 	# indep_var is read only
-	indep_var = property(BasicSource._get_indep_var, None, doc='Independent variable Numpy vector')	#pylint: disable-msg=E0602
+	indep_var = property(BasicSource._get_indep_var, None, doc='Independent variable Numpy vector')	#pylint: disable=E0602
 
 	# dep_var is read only
-	dep_var = property(BasicSource._get_dep_var, None, doc='Dependent variable Numpy vector')	#pylint: disable-msg=E0602
+	dep_var = property(BasicSource._get_dep_var, None, doc='Dependent variable Numpy vector')	#pylint: disable=E0602
 
-class Series(object):	#pylint: disable-msg=R0902
+class Series(object):	#pylint: disable=R0902
 	"""
 	Specifies a series within a panel
 
@@ -539,7 +539,7 @@ class Series(object):	#pylint: disable-msg=R0902
 
 	 * Same as :py:meth:`util_plot.Series.secondary_axis()`
 	"""
-	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable-msg=R0913
+	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
 		self.interp_options = ['NONE', 'STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
 		self.scaled_interp_curve_indep_var = None
 		self.scaled_interp_curve_dep_var = None
@@ -594,7 +594,7 @@ class Series(object):	#pylint: disable-msg=R0902
 		for method in ['indep_var', 'dep_var']:
 			if method not in dir(self.current_data_source):
 				raise RuntimeError('Data source object does not have {0}() method'.format(method))
-		if self.current_data_source._complete() is False:	#pylint: disable-msg=W0212
+		if self.current_data_source._complete() is False:	#pylint: disable=W0212
 			raise RuntimeError('Data source object is not fully specified')
 		self.indep_var(self.current_data_source.indep_var())
 		self.dep_var(self.current_data_source.dep_var())
@@ -700,7 +700,7 @@ class Series(object):	#pylint: disable-msg=R0902
 		if isinstance(self.current_label, str) is False:
 			raise TypeError('Series label must be a string')
 
-	def color(self, *spec):	#pylint: disable-msg=R0912
+	def color(self, *spec):	#pylint: disable=R0912
 		"""
 		Sets or returns the series color
 
@@ -736,7 +736,7 @@ class Series(object):	#pylint: disable-msg=R0902
 				try:
 					value = float(self.current_color)
 					valid_color_spec = True if (value >= 0.0) and (value <= 1.0) else False
-				except:	#pylint: disable-msg=W0702
+				except:	#pylint: disable=W0702
 					pass
 			if (valid_color_spec is False) and (self.current_color[0] == '#') and (len(self.current_color) == 7):	# HTML hex string
 				for char in self.current_color:
@@ -873,11 +873,11 @@ class Series(object):	#pylint: disable-msg=R0902
 		"""
 		if (self.interp() != 'NONE') and (self.current_indep_var is not None) and (self.current_dep_var is not None):
 			if self.interp() == 'CUBIC':
-				self.interp_curve_indep_var = numpy.linspace(min(self.current_indep_var), max(self.current_indep_var), 500)  #pylint: disable-msg=E1101
+				self.interp_curve_indep_var = numpy.linspace(min(self.current_indep_var), max(self.current_indep_var), 500)  #pylint: disable=E1101
 				finterp = interp1d(self.current_indep_var, self.current_dep_var, kind='cubic')
 				self.interp_curve_dep_var = finterp(self.interp_curve_indep_var)
 			elif self.interp() == 'LINREG':
-				slope, intercept, r_value, p_value, std_err = stats.linregress(self.current_indep_var, self.current_dep_var)	#pylint: disable-msg=W0612
+				slope, intercept, r_value, p_value, std_err = stats.linregress(self.current_indep_var, self.current_dep_var)	#pylint: disable=W0612
 				self.interp_curve_indep_var = self.current_indep_var
 				self.interp_curve_dep_var = intercept+(slope*self.current_indep_var)
 
@@ -920,7 +920,7 @@ class Series(object):	#pylint: disable-msg=R0902
 				  linewidth=2.5 if (self.line_style() != '') and ((self.interp() == 'STRAIGHT') or (self.interp() == 'STEP')) else 0, drawstyle='steps-post' if self.interp() == 'STEP' else 'default',
 				  label=None if (label_printed is True) or (self.label() == '') else self.label())
 
-class Panel(object):	#pylint: disable-msg=R0902
+class Panel(object):	#pylint: disable=R0902
 	"""
 	Defines properties of a panel within a figure
 
@@ -953,7 +953,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 
 	 * Same as :py:meth:`util_plot.Panel.legend_props()`
 	"""
-	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=dict()):	#pylint: disable-msg=W0102,R0913
+	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=dict()):	#pylint: disable=W0102,R0913
 		self.legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
 		self.panel_has_primary_axis = False
 		self.panel_has_secondary_axis = False
@@ -987,7 +987,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 		self.log_dep_axis(log_dep_axis)
 		self.legend_props(legend_props)
 
-	def series(self):	#pylint: disable-msg=R0912,R0915
+	def series(self):	#pylint: disable=R0912,R0915
 		"""
 		Returns the data series objects attached to the panel
 
@@ -995,7 +995,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 		"""
 		return self.current_series_list
 
-	def add_series(self, series):	#pylint: disable-msg=R0912,R0915
+	def add_series(self, series):	#pylint: disable=R0912,R0915
 		"""
 		Adds data series to panel
 
@@ -1014,7 +1014,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 			for num, obj in enumerate(series):
 				if isinstance(obj, Series) is False:
 					raise TypeError('Series element is not a Series object')
-				elif obj._complete() is False:	#pylint: disable-msg=W0212
+				elif obj._complete() is False:	#pylint: disable=W0212
 					raise RuntimeError('Series element {0} is not fully specified'.format(num))
 			if len(self.current_series_list) == 0:
 				self.current_series_list = series
@@ -1260,7 +1260,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 		Scale independent variable of panel series
 		"""
 		for series_obj in self.current_series_list:
-			series_obj._scale_indep_var(scaling_factor)	#pylint: disable-msg=W0212
+			series_obj._scale_indep_var(scaling_factor)	#pylint: disable=W0212
 
 	def _scale_dep_var(self, primary_scaling_factor, secondary_scaling_factor):
 		"""
@@ -1268,11 +1268,11 @@ class Panel(object):	#pylint: disable-msg=R0902
 		"""
 		for series_obj in self.current_series_list:
 			if series_obj.secondary_axis() is False:
-				series_obj._scale_dep_var(primary_scaling_factor)	#pylint: disable-msg=W0212
+				series_obj._scale_dep_var(primary_scaling_factor)	#pylint: disable=W0212
 			else:
-				series_obj._scale_dep_var(secondary_scaling_factor)	#pylint: disable-msg=W0212
+				series_obj._scale_dep_var(secondary_scaling_factor)	#pylint: disable=W0212
 
-	def _draw_panel(self, fig, axarr, indep_axis_dict=None):	#pylint: disable-msg=R0912,R0914,R0915
+	def _draw_panel(self, fig, axarr, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
 		"""
 		Drawa panel series
 		"""
@@ -1280,7 +1280,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 			axarr_sec = axarr.twinx()
 		# Place data series in their appropriate axis (primary or secondary)
 		for series_obj in self.current_series_list:
-			series_obj._draw_series(axarr if series_obj.secondary_axis() is False else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis())	#pylint: disable-msg=W0212
+			series_obj._draw_series(axarr if series_obj.secondary_axis() is False else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis())	#pylint: disable=W0212
 		primary_height = 0
 		secondary_height = 0
 		indep_height = 0
@@ -1326,9 +1326,9 @@ class Panel(object):	#pylint: disable-msg=R0902
 			primary_labels = []
 			secondary_labels = []
 			if self.panel_has_primary_axis is True:
-				primary_handles, primary_labels = axarr.get_legend_handles_labels()	#pylint: disable-msg=W0612
+				primary_handles, primary_labels = axarr.get_legend_handles_labels()	#pylint: disable=W0612
 			if self.panel_has_secondary_axis is True:
-				secondary_handles, secondary_labels = axarr_sec.get_legend_handles_labels()	#pylint: disable-msg=W0612
+				secondary_handles, secondary_labels = axarr_sec.get_legend_handles_labels()	#pylint: disable=W0612
 			if (len(primary_labels) > 0) and (len(secondary_labels) > 0):
 				labels = [r'$\Leftarrow$'+label for label in primary_labels]+ [label+r'$\Rightarrow$' for label in secondary_labels]
 			else:
@@ -1336,7 +1336,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 			for label in labels:	# Only print legend if at least one series has a label
 				if (label is not None) and (label != ''):
 					legend_scale = 1.5
-					leg_artist = [series_obj._legend_artist(legend_scale) for series_obj in self.current_series_list]	#pylint: disable-msg=W0212
+					leg_artist = [series_obj._legend_artist(legend_scale) for series_obj in self.current_series_list]	#pylint: disable=W0212
 					axarr.legend(leg_artist, labels, ncol=self.legend_props()['cols'] if 'cols' in self.legend_props() else len(labels),
 						loc=self.legend_pos_list[self.legend_pos_list.index(self.legend_props()['pos'].lower() if 'pos' in self.legend_props() else 'lower left')], numpoints=1, fontsize=18/legend_scale)
 					break
@@ -1366,7 +1366,7 @@ class Panel(object):	#pylint: disable-msg=R0902
 		return {'primary':None if self.panel_has_primary_axis is False else axarr, 'secondary':None if self.panel_has_secondary_axis is False else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
 
 
-class Figure(object):	#pylint: disable-msg=R0902
+class Figure(object):	#pylint: disable=R0902
 	"""
 	Automagically generate presentation-quality plots
 
@@ -1402,7 +1402,7 @@ class Figure(object):	#pylint: disable-msg=R0902
 	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be retrieved using \
 	:py:meth:`util_plot.Figure.figure_width()` and/or :py:meth:`util_plot.Figure.figure_height()` methods.
 	"""
-	def __init__(self, panel=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep=False):	#pylint: disable-msg=R0913
+	def __init__(self, panel=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep=False):	#pylint: disable=R0913
 		self.fig = None
 		self.axarr = None
 		self.axarr_list = list()
@@ -1454,7 +1454,7 @@ class Figure(object):	#pylint: disable-msg=R0902
 			for num, obj in enumerate(panel):
 				if isinstance(obj, Panel) is False:
 					raise TypeError('Panel element is not a panel object')
-				elif obj._complete() is False:	#pylint: disable-msg=W0212
+				elif obj._complete() is False:	#pylint: disable=W0212
 					raise RuntimeError('Panel element {0} is not fully specified'.format(num))
 			if len(self.current_panel_list) == 0:
 				self.current_panel_list = panel
@@ -1612,7 +1612,7 @@ class Figure(object):	#pylint: disable-msg=R0902
 		num_panels = len(self.current_panel_list)
 		plt.close('all')
 		# Create required number of panels
-		self.fig, self.axarr = plt.subplots(num_panels, sharex=True)	#pylint: disable-msg=W0612
+		self.fig, self.axarr = plt.subplots(num_panels, sharex=True)	#pylint: disable=W0612
 		self.axarr = self.axarr if num_panels > 1 else [self.axarr]
 		global_indep_var = list()
 		# Find union of the independent variable data set of all panels
@@ -1625,14 +1625,14 @@ class Figure(object):	#pylint: disable-msg=R0902
 		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = _intelligent_ticks(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
 		# Scale all panel series
 		for panel_obj in self.current_panel_list:
-			panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable-msg=W0212
+			panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable=W0212
 		# Draw panels
 		indep_axis_dict = {'indep_var_min':self.indep_var_min, 'indep_var_max':self.indep_var_max, 'indep_var_locs':indep_var_locs,
 					 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
 		for num, (panel_obj, axarr) in enumerate(zip(self.current_panel_list, self.axarr)):
-			panel_dict = panel_obj._draw_panel(self.fig, axarr, dict(indep_axis_dict, log_indep=self.log_indep(), indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable-msg=W0212,C0326
+			panel_dict = panel_obj._draw_panel(self.fig, axarr, dict(indep_axis_dict, log_indep=self.log_indep(), indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable=W0212,C0326
 												  indep_axis_label=self.indep_var_label() if num == num_panels-1 else None, indep_axis_units=self.indep_var_units() if num == num_panels-1 else None,
-												  indep_axis_unit_scale = self.indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable-msg=C0326
+												  indep_axis_unit_scale = self.indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable=C0326
 			self.axarr_list.append({'panel':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary'], 'min_height':panel_dict['min_height'], 'min_width':panel_dict['min_width']})
 		self.title_height = 0
 		self.title_width = 0
@@ -1653,7 +1653,7 @@ class Figure(object):	#pylint: disable-msg=R0902
 		"""
 		return self.axarr_list
 
-	def show(self):	#pylint: disable-msg=R0201
+	def show(self):	#pylint: disable=R0201
 		"""
 		Displays figure
 
@@ -1681,7 +1681,7 @@ class Figure(object):	#pylint: disable-msg=R0902
 			self.draw()
 		# Calculate minimum figure dimensions
 		axarr = self.axarr_list[0]['primary']
-		legend_obj = axarr.get_legend()	#pylint: disable-msg=W0612
+		legend_obj = axarr.get_legend()	#pylint: disable=W0612
 		min_fig_width = (max(self.title_width, max([panel_dict['min_width'] for panel_dict in self.axarr_list])))/float(self.fig.dpi)
 		min_fig_height = ((len(self.axarr_list)-1)*0.00)+(((len(self.axarr_list)*max([panel_dict['min_height'] for panel_dict in self.axarr_list]))+self.title_height)/float(self.fig.dpi))
 		self.figure_width(min_fig_width if self.figure_width() is None else self.figure_width())
@@ -1693,7 +1693,7 @@ class Figure(object):	#pylint: disable-msg=R0902
 		self.fig.savefig(file_name, bbox_inches='tight', dpi=self.fig.dpi)
 		plt.close('all')
 
-def _scale_series(series, scale=False, series_min=None, series_max=None, scale_type='delta'):	#pylint: disable-msg=R0913
+def _scale_series(series, scale=False, series_min=None, series_max=None, scale_type='delta'):	#pylint: disable=R0913
 	"""
 	Scales series, 'delta' with the series span, 'min' with the series minimum
 	"""
@@ -1704,7 +1704,7 @@ def _scale_series(series, scale=False, series_min=None, series_max=None, scale_t
 		(unit, div) = (' ', 1)
 	else:
 		(unit, div) = util_eng.peng_power(util_eng.peng(series_delta if scale_type == 'delta' else (series_min if scale_type == 'min' else series_max), 3))
-		(first_unit, first_div) = util_eng.peng_power(util_eng.peng(series_min/div, 3))	#pylint: disable-msg=W0612
+		(first_unit, first_div) = util_eng.peng_power(util_eng.peng(series_min/div, 3))	#pylint: disable=W0612
 		if abs(1.00-(div*first_div)) < 1e-10:
 			(unit, div) = util_eng.peng_power(util_eng.peng(series_min, 3))
 		series = series/div
@@ -1722,26 +1722,26 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	raw_labels = [util_eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(util_misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
 
-def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable-msg=R0912,R0914,R0915
+def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
 	"""
 	Calculates ticks 'intelligently', trying to calculate sane tick spacing
 	"""
 	ideal_num_ticks = 8
 	series_delta = float(series_max-series_min)
 	num_ticks = 0
-	sdiff = [1 if int(element) == element else 0 for element in [util_misc.smart_round(element, 10) for element in numpy.diff(series)]]	#pylint: disable-msg=E1101
+	sdiff = [1 if int(element) == element else 0 for element in [util_misc.smart_round(element, 10) for element in numpy.diff(series)]]	#pylint: disable=E1101
 	int_scale = True if sum(sdiff) == len(sdiff) else False
 	min_num_ticks = 2 if series_delta == 0 else (ideal_num_ticks if int_scale is False else min(ideal_num_ticks, series_delta))
 	div = 1 if (series_delta == 0) or (int_scale is True) else 10.0
 	tick_list = None
 	if calc_ticks is False:
 		# Calculate spacing between points
-		tspace = numpy.diff(series)	#pylint: disable-msg=E1101
+		tspace = numpy.diff(series)	#pylint: disable=E1101
 		# Find minimum common spacing
 		factors = [util_eng.peng_power(util_eng.peng(element, 3)) for element in tspace]
-		divs = [div for (unit, div) in factors]	#pylint: disable-msg=W0612
+		divs = [div for (unit, div) in factors]	#pylint: disable=W0612
 		tspace_div = min(divs)
-		scaled_tspace = numpy.round(numpy.array(tspace)/tspace_div, 10)	#pylint: disable-msg=E1101
+		scaled_tspace = numpy.round(numpy.array(tspace)/tspace_div, 10)	#pylint: disable=E1101
 		tspace_gcd = 0.5*util_misc.gcd(scaled_tspace)
 		num_ticks = 1
 		while num_ticks > min_num_ticks:
@@ -1752,7 +1752,7 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=Tr
 				num_ticks = int(round(num_ticks, 10))
 				tstop = series[-1]
 				tspace = tspace_gcd*tspace_div
-				tick_list = numpy.linspace(series_min, series_max, num_ticks)	#pylint: disable-msg=E1101
+				tick_list = numpy.linspace(series_min, series_max, num_ticks)	#pylint: disable=E1101
 				calc_ticks = False
 	calc_ticks = True if tick_list is None else calc_ticks
 	if calc_ticks is True:
@@ -1814,9 +1814,9 @@ def _series_threshold(indep_var, dep_var, threshold, threshold_type):
 	"""
 	Chops series given a threshold
 	"""
-	indexes = numpy.where(numpy.array(indep_var) >= threshold) if threshold_type.upper() == 'MIN' else numpy.where(numpy.array(indep_var) <= threshold)  #pylint: disable-msg=E1101
-	indep_var = numpy.array(indep_var)[indexes]  #pylint: disable-msg=E1101
-	dep_var = numpy.array(dep_var)[indexes]  #pylint: disable-msg=E1101
+	indexes = numpy.where(numpy.array(indep_var) >= threshold) if threshold_type.upper() == 'MIN' else numpy.where(numpy.array(indep_var) <= threshold)  #pylint: disable=E1101
+	indep_var = numpy.array(indep_var)[indexes]  #pylint: disable=E1101
+	dep_var = numpy.array(dep_var)[indexes]  #pylint: disable=E1101
 	return indep_var, dep_var
 
 def _get_text_prop(fig, text_obj):
@@ -1874,12 +1874,12 @@ def parametrized_color_space(series, offset=0, color='binary'):
 	if (offset < 0) or (offset > 1):
 		raise ValueError('Offset is out of normal range [0, 1]')
 	color_name_list = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
-	color_pallete_list = [plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.gist_yarg, plt.cm.GnBu, plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,	#pylint: disable-msg=E1101
-					   plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds, plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd]	#pylint: disable-msg=E1101
+	color_pallete_list = [plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.gist_yarg, plt.cm.GnBu, plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,	#pylint: disable=E1101
+					   plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds, plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd]	#pylint: disable=E1101
 	if color not in color_name_list:
 		raise ValueError('Color pallete is not valid')
 	color_dict = dict(zip(color_name_list, color_pallete_list))
-	#color_dict = {'binary':plt.cm.binary, 'Blues':plt.cm.Blues, 'BuGn':plt.cm.BuGn, 'BuPu':plt.cm.BuPu, 'gist_yarg':plt.cm.gist_yarg, 'GnBu':plt.cm.GnBu, 'Greens':plt.cm.Greens, 'Greys':plt.cm.Greys,	#pylint: disable-msg=E1101
-	#		'Oranges':plt.cm.Oranges, 'OrRd':plt.cm.OrRd, 'PuBu':plt.cm.PuBu, 'PuBuGn':plt.cm.PuBuGn, 'PuRd':plt.cm.PuRd, 'Purples':plt.cm.Purples, 'RdPu':plt.cm.RdPu, 'Reds':plt.cm.Reds,	#pylint: disable-msg=E1101
-	#		'YlGn':plt.cm.YlGn, 'YlGnBu':plt.cm.YlGnBu, 'YlOrBr':plt.cm.YlOrBr, 'YlOrRd':plt.cm.YlOrRd}	#pylint: disable-msg=E1101
-	return [color_dict[color](util_misc.normalize(value, series, offset)) for value in series]	#pylint: disable-msg=E1101
+	#color_dict = {'binary':plt.cm.binary, 'Blues':plt.cm.Blues, 'BuGn':plt.cm.BuGn, 'BuPu':plt.cm.BuPu, 'gist_yarg':plt.cm.gist_yarg, 'GnBu':plt.cm.GnBu, 'Greens':plt.cm.Greens, 'Greys':plt.cm.Greys,	#pylint: disable=E1101
+	#		'Oranges':plt.cm.Oranges, 'OrRd':plt.cm.OrRd, 'PuBu':plt.cm.PuBu, 'PuBuGn':plt.cm.PuBuGn, 'PuRd':plt.cm.PuRd, 'Purples':plt.cm.Purples, 'RdPu':plt.cm.RdPu, 'Reds':plt.cm.Reds,	#pylint: disable=E1101
+	#		'YlGn':plt.cm.YlGn, 'YlGnBu':plt.cm.YlGnBu, 'YlOrBr':plt.cm.YlOrBr, 'YlOrRd':plt.cm.YlOrRd}	#pylint: disable=E1101
+	return [color_dict[color](util_misc.normalize(value, series, offset)) for value in series]	#pylint: disable=E1101
