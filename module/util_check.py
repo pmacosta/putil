@@ -283,37 +283,43 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 			return False
 	return True
 
-def check_type(param_name, param_type):
+def check_parameter_type_internal(param_name, param_type, func, *args, **kwargs):
 	""" Checks that a parameter is of a certain type """
+	param = create_parameter_dictionary(func, *args, **kwargs).get(param_name)
+	if (param is not None) and (not type_match(param, param_type)):
+		raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
+
+def check_parameter_internal(param_name, param_spec, func, *args, **kwargs):
+	"""	Checks that a parameter conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
+	check_parameter_type_internal(param_name, param_spec, func, *args, **kwargs)
+	param = create_parameter_dictionary(func, *args, **kwargs).get(param_name)
+	if param is not None:
+		pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType]
+		if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
+			msg = 'Parameter {0}'.format(param_name)
+			ekwargs = {'msg':msg} if type(param_spec) != PolymorphicType else {'msg':msg, 'test_obj':param}
+			raise ValueError(param_spec.exception(**ekwargs))	#pylint: disable=W0142
+
+def check_parameter_type(param_name, param_type):
+	""" Decorator to check that a parameter is of a certain type """
 	def actual_decorator(func):
 		"""	Actual decorator """
 		@functools.wraps(func)
 		def wrapper(*args, **kwargs):
 			"""	Wrapper function to test parameter type	"""
-			param_dict = create_parameter_dictionary(func, *args, **kwargs)
-			if (param_name in param_dict) and (not type_match(param_dict[param_name], param_type)):
-				raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
+			check_parameter_type_internal(param_name, param_type, func, *args, **kwargs)
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator
 
 def check_parameter(param_name, param_spec):	#pylint: disable=R0912
-	"""	Checks that a parameter conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
+	"""	Decorator to check that a parameter conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
 	def actual_decorator(func):
 		"""	Actual decorator """
 		@functools.wraps(func)
 		def wrapper(*args, **kwargs):
 			"""	Wrapper function to test parameter specification """
-			param_dict = create_parameter_dictionary(func, *args, **kwargs)
-			if param_name in param_dict:
-				param = param_dict[param_name]
-				if not type_match(param, param_spec):
-					raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
-				pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType]
-				if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
-					msg = 'Parameter {0}'.format(param_name)
-					ekwargs = {'msg':msg} if type(param_spec) != PolymorphicType else {'msg':msg, 'test_obj':param}
-					raise ValueError(param_spec.exception(**ekwargs))	#pylint: disable=W0142
+			check_parameter_internal(param_name, param_spec, func, *args, **kwargs)
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator

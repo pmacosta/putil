@@ -192,6 +192,13 @@ def test_one_of_istype():	#pylint: disable=C0103
 	assert (ref_obj1.istype('a'), ref_obj1.istype('b'), ref_obj1.istype(3.0), ref_obj1.istype(2), ref_obj1.istype(util_check.Number()), ref_obj1.istype('c'), ref_obj1.istype('A'),
 		 ref_obj2.istype('none'), ref_obj2.istype('autos'), ref_obj2.istype(set([1, 2]))) == (True, True, True, True, False, True, True, True, True, False)
 
+def test_one_of_exception():
+	""" Tests that exception method of OneOf class behaves appropriately """
+	test1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=False).exception('Parameter par1') == "Parameter par1 is not one of ['a', 'b', 3.0, 2] (case insensitive)"
+	test2 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('Parameter par1') == "Parameter par1 is not one of ['a', 'b', 3.0, 2] (case sensitive)"
+	test3 = util_check.OneOf([3.0, 2], case_sensitive=True).exception('Parameter par1') == "Parameter par1 is not one of [3.0, 2]"
+	assert (test1, test2, test3) == (True, True, True)
+
 ###
 # Test for NumberRange class
 ###
@@ -245,6 +252,13 @@ def test_number_range_istype():	#pylint: disable=C0103
 	assert (ref_obj1.istype(5), ref_obj1.istype(10), ref_obj1.istype(13), ref_obj1.istype(15), ref_obj1.istype(20), ref_obj1.istype(13.0),
 		 ref_obj2.istype(75.1), ref_obj2.istype(100.0), ref_obj2.istype(150.0), ref_obj2.istype(200.0), ref_obj2.istype(200.1), ref_obj2.istype(200)) == \
 		 (True, True, True, True, True, False, True, True, True, True, True, False)
+
+def test_number_range_exception():
+	""" Tests that exception method of NumberRange class behaves appropriately """
+	test1 = util_check.NumberRange(maximum=15).exception('Parameter par1') == 'Parameter par1 is not in the range [-inf, 15]'
+	test2 = util_check.NumberRange(minimum=20.0).exception('Parameter par1') == 'Parameter par1 is not in the range [20.0, +inf]'
+	test3 = util_check.NumberRange(minimum=3.5, maximum=4.75).exception('Parameter par1') == 'Parameter par1 is not in the range [3.5, 4.75]'
+	assert (test1, test2, test3) == (True, True, True)
 
 ###
 # Test RealNumpyVector class
@@ -331,6 +345,11 @@ def test_polymorphic_type_istype():	#pylint: disable=C0103
 		 ref_obj1.istype(100.0), ref_obj1.istype(10+20j), ref_obj1.istype(numpy.array([10, 0.0, 30])), ref_obj1.istype('hello world'), ref_obj1.istype([1.0, 2.0, 3.0]), ref_obj1.istype('auto'),
 		 ref_obj1.istype(numpy.array([])), ref_obj1.istype(numpy.array(['a', 'b', 'c'])), ref_obj2.istype(1), ref_obj2.istype(set([1, 2])), ref_obj2.istype(numpy.array([1, 0, -1])),
 		 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0)) == (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True)
+
+def test_polymorphic_exception():
+	""" Tests that exception method of PolymorphicType class behaves appropriately """
+	obj = util_check.PolymorphicType([util_check.OneOf(['NONE', 'MANUAL', 'AUTO']), util_check.NumberRange(minimum=15, maximum=20)])
+	assert obj.exception('Parameter par1', 5) == "Parameter par1 is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nParameter par1 is not in the range [15, 20]"
 
 ##
 # Tests for get_function_args()
@@ -529,7 +548,7 @@ def test_type_match_increasing_real_numpy_vector():	#pylint: disable=C0103
 ###
 def test_check_type_simple_exception():	#pylint: disable=C0103
 	""" Test that function behaves properly when a sigle (wrong) type is given (string, number, etc.) """
-	@util_check.check_type('ppar1', int)
+	@util_check.check_parameter_type('ppar1', int)
 	def func_check_type(ppar1):	#pylint: disable=C0111
 		print ppar1
 	with pytest.raises(TypeError) as excinfo:
@@ -538,21 +557,21 @@ def test_check_type_simple_exception():	#pylint: disable=C0103
 
 def test_check_type_simple_no_exception():	#pylint: disable=C0103
 	""" Test that function behaves properly when a sigle (right) type is given (string, number, etc.) """
-	@util_check.check_type(param_name='ppar1', param_type=util_check.Number())
+	@util_check.check_parameter_type(param_name='ppar1', param_type=util_check.Number())
 	def func_check_type(ppar1):	#pylint: disable=C0111
 		return ppar1
 	assert func_check_type(5.0) == 5.0
 
 def test_check_type_parameter_not_specified():	#pylint: disable=C0103
 	""" Test that function behaves properly when the parameter to be checked is not specified in the function call """
-	@util_check.check_type(param_name='ppar2', param_type=util_check.Number())
+	@util_check.check_parameter_type(param_name='ppar2', param_type=util_check.Number())
 	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable=C0111
 		return ppar1, ppar2, ppar3
 	assert func_check_type(3, ppar3=12) == (3, None, 12)
 
 def test_check_type_parameter_specified_by_position_and_keyword():	#pylint: disable=C0103
 	""" Test that function behaves properly when a parameter is specified both by position and keyword """
-	@util_check.check_type(param_name='ppar2', param_type=util_check.Number())
+	@util_check.check_parameter_type(param_name='ppar2', param_type=util_check.Number())
 	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable=C0111
 		print ppar1, ppar2, ppar3
 	with pytest.raises(TypeError) as excinfo:
@@ -561,7 +580,7 @@ def test_check_type_parameter_specified_by_position_and_keyword():	#pylint: disa
 
 def test_check_type_parameter_repeated_keyword_arguments():	#pylint: disable=C0103
 	""" Test that function behaves properly when a parameter is specified multiple times by keyword """
-	@util_check.check_type(param_name='ppar2', param_type=util_check.Number())
+	@util_check.check_parameter_type(param_name='ppar2', param_type=util_check.Number())
 	def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable=C0111
 		print ppar1, ppar2, ppar3
 	with pytest.raises(TypeError) as excinfo:
