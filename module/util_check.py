@@ -2,7 +2,9 @@
 Decorators for API parameter checks
 """
 
+import os
 import numpy
+import inspect
 import funcsigs
 import functools
 
@@ -100,7 +102,7 @@ class OneOf(object):	#pylint: disable=R0903
 			len(choices)
 		except:
 			raise TypeError('Parameter `choices` is of the wrong type')
-		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector]
+		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
 		self.choices = choices
 		self.types = [type(element) for element in self.choices]
 		self.case_sensitive = case_sensitive if str in self.types else None
@@ -130,9 +132,9 @@ class OneOf(object):	#pylint: disable=R0903
 				return True
 		return False
 
-	def exception(self, msg):
+	def exception(self, param_name):
 		"""	Returns a suitable exception message """
-		return '{0} is not one of {1}{2}'.format(msg, self.choices, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
+		return 'Parameter `{0}` is not one of {1}{2}'.format(param_name, self.choices, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
 
 class NumberRange(object):	#pylint: disable=R0903
 	"""	Class for numeric parameters that can only take values in a certain range """
@@ -159,9 +161,9 @@ class NumberRange(object):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		return type(test_obj) == self.type
 
-	def exception(self, msg):
+	def exception(self, param_name):
 		""" Returns a suitable exception message """
-		return '{0} is not in the range [{1}, {2}]'.format(msg, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
+		return 'Parameter `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
 
 class RealNumpyVector(object):	#pylint: disable=R0903
 	""" Numpy vector where every element is a real number """
@@ -194,12 +196,54 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		return self.includes(test_obj)
 
+class File(object):	#pylint: disable=R0903
+	""" File name string """
+	def __init__(self, check_existance=False):
+		if not isinstance(check_existance, bool):
+			raise TypeError('Parameter `check_existance` is of the wrong type')
+		self.check_existance = check_existance
+
+	def includes(self, test_obj):
+		""" Test that an object belongs to the pseudo-type """
+		return isinstance(test_obj, str) and ((not self.check_existance) or (self.check_existance and os.path.exists(test_obj)))
+
+	def istype(self, test_obj):	#pylint: disable=R0201
+		"""	Checks to see if object is of the same class type """
+		return isinstance(test_obj, str)
+
+	def exception(self, param):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		return 'File {0} could not be found'.format(param)
+
+class Function(object):	#pylint: disable=R0903
+	""" Function pointer """
+	def __init__(self, num_pars=None):
+		if (num_pars is not None) and (not isinstance(num_pars, int)):
+			raise TypeError('Parameter `num_pars` is of the wrong type')
+		self.num_pars = num_pars
+
+	def includes(self, test_obj):
+		""" Test that an object belongs to the pseudo-type """
+		if not inspect.isfunction(test_obj):
+			return False
+		par_tuple = get_function_args(test_obj)
+		multi_par = '*' in [par[0] for par in par_tuple]
+		return multi_par or (self.num_pars is None) or ((not multi_par) and (self.num_pars is not None) and (len(par_tuple) == self.num_pars))
+
+	def istype(self, test_obj):	#pylint: disable=R0201
+		"""	Checks to see if object is of the same class type """
+		return inspect.isfunction(test_obj)
+
+	def exception(self, param):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		return 'Parameter `{0}` is not a function with {1} parameter{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')
+
 class PolymorphicType(object):	#pylint: disable=R0903
 	""" Class for polymorphic parameters """
 	def __init__(self, types):
 		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
 			raise TypeError('Parameter `types` is of the wrong type')
-		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector]
+		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
 		for element_type in types:
 			if (type(element_type) not in self.pseudo_types) and (not isinstance(element_type, type)) and (element_type is not None):
 				raise TypeError('Parameter `types` element is of the wrong type')
@@ -223,13 +267,14 @@ class PolymorphicType(object):	#pylint: disable=R0903
 				return True
 		return False
 
-	def exception(self, msg, test_obj):
+	def exception(self, param_name, param=None, test_obj=None):
 		""" Returns a suitable exception message """
-		return '\n'.join([sub_inst.exception(msg) for sub_type, sub_inst in zip(self.types, self.instances) if (sub_type in self.pseudo_types) and (not sub_inst.includes(test_obj))])
+		return '\n'.join([sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if (sub_type in self.pseudo_types) and (not sub_inst.includes(test_obj))])
 
 def get_function_args(func):
 	"""	Returns a list of the argument names, in order, as defined by the function """
-	return tuple([par for par in funcsigs.signature(func).parameters])
+	par_dict = funcsigs.signature(func).parameters
+	return tuple(['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict])
 
 def create_parameter_dictionary(func, *args, **kwargs):
 	"""
@@ -247,7 +292,7 @@ def type_match(test_obj, ref_obj):
 	Heterogeneous iterables are not supported in part because there is no elegant way to distinguish, for example, between a 1-element list, a list of the type [str, float, int, str] and a list
 	with all elements of the same type but one in which the length of the list is not known a priori (like a list containing the independent variable of an experiment)
 	"""
-	pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType]
+	pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType, File, Function]
 	if ref_obj is None:	# Check for None
 		ret_val = test_obj is None
 	elif type(ref_obj) in pseudo_types:	# Check for pseudo-types
@@ -287,17 +332,16 @@ def check_parameter_type_internal(param_name, param_type, func, *args, **kwargs)
 	""" Checks that a parameter is of a certain type """
 	param = create_parameter_dictionary(func, *args, **kwargs).get(param_name)
 	if (param is not None) and (not type_match(param, param_type)):
-		raise TypeError('Parameter {0} is of the wrong type'.format(param_name))
+		raise TypeError('Parameter `{0}` is of the wrong type'.format(param_name))
 
 def check_parameter_internal(param_name, param_spec, func, *args, **kwargs):
 	"""	Checks that a parameter conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
 	check_parameter_type_internal(param_name, param_spec, func, *args, **kwargs)
 	param = create_parameter_dictionary(func, *args, **kwargs).get(param_name)
 	if param is not None:
-		pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType]
+		pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType, File, Function]
 		if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
-			msg = 'Parameter {0}'.format(param_name)
-			ekwargs = {'msg':msg} if type(param_spec) != PolymorphicType else {'msg':msg, 'test_obj':param}
+			ekwargs = {'param_name':param_name} if type(param_spec) != PolymorphicType else {'param_name':param_name, 'param':param, 'test_obj':param_spec}
 			raise ValueError(param_spec.exception(**ekwargs))	#pylint: disable=W0142
 
 def check_parameter_type(param_name, param_type):

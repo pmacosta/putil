@@ -194,9 +194,9 @@ def test_one_of_istype():	#pylint: disable=C0103
 
 def test_one_of_exception():
 	""" Tests that exception method of OneOf class behaves appropriately """
-	test1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=False).exception('Parameter par1') == "Parameter par1 is not one of ['a', 'b', 3.0, 2] (case insensitive)"
-	test2 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('Parameter par1') == "Parameter par1 is not one of ['a', 'b', 3.0, 2] (case sensitive)"
-	test3 = util_check.OneOf([3.0, 2], case_sensitive=True).exception('Parameter par1') == "Parameter par1 is not one of [3.0, 2]"
+	test1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=False).exception('par1') == "Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case insensitive)"
+	test2 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('par1') == "Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"
+	test3 = util_check.OneOf([3.0, 2], case_sensitive=True).exception('par1') == "Parameter `par1` is not one of [3.0, 2]"
 	assert (test1, test2, test3) == (True, True, True)
 
 ###
@@ -255,9 +255,9 @@ def test_number_range_istype():	#pylint: disable=C0103
 
 def test_number_range_exception():
 	""" Tests that exception method of NumberRange class behaves appropriately """
-	test1 = util_check.NumberRange(maximum=15).exception('Parameter par1') == 'Parameter par1 is not in the range [-inf, 15]'
-	test2 = util_check.NumberRange(minimum=20.0).exception('Parameter par1') == 'Parameter par1 is not in the range [20.0, +inf]'
-	test3 = util_check.NumberRange(minimum=3.5, maximum=4.75).exception('Parameter par1') == 'Parameter par1 is not in the range [3.5, 4.75]'
+	test1 = util_check.NumberRange(maximum=15).exception('par1') == 'Parameter `par1` is not in the range [-inf, 15]'
+	test2 = util_check.NumberRange(minimum=20.0).exception('par1') == 'Parameter `par1` is not in the range [20.0, +inf]'
+	test3 = util_check.NumberRange(minimum=3.5, maximum=4.75).exception('par1') == 'Parameter `par1` is not in the range [3.5, 4.75]'
 	assert (test1, test2, test3) == (True, True, True)
 
 ###
@@ -301,6 +301,62 @@ def test_increasing_real_numpy_vector_istype():	#pylint: disable=C0103
 		(False, False, False, False, False, False, False, True, True)
 
 ###
+# Test File class
+###
+def test_file_parameter_wrong_type():	#pylint: disable=C0103
+	""" Test if function behaves proprely when wrong type parameter is given """
+	with pytest.raises(TypeError) as excinfo:
+		util_check.File('a')
+	assert excinfo.value.message == 'Parameter `check_existance` is of the wrong type'
+
+def test_file_includes():	#pylint: disable=C0103
+	""" Test that the includes method of File class behaves appropriately """
+	assert (util_check.File().includes('/some/file.txt'), util_check.File(True).includes('not a file'), util_check.File(True).includes('./util_check_test.py')) == (True, False, True)
+
+def test_file_istype():	#pylint: disable=C0103
+	""" Test that the istype method of File class behaves appropriately """
+	assert (util_check.File().istype(3), util_check.File(True).istype('not a file'), util_check.File(True).istype('./util_check_test.py')) == (False, True, True)
+
+def test_file_exception():
+	""" Tests that exception method of File class behaves appropriately """
+	assert util_check.File().exception('/some/path/file_name.ext') == 'File /some/path/file_name.ext could not be found'
+
+###
+# Test Function class
+###
+def test_function_wrong_type():	#pylint: disable=C0103
+	""" Test if function behaves proprely when wrong type parameter is given """
+	with pytest.raises(TypeError) as excinfo:
+		util_check.Function('a')
+	assert excinfo.value.message == 'Parameter `num_pars` is of the wrong type'
+
+def test_function_includes():	#pylint: disable=C0103
+	""" Test that the includes method of Function class behaves appropriately """
+	def foo1(par1, par2):	#pylint: disable=C0111
+		return par1, par2
+	def foo2(par1, *args):	#pylint: disable=C0111
+		return par1, args
+	def foo3(par1, *kwargs):	#pylint: disable=C0111
+		return par1, kwargs
+	def foo4(par1, *args, **kwargs):	#pylint: disable=C0111
+		return par1, args, kwargs
+	assert (util_check.Function().includes(3), util_check.Function().includes(foo1), util_check.Function(num_pars=3).includes(foo1), util_check.Function(num_pars=2).includes(foo1),
+		util_check.Function().includes(foo2), util_check.Function(num_pars=5).includes(foo2), util_check.Function(num_pars=2).includes(foo2),
+		util_check.Function().includes(foo3), util_check.Function(num_pars=5).includes(foo3), util_check.Function(num_pars=2).includes(foo3),
+		util_check.Function().includes(foo4), util_check.Function(num_pars=5).includes(foo4), util_check.Function(num_pars=2).includes(foo4)) == (False, True, False, True, True, True, True, True, True, True, True, True, True)
+
+def test_function_istype():	#pylint: disable=C0103
+	""" Test that the istype method of Function class behaves appropriately """
+	def foo1(par1, par2):	#pylint: disable=C0111
+		return par1, par2
+	assert (util_check.Function().istype(3), util_check.Function().istype(foo1), util_check.Function(num_pars=3).istype(foo1), util_check.Function(num_pars=2).istype(foo1)) == (False, True, True, True)
+
+def test_function_exception():
+	""" Tests that exception method of Function class behaves appropriately """
+	assert (util_check.Function(num_pars=1).exception('par1') == 'Parameter `par1` is not a function with 1 parameter',
+		util_check.Function(num_pars=2).exception('par1') == 'Parameter `par1` is not a function with 2 parameters') == (True, True)
+
+###
 # Test PolymorphicType class
 ###
 def test_type_match_polymorphic_type_wrong_type():	#pylint: disable=C0103
@@ -318,7 +374,7 @@ def test_type_match_polymorphic_type_subtype_wrong_type():	#pylint: disable=C010
 def test_type_match_polymorphic_type_no_errors():	#pylint: disable=C0103
 	""" Test if function behaves proprely when all parameters are correctly specified """
 	test_instances = [str, int, None, util_check.ArbitraryLengthList, util_check.ArbitraryLengthTuple, util_check.ArbitraryLengthSet, util_check.IncreasingRealNumpyVector, util_check.RealNumpyVector, util_check.OneOf,
-		  util_check.NumberRange, util_check.Number, util_check.Real]
+		  util_check.NumberRange, util_check.Number, util_check.Real, util_check.File, util_check.Function]
 	obj = util_check.PolymorphicType(test_instances)
 	test_types = test_instances[:]
 	test_types[2] = type(None)
@@ -330,10 +386,16 @@ def test_polymorphic_type_includes():	#pylint: disable=C0103
 		  util_check.NumberRange(1, 3), util_check.Number(), util_check.Real(), util_check.RealNumpyVector()]
 	ref_obj1 = util_check.PolymorphicType(test_instances)
 	ref_obj2 = util_check.PolymorphicType([float, util_check.IncreasingRealNumpyVector()])
+	ref_obj3 = util_check.PolymorphicType([util_check.File(check_existance=False), util_check.Function(num_pars=2)])
+	def foo1(par1, par2, par3):	#pylint: disable=C0111
+		return par1, par2, par3
+	def foo2(par1, par2):	#pylint: disable=C0111
+		return par1, par2
 	assert (ref_obj1.includes(5), ref_obj1.includes(None), ref_obj1.includes([1, 2, 3]), ref_obj1.includes((2.0, 3.0)), ref_obj1.includes(set(['a', 'b', 'c'])), ref_obj1.includes('MANUAL'), ref_obj1.includes(2),
 		 ref_obj1.includes(100.0), ref_obj1.includes(10+20j), ref_obj1.includes(numpy.array([10, 0.0, 30])), ref_obj1.includes('hello world'), ref_obj1.includes([1.0, 2.0, 3.0]), ref_obj1.includes('auto'),
 		 ref_obj1.includes(numpy.array([])), ref_obj1.includes(numpy.array(['a', 'b', 'c'])), ref_obj2.includes(1), ref_obj2.includes(set([1, 2])), ref_obj2.includes(numpy.array([1, 0, -1])),
-		 ref_obj2.includes(numpy.array([10.0, 20.0, 30.0])), ref_obj2.includes(5.0)) == (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True)
+		 ref_obj2.includes(numpy.array([10.0, 20.0, 30.0])), ref_obj2.includes(5.0), ref_obj3.includes(3), ref_obj3.includes('/some/file'), ref_obj3.includes(foo1), ref_obj3.includes(foo2)) == \
+		 (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True, False, True, False, True)
 
 def test_polymorphic_type_istype():	#pylint: disable=C0103
 	""" Test that the istype method of PolymorphicType class behaves appropriately """
@@ -341,15 +403,25 @@ def test_polymorphic_type_istype():	#pylint: disable=C0103
 		  util_check.NumberRange(1, 3), util_check.Number(), util_check.Real(), util_check.RealNumpyVector()]
 	ref_obj1 = util_check.PolymorphicType(test_instances)
 	ref_obj2 = util_check.PolymorphicType([float, util_check.IncreasingRealNumpyVector()])
+	ref_obj3 = util_check.PolymorphicType([util_check.File(check_existance=False), util_check.Function(num_pars=2)])
+	def foo1(par1, par2, par3):	#pylint: disable=C0111
+		return par1, par2, par3
 	assert (ref_obj1.istype(5), ref_obj1.istype(None), ref_obj1.istype([1, 2, 3]), ref_obj1.istype((2.0, 3.0)), ref_obj1.istype(set(['a', 'b', 'c'])), ref_obj1.istype('MANUAL'), ref_obj1.istype(2),
 		 ref_obj1.istype(100.0), ref_obj1.istype(10+20j), ref_obj1.istype(numpy.array([10, 0.0, 30])), ref_obj1.istype('hello world'), ref_obj1.istype([1.0, 2.0, 3.0]), ref_obj1.istype('auto'),
 		 ref_obj1.istype(numpy.array([])), ref_obj1.istype(numpy.array(['a', 'b', 'c'])), ref_obj2.istype(1), ref_obj2.istype(set([1, 2])), ref_obj2.istype(numpy.array([1, 0, -1])),
-		 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0)) == (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True)
+		 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0), ref_obj3.istype(3), ref_obj3.istype('/some/file'), ref_obj3.istype(foo1)) == \
+		 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True)
 
 def test_polymorphic_exception():
 	""" Tests that exception method of PolymorphicType class behaves appropriately """
-	obj = util_check.PolymorphicType([util_check.OneOf(['NONE', 'MANUAL', 'AUTO']), util_check.NumberRange(minimum=15, maximum=20)])
-	assert obj.exception('Parameter par1', 5) == "Parameter par1 is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nParameter par1 is not in the range [15, 20]"
+	obj1 = util_check.PolymorphicType([util_check.OneOf(['NONE', 'MANUAL', 'AUTO']), util_check.NumberRange(minimum=15, maximum=20)])
+	obj2 = util_check.PolymorphicType([util_check.OneOf(['NONE', 'MANUAL', 'AUTO']), util_check.File(True)])
+	obj3 = util_check.PolymorphicType([util_check.File(True), util_check.Function(num_pars=2)])
+	test1 = obj1.exception('par1', 5) == "Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nParameter `par1` is not in the range [15, 20]"
+	test2 = obj2.exception('par1', '_not_valid_') == "Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nFile _not_valid_ could not be found"
+	test3 = obj3.exception('par1', '_not_valid_') == 'File _not_valid_ could not be found\nParameter `par1` is not a function with 2 parameters'
+	print obj3.exception('par1', '_not_valid_')
+	assert (test1, test2, test3) == (True, True, True)
 
 ##
 # Tests for get_function_args()
@@ -553,7 +625,7 @@ def test_check_type_simple_exception():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(TypeError) as excinfo:
 		func_check_type('Hello world')
-	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+	assert excinfo.value.message == 'Parameter `ppar1` is of the wrong type'
 
 def test_check_type_simple_no_exception():	#pylint: disable=C0103
 	""" Test that function behaves properly when a sigle (right) type is given (string, number, etc.) """
@@ -597,7 +669,7 @@ def test_check_parameter_wrong_type():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(TypeError) as excinfo:
 		func_check_type('Hello world')
-	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+	assert excinfo.value.message == 'Parameter `ppar1` is of the wrong type'
 
 def test_check_parameter_one_of_error_case_insensitive():	#pylint: disable=C0103
 	"""
@@ -608,7 +680,7 @@ def test_check_parameter_one_of_error_case_insensitive():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
 		func_check_type('Hello world')
-	assert excinfo.value.message == "Parameter ppar1 is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)"
+	assert excinfo.value.message == "Parameter `ppar1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)"
 
 def test_check_parameter_one_of_error_case_sensitive():	#pylint: disable=C0103
 	"""
@@ -619,7 +691,7 @@ def test_check_parameter_one_of_error_case_sensitive():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
 		func_check_type('none')
-	assert excinfo.value.message == "Parameter ppar1 is not one of ['NONE', 'MANUAL', 'AUTO'] (case sensitive)"
+	assert excinfo.value.message == "Parameter `ppar1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case sensitive)"
 
 def test_check_parameter_one_of_error_no_case_sensitivity():	#pylint: disable=C0103
 	"""
@@ -630,7 +702,7 @@ def test_check_parameter_one_of_error_no_case_sensitivity():	#pylint: disable=C0
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
 		func_check_type(10)
-	assert excinfo.value.message == 'Parameter ppar1 is not one of [0, 1, 2]'
+	assert excinfo.value.message == 'Parameter `ppar1` is not one of [0, 1, 2]'
 
 def test_check_parameter_one_of_no_error():	#pylint: disable=C0103
 	"""
@@ -650,7 +722,7 @@ def test_check_parameter_range_no_maximum_out_of_range():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
 		func_check_type(1)
-	assert excinfo.value.message == 'Parameter ppar1 is not in the range [10, +inf]'
+	assert excinfo.value.message == 'Parameter `ppar1` is not in the range [10, +inf]'
 
 def test_check_parameter_range_no_maximum_in_range():	#pylint: disable=C0103
 	"""
@@ -670,7 +742,7 @@ def test_check_parameter_range_no_minimum_out_of_range():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
 		func_check_type(20)
-	assert excinfo.value.message == 'Parameter ppar1 is not in the range [-inf, 10]'
+	assert excinfo.value.message == 'Parameter `ppar1` is not in the range [-inf, 10]'
 
 def test_check_parameter_range_no_minimum_in_range():	#pylint: disable=C0103
 	"""
@@ -690,7 +762,7 @@ def test_check_parameter_range_minimum_and_maximum_specified_out_of_range():	#py
 		print ppar1
 	with pytest.raises(ValueError) as excinfo:
 		func_check_type(3.1)
-	assert excinfo.value.message == 'Parameter ppar1 is not in the range [5.0, 10.0]'
+	assert excinfo.value.message == 'Parameter `ppar1` is not in the range [5.0, 10.0]'
 
 def test_check_parameter_range_minimum_and_maximum_specified_in_range():	#pylint: disable=C0103
 	"""
@@ -713,10 +785,10 @@ def test_check_parameter_polymorphic_type_error():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(TypeError) as excinfo1:	# Type not in the definition
 		func_check_type1('a')
-	eobj1 = excinfo1.value.message == 'Parameter ppar1 is of the wrong type'
+	eobj1 = excinfo1.value.message == 'Parameter `ppar1` is of the wrong type'
 	with pytest.raises(ValueError) as excinfo2:	# Type not in the definition
 		func_check_type2(2)
-	eobj2 = excinfo2.value.message == "Parameter ppar1 is not in the range [5, 10]\nParameter ppar1 is not one of ['HELLO', 'WORLD'] (case insensitive)"
+	eobj2 = excinfo2.value.message == "Parameter `ppar1` is not in the range [5, 10]\nParameter `ppar1` is not one of ['HELLO', 'WORLD'] (case insensitive)"
 	assert (eobj1, eobj2) == (True, True)
 
 def test_check_parameter_polymorphic_type_no_error():	#pylint: disable=C0103
@@ -737,7 +809,7 @@ def test_check_parameter_numpy_vector_wrong_type():	#pylint: disable=C0103
 		print ppar1
 	with pytest.raises(TypeError) as excinfo:
 		func_check_type(numpy.array([False]))
-	assert excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+	assert excinfo.value.message == 'Parameter `ppar1` is of the wrong type'
 
 def test_check_parameter_numpy_vector_no_error():	#pylint: disable=C0103
 	"""
@@ -757,10 +829,10 @@ def test_check_parameter_increasing_numpy_vector_wrong_type():	#pylint: disable=
 		print ppar1
 	with pytest.raises(TypeError) as excinfo:
 		func_check_type(numpy.array([False]))
-	eobj1 = excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+	eobj1 = excinfo.value.message == 'Parameter `ppar1` is of the wrong type'
 	with pytest.raises(TypeError) as excinfo:
 		func_check_type(numpy.array([1.0, 2.0, 1.0-1e-10]))
-	eobj2 = excinfo.value.message == 'Parameter ppar1 is of the wrong type'
+	eobj2 = excinfo.value.message == 'Parameter `ppar1` is of the wrong type'
 	assert (eobj1, eobj2) == (True, True)
 
 def test_check_parameter_incresing_numpy_vector_no_error():	#pylint: disable=C0103
