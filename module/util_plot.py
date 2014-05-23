@@ -183,10 +183,10 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:param	file_name:			comma-separated file name
 	:type	file_name:			string
-	:param	indep_col_label:	independent variable column label (case insensitive)
-	:type	indep_col_label:	string
-	:param	dep_col_label:		dependent variable column label (case insensitive)
-	:type	dep_col_label:		string
+	:param	indep_col_label:	independent variable column label
+	:type	indep_col_label:	string (case insensitive)
+	:param	dep_col_label:		dependent variable column label
+	:type	dep_col_label:		string (case insensitive)
 	:param	dfilter:			data filter definition. See :py:meth:`util_plot.CsvSource.data_filter()`
 	:type	dfilter:			dictionary
 	:param	indep_min:			minimum independent variable value
@@ -236,7 +236,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('dfilter', util_check.PolymorphicType([None, dict]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
-		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if dfilter is not None else dfilter 	# util_csv is case insensitive and all caps
+		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# util_csv is case insensitive and all caps
 		self._apply_dfilter()
 		self._process_data()
 
@@ -245,7 +245,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('indep_col_label', util_check.PolymorphicType([None, str]))
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
-		self._indep_col_label = indep_col_label.upper() 	# util_csv is case insensitive and all caps
+		self._indep_col_label = indep_col_label.upper() if isinstance(indep_col_label, str) else indep_col_label	# util_csv is case insensitive and all caps
 		self._check_indep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -255,7 +255,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('dep_col_label', util_check.PolymorphicType([None, str]))
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
-		self._dep_col_label = dep_col_label.upper() 	# util_csv is case insensitive and all caps
+		self._dep_col_label = dep_col_label.upper() if isinstance(dep_col_label, str) else dep_col_label	 	# util_csv is case insensitive and all caps
 		self._check_dep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -292,12 +292,12 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _check_indep_col_label(self):
 		""" Check that independent column label can be found in comma-separated file header """
 		if (self._csv_obj is not None) and (self.indep_col_label is not None) and (self.indep_col_label not in self._csv_obj.header()):
-			raise ValueError('Parameter indep_col_label could not be found in comma-separated file {0} header)'.format(self.file_name))
+			raise ValueError('Column {0} (independent column label) could not be found in comma-separated file {1} header'.format(self.indep_col_label, self.file_name))
 
 	def _check_dep_col_label(self):
 		""" Check that dependent column label can be found in comma-separated file header """
 		if (self._csv_obj is not None) and (self.dep_col_label is not None) and (self.dep_col_label not in self._csv_obj.header()):
-			raise ValueError('Parameter dep_col_label could not be found in comma-separated file {0} header)'.format(self.file_name))
+			raise ValueError('Column {0} (dependent column label) could not be found in comma-separated file {1} header'.format(self.dep_col_label, self.file_name))
 
 	def _check_dfilter(self):
 		""" Check that columns in filter specification can be found in comma-separated file header """
@@ -319,6 +319,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_indep_var_from_file(self):
 		""" Retrieve independent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.indep_col_label is not None):
+			self._check_indep_col_label()	# When object is given all parameters at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array(self._csv_obj.filtered_data(self.indep_col_label))
 			if len(data) == 0:
 				raise ValueError('Filtered independent variable is empty')
@@ -333,6 +334,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_dep_var_from_file(self):
 		""" Retrieve dependent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.dep_col_label is not None):
+			self._check_dep_col_label()	# When object is given all parameters at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array(self._csv_obj.filtered_data(self.dep_col_label))
 			if len(data) == 0:
 				raise ValueError('Filtered dependent variable is empty')

@@ -307,3 +307,33 @@ def test_data_filter_operation(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W06
 	util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0})
 	assert comp == True
 
+def test_dep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
+	""" Test if object behaves correctly when dep_col_label is of the wrong type """
+	file_name = str(tmpdir.join('sub/tmp.csv'))
+	comp_list = list()
+	# This assignment should raise an exeption
+	with pytest.raises(TypeError) as excinfo:
+		util_plot.CsvSource(dep_col_label=5)
+	comp_list.append(excinfo.value.message == 'Parameter `dep_col_label` is of the wrong type')
+	with pytest.raises(ValueError) as excinfo:
+		util_plot.CsvSource(file_name=file_name, dep_col_label='Col99')
+	comp_list.append(excinfo.value.message == 'Column COL99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
+	util_plot.CsvSource(dep_col_label=None)
+	util_plot.CsvSource(file_name=file_name, dep_col_label='Col3')
+	assert comp_list == [True, True]
+
+def test_indep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
+	""" Test if object behaves correctly when indep_col_label is of the wrong type """
+	file_name = str(tmpdir.join('sub/tmp.csv'))
+	comp_list = list()
+	# Thes assignments should raise an exeption
+	with pytest.raises(TypeError) as excinfo:
+		util_plot.CsvSource(indep_col_label=5)
+	comp_list.append(excinfo.value.message == 'Parameter `indep_col_label` is of the wrong type')
+	with pytest.raises(ValueError) as excinfo:
+		util_plot.CsvSource(file_name=file_name, indep_col_label='Col99')
+	comp_list.append(excinfo.value.message == 'Column COL99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
+	# Thess assignments should not raise an exception
+	util_plot.CsvSource(indep_col_label=None)
+	util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2')
+	assert comp_list == [True, True]
