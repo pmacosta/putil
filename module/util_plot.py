@@ -1,4 +1,4 @@
-﻿#pylint: disable=C0302
+#pylint: disable=C0302
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -60,10 +60,8 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('indep_var', util_check.PolymorphicType([None, util_check.IncreasingRealNumpyVector()]))
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
-		if (indep_var is not None) and (len(indep_var) == 0):
-			raise ValueError('Parameter indep_var is empty')
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
-			raise ValueError('Parameters indep_var and dep_var must have the same number of elements')
+			raise ValueError('Parameters `indep_var` and `dep_var` must have the same number of elements')
 		self._raw_indep_var = util_misc.smart_round(indep_var, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -73,10 +71,8 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('dep_var', util_check.PolymorphicType([None, util_check.RealNumpyVector()]))
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
-		if (dep_var is not None) and (len(dep_var) == 0):
-			raise ValueError('Parameter dep_var is empty')
 		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):
-			raise ValueError('Parameters indep_var and dep_var must have the same number of elements')
+			raise ValueError('Parameters `indep_var` and `dep_var` must have the same number of elements')
 		self._raw_dep_var = util_misc.smart_round(dep_var, PRECISION)
 		self._update_dep_var()
 
@@ -86,7 +82,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	@util_check.check_parameter('indep_min', util_check.PolymorphicType([None, util_check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
-			raise ValueError('Parameter indep_min is greater than parameter indep_max')
+			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
 		self._indep_min = util_misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -97,34 +93,28 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	@util_check.check_parameter('indep_max', util_check.PolymorphicType([None, util_check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
-			raise ValueError('Parameter indep_min is greater than parameter indep_max')
+			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
 		self._indep_max = util_misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
 		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
 	def _update_indep_var(self):
-		"""
-		Update independent variable according to its minimum and maximum limits
-		"""
+		""" Update independent variable according to its minimum and maximum limits """
 		if self._raw_indep_var is not None:
 			self._indep_var_indexes = numpy.where((self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0])) &
 											(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
 			self._indep_var = self._raw_indep_var[self._indep_var_indexes]
 			if len(self.indep_var) == 0:
-				raise ValueError('Parameter indep_var is empty after indep_min/indep_max thresholding')
+				raise ValueError('Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
 
 	def _update_dep_var(self):
-		"""
-		Update dependent variable (if assigned) to match the independent variable thresholding
-		"""
+		""" Update dependent variable (if assigned) to match the independent variable thresholding """
 		self._dep_var = self._raw_dep_var
 		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
 			self._dep_var = self._raw_dep_var[self._indep_var_indexes]
 
 	def __str__(self):
-		"""
-		Print comma-separated value source information
-		"""
+		""" Print comma-separated value source information """
 		ret = ''
 		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)
 		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)
@@ -133,64 +123,58 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		return ret
 
 	def _complete(self):
-		"""
-		Returns True if object is fully specified, otherwise returns False
-		"""
+		""" Returns True if object is fully specified, otherwise returns False """
 		return (self.indep_var is not None) and (self.dep_var is not None)
 
 	# Managed attributes
-	indep_min = property(_get_indep_min, _set_indep_min, doc='Minimum of independent variable')
+	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
 	"""
 	Minimum independent variable limit
 
 	:type:		real number
 	:raises:
-	 * TypeError (Parameter indep_min is of the wrong type)
+	 * TypeError (Parameter `indep_min` is of the wrong type)
 
-	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding)
 
-	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameter `indep_min` is greater than parameter `indep_max`)
 	"""	#pylint: disable=W0105
 
-	indep_max = property(_get_indep_max, _set_indep_max, doc='Maximum of independent variable')
+	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
 	"""
 	Maximum independent variable limit
 
 	:type:		real number
 	:raises:
-	 * TypeError (Parameter indep_max is of the wrong type)
+	 * TypeError (Parameter `indep_max` is of the wrong type)
 
-	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding)
 
-	 * ValueError (Parameter indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameter `indep_min` is greater than parameter `indep_max`)
 	"""	#pylint: disable=W0105
 
-	indep_var = property(_get_indep_var, _set_indep_var, doc='Independent variable Numpy vector')
+	indep_var = property(_get_indep_var, _set_indep_var, None, doc='Independent variable Numpy vector')
 	"""
 	Independent variable data
 
 	:type:		Numpy array
 	:raises:
-	 * TypeError (Parameter indep_var is of the wrong type)
+	 * TypeError (Parameter `indep_var` is of the wrong type)
 
-	 * ValueError (Parameter indep_var is empty)
+	 * ValueError (Parameters `indep_var` and `dep_var` must have the same number of elements)
 
-	 * ValueError (Parameter indep_var and dep_var must have the same number of elements)
-
-	 * ValueError (Parameters indep_var is empty after indep_min/indep_max thresholding)
+	 * ValueError (Parameters `indep_var` is empty after `indep_min`/`indep_max` thresholding)
 	"""	#pylint: disable=W0105
 
-	dep_var = property(_get_dep_var, _set_dep_var, doc='Dependent variable Numpy vector')
+	dep_var = property(_get_dep_var, _set_dep_var, None, doc='Dependent variable Numpy vector')
 	"""
 	Dependent variable data
 
 	:type:		Numpy array
 	:raises:
-	 * TypeError (Parameter dep_var is of the wrong type)
+	 * TypeError (Parameter `dep_var` is of the wrong type)
 
-	 * ValueError (Parameter dep_var is empty)
-
-	 * ValueError (indep_var and dep_var must have the same number of elements)
+	 * ValueError (Parameters `indep_var` and `dep_var` must have the same number of elements)
 	"""	#pylint: disable=W0105
 
 class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
@@ -199,9 +183,9 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:param	file_name:			comma-separated file name
 	:type	file_name:			string
-	:param	indep_col_label:	independent variable column label
+	:param	indep_col_label:	independent variable column label (case insensitive)
 	:type	indep_col_label:	string
-	:param	dep_col_label:		dependent variable column label
+	:param	dep_col_label:		dependent variable column label (case insensitive)
 	:type	dep_col_label:		string
 	:param	dfilter:			data filter definition. See :py:meth:`util_plot.CsvSource.data_filter()`
 	:type	dfilter:			dictionary
@@ -239,23 +223,20 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_file_name(self):	#pylint: disable=C0111
 		return self._file_name
 
-	@util_check.check_parameter('file_name', util_check.PolymorphicType([None, str]))
+	@util_check.check_parameter('file_name', util_check.PolymorphicType([None, util_check.File(check_existance=True)]))
 	def _set_file_name(self, file_name):	#pylint: disable=C0111
-		self._file_name = file_name
 		if file_name is not None:
-			if os.path.exists(file_name) is False:
-				raise IOError('Comma-separated file {0} could not be found)'.format(file_name))
+			self._file_name = file_name
 			self._csv_obj = util_csv.CsvFile(file_name)
-		self._apply_dfilter()	# This also gets indep_var and dep_var from file
-		self._process_data()
+			self._apply_dfilter()	# This also gets indep_var and dep_var from file
+			self._process_data()
 
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
 
 	@util_check.check_parameter('dfilter', util_check.PolymorphicType([None, dict]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
-		self._dfilter = dfilter
-		self._check_dfilter()
+		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if dfilter is not None else dfilter 	# util_csv is case insensitive and all caps
 		self._apply_dfilter()
 		self._process_data()
 
@@ -264,7 +245,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('indep_col_label', util_check.PolymorphicType([None, str]))
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
-		self._indep_col_label = indep_col_label
+		self._indep_col_label = indep_col_label.upper() 	# util_csv is case insensitive and all caps
 		self._check_indep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -274,7 +255,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('dep_col_label', util_check.PolymorphicType([None, str]))
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
-		self._dep_col_label = dep_col_label
+		self._dep_col_label = dep_col_label.upper() 	# util_csv is case insensitive and all caps
 		self._check_dep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -282,9 +263,8 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
 
+	@util_check.check_parameter('fproc', util_check.PolymorphicType([None, util_check.Function()]))
 	def _set_fproc(self, fproc):	#pylint: disable=C0111
-		if (fproc is not None) and (not hasattr(fproc, '__call__')):
-			raise TypeError('Parameter fproc is of the wrong type')
 		if (fproc is not None) and (len(util_check.get_function_args(fproc)) > 2):
 			raise ValueError('Parameter fproc (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
 		self._fproc = fproc
@@ -302,9 +282,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		self._process_data()
 
 	def _check_fproc_eargs(self):
-		"""
-		Checks that the extra arguments are in the processing function definition
-		"""
+		""" Checks that the extra arguments are in the processing function definition """
 		if self.fproc is not None:
 			args = util_check.get_function_args(self._fproc)
 			for key in self.fproc_eargs:
@@ -312,32 +290,25 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 					raise RuntimeError('Extra argument {0} not found in parameter fproc (function {1}) definition'.format(key, self.fproc.__name__))
 
 	def _check_indep_col_label(self):
-		"""
-		Check that independent column label can be found in comma-separated file header
-		"""
+		""" Check that independent column label can be found in comma-separated file header """
 		if (self._csv_obj is not None) and (self.indep_col_label is not None) and (self.indep_col_label not in self._csv_obj.header()):
 			raise ValueError('Parameter indep_col_label could not be found in comma-separated file {0} header)'.format(self.file_name))
 
 	def _check_dep_col_label(self):
-		"""
-		Check that dependent column label can be found in comma-separated file header
-		"""
+		""" Check that dependent column label can be found in comma-separated file header """
 		if (self._csv_obj is not None) and (self.dep_col_label is not None) and (self.dep_col_label not in self._csv_obj.header()):
 			raise ValueError('Parameter dep_col_label could not be found in comma-separated file {0} header)'.format(self.file_name))
 
 	def _check_dfilter(self):
-		"""
-		Check that columns in filter specification can be found in comma-separated file header
-		"""
+		""" Check that columns in filter specification can be found in comma-separated file header """
 		if (self._csv_obj is not None) and (self.dfilter is not None):
 			for key in self.dfilter:
 				if key not in self._csv_obj.header():
-					raise ValueError('Column {0} not found in comma-separated file {1} header'.format(key, self.file_name))
+					raise ValueError('Column {0} in data filter not found in comma-separated file {1} header'.format(key, self.file_name))
 
 	def _apply_dfilter(self):
-		"""
-		Apply data filters to loaded data
-		"""
+		""" Apply data filters to loaded data """
+		self._check_dfilter()
 		if (self.dfilter is not None) and (len(self.dfilter) > 0) and (self._csv_obj is not None):
 			self._csv_obj.set_filter(self.dfilter)
 		elif self._csv_obj is not None:
@@ -346,9 +317,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		self._get_dep_var_from_file()
 
 	def _get_indep_var_from_file(self):
-		"""
-		Retrieve independent data variable from comma-separated file
-		"""
+		""" Retrieve independent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.indep_col_label is not None):
 			data = numpy.array(self._csv_obj.filtered_data(self.indep_col_label))
 			if len(data) == 0:
@@ -362,9 +331,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			self._set_indep_var(data)
 
 	def _get_dep_var_from_file(self):
-		"""
-		Retrieve dependent data variable from comma-separated file
-		"""
+		""" Retrieve dependent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.dep_col_label is not None):
 			data = numpy.array(self._csv_obj.filtered_data(self.dep_col_label))
 			if len(data) == 0:
@@ -372,9 +339,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			self._set_dep_var(data[::-1] if self._reverse_data else data)
 
 	def _process_data(self):
-		"""
-		Process data through call-back function
-		"""
+		""" Process data through call-back function """
 		if (self.fproc is not None) and (self.indep_var is not None) and (self.dep_var is not None):
 			ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
 			if len(ret) != 2:
@@ -385,18 +350,14 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			self._check_var(dep_var, 'dep_var')
 
 	def _check_var(self, var, name):
-		"""
-		Validate (in)dependent variable returned by processing function
-		"""
+		""" Validate (in)dependent variable returned by processing function """
 		if len(var) == 0:
 			return ValueError('Parameter {0} is empty after function {1} processing'.format(name, self.fproc.__name__))
 		if not util_check.type_match(var, util_check.IncreasingRealNumpyVector if name == 'indep_var' else util_check.RealNumpyVector):
 			return ValueError('Parameter {0} is of the wrong type after function {1} processing'.format(name, self.fproc.__name__))
 
 	def __str__(self):
-		"""
-		Print comma-separated value source information
-		"""
+		""" Print comma-separated value source information """
 		ret = ''
 		ret += 'File name: {0}\n'.format(self.file_name)
 		ret += 'Data filter: {0}\n'.format(self.dfilter if self.dfilter is None else '')
@@ -410,9 +371,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		return ret
 
 	def _complete(self):
-		"""
-		Returns True if object is fully specified, otherwise returns False
-		"""
+		""" Returns True if object is fully specified, otherwise returns False """
 		return (self.file_name is not None) and (self.indep_col_label is not None) and (self.dep_col_label is not None)
 
 	file_name = property(_get_file_name, _set_file_name, doc='Comma-separated file name')
