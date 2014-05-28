@@ -101,8 +101,8 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _update_indep_var(self):
 		""" Update independent variable according to its minimum and maximum limits """
 		if self._raw_indep_var is not None:
-			self._indep_var_indexes = numpy.where((self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0])) &
-											(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
+			self._indep_var_indexes = numpy.where((self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0])) & \
+				(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
 			self._indep_var = self._raw_indep_var[self._indep_var_indexes]
 			if len(self.indep_var) == 0:
 				raise ValueError('Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
@@ -265,8 +265,10 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	@util_check.check_parameter('fproc', util_check.PolymorphicType([None, util_check.Function()]))
 	def _set_fproc(self, fproc):	#pylint: disable=C0111
-		if (fproc is not None) and (len(util_check.get_function_args(fproc)) > 2):
-			raise ValueError('Parameter fproc (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
+		if fproc is not None:
+			args = util_check.get_function_args(fproc)
+			if (fproc is not None) and (len(args) < 2) and ('*args' not in args) and ('**kwargs' not in args):
+				raise ValueError('Parameter `fproc` (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
 		self._fproc = fproc
 		self._check_fproc_eargs()
 		self._process_data()
@@ -283,11 +285,11 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	def _check_fproc_eargs(self):
 		""" Checks that the extra arguments are in the processing function definition """
-		if self.fproc is not None:
+		if (self.fproc is not None) and (self.fproc_eargs is not None):
 			args = util_check.get_function_args(self._fproc)
 			for key in self.fproc_eargs:
-				if key not in args:
-					raise RuntimeError('Extra argument {0} not found in parameter fproc (function {1}) definition'.format(key, self.fproc.__name__))
+				if (key not in args) and ('*args' not in args) and ('**kwargs' not in args):
+					raise RuntimeError('Extra argument `{0}` not found in parameter `fproc` (function {1}) definition'.format(key, self.fproc.__name__))
 
 	def _check_indep_col_label(self):
 		""" Check that independent column label can be found in comma-separated file header """
@@ -321,7 +323,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		if (self._csv_obj is not None) and (self.indep_col_label is not None):
 			self._check_indep_col_label()	# When object is given all parameters at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array(self._csv_obj.filtered_data(self.indep_col_label))
-			if len(data) == 0:
+			if (len(data) == 0) or ((data == [None]*len(data)).all()):
 				raise ValueError('Filtered independent variable is empty')
 			# Flip data if it is in descending order (affects interpolation)
 			if max(numpy.diff(data)) < 0:
@@ -336,27 +338,45 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		if (self._csv_obj is not None) and (self.dep_col_label is not None):
 			self._check_dep_col_label()	# When object is given all parameters at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array(self._csv_obj.filtered_data(self.dep_col_label))
-			if len(data) == 0:
+			if (len(data) == 0) or ((data == [None]*len(data)).all()):
 				raise ValueError('Filtered dependent variable is empty')
 			self._set_dep_var(data[::-1] if self._reverse_data else data)
 
 	def _process_data(self):
 		""" Process data through call-back function """
 		if (self.fproc is not None) and (self.indep_var is not None) and (self.dep_var is not None):
-			ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
+			try:
+				ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
+			except Exception as error_msg:
+				msg = 'Processing function {0} threw an exception when called with the following arguments:\n'.format(self.fproc.__name__)
+				msg += 'indep_var: {0}\n'.format(util_misc.numpy_pretty_print(self.indep_var, limit=10))
+				msg += 'dep_var: {0}\n'.format(util_misc.numpy_pretty_print(self.indep_var, limit=10))
+				if self.fproc_eargs is not None:
+					for key, value in self.fproc_eargs.items():
+						msg += '{0}: {1}\n'.format(key, value)
+				msg += 'Exception error: {0}'.format(error_msg)
+				raise RuntimeError(msg)
+			if (not isinstance(ret, list)) and (not isinstance(ret, tuple)):
+				raise TypeError('Parameter `fproc` (function {0}) return value is of the wrong type'.format(self.fproc.__name__))
 			if len(ret) != 2:
-				raise RuntimeError('Parameter fproc (function {0}) returned an illegal number of parameters'.format(self.fproc.__name__))
+				raise RuntimeError('Parameter `fproc` (function {0}) returned an illegal number of values'.format(self.fproc.__name__))
 			indep_var = ret[0]
 			dep_var = ret[1]
-			self._check_var(indep_var, 'indep_var')
-			self._check_var(dep_var, 'dep_var')
+			self._check_var(indep_var, 'independent variable')
+			self._check_var(dep_var, 'dependent variable')
+			if len(indep_var) != len(dep_var):
+				raise ValueError('Processed independent and dependent variables are of different length')
+			self._set_indep_var(None)	# To avoid errors that dependent and independet variables have different number of elements
+			self._set_dep_var(None)
+			self._set_indep_var(indep_var)
+			self._set_dep_var(dep_var)
 
-	def _check_var(self, var, name):
+	def _check_var(self, var, name):	#pylint:disable=R0201
 		""" Validate (in)dependent variable returned by processing function """
-		if len(var) == 0:
-			return ValueError('Parameter {0} is empty after function {1} processing'.format(name, self.fproc.__name__))
-		if not util_check.type_match(var, util_check.IncreasingRealNumpyVector if name == 'indep_var' else util_check.RealNumpyVector):
-			return ValueError('Parameter {0} is of the wrong type after function {1} processing'.format(name, self.fproc.__name__))
+		if isinstance(var, type(numpy.array([]))) and ((len(var) == 0) or ((var == [None]*len(var)).all())):
+			raise ValueError('Processed {0} is empty'.format(name))
+		if not util_check.type_match(var, util_check.IncreasingRealNumpyVector() if name == 'independent variable' else util_check.RealNumpyVector()):
+			raise TypeError('Processed {0} is of the wrong type'.format(name))
 
 	def __str__(self):
 		""" Print comma-separated value source information """

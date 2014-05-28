@@ -47,7 +47,7 @@ class CsvFile(object):
 			msg = 'Cannot open file '+file_name
 			raise IOError(msg)
 		self.current_header = [col.upper() for col in self.current_data[0]]
-		self.current_data = [[float(col) if util_misc.isalpha(col) is True else col for col in row] for row in self.current_data[1:]]
+		self.current_data = [[None if col.strip() == '' else (float(col) if util_misc.isalpha(col) is True else col) for col in row] for row in self.current_data[1:]]
 		self.current_filtered_data = self.current_data[:]
 
 	def reset_filter(self):
