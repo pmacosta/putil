@@ -190,8 +190,8 @@ def test_basic_source_complete():	#pylint: disable=C0103
 	comp.append(obj._complete() == False)	#pylint: disable=W0212
 	obj.indep_var = numpy.array([1, 2, 3])
 	comp.append(obj._complete() == False)	#pylint: disable=W0212
-	obj.indep_var = numpy.array([10, 20, 30])
-	comp.append(obj._complete() == False)	#pylint: disable=W0212
+	obj.dep_var = numpy.array([10, 20, 30])
+	comp.append(obj._complete() == True)	#pylint: disable=W0212
 	assert comp == 3*[True]
 
 def test_basic_source_str():	#pylint: disable=C0103
@@ -310,34 +310,34 @@ def test_csv_source_data_filter_operation(tmpdir, tmp_csv_file):	#pylint: disabl
 def test_csv_source_indep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when indep_col_label is of the wrong type """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
-	comp_list = list()
+	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
 		util_plot.CsvSource(indep_col_label=5)
-	comp_list.append(excinfo.value.message == 'Parameter `indep_col_label` is of the wrong type')
+	test_list.append(excinfo.value.message == 'Parameter `indep_col_label` is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col99')
-	comp_list.append(excinfo.value.message == 'Column COL99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
+	test_list.append(excinfo.value.message == 'Column COL99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
 	# These assignments should not raise an exception
 	util_plot.CsvSource(indep_col_label=None)
 	util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2')
-	assert comp_list == [True, True]
+	assert test_list == [True, True]
 
 def test_csv_source_dep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when dep_col_label is of the wrong type """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
-	comp_list = list()
+	test_list = list()
 	# This assignment should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
 		util_plot.CsvSource(dep_col_label=5)
-	comp_list.append(excinfo.value.message == 'Parameter `dep_col_label` is of the wrong type')
+	test_list.append(excinfo.value.message == 'Parameter `dep_col_label` is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, dep_col_label='Col99')
-	comp_list.append(excinfo.value.message == 'Column COL99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
+	test_list.append(excinfo.value.message == 'Column COL99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
 	# These assignments should not raise an exception
 	util_plot.CsvSource(dep_col_label=None)
 	util_plot.CsvSource(file_name=file_name, dep_col_label='Col3')
-	assert comp_list == [True, True]
+	assert test_list == [True, True]
 
 def test_csv_source_empty_indep_var_after_filter(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when the independent variable is empty after data filter is applied """
@@ -369,19 +369,19 @@ def test_csv_source_fproc_wrong_type():	#pylint: disable=C0103
 		return True
 	def fproc4(*args, **kwargs):	#pylint: disable=C0111,W0613
 		return True
-	comp_list = list()
+	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
 		util_plot.CsvSource(fproc=5)
-	comp_list.append(excinfo.value.message == 'Parameter `fproc` is of the wrong type')
+	test_list.append(excinfo.value.message == 'Parameter `fproc` is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(fproc=fproc1)
-	comp_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) does not have at least 2 arguments')
+	test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) does not have at least 2 arguments')
 	# These assignments should not raise an exception
 	util_plot.CsvSource(fproc=fproc2)
 	util_plot.CsvSource(fproc=fproc3)
 	util_plot.CsvSource(fproc=fproc4)
-	assert comp_list == [True]*2
+	assert test_list == [True]*2
 
 def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103,R0912,R0914
 	""" Test if object behaves correctly when fproc returns the wrong type and/or number of parameters """
@@ -412,38 +412,38 @@ def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W
 		return [numpy.array([1, 3]), numpy.array([1, 2, 3])]
 	def fproc13(indep_var, dep_var, par1):	#pylint: disable=C0111,W0613
 		raise RuntimeError('Test exception message')
-	comp_list = list()
+	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1)
-	comp_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) return value is of the wrong type')
+	test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) return value is of the wrong type')
 	with pytest.raises(RuntimeError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc2)
-	comp_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc2) returned an illegal number of values')
+	test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc2) returned an illegal number of values')
 	with pytest.raises(TypeError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc4)
-	comp_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
+	test_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
 	with pytest.raises(TypeError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc5)
-	comp_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
+	test_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
 	with pytest.raises(TypeError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc6)
-	comp_list.append(excinfo.value.message == 'Processed dependent variable is of the wrong type')
+	test_list.append(excinfo.value.message == 'Processed dependent variable is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc8)
-	comp_list.append(excinfo.value.message == 'Processed independent variable is empty')
+	test_list.append(excinfo.value.message == 'Processed independent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc9)
-	comp_list.append(excinfo.value.message == 'Processed dependent variable is empty')
+	test_list.append(excinfo.value.message == 'Processed dependent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc10)
-	comp_list.append(excinfo.value.message == 'Processed independent variable is empty')
+	test_list.append(excinfo.value.message == 'Processed independent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc11)
-	comp_list.append(excinfo.value.message == 'Processed dependent variable is empty')
+	test_list.append(excinfo.value.message == 'Processed dependent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc12)
-	comp_list.append(excinfo.value.message == 'Processed independent and dependent variables are of different length')
+	test_list.append(excinfo.value.message == 'Processed independent and dependent variables are of different length')
 	with pytest.raises(RuntimeError) as excinfo:
 		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
 	msg = 'Processing function fproc13 threw an exception when called with the following arguments:\n'
@@ -451,11 +451,11 @@ def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W
 	msg += 'dep_var: [ 1.0, 2.0, 3.0 ]\n'
 	msg += 'par1: 13\n'
 	msg += 'Exception error: Test exception message'
-	comp_list.append(excinfo.value.message == msg)
+	test_list.append(excinfo.value.message == msg)
 	# These assignments should not raise an exception
 	util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc3)
 	util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc7)
-	assert comp_list == [True]*11
+	assert test_list == [True]*11
 
 def test_csv_source_fproc_eargs_wrong_type():	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when fprog_eargs is of the wrong type """
@@ -480,19 +480,19 @@ def test_csv_source_fproc_eargs_parameter_name_validation():	#pylint: disable=W0
 		pass
 	def fproc5(indep_var, dep_var, par7, par8, *args, **kwargs):	#pylint: disable=C0111,W0613
 		pass
-	comp_list = list()
+	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(RuntimeError) as excinfo:
 		util_plot.CsvSource(fproc=fproc1, fproc_eargs={'par1':5})
-	comp_list.append(excinfo.value.message == 'Extra argument `par1` not found in parameter `fproc` (function fproc1) definition')
+	test_list.append(excinfo.value.message == 'Extra argument `par1` not found in parameter `fproc` (function fproc1) definition')
 	with pytest.raises(RuntimeError) as excinfo:
 		util_plot.CsvSource(fproc=fproc2, fproc_eargs={'par3':5})
-	comp_list.append(excinfo.value.message == 'Extra argument `par3` not found in parameter `fproc` (function fproc2) definition')
+	test_list.append(excinfo.value.message == 'Extra argument `par3` not found in parameter `fproc` (function fproc2) definition')
 	# These assignments should not raise an exception
 	util_plot.CsvSource(fproc=fproc3, fproc_eargs={'par99':5})
 	util_plot.CsvSource(fproc=fproc4, fproc_eargs={'par98':5})
 	util_plot.CsvSource(fproc=fproc5, fproc_eargs={'par97':5})
-	assert comp_list == [True]*2
+	assert test_list == [True]*2
 
 def test_fproc_works(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when executing function defined in fproc parameter with extra arguments defined in fproc_eargs parameter """
@@ -504,4 +504,109 @@ def test_fproc_works(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	print obj.dep_var
 	assert [(obj.indep_var == numpy.array([4, 5, 6])).all(), (obj.dep_var == numpy.array([102, 104, 101])).all()] == [True]*2
 
+def test_csv_source_str(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
+	""" Test that str behaves correctly """
+	file_name = str(tmpdir.join('sub/tmp.csv'))
+	def fproc1(indep_var, dep_var):	#pylint: disable=C0111,W0613
+		return indep_var*1e-3, dep_var+1
+	def fproc2(indep_var, dep_var, par1, par2):	#pylint: disable=C0111,W0613
+		return indep_var+par1, dep_var-par2
+	comp = list()
+	# Null object
+	obj = str(util_plot.CsvSource())
+	ref = 'File name: None\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'
+	ref += 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# indep_min set
+	obj = str(util_plot.CsvSource(indep_min=10))
+	ref = 'File name: None\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'
+	ref += 'Independent variable minimum: 10\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# indep_max set
+	obj = str(util_plot.CsvSource(indep_min=10, indep_max=20))
+	ref = 'File name: None\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'
+	ref += 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# file name
+	obj = str(util_plot.CsvSource(file_name=file_name, indep_min=10, indep_max=20))
+	ref = 'File name: {0}\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
+	ref += 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# dfilter
+	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_min=10, indep_max=20))
+	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
+	ref += 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
+	comp.append(obj == ref)
+	# indep_col_label
+	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', indep_min=2, indep_max=200))
+	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
+	ref += 'Independent variable minimum: 2\nIndependent variable maximum: 200\nIndependent variable: [ 2.0, 3.0 ]\nDependent variable: None'
+	comp.append(obj == ref)
+	# dep_col_label
+	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2, indep_max=200))
+	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
+	ref += 'Independent variable minimum: 2\nIndependent variable maximum: 200\nIndependent variable: [ 2.0, 3.0 ]\nDependent variable: [ 4.0, 1.0 ]'
+	comp.append(obj == ref)
+	# fproc
+	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2e-3, indep_max=200, fproc=fproc1))
+	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc1\nProcessing function extra arguments: None\n'.format(file_name)
+	ref += 'Independent variable minimum: 0.002\nIndependent variable maximum: 200\nIndependent variable: [ 0.002, 0.003 ]\nDependent variable: [ 5.0, 2.0 ]'
+	comp.append(obj == ref)
+	# fproc_eargs
+	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, indep_max=200, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
+	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
+	ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
+	comp.append(obj == ref)
+	assert comp == 9*[True]
 
+def test_csv_source_complete(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
+	""" Test that _complete() method behaves correctly """
+	file_name = str(tmpdir.join('sub/tmp.csv'))
+	comp = list()
+	obj = util_plot.CsvSource()
+	comp.append(obj._complete() == False)	#pylint: disable=W0212
+	obj.file_name = file_name
+	comp.append(obj._complete() == False)	#pylint: disable=W0212
+	obj.dfilter = {'Col1':0}
+	comp.append(obj._complete() == False)	#pylint: disable=W0212
+	obj.indep_col_label = 'Col2'
+	comp.append(obj._complete() == False)	#pylint: disable=W0212
+	obj.dep_col_label = 'Col3'
+	comp.append(obj._complete() == True)	#pylint: disable=W0212
+	assert comp == 5*[True]
+
+def test_csv_source_cannot_delete_attributes():	#pylint: disable=C0103
+	""" Test that del method raises an exception on all class attributes """
+	obj = util_plot.CsvSource()
+	test_list = list()
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.file_name
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.dfilter
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.indep_col_label
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.dep_col_label
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.fproc
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.fproc_eargs
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.indep_min
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.indep_max
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.indep_var
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.dep_var
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	assert test_list == 10*[True]

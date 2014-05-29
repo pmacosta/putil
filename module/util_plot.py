@@ -9,6 +9,7 @@ import numpy
 from scipy import stats
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d  #pylint: disable=E0611
+from collections import OrderedDict
 
 import util_csv
 import util_eng
@@ -366,7 +367,9 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			self._check_var(dep_var, 'dependent variable')
 			if len(indep_var) != len(dep_var):
 				raise ValueError('Processed independent and dependent variables are of different length')
-			self._set_indep_var(None)	# To avoid errors that dependent and independet variables have different number of elements
+			# The processing function could potentially expand (say, via interpolation) or shorten the data set length. To avoid errors that dependent and independet variables have different number of elements
+			# while setting the first processed variable (either independent or dependent) both are "reset" to None first
+			self._set_indep_var(None)
 			self._set_dep_var(None)
 			self._set_indep_var(indep_var)
 			self._set_dep_var(dep_var)
@@ -384,11 +387,17 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		ret += 'File name: {0}\n'.format(self.file_name)
 		ret += 'Data filter: {0}\n'.format(self.dfilter if self.dfilter is None else '')
 		if self.dfilter is not None:
-			for key, value in self.dfilter.iteritems():
+			odfilter = OrderedDict(sorted(self.dfilter.items(), key=lambda t: t[0]))
+			for key, value in odfilter.iteritems():
 				ret += '   {0}: {1}\n'.format(key, value)
 		ret += 'Independent column label: {0}\n'.format(self.indep_col_label)
 		ret += 'Dependent column label: {0}\n'.format(self.dep_col_label)
 		ret += 'Processing function: {0}\n'.format('None' if self.fproc is None else self.fproc.__name__)
+		ret += 'Processing function extra arguments: {0}\n'.format(self.fproc_eargs if self.fproc_eargs is None else '')
+		if self.fproc_eargs is not None:
+			ofproc_eargs = OrderedDict(sorted(self.fproc_eargs.items(), key=lambda t: t[0]))
+			for key, value in ofproc_eargs.iteritems():
+				ret += '   {0}: {1}\n'.format(key, value)
 		ret += BasicSource.__str__(self)
 		return ret
 
