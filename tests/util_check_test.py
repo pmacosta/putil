@@ -1,4 +1,8 @@
-﻿"""
+﻿# util_check_test.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
+"""
 Decorators for API parameter checking unit tests
 """
 
@@ -194,9 +198,9 @@ def test_one_of_istype():	#pylint: disable=C0103
 
 def test_one_of_exception():
 	""" Tests that exception method of OneOf class behaves appropriately """
-	test1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=False).exception('par1') == "Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case insensitive)"
-	test2 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('par1') == "Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"
-	test3 = util_check.OneOf([3.0, 2], case_sensitive=True).exception('par1') == "Parameter `par1` is not one of [3.0, 2]"
+	test1 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=False).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case insensitive)"}
+	test2 = util_check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"}
+	test3 = util_check.OneOf([3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not one of [3.0, 2]"}
 	assert (test1, test2, test3) == (True, True, True)
 
 ###
@@ -255,9 +259,9 @@ def test_number_range_istype():	#pylint: disable=C0103
 
 def test_number_range_exception():
 	""" Tests that exception method of NumberRange class behaves appropriately """
-	test1 = util_check.NumberRange(maximum=15).exception('par1') == 'Parameter `par1` is not in the range [-inf, 15]'
-	test2 = util_check.NumberRange(minimum=20.0).exception('par1') == 'Parameter `par1` is not in the range [20.0, +inf]'
-	test3 = util_check.NumberRange(minimum=3.5, maximum=4.75).exception('par1') == 'Parameter `par1` is not in the range [3.5, 4.75]'
+	test1 = util_check.NumberRange(maximum=15).exception('par1') == {'type':ValueError, 'msg':'Parameter `par1` is not in the range [-inf, 15]'}
+	test2 = util_check.NumberRange(minimum=20.0).exception('par1') == {'type':ValueError, 'msg':'Parameter `par1` is not in the range [20.0, +inf]'}
+	test3 = util_check.NumberRange(minimum=3.5, maximum=4.75).exception('par1') == {'type':ValueError, 'msg':'Parameter `par1` is not in the range [3.5, 4.75]'}
 	assert (test1, test2, test3) == (True, True, True)
 
 ###
@@ -319,7 +323,7 @@ def test_file_istype():	#pylint: disable=C0103
 
 def test_file_exception():
 	""" Tests that exception method of File class behaves appropriately """
-	assert util_check.File().exception('/some/path/file_name.ext') == 'File /some/path/file_name.ext could not be found'
+	assert util_check.File().exception('/some/path/file_name.ext') == {'type':IOError, 'msg':'File /some/path/file_name.ext could not be found'}
 
 ###
 # Test Function class
@@ -353,8 +357,8 @@ def test_function_istype():	#pylint: disable=C0103
 
 def test_function_exception():
 	""" Tests that exception method of Function class behaves appropriately """
-	assert (util_check.Function(num_pars=1).exception('par1') == 'Parameter `par1` is not a function with 1 parameter',
-		util_check.Function(num_pars=2).exception('par1') == 'Parameter `par1` is not a function with 2 parameters') == (True, True)
+	assert (util_check.Function(num_pars=1).exception('par1') == {'type':ValueError, 'msg':'Parameter `par1` is not a function with 1 parameter'},
+		util_check.Function(num_pars=2).exception('par1') == {'type':ValueError, 'msg':'Parameter `par1` is not a function with 2 parameters'}) == (True, True)
 
 ###
 # Test PolymorphicType class
@@ -417,10 +421,9 @@ def test_polymorphic_exception():
 	obj1 = util_check.PolymorphicType([util_check.OneOf(['NONE', 'MANUAL', 'AUTO']), util_check.NumberRange(minimum=15, maximum=20)])
 	obj2 = util_check.PolymorphicType([util_check.OneOf(['NONE', 'MANUAL', 'AUTO']), util_check.File(True)])
 	obj3 = util_check.PolymorphicType([util_check.File(True), util_check.Function(num_pars=2)])
-	test1 = obj1.exception('par1', 5) == "Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nParameter `par1` is not in the range [15, 20]"
-	test2 = obj2.exception('par1', '_not_valid_') == "Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nFile _not_valid_ could not be found"
-	test3 = obj3.exception('par1', '_not_valid_') == 'File _not_valid_ could not be found\nParameter `par1` is not a function with 2 parameters'
-	print obj3.exception('par1', '_not_valid_')
+	test1 = obj1.exception('par1', 5) == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nParameter `par1` is not in the range [15, 20]"}
+	test2 = obj2.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':"(ValueError) Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File _not_valid_ could not be found"}
+	test3 = obj3.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':'(IOError) File _not_valid_ could not be found\n(ValueError) Parameter `par1` is not a function with 2 parameters'}
 	assert (test1, test2, test3) == (True, True, True)
 
 ##

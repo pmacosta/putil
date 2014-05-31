@@ -1,3 +1,7 @@
+# util_logging.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
 """
 Logging-related utility classes, methods, functions and constants
 """

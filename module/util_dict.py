@@ -1,4 +1,8 @@
-﻿"""
+﻿# util_dict.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
+"""
 Dictionary-related utility classes, methods, functions and constants
 """
 

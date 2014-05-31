@@ -1,3 +1,7 @@
+# util_plot_test.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
 """
 util_plot unit tests
 """
@@ -87,31 +91,31 @@ def test_basic_source_indep_var_type():	#pylint: disable=C0103
 	comp.append(util_plot.BasicSource(indep_var=None).indep_var == None)
 	comp.append((util_plot.BasicSource(indep_var=numpy.array([1, 2, 3])).indep_var == numpy.array([1, 2, 3])).all())
 	comp.append((util_plot.BasicSource(indep_var=numpy.array([4.0, 5.0, 6.0])).indep_var == numpy.array([4.0, 5.0, 6.0])).all())
-	# Invalid thresholding
+	# Invalid range bounding
 	# Assign indep_min via __init__ path
 	obj = util_plot.BasicSource(indep_min=45)
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_var = numpy.array([1, 2, 3])
-	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
+	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign indep_min via attribute
 	obj = util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_min = 10
-	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
+	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign indep_max via attribute
 	obj = util_plot.BasicSource(indep_max=0)
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_var = numpy.array([1, 2, 3])
-	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
+	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign indep_max via attribute
 	obj = util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_max = 0
-	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
+	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign both indep_min and indep_max via __init__ path
 	with pytest.raises(ValueError) as excinfo:
 		util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]), indep_min=4, indep_max=10)
-	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
+	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Managed attribute path
 	obj = util_plot.BasicSource()
 	# Wrong type
@@ -278,7 +282,7 @@ def test_csv_source_file_name_wrong_type():	#pylint: disable=C0103
 def test_csv_source_file_does_not_exist():	#pylint: disable=C0103
 	""" Test if object behaves correctly when CSV file does not exist """
 	file_name = 'nonexistent_file_name.csv'
-	with pytest.raises(ValueError) as excinfo:
+	with pytest.raises(IOError) as excinfo:
 		util_plot.CsvSource(file_name=file_name)
 	assert excinfo.value.message == 'File {0} could not be found'.format(file_name)
 

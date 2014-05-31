@@ -1,3 +1,7 @@
+# util_plot.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
 #pylint: disable=C0302
 """
 Utility classes, methods and functions to handle plotting
@@ -28,9 +32,9 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	Container to hold data sets intended for plotting
 
 	:param	indep_var:			independent variable vector
-	:type	indep_var:			Numpy array
+	:type	indep_var:			increasing real Numpy vector
 	:param	dep_var:			dependent variable vector
-	:type	dep_var:			Numpy array
+	:type	dep_var:			real Numpy vector
 	:param	indep_min:			minimum independent variable value
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
@@ -64,7 +68,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
 			raise ValueError('Parameters `indep_var` and `dep_var` must have the same number of elements')
 		self._raw_indep_var = util_misc.smart_round(indep_var, PRECISION)
-		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
 	def _get_dep_var(self):	#pylint: disable=C0111
@@ -85,7 +89,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
 			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
 		self._indep_min = util_misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
-		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
 	def _get_indep_max(self):	#pylint: disable=C0111
@@ -96,7 +100,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
 			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
 		self._indep_max = util_misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
-		self._update_indep_var()	# Apply minimum and maximum thresholding and assign it to self._indep_var and thus this is what self.indep_var returns
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
 	def _update_indep_var(self):
@@ -106,10 +110,10 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 				(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
 			self._indep_var = self._raw_indep_var[self._indep_var_indexes]
 			if len(self.indep_var) == 0:
-				raise ValueError('Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding')
+				raise ValueError('Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 
 	def _update_dep_var(self):
-		""" Update dependent variable (if assigned) to match the independent variable thresholding """
+		""" Update dependent variable (if assigned) to match the independent variable range bounding """
 		self._dep_var = self._raw_dep_var
 		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
 			self._dep_var = self._raw_dep_var[self._indep_var_indexes]
@@ -136,7 +140,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	:raises:
 	 * TypeError (Parameter `indep_min` is of the wrong type)
 
-	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding)
+	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
 	 * ValueError (Parameter `indep_min` is greater than parameter `indep_max`)
 	"""	#pylint: disable=W0105
@@ -149,7 +153,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	:raises:
 	 * TypeError (Parameter `indep_max` is of the wrong type)
 
-	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` thresholding)
+	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
 	 * ValueError (Parameter `indep_min` is greater than parameter `indep_max`)
 	"""	#pylint: disable=W0105
@@ -158,20 +162,20 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Independent variable data
 
-	:type:		Numpy array
+	:type:		increasing real Numpy vector
 	:raises:
 	 * TypeError (Parameter `indep_var` is of the wrong type)
 
 	 * ValueError (Parameters `indep_var` and `dep_var` must have the same number of elements)
 
-	 * ValueError (Parameters `indep_var` is empty after `indep_min`/`indep_max` thresholding)
+	 * ValueError (Parameters `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 	"""	#pylint: disable=W0105
 
 	dep_var = property(_get_dep_var, _set_dep_var, None, doc='Dependent variable Numpy vector')
 	"""
 	Dependent variable data
 
-	:type:		Numpy array
+	:type:		real Numpy vector
 	:raises:
 	 * TypeError (Parameter `dep_var` is of the wrong type)
 
@@ -180,7 +184,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
-	Retrieves plot series data from a comma-separated file
+	Retrieves data set from a comma-separated file
 
 	:param	file_name:			comma-separated file name
 	:type	file_name:			string
@@ -411,7 +415,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:type:		string
 	:raises:
-	 * TypeError (Parameter file_name is of the wrong type)
+	 * TypeError (Parameter `file_name` is of the wrong type)
 
 	 * IOError (Comma-separated file *[file_name]* could not be found)
 

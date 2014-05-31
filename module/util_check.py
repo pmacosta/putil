@@ -1,4 +1,8 @@
-﻿"""
+﻿# util_check.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
+"""
 Decorators for API parameter checks
 """
 
@@ -134,7 +138,10 @@ class OneOf(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):
 		"""	Returns a suitable exception message """
-		return 'Parameter `{0}` is not one of {1}{2}'.format(param_name, self.choices, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not one of {1}{2}'.format(param_name, self.choices, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
+		return exp_dict
 
 class NumberRange(object):	#pylint: disable=R0903
 	"""	Class for numeric parameters that can only take values in a certain range """
@@ -163,7 +170,10 @@ class NumberRange(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):
 		""" Returns a suitable exception message """
-		return 'Parameter `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
+		return exp_dict
 
 class RealNumpyVector(object):	#pylint: disable=R0903
 	""" Numpy vector where every element is a real number """
@@ -213,7 +223,10 @@ class File(object):	#pylint: disable=R0903
 
 	def exception(self, param):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		return 'File {0} could not be found'.format(param)
+		exp_dict = dict()
+		exp_dict['type'] = IOError
+		exp_dict['msg'] = 'File {0} could not be found'.format(param)
+		return exp_dict
 
 class Function(object):	#pylint: disable=R0903
 	""" Function pointer """
@@ -236,7 +249,10 @@ class Function(object):	#pylint: disable=R0903
 
 	def exception(self, param):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		return 'Parameter `{0}` is not a function with {1} parameter{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a function with {1} parameter{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')
+		return exp_dict
 
 class PolymorphicType(object):	#pylint: disable=R0903
 	""" Class for polymorphic parameters """
@@ -269,7 +285,14 @@ class PolymorphicType(object):	#pylint: disable=R0903
 
 	def exception(self, param_name, param=None, test_obj=None):
 		""" Returns a suitable exception message """
-		return '\n'.join([sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if (sub_type in self.pseudo_types) and (not sub_inst.includes(test_obj))])
+		exp_dict_list = [sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if (sub_type in self.pseudo_types) and (not sub_inst.includes(test_obj))]
+		same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
+		exp_type = exp_dict_list[0]['type'] if same_exp  else RuntimeError
+		exp_msg = [('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in exp_dict_list]
+		exp_dict = dict()
+		exp_dict['type'] = exp_type
+		exp_dict['msg'] = '\n'.join(exp_msg)
+		return exp_dict
 
 def get_function_args(func):
 	"""	Returns a list of the argument names, in order, as defined by the function """
@@ -342,7 +365,8 @@ def check_parameter_internal(param_name, param_spec, func, *args, **kwargs):
 		pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType, File, Function]
 		if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
 			ekwargs = {'param_name':param_name} if type(param_spec) != PolymorphicType else {'param_name':param_name, 'param':param, 'test_obj':param_spec}
-			raise ValueError(param_spec.exception(**ekwargs))	#pylint: disable=W0142
+			exp_dict = param_spec.exception(**ekwargs)	#pylint: disable=W0142
+			raise exp_dict['type'](exp_dict['msg'])
 
 def check_parameter_type(param_name, param_type):
 	""" Decorator to check that a parameter is of a certain type """

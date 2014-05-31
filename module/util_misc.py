@@ -1,4 +1,8 @@
-﻿"""
+﻿# util_misc.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
+"""
 Miscellaneous utility classes, methods, functions and constants
 """
 
