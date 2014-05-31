@@ -1,4 +1,8 @@
-﻿"""
+﻿# util_check_test.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
+"""
 Decorators for API parameter checks
 """
 

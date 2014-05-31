@@ -1,3 +1,7 @@
+# util_eng.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
 """
 Engineering-relatd classes, methods, functions and constants
 """

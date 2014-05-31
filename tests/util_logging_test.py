@@ -1,4 +1,8 @@
-﻿"""
+﻿# util_logging_test.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
+"""
 Unit testing for util_logging
 """
 

@@ -1,3 +1,7 @@
+# util_csv.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
 """
 Utility classes, methods and functions to handle comma-delimited file as a quasi database
 """

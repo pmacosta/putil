@@ -1,4 +1,8 @@
-﻿#pylint: disable-msg=C0302
+﻿# util_plot.py
+# Copyright (c) 2014 Pablo Acosta-Serafini
+# See LICENSE for details
+
+#pylint: disable-msg=C0302
 """
 Utility classes, methods and functions to handle plotting
 """
