@@ -15,7 +15,7 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
-   util_plot
+   plot
 
 
 Indices and tables

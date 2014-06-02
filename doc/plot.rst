@@ -16,7 +16,7 @@ The data for a series is defined by a source. Two data sources are provided: the
 Example
 -------
 
-.. literalinclude:: ./examples/example_util_plot.py
+.. literalinclude:: ./examples/example_plot.py
     :language: python
     :linenos:
     :tab-width: 3
@@ -30,12 +30,12 @@ Example
 
 |
 
-.. image:: ./examples/util_plot_example.png
+.. image:: ./examples/example_plot.png
 
 Application programming interface (API)
 ---------------------------------------
 
-.. automodule:: util_plot
+.. automodule:: putil.plot
     :members:
     :undoc-members:
     :show-inheritance:

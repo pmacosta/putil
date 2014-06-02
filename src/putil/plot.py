@@ -432,8 +432,10 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Column *[column]* not found in comma-separated file *[file_name]* header)
 
-	.. note:: The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter value \
-	for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
+	.. note::
+	   The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter \
+	   value for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
+
 	"""	#pylint: disable=W0105
 
 	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
@@ -479,13 +481,14 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
 	"""
-	Rxtra arguments for the data processing function
+	Extra arguments for the data processing function
 
 	:type	eargs:	dictionary
 	:raises:
 	 * TypeError (Parameter fproc_eargs is of the wrong type)
 
 	 * ValueError (Parameter fproc (function {0}) does not have at least {1} arguments)
+
 	.. note::
 	   Extra parameters can be passed to the processing function using **fproc_eargs**. For example, if **fproc_eargs** is ``{'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
 
