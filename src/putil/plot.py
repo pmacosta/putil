@@ -1,4 +1,4 @@
-# util_plot.py
+# plot.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d  #pylint: disable=E0611
 from collections import OrderedDict
 
-import util_csv
-import util_eng
-import util_misc
-import util_check
+import putil.pcsv
+import putil.eng
+import putil.misc
+import putil.check
 
 PRECISION = 10	# Number of mantissa significant digits
 """
@@ -39,15 +39,15 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
-	:rtype:						:py:class:`util_plot.BasicSource()` object
+	:rtype:						:py:class:`putil.plot.BasicSource()` object
 	:raises:
-	 * Same as :py:attr:`util_plot.BasicSource.indep_var`
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
 
-	 * Same as :py:attr:`util_plot.BasicSource.dep_var`
+	 * Same as :py:attr:`putil.plot.BasicSource.dep_var`
 
-	 * Same as :py:attr:`util_plot.BasicSource.indep_min`
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_min`
 
-	 * Same as :py:attr:`util_plot.BasicSource.indep_max`
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_max`
 	"""
 	def __init__(self, indep_var=None, dep_var=None, indep_min=None, indep_max=None):
 		# Private attributes
@@ -63,43 +63,43 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_var(self):	#pylint: disable=C0111
 		return self._indep_var
 
-	@util_check.check_parameter('indep_var', util_check.PolymorphicType([None, util_check.IncreasingRealNumpyVector()]))
+	@putil.check.check_parameter('indep_var', putil.check.PolymorphicType([None, putil.check.IncreasingRealNumpyVector()]))
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
 			raise ValueError('Parameters `indep_var` and `dep_var` must have the same number of elements')
-		self._raw_indep_var = util_misc.smart_round(indep_var, PRECISION)
+		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
 	def _get_dep_var(self):	#pylint: disable=C0111
 		return self._dep_var
 
-	@util_check.check_parameter('dep_var', util_check.PolymorphicType([None, util_check.RealNumpyVector()]))
+	@putil.check.check_parameter('dep_var', putil.check.PolymorphicType([None, putil.check.RealNumpyVector()]))
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
 		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):
 			raise ValueError('Parameters `indep_var` and `dep_var` must have the same number of elements')
-		self._raw_dep_var = util_misc.smart_round(dep_var, PRECISION)
+		self._raw_dep_var = putil.misc.smart_round(dep_var, PRECISION)
 		self._update_dep_var()
 
 	def _get_indep_min(self):	#pylint: disable=C0111
 		return self._indep_min
 
-	@util_check.check_parameter('indep_min', util_check.PolymorphicType([None, util_check.Real()]))
+	@putil.check.check_parameter('indep_min', putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
 			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
-		self._indep_min = util_misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
+		self._indep_min = putil.misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
 	def _get_indep_max(self):	#pylint: disable=C0111
 		return self._indep_max
 
-	@util_check.check_parameter('indep_max', util_check.PolymorphicType([None, util_check.Real()]))
+	@putil.check.check_parameter('indep_max', putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
 			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
-		self._indep_max = util_misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
+		self._indep_max = putil.misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
 
@@ -123,8 +123,8 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		ret = ''
 		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)
 		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)
-		ret += 'Independent variable: {0}\n'.format(util_misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))
-		ret += 'Dependent variable: {0}'.format(util_misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))
+		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))
+		ret += 'Dependent variable: {0}'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))
 		return ret
 
 	def _complete(self):
@@ -192,7 +192,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	:type	indep_col_label:	string (case insensitive)
 	:param	dep_col_label:		dependent variable column label
 	:type	dep_col_label:		string (case insensitive)
-	:param	dfilter:			data filter definition. See :py:meth:`util_plot.CsvSource.data_filter()`
+	:param	dfilter:			data filter definition. See :py:meth:`putil.plot.CsvSource.data_filter()`
 	:type	dfilter:			dictionary
 	:param	indep_min:			minimum independent variable value
 	:type	indep_min:			number
@@ -202,15 +202,15 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	:type	fproc:				function pointer
 	:param	fproc_eargs:		processing function extra arguments
 	:type	fproc_eargs:		dictionary
-	:rtype:						:py:class:`util_plot.CsvSource()` object
+	:rtype:						:py:class:`putil.plot.CsvSource()` object
 	:raises:
-	 * Same as :py:attr:`util_plot.BasicSource.indep_var`
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
 
-	 * Same as :py:attr:`util_plot.BasicSource.dep_var`
+	 * Same as :py:attr:`putil.plot.BasicSource.dep_var`
 
-	 * Same as :py:attr:`util_plot.BasicSource.indep_min`
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_min`
 
-	 * Same as :py:attr:`util_plot.BasicSource.indep_max`
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_max`
 	"""
 	def __init__(self, file_name=None, indep_col_label=None, dep_col_label=None, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		BasicSource.__init__(self, indep_var=None, dep_var=None, indep_min=indep_min, indep_max=indep_max)
@@ -228,29 +228,29 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_file_name(self):	#pylint: disable=C0111
 		return self._file_name
 
-	@util_check.check_parameter('file_name', util_check.PolymorphicType([None, util_check.File(check_existance=True)]))
+	@putil.check.check_parameter('file_name', putil.check.PolymorphicType([None, putil.check.File(check_existance=True)]))
 	def _set_file_name(self, file_name):	#pylint: disable=C0111
 		if file_name is not None:
 			self._file_name = file_name
-			self._csv_obj = util_csv.CsvFile(file_name)
+			self._csv_obj = putil.pcsv.CsvFile(file_name)
 			self._apply_dfilter()	# This also gets indep_var and dep_var from file
 			self._process_data()
 
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
 
-	@util_check.check_parameter('dfilter', util_check.PolymorphicType([None, dict]))
+	@putil.check.check_parameter('dfilter', putil.check.PolymorphicType([None, dict]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
-		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# util_csv is case insensitive and all caps
+		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# putil.pcsv is case insensitive and all caps
 		self._apply_dfilter()
 		self._process_data()
 
 	def _get_indep_col_label(self):	#pylint: disable=C0111
 		return self._indep_col_label
 
-	@util_check.check_parameter('indep_col_label', util_check.PolymorphicType([None, str]))
+	@putil.check.check_parameter('indep_col_label', putil.check.PolymorphicType([None, str]))
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
-		self._indep_col_label = indep_col_label.upper() if isinstance(indep_col_label, str) else indep_col_label	# util_csv is case insensitive and all caps
+		self._indep_col_label = indep_col_label.upper() if isinstance(indep_col_label, str) else indep_col_label	# putil.pcsv is case insensitive and all caps
 		self._check_indep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -258,9 +258,9 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_dep_col_label(self):	#pylint: disable=C0111
 		return self._dep_col_label
 
-	@util_check.check_parameter('dep_col_label', util_check.PolymorphicType([None, str]))
+	@putil.check.check_parameter('dep_col_label', putil.check.PolymorphicType([None, str]))
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
-		self._dep_col_label = dep_col_label.upper() if isinstance(dep_col_label, str) else dep_col_label	 	# util_csv is case insensitive and all caps
+		self._dep_col_label = dep_col_label.upper() if isinstance(dep_col_label, str) else dep_col_label	 	# putil.pcsv is case insensitive and all caps
 		self._check_dep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -268,10 +268,10 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
 
-	@util_check.check_parameter('fproc', util_check.PolymorphicType([None, util_check.Function()]))
+	@putil.check.check_parameter('fproc', putil.check.PolymorphicType([None, putil.check.Function()]))
 	def _set_fproc(self, fproc):	#pylint: disable=C0111
 		if fproc is not None:
-			args = util_check.get_function_args(fproc)
+			args = putil.check.get_function_args(fproc)
 			if (fproc is not None) and (len(args) < 2) and ('*args' not in args) and ('**kwargs' not in args):
 				raise ValueError('Parameter `fproc` (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
 		self._fproc = fproc
@@ -281,7 +281,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_fproc_eargs(self):	#pylint: disable=C0111
 		return self._fproc_eargs
 
-	@util_check.check_parameter('fproc_eargs', util_check.PolymorphicType([None, dict]))
+	@putil.check.check_parameter('fproc_eargs', putil.check.PolymorphicType([None, dict]))
 	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable=C0111
 		# Check that extra argnuments to see if they are in the function definition
 		self._fproc_eargs = fproc_eargs
@@ -291,7 +291,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _check_fproc_eargs(self):
 		""" Checks that the extra arguments are in the processing function definition """
 		if (self.fproc is not None) and (self.fproc_eargs is not None):
-			args = util_check.get_function_args(self._fproc)
+			args = putil.check.get_function_args(self._fproc)
 			for key in self.fproc_eargs:
 				if (key not in args) and ('*args' not in args) and ('**kwargs' not in args):
 					raise RuntimeError('Extra argument `{0}` not found in parameter `fproc` (function {1}) definition'.format(key, self.fproc.__name__))
@@ -354,8 +354,8 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 				ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
 			except Exception as error_msg:
 				msg = 'Processing function {0} threw an exception when called with the following arguments:\n'.format(self.fproc.__name__)
-				msg += 'indep_var: {0}\n'.format(util_misc.numpy_pretty_print(self.indep_var, limit=10))
-				msg += 'dep_var: {0}\n'.format(util_misc.numpy_pretty_print(self.indep_var, limit=10))
+				msg += 'indep_var: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, limit=10))
+				msg += 'dep_var: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, limit=10))
 				if self.fproc_eargs is not None:
 					for key, value in self.fproc_eargs.items():
 						msg += '{0}: {1}\n'.format(key, value)
@@ -382,7 +382,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		""" Validate (in)dependent variable returned by processing function """
 		if isinstance(var, type(numpy.array([]))) and ((len(var) == 0) or ((var == [None]*len(var)).all())):
 			raise ValueError('Processed {0} is empty'.format(name))
-		if not util_check.type_match(var, util_check.IncreasingRealNumpyVector() if name == 'independent variable' else util_check.RealNumpyVector()):
+		if not putil.check.type_match(var, putil.check.IncreasingRealNumpyVector() if name == 'independent variable' else putil.check.RealNumpyVector()):
 			raise TypeError('Processed {0} is of the wrong type'.format(name))
 
 	def __str__(self):
@@ -505,7 +505,7 @@ class Series(object):	#pylint: disable=R0902
 	Specifies a series within a panel
 
 	:param	data_source:	data source object
-	:type	data_source:	:py:class:`util_plot.RawSource()` object or :py:class:`util_plot.CsvSource()` object or others conforming to the data source specification
+	:type	data_source:	:py:class:`putil.plot.RawSource()` object or :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
 	:param	label:			series label
 	:type	label:			string
 	:param	color:			series color
@@ -519,19 +519,19 @@ class Series(object):	#pylint: disable=R0902
 	:param	secondary_axis:	secondary axis flag
 	:type	secondary_axis:	boolean
 	:raises:
-	 * Same as :py:meth:`util_plot.Series.data_source()`
+	 * Same as :py:meth:`putil.plot.Series.data_source()`
 
-	 * Same as :py:meth:`util_plot.Series.label()`
+	 * Same as :py:meth:`putil.plot.Series.label()`
 
-	 * Same as :py:meth:`util_plot.Series.color()`
+	 * Same as :py:meth:`putil.plot.Series.color()`
 
-	 * Same as :py:meth:`util_plot.Series.marker()`
+	 * Same as :py:meth:`putil.plot.Series.marker()`
 
-	 * Same as :py:meth:`util_plot.Series.interp()`
+	 * Same as :py:meth:`putil.plot.Series.interp()`
 
-	 * Same as :py:meth:`util_plot.Series.line_style()`
+	 * Same as :py:meth:`putil.plot.Series.line_style()`
 
-	 * Same as :py:meth:`util_plot.Series.secondary_axis()`
+	 * Same as :py:meth:`putil.plot.Series.secondary_axis()`
 	"""
 	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
 		self.interp_options = ['NONE', 'STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
@@ -563,7 +563,7 @@ class Series(object):	#pylint: disable=R0902
 		Sets or returns data set source object. The independent and dependent data sets are obtained once the data source is set.
 
 		:param	data_source:	data source object
-		:type	data_source:	:py:class:`util_plot.RawSource()` object, :py:class:`util_plot.CsvSource()` object or others conforming to the data source specification
+		:type	data_source:	:py:class:`putil.plot.RawSource()` object, :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
 		:raises:
 		 * RuntimeError (Illegal number of parameters)
 
@@ -573,9 +573,9 @@ class Series(object):	#pylint: disable=R0902
 
 		 * RuntimeError (Data source object is not fully specified)
 
-		 * Same as :py:meth:`util_plot.RawSource.indep_var()` or :py:meth:`util_plot.CsvSource.indep_var()` or exceptions thrown by custom data source class while handling independent variable retrieval
+		 * Same as :py:meth:`putil.plot.RawSource.indep_var()` or :py:meth:`putil.plot.CsvSource.indep_var()` or exceptions thrown by custom data source class while handling independent variable retrieval
 
-		 * Same as :py:meth:`util_plot.RawSource.dep_var()` or :py:meth:`util_plot.CsvSource.dep_var()` or exceptions thrown by custom data source class while handling dependent variable retrieval
+		 * Same as :py:meth:`putil.plot.RawSource.dep_var()` or :py:meth:`putil.plot.CsvSource.dep_var()` or exceptions thrown by custom data source class while handling dependent variable retrieval
 
 		.. note:: The data source object must have ``indep_var()`` and ``dep_var()`` methods returning Numpy vectors to be valid.
 
@@ -624,7 +624,7 @@ class Series(object):	#pylint: disable=R0902
 		if len(self.current_indep_var) == 0:
 			raise RuntimeError('Independent variable data set is empty')
 		for index, num in enumerate(self.current_indep_var):
-			if util_misc.isnumber(num) is False:
+			if putil.misc.isnumber(num) is False:
 				raise ValueError('Independent data set element {0} ({1}) is not a number'.format(index, num))
 		self._calculate_curve()
 
@@ -658,7 +658,7 @@ class Series(object):	#pylint: disable=R0902
 		if len(self.current_dep_var) == 0:
 			raise RuntimeError('Dependent variable data set is empty')
 		for index, num in enumerate(self.current_dep_var):
-			if util_misc.isnumber(num) is False:
+			if putil.misc.isnumber(num) is False:
 				raise ValueError('Dependent data set element {0} ({1}) is not a number'.format(index, num))
 		self._calculate_curve()
 
@@ -734,7 +734,7 @@ class Series(object):	#pylint: disable=R0902
 					pass
 			if (valid_color_spec is False) and (self.current_color[0] == '#') and (len(self.current_color) == 7):	# HTML hex string
 				for char in self.current_color:
-					if util_misc.ishex(char) is False:
+					if putil.misc.ishex(char) is False:
 						break
 				else:
 					valid_color_spec = True
@@ -919,7 +919,7 @@ class Panel(object):	#pylint: disable=R0902
 	Defines properties of a panel within a figure
 
 	:param	series:					one or more data series
-	:type	series:					:py:class:`util_plot.Series()` object or list of :py:class:`util_plot.Series()` objects
+	:type	series:					:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
 	:param	primary_axis_label:		primary axis label
 	:type	primary_axis_label:		string
 	:param	primary_axis_units:		primary dependent axis units
@@ -930,22 +930,22 @@ class Panel(object):	#pylint: disable=R0902
 	:type	secondary_axis_units:	string
 	:param	log_dep_axis:			logarithmic dependent (primary and/or secondary) axis flag
 	:type	log_dep_axis:			boolean
-	:param	legend_props:			legend properties. See :py:meth:`util_plot.Panel.legend_props()`
+	:param	legend_props:			legend properties. See :py:meth:`putil.plot.Panel.legend_props()`
 	:type	legend_props:			dictionary
 	:raises:
-	 * Same as :py:meth:`util_plot.Panel.add_series()`
+	 * Same as :py:meth:`putil.plot.Panel.add_series()`
 
-	 * Same as :py:meth:`util_plot.Panel.primary_axis_label()`
+	 * Same as :py:meth:`putil.plot.Panel.primary_axis_label()`
 
-	 * Same as :py:meth:`util_plot.Panel.primary_axis_units()`
+	 * Same as :py:meth:`putil.plot.Panel.primary_axis_units()`
 
-	 * Same as :py:meth:`util_plot.Panel.log_dep_axis()`
+	 * Same as :py:meth:`putil.plot.Panel.log_dep_axis()`
 
-	 * Same as :py:meth:`util_plot.Panel.secondary_axis_label()`
+	 * Same as :py:meth:`putil.plot.Panel.secondary_axis_label()`
 
-	 * Same as :py:meth:`util_plot.Panel.secondary_axis_units()`
+	 * Same as :py:meth:`putil.plot.Panel.secondary_axis_units()`
 
-	 * Same as :py:meth:`util_plot.Panel.legend_props()`
+	 * Same as :py:meth:`putil.plot.Panel.legend_props()`
 	"""
 	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=dict()):	#pylint: disable=W0102,R0913
 		self.legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
@@ -985,7 +985,7 @@ class Panel(object):	#pylint: disable=R0902
 		"""
 		Returns the data series objects attached to the panel
 
-		:rtype:			:py:class:`util_plot.Series()` object or list of :py:class:`util_plot.Series()` objects
+		:rtype:			:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
 		"""
 		return self.current_series_list
 
@@ -994,8 +994,8 @@ class Panel(object):	#pylint: disable=R0902
 		Adds data series to panel
 
 		:param	series: one or more data series
-		:type	series:	:py:class:`util_plot.Series()` object or list of :py:class:`util_plot.Series()` objects
-		:rtype:			:py:class:`util_plot.Series()` object or list of :py:class:`util_plot.Series()` objects
+		:type	series:	:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
+		:rtype:			:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
 		:raises:
 		 * RuntimeError (Series in panel have incongruent primary and secondary axis)
 
@@ -1026,28 +1026,28 @@ class Panel(object):	#pylint: disable=R0902
 			for series_obj in self.current_series_list:
 				if series_obj.secondary_axis() is False:
 					self.panel_has_primary_axis = True
-					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([util_misc.smart_round(element, 10) for element in series_obj.dep_var()])))
+					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var()])))
 					if series_obj.interp_curve_dep_var is not None:
-						global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([util_misc.smart_round(element, 10) for element in series_obj.interp_curve_dep_var])))
+						global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_curve_dep_var])))
 				else:
 					self.panel_has_secondary_axis = True
-					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([util_misc.smart_round(element, 10) for element in series_obj.dep_var()])))
+					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var()])))
 					if series_obj.interp_curve_dep_var is not None:
-						global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([util_misc.smart_round(element, 10) for element in series_obj.interp_curve_dep_var])))
+						global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_curve_dep_var])))
 			# Primary axis
 			if self.panel_has_primary_axis is True:
 				self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale, self.primary_scaled_dep_var = \
 					_scale_series(series=global_primary_dep_var, scale=True, scale_type='delta')
-				self.primary_dep_var_min = util_misc.smart_round(self.primary_dep_var_min, 10)
-				self.primary_dep_var_max = util_misc.smart_round(self.primary_dep_var_max, 10)
+				self.primary_dep_var_min = putil.misc.smart_round(self.primary_dep_var_min, 10)
+				self.primary_dep_var_max = putil.misc.smart_round(self.primary_dep_var_max, 10)
 				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max = \
 					_intelligent_ticks(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
 			# Secondary axis
 			if self.panel_has_secondary_axis is True:
 				self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale, self.secondary_scaled_dep_var = \
 					_scale_series(series=global_secondary_dep_var, scale=True, scale_type='delta')
-				self.secondary_dep_var_min = util_misc.smart_round(self.secondary_dep_var_min, 10)
-				self.secondary_dep_var_max = util_misc.smart_round(self.secondary_dep_var_max, 10)
+				self.secondary_dep_var_min = putil.misc.smart_round(self.secondary_dep_var_min, 10)
+				self.secondary_dep_var_max = putil.misc.smart_round(self.secondary_dep_var_max, 10)
 				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max = \
 					_intelligent_ticks(self.secondary_scaled_dep_var, min(self.secondary_scaled_dep_var), max(self.secondary_scaled_dep_var), tight=False)
 			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval
@@ -1365,7 +1365,7 @@ class Figure(object):	#pylint: disable=R0902
 	Automagically generate presentation-quality plots
 
 	:param	panel:				one or more data panels
-	:type	panel:				:py:class:`util_plot.Panel()` object or list of :py:class:`util_plot.Panel()` objects
+	:type	panel:				:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.Panel()` objects
 	:param	indep_var_label:	independent variable label
 	:type	indep_var_label:	string
 	:param	indep_var_units:	independent variable units
@@ -1379,22 +1379,22 @@ class Figure(object):	#pylint: disable=R0902
 	:param	log_indep:			logarithmic independent axis flag
 	:type	log_indep:			boolean
 	:raises:
-	 * Same as :py:meth:`util_plot.Figure.add_panel()`
+	 * Same as :py:meth:`putil.plot.Figure.add_panel()`
 
-	 * Same as :py:meth:`util_plot.Figure.indep_var_label()`
+	 * Same as :py:meth:`putil.plot.Figure.indep_var_label()`
 
-	 * Same as :py:meth:`util_plot.Figure.indep_var_units()`
+	 * Same as :py:meth:`putil.plot.Figure.indep_var_units()`
 
-	 * Same as :py:meth:`util_plot.Figure.title()`
+	 * Same as :py:meth:`putil.plot.Figure.title()`
 
-	 * Same as :py:meth:`util_plot.Figure.log_indep()`
+	 * Same as :py:meth:`putil.plot.Figure.log_indep()`
 
-	 * Same as :py:meth:`util_plot.Figure.figure_width()`
+	 * Same as :py:meth:`putil.plot.Figure.figure_width()`
 
-	 * Same as :py:meth:`util_plot.Figure.figure_height()`
+	 * Same as :py:meth:`putil.plot.Figure.figure_height()`
 
 	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be retrieved using \
-	:py:meth:`util_plot.Figure.figure_width()` and/or :py:meth:`util_plot.Figure.figure_height()` methods.
+	:py:meth:`putil.plot.Figure.figure_width()` and/or :py:meth:`putil.plot.Figure.figure_height()` methods.
 	"""
 	def __init__(self, panel=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep=False):	#pylint: disable=R0913
 		self.fig = None
@@ -1433,7 +1433,7 @@ class Figure(object):	#pylint: disable=R0902
 		Adds panel to current panel list
 
 		:param	panel:	one or more data panel
-		:type	panel:	:py:class:`util_plot.Panel()` object or list of :py:class:`util_plot.panel()` objects
+		:type	panel:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
 		:raises:
 		 * TypeError (Panels must be provided in list form)
 
@@ -1563,7 +1563,7 @@ class Figure(object):	#pylint: disable=R0902
 			raise RuntimeError('Illegal number of parameters')
 		self.current_fig_width = dim[0]
 		if self.current_fig_width is not None:
-			if util_misc.isnumber(self.current_fig_width) is False:
+			if putil.misc.isnumber(self.current_fig_width) is False:
 				raise TypeError('Figure width must be a number')
 			if self.current_fig_width < 0:
 				raise ValueError('Figure width must be a positive number')
@@ -1589,7 +1589,7 @@ class Figure(object):	#pylint: disable=R0902
 			raise RuntimeError('Illegal number of parameters')
 		self.current_fig_height = dim[0]
 		if self.current_fig_height is not None:
-			if util_misc.isnumber(self.current_fig_height) is False:
+			if putil.misc.isnumber(self.current_fig_height) is False:
 				raise TypeError('Figure height must be a number')
 			if self.current_fig_height < 0:
 				raise ValueError('Figure height must be a positive number')
@@ -1612,10 +1612,10 @@ class Figure(object):	#pylint: disable=R0902
 		# Find union of the independent variable data set of all panels
 		for panel_obj in self.current_panel_list:
 			for series_obj in panel_obj.current_series_list:
-				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([util_misc.smart_round(element, 10) for element in series_obj.indep_var()])))
+				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var()])))
 		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = _scale_series(series=global_indep_var, scale=True, scale_type='delta')
-		self.indep_var_min = util_misc.smart_round(self.indep_var_min, 10)
-		self.indep_var_max = util_misc.smart_round(self.indep_var_max, 10)
+		self.indep_var_min = putil.misc.smart_round(self.indep_var_min, 10)
+		self.indep_var_max = putil.misc.smart_round(self.indep_var_max, 10)
 		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = _intelligent_ticks(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
 		# Scale all panel series
 		for panel_obj in self.current_panel_list:
@@ -1652,7 +1652,7 @@ class Figure(object):	#pylint: disable=R0902
 		Displays figure
 
 		:raises:
-		 * Same as :py:meth:`util_plot.Figure.draw()`
+		 * Same as :py:meth:`putil.plot.Figure.draw()`
 		"""
 		if self.fig is None:
 			self.draw()
@@ -1667,7 +1667,7 @@ class Figure(object):	#pylint: disable=R0902
 		:raises:
 		 * TypeError (File name must be a string)
 
-		 * Same as :py:meth:`util_plot.Figure.draw()`
+		 * Same as :py:meth:`putil.plot.Figure.draw()`
 		"""
 		if isinstance(file_name, str) is False:
 			raise TypeError('File name must be a string')
@@ -1682,7 +1682,7 @@ class Figure(object):	#pylint: disable=R0902
 		self.figure_height(min_fig_height if self.figure_height() is None else self.figure_height())
 		self.fig.set_size_inches(max(min_fig_width, self.figure_width()), max(min_fig_height, self.figure_height()))
 		file_name = os.path.expanduser(file_name)	# Matplotlib seems to have a problem with ~/, expand it to $HOME
-		util_misc.make_dir(file_name)
+		putil.misc.make_dir(file_name)
 		self.fig.savefig(file_name, dpi=self.fig.dpi)
 		self.fig.savefig(file_name, bbox_inches='tight', dpi=self.fig.dpi)
 		plt.close('all')
@@ -1697,10 +1697,10 @@ def _scale_series(series, scale=False, series_min=None, series_max=None, scale_t
 	if scale is False:
 		(unit, div) = (' ', 1)
 	else:
-		(unit, div) = util_eng.peng_power(util_eng.peng(series_delta if scale_type == 'delta' else (series_min if scale_type == 'min' else series_max), 3))
-		(first_unit, first_div) = util_eng.peng_power(util_eng.peng(series_min/div, 3))	#pylint: disable=W0612
+		(unit, div) = putil.eng.peng_power(putil.eng.peng(series_delta if scale_type == 'delta' else (series_min if scale_type == 'min' else series_max), 3))
+		(first_unit, first_div) = putil.eng.peng_power(putil.eng.peng(series_min/div, 3))	#pylint: disable=W0612
 		if abs(1.00-(div*first_div)) < 1e-10:
-			(unit, div) = util_eng.peng_power(util_eng.peng(series_min, 3))
+			(unit, div) = putil.eng.peng_power(putil.eng.peng(series_min, 3))
 		series = series/div
 		series_min = series_min/div
 		series_max = series_max/div
@@ -1713,7 +1713,7 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	"""
 	locs = [float(loc) for loc in locs]
 	bounded_locs = [loc for loc in locs if ((loc >= min_lim) or (abs(loc-min_lim) <= 1e-14)) and ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))]
-	raw_labels = [util_eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(util_misc.smart_round(loc, mant)) for loc in bounded_locs]
+	raw_labels = [putil.eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(putil.misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
 
 def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
@@ -1723,7 +1723,7 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=Tr
 	ideal_num_ticks = 8
 	series_delta = float(series_max-series_min)
 	num_ticks = 0
-	sdiff = [1 if int(element) == element else 0 for element in [util_misc.smart_round(element, 10) for element in numpy.diff(series)]]	#pylint: disable=E1101
+	sdiff = [1 if int(element) == element else 0 for element in [putil.misc.smart_round(element, 10) for element in numpy.diff(series)]]	#pylint: disable=E1101
 	int_scale = True if sum(sdiff) == len(sdiff) else False
 	min_num_ticks = 2 if series_delta == 0 else (ideal_num_ticks if int_scale is False else min(ideal_num_ticks, series_delta))
 	div = 1 if (series_delta == 0) or (int_scale is True) else 10.0
@@ -1732,17 +1732,17 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=Tr
 		# Calculate spacing between points
 		tspace = numpy.diff(series)	#pylint: disable=E1101
 		# Find minimum common spacing
-		factors = [util_eng.peng_power(util_eng.peng(element, 3)) for element in tspace]
+		factors = [putil.eng.peng_power(putil.eng.peng(element, 3)) for element in tspace]
 		divs = [div for (unit, div) in factors]	#pylint: disable=W0612
 		tspace_div = min(divs)
 		scaled_tspace = numpy.round(numpy.array(tspace)/tspace_div, 10)	#pylint: disable=E1101
-		tspace_gcd = 0.5*util_misc.gcd(scaled_tspace)
+		tspace_gcd = 0.5*putil.misc.gcd(scaled_tspace)
 		num_ticks = 1
 		while num_ticks > min_num_ticks:
 			tspace_gcd = 2*tspace_gcd
 			# Find out number of ticks with the minimum common spacing
 			num_ticks = round(1+((series_max-series_min)/(tspace_div*float(tspace_gcd))), 10)
-			if (int(util_misc.smart_round(num_ticks, 10)) == round(num_ticks, 10)) and (int(util_misc.smart_round(num_ticks, 10)) >= min_num_ticks):
+			if (int(putil.misc.smart_round(num_ticks, 10)) == round(num_ticks, 10)) and (int(putil.misc.smart_round(num_ticks, 10)) >= min_num_ticks):
 				num_ticks = int(round(num_ticks, 10))
 				tstop = series[-1]
 				tspace = tspace_gcd*tspace_div
@@ -1752,12 +1752,12 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=Tr
 	if calc_ticks is True:
 		if (series_delta != 0) and (int_scale is True):
 			step = 1 if series_delta <= ideal_num_ticks else math.ceil((series_max-series_min)/ideal_num_ticks)
-			tick_list = [series_min-step]+[series_min+num*step for num in range(1+int(util_misc.smart_round(series_delta, 10)) if series_delta <= ideal_num_ticks else ideal_num_ticks)]
+			tick_list = [series_min-step]+[series_min+num*step for num in range(1+int(putil.misc.smart_round(series_delta, 10)) if series_delta <= ideal_num_ticks else ideal_num_ticks)]
 			tstart = tick_list[0]
 			tstop = tick_list[-1]
 		else:
 			# round() allows for deltas closer to the next engineering unit to get the bigger scale while deltas closer to the smaller engineering scale get smaller scale
-			scale = 1.0 if (series_delta == 0) or (int_scale is True) else 10**(round(math.log10(util_eng.peng_int(util_eng.peng(series_delta, 3)))))
+			scale = 1.0 if (series_delta == 0) or (int_scale is True) else 10**(round(math.log10(putil.eng.peng_int(putil.eng.peng(series_delta, 3)))))
 			tight = False if (series_delta == 0) or (int_scale is True) else tight
 			while num_ticks < min_num_ticks:
 				tspace = scale/div
@@ -1788,7 +1788,7 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
 	# Step 1: Look at two contiguous ticks and lower mantissa till they are no more right zeros
 	mant = 10
 	for mant in range(10, -1, -1):
-		if (str(util_eng.peng_mant(util_eng.peng(tick_list[-1], mant)))[-1] != '0') or (str(util_eng.peng_mant(util_eng.peng(tick_list[-2], mant)))[-1] != '0'):
+		if (str(putil.eng.peng_mant(putil.eng.peng(tick_list[-1], mant)))[-1] != '0') or (str(putil.eng.peng_mant(putil.eng.peng(tick_list[-2], mant)))[-1] != '0'):
 			break
 	# Step 2: Confirm labels are unique
 	unique_mant_found = False
@@ -1859,11 +1859,11 @@ def parametrized_color_space(series, offset=0, color='binary'):
 	if len(series) == 0:
 		raise RuntimeError('Series is empty')
 	for num, element in enumerate(series):
-		if util_misc.isnumber(element) is False:
+		if putil.misc.isnumber(element) is False:
 			raise TypeError('Element {0} ({1}) is not a number'.format(num, element))
 		if (element < 0) or (element > 1):
 			raise ValueError('Element {0} ({1}) is out of normal range [0, 1]'.format(num, element))
-	if util_misc.isnumber(offset) is False:
+	if putil.misc.isnumber(offset) is False:
 		raise TypeError('Offset has to be a number')
 	if (offset < 0) or (offset > 1):
 		raise ValueError('Offset is out of normal range [0, 1]')
@@ -1876,4 +1876,4 @@ def parametrized_color_space(series, offset=0, color='binary'):
 	#color_dict = {'binary':plt.cm.binary, 'Blues':plt.cm.Blues, 'BuGn':plt.cm.BuGn, 'BuPu':plt.cm.BuPu, 'gist_yarg':plt.cm.gist_yarg, 'GnBu':plt.cm.GnBu, 'Greens':plt.cm.Greens, 'Greys':plt.cm.Greys,	#pylint: disable=E1101
 	#		'Oranges':plt.cm.Oranges, 'OrRd':plt.cm.OrRd, 'PuBu':plt.cm.PuBu, 'PuBuGn':plt.cm.PuBuGn, 'PuRd':plt.cm.PuRd, 'Purples':plt.cm.Purples, 'RdPu':plt.cm.RdPu, 'Reds':plt.cm.Reds,	#pylint: disable=E1101
 	#		'YlGn':plt.cm.YlGn, 'YlGnBu':plt.cm.YlGnBu, 'YlOrBr':plt.cm.YlOrBr, 'YlOrRd':plt.cm.YlOrRd}	#pylint: disable=E1101
-	return [color_dict[color](util_misc.normalize(value, series, offset)) for value in series]	#pylint: disable=E1101
+	return [color_dict[color](putil.misc.normalize(value, series, offset)) for value in series]	#pylint: disable=E1101

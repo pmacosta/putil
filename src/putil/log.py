@@ -1,4 +1,4 @@
-# util_logging.py
+# logging.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -35,7 +35,7 @@ def _setup_logging(name, log_level, log_file):
 	"""
 	logger = logging.getLogger(name)
 	logger.setLevel(getattr(logging, log_level.upper()) if log_level.upper() != 'NONE' else 60) # CRITICAL (50),ERROR (40),WARNING (30),INFO (20),DEBUG (10),NOTSET (0)
-	handler = logging.StreamHandler(sys.stdout) if (log_file is None) or (logger.getEffectiveLevel() == 60) else logging.FileHandler(log_file,'w')
+	handler = logging.StreamHandler(sys.stdout) if (log_file is None) or (logger.getEffectiveLevel() == 60) else logging.FileHandler(log_file, 'w')
 	handler.setLevel(getattr(logging, log_level.upper()) if log_level.upper() != 'NONE' else 60)
 	handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(funcName)s : %(message)s'))
 	logger.addHandler(handler)

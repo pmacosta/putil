@@ -1,4 +1,4 @@
-﻿# util_misc.py
+﻿# misc.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -13,7 +13,7 @@ import inspect
 import textwrap
 import fractions
 
-import util_eng
+import putil.eng
 
 def pcolor(text, color, tab=0):
 	"""
@@ -230,4 +230,4 @@ def _oprint(element, eng, mant):
 	"""
 	Print a straigth number or one with engineering notation
 	"""
-	return element if not eng else util_eng.peng(element, mant, True)
+	return element if not eng else putil.eng.peng(element, mant, True)

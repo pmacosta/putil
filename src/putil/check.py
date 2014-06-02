@@ -1,4 +1,4 @@
-﻿# util_check.py
+﻿# check.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -12,13 +12,13 @@ import inspect
 import funcsigs
 import functools
 
-import util_misc
+import putil.misc
 
 class Number(object):	#pylint: disable=R0903
 	"""	Number class (integer, real or complex)	"""
 	def includes(self, test_obj):	#pylint: disable=R0201
 		"""	Test that an object belongs to the pseudo-type """
-		return util_misc.isnumber(test_obj)
+		return putil.misc.isnumber(test_obj)
 
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
@@ -28,7 +28,7 @@ class Real(object):	#pylint: disable=R0903
 	"""	Number class (integer or real) """
 	def includes(self, test_obj):	#pylint: disable=R0201
 		"""	Test that an object belongs to the pseudo-type """
-		return util_misc.isreal(test_obj)
+		return putil.misc.isreal(test_obj)
 
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
@@ -43,7 +43,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
-		if not util_misc.isiterable(test_obj):
+		if not putil.misc.isiterable(test_obj):
 			return False
 		for test_subobj in test_obj:
 			if type(test_subobj) != self.element_type:
@@ -147,7 +147,7 @@ class NumberRange(object):	#pylint: disable=R0903
 	"""	Class for numeric parameters that can only take values in a certain range """
 	def __init__(self, minimum=None, maximum=None):
 		for value, name in zip([minimum, maximum], ['minimum', 'maximum']):
-			if (value is not None) and (not util_misc.isreal(value)):
+			if (value is not None) and (not putil.misc.isreal(value)):
 				raise TypeError('Parameter `{0}` is of the wrong type'.format(name))
 		if (minimum is None) and (maximum is None):
 			raise TypeError('Either parameter `minimum` or parameter `maximum` needs to be specified')
@@ -161,7 +161,7 @@ class NumberRange(object):	#pylint: disable=R0903
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		"""	Test that an object belongs to the pseudo-type """
-		return util_misc.isreal(test_obj) and (type(test_obj) == self.type) and (test_obj >= self.minimum if self.minimum is not None else test_obj) and \
+		return putil.misc.isreal(test_obj) and (type(test_obj) == self.type) and (test_obj >= self.minimum if self.minimum is not None else test_obj) and \
 			(test_obj <= self.maximum if self.maximum is not None else test_obj)
 
 	def istype(self, test_obj):
@@ -320,7 +320,7 @@ def type_match(test_obj, ref_obj):
 		ret_val = test_obj is None
 	elif type(ref_obj) in pseudo_types:	# Check for pseudo-types
 		ret_val = ref_obj.istype(test_obj)
-	elif (not util_misc.isiterable(ref_obj)) or isinstance(ref_obj, str):	# Check for non-iterable types annd strings
+	elif (not putil.misc.isiterable(ref_obj)) or isinstance(ref_obj, str):	# Check for non-iterable types annd strings
 		ret_val = isinstance(test_obj, ref_obj)
 	elif isinstance(ref_obj, dict):	# Dictionaries
 		ret_val = type_match_dict(test_obj, ref_obj)

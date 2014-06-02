@@ -1,4 +1,4 @@
-# util_csv.py
+# pcsv.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -9,14 +9,14 @@ Utility classes, methods and functions to handle comma-delimited file as a quasi
 import os
 import csv
 
-import util_misc
+import putil.misc
 
 def write_file(file_name, row_list, append=True):
 	"""
 	Save (potentially incrementally) CSV file
 	"""
 	try:
-		util_misc.make_dir(file_name)
+		putil.misc.make_dir(file_name)
 		file_handle = open(file_name, 'wb' if append is False else 'ab')
 		csv_handle = csv.writer(file_handle, delimiter=',')
 		for row in row_list:
@@ -51,7 +51,7 @@ class CsvFile(object):
 			msg = 'Cannot open file '+file_name
 			raise IOError(msg)
 		self.current_header = [col.upper() for col in self.current_data[0]]
-		self.current_data = [[None if col.strip() == '' else (float(col) if util_misc.isalpha(col) is True else col) for col in row] for row in self.current_data[1:]]
+		self.current_data = [[None if col.strip() == '' else (float(col) if putil.misc.isalpha(col) is True else col) for col in row] for row in self.current_data[1:]]
 		self.current_filtered_data = self.current_data[:]
 
 	def reset_filter(self):

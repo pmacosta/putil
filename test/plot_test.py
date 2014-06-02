@@ -1,15 +1,15 @@
-# util_plot_test.py
+# plot_test.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
 """
-util_plot unit tests
+putil.plot unit tests
 """
 
 import numpy
 import pytest
 
-import util_plot
+import putil.plot
 
 ###
 # Reusable tests
@@ -61,15 +61,15 @@ def indep_min_greater_than_indep_max(func):	#pylint: disable=C0103
 ###
 def test_basic_source_indep_min_type():	#pylint: disable=C0103
 	""" Tests indep_min type validation """
-	indep_min_max_type(util_plot.BasicSource, 'indep_min')
+	indep_min_max_type(putil.plot.BasicSource, 'indep_min')
 
 def test_basic_source_indep_max_type():	#pylint: disable=C0103
 	""" Tests indep_max type validation """
-	indep_min_max_type(util_plot.BasicSource, 'indep_max')
+	indep_min_max_type(putil.plot.BasicSource, 'indep_max')
 
 def test_basic_source_indep_min_greater_than_indep_max():	#pylint: disable=C0103
 	""" Test if object behaves correctly when indep_min and indep_max are incongrous """
-	indep_min_greater_than_indep_max(util_plot.BasicSource)
+	indep_min_greater_than_indep_max(putil.plot.BasicSource)
 
 def test_basic_source_indep_var_type():	#pylint: disable=C0103
 	""" Tests indep_var type validation """
@@ -77,50 +77,50 @@ def test_basic_source_indep_var_type():	#pylint: disable=C0103
 	# __init__ path
 	# Wrong type
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.BasicSource(indep_var='a')
+		putil.plot.BasicSource(indep_var='a')
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
 	# Non monotonically increasing vector
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.BasicSource(indep_var=numpy.array([1.0, 2.0, 0.0, 3.0]))
+		putil.plot.BasicSource(indep_var=numpy.array([1.0, 2.0, 0.0, 3.0]))
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
 	# Empty vector
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.BasicSource(indep_var=numpy.array([]))
+		putil.plot.BasicSource(indep_var=numpy.array([]))
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
 	# Valid values, these should not raise any exception
-	comp.append(util_plot.BasicSource(indep_var=None).indep_var == None)
-	comp.append((util_plot.BasicSource(indep_var=numpy.array([1, 2, 3])).indep_var == numpy.array([1, 2, 3])).all())
-	comp.append((util_plot.BasicSource(indep_var=numpy.array([4.0, 5.0, 6.0])).indep_var == numpy.array([4.0, 5.0, 6.0])).all())
+	comp.append(putil.plot.BasicSource(indep_var=None).indep_var == None)
+	comp.append((putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3])).indep_var == numpy.array([1, 2, 3])).all())
+	comp.append((putil.plot.BasicSource(indep_var=numpy.array([4.0, 5.0, 6.0])).indep_var == numpy.array([4.0, 5.0, 6.0])).all())
 	# Invalid range bounding
 	# Assign indep_min via __init__ path
-	obj = util_plot.BasicSource(indep_min=45)
+	obj = putil.plot.BasicSource(indep_min=45)
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_var = numpy.array([1, 2, 3])
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign indep_min via attribute
-	obj = util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
+	obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_min = 10
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign indep_max via attribute
-	obj = util_plot.BasicSource(indep_max=0)
+	obj = putil.plot.BasicSource(indep_max=0)
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_var = numpy.array([1, 2, 3])
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign indep_max via attribute
-	obj = util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
+	obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_max = 0
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Assign both indep_min and indep_max via __init__ path
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]), indep_min=4, indep_max=10)
+		putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), indep_min=4, indep_max=10)
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 	# Managed attribute path
-	obj = util_plot.BasicSource()
+	obj = putil.plot.BasicSource()
 	# Wrong type
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.BasicSource(indep_var='a')
+		putil.plot.BasicSource(indep_var='a')
 	comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
 	# Non monotonically increasing vector
 	with pytest.raises(TypeError) as excinfo:
@@ -144,21 +144,21 @@ def test_basic_source_dep_var_type():	#pylint: disable=C0103
 	# __init__ path
 	# Wrong type
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.BasicSource(dep_var='a')
+		putil.plot.BasicSource(dep_var='a')
 	comp.append(excinfo.value.message == 'Parameter `dep_var` is of the wrong type')
 	# Empty vector
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.BasicSource(dep_var=numpy.array([]))
+		putil.plot.BasicSource(dep_var=numpy.array([]))
 	comp.append(excinfo.value.message == 'Parameter `dep_var` is of the wrong type')
 	# Valid values, these should not raise any exception
-	comp.append(util_plot.BasicSource(dep_var=None).dep_var == None)
-	comp.append((util_plot.BasicSource(dep_var=numpy.array([1, 2, 3])).dep_var == numpy.array([1, 2, 3])).all())
-	comp.append((util_plot.BasicSource(dep_var=numpy.array([4.0, 5.0, 6.0])).dep_var == numpy.array([4.0, 5.0, 6.0])).all())
+	comp.append(putil.plot.BasicSource(dep_var=None).dep_var == None)
+	comp.append((putil.plot.BasicSource(dep_var=numpy.array([1, 2, 3])).dep_var == numpy.array([1, 2, 3])).all())
+	comp.append((putil.plot.BasicSource(dep_var=numpy.array([4.0, 5.0, 6.0])).dep_var == numpy.array([4.0, 5.0, 6.0])).all())
 	# Managed attribute path
-	obj = util_plot.BasicSource()
+	obj = putil.plot.BasicSource()
 	# Wrong type
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.BasicSource(dep_var='a')
+		putil.plot.BasicSource(dep_var='a')
 	comp.append(excinfo.value.message == 'Parameter `dep_var` is of the wrong type')
 	# Empty vector
 	with pytest.raises(TypeError) as excinfo:
@@ -176,12 +176,12 @@ def test_basic_source_indep_var_and_dep_var_do_not_have_the_same_number_of_eleme
 	""" Tests dep_var type validation """
 	comp = list()
 	# indep_var set first
-	obj = util_plot.BasicSource(indep_var=numpy.array([10, 20, 30, 40, 50, 60]), indep_min=30, indep_max=50)
+	obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30, 40, 50, 60]), indep_min=30, indep_max=50)
 	with pytest.raises(ValueError) as excinfo:
 		obj.dep_var = numpy.array([100, 200, 300])
 	comp.append(excinfo.value.message == 'Parameters `indep_var` and `dep_var` must have the same number of elements')
 	# dep_var set first
-	obj = util_plot.BasicSource(dep_var=numpy.array([100, 200, 300]), indep_min=30, indep_max=50)
+	obj = putil.plot.BasicSource(dep_var=numpy.array([100, 200, 300]), indep_min=30, indep_max=50)
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
 	comp.append(excinfo.value.message == 'Parameters `indep_var` and `dep_var` must have the same number of elements')
@@ -190,7 +190,7 @@ def test_basic_source_indep_var_and_dep_var_do_not_have_the_same_number_of_eleme
 def test_basic_source_complete():	#pylint: disable=C0103
 	""" Test that _complete() method behaves correctly """
 	comp = list()
-	obj = util_plot.BasicSource(indep_min=0, indep_max=50)
+	obj = putil.plot.BasicSource(indep_min=0, indep_max=50)
 	comp.append(obj._complete() == False)	#pylint: disable=W0212
 	obj.indep_var = numpy.array([1, 2, 3])
 	comp.append(obj._complete() == False)	#pylint: disable=W0212
@@ -202,30 +202,30 @@ def test_basic_source_str():	#pylint: disable=C0103
 	""" Test that str behaves correctly """
 	comp = list()
 	# Null object
-	obj = str(util_plot.BasicSource())
+	obj = str(putil.plot.BasicSource())
 	ref = 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# indep_min set
-	obj = str(util_plot.BasicSource(indep_min=10))
+	obj = str(putil.plot.BasicSource(indep_min=10))
 	ref = 'Independent variable minimum: 10\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# indep_max set
-	obj = str(util_plot.BasicSource(indep_min=10, indep_max=20))
+	obj = str(putil.plot.BasicSource(indep_min=10, indep_max=20))
 	ref = 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# indep_var set
-	obj = str(util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]), indep_min=-10, indep_max=20.0))
+	obj = str(putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), indep_min=-10, indep_max=20.0))
 	ref = 'Independent variable minimum: -10\nIndependent variable maximum: 20.0\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: None'
 	comp.append(obj == ref)
 	# dep_var set
-	obj = str(util_plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=-10, indep_max=20.0))
+	obj = str(putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=-10, indep_max=20.0))
 	ref = 'Independent variable minimum: -10\nIndependent variable maximum: 20.0\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 10.0, 20.0, 30.0 ]'
 	comp.append(obj == ref)
 	assert comp == 5*[True]
 
 def test_basic_source_cannot_delete_attributes():	#pylint: disable=C0103
 	""" Test that del method raises an exception on all class attributes """
-	obj = util_plot.BasicSource()
+	obj = putil.plot.BasicSource()
 	test_list = list()
 	with pytest.raises(AttributeError) as excinfo:
 		del obj.indep_min
@@ -259,46 +259,46 @@ def tmp_csv_file(tmpdir):
 
 def test_csv_source_indep_min_type():	#pylint: disable=C0103
 	""" Tests indep_min type validation """
-	indep_min_max_type(util_plot.CsvSource, 'indep_min')
+	indep_min_max_type(putil.plot.CsvSource, 'indep_min')
 
 def test_csv_source_indep_max_type():	#pylint: disable=C0103
 	""" Tests indep_max type validation """
-	indep_min_max_type(util_plot.CsvSource, 'indep_max')
+	indep_min_max_type(putil.plot.CsvSource, 'indep_max')
 
 def test_csv_source_indep_min_greater_than_indep_max():	#pylint: disable=C0103
 	""" Test if object behaves correctly when indep_min and indep_max are incongrous """
-	indep_min_greater_than_indep_max(util_plot.CsvSource)
+	indep_min_greater_than_indep_max(putil.plot.CsvSource)
 
 def test_csv_source_file_name_wrong_type():	#pylint: disable=C0103
 	""" Test if object behaves correctly when file_name is of the wrong type """
 	# This assignment should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(file_name=5)
+		putil.plot.CsvSource(file_name=5)
 	comp = excinfo.value.message == 'Parameter `file_name` is of the wrong type'
 	# This assignment should not raise an exception
-	util_plot.CsvSource(file_name=None)
+	putil.plot.CsvSource(file_name=None)
 	assert comp == True
 
 def test_csv_source_file_does_not_exist():	#pylint: disable=C0103
 	""" Test if object behaves correctly when CSV file does not exist """
 	file_name = 'nonexistent_file_name.csv'
 	with pytest.raises(IOError) as excinfo:
-		util_plot.CsvSource(file_name=file_name)
+		putil.plot.CsvSource(file_name=file_name)
 	assert excinfo.value.message == 'File {0} could not be found'.format(file_name)
 
 def test_csv_source_file_exist(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when CSV file exists """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
-	util_plot.CsvSource(file_name=file_name)
+	putil.plot.CsvSource(file_name=file_name)
 
 def test_csv_source_data_filter_wrong_type():	#pylint: disable=C0103
 	""" Test if object behaves correctly when dfilter is of the wrong type """
 	# This assignment should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(dfilter=5)
+		putil.plot.CsvSource(dfilter=5)
 	comp = excinfo.value.message == 'Parameter `dfilter` is of the wrong type'
 	# This assignment should not raise an exception
-	util_plot.CsvSource(dfilter=None)
+	putil.plot.CsvSource(dfilter=None)
 	assert comp == True
 
 def test_csv_source_data_filter_operation(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
@@ -306,9 +306,9 @@ def test_csv_source_data_filter_operation(tmpdir, tmp_csv_file):	#pylint: disabl
 	file_name = str(tmpdir.join('sub/tmp.csv'))
 	# This assignment should raise an exeption
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, dfilter={'Col99':500})
+		putil.plot.CsvSource(file_name=file_name, dfilter={'Col99':500})
 	comp = excinfo.value.message == 'Column COL99 in data filter not found in comma-separated file {0} header'.format(file_name)
-	util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0})
+	putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0})
 	assert comp == True
 
 def test_csv_source_indep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
@@ -317,14 +317,14 @@ def test_csv_source_indep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: d
 	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(indep_col_label=5)
+		putil.plot.CsvSource(indep_col_label=5)
 	test_list.append(excinfo.value.message == 'Parameter `indep_col_label` is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col99')
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col99')
 	test_list.append(excinfo.value.message == 'Column COL99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
 	# These assignments should not raise an exception
-	util_plot.CsvSource(indep_col_label=None)
-	util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2')
+	putil.plot.CsvSource(indep_col_label=None)
+	putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2')
 	assert test_list == [True, True]
 
 def test_csv_source_dep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
@@ -333,34 +333,34 @@ def test_csv_source_dep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: dis
 	test_list = list()
 	# This assignment should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(dep_col_label=5)
+		putil.plot.CsvSource(dep_col_label=5)
 	test_list.append(excinfo.value.message == 'Parameter `dep_col_label` is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, dep_col_label='Col99')
+		putil.plot.CsvSource(file_name=file_name, dep_col_label='Col99')
 	test_list.append(excinfo.value.message == 'Column COL99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
 	# These assignments should not raise an exception
-	util_plot.CsvSource(dep_col_label=None)
-	util_plot.CsvSource(file_name=file_name, dep_col_label='Col3')
+	putil.plot.CsvSource(dep_col_label=None)
+	putil.plot.CsvSource(file_name=file_name, dep_col_label='Col3')
 	assert test_list == [True, True]
 
 def test_csv_source_empty_indep_var_after_filter(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when the independent variable is empty after data filter is applied """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':10})
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':10})
 	assert excinfo.value.message == 'Filtered independent variable is empty'
 
 def test_csv_source_empty_dep_var_after_filter(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when the dependent variable is empty after data filter is applied """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col5', dfilter={'Col1':0})
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col5', dfilter={'Col1':0})
 	assert excinfo.value.message == 'Filtered dependent variable is empty'
 
 def test_csv_source_data_reversed(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when the independent dat is descending order """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
-	obj = util_plot.CsvSource(file_name=file_name, indep_col_label='Col6', dep_col_label='Col3', dfilter={'Col1':0})
+	obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col6', dep_col_label='Col3', dfilter={'Col1':0})
 	assert ((obj.indep_var == numpy.array([3, 4, 5])).all(), (obj.dep_var == numpy.array([1, 4, 2])).all()) == (True, True)
 
 def test_csv_source_fproc_wrong_type():	#pylint: disable=C0103
@@ -376,15 +376,15 @@ def test_csv_source_fproc_wrong_type():	#pylint: disable=C0103
 	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(fproc=5)
+		putil.plot.CsvSource(fproc=5)
 	test_list.append(excinfo.value.message == 'Parameter `fproc` is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(fproc=fproc1)
+		putil.plot.CsvSource(fproc=fproc1)
 	test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) does not have at least 2 arguments')
 	# These assignments should not raise an exception
-	util_plot.CsvSource(fproc=fproc2)
-	util_plot.CsvSource(fproc=fproc3)
-	util_plot.CsvSource(fproc=fproc4)
+	putil.plot.CsvSource(fproc=fproc2)
+	putil.plot.CsvSource(fproc=fproc3)
+	putil.plot.CsvSource(fproc=fproc4)
 	assert test_list == [True]*2
 
 def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103,R0912,R0914
@@ -419,37 +419,37 @@ def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W
 	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1)
 	test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) return value is of the wrong type')
 	with pytest.raises(RuntimeError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc2)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc2)
 	test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc2) returned an illegal number of values')
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc4)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc4)
 	test_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc5)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc5)
 	test_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc6)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc6)
 	test_list.append(excinfo.value.message == 'Processed dependent variable is of the wrong type')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc8)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc8)
 	test_list.append(excinfo.value.message == 'Processed independent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc9)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc9)
 	test_list.append(excinfo.value.message == 'Processed dependent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc10)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc10)
 	test_list.append(excinfo.value.message == 'Processed independent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc11)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc11)
 	test_list.append(excinfo.value.message == 'Processed dependent variable is empty')
 	with pytest.raises(ValueError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc12)
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc12)
 	test_list.append(excinfo.value.message == 'Processed independent and dependent variables are of different length')
 	with pytest.raises(RuntimeError) as excinfo:
-		util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
+		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
 	msg = 'Processing function fproc13 threw an exception when called with the following arguments:\n'
 	msg += 'indep_var: [ 1.0, 2.0, 3.0 ]\n'
 	msg += 'dep_var: [ 1.0, 2.0, 3.0 ]\n'
@@ -457,19 +457,19 @@ def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W
 	msg += 'Exception error: Test exception message'
 	test_list.append(excinfo.value.message == msg)
 	# These assignments should not raise an exception
-	util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc3)
-	util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc7)
+	putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc3)
+	putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc7)
 	assert test_list == [True]*11
 
 def test_csv_source_fproc_eargs_wrong_type():	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when fprog_eargs is of the wrong type """
 	# This assignment should raise an exeption
 	with pytest.raises(TypeError) as excinfo:
-		util_plot.CsvSource(fproc_eargs=5)
+		putil.plot.CsvSource(fproc_eargs=5)
 	comp = excinfo.value.message == 'Parameter `fproc_eargs` is of the wrong type'
 	# These assignments should not raise an exception
-	util_plot.CsvSource(fproc_eargs=None)
-	util_plot.CsvSource(fproc_eargs={'arg1':23})
+	putil.plot.CsvSource(fproc_eargs=None)
+	putil.plot.CsvSource(fproc_eargs={'arg1':23})
 	assert comp == True
 
 def test_csv_source_fproc_eargs_parameter_name_validation():	#pylint: disable=W0621,W0613,C0103
@@ -487,15 +487,15 @@ def test_csv_source_fproc_eargs_parameter_name_validation():	#pylint: disable=W0
 	test_list = list()
 	# These assignments should raise an exeption
 	with pytest.raises(RuntimeError) as excinfo:
-		util_plot.CsvSource(fproc=fproc1, fproc_eargs={'par1':5})
+		putil.plot.CsvSource(fproc=fproc1, fproc_eargs={'par1':5})
 	test_list.append(excinfo.value.message == 'Extra argument `par1` not found in parameter `fproc` (function fproc1) definition')
 	with pytest.raises(RuntimeError) as excinfo:
-		util_plot.CsvSource(fproc=fproc2, fproc_eargs={'par3':5})
+		putil.plot.CsvSource(fproc=fproc2, fproc_eargs={'par3':5})
 	test_list.append(excinfo.value.message == 'Extra argument `par3` not found in parameter `fproc` (function fproc2) definition')
 	# These assignments should not raise an exception
-	util_plot.CsvSource(fproc=fproc3, fproc_eargs={'par99':5})
-	util_plot.CsvSource(fproc=fproc4, fproc_eargs={'par98':5})
-	util_plot.CsvSource(fproc=fproc5, fproc_eargs={'par97':5})
+	putil.plot.CsvSource(fproc=fproc3, fproc_eargs={'par99':5})
+	putil.plot.CsvSource(fproc=fproc4, fproc_eargs={'par98':5})
+	putil.plot.CsvSource(fproc=fproc5, fproc_eargs={'par97':5})
 	assert test_list == [True]*2
 
 def test_fproc_works(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
@@ -503,7 +503,7 @@ def test_fproc_works(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	file_name = str(tmpdir.join('sub/tmp.csv'))
 	def fproc1(indep_var, dep_var, indep_offset, dep_offset):	#pylint: disable=C0111,W0613
 		return indep_var+indep_offset, dep_var+dep_offset
-	obj = util_plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1, fproc_eargs={'indep_offset':3, 'dep_offset':100})
+	obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1, fproc_eargs={'indep_offset':3, 'dep_offset':100})
 	print obj.indep_var
 	print obj.dep_var
 	assert [(obj.indep_var == numpy.array([4, 5, 6])).all(), (obj.dep_var == numpy.array([102, 104, 101])).all()] == [True]*2
@@ -517,47 +517,47 @@ def test_csv_source_str(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C010
 		return indep_var+par1, dep_var-par2
 	comp = list()
 	# Null object
-	obj = str(util_plot.CsvSource())
+	obj = str(putil.plot.CsvSource())
 	ref = 'File name: None\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'
 	ref += 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# indep_min set
-	obj = str(util_plot.CsvSource(indep_min=10))
+	obj = str(putil.plot.CsvSource(indep_min=10))
 	ref = 'File name: None\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'
 	ref += 'Independent variable minimum: 10\nIndependent variable maximum: +inf\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# indep_max set
-	obj = str(util_plot.CsvSource(indep_min=10, indep_max=20))
+	obj = str(putil.plot.CsvSource(indep_min=10, indep_max=20))
 	ref = 'File name: None\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'
 	ref += 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# file name
-	obj = str(util_plot.CsvSource(file_name=file_name, indep_min=10, indep_max=20))
+	obj = str(putil.plot.CsvSource(file_name=file_name, indep_min=10, indep_max=20))
 	ref = 'File name: {0}\nData filter: None\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
 	ref += 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# dfilter
-	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_min=10, indep_max=20))
+	obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_min=10, indep_max=20))
 	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: None\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
 	ref += 'Independent variable minimum: 10\nIndependent variable maximum: 20\nIndependent variable: None\nDependent variable: None'
 	comp.append(obj == ref)
 	# indep_col_label
-	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', indep_min=2, indep_max=200))
+	obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', indep_min=2, indep_max=200))
 	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: None\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
 	ref += 'Independent variable minimum: 2\nIndependent variable maximum: 200\nIndependent variable: [ 2.0, 3.0 ]\nDependent variable: None'
 	comp.append(obj == ref)
 	# dep_col_label
-	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2, indep_max=200))
+	obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2, indep_max=200))
 	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
 	ref += 'Independent variable minimum: 2\nIndependent variable maximum: 200\nIndependent variable: [ 2.0, 3.0 ]\nDependent variable: [ 4.0, 1.0 ]'
 	comp.append(obj == ref)
 	# fproc
-	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2e-3, indep_max=200, fproc=fproc1))
+	obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2e-3, indep_max=200, fproc=fproc1))
 	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc1\nProcessing function extra arguments: None\n'.format(file_name)
 	ref += 'Independent variable minimum: 0.002\nIndependent variable maximum: 200\nIndependent variable: [ 0.002, 0.003 ]\nDependent variable: [ 5.0, 2.0 ]'
 	comp.append(obj == ref)
 	# fproc_eargs
-	obj = str(util_plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, indep_max=200, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
+	obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, indep_max=200, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
 	ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
 	ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
 	comp.append(obj == ref)
@@ -567,7 +567,7 @@ def test_csv_source_complete(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613
 	""" Test that _complete() method behaves correctly """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
 	comp = list()
-	obj = util_plot.CsvSource()
+	obj = putil.plot.CsvSource()
 	comp.append(obj._complete() == False)	#pylint: disable=W0212
 	obj.file_name = file_name
 	comp.append(obj._complete() == False)	#pylint: disable=W0212
@@ -581,7 +581,7 @@ def test_csv_source_complete(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613
 
 def test_csv_source_cannot_delete_attributes():	#pylint: disable=C0103
 	""" Test that del method raises an exception on all class attributes """
-	obj = util_plot.CsvSource()
+	obj = putil.plot.CsvSource()
 	test_list = list()
 	with pytest.raises(AttributeError) as excinfo:
 		del obj.file_name

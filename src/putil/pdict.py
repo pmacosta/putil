@@ -1,4 +1,4 @@
-﻿# util_dict.py
+﻿# pdict.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
