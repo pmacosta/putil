@@ -627,10 +627,17 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_color(self):	#pylint: disable=C0111
 		return self._color
 
-	@putil.check.check_parameter('color', putil.check.PolymorphicType([None, str, list, set, tuple]))
+	@putil.check.check_parameter('color', putil.check.PolymorphicType([None, putil.check.Number(), str, list, set, tuple]))
 	def _set_color(self, color):	#pylint: disable=C0111
-		self._color = color.strip()
-		if isinstance(self.color, str) is True:
+		self._color = color.lower().strip() if isinstance(color, str) else color
+		if putil.check.Number().istype(color):
+			# Gray scale color specification
+			value = float(self.color)
+			valid_color_spec = True if (value >= 0.0) and (value <= 1.0) else False
+		elif isinstance(self.color, str):
+			# Basic built-in Matplotlib specification
+			valid_color_spec = True if (len(self.color) == 1) and (self.color in 'bgrcmykw') else False
+			# HTML color name specification
 			valid_html_colors = [
 				'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
 				'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkkhaki', 'darkmagenta',
@@ -644,27 +651,15 @@ class Series(object):	#pylint: disable=R0902,R0903
 				'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquois', 'violet', 'wheat', 'white', 'whitesmoke',
 				'yellow', 'yellowgreen'
 			]
-			valid_color_spec = True if (len(self.color) == 1) and (self.color in 'bgrcmykw') else False	# Basic built-in colors
-			valid_color_spec = True if (valid_color_spec is True) or (valid_html_colors.index(self.color.lower()) != -1) else False	# HTML colors
-			if valid_color_spec is False:	# Grayscale format
-				try:
-					value = float(self.color)
-					valid_color_spec = True if (value >= 0.0) and (value <= 1.0) else False
-				except:	#pylint: disable=W0702
-					pass
-			if (valid_color_spec is False) and (self.color[0] == '#') and (len(self.color) == 7):	# HTML hex string
-				for char in self.color:
-					if putil.misc.ishex(char) is False:
-						break
-				else:
-					valid_color_spec = True
+			valid_color_spec = True if (valid_color_spec is True) or (self.color in valid_html_colors) else False
+			# HTML hex color specification
+			valid_color_spec = True if (valid_color_spec is True) else (False if False in [putil.misc.ishex(char) for char in self.color[1:]] else True) if (self.color[0] == '#') and (len(self.color) == 7) else False
 		elif ((isinstance(self.color, list) is True) or (isinstance(self.color, set) is True) or (isinstance(self.color, tuple) is True)) and ((len(self.color) == 3) or (len(self.color) == 4)):	# RGB or RGBA tuple
-			valid_color_spec = True
 			for num in range(len(self.color)):
 				if (isinstance(self.color[num], float) is False) or ((isinstance(self.color[num], float) is True) and ((self.color[num] < 0.0) or (self.color[num] > 1.0))):
 					valid_color_spec = False
 					break
-		if valid_color_spec is False:
+		if (self.color is not None) and (valid_color_spec is False):
 			raise TypeError('Invalid color specification')
 
 	def _get_marker(self):	#pylint: disable=C0111

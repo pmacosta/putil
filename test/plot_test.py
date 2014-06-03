@@ -617,7 +617,12 @@ def test_csv_source_cannot_delete_attributes():	#pylint: disable=C0103
 ###
 # Tests for Series
 ###
-def test_series_data_source_wrong_type():	#pylint: disable=C0103
+@pytest.fixture
+def default_source():
+	""" Provides a default source to be used in teseting the putil.Series() class """
+	return putil.plot.BasicSource(indep_var=numpy.array([5, 6, 7, 8]), dep_var=numpy.array([0, -10, 5, 4]))
+
+def test_series_data_source_wrong_type(default_source):	#pylint: disable=C0103,W0621
 	""" Test if object behaves correctly when checking the data_source argument """
 	class TestSource(object):	#pylint: disable=C0111,R0903,W0612
 		def __init__(self):
@@ -639,7 +644,40 @@ def test_series_data_source_wrong_type():	#pylint: disable=C0103
 	# These assignments should not raise an exception
 	putil.plot.Series(data_source=None, label='test')
 	putil.plot.Series(data_source=obj, label='test')
-	putil.plot.Series(data_source=putil.plot.BasicSource(indep_var=numpy.array([5, 6, 7, 8]), dep_var=numpy.array([0, -10, 5, 4])), label='test')
-	assert test_list == [True]*3
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list.append(((obj.indep_var == numpy.array([5, 6, 7, 8])).all(), (obj.dep_var == numpy.array([0, -10, 5, 4])).all()) == (True, True))
+	assert test_list == [True]*4
 
+def test_series_label_wrong_type(default_source):	#pylint: disable=C0103,W0621
+	""" Test label data validation """
+	# This assignments should raise an exeption
+	test_list = list()
+	with pytest.raises(TypeError) as excinfo:
+		putil.plot.Series(data_source=default_source, label=5)
+	test_list.append(excinfo.value.message == 'Parameter `label` is of the wrong type')
+	# These assignments should not raise an exception
+	putil.plot.Series(data_source=default_source, label=None)
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list.append(obj.label == 'test')
+	assert test_list == [True]*2
+
+def test_series_color_wrong_type(default_source):	#pylint: disable=C0103,W0621
+	""" Test color data validation """
+	# This assignments should raise an exeption
+	test_list = list()
+	with pytest.raises(TypeError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', color=default_source)
+	test_list.append(excinfo.value.message == 'Parameter `color` is of the wrong type')
+	invalid_color_list = ['invalid_color_name', -0.01, 1.1, '#ABCDEX']
+	valid_color_list = [None, 'moccasin', 0.5, '#ABCDEF']
+	for color in invalid_color_list:
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Series(data_source=default_source, label='test', color=color)
+		test_list.append(excinfo.value.message == 'Invalid color specification')
+	# These assignments should not raise an exception
+	putil.plot.Series(data_source=default_source, label='test', color=None)
+	for color in valid_color_list:
+		obj = putil.plot.Series(data_source=default_source, label='test', color=color)
+		test_list.append(obj.color == color)
+	assert test_list == [True]*(len(invalid_color_list)+len(valid_color_list)+1)
 
