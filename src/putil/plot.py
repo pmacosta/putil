@@ -226,9 +226,9 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def __init__(self, file_name=None, indep_col_label=None, dep_col_label=None, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		BasicSource.__init__(self, indep_var=None, dep_var=None, indep_min=indep_min, indep_max=indep_max)
 		# Private attributes
-		self._csv_obj, self._fproc, self._fproc_eargs, self._reverse_data = None, None, None, False
+		self._csv_obj, self._reverse_data = None, False
 		# Public attributes
-		self._file_name, self._dfilter, self._indep_col_label, self._dep_col_label = None, None, None, None
+		self._file_name, self._dfilter, self._indep_col_label, self._dep_col_label, self._fproc, self._fproc_eargs = None, None, None, None, None, None
 		self._set_indep_col_label(indep_col_label)
 		self._set_dep_col_label(dep_col_label)
 		self._set_fproc(fproc)
@@ -554,419 +554,282 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	# dep_var is read only
 	dep_var = property(BasicSource._get_dep_var, None, doc='Dependent variable Numpy vector')	#pylint: disable=E0602
 
-class Series(object):	#pylint: disable=R0902
+class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	Specifies a series within a panel
 
 	:param	data_source:	data source object
-	:type	data_source:	:py:class:`putil.plot.RawSource()` object or :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
-	:param	label:			series label
+	:type	data_source:	:py:class:`putil.plot.BasicSource()` object or :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
+	:param	label:			series label, to be used in panel legend
 	:type	label:			string
 	:param	color:			series color
 	:type	color:			Matplotlib color
 	:param	marker:			plot data markers flag
 	:type	marker:			boolean
-	:param	interp:			interpolation option, one of NONE, STRAIGHT, STEP, CUBIC or LINREG (case insensitive)
+	:param	interp:			interpolation option, one of STRAIGHT, STEP, CUBIC or LINREG (case insensitive)
 	:type	interp:			string
 	:param	line_style:		line style, one of `-`, `--`, `-.` or `:`
 	:type	line_style:		Matplotlib line specification
 	:param	secondary_axis:	secondary axis flag
 	:type	secondary_axis:	boolean
 	:raises:
-	 * Same as :py:meth:`putil.plot.Series.data_source()`
+	 * Same as :py:meth:`putil.plot.Series.data_source`
 
-	 * Same as :py:meth:`putil.plot.Series.label()`
+	 * Same as :py:meth:`putil.plot.Series.label`
 
-	 * Same as :py:meth:`putil.plot.Series.color()`
+	 * Same as :py:meth:`putil.plot.Series.color`
 
-	 * Same as :py:meth:`putil.plot.Series.marker()`
+	 * Same as :py:meth:`putil.plot.Series.marker`
 
-	 * Same as :py:meth:`putil.plot.Series.interp()`
+	 * Same as :py:meth:`putil.plot.Series.interp`
 
-	 * Same as :py:meth:`putil.plot.Series.line_style()`
+	 * Same as :py:meth:`putil.plot.Series.line_style`
 
-	 * Same as :py:meth:`putil.plot.Series.secondary_axis()`
+	 * Same as :py:meth:`putil.plot.Series.secondary_axis`
 	"""
 	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
-		self.interp_options = ['NONE', 'STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
-		self.scaled_interp_curve_indep_var = None
-		self.scaled_interp_curve_dep_var = None
-		self.scaled_indep_var = None
-		self.scaled_dep_var = None
-		self.interp_curve_indep_var = None
-		self.interp_curve_dep_var = None
-		self.current_data_source = None
-		self.current_label = None
-		self.current_color = None
-		self.current_marker = None
-		self.current_interp = None
-		self.current_line_style = None
-		self.current_secondary_axis = None
-		self.current_indep_var = None
-		self.current_dep_var = None
-		self.data_source(data_source)
-		self.label(label)
-		self.color(color)
-		self.marker(marker)
-		self.interp(interp)
-		self.line_style(line_style)
-		self.secondary_axis(secondary_axis)
+		# Public attributes
+		self.scaled_indep_var, self.scaled_dep_var = None, None
+		self.interp_indep_var, self.interp_dep_var = None, None
+		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
+		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, None, None, None, None, False
+		self.indep_var, self.dep_var = None, None
+		self._set_data_source(data_source)
+		self._set_label(label)
+		self._set_color(color)
+		self._set_marker(marker)
+		self._set_interp(interp)
+		self._set_line_style(line_style)
+		self._set_secondary_axis(secondary_axis)
 
-	def data_source(self, *data_source):
-		"""
-		Sets or returns data set source object. The independent and dependent data sets are obtained once the data source is set.
+	def _get_data_source(self):	#pylint: disable=C0111
+		return self._data_source
 
-		:param	data_source:	data source object
-		:type	data_source:	:py:class:`putil.plot.RawSource()` object, :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
+	def _set_data_source(self, data_source):	#pylint: disable=C0111
+		if data_source is not None:
+			for method in ['indep_var', 'dep_var']:
+				if method not in dir(data_source):
+					raise RuntimeError('Parameter `data_source` does not have `{0}` attribute'.format(method))
+			if ('_complete' in dir(data_source)) and (data_source._complete() is False):	#pylint: disable=W0212
+				raise RuntimeError('Parameter `data_source` is not fully specified')
+			self._data_source = data_source
+			self.indep_var = self.data_source.indep_var
+			self.dep_var = self.data_source.dep_var
+			self._calculate_curve()
 
-		 * RuntimeError (Data source object does not have indep_var() method)
+	def _get_label(self):	#pylint: disable=C0111
+		return self._label
 
-		 * RuntimeError (Data source object does not have dep_var() method)
+	@putil.check.check_parameter('label', putil.check.PolymorphicType([None, str]))
+	def _set_label(self, label):	#pylint: disable=C0111
+		self._label = label
 
-		 * RuntimeError (Data source object is not fully specified)
+	def _get_color(self):	#pylint: disable=C0111
+		return self._color
 
-		 * Same as :py:meth:`putil.plot.RawSource.indep_var()` or :py:meth:`putil.plot.CsvSource.indep_var()` or exceptions thrown by custom data source class while handling independent variable retrieval
-
-		 * Same as :py:meth:`putil.plot.RawSource.dep_var()` or :py:meth:`putil.plot.CsvSource.dep_var()` or exceptions thrown by custom data source class while handling dependent variable retrieval
-
-		.. note:: The data source object must have ``indep_var()`` and ``dep_var()`` methods returning Numpy vectors to be valid.
-
-		"""
-		if len(data_source) == 0:
-			return self.current_data_source
-		if len(data_source) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_data_source = data_source[0]
-		for method in ['indep_var', 'dep_var']:
-			if method not in dir(self.current_data_source):
-				raise RuntimeError('Data source object does not have {0}() method'.format(method))
-		if self.current_data_source._complete() is False:	#pylint: disable=W0212
-			raise RuntimeError('Data source object is not fully specified')
-		self.indep_var(self.current_data_source.indep_var)
-		self.dep_var(self.current_data_source.dep_var)
-		self._calculate_curve()
-
-	def indep_var(self, *vector):
-		"""
-		Sets or returns the independent variable data (if loaded)
-
-		:param	vector:	independent array vector
-		:type	vector:	Numpy array
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * RuntimeError (Independent variable data set needs to be a Numpy vector)
-
-		 * RuntimeError (ndependent variable data set needs to be a vector)
-
-		 * RuntimeError (Independent variable data set is empty)
-
-		 * RuntimeError (Independent data set element *[number]* (*[value]*) is not a number)
-		"""
-		if len(vector) == 0:
-			return self.current_indep_var
-		if len(vector) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_indep_var = vector[0]
-		try:
-			if len(self.current_indep_var.shape) > 1:
-				raise RuntimeError('Independent variable data set needs to be a vector')
-		except:
-			raise RuntimeError('Independent variable data set needs to be a Numpy vector')
-		if len(self.current_indep_var) == 0:
-			raise RuntimeError('Independent variable data set is empty')
-		for index, num in enumerate(self.current_indep_var):
-			if putil.misc.isnumber(num) is False:
-				raise ValueError('Independent data set element {0} ({1}) is not a number'.format(index, num))
-		self._calculate_curve()
-
-	def dep_var(self, *vector):
-		"""
-		Sets or returns the dependent variable data (if loaded)
-
-		:param	vector:	dependent array vector
-		:type	vector:	Numpy array
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * RuntimeError (Dependent variable data set needs to be a Numpy vector)
-
-		 * RuntimeError (Dependent variable data set needs to be a vector)
-
-		 * RuntimeError (Dependent variable data set is empty)
-
-		 * RuntimeError (Dependent data set element *[number]* (*[value]*) is not a number)
-		"""
-		if len(vector) == 0:
-			return self.current_dep_var
-		if len(vector) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_dep_var = vector[0]
-		try:
-			if len(self.current_dep_var.shape) > 1:
-				raise RuntimeError('Dependent variable data set needs to be a vector')
-		except:
-			raise RuntimeError('Dependent variable data set needs to be a Numpy vector')
-		if len(self.current_dep_var) == 0:
-			raise RuntimeError('Dependent variable data set is empty')
-		for index, num in enumerate(self.current_dep_var):
-			if putil.misc.isnumber(num) is False:
-				raise ValueError('Dependent data set element {0} ({1}) is not a number'.format(index, num))
-		self._calculate_curve()
-
-	def interp_indep_var(self):
-		"""
-		Returns the (scaled) independent variable of the interpolated curve
-		"""
-		return self.scaled_interp_curve_indep_var
-
-	def interp_dep_var(self):
-		"""
-		Returns the (scaled) dependent variable of the interpolated curve
-		"""
-		return self.scaled_interp_curve_dep_var
-
-	def label(self, *text):
-		"""
-		Sets or returns the series label
-
-		:param	text:	series label
-		:type	text:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Series label must be a string)
-		"""
-		if len(text) == 0:
-			return self.current_label
-		if len(text) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_label = text[0]
-		if isinstance(self.current_label, str) is False:
-			raise TypeError('Series label must be a string')
-
-	def color(self, *spec):	#pylint: disable=R0912
-		"""
-		Sets or returns the series color
-
-		:param	spec:	series color
-		:type	spec:	Matplotlib color
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Invalid color specification)
-		"""
-		if len(spec) == 0:
-			return self.current_color
-		if len(spec) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_color = spec[0]
-		if isinstance(self.current_color, str) is True:
-			valid_html_colors = ['aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
-						'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkkhaki', 'darkmagenta',
-						'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue',
-						'dimgray', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'honeydew',
-						'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
-						'lightgoldenrodyellow', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen',
-						'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred',
-						'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
-						'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen',
-						'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquois', 'violet', 'wheat', 'white', 'whitesmoke',
-						'yellow', 'yellowgreen']
-			self.current_color = self.current_color.strip()
-			valid_color_spec = True if (len(self.current_color) == 1) and (self.current_color in 'bgrcmykw') else False	# Basic built-in colors
-			valid_color_spec = True if (valid_color_spec is True) or (valid_html_colors.index(self.current_color.lower()) != -1) else False	# HTML colors
+	@putil.check.check_parameter('color', putil.check.PolymorphicType([None, str, list, set, tuple]))
+	def _set_color(self, color):	#pylint: disable=C0111
+		self._color = color.strip()
+		if isinstance(self.color, str) is True:
+			valid_html_colors = [
+				'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
+				'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkkhaki', 'darkmagenta',
+				'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue',
+				'dimgray', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'honeydew',
+				'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
+				'lightgoldenrodyellow', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen',
+				'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred',
+				'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
+				'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen',
+				'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquois', 'violet', 'wheat', 'white', 'whitesmoke',
+				'yellow', 'yellowgreen'
+			]
+			valid_color_spec = True if (len(self.color) == 1) and (self.color in 'bgrcmykw') else False	# Basic built-in colors
+			valid_color_spec = True if (valid_color_spec is True) or (valid_html_colors.index(self.color.lower()) != -1) else False	# HTML colors
 			if valid_color_spec is False:	# Grayscale format
 				try:
-					value = float(self.current_color)
+					value = float(self.color)
 					valid_color_spec = True if (value >= 0.0) and (value <= 1.0) else False
 				except:	#pylint: disable=W0702
 					pass
-			if (valid_color_spec is False) and (self.current_color[0] == '#') and (len(self.current_color) == 7):	# HTML hex string
-				for char in self.current_color:
+			if (valid_color_spec is False) and (self.color[0] == '#') and (len(self.color) == 7):	# HTML hex string
+				for char in self.color:
 					if putil.misc.ishex(char) is False:
 						break
 				else:
 					valid_color_spec = True
-		elif ((isinstance(self.current_color, list) is True) or (isinstance(self.current_color, set) is True) or (isinstance(self.current_color, tuple) is True)) and \
-			((len(self.current_color) == 3) or (len(self.current_color) == 4)):	# RGB or RGBA tuple
+		elif ((isinstance(self.color, list) is True) or (isinstance(self.color, set) is True) or (isinstance(self.color, tuple) is True)) and ((len(self.color) == 3) or (len(self.color) == 4)):	# RGB or RGBA tuple
 			valid_color_spec = True
-			for num in range(len(self.current_color)):
-				if (isinstance(self.current_color[num], float) is False) or ((isinstance(self.current_color[num], float) is True) and ((self.current_color[num] < 0.0) or (self.current_color[num] > 1.0))):
+			for num in range(len(self.color)):
+				if (isinstance(self.color[num], float) is False) or ((isinstance(self.color[num], float) is True) and ((self.color[num] < 0.0) or (self.color[num] > 1.0))):
 					valid_color_spec = False
 					break
 		if valid_color_spec is False:
 			raise TypeError('Invalid color specification')
 
-	def marker(self, *flag):
-		"""
-		Sets or returns the plot data markers flag
+	def _get_marker(self):	#pylint: disable=C0111
+		return self._marker
 
-		:param	flag:	plot data markers flag
-		:type	flag:	boolean
-		:rtype:			boolean
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
+	@putil.check.check_parameter('marker', putil.check.PolymorphicType([None, bool]))
+	def _set_marker(self, marker):	#pylint: disable=C0111
+		self._marker = marker
 
-		 * TypeError (Plot markers flag must be boolean)
-		"""
-		if len(flag) == 0:
-			return self.current_marker
-		if len(flag) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_marker = flag[0]
-		if isinstance(self.current_marker, bool) is False:
-			raise TypeError('Marker flag must be boolean')
+	def _get_interp(self):	#pylint: disable=C0111
+		return self._interp
 
-	def interp(self, *option):
-		"""
-		Sets or returns the interpolation option
-
-		:param	option:	interpolation option, one of NONE, STRAIGHT, CUBIC or LINREG (case insensitive)
-		:type	option:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Interpolation option is not a string)
-
-		 * ValueError (Interpolation option not one of NONE, STRAIGHT, STEP, CUBIC or LINREG)
-		"""
-		if len(option) == 0:
-			return self.current_interp
-		if len(option) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_interp = option[0]
-		if isinstance(self.current_interp, str) is False:
-			raise TypeError('Interpolation option is not a string')
-		self.current_interp = self.current_interp.upper()
-		if self.current_interp not in self.interp_options:
-			raise ValueError('Interpolation option not one of NONE, STRAIGHT, STEP, CUBIC or LINREG')
+	@putil.check.check_parameter('interp', putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
+	def _set_interp(self, interp):	#pylint: disable=C0111
+		self._interp = interp.upper()
 		self._calculate_curve()
 
-	def line_style(self, *style):
-		"""
-		Sets or returns the line style
+	def _get_line_style(self):	#pylint: disable=C0111
+		return self._line_style
 
-		:param	style:	line style, one of `-`, `--`, `-.` or `:`
-		:type	style:	Matplotlib line specification
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
+	@putil.check.check_parameter('line_style', putil.check.PolymorphicType([None, putil.check.OneOf(['-', '--', '-.', ':'])]))
+	def _set_line_style(self, line_style):	#pylint: disable=C0111
+		self._line_style = line_style
 
-		 * TypeError (Line style must be a string)
+	def _get_secondary_axis(self):	#pylint: disable=C0111
+		return self._secondary_axis
 
-		 * ValueError (Illegal line style specification)
-		"""
-		if len(style) == 0:
-			return self.current_line_style
-		if len(style) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_line_style = style[0]
-		if isinstance(self.current_line_style, str) is False:
-			raise TypeError('Line style must be a string')
-		self.current_line_style = self.current_line_style.strip()
-		if (self.current_line_style != '') and (self.current_line_style != '-') and (self.current_line_style != '--') and (self.current_line_style != '-.') and (self.current_line_style != ':'):
-			raise ValueError('Illegal line style specification')
-
-	def secondary_axis(self, *flag):
-		"""
-		Sets or returns the secondary axis flag
-
-		:param	flag:	secondary axis flag
-		:type	flag:	boolean
-		:rtype:			boolean
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Secondary axis flag must be boolean)
-		"""
-		if len(flag) == 0:
-			return self.current_secondary_axis
-		if len(flag) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_secondary_axis = flag[0]
-		if isinstance(self.current_secondary_axis, bool) is False:
-			raise TypeError('Secondary axis flag must be boolean')
+	@putil.check.check_parameter('secondary_axis', putil.check.PolymorphicType([None, bool]))
+	def _set_secondary_axis(self, secondary_axis):	#pylint: disable=C0111
+		self._secondary_axis = secondary_axis
 
 	def __str__(self):
-		"""
-		Print series object information
-		"""
+		""" Print series object information """
 		ret = ''
-		ret += 'Data source: {0}{1} class object\n'.format(None if self.data_source() is None else self.data_source().__module__, '' if self.data_source() is None else '.'+self.data_source().__class__.__name__)
-		ret += 'Independent variable: {0}\n'.format(self.indep_var())
-		ret += 'Dependent variable: {0}\n'.format(self.dep_var())
-		ret += 'Label: {0}\n'.format(self.label())
-		ret += 'Color: {0}\n'.format(self.color())
-		ret += 'Marker: {0}\n'.format(self.marker())
-		ret += 'Interpolation: {0}\n'.format(self.interp())
-		ret += 'Line style: {0}\n'.format(self.line_style())
-		ret += 'Secondary axis: {0}'.format(self.secondary_axis())
+		ret += 'Data source: {0}{1} class object\n'.format(None if self.data_source is None else self.data_source.__module__, '' if self.data_source is None else '.'+self.data_source.__class__.__name__)
+		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50))
+		ret += 'Dependent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50))
+		ret += 'Label: {0}\n'.format(self.label)
+		ret += 'Color: {0}\n'.format(self.color)
+		ret += 'Marker: {0}\n'.format(self.marker)
+		ret += 'Interpolation: {0}\n'.format(self.interp)
+		ret += 'Line style: {0}\n'.format(self.line_style)
+		ret += 'Secondary axis: {0}'.format(self.secondary_axis)
 		return ret
 
 	def _complete(self):
-		"""
-		Returns True if series is fully specified, otherwise returns False
-		"""
-		return True if (self.current_indep_var is not None) and (self.current_dep_var is not None) and (self.current_data_source is not None) else False
+		""" Returns True if series is fully specified, otherwise returns False """
+		return True if self.data_source is not None else False
 
 	def _calculate_curve(self):
-		"""
-		Compute curve to interpolate between data points
-		"""
-		if (self.interp() != 'NONE') and (self.current_indep_var is not None) and (self.current_dep_var is not None):
-			if self.interp() == 'CUBIC':
-				self.interp_curve_indep_var = numpy.linspace(min(self.current_indep_var), max(self.current_indep_var), 500)  #pylint: disable=E1101
-				finterp = interp1d(self.current_indep_var, self.current_dep_var, kind='cubic')
-				self.interp_curve_dep_var = finterp(self.interp_curve_indep_var)
-			elif self.interp() == 'LINREG':
-				slope, intercept, r_value, p_value, std_err = stats.linregress(self.current_indep_var, self.current_dep_var)	#pylint: disable=W0612
-				self.interp_curve_indep_var = self.current_indep_var
-				self.interp_curve_dep_var = intercept+(slope*self.current_indep_var)
+		""" Compute curve to interpolate between data points """
+		if (self.interp != None) and (self.indep_var is not None) and (self.dep_var is not None):
+			if self.interp == 'CUBIC':
+				self.interp_indep_var = numpy.linspace(min(self.indep_var), max(self.indep_var), 500)  #pylint: disable=E1101
+				finterp = interp1d(self.indep_var, self.dep_var, kind='cubic')
+				self.interp_dep_var = finterp(self.interp_indep_var)
+			elif self.interp == 'LINREG':
+				slope, intercept, r_value, p_value, std_err = stats.linregress(self.indep_var, self.dep_var)	#pylint: disable=W0612
+				self.interp_indep_var = self.indep_var
+				self.interp_dep_var = intercept+(slope*self.indep_var)
 
 	def _scale_indep_var(self, scaling_factor):
-		"""
-		Scale independent variable
-		"""
-		self.scaled_indep_var = self.indep_var()/scaling_factor
-		if self.interp_curve_indep_var is not None:
-			self.scaled_interp_curve_indep_var = self.interp_curve_indep_var/scaling_factor
+		""" Scale independent variable """
+		self.scaled_indep_var = self.indep_var/scaling_factor
+		if self.interp_indep_var is not None:
+			self.scaled_interp_indep_var = self.interp_indep_var/scaling_factor
 
 	def _scale_dep_var(self, scaling_factor):
-		"""
-		Scale dependent variable
-		"""
-		self.scaled_dep_var = self.dep_var()/scaling_factor
-		if self.interp_curve_dep_var is not None:
-			self.scaled_interp_curve_dep_var = self.interp_curve_dep_var/scaling_factor
+		""" Scale dependent variable """
+		self.scaled_dep_var = self.dep_var/scaling_factor
+		if self.interp_dep_var is not None:
+			self.scaled_interp_dep_var = self.interp_dep_var/scaling_factor
 
 	def _legend_artist(self, legend_scale=1.5):
-		"""
-		Creates artist (marker -if used- and line style -if used-)
-		"""
-		return plt.Line2D((0, 1), (0, 0), color=self.color(), marker='o' if self.marker() is True else '', linestyle=self.line_style() if (self.line_style() != '') and (self.interp() != 'NONE') else '',
-					linewidth=(2.5 if (self.line_style() != '') and (self.interp() != 'NONE') else 0.0)/legend_scale, markeredgecolor=self.color(), markersize=14/legend_scale,
+		""" Creates artist (marker -if used- and line style -if used-) """
+		return plt.Line2D((0, 1), (0, 0), color=self.color, marker='o' if self.marker is True else '', linestyle=self.line_style if (self.line_style != None) and (self.interp != None) else '',
+					linewidth=(2.5 if (self.line_style != None) and (self.interp != None) else 0.0)/legend_scale, markeredgecolor=self.color, markersize=14/legend_scale,
 					markeredgewidth=5/legend_scale, markerfacecolor='w')
 
 	def _draw_series(self, axarr, log_indep, log_dep):
-		"""
-		Draw series
-		"""
+		""" Draw series """
 		label_printed = False
 		fplot = axarr.plot if (log_indep is False) and (log_dep is False) else (axarr.semilogx if (log_indep is True) and (log_dep is False) else (axarr.loglog if (log_indep is True) and (log_dep is True) else axarr.semilogy))
-		if (self.interp() == 'CUBIC') or (self.interp() == 'LINREG') and (self.line_style() != ''):
-			fplot(self.scaled_interp_curve_indep_var, self.scaled_interp_curve_dep_var, color=self.color(), linestyle=self.line_style(), linewidth=2.5, label=self.label() if self.label() != '' else None)
+		# Plot interpolated line (if necessary)
+		if (self.interp == 'CUBIC') or (self.interp == 'LINREG') and (self.line_style != None):
+			fplot(self.scaled_interp_indep_var, self.scaled_interp_dep_var, color=self.color, linestyle=self.line_style, linewidth=2.5, label=None)
 			label_printed = True
-		if (self.marker() is True) or ((self.marker() is False) and ((self.interp() == 'STRAIGHT') or (self.interp() == 'STEP')) and (self.line_style() != '')):
-			fplot(self.scaled_indep_var, self.scaled_dep_var, color=self.color(), linestyle=self.line_style() if (self.line_style() != '') and ((self.interp() == 'STRAIGHT') or (self.interp() == 'STEP')) else '',
-				  marker='o' if self.marker() is True else '', markeredgecolor=self.color(), markersize=14, markeredgewidth=5, markerfacecolor='w',
-				  linewidth=2.5 if (self.line_style() != '') and ((self.interp() == 'STRAIGHT') or (self.interp() == 'STEP')) else 0, drawstyle='steps-post' if self.interp() == 'STEP' else 'default',
-				  label=None if (label_printed is True) or (self.label() == '') else self.label())
+		# Plot markers and/or straight line segments (if necessary)
+		if (self.marker is True) or ((self.marker is False) and ((self.interp == 'STRAIGHT') or (self.interp == 'STEP')) and (self.line_style() != None)):
+			fplot(self.scaled_indep_var, self.scaled_dep_var, color=self.color, linestyle=self.line_style if (self.line_style != None) and ((self.interp == 'STRAIGHT') or (self.interp == 'STEP')) else '',
+				  marker='o' if self.marker is True else '', markeredgecolor=self.color, markersize=14, markeredgewidth=5, markerfacecolor='w',
+				  linewidth=2.5 if (self.line_style != None) and ((self.interp == 'STRAIGHT') or (self.interp == 'STEP')) else 0, drawstyle='steps-post' if self.interp == 'STEP' else 'default',
+				  label=None if (label_printed is True) or (self.label == None) else self.label)
+
+	data_source = property(_get_data_source, _set_data_source, doc='Data source')
+	"""
+	Data source object. The independent and dependent data sets are obtained once the source is set.
+
+	:type:	:py:class:`putil.plot.BasicSource()` object, :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
+	:raises:
+	 * TypeError (Parameter `data_source` is of the wrong type)
+
+	 * RuntimeError (Parameter `data_source` does not have `indep_var` attribute)
+
+	 * RuntimeError (Parameter `data_source` does not have `dep_var` attribute)
+
+	 * RuntimeError (Parameter `data_source` is not fully specified)
+
+	 * Same as :py:meth:`putil.plot.BasicSource.indep_var` or :py:meth:`putil.plot.CsvSource.indep_var` or exceptions thrown by custom data source class while handling independent variable retrieval
+
+	 * Same as :py:meth:`putil.plot.BasicSource.dep_var()` or :py:meth:`putil.plot.CsvSource.dep_var` or exceptions thrown by custom data source class while handling dependent variable retrieval
+
+	.. note:: The data source object must have ``indep_var`` and ``dep_var`` attributes returning Numpy vectors to be valid.
+	"""	#pylint: disable=W0105
+
+	label = property(_get_label, _set_label, doc='Series label')
+	"""
+	Series label, to be used in panel legend
+
+	:type:	string
+	:raises: TypeError (Parameter `label` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	color = property(_get_color, _set_color, doc='Series line and marker color')
+	"""
+	Series line and marker color
+
+	:type:	Matplotlib color
+	:raises:
+	 * TypeError (Parameter `color` is of the wrong type)
+
+	 * TypeError (Invalid color specification)
+	"""	#pylint: disable=W0105
+
+	marker = property(_get_marker, _set_marker, doc='Plot data point markers flag')
+	"""
+	Plot data point markers flag
+
+	:type:	boolean
+	:raises: TypeError (Parameter `marker` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	interp = property(_get_interp, _set_interp, doc='Series interpolation option, one of `STRAIGHT`, `CUBIC` or `LINREG` (case insensitive)')
+	"""
+	Interpolation option, one of STRAIGHT, CUBIC or LINREG (case insensitive)
+
+	:type:	string
+	:raises: TypeError (Parameter `interp` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	line_style = property(_get_line_style, _set_line_style, doc='Series line style, one of `-`, `--`, `-.` or `:`')
+	"""
+	Line style, one of `-`, `--`, `-.` or `:`
+
+	:type:	Matplotlib line specification
+	:raises: TypeError (Parameter `line_syle` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	secondary_axis = property(_get_secondary_axis, _set_secondary_axis, doc='Series secondary axis flag')
+	"""
+	Secondary axis flag. If true, the series belongs to the secondary (right) panel axis.
+
+	:type:	boolean
+	:raises: TypeError (Parameter `secondary_axis` is of the wrong type)
+	"""	#pylint: disable=W0105
 
 class Panel(object):	#pylint: disable=R0902
 	"""
@@ -1078,16 +941,16 @@ class Panel(object):	#pylint: disable=R0902
 			global_secondary_dep_var = list()
 			# Find union of the dependent variable data set of all panels
 			for series_obj in self.current_series_list:
-				if series_obj.secondary_axis() is False:
+				if series_obj.secondary_axis is False:
 					self.panel_has_primary_axis = True
-					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var()])))
-					if series_obj.interp_curve_dep_var is not None:
-						global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_curve_dep_var])))
+					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
+					if series_obj.interp_dep_var is not None:
+						global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
 				else:
 					self.panel_has_secondary_axis = True
-					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var()])))
-					if series_obj.interp_curve_dep_var is not None:
-						global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_curve_dep_var])))
+					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
+					if series_obj.interp_dep_var is not None:
+						global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
 			# Primary axis
 			if self.panel_has_primary_axis is True:
 				self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale, self.primary_scaled_dep_var = \
@@ -1315,7 +1178,7 @@ class Panel(object):	#pylint: disable=R0902
 		Scale dependent variable of panel series
 		"""
 		for series_obj in self.current_series_list:
-			if series_obj.secondary_axis() is False:
+			if series_obj.secondary_axis is False:
 				series_obj._scale_dep_var(primary_scaling_factor)	#pylint: disable=W0212
 			else:
 				series_obj._scale_dep_var(secondary_scaling_factor)	#pylint: disable=W0212
@@ -1328,7 +1191,7 @@ class Panel(object):	#pylint: disable=R0902
 			axarr_sec = axarr.twinx()
 		# Place data series in their appropriate axis (primary or secondary)
 		for series_obj in self.current_series_list:
-			series_obj._draw_series(axarr if series_obj.secondary_axis() is False else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis())	#pylint: disable=W0212
+			series_obj._draw_series(axarr if series_obj.secondary_axis is False else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis())	#pylint: disable=W0212
 		primary_height = 0
 		secondary_height = 0
 		indep_height = 0
@@ -1666,7 +1529,7 @@ class Figure(object):	#pylint: disable=R0902
 		# Find union of the independent variable data set of all panels
 		for panel_obj in self.current_panel_list:
 			for series_obj in panel_obj.current_series_list:
-				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var()])))
+				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var])))
 		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = _scale_series(series=global_indep_var, scale=True, scale_type='delta')
 		self.indep_var_min = putil.misc.smart_round(self.indep_var_min, 10)
 		self.indep_var_max = putil.misc.smart_round(self.indep_var_max, 10)

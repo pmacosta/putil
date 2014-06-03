@@ -244,7 +244,6 @@ def test_basic_source_cannot_delete_attributes():	#pylint: disable=C0103
 ###
 # Tests for CsvSource
 ###
-
 @pytest.fixture
 def tmp_csv_file(tmpdir):
 	""" Fixture to create temporary CSV file for testing purposes """
@@ -614,3 +613,33 @@ def test_csv_source_cannot_delete_attributes():	#pylint: disable=C0103
 		del obj.dep_var
 	test_list.append(excinfo.value.message == "can't delete attribute")
 	assert test_list == 10*[True]
+
+###
+# Tests for Series
+###
+def test_series_data_source_wrong_type():	#pylint: disable=C0103
+	""" Test if object behaves correctly when checking the data_source argument """
+	class TestSource(object):	#pylint: disable=C0111,R0903,W0612
+		def __init__(self):
+			pass
+	test_list = list()
+	# These assignments should raise an exeption
+	with pytest.raises(RuntimeError) as excinfo:
+		putil.plot.Series(data_source=putil.plot.BasicSource(), label='test')
+	test_list.append(excinfo.value.message == 'Parameter `data_source` is not fully specified')
+	with pytest.raises(RuntimeError) as excinfo:
+		putil.plot.Series(data_source=5, label='test')
+	test_list.append(excinfo.value.message == 'Parameter `data_source` does not have `indep_var` attribute')
+	obj = TestSource()
+	obj.indep_var = numpy.array([5, 6, 7, 8])	#pylint: disable=W0201
+	with pytest.raises(RuntimeError) as excinfo:
+		putil.plot.Series(data_source=obj, label='test')
+	test_list.append(excinfo.value.message == 'Parameter `data_source` does not have `dep_var` attribute')
+	obj.dep_var = numpy.array([0, -10, 5, 4])	#pylint: disable=W0201
+	# These assignments should not raise an exception
+	putil.plot.Series(data_source=None, label='test')
+	putil.plot.Series(data_source=obj, label='test')
+	putil.plot.Series(data_source=putil.plot.BasicSource(indep_var=numpy.array([5, 6, 7, 8]), dep_var=numpy.array([0, -10, 5, 4])), label='test')
+	assert test_list == [True]*3
+
+
