@@ -1,8 +1,7 @@
-# plot.py
+# plot.py 	#pylint: disable=C0302
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-#pylint: disable=C0302
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -35,7 +34,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	:type	indep_var:			increasing real Numpy vector
 	:param	dep_var:			dependent variable vector
 	:type	dep_var:			real Numpy vector
-	:param	indep_min:			minimum independent variable value
+	:param	indep_min:			mini:mum independent variable value
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
@@ -211,6 +210,18 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_min`
 
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_max`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.file_name`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.indep_col_label`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.dep_col_label`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
 	"""
 	def __init__(self, file_name=None, indep_col_label=None, dep_col_label=None, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		BasicSource.__init__(self, indep_var=None, dep_var=None, indep_min=indep_min, indep_max=indep_max)
@@ -417,7 +428,9 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	:raises:
 	 * TypeError (Parameter `file_name` is of the wrong type)
 
-	 * IOError (Comma-separated file *[file_name]* could not be found)
+	 * IOError (File *[file_name]* could not be found)
+
+	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 
 	.. warning:: The first line of the comma-separated file must contain unique headers for each column
 	"""	#pylint: disable=W0105
@@ -428,14 +441,21 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:type:		dictionary
 	:raises:
-	 * TypeError (Parameter dfilter is of the wrong type)
+	 * TypeError (Parameter `dfilter` is of the wrong type)
 
-	 * ValueError (Column *[column]* not found in comma-separated file *[file_name]* header)
+	 * ValueError (Filtered independent variable is empty)
+
+	 * ValueError (Filtered dependent variable is empty)
+
+	 * ValueError (Column *[column]* in data filter not found in comma-separated file *[file_name]* header)
+
+	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
 
 	.. note::
 	   The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter \
 	   value for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
-
 	"""	#pylint: disable=W0105
 
 	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
@@ -444,9 +464,13 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:type:	string
 	:raises:
-	 * TypeError (Parameter indep_col_label is of the wrong type)
+	 * TypeError (Parameter `indep_col_label` is of the wrong type)
 
-	 * ValueError (Parameter indep_col_label could not be found in comma-separated file *[file_name]* header)
+	 * ValueError (Column *[indep_col_label]* (independent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Filtered independent variable is empty)
+
+	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 	"""	#pylint: disable=W0105
 
 	dep_col_label = property(_get_dep_col_label, _set_dep_col_label, doc='Dependent column label (column name)')
@@ -455,9 +479,13 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:type:	string
 	:raises:
-	 * TypeError (Parameter dep_col_label is of the wrong type)
+	 * TypeError (Parameter `dep_col_label` is of the wrong type)
 
-	 * ValueError (Parameter dep_col_label could not be found in comma-separated file *[file_name]* header)
+	 * ValueError (Column *[dep_col_label]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Filtered dependent variable is empty)
+
+	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 	"""	#pylint: disable=W0105
 
 	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
@@ -466,28 +494,51 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:type:	function pointer
 	:raises:
-	 * TypeError (Parameter fproc is of the wrong type)
+	 * TypeError (Parameter `fproc` is of the wrong type)
 
-	 * ValueError (Parameter fproc (function *[function name]*) does not have at least 2 arguments)
+	 * TypeError (Parameter `fproc` (function *[function name pointed by fproc]*) return value is of the wrong type)
+
+	 * TypeError (Processed independent variable is of the wrong type)
+
+	 * TypeError (Processed dependent variable is of the wrong type)
+
+	 * ValueError (Processed independent variable is empty)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Parameter `fproc` (function *[function name pointed by fproc]*) does not have at least 2 arguments)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * RuntimeError (Parameter `fproc` (function *[function name pointed by fproc]*) returned an illegal number of values)
+
+	 * RuntimeError (Processing function *[function name pointed by fproc]* threw an exception when called with the following arguments [...])
+
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
+
+	 * Same as :py:attr:`putil.plot.BasicSource.dep_var`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
 
 	.. note::
 	   The processing function is useful to do "light" data massaging, like scaling, etc; it is called after the data has been retrieved from the comma-separated value and the resulting filtered data set has been \
 	   thresholded by **indep_var_min** and **dep_var_min** (if applicable).
 
-	   The processing function is given two arguments, a Numpy vector representing the independent variable array (first argument) and a \
-	   Numpy vector representing the dependent variable array (second argument). The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second \
-	   element being the processed dependent variable array.
+	   The processing function is given two arguments, a Numpy vector representing the independent variable array (first argument) and a Numpy vector representing the dependent variable array (second argument). \
+	   The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second element being the processed dependent variable array.
 	"""	#pylint: disable=W0105
 
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
 	"""
 	Extra arguments for the data processing function
 
-	:type	eargs:	dictionary
+	:type:	dictionary
 	:raises:
-	 * TypeError (Parameter fproc_eargs is of the wrong type)
+	 * TypeError (Parameter `fproc_eargs` is of the wrong type)
 
-	 * ValueError (Parameter fproc (function {0}) does not have at least {1} arguments)
+	 * ValueError (Extra argument `par1` not found in parameter `fproc` (function *[function name pointed by fproc]*) definition)
+
+	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
 
 	.. note::
 	   Extra parameters can be passed to the processing function using **fproc_eargs**. For example, if **fproc_eargs** is ``{'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
@@ -593,8 +644,8 @@ class Series(object):	#pylint: disable=R0902
 				raise RuntimeError('Data source object does not have {0}() method'.format(method))
 		if self.current_data_source._complete() is False:	#pylint: disable=W0212
 			raise RuntimeError('Data source object is not fully specified')
-		self.indep_var(self.current_data_source.indep_var())
-		self.dep_var(self.current_data_source.dep_var())
+		self.indep_var(self.current_data_source.indep_var)
+		self.dep_var(self.current_data_source.dep_var)
 		self._calculate_curve()
 
 	def indep_var(self, *vector):

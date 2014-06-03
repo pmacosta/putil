@@ -7,11 +7,11 @@ def main():
 	Example of how to use the util_plot library to generate presentation-quality plots
 	"""
 	import numpy
-	import util_plot
-	series1_obj = [util_plot.Series(
-		data_source=util_plot.CsvSource(
+	import putil.plot
+	series1_obj = [putil.plot.Series(
+		data_source=putil.plot.CsvSource(
 			file_name='data.csv',
-			fdef={'value1':1},
+			dfilter={'value1':1},
 			indep_col_label='value2',
 			dep_col_label='value3',
 			indep_min=None,
@@ -26,8 +26,8 @@ def main():
 		line_style='-',
 		secondary_axis=False
 	)]
-	series2_obj = [util_plot.Series(
-		data_source=util_plot.RawSource(
+	series2_obj = [putil.plot.Series(
+		data_source=putil.plot.BasicSource(
 			indep_var=numpy.array([0e-3, 1e-3, 2e-3]),
 			dep_var=numpy.array([4, 7, 8]),
 		),
@@ -38,8 +38,8 @@ def main():
 		line_style='--',
 		secondary_axis=False
 	)]
-	series3_obj = [util_plot.Series(
-		data_source=util_plot.RawSource(
+	series3_obj = [putil.plot.Series(
+		data_source=putil.plot.BasicSource(
 			indep_var=numpy.array([0.5e-3, 1e-3, 1.5e-3]),
 			dep_var=numpy.array([10, 9, 6]),
 		),
@@ -50,7 +50,7 @@ def main():
 		line_style='--',
 		secondary_axis=True
 	)]
-	panel_obj = util_plot.Panel(
+	panel_obj = putil.plot.Panel(
 		series=series1_obj+series2_obj+series3_obj,
 		primary_axis_label='Primary axis label',
 		primary_axis_units='-',
@@ -58,19 +58,19 @@ def main():
 		secondary_axis_units='W',
 		legend_props={'pos':'lower right', 'cols':1}
 	)
-	fig_obj = util_plot.Figure(
+	fig_obj = putil.plot.Figure(
 		panel=panel_obj,
 		indep_var_label='Indep. var.',
 		indep_var_units='S',
 		log_indep=False,
 		fig_width=None,
 		fig_height=None,
-		title='Library util_plot Example'
+		title='Library putil.plot Example'
 	)
 	fig_obj.draw()
-	fig_obj.save('./util_plot_example.png')
+	fig_obj.save('./example_plot.png')
 
-def series1_proc_func(indep_var, dep_var, xoffset):	#pylint: disable-msg=W0613
+def series1_proc_func(indep_var, dep_var, xoffset):	#pylint: disable=W0613
 	"""
 	Process data 1 series
 	"""
