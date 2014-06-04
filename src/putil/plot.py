@@ -588,13 +588,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * Same as :py:meth:`putil.plot.Series.secondary_axis`
 	"""
 	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
-		# Public attributes
+		# Private attributes
 		self.scaled_indep_var, self.scaled_dep_var = None, None
 		self.interp_indep_var, self.interp_dep_var = None, None
-		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
-		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, None, None, None, None, False
 		self.indep_var, self.dep_var = None, None
+		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
 		self._scaling_factor_indep_var, self._scaling_factor_dep_var = 1, 1
+		# Public attributes
+		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, None, None, None, None, False
 		self._set_data_source(data_source)
 		self._set_label(label)
 		self._set_color(color)
@@ -706,7 +707,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	def _complete(self):
 		""" Returns True if series is fully specified, otherwise returns False """
-		return True if self.data_source is not None else False
+		return self.data_source is not None
 
 	def _calculate_curve(self):
 		""" Compute curve to interpolate between data points """
@@ -837,7 +838,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	:raises: TypeError (Parameter `secondary_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
 
-class Panel(object):	#pylint: disable=R0902
+class Panel(object):	#pylint: disable=R0902,R0903
 	"""
 	Defines properties of a panel within a figure
 
@@ -871,6 +872,8 @@ class Panel(object):	#pylint: disable=R0902
 	 * Same as :py:meth:`putil.plot.Panel.legend_props()`
 	"""
 	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=dict()):	#pylint: disable=W0102,R0913
+		# Private attributes
+		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._legend_props = None, None, None, None, None, None, None
 		self.legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
 		self.panel_has_primary_axis = False
 		self.panel_has_secondary_axis = False
@@ -889,64 +892,84 @@ class Panel(object):	#pylint: disable=R0902
 		self.secondary_dep_var_locs = None
 		self.secondary_dep_var_labels = None
 		self.legend_props_list = ['pos', 'cols']
-		self.current_series_list = list()
-		self.current_primary_axis_label = None
-		self.current_primary_axis_units = None
-		self.current_secondary_axis_label = None
-		self.current_secondary_axis_units = None
-		self.current_legend_props = None
-		self.current_log_dep_axis = False
-		self.add_series(series)
-		self.primary_axis_label(primary_axis_label)
-		self.primary_axis_units(primary_axis_units)
-		self.secondary_axis_label(secondary_axis_label)
-		self.secondary_axis_units(secondary_axis_units)
-		self.log_dep_axis(log_dep_axis)
-		self.legend_props(legend_props)
+		self.legend_props_pos_list = ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER']
+		self._set_series(series)
+		self._set_primary_axis_label(primary_axis_label)
+		self._set_primary_axis_units(primary_axis_units)
+		self._set_secondary_axis_label(secondary_axis_label)
+		self._set_secondary_axis_units(secondary_axis_units)
+		self._set_log_dep_axis(log_dep_axis)
+		self._set_legend_props(legend_props)
 
-	def series(self):	#pylint: disable=R0912,R0915
-		"""
-		Returns the data series objects attached to the panel
+	def _get_series(self):	#pylint: disable=C0111
+		return self._series
 
-		:rtype:			:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
-		"""
-		return self.current_series_list
+	def _get_primary_axis_label(self):	#pylint: disable=C0111
+		return self._primary_axis_label
 
-	def add_series(self, series):	#pylint: disable=R0912,R0915
-		"""
-		Adds data series to panel
+	@putil.check.check_parameter('primary_axis_label', putil.check.PolymorphicType([None, str]))
+	def _set_primary_axis_label(self, primary_axis_label):	#pylint: disable=C0111
+		self._primary_axis_label = primary_axis_label
 
-		:param	series: one or more data series
-		:type	series:	:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
-		:rtype:			:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
-		:raises:
-		 * RuntimeError (Series in panel have incongruent primary and secondary axis)
+	def _get_primary_axis_units(self):	#pylint: disable=C0111
+		return self._primary_axis_units
 
-		 * TypeError (Series element is not a Series object)
+	@putil.check.check_parameter('primary_axis_units', putil.check.PolymorphicType([None, str]))
+	def _set_primary_axis_units(self, primary_axis_units):	#pylint: disable=C0111
+		self._primary_axis_units = primary_axis_units
 
-		 * RuntimeError (Series element *[index]* is not fully specified)
-		"""
+	def _get_secondary_axis_label(self):	#pylint: disable=C0111
+		return self._secondary_axis_label
+
+	@putil.check.check_parameter('secondary_axis_label', putil.check.PolymorphicType([None, str]))
+	def _set_secondary_axis_label(self, secondary_axis_label):	#pylint: disable=C0111
+		self._secondary_axis_label = secondary_axis_label
+
+	def _get_secondary_axis_units(self):	#pylint: disable=C0111
+		return self._secondary_axis_units
+
+	@putil.check.check_parameter('secondary_axis_units', putil.check.PolymorphicType([None, str]))
+	def _set_secondary_axis_units(self, secondary_axis_units):	#pylint: disable=C0111
+		self._secondary_axis_units = secondary_axis_units
+
+	def _get_log_dep_axis(self):	#pylint: disable=C0111
+		return self._log_dep_axis
+
+	@putil.check.check_parameter('log_dep_axis', putil.check.PolymorphicType([None, bool]))
+	def _set_log_dep_axis(self, log_dep_axis):	#pylint: disable=C0111
+		self._log_dep_axis = log_dep_axis
+
+	def _get_legend_props(self):	#pylint: disable=C0111
+		return self._legend_props
+
+	@putil.check.check_parameter('legend_props', putil.check.PolymorphicType([None, dict]))
+	def _set_legend_props(self, legend_props):	#pylint: disable=C0111
+		ref_pos_obj = putil.check.OneOf(self.legend_props_pos_list)
+		self._legend_props = legend_props
+		if self.legend_props is not None:
+			for key, value in self.legend_props.iteritems():
+				if key not in self.legend_props_list:
+					raise ValueError('Illegal legend property {0}'.format(key))
+				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props)):
+					raise TypeError(ref_pos_obj.exception('legend_props')).replace(' is ', ' key `pos` is ')
+				elif ((key == 'cols') and (isinstance(value, int) is False)) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
+					raise TypeError('Parameter `legend_props` key `cols` is of the wrong type')
+
+	@putil.check.check_parameter('series', putil.check.PolymorphicType([None, putil.check.ArbitraryLengthList(putil.plot.Series(data_source=putil.plot.BasicSource(), label=''))]))
+	def _set_series(self, series):	#pylint: disable=C0111,R0912
+		self._series = series
 		if series is not None:
-			series = [series] if isinstance(series, Series) is True else series
+			# Check that all series are complete
 			for num, obj in enumerate(series):
-				if isinstance(obj, Series) is False:
-					raise TypeError('Series element is not a Series object')
-				elif obj._complete() is False:	#pylint: disable=W0212
+				if obj._complete() is False:	#pylint: disable=W0212
 					raise RuntimeError('Series element {0} is not fully specified'.format(num))
-			if len(self.current_series_list) == 0:
-				self.current_series_list = series
-			else:
-				for new_obj in series:
-					for old_obj in self.current_series_list:
-						if new_obj == old_obj:
-							break
-					else:
-						self.current_series_list.append(new_obj)
+			# "Uniquify" list
+			self.series = list(set(self.series))
 			# Compute panel scaling factor
 			global_primary_dep_var = list()
 			global_secondary_dep_var = list()
 			# Find union of the dependent variable data set of all panels
-			for series_obj in self.current_series_list:
+			for series_obj in self.series:
 				if series_obj.secondary_axis is False:
 					self.panel_has_primary_axis = True
 					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
@@ -990,200 +1013,45 @@ class Panel(object):	#pylint: disable=R0902
 			#
 			self._scale_dep_var(self.primary_dep_var_div, self.secondary_dep_var_div)
 
-	def primary_axis_label(self, *label):
-		"""
-		Sets or returns the primary axis label
-
-		:param	label:	primary axis label
-		:type	label:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Primary axis label must be a string)
-		"""
-		if len(label) == 0:
-			return self.current_primary_axis_label
-		if len(label) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_primary_axis_label = label[0]
-		if isinstance(self.current_primary_axis_label, str) is False:
-			raise TypeError('Primary axis label must be a string')
-		self.current_primary_axis_label = self.current_primary_axis_label.strip()
-
-	def primary_axis_units(self, *units):
-		"""
-		Sets or returns the primary axis units
-
-		:param	units:	primary axis units
-		:type	units:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Primary axis units must be a string)
-		"""
-		if len(units) == 0:
-			return self.current_primary_axis_units
-		if len(units) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_primary_axis_units = units[0]
-		if isinstance(self.current_primary_axis_units, str) is False:
-			raise TypeError('Primary axis units must be a string')
-		self.current_primary_axis_units = self.current_primary_axis_units.strip()
-
-	def log_dep_axis(self, *flag):
-		"""
-		Sets or returns the logarithmic dependent (primary and/or secondary) axis flag
-
-		:param	flag:	logarithmic dependent (primary and/or secondary) axis flag
-		:type	flag:	boolean
-		:rtype:			boolean
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Logarthmic dependent (primary and/or secondary) axis flag must be boolean)
-		"""
-		if len(flag) == 0:
-			return self.current_log_dep_axis
-		if len(flag) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_log_dep_axis = flag[0]
-		if isinstance(self.current_log_dep_axis, bool) is False:
-			raise TypeError('Logarthmic dependent (primary and/or secondary) axis flag must be boolean')
-
-	def secondary_axis_label(self, *label):
-		"""
-		Sets or returns the secondary axis label
-
-		:param	label:	secondary axis label
-		:type	label:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Secondary axis label must be a string)
-		"""
-		if len(label) == 0:
-			return self.current_secondary_axis_label
-		if len(label) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_secondary_axis_label = label[0]
-		if isinstance(self.current_secondary_axis_label, str) is False:
-			raise TypeError('Secondary axis label must be a string')
-		self.current_secondary_axis_label = self.current_secondary_axis_label.strip()
-
-	def secondary_axis_units(self, *units):
-		"""
-		Sets or returns the secondary axis units
-
-		:param	units:	secondary axis units
-		:type	units:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Secondary axis units must be a string)
-		"""
-		if len(units) == 0:
-			return self.current_secondary_axis_units
-		if len(units) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_secondary_axis_units = units[0]
-		if isinstance(self.current_secondary_axis_units, str) is False:
-			raise TypeError('Secondary axis units must be a string')
-		self.current_secondary_axis_units = self.current_secondary_axis_units.strip()
-
-	def legend_props(self, *props):
-		"""
-		Sets or returns the legend properties
-
-		:param	props:	legend properties
-		:type	props:	dictionary
-		:rtype:			dictionary
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Legend properties must be a dictionary)
-
-		 * ValueError (Illegal legend property *[prop]*)
-
-		 * TypeError (Legend position has to be a string)
-
-		 * ValueError (Illegal position specification)
-
-		 * TypeError (Number of legend columns has to be a positive integer)
-
-		.. note:: No legend is shown if a panel has only one series in it
-
-		.. note:: Currently supported properties are
-
-		     * **pos** (*string*) -- legend position, one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive).
-
-		     * **cols** (integer) -- number of columns in the legend box
-		"""
-		if len(props) == 0:
-			return self.current_legend_props
-		if len(props) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_legend_props = props[0]
-		if isinstance(self.current_legend_props, dict) is False:
-			raise TypeError('Legend properties must be a dictionary')
-		for key, value in self.current_legend_props.iteritems():
-			if key not in self.legend_props_list:
-				raise ValueError('Illegal legend property {0}'.format(key))
-			elif (key == 'pos') and isinstance(value, str) is False:
-				raise TypeError('Legend position has to be a string')
-			elif (key == 'pos') and (value.lower() not in self.legend_pos_list):
-				raise ValueError('Illegal position specification')
-			elif ((key == 'cols') and (isinstance(value, int) is False)) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
-				raise TypeError('Number of legend columns has to be a positive integer')
-
 	def __str__(self):
 		"""
 		Print panel information
 		"""
 		ret = ''
-		if len(self.current_series_list) == 0:
+		if len(self.series) == 0:
 			ret += 'Series: None\n'
 		else:
-			for num, element in enumerate(self.current_series_list):
+			for num, element in enumerate(self.series):
 				ret += 'Series {0}:\n'.format(num+1)
 				temp = str(element).split('\n')
 				temp = [3*' '+line for line in temp]
 				ret += '\n'.join(temp)
 				ret += '\n'
-		ret += 'Primary axis label: {0}\n'.format(self.primary_axis_label())
-		ret += 'Primary axis units: {0}\n'.format(self.primary_axis_units())
-		ret += 'Secondary axis label: {0}\n'.format(self.secondary_axis_label())
-		ret += 'Secondary axis units: {0}\n'.format(self.secondary_axis_units())
-		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis())
-		if self.legend_props() is None:
+		ret += 'Primary axis label: {0}\n'.format(self.primary_axis_label)
+		ret += 'Primary axis units: {0}\n'.format(self.primary_axis_units)
+		ret += 'Secondary axis label: {0}\n'.format(self.secondary_axis_label)
+		ret += 'Secondary axis units: {0}\n'.format(self.secondary_axis_units)
+		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
+		if self.legend_props is None:
 			ret += 'Legend properties: None'
 		else:
 			ret += 'Legend properties\n'
-			for num, (key, value) in enumerate(self.legend_props().iteritems()):
-				ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props()) else '')
+			for num, (key, value) in enumerate(self.legend_props.iteritems()):
+				ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props) else '')
 		return ret
 
 	def _complete(self):
-		"""
-		Returns True if panel is fully specified, otherwise returns False
-		"""
-		return True if len(self.current_series_list) > 0 else False
+		""" Returns True if panel is fully specified, otherwise returns False """
+		return len(self.series) > 0
 
 	def _scale_indep_var(self, scaling_factor):
-		"""
-		Scale independent variable of panel series
-		"""
-		for series_obj in self.current_series_list:
+		""" Scale independent variable of panel series """
+		for series_obj in self.series:
 			series_obj._scale_indep_var(scaling_factor)	#pylint: disable=W0212
 
 	def _scale_dep_var(self, primary_scaling_factor, secondary_scaling_factor):
-		"""
-		Scale dependent variable of panel series
-		"""
-		for series_obj in self.current_series_list:
+		""" Scale dependent variable of panel series """
+		for series_obj in self.series:
 			if series_obj.secondary_axis is False:
 				series_obj._scale_dep_var(primary_scaling_factor)	#pylint: disable=W0212
 			else:
@@ -1191,13 +1059,13 @@ class Panel(object):	#pylint: disable=R0902
 
 	def _draw_panel(self, fig, axarr, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
 		"""
-		Drawa panel series
+		Draw panel series
 		"""
 		if self.panel_has_secondary_axis is True:
 			axarr_sec = axarr.twinx()
 		# Place data series in their appropriate axis (primary or secondary)
-		for series_obj in self.current_series_list:
-			series_obj._draw_series(axarr if series_obj.secondary_axis is False else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis())	#pylint: disable=W0212
+		for series_obj in self.series:
+			series_obj._draw_series(axarr if series_obj.secondary_axis is False else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis)	#pylint: disable=W0212
 		primary_height = 0
 		secondary_height = 0
 		indep_height = 0
@@ -1216,10 +1084,10 @@ class Panel(object):	#pylint: disable=R0902
 			primary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
 		else:
 			axarr.yaxis.set_ticklabels([])
-		if (self.primary_axis_label() != '') or (self.primary_axis_units() != ''):
+		if (self.primary_axis_label != '') or (self.primary_axis_units != ''):
 			unit_scale = '' if self.primary_dep_var_unit_scale is None else self.primary_dep_var_unit_scale
-			axarr.yaxis.set_label_text(self.primary_axis_label() + ('' if (unit_scale == '') and (self.primary_axis_units() == '') else \
-				(' ['+unit_scale+('-' if self.primary_axis_units() == '' else self.primary_axis_units())+']')), fontdict={'fontsize':18})
+			axarr.yaxis.set_label_text(self.primary_axis_label + ('' if (unit_scale == '') and (self.primary_axis_units == '') else \
+				(' ['+unit_scale+('-' if self.primary_axis_units == '' else self.primary_axis_units)+']')), fontdict={'fontsize':18})
 			primary_height = max(primary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
 			primary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
 		# Secondary axis
@@ -1232,14 +1100,14 @@ class Panel(object):	#pylint: disable=R0902
 			# Calculate minimum pane height from primary axis
 			secondary_height = ((len(self.secondary_dep_var_labels))+(len(self.secondary_dep_var_labels)-1))*_get_text_prop(fig, axarr_sec.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
 			secondary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
-		if (self.secondary_axis_label() != '') or (self.secondary_axis_units() != ''):
+		if (self.secondary_axis_label != '') or (self.secondary_axis_units != ''):
 			unit_scale = '' if self.secondary_dep_var_unit_scale is None else self.secondary_dep_var_unit_scale
-			axarr_sec.yaxis.set_label_text(self.secondary_axis_label() + ('' if (unit_scale == '') and (self.secondary_axis_units() == '') else \
-				(' ['+unit_scale+('-' if self.secondary_axis_units() == '' else self.secondary_axis_units())+']')), fontdict={'fontsize':18})
+			axarr_sec.yaxis.set_label_text(self.secondary_axis_label + ('' if (unit_scale == '') and (self.secondary_axis_units == '') else \
+				(' ['+unit_scale+('-' if self.secondary_axis_units == '' else self.secondary_axis_units)+']')), fontdict={'fontsize':18})
 			secondary_height = max(secondary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
 			secondary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
 		# Print legends
-		if (len(self.current_series_list) > 1) and (len(self.legend_props()) > 0):
+		if (len(self.series) > 1) and (len(self.legend_props) > 0):
 			primary_labels = []
 			secondary_labels = []
 			if self.panel_has_primary_axis is True:
@@ -1253,9 +1121,9 @@ class Panel(object):	#pylint: disable=R0902
 			for label in labels:	# Only print legend if at least one series has a label
 				if (label is not None) and (label != ''):
 					legend_scale = 1.5
-					leg_artist = [series_obj._legend_artist(legend_scale) for series_obj in self.current_series_list]	#pylint: disable=W0212
-					axarr.legend(leg_artist, labels, ncol=self.legend_props()['cols'] if 'cols' in self.legend_props() else len(labels),
-						loc=self.legend_pos_list[self.legend_pos_list.index(self.legend_props()['pos'].lower() if 'pos' in self.legend_props() else 'lower left')], numpoints=1, fontsize=18/legend_scale)
+					leg_artist = [series_obj._legend_artist(legend_scale) for series_obj in self.series]	#pylint: disable=W0212
+					axarr.legend(leg_artist, labels, ncol=self.legend_props['cols'] if 'cols' in self.legend_props else len(labels),
+						loc=self.legend_pos_list[self.legend_pos_list.index(self.legend_props['pos'].lower() if 'pos' in self.legend_props else 'lower left')], numpoints=1, fontsize=18/legend_scale)
 					break
 		#  Print independent axis tick marks and label
 		indep_var_min = indep_axis_dict['indep_var_min']
@@ -1282,6 +1150,80 @@ class Panel(object):	#pylint: disable=R0902
 		min_panel_width = primary_width+secondary_width+indep_width
 		return {'primary':None if self.panel_has_primary_axis is False else axarr, 'secondary':None if self.panel_has_secondary_axis is False else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
 
+	series = property(_get_series, _set_series, doc='Panel series')
+	"""
+	Panel series
+
+	:type:	:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
+	:raises:
+	 * RuntimeError (Series in panel have incongruent primary and secondary axis)
+
+	 * TypeError (Series element is not a Series object)
+
+	 * RuntimeError (Series element *[index]* is not fully specified)
+	"""	#pylint: disable=W0105
+
+	primary_axis_label = property(_get_primary_axis_label, _set_primary_axis_label, doc='Panel primary axis label')
+	"""
+	Panel primary axis label
+
+	:type:	string
+	:raises: TypeError (Parameter `primary_axis_label` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	secondary_axis_label = property(_get_secondary_axis_label, _set_secondary_axis_label, doc='Panel secondary axis label')
+	"""
+	Panel secondary axis label
+
+	:type:	string
+	:raises: TypeError (Parameter `secondary_axis_label` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	primary_axis_units = property(_get_primary_axis_units, _set_primary_axis_units, doc='Panel primary axis units')
+	"""
+	Panel primary axis units
+
+	:type:	string
+	:raises: TypeError (Parameter `primary_axis_units` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	secondary_axis_units = property(_get_secondary_axis_units, _set_secondary_axis_units, doc='Panel secondary axis units')
+	"""
+	Panel secondary axis units
+
+	:type:	string
+	:raises: TypeError (Parameter `secondary_axis_units` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	log_dep_axis = property(_get_log_dep_axis, _set_log_dep_axis, doc='Panel logarithmic dependent axis flag')
+	"""
+	Panel logarithmic dependent axis flag
+
+	:type:	boolean
+	:raises: TypeError (Parameter `log_dep_axis` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	legend_props = property(_get_legend_props, _set_legend_props, doc='Panel legend box properties')
+	"""
+	Panel legend box properties
+
+	:type	props:	dictionary
+	:rtype:			dictionary
+	:raises:
+	 * TypeError (Parameter `legend_props` is of the wrong type)
+
+	 * TypeError (Parameter `legend_props` key `props` is not one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive))
+
+	 * TypeError ((Parameter `legend_props` key `cols` is of the wrong type)
+
+	.. note:: No legend is shown if a panel has only one series in it
+
+	.. note:: Currently supported properties are
+
+	     * **pos** (*string*) -- legend position, one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive).
+
+	     * **cols** (integer) -- number of columns in the legend box
+	"""	#pylint: disable=W0105
 
 class Figure(object):	#pylint: disable=R0902
 	"""

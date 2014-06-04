@@ -812,3 +812,32 @@ def test_series_str(default_source):	#pylint: disable=C0103,W0621
 	ret += 'Line style: -\n'
 	ret += 'Secondary axis: False'
 	assert str(obj) == ret
+
+def test_series_cannot_delete_attributes(default_source):	#pylint: disable=C0103,W0621
+	""" Test that del method raises an exception on all class attributes """
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list = list()
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.data_source
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.label
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.color
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.marker
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.interp
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.line_style
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	with pytest.raises(AttributeError) as excinfo:
+		del obj.secondary_axis
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	assert test_list == 7*[True]
+
+
