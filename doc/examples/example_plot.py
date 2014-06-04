@@ -26,32 +26,33 @@ def main():
 		line_style='-',
 		secondary_axis=False
 	)]
-	series2_obj = [putil.plot.Series(
-		data_source=putil.plot.BasicSource(
-			indep_var=numpy.array([0e-3, 1e-3, 2e-3]),
-			dep_var=numpy.array([4, 7, 8]),
-		),
-		label='Source 2',
-		color='r',
-		marker=True,
-		interp='STRAIGHT',
-		line_style='--',
-		secondary_axis=False
-	)]
-	series3_obj = [putil.plot.Series(
-		data_source=putil.plot.BasicSource(
-			indep_var=numpy.array([0.5e-3, 1e-3, 1.5e-3]),
-			dep_var=numpy.array([10, 9, 6]),
-		),
-		label='Source 3',
-		color='b',
-		marker=True,
-		interp='STRAIGHT',
-		line_style='--',
-		secondary_axis=True
-	)]
+	# series2_obj = [putil.plot.Series(
+	# 	data_source=putil.plot.BasicSource(
+	# 		indep_var=numpy.array([0e-3, 1e-3, 2e-3]),
+	# 		dep_var=numpy.array([4, 7, 8]),
+	# 	),
+	# 	label='Source 2',
+	# 	color='r',
+	# 	marker=True,
+	# 	interp='STRAIGHT',
+	# 	line_style='--',
+	# 	secondary_axis=False
+	# )]
+	# series3_obj = [putil.plot.Series(
+	# 	data_source=putil.plot.BasicSource(
+	# 		indep_var=numpy.array([0.5e-3, 1e-3, 1.5e-3]),
+	# 		dep_var=numpy.array([10, 9, 6]),
+	# 	),
+	# 	label='Source 3',
+	# 	color='b',
+	# 	marker=True,
+	# 	interp='STRAIGHT',
+	# 	line_style='--',
+	# 	secondary_axis=True
+	# )]
 	panel_obj = putil.plot.Panel(
-		series=series1_obj+series2_obj+series3_obj,
+		#series=series1_obj+series2_obj+series3_obj,
+		series=series1_obj,
 		primary_axis_label='Primary axis label',
 		primary_axis_units='-',
 		secondary_axis_label='Secondary axis label',

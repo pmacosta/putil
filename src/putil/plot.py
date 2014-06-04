@@ -749,10 +749,12 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _update_linestyle_spec(self):
 		""" Update line style specification to be used in series drawing """
 		self._linestyle_spec = self.line_style if (self.line_style is not None) and (self.interp is not None) else ''
+		print 'Line style: {0}'.format(self._linestyle_spec)
 
 	def _update_linewidth_spec(self):
 		""" Update line width specification to be used in series drawing """
 		self._linewidth_spec = self._ref_linewidth if (self.line_style is not None) and (self.interp is not None) else 0.0
+		print 'Line width: {0}'.format(self._linewidth_spec)
 
 	def _legend_artist(self, legend_scale=1.5):
 		""" Creates artist (marker -if used- and line style -if used-) """
@@ -775,6 +777,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		fplot = axarr.plot if (log_indep is False) and (log_dep is False) else (axarr.semilogx if (log_indep is True) and (log_dep is False) else (axarr.loglog if (log_indep is True) and (log_dep is True) else axarr.semilogy))
 		# Plot interpolated line (if necessary)
 		if (self.interp in ['CUBIC', 'LINREG']) and (self.line_style is not None):
+			print "Interpolated line"
 			label_printed = True
 			fplot(
 				xdata=self.scaled_interp_indep_var,
@@ -786,6 +789,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 			)
 		# Plot markers and/or straight line segments (if necessary)
 		if (self.marker is True) or ((self.marker is False) and (self.interp in ['STRAIGHT', 'STEP']) and (self.line_style is not None)):
+			print "Marker/straing line segment"
+			print self.color
+			print self._linestyle_spec
+			print self._linewidth_spec
 			fplot(
 				xdata=self.scaled_indep_var,
 				ydata=self.scaled_dep_var,
@@ -1104,9 +1111,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				series_obj._scale_dep_var(secondary_scaling_factor)	#pylint: disable=W0212
 
 	def _draw_panel(self, fig, axarr, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
-		"""
-		Draw panel series
-		"""
+		""" Draw panel series """
+		print self.series
 		if self.panel_has_secondary_axis is True:
 			axarr_sec = axarr.twinx()
 		# Place data series in their appropriate axis (primary or secondary)
@@ -1128,14 +1134,14 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			# Calculate minimum pane height from primary axis
 			primary_height = ((len(self.primary_dep_var_labels))+(len(self.primary_dep_var_labels)-1))*_get_text_prop(fig, axarr.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
 			primary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
+			if (self.primary_axis_label not in [None, '']) or (self.primary_axis_units not in [None, '']):
+				unit_scale = '' if self.primary_dep_var_unit_scale is None else self.primary_dep_var_unit_scale
+				axarr.yaxis.set_label_text(self.primary_axis_label + ('' if (unit_scale == '') and (self.primary_axis_units == '') else \
+					(' ['+unit_scale+('-' if self.primary_axis_units == '' else self.primary_axis_units)+']')), fontdict={'fontsize':18})
+				primary_height = max(primary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
+				primary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
 		else:
 			axarr.yaxis.set_ticklabels([])
-		if (self.primary_axis_label != '') or (self.primary_axis_units != ''):
-			unit_scale = '' if self.primary_dep_var_unit_scale is None else self.primary_dep_var_unit_scale
-			axarr.yaxis.set_label_text(self.primary_axis_label + ('' if (unit_scale == '') and (self.primary_axis_units == '') else \
-				(' ['+unit_scale+('-' if self.primary_axis_units == '' else self.primary_axis_units)+']')), fontdict={'fontsize':18})
-			primary_height = max(primary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
-			primary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
 		# Secondary axis
 		if self.panel_has_secondary_axis is True:
 			axarr_sec.yaxis.grid(True, 'both')
@@ -1146,12 +1152,12 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			# Calculate minimum pane height from primary axis
 			secondary_height = ((len(self.secondary_dep_var_labels))+(len(self.secondary_dep_var_labels)-1))*_get_text_prop(fig, axarr_sec.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
 			secondary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
-		if (self.secondary_axis_label != '') or (self.secondary_axis_units != ''):
-			unit_scale = '' if self.secondary_dep_var_unit_scale is None else self.secondary_dep_var_unit_scale
-			axarr_sec.yaxis.set_label_text(self.secondary_axis_label + ('' if (unit_scale == '') and (self.secondary_axis_units == '') else \
-				(' ['+unit_scale+('-' if self.secondary_axis_units == '' else self.secondary_axis_units)+']')), fontdict={'fontsize':18})
-			secondary_height = max(secondary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
-			secondary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
+			if (self.secondary_axis_label not in [None, '']) or (self.secondary_axis_units not in [None, '']):
+				unit_scale = '' if self.secondary_dep_var_unit_scale is None else self.secondary_dep_var_unit_scale
+				axarr_sec.yaxis.set_label_text(self.secondary_axis_label + ('' if (unit_scale == '') and (self.secondary_axis_units == '') else \
+					(' ['+unit_scale+('-' if self.secondary_axis_units == '' else self.secondary_axis_units)+']')), fontdict={'fontsize':18})
+				secondary_height = max(secondary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
+				secondary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
 		# Print legends
 		if (len(self.series) > 1) and (len(self.legend_props) > 0):
 			primary_labels = []
@@ -1194,6 +1200,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			indep_width = max(indep_width, _get_text_prop(fig, axarr.xaxis.get_label())['width'])
 		min_panel_height = max(primary_height, secondary_height)+indep_height
 		min_panel_width = primary_width+secondary_width+indep_width
+		print self.panel_has_primary_axis
+		print self.panel_has_secondary_axis
 		return {'primary':None if self.panel_has_primary_axis is False else axarr, 'secondary':None if self.panel_has_secondary_axis is False else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
 
 	series = property(_get_series, _set_series, doc='Panel series')
