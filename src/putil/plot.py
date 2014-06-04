@@ -588,13 +588,19 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * Same as :py:meth:`putil.plot.Series.secondary_axis`
 	"""
 	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
+		# Series plotting attributes
+		self._ref_linewidth = 2.5
+		self._ref_markersize = 14
+		self._ref_markeredgewidth = 5
+		self._ref_markerfacecolor = 'w'
 		# Private attributes
+		self._scaling_factor_indep_var, self._scaling_factor_dep_var = 1, 1
+		self._marker_spec, self._linestyle_spec, self._linewidth_spec = None, None, None
+		# Public attributes
 		self.scaled_indep_var, self.scaled_dep_var = None, None
 		self.interp_indep_var, self.interp_dep_var = None, None
 		self.indep_var, self.dep_var = None, None
 		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
-		self._scaling_factor_indep_var, self._scaling_factor_dep_var = 1, 1
-		# Public attributes
 		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, None, None, None, None, False
 		self._set_data_source(data_source)
 		self._set_label(label)
@@ -668,6 +674,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	@putil.check.check_parameter('marker', putil.check.PolymorphicType([None, bool]))
 	def _set_marker(self, marker):	#pylint: disable=C0111
 		self._marker = marker
+		self._marker_spec = 'o' if self.marker else ''
 
 	def _get_interp(self):	#pylint: disable=C0111
 		return self._interp
@@ -675,6 +682,8 @@ class Series(object):	#pylint: disable=R0902,R0903
 	@putil.check.check_parameter('interp', putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
 	def _set_interp(self, interp):	#pylint: disable=C0111
 		self._interp = interp.upper().strip() if isinstance(interp, str) else interp
+		self._update_linestyle_spec()
+		self._update_linewidth_spec()
 		self._calculate_curve()
 
 	def _get_line_style(self):	#pylint: disable=C0111
@@ -683,6 +692,8 @@ class Series(object):	#pylint: disable=R0902,R0903
 	@putil.check.check_parameter('line_style', putil.check.PolymorphicType([None, putil.check.OneOf(['-', '--', '-.', ':'])]))
 	def _set_line_style(self, line_style):	#pylint: disable=C0111
 		self._line_style = line_style
+		self._update_linestyle_spec()
+		self._update_linewidth_spec()
 
 	def _get_secondary_axis(self):	#pylint: disable=C0111
 		return self._secondary_axis
@@ -711,7 +722,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	def _calculate_curve(self):
 		""" Compute curve to interpolate between data points """
-		if (self.interp != None) and (self.indep_var is not None) and (self.dep_var is not None):
+		if (self.interp is not None) and (self.indep_var is not None) and (self.dep_var is not None):
 			if self.interp == 'CUBIC':
 				self.interp_indep_var = numpy.linspace(min(self.indep_var), max(self.indep_var), 500)  #pylint: disable=E1101
 				finterp = interp1d(self.indep_var, self.dep_var, kind='cubic')
@@ -726,39 +737,69 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _scale_indep_var(self, scaling_factor):
 		""" Scale independent variable """
 		self._scaling_factor_indep_var = float(scaling_factor)
-		if self.indep_var is not None:
-			self.scaled_indep_var = self.indep_var/self._scaling_factor_indep_var
-		if self.interp_indep_var is not None:
-			self.scaled_interp_indep_var = self.interp_indep_var/self._scaling_factor_indep_var
+		self.scaled_indep_var = self.indep_var/self._scaling_factor_indep_var if self.indep_var is not None else self.scaled_indep_var
+		self.scaled_interp_indep_var = self.interp_indep_var/self._scaling_factor_indep_var if self.interp_indep_var is not None else self.scaled_interp_indep_var
 
 	def _scale_dep_var(self, scaling_factor):
 		""" Scale dependent variable """
 		self._scaling_factor_dep_var = float(scaling_factor)
-		if self.indep_var is not None:
-			self.scaled_dep_var = self.dep_var/self._scaling_factor_dep_var
-		if self.interp_dep_var is not None:
-			self.scaled_interp_dep_var = self.interp_dep_var/self._scaling_factor_dep_var
+		self.scaled_dep_var = self.dep_var/self._scaling_factor_dep_var if self.dep_var is not None else self.scaled_dep_var
+		self.scaled_interp_dep_var = self.interp_dep_var/self._scaling_factor_dep_var if self.interp_dep_var is not None else self.scaled_interp_dep_var
+
+	def _update_linestyle_spec(self):
+		""" Update line style specification to be used in series drawing """
+		self._linestyle_spec = self.line_style if (self.line_style is not None) and (self.interp is not None) else ''
+
+	def _update_linewidth_spec(self):
+		""" Update line width specification to be used in series drawing """
+		self._linewidth_spec = self._ref_linewidth if (self.line_style is not None) and (self.interp is not None) else 0.0
 
 	def _legend_artist(self, legend_scale=1.5):
 		""" Creates artist (marker -if used- and line style -if used-) """
-		return plt.Line2D((0, 1), (0, 0), color=self.color, marker='o' if self.marker is True else '', linestyle=self.line_style if (self.line_style != None) and (self.interp != None) else '',
-					linewidth=(2.5 if (self.line_style != None) and (self.interp != None) else 0.0)/legend_scale, markeredgecolor=self.color, markersize=14/legend_scale,
-					markeredgewidth=5/legend_scale, markerfacecolor='w')
+		return plt.Line2D(
+			xdata=(0, 1),
+			ydata=(0, 0),
+			color=self.color,
+			marker=self._marker_spec,
+			linestyle=self._linestyle_spec,
+			linewidth=self._linewidth_spec/legend_scale,
+			markeredgecolor=self.color,
+			markersize=self._ref_markersize/legend_scale,
+			markeredgewidth=self._ref_markeredgewidth/legend_scale,
+			markerfacecolor=self._ref_markerfacecolor
+		)
 
 	def _draw_series(self, axarr, log_indep, log_dep):
 		""" Draw series """
 		label_printed = False
 		fplot = axarr.plot if (log_indep is False) and (log_dep is False) else (axarr.semilogx if (log_indep is True) and (log_dep is False) else (axarr.loglog if (log_indep is True) and (log_dep is True) else axarr.semilogy))
 		# Plot interpolated line (if necessary)
-		if (self.interp == 'CUBIC') or (self.interp == 'LINREG') and (self.line_style != None):
-			fplot(self.scaled_interp_indep_var, self.scaled_interp_dep_var, color=self.color, linestyle=self.line_style, linewidth=2.5, label=None)
+		if (self.interp in ['CUBIC', 'LINREG']) and (self.line_style is not None):
 			label_printed = True
+			fplot(
+				xdata=self.scaled_interp_indep_var,
+				ydata=self.scaled_interp_dep_var,
+				color=self.color,
+				linestyle=self.line_style,
+				linewidth=self._ref_linewidth,
+				label=None
+			)
 		# Plot markers and/or straight line segments (if necessary)
-		if (self.marker is True) or ((self.marker is False) and ((self.interp == 'STRAIGHT') or (self.interp == 'STEP')) and (self.line_style() != None)):
-			fplot(self.scaled_indep_var, self.scaled_dep_var, color=self.color, linestyle=self.line_style if (self.line_style != None) and ((self.interp == 'STRAIGHT') or (self.interp == 'STEP')) else '',
-				  marker='o' if self.marker is True else '', markeredgecolor=self.color, markersize=14, markeredgewidth=5, markerfacecolor='w',
-				  linewidth=2.5 if (self.line_style != None) and ((self.interp == 'STRAIGHT') or (self.interp == 'STEP')) else 0, drawstyle='steps-post' if self.interp == 'STEP' else 'default',
-				  label=None if (label_printed is True) or (self.label == None) else self.label)
+		if (self.marker is True) or ((self.marker is False) and (self.interp in ['STRAIGHT', 'STEP']) and (self.line_style is not None)):
+			fplot(
+				xdata=self.scaled_indep_var,
+				ydata=self.scaled_dep_var,
+				color=self.color,
+				linestyle=self._linestyle_spec,
+				marker=self._marker_spec,
+				markeredgecolor=self.color,
+				markersize=self._ref_markersize,
+				markeredgewidth=self._ref_markeredgewidth,
+				markerfacecolor=self._ref_markerfacecolor,
+				linewidth=self._linewidth_spec,
+				drawstyle='steps-post' if self.interp == 'STEP' else 'default',
+				label=None if (label_printed is True) or (self.label is None) else self.label
+			)
 
 	data_source = property(_get_data_source, _set_data_source, doc='Data source')
 	"""
@@ -950,12 +991,17 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			for key, value in self.legend_props.iteritems():
 				if key not in self.legend_props_list:
 					raise ValueError('Illegal legend property {0}'.format(key))
-				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props)):
-					raise TypeError(ref_pos_obj.exception('legend_props')).replace(' is ', ' key `pos` is ')
+				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props['pos'])):
+					raise TypeError(ref_pos_obj.exception('legend_props')['msg'].replace(' is ', ' key `pos` is '))
 				elif ((key == 'cols') and (isinstance(value, int) is False)) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
 					raise TypeError('Parameter `legend_props` key `cols` is of the wrong type')
 
-	@putil.check.check_parameter('series', putil.check.PolymorphicType([None, putil.check.ArbitraryLengthList(putil.plot.Series(data_source=putil.plot.BasicSource(), label=''))]))
+	#class _ref_data_source(object):	#pylint: disable=C0111,C0103,R0903
+	#	def __init__(self):
+	#		self.indep_var = numpy.array([0])
+	#		self.dep_var = numpy.array([0])
+	#@putil.check.check_parameter('series', putil.check.PolymorphicType([None, putil.check.ArbitraryLengthList(Series(data_source=_ref_data_source(), label='', interp=None))]))
+	@putil.check.check_parameter('series', putil.check.PolymorphicType([None, list]))
 	def _set_series(self, series):	#pylint: disable=C0111,R0912
 		self._series = series
 		if series is not None:
@@ -964,7 +1010,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				if obj._complete() is False:	#pylint: disable=W0212
 					raise RuntimeError('Series element {0} is not fully specified'.format(num))
 			# "Uniquify" list
-			self.series = list(set(self.series))
+			self._series = list(set(series))
 			# Compute panel scaling factor
 			global_primary_dep_var = list()
 			global_secondary_dep_var = list()
@@ -1476,7 +1522,7 @@ class Figure(object):	#pylint: disable=R0902
 		global_indep_var = list()
 		# Find union of the independent variable data set of all panels
 		for panel_obj in self.current_panel_list:
-			for series_obj in panel_obj.current_series_list:
+			for series_obj in panel_obj.series:
 				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var])))
 		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = _scale_series(series=global_indep_var, scale=True, scale_type='delta')
 		self.indep_var_min = putil.misc.smart_round(self.indep_var_min, 10)
