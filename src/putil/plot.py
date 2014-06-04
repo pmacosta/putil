@@ -594,6 +594,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
 		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, None, None, None, None, False
 		self.indep_var, self.dep_var = None, None
+		self._scaling_factor_indep_var, self._scaling_factor_dep_var = 1, 1
 		self._set_data_source(data_source)
 		self._set_label(label)
 		self._set_color(color)
@@ -627,39 +628,37 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_color(self):	#pylint: disable=C0111
 		return self._color
 
-	@putil.check.check_parameter('color', putil.check.PolymorphicType([None, putil.check.Number(), str, list, set, tuple]))
+	@putil.check.check_parameter('color', putil.check.PolymorphicType([None, putil.check.Number(), str, list, tuple]))
 	def _set_color(self, color):	#pylint: disable=C0111
-		self._color = color.lower().strip() if isinstance(color, str) else color
-		if putil.check.Number().istype(color):
-			# Gray scale color specification
-			value = float(self.color)
-			valid_color_spec = True if (value >= 0.0) and (value <= 1.0) else False
-		elif isinstance(self.color, str):
-			# Basic built-in Matplotlib specification
-			valid_color_spec = True if (len(self.color) == 1) and (self.color in 'bgrcmykw') else False
-			# HTML color name specification
-			valid_html_colors = [
-				'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
-				'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkkhaki', 'darkmagenta',
-				'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue',
-				'dimgray', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'honeydew',
-				'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
-				'lightgoldenrodyellow', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen',
-				'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred',
-				'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
-				'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen',
-				'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquois', 'violet', 'wheat', 'white', 'whitesmoke',
-				'yellow', 'yellowgreen'
-			]
-			valid_color_spec = True if (valid_color_spec is True) or (self.color in valid_html_colors) else False
-			# HTML hex color specification
-			valid_color_spec = True if (valid_color_spec is True) else (False if False in [putil.misc.ishex(char) for char in self.color[1:]] else True) if (self.color[0] == '#') and (len(self.color) == 7) else False
-		elif ((isinstance(self.color, list) is True) or (isinstance(self.color, set) is True) or (isinstance(self.color, tuple) is True)) and ((len(self.color) == 3) or (len(self.color) == 4)):	# RGB or RGBA tuple
-			for num in range(len(self.color)):
-				if (isinstance(self.color[num], float) is False) or ((isinstance(self.color[num], float) is True) and ((self.color[num] < 0.0) or (self.color[num] > 1.0))):
-					valid_color_spec = False
-					break
-		if (self.color is not None) and (valid_color_spec is False):
+		valid_html_colors = [
+			'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
+			'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkkhaki', 'darkmagenta',
+			'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue',
+			'dimgray', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'honeydew',
+			'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
+			'lightgoldenrodyellow', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen',
+			'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred',
+			'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
+			'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen',
+			'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquois', 'violet', 'wheat', 'white', 'whitesmoke',
+			'yellow', 'yellowgreen'
+		]
+		self._color = color.lower().strip() if isinstance(color, str) else (float(color) if putil.check.Number().includes(color) else color)
+		check_list = list()
+		# No color specification
+		check_list.append(self.color is None)
+		# Gray scale color specification, checked by decorator
+		check_list.append(putil.check.NumberRange(minimum=0.0, maximum=1.0).includes(self.color))
+		# Basic built-in Matplotlib specification
+		check_list.append(isinstance(self.color, str) and (len(self.color) == 1) and (self.color in 'bgrcmykw'))
+		# HTML color name specification
+		check_list.append(isinstance(self.color, str) and (self.color in valid_html_colors))
+		# HTML hex color specification
+		check_list.append(isinstance(self.color, str) and (self.color[0] == '#') and (len(self.color) == 7) and ((numpy.array([putil.misc.ishex(char) for char in self.color[1:]]) == numpy.array([True]*6)).all()))
+		# RGB or RGBA tuple
+		check_list.append((type(self.color) in [list, tuple]) and (len(self.color) in [3, 4]) and \
+			((numpy.array([True if putil.check.Number().includes(comp) and putil.check.NumberRange(minimum=0.0, maximum=1.0).includes(comp) else False for comp in self.color]) == numpy.array([True]*len(self.color))).all()))
+		if not True in check_list:
 			raise TypeError('Invalid color specification')
 
 	def _get_marker(self):	#pylint: disable=C0111
@@ -674,7 +673,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	@putil.check.check_parameter('interp', putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
 	def _set_interp(self, interp):	#pylint: disable=C0111
-		self._interp = interp.upper()
+		self._interp = interp.upper().strip() if isinstance(interp, str) else interp
 		self._calculate_curve()
 
 	def _get_line_style(self):	#pylint: disable=C0111
@@ -720,18 +719,24 @@ class Series(object):	#pylint: disable=R0902,R0903
 				slope, intercept, r_value, p_value, std_err = stats.linregress(self.indep_var, self.dep_var)	#pylint: disable=W0612
 				self.interp_indep_var = self.indep_var
 				self.interp_dep_var = intercept+(slope*self.indep_var)
+		self._scale_indep_var(self._scaling_factor_indep_var)
+		self._scale_dep_var(self._scaling_factor_dep_var)
 
 	def _scale_indep_var(self, scaling_factor):
 		""" Scale independent variable """
-		self.scaled_indep_var = self.indep_var/scaling_factor
+		self._scaling_factor_indep_var = float(scaling_factor)
+		if self.indep_var is not None:
+			self.scaled_indep_var = self.indep_var/self._scaling_factor_indep_var
 		if self.interp_indep_var is not None:
-			self.scaled_interp_indep_var = self.interp_indep_var/scaling_factor
+			self.scaled_interp_indep_var = self.interp_indep_var/self._scaling_factor_indep_var
 
 	def _scale_dep_var(self, scaling_factor):
 		""" Scale dependent variable """
-		self.scaled_dep_var = self.dep_var/scaling_factor
+		self._scaling_factor_dep_var = float(scaling_factor)
+		if self.indep_var is not None:
+			self.scaled_dep_var = self.dep_var/self._scaling_factor_dep_var
 		if self.interp_dep_var is not None:
-			self.scaled_interp_dep_var = self.interp_dep_var/scaling_factor
+			self.scaled_interp_dep_var = self.interp_dep_var/self._scaling_factor_dep_var
 
 	def _legend_artist(self, legend_scale=1.5):
 		""" Creates artist (marker -if used- and line style -if used-) """
@@ -807,7 +812,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Interpolation option, one of STRAIGHT, CUBIC or LINREG (case insensitive)
 
 	:type:	string
-	:raises: TypeError (Parameter `interp` is of the wrong type)
+	:raises:
+	 * TypeError (Parameter `interp` is of the wrong type)
+
+	 * ValueError (Parameter `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
 	"""	#pylint: disable=W0105
 
 	line_style = property(_get_line_style, _set_line_style, doc='Series line style, one of `-`, `--`, `-.` or `:`')
@@ -815,7 +823,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Line style, one of `-`, `--`, `-.` or `:`
 
 	:type:	Matplotlib line specification
-	:raises: TypeError (Parameter `line_syle` is of the wrong type)
+	:raises:
+	 * TypeError (Parameter `line_syle` is of the wrong type)
+
+	 * ValueError (Parameter `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive))
 	"""	#pylint: disable=W0105
 
 	secondary_axis = property(_get_secondary_axis, _set_secondary_axis, doc='Series secondary axis flag')

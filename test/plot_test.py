@@ -270,7 +270,7 @@ def test_csv_source_indep_min_greater_than_indep_max():	#pylint: disable=C0103
 
 def test_csv_source_file_name_wrong_type():	#pylint: disable=C0103
 	""" Test if object behaves correctly when file_name is of the wrong type """
-	# This assignment should raise an exeption
+	# This assignment should raise an exception
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.CsvSource(file_name=5)
 	comp = excinfo.value.message == 'Parameter `file_name` is of the wrong type'
@@ -292,7 +292,7 @@ def test_csv_source_file_exist(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W06
 
 def test_csv_source_data_filter_wrong_type():	#pylint: disable=C0103
 	""" Test if object behaves correctly when dfilter is of the wrong type """
-	# This assignment should raise an exeption
+	# This assignment should raise an exception
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.CsvSource(dfilter=5)
 	comp = excinfo.value.message == 'Parameter `dfilter` is of the wrong type'
@@ -303,7 +303,7 @@ def test_csv_source_data_filter_wrong_type():	#pylint: disable=C0103
 def test_csv_source_data_filter_operation(tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when data filter and file name are given """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
-	# This assignment should raise an exeption
+	# This assignment should raise an exception
 	with pytest.raises(ValueError) as excinfo:
 		putil.plot.CsvSource(file_name=file_name, dfilter={'Col99':500})
 	comp = excinfo.value.message == 'Column COL99 in data filter not found in comma-separated file {0} header'.format(file_name)
@@ -314,7 +314,7 @@ def test_csv_source_indep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: d
 	""" Test if object behaves correctly when indep_col_label is of the wrong type """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
 	test_list = list()
-	# These assignments should raise an exeption
+	# These assignments should raise an exception
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.CsvSource(indep_col_label=5)
 	test_list.append(excinfo.value.message == 'Parameter `indep_col_label` is of the wrong type')
@@ -330,7 +330,7 @@ def test_csv_source_dep_col_label_wrong_type(tmpdir, tmp_csv_file):	#pylint: dis
 	""" Test if object behaves correctly when dep_col_label is of the wrong type """
 	file_name = str(tmpdir.join('sub/tmp.csv'))
 	test_list = list()
-	# This assignment should raise an exeption
+	# This assignment should raise an exception
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.CsvSource(dep_col_label=5)
 	test_list.append(excinfo.value.message == 'Parameter `dep_col_label` is of the wrong type')
@@ -373,7 +373,7 @@ def test_csv_source_fproc_wrong_type():	#pylint: disable=C0103
 	def fproc4(*args, **kwargs):	#pylint: disable=C0111,W0613
 		return True
 	test_list = list()
-	# These assignments should raise an exeption
+	# These assignments should raise an exception
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.CsvSource(fproc=5)
 	test_list.append(excinfo.value.message == 'Parameter `fproc` is of the wrong type')
@@ -416,7 +416,7 @@ def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W
 	def fproc13(indep_var, dep_var, par1):	#pylint: disable=C0111,W0613
 		raise RuntimeError('Test exception message')
 	test_list = list()
-	# These assignments should raise an exeption
+	# These assignments should raise an exception
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1)
 	test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) return value is of the wrong type')
@@ -462,7 +462,7 @@ def test_csv_source_fproc_wrong_return(tmpdir, tmp_csv_file):	#pylint: disable=W
 
 def test_csv_source_fproc_eargs_wrong_type():	#pylint: disable=W0621,W0613,C0103
 	""" Test if object behaves correctly when fprog_eargs is of the wrong type """
-	# This assignment should raise an exeption
+	# This assignment should raise an exception
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.CsvSource(fproc_eargs=5)
 	comp = excinfo.value.message == 'Parameter `fproc_eargs` is of the wrong type'
@@ -484,7 +484,7 @@ def test_csv_source_fproc_eargs_parameter_name_validation():	#pylint: disable=W0
 	def fproc5(indep_var, dep_var, par7, par8, *args, **kwargs):	#pylint: disable=C0111,W0613
 		pass
 	test_list = list()
-	# These assignments should raise an exeption
+	# These assignments should raise an exception
 	with pytest.raises(RuntimeError) as excinfo:
 		putil.plot.CsvSource(fproc=fproc1, fproc_eargs={'par1':5})
 	test_list.append(excinfo.value.message == 'Extra argument `par1` not found in parameter `fproc` (function fproc1) definition')
@@ -628,7 +628,7 @@ def test_series_data_source_wrong_type(default_source):	#pylint: disable=C0103,W
 		def __init__(self):
 			pass
 	test_list = list()
-	# These assignments should raise an exeption
+	# These assignments should raise an exception
 	with pytest.raises(RuntimeError) as excinfo:
 		putil.plot.Series(data_source=putil.plot.BasicSource(), label='test')
 	test_list.append(excinfo.value.message == 'Parameter `data_source` is not fully specified')
@@ -650,7 +650,7 @@ def test_series_data_source_wrong_type(default_source):	#pylint: disable=C0103,W
 
 def test_series_label_wrong_type(default_source):	#pylint: disable=C0103,W0621
 	""" Test label data validation """
-	# This assignments should raise an exeption
+	# This assignments should raise an exception
 	test_list = list()
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.Series(data_source=default_source, label=5)
@@ -663,21 +663,152 @@ def test_series_label_wrong_type(default_source):	#pylint: disable=C0103,W0621
 
 def test_series_color_wrong_type(default_source):	#pylint: disable=C0103,W0621
 	""" Test color data validation """
-	# This assignments should raise an exeption
+	# This assignments should raise an exception
 	test_list = list()
 	with pytest.raises(TypeError) as excinfo:
 		putil.plot.Series(data_source=default_source, label='test', color=default_source)
 	test_list.append(excinfo.value.message == 'Parameter `color` is of the wrong type')
-	invalid_color_list = ['invalid_color_name', -0.01, 1.1, '#ABCDEX']
-	valid_color_list = [None, 'moccasin', 0.5, '#ABCDEF']
+	invalid_color_list = ['invalid_color_name', -0.01, 1.1, '#ABCDEX', (-1, 1, 1), [1, 2, 0.5], [1, 1, 2], (-1, 1, 1, 1), [1, 2, 0.5, 0.5], [1, 1, 2, 1], (1, 1, 1, -1)]
+	valid_color_list = [None, 'moccasin', 0.5, '#ABCDEF', (0.5, 0.5, 0.5), [0.25, 0.25, 0.25, 0.25]]
 	for color in invalid_color_list:
 		with pytest.raises(TypeError) as excinfo:
+			print color
 			putil.plot.Series(data_source=default_source, label='test', color=color)
+		print excinfo.value.message
 		test_list.append(excinfo.value.message == 'Invalid color specification')
 	# These assignments should not raise an exception
 	putil.plot.Series(data_source=default_source, label='test', color=None)
 	for color in valid_color_list:
 		obj = putil.plot.Series(data_source=default_source, label='test', color=color)
-		test_list.append(obj.color == color)
+		test_list.append(obj.color == (color.lower() if isinstance(color, str) else color))
+	print test_list
 	assert test_list == [True]*(len(invalid_color_list)+len(valid_color_list)+1)
 
+def test_series_marker_wrong_type(default_source):	#pylint: disable=C0103,W0621
+	""" Test marker data validation """
+	# This assignments should raise an exception
+	test_list = list()
+	with pytest.raises(TypeError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', marker=5)
+	test_list.append(excinfo.value.message == 'Parameter `marker` is of the wrong type')
+	# These assignments should not raise an exception
+	putil.plot.Series(data_source=default_source, label='test', marker=None)
+	obj = putil.plot.Series(data_source=default_source, label='test', marker=False)
+	test_list.append(obj.marker == False)
+	obj = putil.plot.Series(data_source=default_source, label='test', marker=True)
+	test_list.append(obj.marker == True)
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list.append(obj.marker == True)
+	assert test_list == [True]*4
+
+def test_series_interp_wrong_type(default_source):	#pylint: disable=C0103,W0621
+	""" Test interp data validation """
+	# These assignments should raise an exception
+	test_list = list()
+	with pytest.raises(TypeError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', interp=5)
+	with pytest.raises(ValueError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', interp='NOT_AN_OPTION')
+	test_list.append(excinfo.value.message == "Parameter `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)")
+	# These assignments should not raise an exception
+	putil.plot.Series(data_source=default_source, label='test', interp=None)
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='straight')
+	test_list.append(obj.interp == 'STRAIGHT')
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='StEp')
+	test_list.append(obj.interp == 'STEP')
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='CUBIC')
+	test_list.append(obj.interp == 'CUBIC')
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='linreg')
+	test_list.append(obj.interp == 'LINREG')
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list.append(obj.interp == 'CUBIC')
+	assert test_list == [True]*6
+
+def test_series_line_style_wrong_type(default_source):	#pylint: disable=C0103,W0621
+	""" Test line_style data validation """
+	# These assignments should raise an exception
+	test_list = list()
+	with pytest.raises(TypeError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', line_style=5)
+	test_list.append(excinfo.value.message == 'Parameter `line_style` is of the wrong type')
+	with pytest.raises(ValueError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', line_style='x')
+	test_list.append(excinfo.value.message == "Parameter `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive)")
+	# These assignments should not raise an exception
+	putil.plot.Series(data_source=default_source, label='test', line_style=None)
+	obj = putil.plot.Series(data_source=default_source, label='test', line_style='-')
+	test_list.append(obj.line_style == '-')
+	obj = putil.plot.Series(data_source=default_source, label='test', line_style='--')
+	test_list.append(obj.line_style == '--')
+	obj = putil.plot.Series(data_source=default_source, label='test', line_style='-.')
+	test_list.append(obj.line_style == '-.')
+	obj = putil.plot.Series(data_source=default_source, label='test', line_style=':')
+	test_list.append(obj.line_style == ':')
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list.append(obj.line_style == '-')
+	assert test_list == [True]*7
+
+def test_series_secondary_axis_wrong_type(default_source):	#pylint: disable=C0103,W0621
+	""" Test secondary_axis data validation """
+	# This assignments should raise an exception
+	test_list = list()
+	with pytest.raises(TypeError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', secondary_axis=5)
+	test_list.append(excinfo.value.message == 'Parameter `secondary_axis` is of the wrong type')
+	# These assignments should not raise an exception
+	putil.plot.Series(data_source=default_source, label='test', secondary_axis=None)
+	obj = putil.plot.Series(data_source=default_source, label='test', secondary_axis=False)
+	test_list.append(obj.secondary_axis == False)
+	obj = putil.plot.Series(data_source=default_source, label='test', secondary_axis=True)
+	test_list.append(obj.secondary_axis == True)
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list.append(obj.secondary_axis == False)
+	assert test_list == [True]*4
+
+	test_list.append(excinfo.value.message == "Parameter `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)")
+
+def test_series_calculate_curve(default_source):	#pylint: disable=C0103,W0621
+	""" Test that interpolated curve is calculated when apropriate """
+	test_list = list()
+	obj = putil.plot.Series(data_source=default_source, label='test', interp=None)
+	test_list.append((obj.interp_indep_var, obj.interp_dep_var) == (None, None))
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='STRAIGHT')
+	test_list.append((obj.interp_indep_var, obj.interp_dep_var) == (None, None))
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='STEP')
+	test_list.append((obj.interp_indep_var, obj.interp_dep_var) == (None, None))
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='CUBIC')
+	test_list.append((obj.interp_indep_var, obj.interp_dep_var) != (None, None))
+	obj = putil.plot.Series(data_source=default_source, label='test', interp='LINREG')
+	test_list.append((obj.interp_indep_var, obj.interp_dep_var) != (None, None))
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	test_list.append((obj.interp_indep_var, obj.interp_dep_var) != (None, None))
+	assert test_list == [True]*6
+
+def test_series_scale_indep_var(default_source):	#pylint: disable=C0103,W0621
+	""" Test that independent variable scaling works """
+	test_list = list()
+	obj = putil.plot.Series(data_source=default_source, label='test', interp=None)
+	test_list.append((obj.scaled_indep_var is not None, obj.scaled_dep_var is not None, obj.scaled_interp_indep_var is None, obj.scaled_interp_dep_var is None) == (True, True, True, True))
+	obj._scale_indep_var(2)	#pylint: disable=W0212
+	obj._scale_dep_var(4)	#pylint: disable=W0212
+	test_list.append(((obj.scaled_indep_var == numpy.array([2.5, 3.0, 3.5, 4.0])).all(), (obj.scaled_dep_var == numpy.array([0.0, -2.5, 1.25, 1.0])).all(), \
+				   obj.scaled_interp_indep_var is None, obj.scaled_interp_dep_var is None) == (True, True, True, True))
+	obj.interp = 'CUBIC'
+	test_list.append(((obj.scaled_indep_var == numpy.array([2.5, 3.0, 3.5, 4.0])).all(), (obj.scaled_dep_var == numpy.array([0.0, -2.5, 1.25, 1.0])).all(), \
+				   obj.scaled_interp_indep_var is not None, obj.scaled_interp_dep_var is not None) == (True, True, True, True))
+	assert test_list == [True]*3
+
+def test_series_str(default_source):	#pylint: disable=C0103,W0621
+	""" Test that str behaves correctly """
+	obj = putil.plot.Series(data_source=default_source, label='test')
+	ret = ''
+	ret += 'Data source: putil.plot.BasicSource class object\n'
+	ret += 'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+	ret += 'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+	ret += 'Label: test\n'
+	ret += 'Color: k\n'
+	ret += 'Marker: True\n'
+	ret += 'Interpolation: CUBIC\n'
+	ret += 'Line style: -\n'
+	ret += 'Secondary axis: False'
+	assert str(obj) == ret
