@@ -10,7 +10,9 @@ import scipy
 import numpy
 import pytest
 from scipy.misc import imread	#pylint: disable=E0611
+
 import putil.plot
+import gen_ref_images
 
 IMGTOL = 1e-3
 def compare_images(image_file_name1, image_file_name2):
@@ -18,9 +20,12 @@ def compare_images(image_file_name1, image_file_name2):
 	# Source: http://stackoverflow.com/questions/189943/how-can-i-quantify-difference-between-two-images
 	img1 = imread(image_file_name1).astype(float)
 	img2 = imread(image_file_name2).astype(float)
-	diff = img1 - img2								# elementwise for scipy arrays
-	m_norm = scipy.sum(numpy.abs(diff))				# Manhattan norm
-	z_norm = scipy.linalg.norm(diff.ravel(), 0)		# Zero norm
+	if img1.size != img2.size:
+		m_norm, z_norm = 2*[2*IMGTOL]
+	else:
+		diff = img1 - img2								# elementwise for scipy arrays
+		m_norm = scipy.sum(numpy.abs(diff))				# Manhattan norm
+		z_norm = scipy.linalg.norm(diff.ravel(), 0)		# Zero norm
 	return (m_norm, z_norm)
 
 ###
@@ -871,35 +876,16 @@ def test_series_cannot_delete_attributes(default_source):	#pylint: disable=C0103
 	test_list.append(excinfo.value.message == "can't delete attribute")
 	assert test_list == 7*[True]
 
-def test_series_default(tmpdir):	#pylint: disable=C0103,W0621
+def test_series_images(tmpdir):	#pylint: disable=C0103,W0621
 	""" Compare images to verify correct plotting of series """
 	tmpdir.mkdir('test_images')
 	test_list = list()
-	panel_obj = putil.plot.Panel(
-		series=putil.plot.Series(
-			data_source=putil.plot.BasicSource(
-				indep_var=numpy.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-				dep_var=numpy.array([0.9, 2.5, 3, 3.5, 5.9, 6.6, 7.1, 7.9, 9.9, 10.5])
-			),
-			label='test series'
-		),
-		primary_axis_label='Dependent axis',
-		primary_axis_units='-',
-	)
-	fig_obj = putil.plot.Figure(
-		panel=panel_obj,
-		indep_var_label='Independent axis',
-		indep_var_units='',
-		log_indep=False,
-		fig_width=8,
-		fig_height=6,
-		title=''
-	)
-	file_name = str(tmpdir.join('test_images/test_image_1.png'))
-	fig_obj.save(file_name)
-	metrics = compare_images('./ref_images/series_default.png', file_name)
-	print metrics
-	test_list.append((metrics[0] < IMGTOL) and (metrics[1] < IMGTOL))
-	assert test_list == [True]*1
-
-
+	images_dict_list = gen_ref_images.unittest_image(mode='test', test_dir=str(tmpdir))
+	for images_dict in images_dict_list:
+		ref_file_name = images_dict['ref_file_name']
+		test_file_name = images_dict['test_file_name']
+		metrics = compare_images(ref_file_name, test_file_name)
+		result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
+		print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
+		test_list.append(result)
+	assert test_list == [True]*len(images_dict_list)
