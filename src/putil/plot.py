@@ -1003,21 +1003,15 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				elif ((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
 					raise TypeError('Parameter `legend_props` key `cols` is of the wrong type')
 
-	#class _ref_data_source(object):	#pylint: disable=C0111,C0103,R0903
-	#	def __init__(self):
-	#		self.indep_var = numpy.array([0])
-	#		self.dep_var = numpy.array([0])
-	#@putil.check.check_parameter('series', putil.check.PolymorphicType([None, putil.check.ArbitraryLengthList(Series(data_source=_ref_data_source(), label='', interp=None))]))
-	@putil.check.check_parameter('series', putil.check.PolymorphicType([None, list]))
 	def _set_series(self, series):	#pylint: disable=C0111,R0912
-		self._series = series
-		if series is not None:
-			# Check that all series are complete
-			for num, obj in enumerate(series):
+		self._series = (series if isinstance(series, list) else [series]) if series is not None else series
+		if self.series is not None:
+			# Validate series
+			for num, obj in enumerate(self.series):
+				if type(obj) is not Series:
+					raise TypeError('Parameter `series` is of the wrong type')
 				if not obj._complete():	#pylint: disable=W0212
 					raise RuntimeError('Series element {0} is not fully specified'.format(num))
-			# "Uniquify" list
-			#self._series = list(set(series))
 			# Compute panel scaling factor
 			global_primary_dep_var = list()
 			global_secondary_dep_var = list()
