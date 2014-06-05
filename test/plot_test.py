@@ -692,7 +692,6 @@ def test_series_marker_wrong_type(default_source):	#pylint: disable=C0103,W0621
 		putil.plot.Series(data_source=default_source, label='test', marker=5)
 	test_list.append(excinfo.value.message == 'Parameter `marker` is of the wrong type')
 	# These assignments should not raise an exception
-	putil.plot.Series(data_source=default_source, label='test', marker=None)
 	obj = putil.plot.Series(data_source=default_source, label='test', marker=False)
 	test_list.append(obj.marker == False)
 	obj = putil.plot.Series(data_source=default_source, label='test', marker=True)
@@ -798,6 +797,26 @@ def test_series_scale_indep_var(default_source):	#pylint: disable=C0103,W0621
 				   obj.scaled_interp_indep_var is not None, obj.scaled_interp_dep_var is not None) == (True, True, True, True))
 	assert test_list == [True]*3
 
+def test_series_plottable(default_source):	#pylint: disable=C0103,W0621
+	""" Test that object behaves properl when a series is not plottable """
+	test_list = list()
+	with pytest.raises(RuntimeError) as excinfo:
+		putil.plot.Series(data_source=default_source, label='test', marker=False, interp=None, line_style=None)
+	test_list.append(excinfo.value.message == 'Series options make it not plottable')
+	obj = putil.plot.Series(data_source=default_source, label='test', marker=True, interp='CUBIC', line_style=None)
+	with pytest.raises(RuntimeError) as excinfo:
+		obj.marker = False
+	test_list.append(excinfo.value.message == 'Series options make it not plottable')
+	obj = putil.plot.Series(data_source=default_source, label='test', marker=False, interp='CUBIC', line_style='-')
+	with pytest.raises(RuntimeError) as excinfo:
+		obj.interp = None
+	test_list.append(excinfo.value.message == 'Series options make it not plottable')
+	obj = putil.plot.Series(data_source=default_source, label='test', marker=False, interp='CUBIC', line_style='-')
+	with pytest.raises(RuntimeError) as excinfo:
+		obj.line_style = None
+	test_list.append(excinfo.value.message == 'Series options make it not plottable')
+	assert test_list == [True]*4
+
 def test_series_str(default_source):	#pylint: disable=C0103,W0621
 	""" Test that str behaves correctly """
 	obj = putil.plot.Series(data_source=default_source, label='test')
@@ -839,5 +858,3 @@ def test_series_cannot_delete_attributes(default_source):	#pylint: disable=C0103
 		del obj.secondary_axis
 	test_list.append(excinfo.value.message == "can't delete attribute")
 	assert test_list == 7*[True]
-
-

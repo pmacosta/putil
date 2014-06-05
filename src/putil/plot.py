@@ -601,14 +601,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 		self.interp_indep_var, self.interp_dep_var = None, None
 		self.indep_var, self.dep_var = None, None
 		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
-		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, None, None, None, None, False
-		self._set_data_source(data_source)
+		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, 'k', True, 'CUBIC', '-', False
 		self._set_label(label)
 		self._set_color(color)
 		self._set_marker(marker)
 		self._set_interp(interp)
 		self._set_line_style(line_style)
 		self._set_secondary_axis(secondary_axis)
+		self._set_data_source(data_source)
 
 	def _get_data_source(self):	#pylint: disable=C0111
 		return self._data_source
@@ -618,7 +618,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 			for method in ['indep_var', 'dep_var']:
 				if method not in dir(data_source):
 					raise RuntimeError('Parameter `data_source` does not have `{0}` attribute'.format(method))
-			if ('_complete' in dir(data_source)) and (data_source._complete() is False):	#pylint: disable=W0212
+			if ('_complete' in dir(data_source)) and (not data_source._complete()):	#pylint: disable=W0212
 				raise RuntimeError('Parameter `data_source` is not fully specified')
 			self._data_source = data_source
 			self.indep_var = self.data_source.indep_var
@@ -671,9 +671,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_marker(self):	#pylint: disable=C0111
 		return self._marker
 
-	@putil.check.check_parameter('marker', putil.check.PolymorphicType([None, bool]))
+	@putil.check.check_parameter('marker', bool)
 	def _set_marker(self, marker):	#pylint: disable=C0111
 		self._marker = marker
+		self._check_series_is_plottable()
 		self._marker_spec = 'o' if self.marker else ''
 
 	def _get_interp(self):	#pylint: disable=C0111
@@ -684,6 +685,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		self._interp = interp.upper().strip() if isinstance(interp, str) else interp
 		self._update_linestyle_spec()
 		self._update_linewidth_spec()
+		self._check_series_is_plottable()
 		self._calculate_curve()
 
 	def _get_line_style(self):	#pylint: disable=C0111
@@ -694,6 +696,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		self._line_style = line_style
 		self._update_linestyle_spec()
 		self._update_linewidth_spec()
+		self._check_series_is_plottable()
 
 	def _get_secondary_axis(self):	#pylint: disable=C0111
 		return self._secondary_axis
@@ -715,6 +718,11 @@ class Series(object):	#pylint: disable=R0902,R0903
 		ret += 'Line style: {0}\n'.format(self.line_style)
 		ret += 'Secondary axis: {0}'.format(self.secondary_axis)
 		return ret
+
+	def _check_series_is_plottable(self):
+		""" Check that the combination of marker, line style and line width width will produce a printable series """
+		if (not self.marker) and ((not self.interp) or (not self.line_style)):
+			raise RuntimeError('Series options make it not plottable')
 
 	def _complete(self):
 		""" Returns True if series is fully specified, otherwise returns False """
@@ -749,18 +757,16 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _update_linestyle_spec(self):
 		""" Update line style specification to be used in series drawing """
 		self._linestyle_spec = self.line_style if (self.line_style is not None) and (self.interp is not None) else ''
-		print 'Line style: {0}'.format(self._linestyle_spec)
 
 	def _update_linewidth_spec(self):
 		""" Update line width specification to be used in series drawing """
 		self._linewidth_spec = self._ref_linewidth if (self.line_style is not None) and (self.interp is not None) else 0.0
-		print 'Line width: {0}'.format(self._linewidth_spec)
 
 	def _legend_artist(self, legend_scale=1.5):
 		""" Creates artist (marker -if used- and line style -if used-) """
 		return plt.Line2D(
-			xdata=(0, 1),
-			ydata=(0, 0),
+			(0, 1),
+			(0, 0),
 			color=self.color,
 			marker=self._marker_spec,
 			linestyle=self._linestyle_spec,
@@ -773,39 +779,33 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	def _draw_series(self, axarr, log_indep, log_dep):
 		""" Draw series """
-		label_printed = False
-		fplot = axarr.plot if (log_indep is False) and (log_dep is False) else (axarr.semilogx if (log_indep is True) and (log_dep is False) else (axarr.loglog if (log_indep is True) and (log_dep is True) else axarr.semilogy))
-		# Plot interpolated line (if necessary)
-		if (self.interp in ['CUBIC', 'LINREG']) and (self.line_style is not None):
-			print "Interpolated line"
-			label_printed = True
+		fplot = axarr.plot if (not log_indep) and (not log_dep) else (axarr.semilogx if log_indep and (not log_dep) else (axarr.loglog if (log_indep) and (log_dep) else axarr.semilogy))
+		# Plot line
+		if self.line_style is not None:
 			fplot(
-				xdata=self.scaled_interp_indep_var,
-				ydata=self.scaled_interp_dep_var,
+				self.scaled_indep_var if self.interp in ['STRAIGHT', 'STEP'] else self.scaled_interp_indep_var,
+				self.scaled_dep_var if self.interp in ['STRAIGHT', 'STEP'] else self.scaled_interp_dep_var,
 				color=self.color,
 				linestyle=self.line_style,
 				linewidth=self._ref_linewidth,
-				label=None
+				drawstyle='steps-post' if self.interp == 'STEP' else 'default',
+				label=self.label
 			)
-		# Plot markers and/or straight line segments (if necessary)
-		if (self.marker is True) or ((self.marker is False) and (self.interp in ['STRAIGHT', 'STEP']) and (self.line_style is not None)):
-			print "Marker/straing line segment"
-			print self.color
-			print self._linestyle_spec
-			print self._linewidth_spec
+		# Plot markers
+		if self.marker:
 			fplot(
-				xdata=self.scaled_indep_var,
-				ydata=self.scaled_dep_var,
+				self.scaled_indep_var,
+				self.scaled_dep_var,
 				color=self.color,
-				linestyle=self._linestyle_spec,
+				linestyle='',
+				linewidth=0,
+				drawstyle='steps-post' if self.interp == 'STEP' else 'default',
 				marker=self._marker_spec,
 				markeredgecolor=self.color,
 				markersize=self._ref_markersize,
 				markeredgewidth=self._ref_markeredgewidth,
 				markerfacecolor=self._ref_markerfacecolor,
-				linewidth=self._linewidth_spec,
-				drawstyle='steps-post' if self.interp == 'STEP' else 'default',
-				label=None if (label_printed is True) or (self.label is None) else self.label
+				label=self.label if self.line_style is None else None
 			)
 
 	data_source = property(_get_data_source, _set_data_source, doc='Data source')
@@ -1000,7 +1000,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 					raise ValueError('Illegal legend property {0}'.format(key))
 				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props['pos'])):
 					raise TypeError(ref_pos_obj.exception('legend_props')['msg'].replace(' is ', ' key `pos` is '))
-				elif ((key == 'cols') and (isinstance(value, int) is False)) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
+				elif ((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
 					raise TypeError('Parameter `legend_props` key `cols` is of the wrong type')
 
 	#class _ref_data_source(object):	#pylint: disable=C0111,C0103,R0903
@@ -1014,16 +1014,16 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		if series is not None:
 			# Check that all series are complete
 			for num, obj in enumerate(series):
-				if obj._complete() is False:	#pylint: disable=W0212
+				if not obj._complete():	#pylint: disable=W0212
 					raise RuntimeError('Series element {0} is not fully specified'.format(num))
 			# "Uniquify" list
-			self._series = list(set(series))
+			#self._series = list(set(series))
 			# Compute panel scaling factor
 			global_primary_dep_var = list()
 			global_secondary_dep_var = list()
 			# Find union of the dependent variable data set of all panels
 			for series_obj in self.series:
-				if series_obj.secondary_axis is False:
+				if not series_obj.secondary_axis:
 					self.panel_has_primary_axis = True
 					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
 					if series_obj.interp_dep_var is not None:
@@ -1105,19 +1105,18 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	def _scale_dep_var(self, primary_scaling_factor, secondary_scaling_factor):
 		""" Scale dependent variable of panel series """
 		for series_obj in self.series:
-			if series_obj.secondary_axis is False:
+			if not series_obj.secondary_axis:
 				series_obj._scale_dep_var(primary_scaling_factor)	#pylint: disable=W0212
 			else:
 				series_obj._scale_dep_var(secondary_scaling_factor)	#pylint: disable=W0212
 
 	def _draw_panel(self, fig, axarr, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
 		""" Draw panel series """
-		print self.series
 		if self.panel_has_secondary_axis is True:
 			axarr_sec = axarr.twinx()
 		# Place data series in their appropriate axis (primary or secondary)
 		for series_obj in self.series:
-			series_obj._draw_series(axarr if series_obj.secondary_axis is False else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis)	#pylint: disable=W0212
+			series_obj._draw_series(axarr if not series_obj.secondary_axis else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis)	#pylint: disable=W0212
 		primary_height = 0
 		secondary_height = 0
 		indep_height = 0
@@ -1200,9 +1199,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			indep_width = max(indep_width, _get_text_prop(fig, axarr.xaxis.get_label())['width'])
 		min_panel_height = max(primary_height, secondary_height)+indep_height
 		min_panel_width = primary_width+secondary_width+indep_width
-		print self.panel_has_primary_axis
-		print self.panel_has_secondary_axis
-		return {'primary':None if self.panel_has_primary_axis is False else axarr, 'secondary':None if self.panel_has_secondary_axis is False else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
+		return {'primary':None if not self.panel_has_primary_axis else axarr, 'secondary':None if not self.panel_has_secondary_axis else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
 
 	series = property(_get_series, _set_series, doc='Panel series')
 	"""
@@ -1362,12 +1359,12 @@ class Figure(object):	#pylint: disable=R0902
 		"""
 		if panel is not None:
 			panel = [panel] if isinstance(panel, Panel) is True else panel
-			if isinstance(panel, list) is False:
+			if not isinstance(panel, list):
 				raise TypeError('Panels must be provided in list form')
 			for num, obj in enumerate(panel):
-				if isinstance(obj, Panel) is False:
+				if not isinstance(obj, Panel):
 					raise TypeError('Panel element is not a panel object')
-				elif obj._complete() is False:	#pylint: disable=W0212
+				elif not obj._complete():	#pylint: disable=W0212
 					raise RuntimeError('Panel element {0} is not fully specified'.format(num))
 			if len(self.current_panel_list) == 0:
 				self.current_panel_list = panel
@@ -1396,7 +1393,7 @@ class Figure(object):	#pylint: disable=R0902
 		if len(label) > 1:
 			raise RuntimeError('Illegal number of parameters')
 		self.current_indep_var_label = label[0]
-		if isinstance(self.current_indep_var_label, str) is False:
+		if not isinstance(self.current_indep_var_label, str):
 			raise TypeError('Independent variable label must be a string')
 		self.current_indep_var_label = self.current_indep_var_label.strip()
 
@@ -1417,7 +1414,7 @@ class Figure(object):	#pylint: disable=R0902
 		if len(units) > 1:
 			raise RuntimeError('Illegal number of parameters')
 		self.current_indep_var_units = units[0]
-		if isinstance(self.current_indep_var_units, str) is False:
+		if not isinstance(self.current_indep_var_units, str):
 			raise TypeError('Independent variable units must be a string')
 		self.current_indep_var_units = self.current_indep_var_units.strip()
 
@@ -1438,7 +1435,7 @@ class Figure(object):	#pylint: disable=R0902
 		if len(text) > 1:
 			raise RuntimeError('Illegal number of parameters')
 		self.current_title = text[0]
-		if isinstance(self.current_title, str) is False:
+		if not isinstance(self.current_title, str):
 			raise TypeError('Plot title must be a string')
 		self.current_title = self.current_title.strip()
 
@@ -1459,7 +1456,7 @@ class Figure(object):	#pylint: disable=R0902
 		if len(flag) > 1:
 			raise RuntimeError('Illegal number of parameters')
 		self.current_log_indep = flag[0]
-		if isinstance(self.current_log_indep, bool) is False:
+		if not isinstance(self.current_log_indep, bool):
 			raise TypeError('Logarthmic independent axis flag must be boolean')
 
 	def figure_width(self, *dim):
@@ -1482,7 +1479,7 @@ class Figure(object):	#pylint: disable=R0902
 			raise RuntimeError('Illegal number of parameters')
 		self.current_fig_width = dim[0]
 		if self.current_fig_width is not None:
-			if putil.misc.isnumber(self.current_fig_width) is False:
+			if not putil.misc.isnumber(self.current_fig_width):
 				raise TypeError('Figure width must be a number')
 			if self.current_fig_width < 0:
 				raise ValueError('Figure width must be a positive number')
@@ -1508,7 +1505,7 @@ class Figure(object):	#pylint: disable=R0902
 			raise RuntimeError('Illegal number of parameters')
 		self.current_fig_height = dim[0]
 		if self.current_fig_height is not None:
-			if putil.misc.isnumber(self.current_fig_height) is False:
+			if not putil.misc.isnumber(self.current_fig_height):
 				raise TypeError('Figure height must be a number')
 			if self.current_fig_height < 0:
 				raise ValueError('Figure height must be a positive number')
@@ -1520,7 +1517,7 @@ class Figure(object):	#pylint: disable=R0902
 
 		:raises:	RuntimeError (Figure is not fully specified)
 		"""
-		if self._complete() is False:
+		if not self._complete():
 			raise RuntimeError('Figure is not fully specified')
 		num_panels = len(self.current_panel_list)
 		plt.close('all')
@@ -1588,7 +1585,7 @@ class Figure(object):	#pylint: disable=R0902
 
 		 * Same as :py:meth:`putil.plot.Figure.draw()`
 		"""
-		if isinstance(file_name, str) is False:
+		if not isinstance(file_name, str):
 			raise TypeError('File name must be a string')
 		if self.fig is None:
 			self.draw()
@@ -1613,7 +1610,7 @@ def _scale_series(series, scale=False, series_min=None, series_max=None, scale_t
 	series_min = min(series) if series_min is None else series_min
 	series_max = max(series) if series_max is None else series_max
 	series_delta = series_max-series_min
-	if scale is False:
+	if not scale:
 		(unit, div) = (' ', 1)
 	else:
 		(unit, div) = putil.eng.peng_power(putil.eng.peng(series_delta if scale_type == 'delta' else (series_min if scale_type == 'min' else series_max), 3))
