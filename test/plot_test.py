@@ -1,4 +1,4 @@
-# plot_test.py
+# plot_test.py	#pylint:disable=C0302
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -729,10 +729,18 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', interp=5)
+		test_list.append(excinfo.value.message == 'Parameter `interp` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', interp='NOT_AN_OPTION')
 		test_list.append(excinfo.value.message == "Parameter `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)")
+		source_obj = putil.plot.BasicSource(indep_var=numpy.array([5]), dep_var=numpy.array([0]))
+		with pytest.raises(ValueError) as excinfo:
+			putil.plot.Series(data_source=source_obj, label='test', interp='CUBIC')
+		test_list.append(excinfo.value.message == 'At least 4 data points are needed for CUBIC interpolation')
 		# These assignments should not raise an exception
+		putil.plot.Series(data_source=source_obj, label='test', interp='STRAIGHT')
+		putil.plot.Series(data_source=source_obj, label='test', interp='STEP')
+		putil.plot.Series(data_source=source_obj, label='test', interp='LINREG')
 		putil.plot.Series(data_source=default_source, label='test', interp=None)
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='straight')
 		test_list.append(obj.interp == 'STRAIGHT')
@@ -744,7 +752,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list.append(obj.interp == 'LINREG')
 		obj = putil.plot.Series(data_source=default_source, label='test')
 		test_list.append(obj.interp == 'CUBIC')
-		assert test_list == [True]*6
+		assert test_list == [True]*8
 
 	def test_line_style_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test line_style data validation """
@@ -971,5 +979,32 @@ class TestPanel(object):	#pylint: disable=W0232
 		obj = putil.plot.Panel(series=default_series)
 		test_list.append(obj.log_dep_axis == False)
 		assert test_list == [True]*4
+
+	def test_legend_props_wrong_type(self, default_series):	#pylint: disable=C0103,R0201,W0621
+		""" Test legend_props data validation """
+		# These assignments should raise an exception
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Panel(series=default_series, legend_props=5)
+		test_list.append(excinfo.value.message == 'Parameter `legend_props` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:
+			putil.plot.Panel(series=default_series, legend_props={'not_a_valid_prop':5})
+		test_list.append(excinfo.value.message == 'Illegal legend property `not_a_valid_prop`')
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Panel(series=default_series, legend_props={'pos':5})
+		msg = "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive)"
+		test_list.append(excinfo.value.message == msg)
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Panel(series=default_series, legend_props={'cols':-1})
+		test_list.append(excinfo.value.message == 'Legend property `cols` is of the wrong type')
+		# These assignments should not raise an exception
+		obj = putil.plot.Panel(series=default_series, legend_props={'pos':'upper left'})
+		test_list.append(obj.legend_props == {'pos':'UPPER LEFT', 'cols':1})
+		obj = putil.plot.Panel(series=default_series, legend_props={'cols':3})
+		test_list.append(obj.legend_props == {'pos':'BEST', 'cols':3})
+		obj = putil.plot.Panel(series=default_series)
+		test_list.append(obj.legend_props == {'pos':'BEST', 'cols':1})
+		print obj.legend_props
+		assert test_list == [True]*7
 
 

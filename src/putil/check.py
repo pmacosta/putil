@@ -184,7 +184,7 @@ class RealNumpyVector(object):	#pylint: disable=R0903
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
 		# Discard test object that are not Numpy arrays and Numpy arrays that are not Numpy vectors or zero length Numpy vectors
-		if (type(test_obj) != self.iter_type) or ((type(test_obj) == self.iter_type) and ((len(test_obj.shape) > 1) or (len(test_obj) == 0))):
+		if (type(test_obj) != numpy.ndarray) or ((type(test_obj) == numpy.ndarray) and ((len(test_obj.shape) > 1) or ((len(test_obj.shape) == 1) and (test_obj.shape[0] == 0)))):
 			return False
 		# By comparing to a Numpy array object the comparison is machine/implementation independent as to how many number of bits are used to represent integers or floats
 		return (test_obj.dtype.type == numpy.array([0]).dtype.type) or (test_obj.dtype.type == numpy.array([0.0]).dtype.type)
@@ -200,7 +200,7 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		"""	Test that an object belongs to the pseudo-type """
-		return False if not RealNumpyVector.includes(self, test_obj) else (not min(numpy.diff(test_obj)) <= 0)
+		return False if not RealNumpyVector.includes(self, test_obj) else (True if test_obj.shape[0] == 1 else (not min(numpy.diff(test_obj)) <= 0))
 
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """

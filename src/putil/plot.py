@@ -623,6 +623,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 			self._data_source = data_source
 			self.indep_var = self.data_source.indep_var
 			self.dep_var = self.data_source.dep_var
+			self._validate_source_length_cubic_interp()
 			self._calculate_curve()
 
 	def _get_label(self):	#pylint: disable=C0111
@@ -683,9 +684,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 	@putil.check.check_parameter('interp', putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
 	def _set_interp(self, interp):	#pylint: disable=C0111
 		self._interp = interp.upper().strip() if isinstance(interp, str) else interp
+		self._check_series_is_plottable()
+		self._validate_source_length_cubic_interp()
 		self._update_linestyle_spec()
 		self._update_linewidth_spec()
-		self._check_series_is_plottable()
 		self._calculate_curve()
 
 	def _get_line_style(self):	#pylint: disable=C0111
@@ -723,6 +725,11 @@ class Series(object):	#pylint: disable=R0902,R0903
 		""" Check that the combination of marker, line style and line width width will produce a printable series """
 		if (not self.marker) and ((not self.interp) or (not self.line_style)):
 			raise RuntimeError('Series options make it not plottable')
+
+	def _validate_source_length_cubic_interp(self):	#pylint:disable=C0103
+		""" Test if data source has minimum length to calculate cubic interpolation """
+		if (self.interp == 'CUBIC') and (self.indep_var is not None) and (self.dep_var is not None) and (self.indep_var.shape[0] < 4):
+			raise ValueError('At least 4 data points are needed for CUBIC interpolation')
 
 	def _complete(self):
 		""" Returns True if series is fully specified, otherwise returns False """
@@ -919,9 +926,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	 * Same as :py:meth:`putil.plot.Panel.legend_props()`
 	"""
-	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=dict()):	#pylint: disable=W0102,R0913
+	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props={'pos':'BEST', 'cols':1}):	#pylint: disable=W0102,R0913
 		# Private attributes
-		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._legend_props = None, None, None, None, None, None, None
+		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._legend_props = None, None, None, None, None, None, {'pos':'BEST', 'cols':1}
 		self.legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
 		self.panel_has_primary_axis = False
 		self.panel_has_secondary_axis = False
@@ -951,6 +958,58 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	def _get_series(self):	#pylint: disable=C0111
 		return self._series
+
+	def _set_series(self, series):	#pylint: disable=C0111,R0912
+		self._series = (series if isinstance(series, list) else [series]) if series is not None else series
+		if self.series is not None:
+			self._validate_series()
+			self.panel_has_primary_axis = any([not series_obj.secondary_axis for series_obj in self.series])
+			self.panel_has_secondary_axis = any([series_obj.secondary_axis for series_obj in self.series])
+			# Compute panel scaling factor
+			global_primary_dep_var = list()
+			global_secondary_dep_var = list()
+			# Find union of the dependent variable data set of all panels
+			for series_obj in self.series:
+				if not series_obj.secondary_axis:
+					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
+					if series_obj.interp_dep_var is not None:
+						global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
+				else:
+					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
+					if series_obj.interp_dep_var is not None:
+						global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
+			# Primary axis
+			if self.panel_has_primary_axis is True:
+				self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale, self.primary_scaled_dep_var = \
+					_scale_series(series=global_primary_dep_var, scale=True, scale_type='delta')
+				self.primary_dep_var_min = putil.misc.smart_round(self.primary_dep_var_min, 10)
+				self.primary_dep_var_max = putil.misc.smart_round(self.primary_dep_var_max, 10)
+				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max = \
+					_intelligent_ticks(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
+			# Secondary axis
+			if self.panel_has_secondary_axis is True:
+				self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale, self.secondary_scaled_dep_var = \
+					_scale_series(series=global_secondary_dep_var, scale=True, scale_type='delta')
+				self.secondary_dep_var_min = putil.misc.smart_round(self.secondary_dep_var_min, 10)
+				self.secondary_dep_var_max = putil.misc.smart_round(self.secondary_dep_var_max, 10)
+				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max = \
+					_intelligent_ticks(self.secondary_scaled_dep_var, min(self.secondary_scaled_dep_var), max(self.secondary_scaled_dep_var), tight=False)
+			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval
+			if (self.panel_has_primary_axis is True) and (self.panel_has_secondary_axis is True):
+				max_ticks = max(len(self.primary_dep_var_locs), len(self.secondary_dep_var_locs))-1
+				primary_delta = (self.primary_dep_var_locs[-1]-self.primary_dep_var_locs[0])/float(max_ticks)
+				secondary_delta = (self.secondary_dep_var_locs[-1]-self.secondary_dep_var_locs[0])/float(max_ticks)
+				primary_start = self.primary_dep_var_locs[0]
+				secondary_start = self.secondary_dep_var_locs[0]
+				self.primary_dep_var_locs = list()
+				self.secondary_dep_var_locs = list()
+				for num in range(max_ticks+1):
+					self.primary_dep_var_locs.append(primary_start+(num*primary_delta))
+					self.secondary_dep_var_locs.append(secondary_start+(num*secondary_delta))
+				self.primary_dep_var_locs, self.primary_dep_var_labels = _uniquify_tick_labels(self.primary_dep_var_locs, self.primary_dep_var_locs[0], self.primary_dep_var_locs[-1])
+				self.secondary_dep_var_locs, self.secondary_dep_var_labels = _uniquify_tick_labels(self.secondary_dep_var_locs, self.secondary_dep_var_locs[0], self.secondary_dep_var_locs[-1])
+			#
+			self._scale_dep_var(self.primary_dep_var_div, self.secondary_dep_var_div)
 
 	def _get_primary_axis_label(self):	#pylint: disable=C0111
 		return self._primary_axis_label
@@ -993,72 +1052,18 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	@putil.check.check_parameter('legend_props', putil.check.PolymorphicType([None, dict]))
 	def _set_legend_props(self, legend_props):	#pylint: disable=C0111
 		ref_pos_obj = putil.check.OneOf(self.legend_props_pos_list)
-		self._legend_props = legend_props
+		self._legend_props = legend_props if legend_props is not None else {'pos':'BEST', 'cols':1}
 		if self.legend_props is not None:
+			self._legend_props.setdefault('pos', 'BEST')
+			self._legend_props.setdefault('cols', 1)
 			for key, value in self.legend_props.iteritems():
 				if key not in self.legend_props_list:
-					raise ValueError('Illegal legend property {0}'.format(key))
+					raise ValueError('Illegal legend property `{0}`'.format(key))
 				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props['pos'])):
-					raise TypeError(ref_pos_obj.exception('legend_props')['msg'].replace(' is ', ' key `pos` is '))
+					raise TypeError(ref_pos_obj.exception('pos')['msg'].replace('Parameter', 'Legend property'))
 				elif ((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
-					raise TypeError('Parameter `legend_props` key `cols` is of the wrong type')
-
-	def _set_series(self, series):	#pylint: disable=C0111,R0912
-		self._series = (series if isinstance(series, list) else [series]) if series is not None else series
-		if self.series is not None:
-			# Validate series
-			for num, obj in enumerate(self.series):
-				if type(obj) is not Series:
-					raise TypeError('Parameter `series` is of the wrong type')
-				if not obj._complete():	#pylint: disable=W0212
-					raise RuntimeError('Series element {0} is not fully specified'.format(num))
-			# Compute panel scaling factor
-			global_primary_dep_var = list()
-			global_secondary_dep_var = list()
-			# Find union of the dependent variable data set of all panels
-			for series_obj in self.series:
-				if not series_obj.secondary_axis:
-					self.panel_has_primary_axis = True
-					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
-					if series_obj.interp_dep_var is not None:
-						global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
-				else:
-					self.panel_has_secondary_axis = True
-					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
-					if series_obj.interp_dep_var is not None:
-						global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
-			# Primary axis
-			if self.panel_has_primary_axis is True:
-				self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale, self.primary_scaled_dep_var = \
-					_scale_series(series=global_primary_dep_var, scale=True, scale_type='delta')
-				self.primary_dep_var_min = putil.misc.smart_round(self.primary_dep_var_min, 10)
-				self.primary_dep_var_max = putil.misc.smart_round(self.primary_dep_var_max, 10)
-				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max = \
-					_intelligent_ticks(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
-			# Secondary axis
-			if self.panel_has_secondary_axis is True:
-				self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale, self.secondary_scaled_dep_var = \
-					_scale_series(series=global_secondary_dep_var, scale=True, scale_type='delta')
-				self.secondary_dep_var_min = putil.misc.smart_round(self.secondary_dep_var_min, 10)
-				self.secondary_dep_var_max = putil.misc.smart_round(self.secondary_dep_var_max, 10)
-				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max = \
-					_intelligent_ticks(self.secondary_scaled_dep_var, min(self.secondary_scaled_dep_var), max(self.secondary_scaled_dep_var), tight=False)
-			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval
-			if (self.panel_has_primary_axis is True) and (self.panel_has_secondary_axis is True):
-				max_ticks = max(len(self.primary_dep_var_locs), len(self.secondary_dep_var_locs))-1
-				primary_delta = (self.primary_dep_var_locs[-1]-self.primary_dep_var_locs[0])/float(max_ticks)
-				secondary_delta = (self.secondary_dep_var_locs[-1]-self.secondary_dep_var_locs[0])/float(max_ticks)
-				primary_start = self.primary_dep_var_locs[0]
-				secondary_start = self.secondary_dep_var_locs[0]
-				self.primary_dep_var_locs = list()
-				self.secondary_dep_var_locs = list()
-				for num in range(max_ticks+1):
-					self.primary_dep_var_locs.append(primary_start+(num*primary_delta))
-					self.secondary_dep_var_locs.append(secondary_start+(num*secondary_delta))
-				self.primary_dep_var_locs, self.primary_dep_var_labels = _uniquify_tick_labels(self.primary_dep_var_locs, self.primary_dep_var_locs[0], self.primary_dep_var_locs[-1])
-				self.secondary_dep_var_locs, self.secondary_dep_var_labels = _uniquify_tick_labels(self.secondary_dep_var_locs, self.secondary_dep_var_locs[0], self.secondary_dep_var_locs[-1])
-			#
-			self._scale_dep_var(self.primary_dep_var_div, self.secondary_dep_var_div)
+					raise TypeError('Legend property `cols` is of the wrong type')
+			self._legend_props['pos'] = self._legend_props['pos'].upper()
 
 	def __str__(self):
 		"""
@@ -1087,9 +1092,17 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props) else '')
 		return ret
 
+	def _validate_series(self):
+		""" Verifies that elements of series list are of the right type and fully specified """
+		for num, obj in enumerate(self.series):
+			if type(obj) is not Series:
+				raise TypeError('Parameter `series` is of the wrong type')
+			if not obj._complete():	#pylint: disable=W0212
+				raise RuntimeError('Series element {0} is not fully specified'.format(num))
+
 	def _complete(self):
 		""" Returns True if panel is fully specified, otherwise returns False """
-		return len(self.series) > 0
+		return (self.series is not None) and (len(self.series) > 0)
 
 	def _scale_indep_var(self, scaling_factor):
 		""" Scale independent variable of panel series """
@@ -1625,6 +1638,20 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	bounded_locs = [loc for loc in locs if ((loc >= min_lim) or (abs(loc-min_lim) <= 1e-14)) and ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))]
 	raw_labels = [putil.eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(putil.misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
+
+def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
+	"""
+	Calculates ticks 'intelligently', trying to calculate sane tick spacing
+	"""
+	calc_ticks = calc_ticks
+	tight = tight
+	# Handle 1-point series
+	if len(series) == 1:
+		series_min = 0.9*series[0]
+		series_max = 1.1*series[1]
+		tick_list = [series_min, series[0], series_max]
+		loc, labels = _uniquify_tick_labels(tick_list, series_min, series_max)
+		return (loc, labels, series_min, series_max)
 
 def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
 	"""

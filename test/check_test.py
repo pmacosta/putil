@@ -275,13 +275,13 @@ def test_real_numpy_vector_includes():	#pylint: disable=C0103
 	""" Test that the includes method of RealNumpyVector class behaves appropriately """
 	ref_obj = putil.check.RealNumpyVector()
 	assert (ref_obj.includes('a'), ref_obj.includes([1, 2, 3]), ref_obj.includes(numpy.array([])), ref_obj.includes(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.includes(numpy.array(['a', 'b'])),
-		 ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0]))) == (False, False, False, False, False, True, True)
+		 ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0])), ref_obj.includes(numpy.array([10.0]))) == (False, False, False, False, False, True, True, True)
 
 def test_real_numpy_vector_istype():	#pylint: disable=C0103
 	""" Test that the istype method of RealNumpyVector class behaves appropriately """
 	ref_obj = putil.check.RealNumpyVector()
 	assert (ref_obj.istype('a'), ref_obj.istype([1, 2, 3]), ref_obj.istype(numpy.array([])), ref_obj.istype(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.istype(numpy.array(['a', 'b'])),
-		 ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0]))) == (False, False, False, False, False, True, True)
+		 ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0])), ref_obj.istype(numpy.array([10.0]))) == (False, False, False, False, False, True, True, True)
 
 ###
 # Test IncreasingRealNumpyVector class
@@ -294,15 +294,15 @@ def test_increasing_real_numpy_vector_includes():	#pylint: disable=C0103
 	""" Test that the includes method of IncreasingRealNumpyVector class behaves appropriately """
 	ref_obj = putil.check.IncreasingRealNumpyVector()
 	assert (ref_obj.includes('a'), ref_obj.includes([1, 2, 3]), ref_obj.includes(numpy.array([])), ref_obj.includes(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.includes(numpy.array(['a', 'b'])),
-		 ref_obj.includes(numpy.array([1, 0, -3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0])), ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 12.1, 12.5]))) == \
-		(False, False, False, False, False, False, False, True, True)
+		 ref_obj.includes(numpy.array([1, 0, -3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0])), ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 12.1, 12.5])),
+		 ref_obj.includes(numpy.array([10.0]))) == (False, False, False, False, False, False, False, True, True, True)
 
 def test_increasing_real_numpy_vector_istype():	#pylint: disable=C0103
 	""" Test that the istype method of IncreasingRealNumpyVector class behaves appropriately """
 	ref_obj = putil.check.IncreasingRealNumpyVector()
 	assert (ref_obj.istype('a'), ref_obj.istype([1, 2, 3]), ref_obj.istype(numpy.array([])), ref_obj.istype(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.istype(numpy.array(['a', 'b'])),
-		 ref_obj.istype(numpy.array([1, 0, -3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0])), ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 12.1, 12.5]))) == \
-		(False, False, False, False, False, False, False, True, True)
+		 ref_obj.istype(numpy.array([1, 0, -3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0])), ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 12.1, 12.5])), ref_obj.istype(numpy.array([10.0]))) == \
+		(False, False, False, False, False, False, False, True, True, True)
 
 ###
 # Test File class
@@ -587,8 +587,8 @@ def test_type_match_fixed_length_set():	#pylint: disable=C0103
 
 def test_type_match_one_of():	#pylint: disable=C0103
 	""" Test if function behaves proprely for OneOf pseudo-type """
-	assert (putil.check.type_match('HELLO', putil.check.OneOf(['HELLO', 45, 'WORLD'])), putil.check.type_match(45, putil.check.OneOf(['HELLO', 45, 'WORLD'])), putil.check.type_match(1.0, putil.check.OneOf(['HELLO', 45, 'WORLD']))) == \
-		 (True, True, False)
+	assert (putil.check.type_match('HELLO', putil.check.OneOf(['HELLO', 45, 'WORLD'])), putil.check.type_match(45, putil.check.OneOf(['HELLO', 45, 'WORLD'])),
+		 putil.check.type_match(1.0, putil.check.OneOf(['HELLO', 45, 'WORLD']))) == (True, True, False)
 
 def test_type_match_number_range():	#pylint: disable=C0103
 	""" Test if function behaves proprely for NumberRange pseudo-type """
