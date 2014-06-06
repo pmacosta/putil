@@ -27,6 +27,13 @@ def write_file(file_name, row_list, append=True):
 	except Exception as msg:
 		raise RuntimeError('Unknown error: {0}'.format(msg))
 
+def _float_failsafe(obj):
+	""" Convert to float if object is a number string """
+	try:
+		return float(obj)
+	except:	#pylint: disable=W0702
+		return obj
+
 class CsvFile(object):
 	"""
 	Read CSV files, filter and retrieve information. First row must contain headers, the rest of the data must be numbers
@@ -51,7 +58,7 @@ class CsvFile(object):
 			msg = 'Cannot open file '+file_name
 			raise IOError(msg)
 		self.current_header = [col.upper() for col in self.current_data[0]]
-		self.current_data = [[None if col.strip() == '' else (float(col) if putil.misc.isalpha(col) is True else col) for col in row] for row in self.current_data[1:]]
+		self.current_data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self.current_data[1:]]
 		self.current_filtered_data = self.current_data[:]
 
 	def reset_filter(self):
