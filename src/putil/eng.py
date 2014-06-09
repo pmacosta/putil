@@ -7,6 +7,8 @@ Engineering-relatd classes, methods, functions and constants
 """
 import math
 
+UNIT_LIST = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+
 def peng(number, mantissa, rjust=True):
 	"""
 	Print number in engineering notation
@@ -48,16 +50,20 @@ def peng_unit(text):
 	unit = text.strip()[-1]
 	return unit if unit.isdigit() is False else ' '
 
+def peng_unit_math(center, offset):
+	cindex = UNIT_LIST.index(center)
+	oindex = max(0, min(len(UNIT_LIST)-1, cindex+offset))
+	return UNIT_LIST[oindex]
+
 def peng_power(text):
 	"""
 	Return exponent of number string in engineering notation
 	"""
 	text = text.strip()
 	if len(text)>0:
-		unit_list = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
 		unit = peng_unit(text)
-		if unit in unit_list:
-			return (unit, float(pow(10, 3*(unit_list.index(unit)-8))))
+		if unit in UNIT_LIST:
+			return (unit, float(pow(10, 3*(UNIT_LIST.index(unit)-8))))
 		else:
 			raise Exception('Unrecognized unit '+unit+' in fucntion peng_scale')
 	else:

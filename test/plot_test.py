@@ -1007,4 +1007,28 @@ class TestPanel(object):	#pylint: disable=W0232
 		print obj.legend_props
 		assert test_list == [True]*7
 
-
+	def test_intelligent_ticks(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test that intelligent_tick methods works for all scenarios """
+		test_list = list()
+		#
+		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6], ['0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6'], 0.8, 1.6, ' '))
+		print obj
+		#
+		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, ' '))
+		print obj
+		#
+		vector = numpy.array([10, 20, 30, 40, 50, 60, 70])
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([10, 20, 30, 40, 50, 60, 70], ['10', '20', '30', '40', '50', '60', '70'], 10, 70, ' '))
+		print obj
+		#
+		vector = numpy.array([1000, 2000, 3000, 4000, 5000, 6000, 7000])
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 'k'))
+		print obj
+		#
+		assert test_list == [True]*4
