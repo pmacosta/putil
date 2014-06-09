@@ -1640,18 +1640,35 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
 
 def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
-	"""
-	Calculates ticks 'intelligently', trying to calculate sane tick spacing
-	"""
+	""" Calculates ticks 'intelligently', trying to calculate sane tick spacing """
 	calc_ticks = calc_ticks
 	tight = tight
+	max_ticks = 10
+	min_ticks = 6
 	# Handle 1-point series
 	if len(series) == 1:
-		series_min = 0.9*series[0]
-		series_max = 1.1*series[1]
+		series_min = series_max = series[0]
 		tick_list = [series_min, series[0], series_max]
-		loc, labels = _uniquify_tick_labels(tick_list, series_min, series_max)
-		return (loc, labels, series_min, series_max)
+		tight = False
+	else:
+		series_delta = putil.misc.smart_round(float(series_max-series_min), PRECISION)
+		working_series = series[:]
+		tick_list = list()
+		num_ticks = max_ticks
+		while num_ticks >= min_ticks:
+			data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
+			spacing_gcd = putil.misc.gcd(data_spacing)
+			num_ticks = (series_delta/spacing_gcd)+1
+			if (num_ticks >= min_ticks) and (num_ticks <= max_ticks):
+				tick_list = numpy.arange(putil.misc.smart_round(min(working_series), PRECISION), putil.misc.smart_round(max(working_series), PRECISION), spacing_gcd)
+				break
+			min_data_spacing = min(data_spacing)
+			working_series = [element for element, spacing in zip(series[1:], data_spacing) if spacing != min_data_spacing]
+		tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), max_ticks-2)
+	# round() allows for deltas closer to the next engineering unit to get the bigger scale while deltas closer to the smaller engineering scale get smaller scale
+	scale = float(10**(round(math.log10(putil.eng.peng_int(putil.eng.peng(series_delta, 3))))))
+	loc, labels = _uniquify_tick_labels(numpy.array(tick_list)/scale, series_min/scale, series_max/scale)
+	return (loc, labels, series_min/scale, series_max/scale)
 
 def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
 	"""
