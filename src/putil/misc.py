@@ -144,7 +144,7 @@ def normalize(value, series, offset=0):
 	"""
 	return offset+(((value-min(series))/float(max(series)-min(series)))/(1.0-offset))
 
-def gcd(vector):
+def gcd(vector, precision=None):
 	"""
 	Calculates the greatest common divisor of an integer vector
 	"""
@@ -153,11 +153,11 @@ def gcd(vector):
 	elif len(vector) == 1:
 		return vector[0]
 	elif len(vector) == 2:
-		return fractions.gcd(vector[0], vector[1])
+		return fractions.gcd(vector[0], vector[1]) if precision is None else putil.misc.smart_round(fractions.gcd(vector[0], vector[1]), precision)
 	else:
 		current_gcd = fractions.gcd(vector[0], vector[1])
 		for element in vector[2:]:
-			current_gcd = fractions.gcd(current_gcd, element)
+			current_gcd = fractions.gcd(current_gcd, element) if precision is None else putil.misc.smart_round(fractions.gcd(current_gcd, element), precision)
 		return current_gcd
 
 def isalpha(text):

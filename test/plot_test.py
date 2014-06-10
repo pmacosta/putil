@@ -1031,4 +1031,17 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 'k'))
 		print obj
 		#
-		assert test_list == [True]*4
+		vector = numpy.array([200e6, 300e6, 400e6, 500e6, 600e6, 700e6, 800e6, 900e6, 1000e6])
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([200, 300, 400, 500, 600, 700, 800, 900, 1000], ['200', '300', '400', '500', '600', '700', '800', '900', '1k'], 200, 1000, 'M'))
+		print obj
+		#
+		vector = numpy.array([105, 107.7, 215, 400.2, 600, 700, 800, 810, 820, 830, 840, 850, 900, 905])
+		import pdb; pdb.set_trace()
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([105.0, 193.88888888888889, 282.77777777777777, 371.66666666666663, 460.55555555555554, 549.4444444444445, 638.3333333333333, 727.2222222222222, 816.1111111111111, 905.0],
+						   ['105.0', '193.88888888888889', '282.77777777777777', '371.66666666666663', '460.55555555555554', '549.4444444444445', '638.3333333333333', '727.2222222222222', '816.1111111111111', '905.0'],
+						   105, 905, ' '))
+		print obj
+		#
+		assert test_list == [True]*5

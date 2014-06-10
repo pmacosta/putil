@@ -1655,7 +1655,7 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 		working_series = series[:]
 		tick_list = list()
 		num_ticks = max_ticks
-		while num_ticks >= min_ticks:
+		while (num_ticks >= min_ticks) and (len(working_series) > 0):
 			data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
 			spacing_gcd = putil.misc.gcd(data_spacing)
 			num_ticks = (series_delta/spacing_gcd)+1
@@ -1664,17 +1664,31 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 				break
 			min_data_spacing = min(data_spacing)
 			working_series = [element for element, spacing in zip(series[1:], data_spacing) if spacing != min_data_spacing]
-		tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), max_ticks-2)
+		tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), max_ticks)
 	tick_list = numpy.array(tick_list)
-	(unit, scale) = putil.eng.peng_power(putil.eng.peng(series_delta, 3))
+	opt_min = _scale_ticks(tick_list, 'MIN')
+	opt_max = _scale_ticks(tick_list, 'MAX')
+	opt_delta = _scale_ticks(tick_list, 'DELTA')
+	opt = opt_min if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else (opt_max if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else opt_max)
+	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['unit'])
+
+def _scale_ticks(tick_list, mode):
+	""" Scale series taking the reference to be the series start, stop or delta """
+	mode = mode.strip().upper()
+	tick_min = tick_list[0]
+	tick_max = tick_list[-1]
+	tick_delta = tick_max-tick_min
+	tick_ref = tick_min if mode == 'MIN' else (tick_max if mode == 'MAX' else tick_delta)
+	(unit, scale) = putil.eng.peng_power(putil.eng.peng(tick_ref, 3))
 	rollback = sum((tick_list/scale) >= 1000) > sum((tick_list/scale) < 1000)
 	scale = 1 if rollback else scale
 	unit = putil.eng.peng_unit_math(unit, +1) if rollback else unit
 	tick_list = numpy.array([putil.misc.smart_round(element/scale, PRECISION) for element in tick_list])
-	series_min = putil.misc.smart_round(series_min/scale, PRECISION)
-	series_max = putil.misc.smart_round(series_max/scale, PRECISION)
-	loc, labels = _uniquify_tick_labels(tick_list, series_min, series_max)
-	return (loc, labels, series_min, series_max, unit)
+	tick_min = putil.misc.smart_round(tick_min/scale, PRECISION)
+	tick_max = putil.misc.smart_round(tick_max/scale, PRECISION)
+	loc, labels = _uniquify_tick_labels(tick_list, tick_min, tick_max)
+	count = len(''.join(labels))
+	return {'loc':loc, 'labels':labels, 'unit':unit, 'min':tick_min, 'max':tick_max, 'count':count}
 
 def _intelligent_ticks(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
 	"""
