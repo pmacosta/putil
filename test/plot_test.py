@@ -1010,36 +1010,46 @@ class TestPanel(object):	#pylint: disable=W0232
 	def test_intelligent_ticks(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test that intelligent_tick methods works for all scenarios """
 		test_list = list()
-		#
+		# One sample
+		vector = numpy.array([35e-6])
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([31.5, 35, 38.5], ['32', '35', '39'], 31.5, 38.5, 'u'))
+		print obj
+		# Tight = False
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
-		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
 		test_list.append(obj == ([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6], ['0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6'], 0.8, 1.6, ' '))
 		print obj
 		#
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
-		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
 		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, ' '))
 		print obj
 		#
 		vector = numpy.array([10, 20, 30, 40, 50, 60, 70])
-		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
 		test_list.append(obj == ([10, 20, 30, 40, 50, 60, 70], ['10', '20', '30', '40', '50', '60', '70'], 10, 70, ' '))
 		print obj
 		#
 		vector = numpy.array([1000, 2000, 3000, 4000, 5000, 6000, 7000])
-		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
 		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 'k'))
 		print obj
 		#
 		vector = numpy.array([200e6, 300e6, 400e6, 500e6, 600e6, 700e6, 800e6, 900e6, 1000e6])
-		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
 		test_list.append(obj == ([200, 300, 400, 500, 600, 700, 800, 900, 1000], ['200', '300', '400', '500', '600', '700', '800', '900', '1k'], 200, 1000, 'M'))
 		print obj
 		#
 		vector = numpy.array([105, 107.7, 215, 400.2, 600, 700, 800, 810, 820, 830, 840, 850, 900, 905])
-		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=False, calc_ticks=True)	#pylint: disable=W0212
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
 		test_list.append(obj == ([105.0, 193.88888889, 282.77777778, 371.66666667, 460.55555556, 549.44444444, 638.33333333, 727.22222222, 816.11111111, 905.0],
 						   ['105', '194', '283', '372', '461', '549', '638', '727', '816', '905'], 105, 905, ' '))
 		print obj
 		#
-		assert test_list == [True]*6
+		vector = numpy.array([10, 20, 30, 40, 41, 50, 60, 62, 70, 75.5, 80])
+		obj = putil.plot._intelligent_ticks2(vector, min(vector), max(vector), tight=True, calc_ticks=True)	#pylint: disable=W0212
+		test_list.append(obj == ([10, 20, 30, 40, 50, 60, 70, 80], ['10', '20', '30', '40', '50', '60', '70', '80'], 10, 80, ' '))
+		print obj
+		#
+		assert test_list == [True]*8
