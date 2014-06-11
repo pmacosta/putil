@@ -1653,6 +1653,7 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 		tick_spacing = 0.1*series[0]
 		tight = False
 	else:
+		# Try to find the tick spacing that will have the most number of data points in grid. Otherwise, place max_ticks uniformely distributed across the data rage
 		series_delta = putil.misc.smart_round(float(series_max-series_min), PRECISION)
 		working_series = series[:].tolist()
 		tick_list = list()
