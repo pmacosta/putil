@@ -985,7 +985,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				self.primary_dep_var_min = putil.misc.smart_round(self.primary_dep_var_min, 10)
 				self.primary_dep_var_max = putil.misc.smart_round(self.primary_dep_var_max, 10)
 				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max = \
-					_intelligent_ticks(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
+					intelligent_ticks2(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
 			# Secondary axis
 			if self.panel_has_secondary_axis is True:
 				self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale, self.secondary_scaled_dep_var = \
@@ -993,7 +993,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				self.secondary_dep_var_min = putil.misc.smart_round(self.secondary_dep_var_min, 10)
 				self.secondary_dep_var_max = putil.misc.smart_round(self.secondary_dep_var_max, 10)
 				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max = \
-					_intelligent_ticks(self.secondary_scaled_dep_var, min(self.secondary_scaled_dep_var), max(self.secondary_scaled_dep_var), tight=False)
+					intelligent_ticks2(self.secondary_scaled_dep_var, min(self.secondary_scaled_dep_var), max(self.secondary_scaled_dep_var), tight=False)
 			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval
 			if (self.panel_has_primary_axis is True) and (self.panel_has_secondary_axis is True):
 				max_ticks = max(len(self.primary_dep_var_locs), len(self.secondary_dep_var_locs))-1
@@ -1539,7 +1539,8 @@ class Figure(object):	#pylint: disable=R0902
 		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = _scale_series(series=global_indep_var, scale=True, scale_type='delta')
 		self.indep_var_min = putil.misc.smart_round(self.indep_var_min, 10)
 		self.indep_var_max = putil.misc.smart_round(self.indep_var_max, 10)
-		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = _intelligent_ticks(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
+		import pdb; pdb.set_trace()
+		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max = intelligent_ticks2(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
 		# Scale all panel series
 		for panel_obj in self.current_panel_list:
 			panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable=W0212
@@ -1639,7 +1640,7 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	raw_labels = [putil.eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(putil.misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
 
-def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
+def intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=True):	#pylint: disable=R0912,R0914,R0915
 	""" Calculates ticks 'intelligently', trying to calculate sane tick spacing """
 	calc_ticks = calc_ticks
 	tight = tight
@@ -1655,7 +1656,8 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 		working_series = series[:]
 		tick_list = list()
 		num_ticks = max_ticks
-		while (num_ticks >= min_ticks) and (len(working_series) > 0):
+		spacing_gcd = 2
+		while (num_ticks >= min_ticks) and (spacing_gcd > 1):
 			data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
 			spacing_gcd = putil.misc.gcd(data_spacing)
 			num_ticks = (series_delta/spacing_gcd)+1
@@ -1670,7 +1672,8 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 	opt_max = _scale_ticks(tick_list, 'MAX')
 	opt_delta = _scale_ticks(tick_list, 'DELTA')
 	opt = opt_min if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else (opt_max if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else opt_max)
-	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['unit'])
+	#return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['unit'])
+	return (opt['loc'], opt['labels'], opt['min'], opt['max'])
 
 def _scale_ticks(tick_list, mode):
 	""" Scale series taking the reference to be the series start, stop or delta """

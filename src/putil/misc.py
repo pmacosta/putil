@@ -7,11 +7,9 @@ Miscellaneous utility classes, methods, functions and constants
 """
 
 import os
-import math
 import numpy
 import inspect
 import textwrap
-import fractions
 
 import putil.eng
 
@@ -153,12 +151,18 @@ def gcd(vector, precision=None):
 	elif len(vector) == 1:
 		return vector[0]
 	elif len(vector) == 2:
-		return fractions.gcd(vector[0], vector[1]) if precision is None else putil.misc.smart_round(fractions.gcd(vector[0], vector[1]), precision)
+		return pgcd(vector[0], vector[1]) if precision is None else putil.misc.smart_round(pgcd(vector[0], vector[1]), precision)
 	else:
-		current_gcd = fractions.gcd(vector[0], vector[1])
+		current_gcd = pgcd(vector[0], vector[1])
 		for element in vector[2:]:
-			current_gcd = fractions.gcd(current_gcd, element) if precision is None else putil.misc.smart_round(fractions.gcd(current_gcd, element), precision)
+			current_gcd = pgcd(current_gcd, element) if precision is None else putil.misc.smart_round(pgcd(current_gcd, element), precision)
 		return current_gcd
+
+def pgcd(num_a, num_b):
+	"""Calculate the Greatest Common Divisor of a and b """
+	while num_b:
+		num_a, num_b = num_b, round(num_a % num_b, 10)
+	return num_a
 
 def isalpha(text):
 	"""
@@ -192,9 +196,8 @@ def smart_round(num, ndigits):
 		if num == 0:
 			return num
 		else:
-			sign = -1.0 if num < 0.0 else +1
-			exp = int(math.log10(abs(num)))
-			return sign*round(abs(num)*(10**-exp), ndigits)*(10**exp)
+			index = str(num).find('.')
+			return round(num, ndigits-(0 if index == -1 else index)+(1 if num < 0.0 else 0)+1)
 
 def isiterable(obj):
 	"""
