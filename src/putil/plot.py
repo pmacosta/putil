@@ -966,24 +966,25 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			self.panel_has_primary_axis = any([not series_obj.secondary_axis for series_obj in self.series])
 			self.panel_has_secondary_axis = any([series_obj.secondary_axis for series_obj in self.series])
 			# Compute panel scaling factor
-			global_primary_dep_var = list()
-			global_secondary_dep_var = list()
+			global_primary_dep_var = global_primary_interp_dep_var = list()
+			global_secondary_dep_var = global_secondary_dep_var = list()
 			# Find union of the dependent variable data set of all panels
 			for series_obj in self.series:
 				if not series_obj.secondary_axis:
 					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
 					if series_obj.interp_dep_var is not None:
-						global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
+						global_primary_interp_dep_var = numpy.unique(numpy.append(global_primary_interp_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
 				else:
 					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
 					if series_obj.interp_dep_var is not None:
-						global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
+						global_secondary_interp_dep_var = numpy.unique(numpy.append(global_secondary_interp_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.interp_dep_var])))
 			# Primary axis
 			if self.panel_has_primary_axis is True:
 				self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale, self.primary_scaled_dep_var = \
 					_scale_series(series=global_primary_dep_var, scale=True, scale_type='delta')
 				self.primary_dep_var_min = putil.misc.smart_round(self.primary_dep_var_min, 10)
 				self.primary_dep_var_max = putil.misc.smart_round(self.primary_dep_var_max, 10)
+				import pdb; pdb.set_trace()
 				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, temp = \
 					_intelligent_ticks2(self.primary_scaled_dep_var, min(self.primary_scaled_dep_var), max(self.primary_scaled_dep_var), tight=False)
 			# Secondary axis
@@ -1539,7 +1540,6 @@ class Figure(object):	#pylint: disable=R0902
 		self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale, self.scaled_indep_var = _scale_series(series=global_indep_var, scale=True, scale_type='delta')
 		self.indep_var_min = putil.misc.smart_round(self.indep_var_min, 10)
 		self.indep_var_max = putil.misc.smart_round(self.indep_var_max, 10)
-		import pdb; pdb.set_trace()
 		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max, temp = _intelligent_ticks2(self.scaled_indep_var, min(self.scaled_indep_var), max(self.scaled_indep_var), tight=True, calc_ticks=False)
 		# Scale all panel series
 		for panel_obj in self.current_panel_list:
@@ -1651,10 +1651,10 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 		series_min = series_max = series[0]
 		tick_list = [series[0]]
 		tick_spacing = 0.1*series[0]
-		tight = False
+		tight_left = tight_right = False
 	else:
 		# Try to find the tick spacing that will have the most number of data points in grid. Otherwise, place max_ticks uniformely distributed across the data rage
-		series_delta = putil.misc.smart_round(float(series_max-series_min), PRECISION)
+		series_delta = putil.misc.smart_round(max(series)-min(series), PRECISION)
 		working_series = series[:].tolist()
 		tick_list = list()
 		num_ticks = max_ticks
@@ -1663,7 +1663,7 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 			tick_spacing = putil.misc.gcd(data_spacing)
 			num_ticks = (series_delta/tick_spacing)+1
 			if (num_ticks >= min_ticks) and (num_ticks <= max_ticks):
-				tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks)
+				tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()
 				break
 			# Remove elements that cause minimum spacing, to see if with those elements removed the number of tick marks can be withing the acceptable range
 			min_data_spacing = min(data_spacing)
@@ -1672,8 +1672,14 @@ def _intelligent_ticks2(series, series_min, series_max, tight=True, calc_ticks=T
 				working_series = working_series[:-2]+[working_series[-1]]
 				data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
 			working_series = [working_series[0]]+[element for element, spacing in zip(working_series[1:], data_spacing) if spacing != min_data_spacing]
-		tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), max_ticks)
-	tick_list = numpy.array(tick_list if tight else [tick_list[0]-tick_spacing]+tick_list+[tick_list[-1]+tick_spacing])
+		tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), max_ticks).tolist()
+		tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
+		# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
+		tight_left = True if (not tight) and (tick_list[0] > series_min) else tight
+		tight_right = True if (not tight) and (tick_list[-1] < series_max) else tight
+		tick_list = tick_list if tick_list[0] <= series_min else [tick_list[0]-tick_spacing]+tick_list
+		tick_list = tick_list if tick_list[-1] >= series_max else tick_list+[tick_list[-1]+tick_spacing]
+	tick_list = numpy.array(tick_list if tight else ([tick_list[0]-tick_spacing] if not tight_left else [])+tick_list+([tick_list[-1]+tick_spacing] if not tight_right else []))
 	opt_min = _scale_ticks(tick_list, 'MIN')
 	opt_max = _scale_ticks(tick_list, 'MAX')
 	opt_delta = _scale_ticks(tick_list, 'DELTA')
