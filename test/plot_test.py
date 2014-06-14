@@ -1014,7 +1014,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		# One sample
 		vector = numpy.array([35e-6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([31.5, 35, 38.5], ['32', '35', '39'], 31.5, 38.5, 1e-6, 'u'))
+		test_list.append(obj == ([31.5, 35, 38.5], ['31.5', '35.0', '38.5'], 31.5, 38.5, 1e-6, 'u'))
 		print obj
 		# Scaling with more data samples after 1.0
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
@@ -1096,9 +1096,10 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list.append(obj == ([1.00001, 1.00002, 1.00003, 1.00004, 1.00005, 1.00006, 1.00007, 1.00008], ['1.00001', '1.00002', '1.00003', '1.00004', '1.00005', '1.00006', '1.00007', '1.00008'], 1.00001, 1.00008, 1e9, 'G'))
 		print obj
 		# Scaling, delta as reference
-		vector = numpy.array([10.1e6, 20, 30, 40, 50, 60, 70, 80, 90, 100, 20.22e9])
+		vector = numpy.array([10.1e6, 20e6, 30e6, 40e6, 50e6, 60e6, 70e6, 80e6, 90e6, 100e6, 20.22e9])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([10.000001, 20.000001, 30.000001, 40.000001, 50.000001, 60.000001, 70.000001, 80.000001], ['10', '20', '30', '40', '50', '60', '70', '80'], 10.000001, 80.000001, 1e3, 'k'))
+		test_list.append(obj == ([10.1, 2255.6444444, 4501.1888889, 6746.7333333, 8992.2777778, 11237.822222, 13483.366667, 15728.911111, 17974.455556, 20220.0], \
+						   ['10.1', '2.3k', '4.5k', '6.7k', '9.0k', '11.2k', '13.5k', '15.7k', '18.0k', '20.2k'], 10.1, 20220.0, 1e6, 'M'))
 		print obj
 		# Scaling, maximum as reference
 		vector = (numpy.array([0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5])*1e12)
@@ -1107,3 +1108,32 @@ class TestPanel(object):	#pylint: disable=W0232
 		print obj
 		#
 		assert test_list == [True]*18
+
+	def test_cannot_delete_attributes(self, default_series):	#pylint: disable=C0103,R0201,W0621
+		""" Test that del method raises an exception on all class attributes """
+		obj = putil.plot.Panel(series=default_series)
+		test_list = list()
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.series
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.primary_axis_label
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.secondary_axis_label
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.primary_axis_units
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.secondary_axis_units
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.log_dep_axis
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.legend_props
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert test_list == 7*[True]
+
+

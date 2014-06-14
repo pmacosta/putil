@@ -2,6 +2,8 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
+# TODO: Logarithmic axis test and implementation
+
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -1137,7 +1139,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			primary_height = ((len(self.primary_dep_var_labels))+(len(self.primary_dep_var_labels)-1))*_get_text_prop(fig, axarr.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
 			primary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
 			if (self.primary_axis_label not in [None, '']) or (self.primary_axis_units not in [None, '']):
-				unit_scale = '' if self.primary_dep_var_unit_scale is None else self.primary_dep_var_unit_scale
+				unit_scale = '' if self.primary_dep_var_unit_scale is None else self.primary_dep_var_unit_scale.strip()
 				axarr.yaxis.set_label_text(self.primary_axis_label + ('' if (unit_scale == '') and (self.primary_axis_units == '') else \
 					(' ['+unit_scale+('-' if self.primary_axis_units == '' else self.primary_axis_units)+']')), fontdict={'fontsize':18})
 				primary_height = max(primary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
@@ -1155,7 +1157,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			secondary_height = ((len(self.secondary_dep_var_labels))+(len(self.secondary_dep_var_labels)-1))*_get_text_prop(fig, axarr_sec.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
 			secondary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
 			if (self.secondary_axis_label not in [None, '']) or (self.secondary_axis_units not in [None, '']):
-				unit_scale = '' if self.secondary_dep_var_unit_scale is None else self.secondary_dep_var_unit_scale
+				unit_scale = '' if self.secondary_dep_var_unit_scale is None else self.secondary_dep_var_unit_scale.strip()
 				axarr_sec.yaxis.set_label_text(self.secondary_axis_label + ('' if (unit_scale == '') and (self.secondary_axis_units == '') else \
 					(' ['+unit_scale+('-' if self.secondary_axis_units == '' else self.secondary_axis_units)+']')), fontdict={'fontsize':18})
 				secondary_height = max(secondary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
@@ -1656,7 +1658,6 @@ def _intelligent_ticks(series, series_min, series_max, tight=True):	#pylint: dis
 	opt_max = _scale_ticks(tick_list, 'MAX')
 	opt_delta = _scale_ticks(tick_list, 'DELTA')
 	opt = opt_min if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else (opt_max if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else opt_delta)
-	print 'MIN' if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else ('MAX' if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else 'DELTA')
 	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['scale'], opt['unit'])
 
 def _scale_ticks(tick_list, mode):
@@ -1667,7 +1668,8 @@ def _scale_ticks(tick_list, mode):
 	tick_delta = tick_max-tick_min
 	tick_ref = tick_min if mode == 'MIN' else (tick_max if mode == 'MAX' else tick_delta)
 	(unit, scale) = putil.eng.peng_power(putil.eng.peng(tick_ref, 3))
-	rollback = sum((tick_list/scale) >= 1000) > sum((tick_list/scale) < 1000)
+	# Move one engineering unit back if there are more ticks below 1.0 than above it
+	rollback = (sum((tick_list/scale) >= 1000) > sum((tick_list/scale) < 1000)) and (tick_list[-1]/scale < 10000)
 	scale = 1 if rollback else scale
 	unit = putil.eng.peng_unit_math(unit, +1) if rollback else unit
 	tick_list = numpy.array([putil.misc.smart_round(element/scale, PRECISION) for element in tick_list])
@@ -1677,21 +1679,27 @@ def _scale_ticks(tick_list, mode):
 	count = len(''.join(labels))
 	return {'loc':loc, 'labels':labels, 'unit':unit, 'scale':scale, 'min':tick_min, 'max':tick_max, 'count':count}
 
+def _mantissa_digits(num):
+	""" Get number of digits in the mantissa """
+	snum = str(num)
+	return 0 if (snum.find('.') == -1) or str(float(int(num))) == snum else len(snum)-snum.find('.')-1
+
 def _uniquify_tick_labels(tick_list, tmin, tmax):
-	"""
-	Calculate minimum tick mantissa given tick spacing
-	"""
-	# Step 1: Look at two contiguous ticks and lower mantissa till they are no more right zeros
+	""" Calculate minimum tick mantissa given tick spacing """
+	# If mininum or maximum has a mantissa, at least preserve one digit
+	mant_min = 1 if max(_mantissa_digits(tick_list[0]), _mantissa_digits(tick_list[-1])) > 0 else 0
+	# Step 1: Look at two contiguous ticks and lower mantissa digits till they are no more right zeros
 	mant = 10
-	for mant in range(10, -1, -1):
+	for mant in range(10, mant_min-1, -1):
 		if (str(putil.eng.peng_mant(putil.eng.peng(tick_list[-1], mant)))[-1] != '0') or (str(putil.eng.peng_mant(putil.eng.peng(tick_list[-2], mant)))[-1] != '0'):
 			break
 	# Step 2: Confirm labels are unique
 	unique_mant_found = False
-	while mant >= 0:
+	while mant >= mant_min:
 		loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
-		if sum([1 if labels[index] != labels[index+1] else 0 for index in range(0, len(labels[:-1]))]) == len(labels)-1:
-			unique_mant_found = True if unique_mant_found is False else unique_mant_found
+		if (sum([1 if labels[index] != labels[index+1] else 0 for index in range(0, len(labels[:-1]))]) == len(labels)-1) and \
+				(sum([1 if (putil.eng.peng_num(label) != 0) or ((putil.eng.peng_num(label) == 0) and (num == 0)) else 0 for num, label in zip(tick_list, labels)]) == len(labels)):
+			unique_mant_found = True
 			mant -= 1
 		else:
 			mant += 1
