@@ -57,8 +57,16 @@ class CsvFile(object):
 		except:
 			msg = 'Cannot open file '+file_name
 			raise IOError(msg)
+		# Find start of data row
+		num = 0
+		for num, row in enumerate(self.current_data[1:]):
+			if _float_failsafe(row[0]) != row[0]:
+				break
+		else:
+			raise ValueError('No data was detected in comma-separated file {0}'.format(file_name))
+		# Set up class properties
 		self.current_header = [col.upper() for col in self.current_data[0]]
-		self.current_data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self.current_data[1:]]
+		self.current_data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self.current_data[num+1:]]
 		self.current_filtered_data = self.current_data[:]
 
 	def reset_filter(self):
