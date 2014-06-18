@@ -9,6 +9,7 @@ Utility classes, methods and functions to handle plotting
 """
 
 import os
+import math
 import numpy
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -985,33 +986,44 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			self.panel_has_primary_axis = any([not series_obj.secondary_axis for series_obj in self.series])
 			self.panel_has_secondary_axis = any([series_obj.secondary_axis for series_obj in self.series])
 			# Compute panel scaling factor
-			global_primary_dep_var = global_secondary_dep_var = list()
-			primary_min = secondary_min = primary_max = secondary_max = None
+			global_primary_dep_var = global_secondary_dep_var = global_panel_dep_var = list()
+			primary_min = secondary_min = primary_max = secondary_max = panel_min = panel_max = None
 			# Find union of all data points and panel minimum and maximum
+			# If panel has logarithmic dependent axis, limits are common and the union of the limits of both axis
 			for series_obj in self.series:
-				if not series_obj.secondary_axis:
+				if (not self.log_dep_axis) and (not series_obj.secondary_axis):
 					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
 					primary_min = min(series_obj.dep_var) if primary_min is None else min(primary_min, min(series_obj.dep_var))
 					primary_max = max(series_obj.dep_var) if primary_max is None else max(primary_max, max(series_obj.dep_var))
 					if series_obj.interp_dep_var is not None:
 						primary_min = min(primary_min, min(series_obj.interp_dep_var))
 						primary_max = max(primary_max, max(series_obj.interp_dep_var))
-				else:
+				elif (not self.log_dep_axis) and (series_obj.secondary_axis):
 					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
 					secondary_min = min(series_obj.dep_var) if secondary_min is None else min(secondary_min, min(series_obj.dep_var))
 					secondary_max = max(series_obj.dep_var) if secondary_max is None else max(secondary_max, max(series_obj.dep_var))
 					if series_obj.interp_dep_var is not None:
 						secondary_min = min(secondary_min, min(series_obj.interp_dep_var))
 						secondary_max = max(secondary_max, max(series_obj.interp_dep_var))
+				elif self.log_dep_axis:
+					global_panel_dep_var = numpy.unique(numpy.append(global_panel_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
+					panel_min = min(series_obj.dep_var) if panel_min is None else min(panel_min, min(series_obj.dep_var))
+					panel_max = max(series_obj.dep_var) if panel_max is None else max(panel_max, max(series_obj.dep_var))
 			# Get axis tick marks locations
-			if self.panel_has_primary_axis is True:
+			if (not self.log_dep_axis) and self.panel_has_primary_axis:
 				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale = \
-					_intelligent_ticks(global_primary_dep_var, primary_min, primary_max, tight=False)
-			if self.panel_has_secondary_axis is True:
+					_intelligent_ticks(global_primary_dep_var, primary_min, primary_max, tight=False, log_axis=self.log_dep_axis)
+			if (not self.log_dep_axis) and self.panel_has_secondary_axis:
 				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale = \
-					_intelligent_ticks(global_secondary_dep_var, secondary_min, secondary_max, tight=False)
+					_intelligent_ticks(global_secondary_dep_var, secondary_min, secondary_max, tight=False, log_axis=self.log_dep_axis)
+			if self.log_dep_axis:
+				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale = \
+					_intelligent_ticks(global_panel_dep_var, panel_min, panel_max, tight=False, log_axis=self.log_dep_axis)
+				if self.panel_has_secondary_axis:
+					self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale = \
+						self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale
 			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval
-			if (self.panel_has_primary_axis is True) and (self.panel_has_secondary_axis is True):
+			if (not self.log_dep_axis) and self.panel_has_primary_axis and self.panel_has_secondary_axis:
 				max_ticks = max(len(self.primary_dep_var_locs), len(self.secondary_dep_var_locs))-1
 				primary_delta = (self.primary_dep_var_locs[-1]-self.primary_dep_var_locs[0])/float(max_ticks)
 				secondary_delta = (self.secondary_dep_var_locs[-1]-self.secondary_dep_var_locs[0])/float(max_ticks)
@@ -1633,47 +1645,61 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	raw_labels = [putil.eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(putil.misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
 
-def _intelligent_ticks(series, series_min, series_max, tight=True):	#pylint: disable=R0912,R0914,R0915
+def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=False):	#pylint: disable=R0912,R0914,R0915
 	""" Calculates ticks 'intelligently', trying to calculate sane tick spacing """
 	# Handle 1-point series
-	if len(series) == 1:
-		series_min = series_max = series[0]
-		tick_list = [series[0]]
-		tick_spacing = 0.1*series[0]
-		tight = tight_left = tight_right = False
-	else:
-		# Try to find the tick spacing that will have the most number of data points on grid. Otherwise, place max_ticks uniformely distributed across the data rage
-		series_delta = putil.misc.smart_round(max(series)-min(series), PRECISION)
-		working_series = series[:].tolist()
-		tick_list = list()
-		num_ticks = MAX_TICKS
-		while (num_ticks >= MIN_TICKS) and (len(working_series) > 1):
-			data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
-			tick_spacing = putil.misc.gcd(data_spacing)
-			num_ticks = (series_delta/tick_spacing)+1
-			if (num_ticks >= MIN_TICKS) and (num_ticks <= MAX_TICKS):
-				tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()
-				break
-			# Remove elements that cause minimum spacing, to see if with those elements removed the number of tick marks can be withing the acceptable range
-			min_data_spacing = min(data_spacing)
-			# Account for fact that if minimum spacing is between last two elements, the last element cannot be removed (it is the end of the range), but rather the next-to-last has to be removed
-			if (data_spacing[-1] == min_data_spacing) and (len(working_series) > 2):
-				working_series = working_series[:-2]+[working_series[-1]]
-				data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
-			working_series = [working_series[0]]+[element for element, spacing in zip(working_series[1:], data_spacing) if spacing != min_data_spacing]
-		tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), MAX_TICKS).tolist()
-		tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
-		# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
+	if log_axis:
+		dec_start = int(math.log10(min(series)))
+		dec_stop = int(math.log10(max(series)))+1
+		tick_list = [10**num for num in range(dec_start, dec_stop+1)]
 		tight_left = True if (not tight) and (tick_list[0] > series_min) else tight
 		tight_right = True if (not tight) and (tick_list[-1] < series_max) else tight
-		tick_list = tick_list if tight or ((not tight) and (tick_list[0] <= series_min)) else [tick_list[0]-tick_spacing]+tick_list
-		tick_list = tick_list if tight or ((not tight) and (tick_list[-1] >= series_max)) else tick_list+[tick_list[-1]+tick_spacing]
-	tick_list = numpy.array(tick_list if tight else ([tick_list[0]-tick_spacing] if not tight_left else [])+tick_list+([tick_list[-1]+tick_spacing] if not tight_right else []))
+		tick_list = numpy.array(tick_list)
+	else:
+		if len(series) == 1:
+			series_min = series_max = series[0]
+			tick_list = [series[0]]
+			tick_spacing = 0.1*series[0]
+			tight = tight_left = tight_right = False
+		else:
+			# Try to find the tick spacing that will have the most number of data points on grid. Otherwise, place max_ticks uniformely distributed across the data rage
+			series_delta = putil.misc.smart_round(max(series)-min(series), PRECISION)
+			working_series = series[:].tolist()
+			tick_list = list()
+			num_ticks = MAX_TICKS
+			while (num_ticks >= MIN_TICKS) and (len(working_series) > 1):
+				data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
+				tick_spacing = putil.misc.gcd(data_spacing)
+				num_ticks = (series_delta/tick_spacing)+1
+				if (num_ticks >= MIN_TICKS) and (num_ticks <= MAX_TICKS):
+					tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()
+					break
+				# Remove elements that cause minimum spacing, to see if with those elements removed the number of tick marks can be withing the acceptable range
+				min_data_spacing = min(data_spacing)
+				# Account for fact that if minimum spacing is between last two elements, the last element cannot be removed (it is the end of the range), but rather the next-to-last has to be removed
+				if (data_spacing[-1] == min_data_spacing) and (len(working_series) > 2):
+					working_series = working_series[:-2]+[working_series[-1]]
+					data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
+				working_series = [working_series[0]]+[element for element, spacing in zip(working_series[1:], data_spacing) if spacing != min_data_spacing]
+			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), MAX_TICKS).tolist()
+			tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
+			# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
+			tight_left = False if (not tight) and (tick_list[0] > series_min) else tight
+			tight_right = False if (not tight) and (tick_list[-1] < series_max) else tight
+		tick_list = numpy.array(tick_list if tight else ([tick_list[0]-tick_spacing] if not tight_left else [])+tick_list+([tick_list[-1]+tick_spacing] if not tight_right else []))
 	# Scale series with minimum, maximum and delta as reference, pick scaling option that has the most compact representation
 	opt_min = _scale_ticks(tick_list, 'MIN')
 	opt_max = _scale_ticks(tick_list, 'MAX')
 	opt_delta = _scale_ticks(tick_list, 'DELTA')
 	opt = opt_min if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else (opt_max if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else opt_delta)
+	# Add extra room in logarithmic axis if Tight is True, but do not label marks (aesthetic decision)
+	if log_axis and not tight:
+		if tight_left:
+			opt['loc'].insert(0, putil.misc.smart_round(0.9*opt['loc'][0], PRECISION))
+			opt['labels'].insert(0, '')
+		if tight_right:
+			opt['loc'].append(putil.misc.smart_round(1.1*opt['loc'][-1], PRECISION))
+			opt['labels'].append('')
 	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['scale'], opt['unit'])
 
 def _scale_ticks(tick_list, mode):

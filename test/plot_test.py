@@ -1010,104 +1010,147 @@ class TestPanel(object):	#pylint: disable=W0232
 	def test_intelligent_ticks(self):	#pylint: disable=C0103,R0201,W0621,R0915
 		""" Test that intelligent_tick methods works for all scenarios """
 		test_list = list()
+		# 0
 		# Tight = True
 		# One sample
 		vector = numpy.array([35e-6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([31.5, 35, 38.5], ['31.5', '35.0', '38.5'], 31.5, 38.5, 1e-6, 'u'))
 		print obj
+		# 1
 		# Scaling with more data samples after 1.0
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6], ['0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6'], 0.8, 1.6, 1, ' '))
 		print obj
+		# 2
 		# Regular, should not have any scaling
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1, ' '))
 		print obj
+		# 3
 		# Regular, should not have any scaling
 		vector = numpy.array([10, 20, 30, 40, 50, 60, 70])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([10, 20, 30, 40, 50, 60, 70], ['10', '20', '30', '40', '50', '60', '70'], 10, 70, 1, ' '))
 		print obj
+		# 4
 		# Scaling
 		vector = numpy.array([1000, 2000, 3000, 4000, 5000, 6000, 7000])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1e3, 'k'))
 		print obj
+		# 5
 		# Scaling
 		vector = numpy.array([200e6, 300e6, 400e6, 500e6, 600e6, 700e6, 800e6, 900e6, 1000e6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([200, 300, 400, 500, 600, 700, 800, 900, 1000], ['200', '300', '400', '500', '600', '700', '800', '900', '1k'], 200, 1000, 1e6, 'M'))
 		print obj
+		# 6
 		# No tick marks to place all data points on grid, space uniformely
 		vector = numpy.array([105, 107.7, 215, 400.2, 600, 700, 800, 810, 820, 830, 840, 850, 900, 905])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([105.0, 193.88888889, 282.77777778, 371.66666667, 460.55555556, 549.44444444, 638.33333333, 727.22222222, 816.11111111, 905.0],
 						   ['105', '194', '283', '372', '461', '549', '638', '727', '816', '905'], 105, 905, 1, ' '))
 		print obj
+		# 7
 		# Ticks marks where some data points can be on grid
 		vector = numpy.array([10, 20, 30, 40, 41, 50, 60, 62, 70, 75.5, 80])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([10, 20, 30, 40, 50, 60, 70, 80], ['10', '20', '30', '40', '50', '60', '70', '80'], 10, 80, 1, ' '))
 		print obj
-		#
+		# 8
 		# Tight = False
 		# One sample
 		vector = numpy.array([1e-9])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
 		test_list.append(obj == ([0.9, 1, 1.1], ['0.9', '1.0', '1.1'], 0.9, 1.1, 1e-9, 'n'))
 		print obj
+		# 9
 		# Scaling with more data samples after 1.0
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
 		test_list.append(obj == ([0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7'], 0.7, 1.7, 1, ' '))
 		print obj
+		# 10
 		# Scaling with more data samples before 1.0
 		vector = numpy.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
 		test_list.append(obj == ([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2], ['0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0', '1.1', '1.2'], 0.2, 1.2, 1, ' '))
 		print obj
+		# 11
 		# Regular, with some overshoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 7.5, tight=False)	#pylint: disable=W0212
 		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
 		print obj
+		# 12
 		# Regular, with some undershoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, 0.1, max(vector), tight=False)	#pylint: disable=W0212
 		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
 		print obj
+		# 13
 		# Regular, with large overshoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 20, tight=False)	#pylint: disable=W0212
 		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
 		print obj
+		# 14
 		# Regular, with large undershoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, -10, max(vector), tight=False)	#pylint: disable=W0212
 		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
 		print obj
-		#
+		# 15
 		# Scaling, minimum as reference
 		vector = 1e9+(numpy.array([10, 20, 30, 40, 50, 60, 70, 80])*1e3)
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([1.00001, 1.00002, 1.00003, 1.00004, 1.00005, 1.00006, 1.00007, 1.00008], ['1.00001', '1.00002', '1.00003', '1.00004', '1.00005', '1.00006', '1.00007', '1.00008'], 1.00001, 1.00008, 1e9, 'G'))
 		print obj
+		# 16
 		# Scaling, delta as reference
 		vector = numpy.array([10.1e6, 20e6, 30e6, 40e6, 50e6, 60e6, 70e6, 80e6, 90e6, 100e6, 20.22e9])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([10.1, 2255.6444444, 4501.1888889, 6746.7333333, 8992.2777778, 11237.822222, 13483.366667, 15728.911111, 17974.455556, 20220.0], \
 						   ['10.1', '2.3k', '4.5k', '6.7k', '9.0k', '11.2k', '13.5k', '15.7k', '18.0k', '20.2k'], 10.1, 20220.0, 1e6, 'M'))
 		print obj
+		# 17
 		# Scaling, maximum as reference
 		vector = (numpy.array([0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5])*1e12)
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		test_list.append(obj == ([0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5'], 0.7, 1.5, 1e12, 'T'))
 		print obj
-		#
-		assert test_list == [True]*18
+		# 18
+		# Log axis
+		# Tight False
+		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
+		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True, log_axis=True)	#pylint: disable=W0212
+		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
+		print obj
+		# 19
+		# Tight True
+		# Left side
+		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
+		obj = putil.plot._intelligent_ticks(vector, 500, max(vector), tight=False, log_axis=True)	#pylint: disable=W0212
+		test_list.append(obj == ([0.9, 1, 10, 100, 1000, 10000, 100000], ['', '1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
+		print obj
+		# 20
+		# Right side
+		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
+		obj = putil.plot._intelligent_ticks(vector, min(vector), 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
+		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000, 110000], ['1', '10', '100', '1k', '10k', '100k', ''], 1, 100000, 1000, 'k'))
+		print obj
+		# 21
+		# Both
+		# Right side
+		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
+		obj = putil.plot._intelligent_ticks(vector, 500, 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
+		test_list.append(obj == ([0.9, 1, 10, 100, 1000, 10000, 100000, 110000], ['', '1', '10', '100', '1k', '10k', '100k', ''], 1, 100000, 1000, 'k'))
+		print obj
+
+		assert test_list == [True]*22
 
 	def test_cannot_delete_attributes(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
