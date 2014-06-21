@@ -2,8 +2,6 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-# TODO: Logarithmic axis test and implementation
-
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -948,7 +946,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	"""
 	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props={'pos':'BEST', 'cols':1}):	#pylint: disable=W0102,R0913
 		# Private attributes
-		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._legend_props = None, None, None, None, None, None, {'pos':'BEST', 'cols':1}
+		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props = \
+			None, None, None, None, None, None, False, {'pos':'BEST', 'cols':1}
 		self.legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
 		self.panel_has_primary_axis = False
 		self.panel_has_secondary_axis = False
@@ -956,24 +955,22 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self.primary_dep_var_max = None
 		self.primary_dep_var_div = None
 		self.primary_dep_var_unit_scale = None
-		self.primary_scaled_dep_var = None
 		self.primary_dep_var_locs = None
 		self.primary_dep_var_labels = None
 		self.secondary_dep_var_min = None
 		self.secondary_dep_var_max = None
 		self.secondary_dep_var_div = None
 		self.secondary_dep_var_unit_scale = None
-		self.secondary_scaled_dep_var = None
 		self.secondary_dep_var_locs = None
 		self.secondary_dep_var_labels = None
 		self.legend_props_list = ['pos', 'cols']
 		self.legend_props_pos_list = ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER']
+		self._set_log_dep_axis(log_dep_axis)	# Order here is important to avoid unnecessary re-calculating of panel axes if log_dep_axis is True
 		self._set_series(series)
 		self._set_primary_axis_label(primary_axis_label)
 		self._set_primary_axis_units(primary_axis_units)
 		self._set_secondary_axis_label(secondary_axis_label)
 		self._set_secondary_axis_units(secondary_axis_units)
-		self._set_log_dep_axis(log_dep_axis)
 		self._set_legend_props(legend_props)
 
 	def _get_series(self):	#pylint: disable=C0111
@@ -981,59 +978,56 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	def _set_series(self, series):	#pylint: disable=C0111,R0912,R0914
 		self._series = (series if isinstance(series, list) else [series]) if series is not None else series
+		self._recalculate_series = False
 		if self.series is not None:
 			self._validate_series()
 			self.panel_has_primary_axis = any([not series_obj.secondary_axis for series_obj in self.series])
 			self.panel_has_secondary_axis = any([series_obj.secondary_axis for series_obj in self.series])
+			comp_prim_dep_var = (not self.log_dep_axis) and self.panel_has_primary_axis
+			comp_sec_dep_var = (not self.log_dep_axis) and self.panel_has_secondary_axis
+			panel_has_primary_interp_series = any([(not series_obj.secondary_axis) and (series_obj.interp_dep_var is not None) for series_obj in self.series])
+			panel_has_secondary_interp_series = any([series_obj.secondary_axis and (series_obj.interp_dep_var is not None) for series_obj in self.series])	#pylint:disable=C0103
 			# Compute panel scaling factor
-			global_primary_dep_var = global_secondary_dep_var = global_panel_dep_var = list()
-			primary_min = secondary_min = primary_max = secondary_max = panel_min = panel_max = None
-			# Find union of all data points and panel minimum and maximum
-			# If panel has logarithmic dependent axis, limits are common and the union of the limits of both axis
-			for series_obj in self.series:
-				if (not self.log_dep_axis) and (not series_obj.secondary_axis):
-					global_primary_dep_var = numpy.unique(numpy.append(global_primary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
-					primary_min = min(series_obj.dep_var) if primary_min is None else min(primary_min, min(series_obj.dep_var))
-					primary_max = max(series_obj.dep_var) if primary_max is None else max(primary_max, max(series_obj.dep_var))
-					if series_obj.interp_dep_var is not None:
-						primary_min = min(primary_min, min(series_obj.interp_dep_var))
-						primary_max = max(primary_max, max(series_obj.interp_dep_var))
-				elif (not self.log_dep_axis) and (series_obj.secondary_axis):
-					global_secondary_dep_var = numpy.unique(numpy.append(global_secondary_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
-					secondary_min = min(series_obj.dep_var) if secondary_min is None else min(secondary_min, min(series_obj.dep_var))
-					secondary_max = max(series_obj.dep_var) if secondary_max is None else max(secondary_max, max(series_obj.dep_var))
-					if series_obj.interp_dep_var is not None:
-						secondary_min = min(secondary_min, min(series_obj.interp_dep_var))
-						secondary_max = max(secondary_max, max(series_obj.interp_dep_var))
-				elif self.log_dep_axis:
-					global_panel_dep_var = numpy.unique(numpy.append(global_panel_dep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.dep_var])))
-					panel_min = min(series_obj.dep_var) if panel_min is None else min(panel_min, min(series_obj.dep_var))
-					panel_max = max(series_obj.dep_var) if panel_max is None else max(panel_max, max(series_obj.dep_var))
+			primary_min = prim_interp_min = secondary_min = sec_interp_min = primary_max = prim_interp_max = secondary_max = sec_interp_max = panel_min = panel_max = None
+			# Find union of all data points and panel minimum and maximum. If panel has logarithmic dependent axis, limits are common and the union of the limits of both axis
+			# Primary axis
+			glob_prim_dep_var = numpy.unique(numpy.concatenate([series_obj.dep_var for series_obj in self.series if not series_obj.secondary_axis])) if comp_prim_dep_var else None
+			prim_interp_min = min([min(series_obj.dep_var) for series_obj in self.series if (not series_obj.secondary_axis) and (series_obj.interp_dep_var is not None)]) if panel_has_primary_interp_series else None
+			prim_interp_max = max([max(series_obj.dep_var) for series_obj in self.series if (not series_obj.secondary_axis) and (series_obj.interp_dep_var is not None)]) if panel_has_primary_interp_series else None
+			primary_min = min(min(glob_prim_dep_var), prim_interp_min) if comp_prim_dep_var and (prim_interp_min is not None) else (min(glob_prim_dep_var) if comp_prim_dep_var else None)
+			primary_max = max(max(glob_prim_dep_var), prim_interp_max) if comp_prim_dep_var and (prim_interp_min is not None) else (max(glob_prim_dep_var) if comp_prim_dep_var else None)
+			# Secondary axis
+			glob_sec_dep_var = numpy.unique(numpy.concatenate([series_obj.dep_var  for series_obj in self.series if series_obj.secondary_axis])) if comp_sec_dep_var else None
+			sec_interp_min = min([min(series_obj.dep_var) for series_obj in self.series if series_obj.secondary_axis and (series_obj.interp_dep_var is not None)]).tolist() if panel_has_secondary_interp_series else None
+			sec_interp_max = max([max(series_obj.dep_var) for series_obj in self.series if series_obj.secondary_axis and (series_obj.interp_dep_var is not None)]).tolist() if panel_has_secondary_interp_series else None
+			secondary_min = min(min(glob_sec_dep_var), sec_interp_min) if comp_sec_dep_var and (sec_interp_min is not None) else (min(glob_sec_dep_var) if comp_sec_dep_var else None)
+			secondary_max = max(max(glob_sec_dep_var), sec_interp_max) if comp_sec_dep_var and (sec_interp_max is not None) else (max(glob_sec_dep_var) if comp_sec_dep_var else None)
+			# Global (for logarithmic dependent axis)
+			glob_panel_dep_var = None if not self.log_dep_axis else numpy.unique(numpy.concatenate([series_obj.dep_var for series_obj in self.series]))
+			panel_min = min(min(glob_panel_dep_var), prim_interp_min) if self.log_dep_axis and panel_has_primary_interp_series else (min(glob_panel_dep_var) if self.log_dep_axis else None)
+			panel_max = max(max(glob_panel_dep_var), prim_interp_max) if self.log_dep_axis and panel_has_primary_interp_series else (max(glob_panel_dep_var) if self.log_dep_axis else None)
+			panel_min = min(min(glob_panel_dep_var), sec_interp_min) if self.log_dep_axis and panel_has_secondary_interp_series else (min(glob_panel_dep_var) if self.log_dep_axis else None)
+			panel_max = max(max(glob_panel_dep_var), sec_interp_max) if self.log_dep_axis and panel_has_secondary_interp_series else (max(glob_panel_dep_var) if self.log_dep_axis else None)
 			# Get axis tick marks locations
-			if (not self.log_dep_axis) and self.panel_has_primary_axis:
+			if comp_prim_dep_var:
 				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale = \
-					_intelligent_ticks(global_primary_dep_var, primary_min, primary_max, tight=False, log_axis=self.log_dep_axis)
-			if (not self.log_dep_axis) and self.panel_has_secondary_axis:
+					_intelligent_ticks(glob_prim_dep_var, primary_min, primary_max, tight=False, log_axis=self.log_dep_axis)
+			if comp_sec_dep_var:
 				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale = \
-					_intelligent_ticks(global_secondary_dep_var, secondary_min, secondary_max, tight=False, log_axis=self.log_dep_axis)
-			if self.log_dep_axis:
+					_intelligent_ticks(glob_sec_dep_var, secondary_min, secondary_max, tight=False, log_axis=self.log_dep_axis)
+			if self.log_dep_axis and self.panel_has_primary_axis:
 				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale = \
-					_intelligent_ticks(global_panel_dep_var, panel_min, panel_max, tight=False, log_axis=self.log_dep_axis)
-				if self.panel_has_secondary_axis:
-					self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale = \
-						self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale
-			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval
+					_intelligent_ticks(glob_panel_dep_var, panel_min, panel_max, tight=False, log_axis=self.log_dep_axis)
+			if self.log_dep_axis and self.panel_has_secondary_axis:
+				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale = \
+					_intelligent_ticks(glob_panel_dep_var, panel_min, panel_max, tight=False, log_axis=self.log_dep_axis)
+			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval (for non-logarithmic panels)
 			if (not self.log_dep_axis) and self.panel_has_primary_axis and self.panel_has_secondary_axis:
 				max_ticks = max(len(self.primary_dep_var_locs), len(self.secondary_dep_var_locs))-1
 				primary_delta = (self.primary_dep_var_locs[-1]-self.primary_dep_var_locs[0])/float(max_ticks)
 				secondary_delta = (self.secondary_dep_var_locs[-1]-self.secondary_dep_var_locs[0])/float(max_ticks)
-				primary_start = self.primary_dep_var_locs[0]
-				secondary_start = self.secondary_dep_var_locs[0]
-				self.primary_dep_var_locs = list()
-				self.secondary_dep_var_locs = list()
-				for num in range(max_ticks+1):
-					self.primary_dep_var_locs.append(primary_start+(num*primary_delta))
-					self.secondary_dep_var_locs.append(secondary_start+(num*secondary_delta))
+				self.primary_dep_var_locs = [self.primary_dep_var_locs[0]+(num*primary_delta) for num in range(max_ticks+1)]
+				self.secondary_dep_var_locs = [self.secondary_dep_var_locs[0]+(num*secondary_delta) for num in range(max_ticks+1)]
 				self.primary_dep_var_locs, self.primary_dep_var_labels = _uniquify_tick_labels(self.primary_dep_var_locs, self.primary_dep_var_locs[0], self.primary_dep_var_locs[-1])
 				self.secondary_dep_var_locs, self.secondary_dep_var_labels = _uniquify_tick_labels(self.secondary_dep_var_locs, self.secondary_dep_var_locs[0], self.secondary_dep_var_locs[-1])
 			# Scale panel
@@ -1072,7 +1066,10 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	@putil.check.check_parameter('log_dep_axis', putil.check.PolymorphicType([None, bool]))
 	def _set_log_dep_axis(self, log_dep_axis):	#pylint: disable=C0111
+		self._recalculate_series = self.log_dep_axis != log_dep_axis
 		self._log_dep_axis = log_dep_axis
+		if self._recalculate_series:
+			self._set_series(self._series)
 
 	def _get_legend_props(self):	#pylint: disable=C0111
 		return self._legend_props
@@ -1115,7 +1112,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		if self.legend_props is None:
 			ret += 'Legend properties: None'
 		else:
-			ret += 'Legend properties\n'
+			ret += 'Legend properties:\n'
 			for num, (key, value) in enumerate(self.legend_props.iteritems()):
 				ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props) else '')
 		return ret
@@ -1127,6 +1124,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				raise TypeError('Parameter `series` is of the wrong type')
 			if not obj._complete():	#pylint: disable=W0212
 				raise RuntimeError('Series element {0} is not fully specified'.format(num))
+			if (min(obj.dep_var) <= 0) and self.log_dep_axis:
+				raise ValueError('Series element {0} cannot be plotted in a logarithmic axis because it contains negative data points'.format(num))
 
 	def _complete(self):
 		""" Returns True if panel is fully specified, otherwise returns False """
@@ -1648,19 +1647,20 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=False):	#pylint: disable=R0912,R0914,R0915
 	""" Calculates ticks 'intelligently', trying to calculate sane tick spacing """
 	# Handle 1-point series
-	if log_axis:
-		dec_start = int(math.log10(min(series)))
-		dec_stop = int(math.log10(max(series)))+1
-		tick_list = [10**num for num in range(dec_start, dec_stop+1)]
-		tight_left = True if (not tight) and (tick_list[0] > series_min) else tight
-		tight_right = True if (not tight) and (tick_list[-1] < series_max) else tight
-		tick_list = numpy.array(tick_list)
+	if len(series) == 1:
+		series_min = series_max = series[0]
+		tick_spacing = putil.misc.smart_round(0.1*series[0], PRECISION)
+		tick_list = numpy.array([series[0]-tick_spacing, series[0], series[0]+tick_spacing])
+		tick_spacing = putil.misc.smart_round(0.1*series[0], PRECISION)
+		tight = tight_left = tight_right = log_axis = False
 	else:
-		if len(series) == 1:
-			series_min = series_max = series[0]
-			tick_list = [series[0]]
-			tick_spacing = 0.1*series[0]
-			tight = tight_left = tight_right = False
+		if log_axis:
+			dec_start = int(math.log10(min(series)))
+			dec_stop = int(math.ceil(math.log10(max(series))))
+			tick_list = [10**num for num in range(dec_start, dec_stop+1)]
+			tight_left = False if (not tight) and (tick_list[0] >= min(series)) else True
+			tight_right = False if (not tight) and (tick_list[-1] <= max(series)) else True
+			tick_list = numpy.array(tick_list)
 		else:
 			# Try to find the tick spacing that will have the most number of data points on grid. Otherwise, place max_ticks uniformely distributed across the data rage
 			series_delta = putil.misc.smart_round(max(series)-min(series), PRECISION)
@@ -1684,9 +1684,9 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=Fals
 			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), MAX_TICKS).tolist()
 			tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
 			# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
-			tight_left = False if (not tight) and (tick_list[0] > series_min) else tight
-			tight_right = False if (not tight) and (tick_list[-1] < series_max) else tight
-		tick_list = numpy.array(tick_list if tight else ([tick_list[0]-tick_spacing] if not tight_left else [])+tick_list+([tick_list[-1]+tick_spacing] if not tight_right else []))
+			tight_left = False if (not tight) and (tick_list[0] >= series_min) else tight
+			tight_right = False if (not tight) and (tick_list[-1] <= series_max) else tight
+			tick_list = numpy.array(tick_list if tight else ([tick_list[0]-tick_spacing] if not tight_left else [])+tick_list+([tick_list[-1]+tick_spacing] if not tight_right else []))
 	# Scale series with minimum, maximum and delta as reference, pick scaling option that has the most compact representation
 	opt_min = _scale_ticks(tick_list, 'MIN')
 	opt_max = _scale_ticks(tick_list, 'MAX')
@@ -1694,11 +1694,13 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=Fals
 	opt = opt_min if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else (opt_max if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else opt_delta)
 	# Add extra room in logarithmic axis if Tight is True, but do not label marks (aesthetic decision)
 	if log_axis and not tight:
-		if tight_left:
-			opt['loc'].insert(0, putil.misc.smart_round(0.9*opt['loc'][0], PRECISION))
+		if not tight_left:
+			opt['min'] = putil.misc.smart_round(0.9*opt['loc'][0], PRECISION)
+			opt['loc'].insert(0, opt['min'])
 			opt['labels'].insert(0, '')
-		if tight_right:
-			opt['loc'].append(putil.misc.smart_round(1.1*opt['loc'][-1], PRECISION))
+		if not tight_right:
+			opt['max'] = putil.misc.smart_round(1.1*opt['loc'][-1], PRECISION)
+			opt['loc'].append(opt['max'])
 			opt['labels'].append('')
 	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['scale'], opt['unit'])
 
@@ -1748,7 +1750,7 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
 			if unique_mant_found is True:
 				loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
 				break
-	return loc, labels
+	return [putil.misc.smart_round(element, PRECISION) for element in loc], labels
 
 def _series_threshold(indep_var, dep_var, threshold, threshold_type):
 	"""

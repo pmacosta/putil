@@ -971,14 +971,19 @@ class TestPanel(object):	#pylint: disable=W0232
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Panel(series=default_series, log_dep_axis=5)
 		test_list.append(excinfo.value.message == 'Parameter `log_dep_axis` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:
+			putil.plot.Panel(series=default_series, log_dep_axis=True)
+		test_list.append(excinfo.value.message == 'Series element 0 cannot be plotted in a logarithmic axis because it contains negative data points')
 		# These assignments should not raise an exception
+		non_negative_data_source = putil.plot.BasicSource(indep_var=numpy.array([5, 6, 7, 8]), dep_var=numpy.array([0.1, 10, 5, 4]))
+		non_negative_series = putil.plot.Series(data_source=non_negative_data_source, label='non-negative data series')
 		obj = putil.plot.Panel(series=default_series, log_dep_axis=False)
 		test_list.append(obj.log_dep_axis == False)
-		obj = putil.plot.Panel(series=default_series, log_dep_axis=True)
+		obj = putil.plot.Panel(series=non_negative_series, log_dep_axis=True)
 		test_list.append(obj.log_dep_axis == True)
 		obj = putil.plot.Panel(series=default_series)
 		test_list.append(obj.log_dep_axis == False)
-		assert test_list == [True]*4
+		assert test_list == [True]*5
 
 	def test_legend_props_wrong_type(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test legend_props data validation """
@@ -1128,29 +1133,200 @@ class TestPanel(object):	#pylint: disable=W0232
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True, log_axis=True)	#pylint: disable=W0212
 		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
-		print obj
 		# 19
 		# Tight True
 		# Left side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, 500, max(vector), tight=False, log_axis=True)	#pylint: disable=W0212
-		test_list.append(obj == ([0.9, 1, 10, 100, 1000, 10000, 100000], ['', '1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
+		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
 		print obj
 		# 20
 		# Right side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000, 110000], ['1', '10', '100', '1k', '10k', '100k', ''], 1, 100000, 1000, 'k'))
+		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
 		print obj
 		# 21
 		# Both
 		# Right side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, 500, 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
-		test_list.append(obj == ([0.9, 1, 10, 100, 1000, 10000, 100000, 110000], ['', '1', '10', '100', '1k', '10k', '100k', ''], 1, 100000, 1000, 'k'))
+		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
 		print obj
-
+		#
 		assert test_list == [True]*22
+
+	def test_series(self):	#pylint: disable=C0103,R0201,W0621,R0914,R0915
+		""" Test that the panel dependent axis are correctly set """
+		ds1_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([1, 2, 3, 4]))
+		ds2_obj = putil.plot.BasicSource(indep_var=numpy.array([300, 400, 500, 600, 700]), dep_var=numpy.array([3, 4, 5, 6, 7]))
+		ds3_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300]), dep_var=numpy.array([20, 40, 50]))
+		ds4_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300]), dep_var=numpy.array([10, 25, 35]))
+		ds5_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([10, 20, 30, 40]))
+		ds6_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([20, 30, 40, 100]))
+		ds7_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([20, 30, 40, 50]))
+		ds8_obj = putil.plot.BasicSource(indep_var=numpy.array([100]), dep_var=numpy.array([20]))
+		series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', interp=None)
+		series2_obj = putil.plot.Series(data_source=ds2_obj, label='series 2', interp=None)
+		series3_obj = putil.plot.Series(data_source=ds3_obj, label='series 3', interp=None, secondary_axis=True)
+		series4_obj = putil.plot.Series(data_source=ds4_obj, label='series 4', interp=None, secondary_axis=True)
+		series5_obj = putil.plot.Series(data_source=ds5_obj, label='series 5', interp=None, secondary_axis=True)
+		series6_obj = putil.plot.Series(data_source=ds6_obj, label='series 6', interp=None, secondary_axis=True)
+		series7_obj = putil.plot.Series(data_source=ds7_obj, label='series 7', interp=None)
+		series8_obj = putil.plot.Series(data_source=ds8_obj, label='series 8', interp=None)
+		test_list = list()
+		# 0-8: Linear primary and secondary axis, with multiple series on both
+		panel_obj = putil.plot.Panel(series=[series1_obj, series2_obj, series3_obj, series4_obj])
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (True, True))
+		test_list.append(panel_obj.primary_dep_var_locs == [0, 0.8, 1.6, 2.4, 3.2, 4.0, 4.8, 5.6, 6.4, 7.2, 8.0])
+		test_list.append(panel_obj.primary_dep_var_labels == ['0.0', '0.8', '1.6', '2.4', '3.2', '4.0', '4.8', '5.6', '6.4', '7.2', '8.0'])
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (0, 8))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (1, ' '))
+		test_list.append(panel_obj.secondary_dep_var_locs == [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55])
+		test_list.append(panel_obj.secondary_dep_var_labels == ['5', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'])
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (5, 55))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (1, ' '))
+		# 9-17: Linear primary axis with multiple series
+		panel_obj = putil.plot.Panel(series=[series1_obj, series2_obj])
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (True, False))
+		test_list.append(panel_obj.primary_dep_var_locs == [0, 1, 2, 3, 4, 5, 6, 7, 8])
+		test_list.append(panel_obj.primary_dep_var_labels == ['0', '1', '2', '3', '4', '5', '6', '7', '8'])
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (0, 8))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (1, ' '))
+		test_list.append(panel_obj.secondary_dep_var_locs == None)
+		test_list.append(panel_obj.secondary_dep_var_labels == None)
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (None, None))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (None, None))
+		# 18-26: Linear primary and secondary axis, with multiple series on both
+		panel_obj = putil.plot.Panel(series=[series3_obj, series4_obj])
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (False, True))
+		test_list.append(panel_obj.primary_dep_var_locs == None)
+		test_list.append(panel_obj.primary_dep_var_labels == None)
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (None, None))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (None, None))
+		test_list.append(panel_obj.secondary_dep_var_locs == [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55])
+		test_list.append(panel_obj.secondary_dep_var_labels == ['5', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'])
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (5, 55))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (1, ' '))
+		# 27-35: Logarithmic primary and secondary axis, with multiple series on both
+		panel_obj = putil.plot.Panel(series=[series1_obj, series5_obj], log_dep_axis=True)
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (True, True))
+		test_list.append(panel_obj.primary_dep_var_locs == [0.9, 1, 10, 100])
+		test_list.append(panel_obj.primary_dep_var_labels == ['', '1', '10', '100'])
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (0.9, 100))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (1, ' '))
+		test_list.append(panel_obj.secondary_dep_var_locs == [0.9, 1, 10, 100])
+		test_list.append(panel_obj.secondary_dep_var_labels == ['', '1', '10', '100'])
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (0.9, 100))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (1, ' '))
+		# 36-44: Logarithmic primary axis (bottom point at decade edge)
+		panel_obj = putil.plot.Panel(series=[series1_obj], log_dep_axis=True)
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (True, False))
+		test_list.append(panel_obj.primary_dep_var_locs == [0.9, 1, 10])
+		test_list.append(panel_obj.primary_dep_var_labels == ['', '1', '10'])
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (0.9, 10))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (1, ' '))
+		test_list.append(panel_obj.secondary_dep_var_locs == None)
+		test_list.append(panel_obj.secondary_dep_var_labels == None)
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (None, None))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (None, None))
+		# 45-53: Logarithmic secondary axis (top point at decade edge)
+		panel_obj = putil.plot.Panel(series=[series6_obj], log_dep_axis=True)
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (False, True))
+		test_list.append(panel_obj.primary_dep_var_locs == None)
+		test_list.append(panel_obj.primary_dep_var_labels == None)
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (None, None))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (None, None))
+		test_list.append(panel_obj.secondary_dep_var_locs == [10, 100, 110])
+		test_list.append(panel_obj.secondary_dep_var_labels == ['10', '100', ''])
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (10, 110))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (1, ' '))
+		# 54-62: Logarithmic secondary axis (points not at decade edge)
+		panel_obj = putil.plot.Panel(series=[series7_obj], log_dep_axis=True)
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (True, False))
+		test_list.append(panel_obj.primary_dep_var_locs == [10, 100])
+		test_list.append(panel_obj.primary_dep_var_labels == ['10', '100'])
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (10, 100))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (1, ' '))
+		test_list.append(panel_obj.secondary_dep_var_locs == None)
+		test_list.append(panel_obj.secondary_dep_var_labels == None)
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (None, None))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (None, None))
+		# 63-71: Logarithmic secondary axis (1 point)
+		panel_obj = putil.plot.Panel(series=[series8_obj], log_dep_axis=True)
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (True, False))
+		test_list.append(panel_obj.primary_dep_var_locs == [18, 20, 22])
+		test_list.append(panel_obj.primary_dep_var_labels == ['18', '20', '22'])
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (18, 22))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (1, ' '))
+		test_list.append(panel_obj.secondary_dep_var_locs == None)
+		test_list.append(panel_obj.secondary_dep_var_labels == None)
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (None, None))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (None, None))
+		# 72-80: Linear secondary axis (1 point)
+		panel_obj = putil.plot.Panel(series=[series8_obj], log_dep_axis=False)
+		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (True, False))
+		test_list.append(panel_obj.primary_dep_var_locs == [18, 20, 22])
+		test_list.append(panel_obj.primary_dep_var_labels == ['18', '20', '22'])
+		test_list.append((panel_obj.primary_dep_var_min, panel_obj.primary_dep_var_max) == (18, 22))
+		test_list.append((panel_obj.primary_dep_var_div, panel_obj.primary_dep_var_unit_scale) == (1, ' '))
+		test_list.append(panel_obj.secondary_dep_var_locs == None)
+		test_list.append(panel_obj.secondary_dep_var_labels == None)
+		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (None, None))
+		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (None, None))
+		#
+		assert test_list == [True]*81
+
+	def test_complete(self, default_series):	#pylint: disable=C0103,R0201,W0621
+		""" Test that _complete() method behaves correctly """
+		test_list = list()
+		obj = putil.plot.Panel(series=None)
+		test_list.append(obj._complete() == False)	#pylint: disable=W0212
+		obj.series = default_series
+		test_list.append(obj._complete() == True)	#pylint: disable=W0212
+		assert test_list == 2*[True]
+
+	def test_scale_series(self, default_series):	#pylint: disable=C0103,R0201,W0621
+		""" Test that series scaling function behaves correctly """
+		#return putil.plot.Series(data_source=default_source, label='test series')
+		source_obj = putil.plot.BasicSource(indep_var=numpy.array([5, 6, 7, 8]), dep_var=numpy.array([4.2, 8, 10, 4]))
+		series_obj = putil.plot.Series(data_source=source_obj, label='test', secondary_axis=True)
+		panel1_obj = putil.plot.Panel(series=series_obj)
+		panel2_obj = putil.plot.Panel(series=[default_series, series_obj])
+		test_list = list()
+		obj = putil.plot.Panel(series=default_series)
+		obj._scale_dep_var(2, None)	#pylint: disable=W0212
+		test_list.append((abs(obj.series[0].scaled_dep_var-[0, -5, 2.5, 2]) < 1e-10).all() == True)
+		obj._scale_dep_var(2, 5)	#pylint: disable=W0212
+		test_list.append((abs(obj.series[0].scaled_dep_var-[0, -5, 2.5, 2]) < 1e-10).all() == True)
+		panel1_obj._scale_dep_var(None, 2)	#pylint: disable=W0212
+		test_list.append((abs(panel1_obj.series[0].scaled_dep_var-[2.1, 4, 5, 2]) < 1e-10).all() == True)
+		panel2_obj._scale_dep_var(4, 5)	#pylint: disable=W0212
+		test_list.append(((abs(panel2_obj.series[0].scaled_dep_var-[0, -2.5, 1.25, 1]) < 1e-10).all(), (abs(panel2_obj.series[1].scaled_dep_var-[0.84, 1.6, 2, 0.8]) < 1e-10).all()) == (True, True))
+		assert test_list == 4*[True]
+
+	def test_str(self, default_series):	#pylint: disable=C0103,R0201,W0621
+		""" Test that str behaves correctly """
+		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts')
+		ret = 'Series 1:\n'
+		ret += '   Data source: putil.plot.BasicSource class object\n'
+		ret += '   Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+		ret += '   Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+		ret += '   Label: test series\n'
+		ret += '   Color: k\n'
+		ret += '   Marker: True\n'
+		ret += '   Interpolation: CUBIC\n'
+		ret += '   Line style: -\n'
+		ret += '   Secondary axis: False\n'
+		ret += 'Primary axis label: Output\n'
+		ret += 'Primary axis units: Volts\n'
+		ret += 'Secondary axis label: Input\n'
+		ret += 'Secondary axis units: Watts\n'
+		ret += 'Logarithmic dependent axis: False\n'
+		ret += 'Legend properties:\n'
+		ret += '   pos: BEST\n'
+		ret += '   cols: 1'
+		assert str(obj) == ret
 
 	def test_cannot_delete_attributes(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
@@ -1178,5 +1354,3 @@ class TestPanel(object):	#pylint: disable=W0232
 			del obj.legend_props
 		test_list.append(excinfo.value.message == "can't delete attribute")
 		assert test_list == 7*[True]
-
-
