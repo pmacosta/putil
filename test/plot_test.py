@@ -892,7 +892,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		""" Compare images to verify correct plotting of series """
 		tmpdir.mkdir('test_images')
 		test_list = list()
-		images_dict_list = gen_ref_images.unittest_image(mode='test', test_dir=str(tmpdir))
+		images_dict_list = gen_ref_images.unittest_series_images(mode='test', test_dir=str(tmpdir))
 		for images_dict in images_dict_list:
 			ref_file_name = images_dict['ref_file_name']
 			test_file_name = images_dict['test_file_name']
@@ -1197,7 +1197,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list.append(panel_obj.secondary_dep_var_labels == None)
 		test_list.append((panel_obj.secondary_dep_var_min, panel_obj.secondary_dep_var_max) == (None, None))
 		test_list.append((panel_obj.secondary_dep_var_div, panel_obj.secondary_dep_var_unit_scale) == (None, None))
-		# 18-26: Linear primary and secondary axis, with multiple series on both
+		# 18-26: Linear secondary axis with multiple series on both
 		panel_obj = putil.plot.Panel(series=[series3_obj, series4_obj])
 		test_list.append((panel_obj.panel_has_primary_axis, panel_obj.panel_has_secondary_axis) == (False, True))
 		test_list.append(panel_obj.primary_dep_var_locs == None)

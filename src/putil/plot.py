@@ -44,6 +44,29 @@ of the panel and below the minimum data point of the panel.
 :type:	integer
 """	#pylint: disable=W0105
 
+
+AXIS_LABEL_FONT_SIZE = 18
+"""
+Font size in points for axis labels
+
+:type:	integer
+"""	#pylint: disable=W0105
+
+AXIS_TICKS_FONT_SIZE = 14
+"""
+Font size in points for axis tick labels
+
+:type:	integer
+"""	#pylint: disable=W0105
+
+LEGEND_SCALE = 1.5
+"""
+Scale factor for panel legend. The legend font size in points is equal to the axis font size divided by the legend scale.
+
+:type:	number
+"""	#pylint: disable=W0105
+
+
 class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Container to hold data sets intended for plotting
@@ -787,8 +810,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 		""" Update line width specification to be used in series drawing """
 		self._linewidth_spec = self._ref_linewidth if (self.line_style is not None) and (self.interp is not None) else 0.0
 
-	def _legend_artist(self, legend_scale=1.5):
+	def _legend_artist(self, legend_scale=None):
 		""" Creates artist (marker -if used- and line style -if used-) """
+		legend_scale = LEGEND_SCALE if legend_scale is None else legend_scale
 		return plt.Line2D(
 			(0, 1),
 			(0, 0),
@@ -1144,96 +1168,92 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			else:
 				series_obj._scale_dep_var(secondary_scaling_factor)	#pylint: disable=W0212
 
-	def _draw_panel(self, fig, axarr, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
+	def _setup_dep_axis(self, axis_type, fig_obj, axis_obj, dep_min, dep_max, tick_locs, tick_labels, axis_label, axis_units, axis_scale):	#pylint: disable=R0201,R0913,R0914
+		""" Configure dependent axis """
+		# Set function pointers
+		xflist = [axis_obj.xaxis.grid, axis_obj.set_xlim, axis_obj.xaxis.set_ticks, axis_obj.xaxis.set_ticklabels, axis_obj.xaxis.get_ticklabels, axis_obj.xaxis.set_label_text, axis_obj.xaxis.get_label]
+		yflist = [axis_obj.yaxis.grid, axis_obj.set_ylim, axis_obj.yaxis.set_ticks, axis_obj.yaxis.set_ticklabels, axis_obj.yaxis.get_ticklabels, axis_obj.yaxis.set_label_text, axis_obj.yaxis.get_label]
+		fgrid, flim, fticks, fticklabels, fget_ticklabels, fset_label_text, fget_label = xflist if axis_type.upper() == 'INDEP' else yflist
+		# Process
+		fgrid(True, 'both')
+		flim((dep_min, dep_max), emit=True, auto=False)
+		fticks(tick_locs)
+		axis_obj.tick_params(axis='x' if axis_type.upper() == 'INDEP' else 'y', which='major', labelsize=AXIS_TICKS_FONT_SIZE)
+		if tick_labels is not None:
+			fticklabels(tick_labels)
+			# Calculate minimum panel height from primary axis
+			# Minimum of one line spacing between vertical ticks, minimum of one smallest label separation between horizontal ticks
+			# Find first non-blank label
+			label_index = label = None
+			for label_index, label in enumerate(tick_labels):
+				if label != '':
+					break
+			else:
+				raise RuntimeError('All axis labels are blank')
+			print fget_ticklabels()[label_index]
+			print _get_text_prop(fig_obj, fget_ticklabels()[label_index])
+			print _get_text_prop(fig_obj, fget_ticklabels()[label_index])['height']
+			print
+			label_height = _get_text_prop(fig_obj, fget_ticklabels()[label_index])['height']
+			axis_height = label_height if axis_type.upper() == 'INDEP' else (2*len(tick_labels)-1)*label_height
+			min_label_width, max_label_width = min([_get_text_prop(fig_obj, tick)['width'] for tick in fget_ticklabels()]), max([_get_text_prop(fig_obj, tick)['width'] for tick in fget_ticklabels()])
+			axis_width = ((len(tick_labels)-1)*min_label_width)+sum([_get_text_prop(fig_obj, tick)['width'] for tick in fget_ticklabels()]) if axis_type.upper() == 'INDEP' else max_label_width
+		if (axis_label not in [None, '']) or (axis_units not in [None, '']):
+			axis_label = '' if axis_label is None else axis_label.strip()
+			unit_scale = '' if axis_scale is None else axis_scale.strip()
+			fset_label_text(axis_label + ('' if (unit_scale == '') and (axis_units == '') else (' ['+unit_scale+('-' if axis_units == '' else axis_units)+']')), fontdict={'fontsize':AXIS_LABEL_FONT_SIZE})
+			# Allow for half a line of spacing between tick labels and axis labels
+			# Make panel height/width be the maximum of the tick labels or of the axis label
+			axis_height = (axis_height+(1.5*_get_text_prop(fig_obj, fget_label())['height'])) if axis_type.upper() == 'INDEP' else max(axis_height, _get_text_prop(fig_obj, fget_label())['height'])
+			axis_width = max(axis_width, _get_text_prop(fig_obj, fget_label())['width']) if axis_type.upper() == 'INDEP' else (axis_width+(1.5*_get_text_prop(fig_obj, fget_label())['width']))
+		return axis_height, axis_width
+
+	def _draw_panel(self, fig, axarr_prim, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
 		""" Draw panel series """
-		if self.panel_has_secondary_axis is True:
-			axarr_sec = axarr.twinx()
+		axarr_sec = axarr_prim.twinx() if self.panel_has_secondary_axis else None
 		# Place data series in their appropriate axis (primary or secondary)
 		for series_obj in self.series:
-			series_obj._draw_series(axarr if not series_obj.secondary_axis else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis)	#pylint: disable=W0212
-		primary_height = 0
-		secondary_height = 0
-		indep_height = 0
-		primary_width = 0
-		secondary_width = 0
-		indep_width = 0
-		# Primary axis
-		if self.panel_has_primary_axis is True:
-			axarr.yaxis.grid(True, 'both')
-			axarr.set_ylim((self.primary_dep_var_min, self.primary_dep_var_max), emit=True, auto=False)
-			axarr.yaxis.set_ticks(self.primary_dep_var_locs)
-			axarr.yaxis.set_ticklabels(self.primary_dep_var_labels)
-			axarr.tick_params(axis='y', which='major', labelsize=14)
-			# Calculate minimum pane height from primary axis
-			primary_height = ((len(self.primary_dep_var_labels))+(len(self.primary_dep_var_labels)-1))*_get_text_prop(fig, axarr.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
-			primary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
-			if (self.primary_axis_label not in [None, '']) or (self.primary_axis_units not in [None, '']):
-				unit_scale = '' if self.primary_dep_var_unit_scale is None else self.primary_dep_var_unit_scale.strip()
-				axarr.yaxis.set_label_text(self.primary_axis_label + ('' if (unit_scale == '') and (self.primary_axis_units == '') else \
-					(' ['+unit_scale+('-' if self.primary_axis_units == '' else self.primary_axis_units)+']')), fontdict={'fontsize':18})
-				primary_height = max(primary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
-				primary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
-		else:
-			axarr.yaxis.set_ticklabels([])
-		# Secondary axis
-		if self.panel_has_secondary_axis is True:
-			axarr_sec.yaxis.grid(True, 'both')
-			axarr_sec.set_ylim((self.secondary_dep_var_min, self.secondary_dep_var_max), emit=True, auto=False)
-			axarr_sec.yaxis.set_ticks(self.secondary_dep_var_locs)
-			axarr_sec.yaxis.set_ticklabels(self.secondary_dep_var_labels)
-			axarr_sec.tick_params(axis='y', which='major', labelsize=14)
-			# Calculate minimum pane height from primary axis
-			secondary_height = ((len(self.secondary_dep_var_labels))+(len(self.secondary_dep_var_labels)-1))*_get_text_prop(fig, axarr_sec.yaxis.get_ticklabels()[0])['height']	# Minimum of one line spacing between ticks
-			secondary_width = max([_get_text_prop(fig, tick)['width'] for tick in axarr.yaxis.get_ticklabels()])
-			if (self.secondary_axis_label not in [None, '']) or (self.secondary_axis_units not in [None, '']):
-				unit_scale = '' if self.secondary_dep_var_unit_scale is None else self.secondary_dep_var_unit_scale.strip()
-				axarr_sec.yaxis.set_label_text(self.secondary_axis_label + ('' if (unit_scale == '') and (self.secondary_axis_units == '') else \
-					(' ['+unit_scale+('-' if self.secondary_axis_units == '' else self.secondary_axis_units)+']')), fontdict={'fontsize':18})
-				secondary_height = max(secondary_height, _get_text_prop(fig, axarr.yaxis.get_label())['height'])
-				secondary_width += 1.5*_get_text_prop(fig, axarr.yaxis.get_label())['width']
-		# Print legends
+			series_obj._draw_series(axarr_prim if not series_obj.secondary_axis else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis)	#pylint: disable=W0212
+		# Set up tick labels and axis labels
+		primary_height, primary_width = (0, 0) if not self.panel_has_primary_axis else self._setup_dep_axis('DEP', fig, axarr_prim, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_locs,
+																									  self.primary_dep_var_labels, self.primary_axis_label, self.primary_axis_units, self.primary_dep_var_unit_scale)
+		secondary_height, secondary_width = (0, 0) if not self.panel_has_secondary_axis else self._setup_dep_axis('DEP', fig, axarr_sec, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_locs,
+																									  self.secondary_dep_var_labels, self.secondary_axis_label, self.secondary_axis_units, self.secondary_dep_var_unit_scale)
+		if (not self.panel_has_primary_axis) and self.panel_has_secondary_axis:
+			axarr_prim.yaxis.set_visible(False)
+		# Print legend
 		if (len(self.series) > 1) and (len(self.legend_props) > 0):
-			primary_labels = []
-			secondary_labels = []
-			if self.panel_has_primary_axis is True:
-				primary_handles, primary_labels = axarr.get_legend_handles_labels()	#pylint: disable=W0612
-			if self.panel_has_secondary_axis is True:
-				secondary_handles, secondary_labels = axarr_sec.get_legend_handles_labels()	#pylint: disable=W0612
-			if (len(primary_labels) > 0) and (len(secondary_labels) > 0):
-				labels = [r'$\Leftarrow$'+label for label in primary_labels]+ [label+r'$\Rightarrow$' for label in secondary_labels]
-			else:
-				labels = primary_labels+secondary_labels
-			for label in labels:	# Only print legend if at least one series has a label
-				if (label is not None) and (label != ''):
-					legend_scale = 1.5
-					leg_artist = [series_obj._legend_artist(legend_scale) for series_obj in self.series]	#pylint: disable=W0212
-					axarr.legend(leg_artist, labels, ncol=self.legend_props['cols'] if 'cols' in self.legend_props else len(labels),
-						loc=self.legend_pos_list[self.legend_pos_list.index(self.legend_props['pos'].lower() if 'pos' in self.legend_props else 'lower left')], numpoints=1, fontsize=18/legend_scale)
-					break
+			_, primary_labels = axarr_prim.get_legend_handles_labels() if self.panel_has_primary_axis else (None, list()) #pylint: disable=W0612
+			_, secondary_labels = axarr_sec.get_legend_handles_labels() if self.panel_has_secondary_axis else (None, list()) #pylint: disable=W0612
+			labels = [r'$\Leftarrow$'+label for label in primary_labels]+ [label+r'$\Rightarrow$' for label in secondary_labels] if (len(primary_labels) > 0) and (len(secondary_labels) > 0) else primary_labels+secondary_labels
+			if any([True if (label is not None) and (label != '') else False for label in labels]):
+				leg_artist = [series_obj._legend_artist(LEGEND_SCALE) for series_obj in self.series]	#pylint: disable=W0212
+				legend_axis = axarr_prim if self.panel_has_primary_axis else axarr_sec
+				legend_axis.legend(leg_artist, labels, ncol=self.legend_props['cols'] if 'cols' in self.legend_props else len(labels),
+					loc=self.legend_pos_list[self.legend_pos_list.index(self.legend_props['pos'].lower() if 'pos' in self.legend_props else 'lower left')], numpoints=1, fontsize=AXIS_LABEL_FONT_SIZE/LEGEND_SCALE)
+				# Fix Matplotlib issue where when there is primary and secondary axis the legend box of one axis is transparent for the axis/series of the other
+				# From: http://stackoverflow.com/questions/17158469/legend-transparency-when-using-secondary-axis
+				if self.panel_has_primary_axis and self.panel_has_secondary_axis:
+					axarr_prim.set_zorder(1)
+					axarr_prim.set_frame_on(False)
+					axarr_sec.set_frame_on(True)
 		#  Print independent axis tick marks and label
-		indep_var_min = indep_axis_dict['indep_var_min']
-		indep_var_max = indep_axis_dict['indep_var_max']
-		indep_var_locs = indep_axis_dict['indep_var_locs']
-		indep_axis_label = '' if indep_axis_dict['indep_axis_label'] is None else indep_axis_dict['indep_axis_label']
-		indep_axis_units = '' if indep_axis_dict['indep_axis_units'] is None else indep_axis_dict['indep_axis_units']
-		indep_axis_unit_scale = '' if indep_axis_dict['indep_axis_unit_scale'] is None else indep_axis_dict['indep_axis_unit_scale']
-		axarr.set_xlim((indep_var_min, indep_var_max), emit=True, auto=False)
-		axarr.xaxis.set_ticks(indep_var_locs)
-		axarr.xaxis.grid(True, 'both')
-		axarr.tick_params(axis='x', which='major', labelsize=14)
-		if ('indep_var_labels' in indep_axis_dict) and (indep_axis_dict['indep_var_labels'] is not None):
-			axarr.xaxis.set_ticklabels(indep_axis_dict['indep_var_labels'], fontsize=14)
-			indep_height = _get_text_prop(fig, axarr.xaxis.get_ticklabels()[0])['height']
-			min_width_label = min([_get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
-			indep_width = ((len(indep_axis_dict['indep_var_labels'])-1)*min_width_label)+sum([_get_text_prop(fig, tick)['width'] for tick in axarr.xaxis.get_ticklabels()])
-		if (indep_axis_label != '') or (indep_axis_units != ''):
-			axarr.xaxis.set_label_text(indep_axis_label + ('' if (indep_axis_unit_scale == '') and (indep_axis_units == '') else \
-				(' ['+indep_axis_unit_scale+('-' if indep_axis_units == '' else indep_axis_units)+']')), fontdict={'fontsize':18})
-			indep_height += 1.5*_get_text_prop(fig, axarr.xaxis.get_label())['height']	# Allow for half a line of spacing between tick labels and axis labels
-			indep_width = max(indep_width, _get_text_prop(fig, axarr.xaxis.get_label())['width'])
+		indep_var_min, indep_var_max, indep_var_locs = indep_axis_dict['indep_var_min'], indep_axis_dict['indep_var_max'], indep_axis_dict['indep_var_locs']
+		indep_var_labels = indep_axis_dict['indep_var_labels'] if ('indep_var_labels' in indep_axis_dict) and (indep_axis_dict['indep_var_labels'] is not None) else None
+		indep_axis_label = '' if indep_axis_dict['indep_axis_label'] is None else indep_axis_dict['indep_axis_label'].strip()
+		indep_axis_units = '' if indep_axis_dict['indep_axis_units'] is None else indep_axis_dict['indep_axis_units'].strip()
+		indep_axis_unit_scale = '' if indep_axis_dict['indep_axis_unit_scale'] is None else indep_axis_dict['indep_axis_unit_scale'].strip()
+		indep_height = indep_width = 0
+		indep_height, indep_width = self._setup_dep_axis('INDEP', fig, axarr_prim, indep_var_min, indep_var_max, indep_var_locs, indep_var_labels, indep_axis_label, indep_axis_units, indep_axis_unit_scale)
 		min_panel_height = max(primary_height, secondary_height)+indep_height
-		min_panel_width = primary_width+secondary_width+indep_width
-		return {'primary':None if not self.panel_has_primary_axis else axarr, 'secondary':None if not self.panel_has_secondary_axis else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
+		min_panel_width = sum([primary_width, secondary_width, indep_width])
+		print primary_height
+		print secondary_height
+		print indep_height
+		print primary_width
+		print secondary_width
+		print indep_width
+		return {'primary':None if not self.panel_has_primary_axis else axarr_prim, 'secondary':None if not self.panel_has_secondary_axis else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
 
 	series = property(_get_series, _set_series, doc='Panel series')
 	"""
@@ -1392,7 +1412,7 @@ class Figure(object):	#pylint: disable=R0902
 		 * RuntimeError (Panel element *[number]* is not fully specified)
 		"""
 		if panel is not None:
-			panel = [panel] if isinstance(panel, Panel) is True else panel
+			panel = [panel] if isinstance(panel, Panel) else panel
 			if not isinstance(panel, list):
 				raise TypeError('Panels must be provided in list form')
 			for num, obj in enumerate(panel):
@@ -1622,7 +1642,7 @@ class Figure(object):	#pylint: disable=R0902
 		if self.fig is None:
 			self.draw()
 		# Calculate minimum figure dimensions
-		axarr = self.axarr_list[0]['primary']
+		axarr = self.axarr_list[0]['primary'] if self.axarr_list[0]['primary'] is not None else self.axarr_list[0]['secondary']
 		legend_obj = axarr.get_legend()	#pylint: disable=W0612
 		min_fig_width = (max(self.title_width, max([panel_dict['min_width'] for panel_dict in self.axarr_list])))/float(self.fig.dpi)
 		min_fig_height = ((len(self.axarr_list)-1)*0.00)+(((len(self.axarr_list)*max([panel_dict['min_height'] for panel_dict in self.axarr_list]))+self.title_height)/float(self.fig.dpi))
@@ -1747,39 +1767,26 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
 			mant -= 1
 		else:
 			mant += 1
-			if unique_mant_found is True:
+			if unique_mant_found:
 				loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
 				break
 	return [putil.misc.smart_round(element, PRECISION) for element in loc], labels
 
-def _series_threshold(indep_var, dep_var, threshold, threshold_type):
-	"""
-	Chops series given a threshold
-	"""
-	indexes = numpy.where(numpy.array(indep_var) >= threshold) if threshold_type.upper() == 'MIN' else numpy.where(numpy.array(indep_var) <= threshold)  #pylint: disable=E1101
-	indep_var = numpy.array(indep_var)[indexes]  #pylint: disable=E1101
-	dep_var = numpy.array(dep_var)[indexes]  #pylint: disable=E1101
-	return indep_var, dep_var
-
 def _get_text_prop(fig, text_obj):
-	"""
-	Return length of text in pixels
-	"""
+	""" Return length of text in pixels """
 	renderer = fig.canvas.get_renderer()
 	bbox = text_obj.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
 	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
 
 def _get_panel_prop(fig, axarr):
-	"""
-	Return height of (sub)panel in pixels
-	"""
+	""" Return height of (sub)panel in pixels """
 	renderer = fig.canvas.get_renderer()
 	bbox = axarr.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
 	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
 
 def parametrized_color_space(series, offset=0, color='binary'):
 	"""
-	Computes a colors space where lighter colors correspond to lower parameter values
+	Computes a color space where lighter colors correspond to lower parameter values
 
 	:param	series:	data series
 	:type	series:	Numpy vector
