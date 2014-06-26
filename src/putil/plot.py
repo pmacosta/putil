@@ -12,6 +12,7 @@ import numpy
 from scipy import stats
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d  #pylint: disable=E0611
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 from collections import OrderedDict
 
 import putil.pcsv
@@ -1168,12 +1169,12 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			else:
 				series_obj._scale_dep_var(secondary_scaling_factor)	#pylint: disable=W0212
 
-	def _setup_dep_axis(self, axis_type, fig_obj, axis_obj, dep_min, dep_max, tick_locs, tick_labels, axis_label, axis_units, axis_scale):	#pylint: disable=R0201,R0913,R0914
+	def _setup_axis(self, axis_type, axis_obj, dep_min, dep_max, tick_locs, tick_labels, axis_label, axis_units, axis_scale):	#pylint: disable=R0201,R0913,R0914
 		""" Configure dependent axis """
 		# Set function pointers
-		xflist = [axis_obj.xaxis.grid, axis_obj.set_xlim, axis_obj.xaxis.set_ticks, axis_obj.xaxis.set_ticklabels, axis_obj.xaxis.get_ticklabels, axis_obj.xaxis.set_label_text, axis_obj.xaxis.get_label]
-		yflist = [axis_obj.yaxis.grid, axis_obj.set_ylim, axis_obj.yaxis.set_ticks, axis_obj.yaxis.set_ticklabels, axis_obj.yaxis.get_ticklabels, axis_obj.yaxis.set_label_text, axis_obj.yaxis.get_label]
-		fgrid, flim, fticks, fticklabels, fget_ticklabels, fset_label_text, fget_label = xflist if axis_type.upper() == 'INDEP' else yflist
+		xflist = [axis_obj.xaxis.grid, axis_obj.set_xlim, axis_obj.xaxis.set_ticks, axis_obj.xaxis.set_ticklabels, axis_obj.xaxis.set_label_text]
+		yflist = [axis_obj.yaxis.grid, axis_obj.set_ylim, axis_obj.yaxis.set_ticks, axis_obj.yaxis.set_ticklabels, axis_obj.yaxis.set_label_text]
+		fgrid, flim, fticks, fticklabels, fset_label_text = xflist if axis_type.upper() == 'INDEP' else yflist
 		# Process
 		fgrid(True, 'both')
 		flim((dep_min, dep_max), emit=True, auto=False)
@@ -1181,44 +1182,24 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		axis_obj.tick_params(axis='x' if axis_type.upper() == 'INDEP' else 'y', which='major', labelsize=AXIS_TICKS_FONT_SIZE)
 		if tick_labels is not None:
 			fticklabels(tick_labels)
-			# Calculate minimum panel height from primary axis
-			# Minimum of one line spacing between vertical ticks, minimum of one smallest label separation between horizontal ticks
-			# Find first non-blank label
-			label_index = label = None
-			for label_index, label in enumerate(tick_labels):
-				if label != '':
-					break
-			else:
-				raise RuntimeError('All axis labels are blank')
-			print fget_ticklabels()[label_index]
-			print _get_text_prop(fig_obj, fget_ticklabels()[label_index])
-			print _get_text_prop(fig_obj, fget_ticklabels()[label_index])['height']
-			print
-			label_height = _get_text_prop(fig_obj, fget_ticklabels()[label_index])['height']
-			axis_height = label_height if axis_type.upper() == 'INDEP' else (2*len(tick_labels)-1)*label_height
-			min_label_width, max_label_width = min([_get_text_prop(fig_obj, tick)['width'] for tick in fget_ticklabels()]), max([_get_text_prop(fig_obj, tick)['width'] for tick in fget_ticklabels()])
-			axis_width = ((len(tick_labels)-1)*min_label_width)+sum([_get_text_prop(fig_obj, tick)['width'] for tick in fget_ticklabels()]) if axis_type.upper() == 'INDEP' else max_label_width
 		if (axis_label not in [None, '']) or (axis_units not in [None, '']):
 			axis_label = '' if axis_label is None else axis_label.strip()
 			unit_scale = '' if axis_scale is None else axis_scale.strip()
 			fset_label_text(axis_label + ('' if (unit_scale == '') and (axis_units == '') else (' ['+unit_scale+('-' if axis_units == '' else axis_units)+']')), fontdict={'fontsize':AXIS_LABEL_FONT_SIZE})
-			# Allow for half a line of spacing between tick labels and axis labels
-			# Make panel height/width be the maximum of the tick labels or of the axis label
-			axis_height = (axis_height+(1.5*_get_text_prop(fig_obj, fget_label())['height'])) if axis_type.upper() == 'INDEP' else max(axis_height, _get_text_prop(fig_obj, fget_label())['height'])
-			axis_width = max(axis_width, _get_text_prop(fig_obj, fget_label())['width']) if axis_type.upper() == 'INDEP' else (axis_width+(1.5*_get_text_prop(fig_obj, fget_label())['width']))
-		return axis_height, axis_width
 
-	def _draw_panel(self, fig, axarr_prim, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
+	def _draw_panel(self, axarr_prim, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
 		""" Draw panel series """
 		axarr_sec = axarr_prim.twinx() if self.panel_has_secondary_axis else None
 		# Place data series in their appropriate axis (primary or secondary)
 		for series_obj in self.series:
 			series_obj._draw_series(axarr_prim if not series_obj.secondary_axis else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis)	#pylint: disable=W0212
 		# Set up tick labels and axis labels
-		primary_height, primary_width = (0, 0) if not self.panel_has_primary_axis else self._setup_dep_axis('DEP', fig, axarr_prim, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_locs,
-																									  self.primary_dep_var_labels, self.primary_axis_label, self.primary_axis_units, self.primary_dep_var_unit_scale)
-		secondary_height, secondary_width = (0, 0) if not self.panel_has_secondary_axis else self._setup_dep_axis('DEP', fig, axarr_sec, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_locs,
-																									  self.secondary_dep_var_labels, self.secondary_axis_label, self.secondary_axis_units, self.secondary_dep_var_unit_scale)
+		if self.panel_has_primary_axis:
+			self._setup_axis('DEP', axarr_prim, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_locs, self.primary_dep_var_labels,
+						self.primary_axis_label, self.primary_axis_units, self.primary_dep_var_unit_scale)
+		if self.panel_has_secondary_axis:
+			self._setup_axis('DEP', axarr_sec, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_locs, self.secondary_dep_var_labels,
+						self.secondary_axis_label, self.secondary_axis_units, self.secondary_dep_var_unit_scale)
 		if (not self.panel_has_primary_axis) and self.panel_has_secondary_axis:
 			axarr_prim.yaxis.set_visible(False)
 		# Print legend
@@ -1243,17 +1224,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		indep_axis_label = '' if indep_axis_dict['indep_axis_label'] is None else indep_axis_dict['indep_axis_label'].strip()
 		indep_axis_units = '' if indep_axis_dict['indep_axis_units'] is None else indep_axis_dict['indep_axis_units'].strip()
 		indep_axis_unit_scale = '' if indep_axis_dict['indep_axis_unit_scale'] is None else indep_axis_dict['indep_axis_unit_scale'].strip()
-		indep_height = indep_width = 0
-		indep_height, indep_width = self._setup_dep_axis('INDEP', fig, axarr_prim, indep_var_min, indep_var_max, indep_var_locs, indep_var_labels, indep_axis_label, indep_axis_units, indep_axis_unit_scale)
-		min_panel_height = max(primary_height, secondary_height)+indep_height
-		min_panel_width = sum([primary_width, secondary_width, indep_width])
-		print primary_height
-		print secondary_height
-		print indep_height
-		print primary_width
-		print secondary_width
-		print indep_width
-		return {'primary':None if not self.panel_has_primary_axis else axarr_prim, 'secondary':None if not self.panel_has_secondary_axis else axarr_sec, 'min_height':min_panel_height, 'min_width':min_panel_width}
+		self._setup_axis('INDEP', axarr_prim, indep_var_min, indep_var_max, indep_var_locs, indep_var_labels, indep_axis_label, indep_axis_units, indep_axis_unit_scale)
+		return {'primary':None if not self.panel_has_primary_axis else axarr_prim, 'secondary':None if not self.panel_has_secondary_axis else axarr_sec}
 
 	series = property(_get_series, _set_series, doc='Panel series')
 	"""
@@ -1577,6 +1549,7 @@ class Figure(object):	#pylint: disable=R0902
 		plt.close('all')
 		# Create required number of panels
 		self.fig, self.axarr = plt.subplots(num_panels, sharex=True)	#pylint: disable=W0612
+		#self.fig.canvas.mpl_connect('draw_event', self._draw_callback_function)
 		self.axarr = self.axarr if num_panels > 1 else [self.axarr]
 		global_indep_var = list()
 		# Find union of the independent variable data set of all panels
@@ -1584,7 +1557,7 @@ class Figure(object):	#pylint: disable=R0902
 			for series_obj in panel_obj.series:
 				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var])))
 		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale = \
-			_intelligent_ticks(global_indep_var, min(global_indep_var), max(global_indep_var), tight=True)
+			_intelligent_ticks(global_indep_var, min(global_indep_var), max(global_indep_var), tight=True, log_axis=self.log_indep())
 		# Scale all panel series
 		for panel_obj in self.current_panel_list:
 			panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable=W0212
@@ -1592,27 +1565,37 @@ class Figure(object):	#pylint: disable=R0902
 		indep_axis_dict = {'indep_var_min':self.indep_var_min, 'indep_var_max':self.indep_var_max, 'indep_var_locs':indep_var_locs,
 					 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
 		for num, (panel_obj, axarr) in enumerate(zip(self.current_panel_list, self.axarr)):
-			panel_dict = panel_obj._draw_panel(self.fig, axarr, dict(indep_axis_dict, log_indep=self.log_indep(), indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable=W0212,C0326
+			panel_dict = panel_obj._draw_panel(axarr, dict(indep_axis_dict, log_indep=self.log_indep(), indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable=W0212,C0326
 												  indep_axis_label=self.indep_var_label() if num == num_panels-1 else None, indep_axis_units=self.indep_var_units() if num == num_panels-1 else None,
 												  indep_axis_unit_scale = self.indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable=C0326
-			self.axarr_list.append({'panel':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary'], 'min_height':panel_dict['min_height'], 'min_width':panel_dict['min_width']})
+			self.axarr_list.append({'panel':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary']})
 		self.title_height = 0
 		self.title_width = 0
 		if self.title() != '':
-			title_obj = self.axarr[0].set_title(self.title(), horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=24)
-			self.title_height = _get_text_prop(self.fig, title_obj)['height']
-			self.title_width = _get_text_prop(self.fig, title_obj)['width']
+			self.axarr[0].set_title(self.title(), horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=24)
+		self.fig.canvas.draw()
+
+	def _calculate_figure_size(self):	#pylint: disable=R0201,R0914
+		""" Calculates minimum panel and figure size """
+		title_height = title_width = 0
+		title = self.fig.axes[0].get_title()
+		if (title is not None) and (title.strip() != ''):
+			title_obj = self.fig.axes[0].title
+			title_height = _get_text_prop(self.fig, title_obj)['height']
+			title_width = _get_text_prop(self.fig, title_obj)['width']
+		xaxis_dims = [_get_xaxis_size(self.fig, axis_obj.xaxis.get_ticklabels(), axis_obj.xaxis.get_label()) for axis_obj in self.fig.axes]
+		yaxis_dims = [_get_yaxis_size(self.fig, axis_obj.yaxis.get_ticklabels(), axis_obj.yaxis.get_label()) for axis_obj in self.fig.axes]
+		panel_dims = [(yaxis_height+xaxis_height, yaxis_width+xaxis_width) for (yaxis_height, yaxis_width), (xaxis_height, xaxis_width) in zip(yaxis_dims, xaxis_dims)]
+		min_fig_width = (max(title_width, max([panel_width for _, panel_width in panel_dims])))/float(self.fig.dpi)
+		min_fig_height = (((len(self.axarr_list)*max([panel_height for panel_height, _ in panel_dims]))+title_height)/float(self.fig.dpi))
+		return min_fig_height, min_fig_width
 
 	def fig_handle(self):
-		"""
-		Returns the Matplotlib figure handle. Useful if annotations or further customizations to the figure are needed.
-		"""
+		""" Returns the Matplotlib figure handle. Useful if annotations or further customizations to the figure are needed. """
 		return self.fig
 
 	def axis_list(self):
-		"""
-		Returns the Matplotlib figure axes handle vector. Useful if annotations or further customizations to the panel(s) are needed.
-		"""
+		""" Returns the Matplotlib figure axes handle vector. Useful if annotations or further customizations to the panel(s) are needed. """
 		return self.axarr_list
 
 	def show(self):	#pylint: disable=R0201
@@ -1642,10 +1625,11 @@ class Figure(object):	#pylint: disable=R0902
 		if self.fig is None:
 			self.draw()
 		# Calculate minimum figure dimensions
-		axarr = self.axarr_list[0]['primary'] if self.axarr_list[0]['primary'] is not None else self.axarr_list[0]['secondary']
-		legend_obj = axarr.get_legend()	#pylint: disable=W0612
-		min_fig_width = (max(self.title_width, max([panel_dict['min_width'] for panel_dict in self.axarr_list])))/float(self.fig.dpi)
-		min_fig_height = ((len(self.axarr_list)-1)*0.00)+(((len(self.axarr_list)*max([panel_dict['min_height'] for panel_dict in self.axarr_list]))+self.title_height)/float(self.fig.dpi))
+		FigureCanvasAgg(self.fig).draw()	# Draw figure otherwise some bounding boxes return NaN
+		min_fig_height, min_fig_width = self._calculate_figure_size()
+		#axarr = self.axarr_list[0]['primary'] if self.axarr_list[0]['primary'] is not None else self.axarr_list[0]['secondary']
+		#min_fig_width = (max(self.title_width, max([panel_dict['min_width'] for panel_dict in self.axarr_list])))/float(self.fig.dpi)
+		#min_fig_height = ((len(self.axarr_list)-1)*0.00)+(((len(self.axarr_list)*max([panel_dict['min_height'] for panel_dict in self.axarr_list]))+self.title_height)/float(self.fig.dpi))
 		self.figure_width(min_fig_width if self.figure_width() is None else self.figure_width())
 		self.figure_height(min_fig_height if self.figure_height() is None else self.figure_height())
 		self.fig.set_size_inches(max(min_fig_width, self.figure_width()), max(min_fig_height, self.figure_height()))
@@ -1654,6 +1638,40 @@ class Figure(object):	#pylint: disable=R0902
 		self.fig.savefig(file_name, dpi=self.fig.dpi)
 		self.fig.savefig(file_name, bbox_inches='tight', dpi=self.fig.dpi)
 		plt.close('all')
+
+def _first_label(label_list):
+	""" Find first non-blank label """
+	for label_index, label_obj in enumerate(label_list):
+		if (label_obj.get_text() is not None) and (label_obj.get_text().strip() != ''):
+			return label_index
+	return None
+
+def _get_yaxis_size(fig_obj, tick_labels, axis_label):
+	""" Compute Y axis height and width """
+	# Minimum of one line spacing between vertical ticks
+	axis_height = axis_width = 0
+	if (tick_labels is not None) and (len(tick_labels) > 0):
+		label_index = _first_label(tick_labels)
+		if label_index is not None:
+			label_height = _get_text_prop(fig_obj, tick_labels[label_index])['height']
+			axis_height = (2*len(tick_labels)-1)*label_height
+			axis_width = max([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+	if axis_label is not None:
+		axis_height = max(axis_height, _get_text_prop(fig_obj, axis_label)['height'])
+		axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
+	return axis_height, axis_width
+
+def _get_xaxis_size(fig_obj, tick_labels, axis_label):
+	""" Compute Y axis height and width """
+	# Minimum of one smallest label separation between horizontal ticks
+	axis_height = axis_width = 0
+	if (tick_labels is not None) and (len(tick_labels) > 0):
+		min_label_width = min([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+		axis_width = ((len(tick_labels)-1)*min_label_width)+sum([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+	if axis_label is not None:
+		axis_height = (axis_height+(1.5*_get_text_prop(fig_obj, axis_label)['height']))
+		axis_width = max(axis_width, _get_text_prop(fig_obj, axis_label)['width'])
+	return axis_height, axis_width
 
 def _process_ticks(locs, min_lim, max_lim, mant):
 	"""

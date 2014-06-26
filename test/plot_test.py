@@ -1354,3 +1354,17 @@ class TestPanel(object):	#pylint: disable=W0232
 			del obj.legend_props
 		test_list.append(excinfo.value.message == "can't delete attribute")
 		assert test_list == 7*[True]
+
+	def test_images(self, tmpdir):	#pylint: disable=C0103,R0201,W0621
+		""" Compare images to verify correct plotting of series """
+		tmpdir.mkdir('test_images')
+		test_list = list()
+		images_dict_list = gen_ref_images.unittest_panel_images(mode='test', test_dir=str(tmpdir))
+		for images_dict in images_dict_list:
+			ref_file_name = images_dict['ref_file_name']
+			test_file_name = images_dict['test_file_name']
+			metrics = compare_images(ref_file_name, test_file_name)
+			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
+			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
+			test_list.append(result)
+		assert test_list == [True]*len(images_dict_list)
