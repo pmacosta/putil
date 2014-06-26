@@ -74,7 +74,7 @@ def main():
 		panel=panel_obj,
 		indep_var_label='Indep. var.',
 		indep_var_units='S',
-		log_indep=False,
+		log_indep_axis=False,
 		fig_width=None,
 		fig_height=None,
 		title='Library putil.plot Example'

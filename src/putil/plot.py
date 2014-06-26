@@ -1338,204 +1338,98 @@ class Figure(object):	#pylint: disable=R0902
 	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be retrieved using \
 	:py:meth:`putil.plot.Figure.figure_width()` and/or :py:meth:`putil.plot.Figure.figure_height()` methods.
 	"""
-	def __init__(self, panel=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep=False):	#pylint: disable=R0913
+	def __init__(self, panel=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep_axis=False):	#pylint: disable=R0913
+		# Private attributes
+		self._panel, self._indep_var_label, self._indep_var_units, self._title, self._log_indep_axis, self._fig_width, self._fig_height = None, None, None, None, None, None, None
 		self.fig = None
 		self.axarr = None
 		self.axarr_list = list()
-		self.title_height = 0
-		self.title_width = 0
 		self.indep_var_min = None
 		self.indep_var_max = None
 		self.indep_var_div = None
 		self.indep_var_unit_scale = None
 		self.scaled_indep_var = None
-		self.current_panel_list = list()
-		self.current_indep_var_label = None
-		self.current_indep_var_units = None
-		self.current_fig_height = None
-		self.current_fig_width = None
-		self.current_title = None
-		self.current_log_indep = False
-		self.add_panel(panel)
-		self.indep_var_label(indep_var_label)
-		self.indep_var_units(indep_var_units)
-		self.figure_height(fig_height)
-		self.figure_width(fig_width)
-		self.title(title)
-		self.log_indep(log_indep)
+		self._set_indep_var_label(indep_var_label)
+		self._set_indep_var_units(indep_var_units)
+		self._set_title(title)
+		self._set_log_indep_axis(log_indep_axis)
+		self._set_fig_width(fig_width)
+		self._set_fig_height(fig_height)
+		self._set_panel(panel)
+
+	def _get_indep_var_label(self):	#pylint: disable=C0111
+		return self._indep_var_label
+
+	@putil.check.check_parameter('indep_var_label', putil.check.PolymorphicType([None, str]))
+	def _set_indep_var_label(self, indep_var_label):	#pylint: disable=C0111
+		self._indep_var_label = indep_var_label
+		if self._complete():
+			self.draw()
+
+	def _get_indep_var_units(self):	#pylint: disable=C0111
+		return self._indep_var_units
+
+	@putil.check.check_parameter('indep_var_units', putil.check.PolymorphicType([None, str]))
+	def _set_indep_var_units(self, indep_var_units):	#pylint: disable=C0111
+		self._indep_var_units = indep_var_units
+		if self._complete():
+			self.draw()
+
+	def _get_title(self):	#pylint: disable=C0111
+		return self._title
+
+	@putil.check.check_parameter('title', putil.check.PolymorphicType([None, str]))
+	def _set_title(self, title):	#pylint: disable=C0111
+		self._title = title
+		if self._complete():
+			self.draw()
+
+	def _get_log_indep_axis(self):	#pylint: disable=C0111
+		return self._log_indep_axis
+
+	@putil.check.check_parameter('log_indep_axis', putil.check.PolymorphicType([None, bool]))
+	def _set_log_indep_axis(self, log_indep_axis):	#pylint: disable=C0111
+		self._log_indep_axis = log_indep_axis
+		if self._complete():
+			self.draw()
 
 	def _complete(self):
-		"""
-		Returns True if figire is fully specified, otherwise returns False
-		"""
-		return True if len(self.current_panel_list) > 0 else False
+		""" Returns True if figure is fully specified, otherwise returns False """
+		return (self.panel is not None) and (len(self.panel) > 0)
 
-	def add_panel(self, panel):
-		"""
-		Adds panel to current panel list
+	def _get_panel(self):	#pylint: disable=C0111
+		return self._panel
 
-		:param	panel:	one or more data panel
-		:type	panel:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
-		:raises:
-		 * TypeError (Panels must be provided in list form)
+	def _set_panel(self, panel):	#pylint: disable=C0111
+		self._panel = (panel if isinstance(panel, list) else [panel]) if panel is not None else panel
+		if self.panel is not None:
+			self._validate_panel()
 
-		 * TypeError (Panel element is not a panel object)
+	def _validate_panel(self):
+		""" Verifies that elements of panel list are of the right type and fully specified """
+		for num, obj in enumerate(self.panel):
+			if type(obj) is not Panel:
+				raise TypeError('Parameter `panel` is of the wrong type')
+			if not obj._complete():	#pylint: disable=W0212
+				raise RuntimeError('Panel element {0} is not fully specified'.format(num))
 
-		 * RuntimeError (Panel element *[number]* is not fully specified)
-		"""
-		if panel is not None:
-			panel = [panel] if isinstance(panel, Panel) else panel
-			if not isinstance(panel, list):
-				raise TypeError('Panels must be provided in list form')
-			for num, obj in enumerate(panel):
-				if not isinstance(obj, Panel):
-					raise TypeError('Panel element is not a panel object')
-				elif not obj._complete():	#pylint: disable=W0212
-					raise RuntimeError('Panel element {0} is not fully specified'.format(num))
-			if len(self.current_panel_list) == 0:
-				self.current_panel_list = panel
-			else:
-				for new_obj in panel:
-					for old_obj in self.current_panel_list:
-						if new_obj == old_obj:
-							break
-					else:
-						self.current_panel_list.append(new_obj)
+	def _get_fig_width(self):	#pylint: disable=C0111
+		return self._fig_width
 
-	def indep_var_label(self, *label):
-		"""
-		Sets or returns the plot independent variable label
+	@putil.check.check_parameter('fig_width', putil.check.PolymorphicType([None, putil.check.Real()]))
+	def _set_fig_width(self, fig_width):	#pylint: disable=C0111
+		if (fig_width is not None) and (fig_width < 0):
+			raise ValueError('Parameter `fig_width` is not a positive number')
+		self._fig_width = fig_width
 
-		:param	label:	independent variable label
-		:type	label:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
+	def _get_fig_height(self):	#pylint: disable=C0111
+		return self._fig_height
 
-		 * TypeError (Independent variable label must be a string)
-		"""
-		if len(label) == 0:
-			return self.current_indep_var_label
-		if len(label) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_indep_var_label = label[0]
-		if not isinstance(self.current_indep_var_label, str):
-			raise TypeError('Independent variable label must be a string')
-		self.current_indep_var_label = self.current_indep_var_label.strip()
-
-	def indep_var_units(self, *units):
-		"""
-		Sets or returns the plot independent variable units
-
-		:param	units:	independent variable units
-		:type	units:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Independent variable units must be a string)
-		"""
-		if len(units) == 0:
-			return self.current_indep_var_units
-		if len(units) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_indep_var_units = units[0]
-		if not isinstance(self.current_indep_var_units, str):
-			raise TypeError('Independent variable units must be a string')
-		self.current_indep_var_units = self.current_indep_var_units.strip()
-
-	def title(self, *text):
-		"""
-		Sets or returns the plot title
-
-		:param	text:	plot title
-		:type	text:	string
-		:rtype:			string
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Plot title must be a string)
-		"""
-		if len(text) == 0:
-			return self.current_title
-		if len(text) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_title = text[0]
-		if not isinstance(self.current_title, str):
-			raise TypeError('Plot title must be a string')
-		self.current_title = self.current_title.strip()
-
-	def log_indep(self, *flag):
-		"""
-		Sets or returns the logarithmic independent axis flag
-
-		:param	flag:	logarithmic independent axis flag
-		:type	flag:	boolean
-		:rtype:			boolean
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Logarthmic independent axis flag must be boolean)
-		"""
-		if len(flag) == 0:
-			return self.current_log_indep
-		if len(flag) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_log_indep = flag[0]
-		if not isinstance(self.current_log_indep, bool):
-			raise TypeError('Logarthmic independent axis flag must be boolean')
-
-	def figure_width(self, *dim):
-		"""
-		Sets or returns the width of the hardcopy plot
-
-		:param	dim:	hardcopy plot width (in inches)
-		:type	dim:	positive number, float or integer
-		:rtype:			positive number, float or integer
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Figure width must be a number)
-
-		 * ValueError (Figure width must be a positive number)
-		"""
-		if len(dim) == 0:
-			return self.current_fig_width
-		if len(dim) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_fig_width = dim[0]
-		if self.current_fig_width is not None:
-			if not putil.misc.isnumber(self.current_fig_width):
-				raise TypeError('Figure width must be a number')
-			if self.current_fig_width < 0:
-				raise ValueError('Figure width must be a positive number')
-			self.current_fig_width = float(self.current_fig_width)
-
-	def figure_height(self, *dim):
-		"""
-		Sets or returns the height of the hardcopy plot
-
-		:param	dim:	hardcopy plot height (in inches)
-		:type	dim:	positive number
-		:rtype:			positive number
-		:raises:
-		 * RuntimeError (Illegal number of parameters)
-
-		 * TypeError (Figure height must be a number)
-
-		 * ValueError (Figure height must be a positive number)
-		"""
-		if len(dim) == 0:
-			return self.current_fig_height
-		if len(dim) > 1:
-			raise RuntimeError('Illegal number of parameters')
-		self.current_fig_height = dim[0]
-		if self.current_fig_height is not None:
-			if not putil.misc.isnumber(self.current_fig_height):
-				raise TypeError('Figure height must be a number')
-			if self.current_fig_height < 0:
-				raise ValueError('Figure height must be a positive number')
-			self.current_fig_height = float(self.current_fig_height)
+	@putil.check.check_parameter('fig_height', putil.check.PolymorphicType([None, putil.check.Real()]))
+	def _set_fig_height(self, fig_height):	#pylint: disable=C0111
+		if (fig_height is not None) and (fig_height < 0):
+			raise ValueError('Parameter `fig_height` is not a positive number')
+		self._fig_height = fig_height
 
 	def draw(self):
 		"""
@@ -1545,7 +1439,7 @@ class Figure(object):	#pylint: disable=R0902
 		"""
 		if not self._complete():
 			raise RuntimeError('Figure is not fully specified')
-		num_panels = len(self.current_panel_list)
+		num_panels = len(self.panel)
 		plt.close('all')
 		# Create required number of panels
 		self.fig, self.axarr = plt.subplots(num_panels, sharex=True)	#pylint: disable=W0612
@@ -1553,26 +1447,24 @@ class Figure(object):	#pylint: disable=R0902
 		self.axarr = self.axarr if num_panels > 1 else [self.axarr]
 		global_indep_var = list()
 		# Find union of the independent variable data set of all panels
-		for panel_obj in self.current_panel_list:
+		for panel_obj in self.panel:
 			for series_obj in panel_obj.series:
 				global_indep_var = numpy.unique(numpy.append(global_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var])))
 		indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale = \
-			_intelligent_ticks(global_indep_var, min(global_indep_var), max(global_indep_var), tight=True, log_axis=self.log_indep())
+			_intelligent_ticks(global_indep_var, min(global_indep_var), max(global_indep_var), tight=True, log_axis=self.log_indep_axis)
 		# Scale all panel series
-		for panel_obj in self.current_panel_list:
+		for panel_obj in self.panel:
 			panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable=W0212
 		# Draw panels
 		indep_axis_dict = {'indep_var_min':self.indep_var_min, 'indep_var_max':self.indep_var_max, 'indep_var_locs':indep_var_locs,
 					 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
-		for num, (panel_obj, axarr) in enumerate(zip(self.current_panel_list, self.axarr)):
-			panel_dict = panel_obj._draw_panel(axarr, dict(indep_axis_dict, log_indep=self.log_indep(), indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable=W0212,C0326
-												  indep_axis_label=self.indep_var_label() if num == num_panels-1 else None, indep_axis_units=self.indep_var_units() if num == num_panels-1 else None,
+		for num, (panel_obj, axarr) in enumerate(zip(self.panel, self.axarr)):
+			panel_dict = panel_obj._draw_panel(axarr, dict(indep_axis_dict, log_indep=self.log_indep_axis, indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable=W0212,C0326
+												  indep_axis_label=self.indep_var_label if num == num_panels-1 else None, indep_axis_units=self.indep_var_units if num == num_panels-1 else None,
 												  indep_axis_unit_scale = self.indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable=C0326
 			self.axarr_list.append({'panel':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary']})
-		self.title_height = 0
-		self.title_width = 0
-		if self.title() != '':
-			self.axarr[0].set_title(self.title(), horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=24)
+		if self.title not in [None, '']:
+			self.axarr[0].set_title(self.title, horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=24)
 		self.fig.canvas.draw()
 
 	def _calculate_figure_size(self):	#pylint: disable=R0201,R0914
@@ -1630,14 +1522,110 @@ class Figure(object):	#pylint: disable=R0902
 		#axarr = self.axarr_list[0]['primary'] if self.axarr_list[0]['primary'] is not None else self.axarr_list[0]['secondary']
 		#min_fig_width = (max(self.title_width, max([panel_dict['min_width'] for panel_dict in self.axarr_list])))/float(self.fig.dpi)
 		#min_fig_height = ((len(self.axarr_list)-1)*0.00)+(((len(self.axarr_list)*max([panel_dict['min_height'] for panel_dict in self.axarr_list]))+self.title_height)/float(self.fig.dpi))
-		self.figure_width(min_fig_width if self.figure_width() is None else self.figure_width())
-		self.figure_height(min_fig_height if self.figure_height() is None else self.figure_height())
-		self.fig.set_size_inches(max(min_fig_width, self.figure_width()), max(min_fig_height, self.figure_height()))
+		self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
+		self.fig_height = min_fig_height if self.fig_height is None else self.fig_height
+		self.fig.set_size_inches(max(min_fig_width, self.fig_width), max(min_fig_height, self.fig_height))
 		file_name = os.path.expanduser(file_name)	# Matplotlib seems to have a problem with ~/, expand it to $HOME
 		putil.misc.make_dir(file_name)
 		self.fig.savefig(file_name, dpi=self.fig.dpi)
 		self.fig.savefig(file_name, bbox_inches='tight', dpi=self.fig.dpi)
 		plt.close('all')
+
+	panel = property(_get_panel, _set_panel, doc='Figure independent axis label')
+	"""
+	Panel list
+
+	:param	panel:	one or more data panel
+	:type	panel:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
+	:raises:
+	 * TypeError (Panels must be provided in list form)
+
+	 * TypeError (Panel element is not a panel object)
+
+	 * RuntimeError (Panel element *[number]* is not fully specified)
+	"""	#pylint: disable=W0105
+
+	indep_var_label = property(_get_indep_var_label, _set_indep_var_label, doc='Figure independent axis label')
+	"""
+	Figure independent variable label
+
+	:param	label:	independent variable label
+	:type	label:	string
+	:rtype:			string
+	:raises:
+	 * RuntimeError (Illegal number of parameters)
+
+	 * TypeError (Independent variable label must be a string)
+	"""	#pylint: disable=W0105
+
+	indep_var_units = property(_get_indep_var_units, _set_indep_var_units, doc='Figure independent axis units')
+	"""
+	Figure independent variable units
+
+	:param	units:	independent variable units
+	:type	units:	string
+	:rtype:			string
+	:raises:
+	 * RuntimeError (Illegal number of parameters)
+
+	 * TypeError (Independent variable units must be a string)
+	"""	#pylint: disable=W0105
+
+	title = property(_get_title, _set_title, doc='Figure title')
+	"""
+	Figure title
+
+	:param	text:	plot title
+	:type	text:	string
+	:rtype:			string
+	:raises:
+	 * RuntimeError (Illegal number of parameters)
+
+	 * TypeError (Plot title must be a string)
+	"""	#pylint: disable=W0105
+
+	log_indep_axis = property(_get_log_indep_axis, _set_log_indep_axis, doc='Figure log_indep_axis')
+	"""
+	Figure logarithmic independent axis flag
+
+	:param	flag:	logarithmic independent axis flag
+	:type	flag:	boolean
+	:rtype:			boolean
+	:raises:
+	 * RuntimeError (Illegal number of parameters)
+
+	 * TypeError (Logarthmic independent axis flag must be boolean)
+	"""	#pylint: disable=W0105
+
+	fig_width = property(_get_fig_width, _set_fig_width, doc='Width of the hardcopy plot')
+	"""
+	Width of the hardcopy plot
+
+	:param	dim:	hardcopy plot width (in inches)
+	:type	dim:	positive number, float or integer
+	:rtype:			positive number, float or integer
+	:raises:
+	 * RuntimeError (Illegal number of parameters)
+
+	 * TypeError (Figure width must be a number)
+
+	 * ValueError (Figure width must be a positive number)
+	"""	#pylint: disable=W0105
+
+	fig_height = property(_get_fig_height, _set_fig_height, doc='height of the hardcopy plot')
+	"""
+	Height of the hardcopy plot
+
+	:param	dim:	hardcopy plot height (in inches)
+	:type	dim:	positive number
+	:rtype:			positive number
+	:raises:
+	 * RuntimeError (Illegal number of parameters)
+
+	 * TypeError (Figure height must be a number)
+
+	 * ValueError (Figure height must be a positive number)
+	"""	#pylint: disable=W0105
 
 def _first_label(label_list):
 	""" Find first non-blank label """
