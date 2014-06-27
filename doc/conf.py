@@ -341,3 +341,5 @@ def skip_private_parameter(app,what,name,obj,options,signature,return_annotation
 
 def setup(app):
 	app.connect('autodoc-process-signature',skip_private_parameter)
+
+autodoc_member_order = 'bysource'

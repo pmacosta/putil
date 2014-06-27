@@ -71,7 +71,7 @@ def main():
 		legend_props={'pos':'lower right', 'cols':1}
 	)
 	fig_obj = putil.plot.Figure(
-		panel=panel_obj,
+		panels=panel_obj,
 		indep_var_label='Indep. var.',
 		indep_var_units='S',
 		log_indep_axis=False,
@@ -79,7 +79,6 @@ def main():
 		fig_height=None,
 		title='Library putil.plot Example'
 	)
-	fig_obj.draw()
 	fig_obj.save('./example_plot.png')
 
 def series1_proc_func(indep_var, dep_var, xoffset):	#pylint: disable=W0613
