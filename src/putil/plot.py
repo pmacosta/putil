@@ -102,6 +102,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
 		# Public attributes
 		self._indep_var, self._dep_var, self._indep_min, self._indep_max = None, None, None, None
+		# Assignment of parameters to attributes
 		# Assign minimum and maximum first so as not to trigger unnecessary tresholding if the dependent and independent variables are already assigned
 		self._set_indep_min(indep_min)
 		self._set_indep_max(indep_max)
@@ -278,6 +279,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		self._csv_obj, self._reverse_data = None, False
 		# Public attributes
 		self._file_name, self._dfilter, self._indep_col_label, self._dep_col_label, self._fproc, self._fproc_eargs = None, None, None, None, None, None
+		# Assignment of parameters to attributes
 		self._set_indep_col_label(indep_col_label)
 		self._set_dep_col_label(dep_col_label)
 		self._set_fproc(fproc)
@@ -651,6 +653,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		self.indep_var, self.dep_var = None, None
 		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
 		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, 'k', True, 'CUBIC', '-', False
+		# Assignment of parameters to attributes
 		self._set_label(label)
 		self._set_color(color)
 		self._set_marker(marker)
@@ -980,23 +983,14 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		# Private attributes
 		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props = \
 			None, None, None, None, None, None, False, {'pos':'BEST', 'cols':1}
-		self.legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
-		self.panel_has_primary_axis = False
-		self.panel_has_secondary_axis = False
-		self.primary_dep_var_min = None
-		self.primary_dep_var_max = None
-		self.primary_dep_var_div = None
-		self.primary_dep_var_unit_scale = None
-		self.primary_dep_var_locs = None
-		self.primary_dep_var_labels = None
-		self.secondary_dep_var_min = None
-		self.secondary_dep_var_max = None
-		self.secondary_dep_var_div = None
-		self.secondary_dep_var_unit_scale = None
-		self.secondary_dep_var_locs = None
-		self.secondary_dep_var_labels = None
-		self.legend_props_list = ['pos', 'cols']
-		self.legend_props_pos_list = ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER']
+		# Private attributes
+		self._legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
+		self._panel_has_primary_axis, self._panel_has_secondary_axis = False, False
+		self._primary_dep_var_min, self._primary_dep_var_max, self._primary_dep_var_div, self._primary_dep_var_unit_scale, self._primary_dep_var_locs, self._primary_dep_var_labels = None, None, None, None, None, None
+		self._secondary_dep_var_min, self._secondary_dep_var_max, self._secondary_dep_var_div, self._secondary_dep_var_unit_scale, self._secondary_dep_var_locs, self._secondary_dep_var_labels = None, None, None, None, None, None
+		self._legend_props_list = ['pos', 'cols']
+		self._legend_props_pos_list = ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER']
+		# Assignment of parameters to attributes
 		self._set_log_dep_axis(log_dep_axis)	# Order here is important to avoid unnecessary re-calculating of panel axes if log_dep_axis is True
 		self._set_series(series)
 		self._set_primary_axis_label(primary_axis_label)
@@ -1013,10 +1007,10 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self._recalculate_series = False
 		if self.series is not None:
 			self._validate_series()
-			self.panel_has_primary_axis = any([not series_obj.secondary_axis for series_obj in self.series])
-			self.panel_has_secondary_axis = any([series_obj.secondary_axis for series_obj in self.series])
-			comp_prim_dep_var = (not self.log_dep_axis) and self.panel_has_primary_axis
-			comp_sec_dep_var = (not self.log_dep_axis) and self.panel_has_secondary_axis
+			self._panel_has_primary_axis = any([not series_obj.secondary_axis for series_obj in self.series])
+			self._panel_has_secondary_axis = any([series_obj.secondary_axis for series_obj in self.series])
+			comp_prim_dep_var = (not self.log_dep_axis) and self._panel_has_primary_axis
+			comp_sec_dep_var = (not self.log_dep_axis) and self._panel_has_secondary_axis
 			panel_has_primary_interp_series = any([(not series_obj.secondary_axis) and (series_obj.interp_dep_var is not None) for series_obj in self.series])
 			panel_has_secondary_interp_series = any([series_obj.secondary_axis and (series_obj.interp_dep_var is not None) for series_obj in self.series])	#pylint:disable=C0103
 			# Compute panel scaling factor
@@ -1042,28 +1036,28 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			panel_max = max(max(glob_panel_dep_var), sec_interp_max) if self.log_dep_axis and panel_has_secondary_interp_series else (max(glob_panel_dep_var) if self.log_dep_axis else None)
 			# Get axis tick marks locations
 			if comp_prim_dep_var:
-				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale = \
+				self._primary_dep_var_locs, self._primary_dep_var_labels, self._primary_dep_var_min, self._primary_dep_var_max, self._primary_dep_var_div, self._primary_dep_var_unit_scale = \
 					_intelligent_ticks(glob_prim_dep_var, primary_min, primary_max, tight=False, log_axis=self.log_dep_axis)
 			if comp_sec_dep_var:
-				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale = \
+				self._secondary_dep_var_locs, self._secondary_dep_var_labels, self._secondary_dep_var_min, self._secondary_dep_var_max, self._secondary_dep_var_div, self._secondary_dep_var_unit_scale = \
 					_intelligent_ticks(glob_sec_dep_var, secondary_min, secondary_max, tight=False, log_axis=self.log_dep_axis)
-			if self.log_dep_axis and self.panel_has_primary_axis:
-				self.primary_dep_var_locs, self.primary_dep_var_labels, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_div, self.primary_dep_var_unit_scale = \
+			if self.log_dep_axis and self._panel_has_primary_axis:
+				self._primary_dep_var_locs, self._primary_dep_var_labels, self._primary_dep_var_min, self._primary_dep_var_max, self._primary_dep_var_div, self._primary_dep_var_unit_scale = \
 					_intelligent_ticks(glob_panel_dep_var, panel_min, panel_max, tight=False, log_axis=self.log_dep_axis)
-			if self.log_dep_axis and self.panel_has_secondary_axis:
-				self.secondary_dep_var_locs, self.secondary_dep_var_labels, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_div, self.secondary_dep_var_unit_scale = \
+			if self.log_dep_axis and self._panel_has_secondary_axis:
+				self._secondary_dep_var_locs, self._secondary_dep_var_labels, self._secondary_dep_var_min, self._secondary_dep_var_max, self._secondary_dep_var_div, self._secondary_dep_var_unit_scale = \
 					_intelligent_ticks(glob_panel_dep_var, panel_min, panel_max, tight=False, log_axis=self.log_dep_axis)
 			# Equalize number of ticks on primary and secondary axis so that ticks are in the same percentage place within the dependent variable plotting interval (for non-logarithmic panels)
-			if (not self.log_dep_axis) and self.panel_has_primary_axis and self.panel_has_secondary_axis:
-				max_ticks = max(len(self.primary_dep_var_locs), len(self.secondary_dep_var_locs))-1
-				primary_delta = (self.primary_dep_var_locs[-1]-self.primary_dep_var_locs[0])/float(max_ticks)
-				secondary_delta = (self.secondary_dep_var_locs[-1]-self.secondary_dep_var_locs[0])/float(max_ticks)
-				self.primary_dep_var_locs = [self.primary_dep_var_locs[0]+(num*primary_delta) for num in range(max_ticks+1)]
-				self.secondary_dep_var_locs = [self.secondary_dep_var_locs[0]+(num*secondary_delta) for num in range(max_ticks+1)]
-				self.primary_dep_var_locs, self.primary_dep_var_labels = _uniquify_tick_labels(self.primary_dep_var_locs, self.primary_dep_var_locs[0], self.primary_dep_var_locs[-1])
-				self.secondary_dep_var_locs, self.secondary_dep_var_labels = _uniquify_tick_labels(self.secondary_dep_var_locs, self.secondary_dep_var_locs[0], self.secondary_dep_var_locs[-1])
+			if (not self.log_dep_axis) and self._panel_has_primary_axis and self._panel_has_secondary_axis:
+				max_ticks = max(len(self._primary_dep_var_locs), len(self._secondary_dep_var_locs))-1
+				primary_delta = (self._primary_dep_var_locs[-1]-self._primary_dep_var_locs[0])/float(max_ticks)
+				secondary_delta = (self._secondary_dep_var_locs[-1]-self._secondary_dep_var_locs[0])/float(max_ticks)
+				self._primary_dep_var_locs = [self._primary_dep_var_locs[0]+(num*primary_delta) for num in range(max_ticks+1)]
+				self._secondary_dep_var_locs = [self._secondary_dep_var_locs[0]+(num*secondary_delta) for num in range(max_ticks+1)]
+				self._primary_dep_var_locs, self._primary_dep_var_labels = _uniquify_tick_labels(self._primary_dep_var_locs, self._primary_dep_var_locs[0], self._primary_dep_var_locs[-1])
+				self._secondary_dep_var_locs, self._secondary_dep_var_labels = _uniquify_tick_labels(self._secondary_dep_var_locs, self._secondary_dep_var_locs[0], self._secondary_dep_var_locs[-1])
 			# Scale panel
-			self._scale_dep_var(self.primary_dep_var_div, self.secondary_dep_var_div)
+			self._scale_dep_var(self._primary_dep_var_div, self._secondary_dep_var_div)
 
 	def _get_primary_axis_label(self):	#pylint: disable=C0111
 		return self._primary_axis_label
@@ -1108,13 +1102,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	@putil.check.check_parameter('legend_props', putil.check.PolymorphicType([None, dict]))
 	def _set_legend_props(self, legend_props):	#pylint: disable=C0111
-		ref_pos_obj = putil.check.OneOf(self.legend_props_pos_list)
+		ref_pos_obj = putil.check.OneOf(self._legend_props_pos_list)
 		self._legend_props = legend_props if legend_props is not None else {'pos':'BEST', 'cols':1}
 		if self.legend_props is not None:
 			self._legend_props.setdefault('pos', 'BEST')
 			self._legend_props.setdefault('cols', 1)
 			for key, value in self.legend_props.iteritems():
-				if key not in self.legend_props_list:
+				if key not in self._legend_props_list:
 					raise ValueError('Illegal legend property `{0}`'.format(key))
 				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props['pos'])):
 					raise TypeError(ref_pos_obj.exception('pos')['msg'].replace('Parameter', 'Legend property'))
@@ -1196,32 +1190,32 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	def _draw_panel(self, axarr_prim, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
 		""" Draw panel series """
-		axarr_sec = axarr_prim.twinx() if self.panel_has_secondary_axis else None
+		axarr_sec = axarr_prim.twinx() if self._panel_has_secondary_axis else None
 		# Place data series in their appropriate axis (primary or secondary)
 		for series_obj in self.series:
 			series_obj._draw_series(axarr_prim if not series_obj.secondary_axis else axarr_sec, indep_axis_dict['log_indep'], self.log_dep_axis)	#pylint: disable=W0212
 		# Set up tick labels and axis labels
-		if self.panel_has_primary_axis:
-			self._setup_axis('DEP', axarr_prim, self.primary_dep_var_min, self.primary_dep_var_max, self.primary_dep_var_locs, self.primary_dep_var_labels,
-						self.primary_axis_label, self.primary_axis_units, self.primary_dep_var_unit_scale)
-		if self.panel_has_secondary_axis:
-			self._setup_axis('DEP', axarr_sec, self.secondary_dep_var_min, self.secondary_dep_var_max, self.secondary_dep_var_locs, self.secondary_dep_var_labels,
-						self.secondary_axis_label, self.secondary_axis_units, self.secondary_dep_var_unit_scale)
-		if (not self.panel_has_primary_axis) and self.panel_has_secondary_axis:
+		if self._panel_has_primary_axis:
+			self._setup_axis('DEP', axarr_prim, self._primary_dep_var_min, self._primary_dep_var_max, self._primary_dep_var_locs, self._primary_dep_var_labels,
+						self.primary_axis_label, self.primary_axis_units, self._primary_dep_var_unit_scale)
+		if self._panel_has_secondary_axis:
+			self._setup_axis('DEP', axarr_sec, self._secondary_dep_var_min, self._secondary_dep_var_max, self._secondary_dep_var_locs, self._secondary_dep_var_labels,
+						self.secondary_axis_label, self.secondary_axis_units, self._secondary_dep_var_unit_scale)
+		if (not self._panel_has_primary_axis) and self._panel_has_secondary_axis:
 			axarr_prim.yaxis.set_visible(False)
 		# Print legend
 		if (len(self.series) > 1) and (len(self.legend_props) > 0):
-			_, primary_labels = axarr_prim.get_legend_handles_labels() if self.panel_has_primary_axis else (None, list()) #pylint: disable=W0612
-			_, secondary_labels = axarr_sec.get_legend_handles_labels() if self.panel_has_secondary_axis else (None, list()) #pylint: disable=W0612
+			_, primary_labels = axarr_prim.get_legend_handles_labels() if self._panel_has_primary_axis else (None, list()) #pylint: disable=W0612
+			_, secondary_labels = axarr_sec.get_legend_handles_labels() if self._panel_has_secondary_axis else (None, list()) #pylint: disable=W0612
 			labels = [r'$\Leftarrow$'+label for label in primary_labels]+ [label+r'$\Rightarrow$' for label in secondary_labels] if (len(primary_labels) > 0) and (len(secondary_labels) > 0) else primary_labels+secondary_labels
 			if any([True if (label is not None) and (label != '') else False for label in labels]):
 				leg_artist = [series_obj._legend_artist(LEGEND_SCALE) for series_obj in self.series]	#pylint: disable=W0212
-				legend_axis = axarr_prim if self.panel_has_primary_axis else axarr_sec
+				legend_axis = axarr_prim if self._panel_has_primary_axis else axarr_sec
 				legend_axis.legend(leg_artist, labels, ncol=self.legend_props['cols'] if 'cols' in self.legend_props else len(labels),
-					loc=self.legend_pos_list[self.legend_pos_list.index(self.legend_props['pos'].lower() if 'pos' in self.legend_props else 'lower left')], numpoints=1, fontsize=AXIS_LABEL_FONT_SIZE/LEGEND_SCALE)
+					loc=self._legend_pos_list[self._legend_pos_list.index(self.legend_props['pos'].lower() if 'pos' in self.legend_props else 'lower left')], numpoints=1, fontsize=AXIS_LABEL_FONT_SIZE/LEGEND_SCALE)
 				# Fix Matplotlib issue where when there is primary and secondary axis the legend box of one axis is transparent for the axis/series of the other
 				# From: http://stackoverflow.com/questions/17158469/legend-transparency-when-using-secondary-axis
-				if self.panel_has_primary_axis and self.panel_has_secondary_axis:
+				if self._panel_has_primary_axis and self._panel_has_secondary_axis:
 					axarr_prim.set_zorder(1)
 					axarr_prim.set_frame_on(False)
 					axarr_sec.set_frame_on(True)
@@ -1232,7 +1226,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		indep_axis_units = '' if indep_axis_dict['indep_axis_units'] is None else indep_axis_dict['indep_axis_units'].strip()
 		indep_axis_unit_scale = '' if indep_axis_dict['indep_axis_unit_scale'] is None else indep_axis_dict['indep_axis_unit_scale'].strip()
 		self._setup_axis('INDEP', axarr_prim, indep_var_min, indep_var_max, indep_var_locs, indep_var_labels, indep_axis_label, indep_axis_units, indep_axis_unit_scale)
-		return {'primary':None if not self.panel_has_primary_axis else axarr_prim, 'secondary':None if not self.panel_has_secondary_axis else axarr_sec}
+		return {'primary':None if not self._panel_has_primary_axis else axarr_prim, 'secondary':None if not self._panel_has_secondary_axis else axarr_sec}
 
 	series = property(_get_series, _set_series, doc='Panel series')
 	"""
@@ -1346,16 +1340,9 @@ class Figure(object):	#pylint: disable=R0902
 	:py:attr:`putil.plot.Figure.fig_width` and/or :py:attr:`putil.plot.Figure.fig_height` attributes.
 	"""
 	def __init__(self, panels=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep_axis=False):	#pylint: disable=R0913
-		# Private attributes
-		self._panels, self._indep_var_label, self._indep_var_units, self._title, self._log_indep_axis, self._fig_width, self._fig_height = None, None, None, None, None, None, None
-		self.fig = None
-		self.axarr = None
-		self.axarr_list = list()
-		self.indep_var_min = None
-		self.indep_var_max = None
-		self.indep_var_div = None
-		self.indep_var_unit_scale = None
-		self.scaled_indep_var = None
+		# Public attributes
+		self._fig, self._panels, self._indep_var_label, self._indep_var_units, self._title, self._log_indep_axis, self._fig_width, self._fig_height, self._axes_list = None, None, None, None, None, None, None, None, list()
+		# Assignment of parameters to attributes
 		self._set_indep_var_label(indep_var_label)
 		self._set_indep_var_units(indep_var_units)
 		self._set_title(title)
@@ -1431,18 +1418,20 @@ class Figure(object):	#pylint: disable=R0902
 			if not obj._complete():	#pylint: disable=W0212
 				raise RuntimeError('Panel {0} is not fully specified'.format(num))
 
+	def _get_fig(self):	#pylint: disable=C0111
+		return self._fig
+
 	def _complete(self):
 		""" Returns True if figure is fully specified, otherwise returns False """
 		return (self.panels is not None) and (len(self.panels) > 0)
-
 
 	def _draw(self, force_redraw=False, raise_exception=False):	#pylint: disable=C0111,R0914
 		if (self._complete()) and force_redraw:
 			num_panels = len(self.panels)
 			plt.close('all')
 			# Create required number of panels
-			self.fig, self.axarr = plt.subplots(num_panels, sharex=True)	#pylint: disable=W0612
-			self.axarr = self.axarr if isinstance(self.axarr, list) else [self.axarr]
+			self._fig, axes = plt.subplots(num_panels, sharex=True)	#pylint: disable=W0612
+			axes = axes if isinstance(axes, list) else [axes]
 			glob_indep_var = list()
 			# Find union of the independent variable data set of all panels
 			for panel_num, panel_obj in enumerate(self.panels):
@@ -1450,46 +1439,42 @@ class Figure(object):	#pylint: disable=R0902
 					if (self.log_indep_axis is not None) and self.log_indep_axis and (min(series_obj.indep_var) < 0):
 						raise ValueError('Figure cannot cannot be plotted with a logarithmic independent axis because panel {0}, series {1} contains negative independent data points'.format(panel_num, series_num))
 					glob_indep_var = numpy.unique(numpy.append(glob_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var])))
-			indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale = \
+			indep_var_locs, indep_var_labels, indep_var_min, indep_var_max, indep_var_div, indep_var_unit_scale = \
 				_intelligent_ticks(glob_indep_var, min(glob_indep_var), max(glob_indep_var), tight=True, log_axis=self.log_indep_axis)
 			# Scale all panel series
 			for panel_obj in self.panels:
-				panel_obj._scale_indep_var(self.indep_var_div)	#pylint: disable=W0212
+				panel_obj._scale_indep_var(indep_var_div)	#pylint: disable=W0212
 			# Draw panels
-			indep_axis_dict = {'indep_var_min':self.indep_var_min, 'indep_var_max':self.indep_var_max, 'indep_var_locs':indep_var_locs,
+			indep_axis_dict = {'indep_var_min':indep_var_min, 'indep_var_max':indep_var_max, 'indep_var_locs':indep_var_locs,
 						 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
-			for num, (panel_obj, axarr) in enumerate(zip(self.panels, self.axarr)):
+			for num, (panel_obj, axarr) in enumerate(zip(self.panels, axes)):
 				panel_dict = panel_obj._draw_panel(axarr, dict(indep_axis_dict, log_indep=self.log_indep_axis, indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable=W0212,C0326
 													  indep_axis_label=self.indep_var_label if num == num_panels-1 else None, indep_axis_units=self.indep_var_units if num == num_panels-1 else None,
-													  indep_axis_unit_scale = self.indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable=C0326
-				self.axarr_list.append({'number':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary']})
+													  indep_axis_unit_scale=indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable=C0326
+				self._axes_list.append({'number':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary']})
 			if self.title not in [None, '']:
-				self.axarr[0].set_title(self.title, horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=TITLE_FONT_SIZE)
-			#self.fig.canvas.draw()
-			FigureCanvasAgg(self.fig).draw()	# Draw figure otherwise some bounding boxes return NaN
+				axes[0].set_title(self.title, horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=TITLE_FONT_SIZE)
+			#self._fig.canvas.draw()
+			FigureCanvasAgg(self._fig).draw()	# Draw figure otherwise some bounding boxes return NaN
 		elif (not self._complete()) and (raise_exception):
 			raise RuntimeError('Figure object is not fully specified')
 
 	def _calculate_figure_size(self):	#pylint: disable=R0201,R0914
 		""" Calculates minimum panel and figure size """
 		title_height = title_width = 0
-		title = self.fig.axes[0].get_title()
+		title = self._fig.axes[0].get_title()
 		if (title is not None) and (title.strip() != ''):
-			title_obj = self.fig.axes[0].title
-			title_height = _get_text_prop(self.fig, title_obj)['height']
-			title_width = _get_text_prop(self.fig, title_obj)['width']
-		xaxis_dims = [_get_xaxis_size(self.fig, axis_obj.xaxis.get_ticklabels(), axis_obj.xaxis.get_label()) for axis_obj in self.fig.axes]
-		yaxis_dims = [_get_yaxis_size(self.fig, axis_obj.yaxis.get_ticklabels(), axis_obj.yaxis.get_label()) for axis_obj in self.fig.axes]
+			title_obj = self._fig.axes[0].title
+			title_height = _get_text_prop(self._fig, title_obj)['height']
+			title_width = _get_text_prop(self._fig, title_obj)['width']
+		xaxis_dims = [_get_xaxis_size(self._fig, axis_obj.xaxis.get_ticklabels(), axis_obj.xaxis.get_label()) for axis_obj in self._fig.axes]
+		yaxis_dims = [_get_yaxis_size(self._fig, axis_obj.yaxis.get_ticklabels(), axis_obj.yaxis.get_label()) for axis_obj in self._fig.axes]
 		panel_dims = [(yaxis_height+xaxis_height, yaxis_width+xaxis_width) for (yaxis_height, yaxis_width), (xaxis_height, xaxis_width) in zip(yaxis_dims, xaxis_dims)]
-		min_fig_width = (max(title_width, max([panel_width for _, panel_width in panel_dims])))/float(self.fig.dpi)
-		min_fig_height = (((len(self.axarr_list)*max([panel_height for panel_height, _ in panel_dims]))+title_height)/float(self.fig.dpi))
+		min_fig_width = round((max(title_width, max([panel_width for _, panel_width in panel_dims])))/float(self._fig.dpi), 2)
+		min_fig_height = round((((len(self._axes_list)*max([panel_height for panel_height, _ in panel_dims]))+title_height)/float(self._fig.dpi)), 2)
 		return min_fig_height, min_fig_width
 
-	def fig_handle(self):
-		""" Returns the Matplotlib figure handle. Useful if annotations or further customizations to the figure are needed. """
-		return self.fig
-
-	def axis_list(self):
+	def axes_list(self):
 		"""
 		Returns the Matplotlib figure axes handle list. Useful if annotations or further customizations to the panel(s) are needed. Each panel has an entry in the list, which is sorted in the order the panels are
 		plotted (top to bottom). Each panel entry is a dictionary containing the following keys:
@@ -1498,7 +1483,7 @@ class Figure(object):	#pylint: disable=R0902
 		* **primary** (*Matplotlib axis object*) -- axis handle for the primary axis, *None* if the figure has not primary axis
 		* **secondary** (*Matplotlib axis object*) -- axis handle for the secondary axis, *None* if the figure has not secondary axis
 		"""
-		return self.axarr_list
+		return self._axes_list
 
 	def show(self):	#pylint: disable=R0201
 		"""
@@ -1509,7 +1494,7 @@ class Figure(object):	#pylint: disable=R0902
 
 		 * Same as :py:attr:`putil.plot.Figure.panels`
 		"""
-		self._draw(force_redraw=self.fig is None, raise_exception=True)
+		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		plt.show()
 
 	@putil.check.check_parameter('file_name', putil.check.File())
@@ -1526,7 +1511,7 @@ class Figure(object):	#pylint: disable=R0902
 		"""
 		if not self._complete():
 			raise RuntimeError('Figure object is not fully specified')
-		self._draw(force_redraw=self.fig is None, raise_exception=True)
+		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		# Calculate minimum figure dimensions
 		min_fig_height, min_fig_width = self._calculate_figure_size()
 		self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
@@ -1534,7 +1519,7 @@ class Figure(object):	#pylint: disable=R0902
 		self.fig.set_size_inches(self.fig_width, self.fig_height)
 		file_name = os.path.expanduser(file_name)	# Matplotlib seems to have a problem with ~/, expand it to $HOME
 		putil.misc.make_dir(file_name)
-		self.fig.savefig(file_name, bbox_inches='tight', dpi=self.fig.dpi)
+		self._fig.savefig(file_name, bbox_inches='tight', dpi=self._fig.dpi)
 		plt.close('all')
 
 	indep_var_label = property(_get_indep_var_label, _set_indep_var_label, doc='Figure independent axis label')
@@ -1611,6 +1596,8 @@ class Figure(object):	#pylint: disable=R0902
 
 	panels = property(_get_panels, _set_panels, doc='Figure panel(s)')
 	"""
+	Figure panel(s)
+
 	:type:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
 	:raises:
 	 * TypeError (Parameter `panels` is of the wrong type)
@@ -1618,6 +1605,13 @@ class Figure(object):	#pylint: disable=R0902
 	 * RuntimeError (Panel *[number]* is not fully specified)
 
 	 * ValueError(Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+	"""	#pylint: disable=W0105
+
+	fig = property(_get_fig, doc='Figure handle')
+	"""
+	Figure handle. Useful if annotations or further customizations to the figure are needed.
+
+	:type:		Matplotlib figure handle if figure is fully specified, otherwise None
 	"""	#pylint: disable=W0105
 
 def _first_label(label_list):

@@ -43,10 +43,10 @@ def unittest_series_images(mode=None, test_dir=None):	#pylint: disable=R0914
 			primary_axis_units='-',
 		)
 		fig_obj = putil.plot.Figure(
-			panel=panel_obj,
+			panels=panel_obj,
 			indep_var_label='Independent axis',
 			indep_var_units='',
-			log_indep=False,
+			log_indep_axis=False,
 			fig_width=8,
 			fig_height=6,
 			title='marker: {0}\ninterp: {1}\nline_style: {2}'.format(marker, interp, line_style)
@@ -130,10 +130,10 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 				log_dep_axis=(True if axis_type == 'log' else False)
 			)
 			fig_obj = putil.plot.Figure(
-				panel=panel_obj,
+				panels=panel_obj,
 				indep_var_label='Independent axis',
 				indep_var_units='',
-				log_indep=(axis_type == 'filter'),
+				log_indep_axis=(axis_type == 'filter'),
 				fig_width=8,
 				fig_height=6,
 				title='Axis: {0}\nSeries in axis: {1}'.format(axis_type, in_axis),
