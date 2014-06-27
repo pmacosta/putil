@@ -2,7 +2,7 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-# TODO: Figure.__str__, Series marker choose
+# TODO: Figure.__str__, Series marker choose, Positive integer, positive real, positive number check
 """
 Utility classes, methods and functions to handle plotting
 """
