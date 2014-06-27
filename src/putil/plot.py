@@ -2,6 +2,7 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
+# TODO: Figure.__str__, Series marker choose
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -1395,26 +1396,6 @@ class Figure(object):	#pylint: disable=R0902
 		self._log_indep_axis = log_indep_axis
 		self._draw(force_redraw=True)
 
-	def _complete(self):
-		""" Returns True if figure is fully specified, otherwise returns False """
-		return (self.panels is not None) and (len(self.panels) > 0)
-
-	def _get_panels(self):	#pylint: disable=C0111
-		return self._panels
-
-	def _set_panels(self, panels):	#pylint: disable=C0111
-		self._panels = (panels if isinstance(panels, list) else [panels]) if panels is not None else panels
-		if self.panels is not None:
-			self._validate_panels()
-
-	def _validate_panels(self):
-		""" Verifies that elements of panel list are of the right type and fully specified """
-		for num, obj in enumerate(self.panels):
-			if type(obj) is not Panel:
-				raise TypeError('Parameter `panels` is of the wrong type')
-			if not obj._complete():	#pylint: disable=W0212
-				raise RuntimeError('Panel element {0} is not fully specified'.format(num))
-
 	def _get_fig_width(self):	#pylint: disable=C0111
 		return self._fig_width
 
@@ -1433,7 +1414,29 @@ class Figure(object):	#pylint: disable=R0902
 			raise ValueError('Parameter `fig_height` is not a positive number')
 		self._fig_height = fig_height
 
-	def _draw(self, force_redraw=False, raise_exception=False):	#pylint: disable=C0111
+	def _get_panels(self):	#pylint: disable=C0111
+		return self._panels
+
+	def _set_panels(self, panels):	#pylint: disable=C0111
+		self._panels = (panels if isinstance(panels, list) else [panels]) if panels is not None else panels
+		if self.panels is not None:
+			self._validate_panels()
+		self._draw(force_redraw=True)
+
+	def _validate_panels(self):
+		""" Verifies that elements of panel list are of the right type and fully specified """
+		for num, obj in enumerate(self.panels):
+			if type(obj) is not Panel:
+				raise TypeError('Parameter `panels` is of the wrong type')
+			if not obj._complete():	#pylint: disable=W0212
+				raise RuntimeError('Panel {0} is not fully specified'.format(num))
+
+	def _complete(self):
+		""" Returns True if figure is fully specified, otherwise returns False """
+		return (self.panels is not None) and (len(self.panels) > 0)
+
+
+	def _draw(self, force_redraw=False, raise_exception=False):	#pylint: disable=C0111,R0914
 		if (self._complete()) and force_redraw:
 			num_panels = len(self.panels)
 			plt.close('all')
@@ -1442,8 +1445,10 @@ class Figure(object):	#pylint: disable=R0902
 			self.axarr = self.axarr if isinstance(self.axarr, list) else [self.axarr]
 			glob_indep_var = list()
 			# Find union of the independent variable data set of all panels
-			for panel_obj in self.panels:
-				for series_obj in panel_obj.series:
+			for panel_num, panel_obj in enumerate(self.panels):
+				for series_num, series_obj in enumerate(panel_obj.series):
+					if (self.log_indep_axis is not None) and self.log_indep_axis and (min(series_obj.indep_var) < 0):
+						raise ValueError('Figure cannot cannot be plotted with a logarithmic independent axis because panel {0}, series {1} contains negative independent data points'.format(panel_num, series_num))
 					glob_indep_var = numpy.unique(numpy.append(glob_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var])))
 			indep_var_locs, indep_var_labels, self.indep_var_min, self.indep_var_max, self.indep_var_div, self.indep_var_unit_scale = \
 				_intelligent_ticks(glob_indep_var, min(glob_indep_var), max(glob_indep_var), tight=True, log_axis=self.log_indep_axis)
@@ -1499,7 +1504,10 @@ class Figure(object):	#pylint: disable=R0902
 		"""
 		Displays figure
 
-		:raises: RuntimeError (Figure object is not fully specified)
+		:raises:
+		 * RuntimeError (Figure object is not fully specified)
+
+		 * Same as :py:attr:`putil.plot.Figure.panels`
 		"""
 		self._draw(force_redraw=self.fig is None, raise_exception=True)
 		plt.show()
@@ -1529,22 +1537,16 @@ class Figure(object):	#pylint: disable=R0902
 		self.fig.savefig(file_name, bbox_inches='tight', dpi=self.fig.dpi)
 		plt.close('all')
 
-	panels = property(_get_panels, _set_panels, doc='Figure panel(s)')
-	"""
-	:type:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
-	:raises:
-	 * TypeError (Parameter `panels` is of the wrong type)
-
-	 * RuntimeError (Panel element *[number]* is not fully specified)
-	"""	#pylint: disable=W0105
-
 	indep_var_label = property(_get_indep_var_label, _set_indep_var_label, doc='Figure independent axis label')
 	"""
 	Figure independent variable label
 
 	:type:		string
 	:rtype:		string
-	:raises:	TypeError (Parameter `indep_var_label` is of the wrong type)
+	:raises:
+	 * TypeError (Parameter `indep_var_label` is of the wrong type)
+
+	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
 
 	indep_var_units = property(_get_indep_var_units, _set_indep_var_units, doc='Figure independent axis units')
@@ -1553,7 +1555,10 @@ class Figure(object):	#pylint: disable=R0902
 
 	:type:		string
 	:rtype:		string
-	:raises:	TypeError (Parameter `indep_var_units` is of the wrong type)
+	:raises:
+	 * TypeError (Parameter `indep_var_units` is of the wrong type)
+
+	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
 
 	title = property(_get_title, _set_title, doc='Figure title')
@@ -1562,7 +1567,10 @@ class Figure(object):	#pylint: disable=R0902
 
 	:type:		string
 	:rtype:		string
-	:raises:	TypeError (Parameter `title` is of the wrong type)
+	:raises:
+	 * TypeError (Parameter `title` is of the wrong type)
+
+	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
 
 	log_indep_axis = property(_get_log_indep_axis, _set_log_indep_axis, doc='Figure log_indep_axis')
@@ -1571,7 +1579,10 @@ class Figure(object):	#pylint: disable=R0902
 
 	:type:		boolean
 	:rtype:		boolean
-	:raises:	TypeError (Parameter `log_indep_axis` is of the wrong type)
+	:raises:
+	 * TypeError (Parameter `log_indep_axis` is of the wrong type)
+
+	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
 
 	fig_width = property(_get_fig_width, _set_fig_width, doc='Width of the hardcopy plot')
@@ -1596,6 +1607,17 @@ class Figure(object):	#pylint: disable=R0902
 	 * TypeError (Parameter `fig_height` is of the wrong type)
 
 	 * ValueError (Parameter `fig_height` is not positive number)
+	"""	#pylint: disable=W0105
+
+	panels = property(_get_panels, _set_panels, doc='Figure panel(s)')
+	"""
+	:type:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
+	:raises:
+	 * TypeError (Parameter `panels` is of the wrong type)
+
+	 * RuntimeError (Panel *[number]* is not fully specified)
+
+	 * ValueError(Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
 	"""	#pylint: disable=W0105
 
 def _first_label(label_list):

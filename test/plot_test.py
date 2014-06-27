@@ -1368,3 +1368,101 @@ class TestPanel(object):	#pylint: disable=W0232
 			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			test_list.append(result)
 		assert test_list == [True]*len(images_dict_list)
+
+###
+# Tests for Figure
+###
+@pytest.fixture
+def default_panel(default_series):	#pylint: disable=W0621
+	""" Provides a default panel object to be used in teseting the putil.Figure() class """
+	return putil.plot.Panel(series=default_series, primary_axis_label='Primary axis', primary_axis_units='A', secondary_axis_label='Secondary axis', secondary_axis_units='B')
+
+class TestFigure(object):	#pylint: disable=W0232,R0903
+	""" Tests for Figure """
+	def test_indep_var_label_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test indep_var_label data validation """
+		# This assignments should raise an exception
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Figure(panels=default_panel, indep_var_label=5)
+		test_list.append(excinfo.value.message == 'Parameter `indep_var_label` is of the wrong type')
+		# These assignments should not raise an exception
+		putil.plot.Figure(panels=default_panel, indep_var_label=None)
+		putil.plot.Figure(panels=default_panel, indep_var_label='sec')
+		obj = putil.plot.Figure(panels=default_panel, indep_var_label='test')
+		test_list.append(obj.indep_var_label == 'test')
+		assert test_list == [True]*2
+
+	def test_indep_var_units_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test indep_var_units data validation """
+		# This assignments should raise an exception
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Figure(panels=default_panel, indep_var_units=5)
+		test_list.append(excinfo.value.message == 'Parameter `indep_var_units` is of the wrong type')
+		# These assignments should not raise an exception
+		putil.plot.Figure(panels=default_panel, indep_var_units=None)
+		putil.plot.Figure(panels=default_panel, indep_var_units='sec')
+		obj = putil.plot.Figure(panels=default_panel, indep_var_units='test')
+		test_list.append(obj.indep_var_units == 'test')
+		assert test_list == [True]*2
+
+	def test_title_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test title data validation """
+		# This assignments should raise an exception
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Figure(panels=default_panel, title=5)
+		test_list.append(excinfo.value.message == 'Parameter `title` is of the wrong type')
+		# These assignments should not raise an exception
+		putil.plot.Figure(panels=default_panel, title=None)
+		putil.plot.Figure(panels=default_panel, title='sec')
+		obj = putil.plot.Figure(panels=default_panel, title='test')
+		test_list.append(obj.title == 'test')
+		assert test_list == [True]*2
+
+	def test_log_indep_axis_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test log_indep_axis data validation """
+		# This assignments should raise an exception
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Figure(panels=default_panel, log_indep_axis=5)
+		test_list.append(excinfo.value.message == 'Parameter `log_indep_axis` is of the wrong type')
+		negative_data_source = putil.plot.BasicSource(indep_var=numpy.array([-5, 6, 7, 8]), dep_var=numpy.array([0.1, 10, 5, 4]))
+		negative_series = putil.plot.Series(data_source=negative_data_source, label='negative data series')
+		negative_panel = putil.plot.Panel(series=negative_series)
+		with pytest.raises(ValueError) as excinfo:
+			putil.plot.Figure(panels=negative_panel, log_indep_axis=True)
+		test_list.append(excinfo.value.message == 'Figure cannot cannot be plotted with a logarithmic independent axis because panel 0, series 0 contains negative independent data points')
+		# These assignments should not raise an exception
+		obj = putil.plot.Figure(panels=default_panel, log_indep_axis=False)
+		test_list.append(obj.log_indep_axis == False)
+		obj = putil.plot.Figure(panels=default_panel, log_indep_axis=True)
+		test_list.append(obj.log_indep_axis == True)
+		obj = putil.plot.Figure(panels=default_panel)
+		test_list.append(obj.log_indep_axis == False)
+		assert test_list == [True]*5
+
+	def test_panels_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test panel data validation """
+		# This assignments should raise an exception
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Figure(panels=5)
+		test_list.append(excinfo.value.message == 'Parameter `panels` is of the wrong type')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.plot.Figure(panels=[default_panel, putil.plot.Panel(series=None)])
+		test_list.append(excinfo.value.message == 'Panel 1 is not fully specified')
+		# These assignments should not raise an exception
+		putil.plot.Figure(panels=None)
+		putil.plot.Figure(panels=default_panel)
+		assert test_list == [True]*2
+
+	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test that _complete() method behaves correctly """
+		test_list = list()
+		obj = putil.plot.Figure(panels=None)
+		test_list.append(obj._complete() == False)	#pylint: disable=W0212
+		obj.panels = default_panel
+		test_list.append(obj._complete() == True)	#pylint: disable=W0212
+		assert test_list == 2*[True]
