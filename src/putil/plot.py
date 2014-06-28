@@ -3,6 +3,7 @@
 # See LICENSE for details
 
 # TODO: Series marker choose, Positive integer, positive real, positive number check
+
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -26,6 +27,16 @@ PRECISION = 10
 Number of mantissa significant digits
 
 :type:	integer
+"""	#pylint: disable=W0105
+
+LINE_WIDTH = 2.5
+"""
+Line width in points
+"""	#pylint: disable=W0105
+
+MARKER_SIZE = 14
+"""
+Marker size in points
 """	#pylint: disable=W0105
 
 MIN_TICKS = 6
@@ -640,9 +651,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
 		# Series plotting attributes
-		self._ref_linewidth = 2.5
-		self._ref_markersize = 14
-		self._ref_markeredgewidth = 5
+		self._ref_linewidth = LINE_WIDTH
+		self._ref_markersize = MARKER_SIZE
+		self._ref_markeredgewidth = self._ref_markersize*(5.0/14.0)
 		self._ref_markerfacecolor = 'w'
 		# Private attributes
 		self._scaling_factor_indep_var, self._scaling_factor_dep_var = 1, 1
