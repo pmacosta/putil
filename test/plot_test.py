@@ -1308,8 +1308,20 @@ class TestPanel(object):	#pylint: disable=W0232
 
 	def test_str(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
+		test_list = list()
+		obj = putil.plot.Panel(series=None)
+		ret = 'Series: None\n'
+		ret += 'Primary axis label: not specified\n'
+		ret += 'Primary axis units: not specified\n'
+		ret += 'Secondary axis label: not specified\n'
+		ret += 'Secondary axis units: not specified\n'
+		ret += 'Logarithmic dependent axis: False\n'
+		ret += 'Legend properties:\n'
+		ret += '   pos: BEST\n'
+		ret += '   cols: 1'
+		test_list.append(str(obj) == ret)
 		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts')
-		ret = 'Series 1:\n'
+		ret = 'Series 0:\n'
 		ret += '   Data source: putil.plot.BasicSource class object\n'
 		ret += '   Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
 		ret += '   Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
@@ -1327,7 +1339,8 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Legend properties:\n'
 		ret += '   pos: BEST\n'
 		ret += '   cols: 1'
-		assert str(obj) == ret
+		test_list.append(str(obj) == ret)
+		assert test_list == 2*[True]
 
 	def test_cannot_delete_attributes(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
@@ -1445,34 +1458,36 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		assert test_list == [True]*5
 
 	def test_fig_width_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
-		""" Test panel data validation """
+		""" Test figure width data validation """
 		# This assignments should raise an exception
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, fig_width='a')
 		test_list.append(excinfo.value.message == 'Parameter `fig_width` is of the wrong type')
 		# These assignments should not raise an exception
-		putil.plot.Figure(panels=default_panel, fig_width=None)
-		obj = putil.plot.Figure(panels=default_panel)
+		obj = putil.plot.Figure(panels=None)
 		test_list.append(obj.fig_width == None)
+		obj = putil.plot.Figure(panels=default_panel)
+		test_list.append(obj.fig_width-6.08 < 1e-10)
 		obj.fig_width = 5
 		test_list.append(obj.fig_width == 5)
-		assert test_list == 3*[True]
+		assert test_list == 4*[True]
 
 	def test_fig_height_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
-		""" Test panel data validation """
+		""" Test figure height data validation """
 		# This assignments should raise an exception
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, fig_height='a')
 		test_list.append(excinfo.value.message == 'Parameter `fig_height` is of the wrong type')
 		# These assignments should not raise an exception
-		putil.plot.Figure(panels=default_panel, fig_height=None)
-		obj = putil.plot.Figure(panels=default_panel)
+		obj = putil.plot.Figure(panels=None)
 		test_list.append(obj.fig_height == None)
+		obj = putil.plot.Figure(panels=default_panel)
+		test_list.append(obj.fig_height-4.31 < 1e-10)
 		obj.fig_height = 5
 		test_list.append(obj.fig_height == 5)
-		assert test_list == 3*[True]
+		assert test_list == 4*[True]
 
 	def test_panels_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test panel data validation """
@@ -1490,12 +1505,26 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		assert test_list == 2*[True]
 
 	def test_fig_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
-		""" Test panel data validation """
+		""" Test fig attribute """
 		test_list = list()
 		obj = putil.plot.Figure(panels=None)
 		test_list.append(obj.fig == None)
 		obj = putil.plot.Figure(panels=default_panel)
 		test_list.append(isinstance(obj.fig, matplotlib.figure.Figure))
+		assert test_list == 2*[True]
+
+	def test_axes_list(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test axes_list attribute """
+		test_list = list()
+		obj = putil.plot.Figure(panels=None)
+		test_list.append(obj.axes_list == list())
+		obj = putil.plot.Figure(panels=default_panel)
+		comp_list = list()
+		for num, axis_dict in enumerate(obj.axes_list):
+			if (axis_dict['number'] == num) and ((axis_dict['primary'] is None) or (isinstance(axis_dict['primary'], matplotlib.axes.Axes))) and \
+					((axis_dict['secondary'] is None) or (isinstance(axis_dict['secondary'], matplotlib.axes.Axes))):
+				comp_list.append(True)
+		test_list.append(comp_list == len(obj.axes_list)*[True])
 		assert test_list == 2*[True]
 
 	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
@@ -1505,4 +1534,45 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list.append(obj._complete() == False)	#pylint: disable=W0212
 		obj.panels = default_panel
 		test_list.append(obj._complete() == True)	#pylint: disable=W0212
+		assert test_list == 2*[True]
+
+	def test_str(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test that str behaves correctly """
+		test_list = list()
+		obj = putil.plot.Figure(panels=None)
+		ret = 'Panels: None\n'
+		ret += 'Independent variable label: not specified\n'
+		ret += 'Independent variable units: not specified\n'
+		ret += 'Logarithmic independent axis: False\n'
+		ret += 'Title: not specified\n'
+		ret += 'Figure width: None\n'
+		ret += 'Figure height: None\n'
+		test_list.append(str(obj) == ret)
+		obj = putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph')
+		ret = 'Panel 0:\n'
+		ret += '   Series 0:\n'
+		ret += '      Data source: putil.plot.BasicSource class object\n'
+		ret += '      Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+		ret += '      Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+		ret += '      Label: test series\n'
+		ret += '      Color: k\n'
+		ret += '      Marker: True\n'
+		ret += '      Interpolation: CUBIC\n'
+		ret += '      Line style: -\n'
+		ret += '      Secondary axis: False\n'
+		ret += '   Primary axis label: Primary axis\n'
+		ret += '   Primary axis units: A\n'
+		ret += '   Secondary axis label: Secondary axis\n'
+		ret += '   Secondary axis units: B\n'
+		ret += '   Logarithmic dependent axis: False\n'
+		ret += '   Legend properties:\n'
+		ret += '      pos: BEST\n'
+		ret += '      cols: 1\n'
+		ret += 'Independent variable label: Input\n'
+		ret += 'Independent variable units: Amps\n'
+		ret += 'Logarithmic independent axis: False\n'
+		ret += 'Title: My graph\n'
+		ret += 'Figure width: 6.08\n'
+		ret += 'Figure height: 4.99\n'
+		test_list.append(str(obj) == ret)
 		assert test_list == 2*[True]

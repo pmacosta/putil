@@ -2,7 +2,7 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-# TODO: Figure.__str__, Series marker choose, Positive integer, positive real, positive number check
+# TODO: Series marker choose, Positive integer, positive real, positive number check
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -1121,19 +1121,19 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		Print panel information
 		"""
 		ret = ''
-		if len(self.series) == 0:
+		if (self.series is None) or (len(self.series) == 0):
 			ret += 'Series: None\n'
 		else:
 			for num, element in enumerate(self.series):
-				ret += 'Series {0}:\n'.format(num+1)
+				ret += 'Series {0}:\n'.format(num)
 				temp = str(element).split('\n')
 				temp = [3*' '+line for line in temp]
 				ret += '\n'.join(temp)
 				ret += '\n'
-		ret += 'Primary axis label: {0}\n'.format(self.primary_axis_label)
-		ret += 'Primary axis units: {0}\n'.format(self.primary_axis_units)
-		ret += 'Secondary axis label: {0}\n'.format(self.secondary_axis_label)
-		ret += 'Secondary axis units: {0}\n'.format(self.secondary_axis_units)
+		ret += 'Primary axis label: {0}\n'.format(self.primary_axis_label if self.primary_axis_label not in ['', None] else 'not specified')
+		ret += 'Primary axis units: {0}\n'.format(self.primary_axis_units if self.primary_axis_units not in ['', None] else 'not specified')
+		ret += 'Secondary axis label: {0}\n'.format(self.secondary_axis_label if self.secondary_axis_label not in ['', None] else 'not specified')
+		ret += 'Secondary axis units: {0}\n'.format(self.secondary_axis_units if self.secondary_axis_units not in ['', None] else 'not specified')
 		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
 		if self.legend_props is None:
 			ret += 'Legend properties: None'
@@ -1421,6 +1421,9 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_fig(self):	#pylint: disable=C0111
 		return self._fig
 
+	def _get_axes_list(self):	#pylint: disable=C0111
+		return self._axes_list
+
 	def _complete(self):
 		""" Returns True if figure is fully specified, otherwise returns False """
 		return (self.panels is not None) and (len(self.panels) > 0)
@@ -1456,6 +1459,7 @@ class Figure(object):	#pylint: disable=R0902
 				axes[0].set_title(self.title, horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=TITLE_FONT_SIZE)
 			#self._fig.canvas.draw()
 			FigureCanvasAgg(self._fig).draw()	# Draw figure otherwise some bounding boxes return NaN
+			self._calculate_figure_size()
 		elif (not self._complete()) and (raise_exception):
 			raise RuntimeError('Figure object is not fully specified')
 
@@ -1472,18 +1476,8 @@ class Figure(object):	#pylint: disable=R0902
 		panel_dims = [(yaxis_height+xaxis_height, yaxis_width+xaxis_width) for (yaxis_height, yaxis_width), (xaxis_height, xaxis_width) in zip(yaxis_dims, xaxis_dims)]
 		min_fig_width = round((max(title_width, max([panel_width for _, panel_width in panel_dims])))/float(self._fig.dpi), 2)
 		min_fig_height = round((((len(self._axes_list)*max([panel_height for panel_height, _ in panel_dims]))+title_height)/float(self._fig.dpi)), 2)
-		return min_fig_height, min_fig_width
-
-	def axes_list(self):
-		"""
-		Returns the Matplotlib figure axes handle list. Useful if annotations or further customizations to the panel(s) are needed. Each panel has an entry in the list, which is sorted in the order the panels are
-		plotted (top to bottom). Each panel entry is a dictionary containing the following keys:
-
-		* **number** (*integer*) -- panel number, panel 0 is the top-most panel
-		* **primary** (*Matplotlib axis object*) -- axis handle for the primary axis, *None* if the figure has not primary axis
-		* **secondary** (*Matplotlib axis object*) -- axis handle for the secondary axis, *None* if the figure has not secondary axis
-		"""
-		return self._axes_list
+		self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
+		self.fig_height = min_fig_height if self.fig_height is None else self.fig_height
 
 	def show(self):	#pylint: disable=R0201
 		"""
@@ -1512,15 +1506,33 @@ class Figure(object):	#pylint: disable=R0902
 		if not self._complete():
 			raise RuntimeError('Figure object is not fully specified')
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
-		# Calculate minimum figure dimensions
-		min_fig_height, min_fig_width = self._calculate_figure_size()
-		self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
-		self.fig_height = min_fig_height if self.fig_height is None else self.fig_height
 		self.fig.set_size_inches(self.fig_width, self.fig_height)
 		file_name = os.path.expanduser(file_name)	# Matplotlib seems to have a problem with ~/, expand it to $HOME
 		putil.misc.make_dir(file_name)
 		self._fig.savefig(file_name, bbox_inches='tight', dpi=self._fig.dpi)
 		plt.close('all')
+
+	def __str__(self):
+		"""
+		Print figure information
+		"""
+		ret = ''
+		if (self.panels is None) or (len(self.panels) == 0):
+			ret += 'Panels: None\n'
+		else:
+			for num, element in enumerate(self.panels):
+				ret += 'Panel {0}:\n'.format(num)
+				temp = str(element).split('\n')
+				temp = [3*' '+line for line in temp]
+				ret += '\n'.join(temp)
+				ret += '\n'
+		ret += 'Independent variable label: {0}\n'.format(self.indep_var_label if self.indep_var_label not in ['', None] else 'not specified')
+		ret += 'Independent variable units: {0}\n'.format(self.indep_var_units if self.indep_var_units not in ['', None] else 'not specified')
+		ret += 'Logarithmic independent axis: {0}\n'.format(self.log_indep_axis)
+		ret += 'Title: {0}\n'.format(self.title if self.title not in ['', None] else 'not specified')
+		ret += 'Figure width: {0}\n'.format(self.fig_width)
+		ret += 'Figure height: {0}\n'.format(self.fig_height)
+		return ret
 
 	indep_var_label = property(_get_indep_var_label, _set_indep_var_label, doc='Figure independent axis label')
 	"""
@@ -1613,6 +1625,16 @@ class Figure(object):	#pylint: disable=R0902
 
 	:type:		Matplotlib figure handle if figure is fully specified, otherwise None
 	"""	#pylint: disable=W0105
+
+	axes_list = property(_get_axes_list, doc='Matplotlib figure axes handle list')
+	"""
+	Matplotlib figure axes handle list. Useful if annotations or further customizations to the panel(s) are needed. Each panel has an entry in the list, which is sorted in the order the panels are
+	plotted (top to bottom). Each panel entry is a dictionary containing the following keys:
+
+	* **number** (*integer*) -- panel number, panel 0 is the top-most panel
+	* **primary** (*Matplotlib axis object*) -- axis handle for the primary axis, *None* if the figure has not primary axis
+	* **secondary** (*Matplotlib axis object*) -- axis handle for the secondary axis, *None* if the figure has not secondary axis
+	""" #pylint: disable=W0105
 
 def _first_label(label_list):
 	""" Find first non-blank label """
