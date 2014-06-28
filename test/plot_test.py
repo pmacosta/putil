@@ -1576,3 +1576,38 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += 'Figure height: 4.99\n'
 		test_list.append(str(obj) == ret)
 		assert test_list == 2*[True]
+
+	def test_cannot_delete_attributes(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test that del method raises an exception on all class attributes """
+		obj = putil.plot.Figure(panels=default_panel)
+		test_list = list()
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.panels
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.indep_var_label
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.indep_var_units
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.title
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.log_indep_axis
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.fig_width
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.fig_height
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.fig
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del obj.axes_list
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert test_list == 9*[True]
+
+
