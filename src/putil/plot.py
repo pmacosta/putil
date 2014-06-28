@@ -1434,7 +1434,7 @@ class Figure(object):	#pylint: disable=R0902
 			plt.close('all')
 			# Create required number of panels
 			self._fig, axes = plt.subplots(num_panels, sharex=True)	#pylint: disable=W0612
-			axes = axes if isinstance(axes, list) else [axes]
+			axes = axes if isinstance(axes, type(numpy.array([]))) else [axes]
 			glob_indep_var = list()
 			# Find union of the independent variable data set of all panels
 			for panel_num, panel_obj in enumerate(self.panels):

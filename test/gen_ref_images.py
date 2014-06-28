@@ -141,9 +141,65 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 			if mode == 'ref':
 				putil.misc.make_dir(ref_file_name)
 			fig_obj.save(ref_file_name if mode == 'ref' else test_file_name)
+	return output_list
 
+def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915
+	""" Images for Figure() class """
+	mode = 'ref' if mode is None else mode.lower()
+	ref_dir = './ref_images/'
+	test_dir = './test_images' if test_dir is None else test_dir
+	output_list = list()
+	ds1_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([1, 2, 3, 4]))
+	ds2_obj = putil.plot.BasicSource(indep_var=numpy.array([300, 400, 500, 600, 700]), dep_var=numpy.array([3, 4, 5, 6, 7]))
+	indep_var = numpy.array([1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3, 1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5, 1e6])
+	dep_var = numpy.array([20*math.log10(math.sqrt(abs(1/(1+((1j*2*math.pi*freq)/(2*math.pi*1e4)))))) for freq in indep_var])
+	ds3_obj = putil.plot.BasicSource(indep_var=indep_var, dep_var=dep_var)
+	series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', marker=True, interp='STRAIGHT', line_style='-', color='k')
+	series2_obj = putil.plot.Series(data_source=ds2_obj, label='series 2', marker=True, interp='STRAIGHT', line_style='-', color='b', secondary_axis=True)
+	series3_obj = putil.plot.Series(data_source=ds3_obj, label='series 3', marker=False, interp='CUBIC', line_style='-', color='k')
+	panel1_obj = putil.plot.Panel(
+		series=series1_obj,
+		primary_axis_label='Primary axis #1',
+		primary_axis_units='-',
+		secondary_axis_label='Secondary axis #1',
+		secondary_axis_units='-',
+		log_dep_axis=False
+	)
+	panel2_obj = putil.plot.Panel(
+		series=series2_obj,
+		primary_axis_label='Primary axis #2',
+		primary_axis_units='-',
+		secondary_axis_label='Secondary axis #2',
+		secondary_axis_units='-',
+		log_dep_axis=False
+	)
+	panel3_obj = putil.plot.Panel(
+		series=series3_obj,
+		primary_axis_label='Primary axis #3',
+		primary_axis_units='-',
+		secondary_axis_label='Secondary axis #3',
+		secondary_axis_units='-',
+		log_dep_axis=False
+	)
+	for axis_type in ['linear', 'logarithmic']:
+		ref_file_name = '{0}/figure_{1}_axis.png'.format(ref_dir, axis_type)
+		test_file_name = '{0}/figure_{1}_axis.png'.format(test_dir, axis_type)
+		print 'Generating image {0}'.format(ref_file_name if mode == 'ref' else test_file_name)
+		fig_obj = putil.plot.Figure(
+			panels=[panel1_obj, panel2_obj] if axis_type == 'linear' else [panel1_obj, panel3_obj],
+			indep_var_label='Independent axis',
+			indep_var_units='',
+			log_indep_axis=False if axis_type == 'linear' else True,
+			fig_width=8,
+			fig_height=6,
+			title='{0} axis'.format(axis_type),
+		)
+		if mode == 'ref':
+			putil.misc.make_dir(ref_file_name)
+		fig_obj.save(ref_file_name if mode == 'ref' else test_file_name)
 	return output_list
 
 if __name__ == '__main__':
-	unittest_series_images(mode='ref')
-	unittest_panel_images(mode='ref')
+	#unittest_series_images(mode='ref')
+	#unittest_panel_images(mode='ref')
+	unittest_figure_images(mode='ref')
