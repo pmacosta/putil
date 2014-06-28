@@ -10,6 +10,7 @@ import scipy
 import numpy
 import pytest
 import matplotlib
+import matplotlib.path
 from scipy.misc import imread	#pylint: disable=E0611
 
 import putil.plot
@@ -713,15 +714,15 @@ class TestSeries(object):	#pylint: disable=W0232
 		# This assignments should raise an exception
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', marker=5)
+			putil.plot.Series(data_source=default_source, label='test', marker='hello')
 		test_list.append(excinfo.value.message == 'Parameter `marker` is of the wrong type')
 		# These assignments should not raise an exception
-		obj = putil.plot.Series(data_source=default_source, label='test', marker=False)
-		test_list.append(obj.marker == False)
-		obj = putil.plot.Series(data_source=default_source, label='test', marker=True)
-		test_list.append(obj.marker == True)
+		obj = putil.plot.Series(data_source=default_source, label='test', marker=None)
+		test_list.append(obj.marker == None)
+		obj = putil.plot.Series(data_source=default_source, label='test', marker='D')
+		test_list.append(obj.marker == 'D')
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append(obj.marker == True)
+		test_list.append(obj.marker == 'o')
 		assert test_list == [True]*4
 
 	def test_interp_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
@@ -831,17 +832,17 @@ class TestSeries(object):	#pylint: disable=W0232
 		""" Test that object behaves properl when a series is not plottable """
 		test_list = list()
 		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', marker=False, interp=None, line_style=None)
+			putil.plot.Series(data_source=default_source, label='test', marker=None, interp=None, line_style=None)
 		test_list.append(excinfo.value.message == 'Series options make it not plottable')
-		obj = putil.plot.Series(data_source=default_source, label='test', marker=True, interp='CUBIC', line_style=None)
+		obj = putil.plot.Series(data_source=default_source, label='test', marker='o', interp='CUBIC', line_style=None)
 		with pytest.raises(RuntimeError) as excinfo:
-			obj.marker = False
+			obj.marker = None
 		test_list.append(excinfo.value.message == 'Series options make it not plottable')
-		obj = putil.plot.Series(data_source=default_source, label='test', marker=False, interp='CUBIC', line_style='-')
+		obj = putil.plot.Series(data_source=default_source, label='test', marker='None', interp='CUBIC', line_style='-')
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.interp = None
 		test_list.append(excinfo.value.message == 'Series options make it not plottable')
-		obj = putil.plot.Series(data_source=default_source, label='test', marker=False, interp='CUBIC', line_style='-')
+		obj = putil.plot.Series(data_source=default_source, label='test', marker=' ', interp='CUBIC', line_style='-')
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.line_style = None
 		test_list.append(excinfo.value.message == 'Series options make it not plottable')
@@ -849,18 +850,29 @@ class TestSeries(object):	#pylint: disable=W0232
 
 	def test_str(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
-		obj = putil.plot.Series(data_source=default_source, label='test')
-		ret = ''
-		ret += 'Data source: putil.plot.BasicSource class object\n'
-		ret += 'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
-		ret += 'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
-		ret += 'Label: test\n'
-		ret += 'Color: k\n'
-		ret += 'Marker: True\n'
-		ret += 'Interpolation: CUBIC\n'
-		ret += 'Line style: -\n'
-		ret += 'Secondary axis: False'
-		assert str(obj) == ret
+		test_list = list()
+		marker_list = [{'value':None, 'string':'None'}, {'value':'o', 'string':'o'}, {'value':matplotlib.path.Path([(0, 0), (1, 1)]), 'string':'matplotlib.path.Path object'}, {'value':[(0, 0), (1, 1)], 'string':'[(0, 0), (1, 1)]'},
+				 {'value':r'$a_{b}$', 'string':r'$a_{b}$'}]
+		for marker_dict in marker_list:
+			obj = putil.plot.Series(data_source=default_source, label='test', marker=marker_dict['value'])
+			ret = ''
+			ret += 'Data source: putil.plot.BasicSource class object\n'
+			ret += 'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+			ret += 'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+			ret += 'Label: test\n'
+			ret += 'Color: k\n'
+			ret += 'Marker: {0}\n'.format(marker_dict['string'])
+			ret += 'Interpolation: CUBIC\n'
+			ret += 'Line style: -\n'
+			ret += 'Secondary axis: False'
+			if str(obj) != ret:
+				print 'Object:'
+				print str(obj)
+				print
+				print 'Comparison:'
+				print ret
+			test_list.append(str(obj) == ret)
+		assert test_list == 5*[True]
 
 	def test_cannot_delete_attributes(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
@@ -1327,7 +1339,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += '   Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
 		ret += '   Label: test series\n'
 		ret += '   Color: k\n'
-		ret += '   Marker: True\n'
+		ret += '   Marker: o\n'
 		ret += '   Interpolation: CUBIC\n'
 		ret += '   Line style: -\n'
 		ret += '   Secondary axis: False\n'
@@ -1556,7 +1568,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += '      Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
 		ret += '      Label: test series\n'
 		ret += '      Color: k\n'
-		ret += '      Marker: True\n'
+		ret += '      Marker: o\n'
 		ret += '      Interpolation: CUBIC\n'
 		ret += '      Line style: -\n'
 		ret += '      Secondary axis: False\n'

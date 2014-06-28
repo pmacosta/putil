@@ -33,7 +33,7 @@ def unittest_series_images(mode=None, test_dir=None):	#pylint: disable=R0914
 		series1 = putil.plot.Series(
 			data_source=putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), dep_var=numpy.array([0.9, 2.5, 3, 3.5, 5.9, 6.6, 7.1, 7.9, 9.9, 10.5])),
 			label='test series',
-			marker=marker,
+			marker='o' if marker else None,
 			interp=interp,
 			line_style=line_style
 		)
@@ -77,15 +77,15 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 	indep_var = numpy.array([1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3, 1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5, 1e6])
 	dep_var = numpy.array([20*math.log10(math.sqrt(abs(1/(1+((1j*2*math.pi*freq)/(2*math.pi*1e4)))))) for freq in indep_var])
 	ds9_obj = putil.plot.BasicSource(indep_var=indep_var, dep_var=dep_var)
-	series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', marker=True, interp='STRAIGHT', line_style='-', color='k')
-	series2_obj = putil.plot.Series(data_source=ds2_obj, label='series 2', marker=True, interp='STRAIGHT', line_style='-', color='b')
-	series3_obj = putil.plot.Series(data_source=ds3_obj, label='series 3', marker=True, interp='STRAIGHT', line_style='-', color='g', secondary_axis=True)
-	series4_obj = putil.plot.Series(data_source=ds4_obj, label='series 4', marker=True, interp='STRAIGHT', line_style='-', color='r', secondary_axis=True)
-	series5_obj = putil.plot.Series(data_source=ds5_obj, label='series 5', marker=True, interp='STRAIGHT', line_style='-', color='m', secondary_axis=True)
-	series6_obj = putil.plot.Series(data_source=ds6_obj, label='series 6', marker=True, interp='STRAIGHT', line_style='-', color='c', secondary_axis=True)
-	series7_obj = putil.plot.Series(data_source=ds7_obj, label='series 7', marker=True, interp='STRAIGHT', line_style='-', color='y')
-	series8_obj = putil.plot.Series(data_source=ds8_obj, label='series 8', marker=True, interp='STRAIGHT', line_style='--', color='k', secondary_axis=True)
-	series9_obj = putil.plot.Series(data_source=ds9_obj, label='series 9', marker=False, interp='CUBIC', line_style='-', color='k')
+	series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', marker='o', interp='STRAIGHT', line_style='-', color='k')
+	series2_obj = putil.plot.Series(data_source=ds2_obj, label='series 2', marker='o', interp='STRAIGHT', line_style='-', color='b')
+	series3_obj = putil.plot.Series(data_source=ds3_obj, label='series 3', marker='o', interp='STRAIGHT', line_style='-', color='g', secondary_axis=True)
+	series4_obj = putil.plot.Series(data_source=ds4_obj, label='series 4', marker='o', interp='STRAIGHT', line_style='-', color='r', secondary_axis=True)
+	series5_obj = putil.plot.Series(data_source=ds5_obj, label='series 5', marker='o', interp='STRAIGHT', line_style='-', color='m', secondary_axis=True)
+	series6_obj = putil.plot.Series(data_source=ds6_obj, label='series 6', marker='o', interp='STRAIGHT', line_style='-', color='c', secondary_axis=True)
+	series7_obj = putil.plot.Series(data_source=ds7_obj, label='series 7', marker='o', interp='STRAIGHT', line_style='-', color='y')
+	series8_obj = putil.plot.Series(data_source=ds8_obj, label='series 8', marker='o', interp='STRAIGHT', line_style='--', color='k', secondary_axis=True)
+	series9_obj = putil.plot.Series(data_source=ds9_obj, label='series 9', marker=None, interp='CUBIC', line_style='-', color='k')
 	for axis_type, in_axis in comb_list:
 		ref_file_name = '{0}/panel_{1}_axis_series_in_{2}_axis.png'.format(ref_dir, axis_type, in_axis)
 		test_file_name = '{0}/panel_{1}_axis_series_in_{2}_axis.png'.format(test_dir, axis_type, in_axis)
@@ -154,9 +154,9 @@ def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R09
 	indep_var = numpy.array([1e3, 2e3, 3e3, 4e3, 5e3, 6e3, 7e3, 8e3, 9e3, 1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5, 1e6])
 	dep_var = numpy.array([20*math.log10(math.sqrt(abs(1/(1+((1j*2*math.pi*freq)/(2*math.pi*1e4)))))) for freq in indep_var])
 	ds3_obj = putil.plot.BasicSource(indep_var=indep_var, dep_var=dep_var)
-	series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', marker=True, interp='STRAIGHT', line_style='-', color='k')
-	series2_obj = putil.plot.Series(data_source=ds2_obj, label='series 2', marker=True, interp='STRAIGHT', line_style='-', color='b', secondary_axis=True)
-	series3_obj = putil.plot.Series(data_source=ds3_obj, label='series 3', marker=False, interp='CUBIC', line_style='-', color='k')
+	series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', marker='o', interp='STRAIGHT', line_style='-', color='k')
+	series2_obj = putil.plot.Series(data_source=ds2_obj, label='series 2', marker='o', interp='STRAIGHT', line_style='-', color='b', secondary_axis=True)
+	series3_obj = putil.plot.Series(data_source=ds3_obj, label='series 3', marker=None, interp='CUBIC', line_style='-', color='k')
 	panel1_obj = putil.plot.Panel(
 		series=series1_obj,
 		primary_axis_label='Primary axis #1',

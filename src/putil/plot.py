@@ -2,7 +2,7 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-# TODO: Series marker choose, Positive integer, positive real, positive number check
+# TODO: Positive integer, positive real, positive number check
 
 """
 Utility classes, methods and functions to handle plotting
@@ -12,6 +12,8 @@ import os
 import math
 import numpy
 from scipy import stats
+import matplotlib.path
+import matplotlib.markers
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d  #pylint: disable=E0611
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -627,7 +629,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	:param	color:			series color
 	:type	color:			Matplotlib color
 	:param	marker:			plot data markers flag
-	:type	marker:			boolean
+	:type	marker:			Matplotlib marker specification
 	:param	interp:			interpolation option, one of STRAIGHT, STEP, CUBIC or LINREG (case insensitive)
 	:type	interp:			string
 	:param	line_style:		line style, one of `-`, `--`, `-.` or `:`
@@ -649,7 +651,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	 * Same as :py:attr:`putil.plot.Series.secondary_axis`
 	"""
-	def __init__(self, data_source, label, color='k', marker=True, interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
+	def __init__(self, data_source, label, color='k', marker='o', interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
 		# Series plotting attributes
 		self._ref_linewidth = LINE_WIDTH
 		self._ref_markersize = MARKER_SIZE
@@ -663,7 +665,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		self.interp_indep_var, self.interp_dep_var = None, None
 		self.indep_var, self.dep_var = None, None
 		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
-		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, 'k', True, 'CUBIC', '-', False
+		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, 'k', 'o', 'CUBIC', '-', False
 		# Assignment of parameters to attributes
 		self._set_label(label)
 		self._set_color(color)
@@ -735,11 +737,12 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_marker(self):	#pylint: disable=C0111
 		return self._marker
 
-	@putil.check.check_parameter('marker', bool)
 	def _set_marker(self, marker):	#pylint: disable=C0111
+		if not self._validate_marker(marker):
+			raise TypeError('Parameter `marker` is of the wrong type')
 		self._marker = marker
+		self._marker_spec = self.marker if self.marker not in ["None", None, ' ', ''] else ''
 		self._check_series_is_plottable()
-		self._marker_spec = 'o' if self.marker else ''
 
 	def _get_interp(self):	#pylint: disable=C0111
 		return self._interp
@@ -778,7 +781,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		ret += 'Dependent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50))
 		ret += 'Label: {0}\n'.format(self.label)
 		ret += 'Color: {0}\n'.format(self.color)
-		ret += 'Marker: {0}\n'.format(self.marker)
+		ret += 'Marker: {0}\n'.format(self._print_marker())
 		ret += 'Interpolation: {0}\n'.format(self.interp)
 		ret += 'Line style: {0}\n'.format(self.line_style)
 		ret += 'Secondary axis: {0}'.format(self.secondary_axis)
@@ -786,13 +789,76 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	def _check_series_is_plottable(self):
 		""" Check that the combination of marker, line style and line width width will produce a printable series """
-		if (not self.marker) and ((not self.interp) or (not self.line_style)):
+		if (self._marker_spec == '') and ((not self.interp) or (not self.line_style)):
 			raise RuntimeError('Series options make it not plottable')
 
 	def _validate_source_length_cubic_interp(self):	#pylint:disable=C0103
 		""" Test if data source has minimum length to calculate cubic interpolation """
 		if (self.interp == 'CUBIC') and (self.indep_var is not None) and (self.dep_var is not None) and (self.indep_var.shape[0] < 4):
 			raise ValueError('At least 4 data points are needed for CUBIC interpolation')
+
+	def _validate_marker(self, marker):	#pylint:disable=R0201,R0911
+		""" Validate if marker specification is valid """
+		try:
+			plt.plot(range(10), marker=marker)
+		except:	#pylint: disable=W0702
+			return False
+		return True
+		#marker_chars = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
+		#marker_consts = [matplotlib.markers.TICKLEFT, matplotlib.markers.TICKRIGHT, matplotlib.markers.TICKUP, matplotlib.markers.TICKDOWN, matplotlib.markers.CARETLEFT, matplotlib.markers.CARETRIGHT,
+		#		   matplotlib.markers.CARETUP, matplotlib.markers.CARETDOWN]
+		#marker_none = ["None", None, ' ', '']
+		## regular marker characters
+		#if isinstance(marker, str) and (marker.strip() in marker_chars):
+		#	return {'error':False, 'marker':marker.strip()}
+		## Global marker designations, no marker specification or Path options
+		#if (marker in marker_consts) or (marker in marker_none) or isinstance(marker, matplotlib.path.Path):
+		#	return {'error':False, 'marker':marker}
+		## Check for verts option
+		#if isinstance(marker, list) and all([(isinstance(element, list) or isinstance(element, tuple)) and (len(element) == 2) and putil.misc.isnumber(element[0]) and putil.misc.isnumber(element[1]) for element in marker]):
+		#	return {'error':False, 'marker':marker}
+		## Check for (verts, 0) option
+		#if isinstance(marker, list) and (len(marker) == 2) and (marker[1] == 0) and \
+		#		all([(isinstance(element, list) or isinstance(element, tuple)) and (len(element) == 2) and putil.misc.isnumber(element[0]) and putil.misc.isnumber(element[1]) for element in marker[0]]):
+		#	return {'error':False, 'marker':marker}
+		## (numside, style, angle) check
+		#if (isinstance(marker, list) or isinstance(marker, tuple)) and (len(marker) == 3) and isinstance(marker[0], int) and (marker[0] > 0) and isinstance(marker[1], int) and (marker[1] >= 0) and (marker[1] <= 3) \
+		#		and putil.misc.isnumber(marker[3]):
+		#	return {'error':False, 'marker':marker}
+		## mathtext
+		#if isinstance(marker, str) and (marker.strip()[0] == '$') and (marker.strip()[-1] == '$'):
+		#	marker = marker.strip()
+		#	try:
+		#		plt.plot(range(200))
+		#		plt.text(100, 50, marker)
+		#	except:
+		#		return {'error':True, 'marker':None}
+		#	return {'error':False, 'marker':marker}
+		## Anything else is an unsupported marker specification
+		#return {'error':True, 'marker':None}
+
+
+	def _print_marker(self):
+		""" Returns marker description """
+		marker_consts = [{'value':matplotlib.markers.TICKLEFT, 'repr':'matplotlib.markers.TICKLEFT'},
+						 {'value':matplotlib.markers.TICKRIGHT, 'repr':'matplotlib.markers.TICKRIGHT'},
+						 {'value':matplotlib.markers.TICKUP, 'repr':'matplotlib.markers.TICKUP'},
+						 {'value':matplotlib.markers.TICKDOWN, 'repr':'matplotlib.markers.TICKDOWN'},
+						 {'value':matplotlib.markers.CARETLEFT, 'repr':'matplotlib.markers.CARETLEFT'},
+						 {'value':matplotlib.markers.CARETRIGHT, 'repr':'matplotlib.markers.CARETRIGHT'},
+						 {'value':matplotlib.markers.CARETUP, 'repr':'matplotlib.markers.CARETUP'},
+						 {'value':matplotlib.markers.CARETDOWN, 'repr':'matplotlib.markers.CARETDOWN'}]
+		marker_none = ["None", None, ' ', '']
+		if self.marker in marker_none:
+			return 'None'
+		for const_dict in marker_consts:
+			if self.marker == const_dict['value']:
+				return const_dict['repr']
+		if isinstance(self.marker, str):
+			return self.marker
+		if isinstance(self.marker, matplotlib.path.Path):
+			return 'matplotlib.path.Path object'
+		return str(self.marker)
 
 	def _complete(self):
 		""" Returns True if series is fully specified, otherwise returns False """
@@ -863,7 +929,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 				label=self.label
 			)
 		# Plot markers
-		if self.marker:
+		if self.marker != '':
 			fplot(
 				self.scaled_indep_var,
 				self.scaled_dep_var,
@@ -923,7 +989,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	Plot data point markers flag
 
-	:type:	boolean
+	:type:	Matplotlib marker specification
 	:raises: TypeError (Parameter `marker` is of the wrong type)
 	"""	#pylint: disable=W0105
 

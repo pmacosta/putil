@@ -21,7 +21,7 @@ def main():
 		),
 		label='Source 1',
 		color='k',
-		marker=True,
+		marker='o',
 		interp='CUBIC',
 		line_style='-',
 		secondary_axis=False
@@ -33,7 +33,7 @@ def main():
 		),
 		label='Source 2',
 		color='r',
-		marker=True,
+		marker='s',
 		interp='STRAIGHT',
 		line_style='--',
 		secondary_axis=False
@@ -45,7 +45,7 @@ def main():
 		),
 		label='Source 3',
 		color='b',
-		marker=True,
+		marker='h',
 		interp='STRAIGHT',
 		line_style='--',
 		secondary_axis=True
@@ -57,7 +57,7 @@ def main():
 		),
 		label='Source 4',
 		color='g',
-		marker=True,
+		marker='D',
 		interp='STRAIGHT',
 		line_style=None,
 		secondary_axis=True
