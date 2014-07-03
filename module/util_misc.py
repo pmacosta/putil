@@ -194,3 +194,34 @@ def isiterable(obj):
 		return False
 	else:
 		return True
+
+def elapsed_time_string(start_time, stop_time):
+	""" Returns a formatted string with the ellapsed time between two time points. The string includes years (365 days), months (30 days), days (24 hours), hours (60 minutes), minutes (60 seconds) and seconds.
+	If **start_time** is greater than the **stop_time**, the string returned is 'Invalid time delta specification'. If **start_time** and **stop_time** are equal, the string returned
+	is 'None'. Otherwise, the string returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s], [MM minute[s] [and SS second[s]]]]]]. Any piece (year[s], month[s], etc.) is omitted if the number of the
+	token is null/zero.
+
+	:param	start_time:	Starting time point
+	:type	start_time:	`datetime <https://docs.python.org/2/library/datetime.html#datetime-objects>`_ object
+	:param	stop_time:	Ending time point
+	:type	stop_time:	`datetime`_ object
+	:rtype:				string
+	"""
+	if start_time > stop_time:
+		return 'Invalid time delta specification'
+	delta_time = stop_time-start_time
+	tot_seconds = int(delta_time.total_seconds())
+	years, remainder = divmod(tot_seconds, 365*24*60*60)
+	months, remainder = divmod(remainder, 30*24*60*60)
+	days, remainder = divmod(remainder, 24*60*60)
+	hours, remainder = divmod(remainder, 60*60)
+	minutes, seconds = divmod(remainder, 60)
+	ret_list = ['{0} {1}{2}'.format(num, desc, 's' if num > 1 else '') for num, desc in zip([years, months, days, hours, minutes, seconds], ['year', 'month', 'day', 'hour', 'minute', 'second']) if num > 0]
+	if len(ret_list) == 0:
+		return 'None'
+	elif len(ret_list) == 1:
+		return ret_list[0]
+	elif len(ret_list) == 2:
+		return ret_list[0]+' and '+ret_list[1]
+	else:
+		return (', '.join(ret_list[0:-1]))+' and '+ret_list[-1]
