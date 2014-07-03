@@ -15,6 +15,7 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
+   misc
    plot
 
 
