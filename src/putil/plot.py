@@ -2,8 +2,6 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-# TODO: Positive integer, positive real, positive number check
-
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -1463,19 +1461,15 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_fig_width(self):	#pylint: disable=C0111
 		return self._fig_width
 
-	@putil.check.check_parameter('fig_width', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_parameter('fig_width', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
 	def _set_fig_width(self, fig_width):	#pylint: disable=C0111
-		if (fig_width is not None) and (fig_width < 0):
-			raise ValueError('Parameter `fig_width` is not a positive number')
 		self._fig_width = fig_width
 
 	def _get_fig_height(self):	#pylint: disable=C0111
 		return self._fig_height
 
-	@putil.check.check_parameter('fig_height', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_parameter('fig_height', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
 	def _set_fig_height(self, fig_height):	#pylint: disable=C0111
-		if (fig_height is not None) and (fig_height < 0):
-			raise ValueError('Parameter `fig_height` is not a positive number')
 		self._fig_height = fig_height
 
 	def _get_panels(self):	#pylint: disable=C0111
