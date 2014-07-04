@@ -24,8 +24,32 @@ class Number(object):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		return self.includes(test_obj)
 
+	def exception(self, param_name):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a number'.format(param_name)
+		return exp_dict
+
+class PositiveInteger(object):	#pylint: disable=R0903
+	"""	PositiveInteger class (Integer greater than zero) """
+	def includes(self, test_obj):	#pylint: disable=R0201
+		"""	Test that an object belongs to the pseudo-type """
+		return isinstance(test_obj, int) and (test_obj > 0)
+
+	def istype(self, test_obj):
+		"""	Checks to see if object is of the same class type """
+		return self.includes(test_obj)
+
+	def exception(self, param_name):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a positive integer'.format(param_name)
+		return exp_dict
+
 class Real(object):	#pylint: disable=R0903
-	"""	Number class (integer or real) """
+	"""	Real class (integer or real) """
 	def includes(self, test_obj):	#pylint: disable=R0201
 		"""	Test that an object belongs to the pseudo-type """
 		return putil.misc.isreal(test_obj)
@@ -34,16 +58,43 @@ class Real(object):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		return self.includes(test_obj)
 
+	def exception(self, param_name):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a real number'.format(param_name)
+		return exp_dict
+
+class PositiveReal(object):	#pylint: disable=R0903
+	"""	PositiveReal class (integer or real greater than zero) """
+	def includes(self, test_obj):	#pylint: disable=R0201
+		"""	Test that an object belongs to the pseudo-type """
+		return putil.misc.isreal(test_obj) and (test_obj > 0)
+
+	def istype(self, test_obj):
+		"""	Checks to see if object is of the same class type """
+		return self.includes(test_obj)
+
+	def exception(self, param_name):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a positive real number'.format(param_name)
+		return exp_dict
+
 class ArbitraryLength(object):	#pylint: disable=R0903
 	""" Base class for arbitrary length iterables """
-	def __init__(self, element_type):
+	def __init__(self, iter_type, element_type):
+		if iter_type not in [list, tuple, set]:
+			raise TypeError('Parameter `iter_type` is of the wrong type')
 		if not isinstance(element_type, type):
 			raise TypeError('Parameter `element_type` is of the wrong type')
 		self.element_type = element_type
+		self.iter_type = iter_type
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
-		if not putil.misc.isiterable(test_obj):
+		if not isinstance(test_obj, self.iter_type):
 			return False
 		for test_subobj in test_obj:
 			if type(test_subobj) != self.element_type:
@@ -54,47 +105,27 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		return self.includes(test_obj)
 
+	def exception(self, param_name):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a {1} of {2} objects'.format(param_name, str(self.iter_type)[7:-2], str(self.element_type)[7:-2])
+		return exp_dict
+
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length lists """
 	def __init__(self, element_type):
-		ArbitraryLength.__init__(self, element_type)
-		self.iter_type = list
-
-	def includes(self, test_obj):	#pylint: disable=R0201
-		"""	Test that an object belongs to the pseudo-type """
-		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLength.includes(self, test_obj)
-
-	def istype(self, test_obj):
-		"""	Checks to see if object is of the same class type """
-		return self.includes(test_obj)
+		ArbitraryLength.__init__(self, list, element_type)
 
 class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length tuple """
 	def __init__(self, element_type):
-		ArbitraryLength.__init__(self, element_type)
-		self.iter_type = tuple
-
-	def includes(self, test_obj):	#pylint: disable=R0201
-		"""	Test that an object belongs to the pseudo-type """
-		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLength.includes(self, test_obj)
-
-	def istype(self, test_obj):
-		"""	Checks to see if object is of the same class type """
-		return self.includes(test_obj)
+		ArbitraryLength.__init__(self, tuple, element_type)
 
 class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
-		ArbitraryLength.__init__(self, element_type)
-		self.iter_type = set
-
-	def includes(self, test_obj):	#pylint: disable=R0201
-		"""	Test that an object belongs to the pseudo-type """
-		return False if not isinstance(test_obj, self.iter_type) else ArbitraryLength.includes(self, test_obj)
-
-	def istype(self, test_obj):
-		"""	Checks to see if object is of the same class type """
-		return self.includes(test_obj)
+		ArbitraryLength.__init__(self, set, element_type)
 
 class OneOf(object):	#pylint: disable=R0903
 	""" Class for parmeters that can only take a value from a finite set """
@@ -106,8 +137,11 @@ class OneOf(object):	#pylint: disable=R0903
 			len(choices)
 		except:
 			raise TypeError('Parameter `choices` is of the wrong type')
-		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
+		pseudo_types_dict = _get_pseudo_types()
+		self.pseudo_types = pseudo_types_dict['type']
 		self.choices = choices
+		str_choice_list = ["'"+choice+"'" if isinstance(choice, str) else (str(choice) if type(choice) not in self.pseudo_types else pseudo_types_dict['desc'][self.pseudo_types.index(type(choice))]) for choice in self.choices]
+		self.desc = '['+ (', '.join(str_choice_list))+']'
 		self.types = [type(element) for element in self.choices]
 		self.case_sensitive = case_sensitive if str in self.types else None
 
@@ -140,7 +174,7 @@ class OneOf(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not one of {1}{2}'.format(param_name, self.choices, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
+		exp_dict['msg'] = 'Parameter `{0}` is not one of {1}{2}'.format(param_name, self.desc, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
 		return exp_dict
 
 class NumberRange(object):	#pylint: disable=R0903
@@ -193,6 +227,13 @@ class RealNumpyVector(object):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		return self.includes(test_obj)
 
+	def exception(self, param_name):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a Numpy vector of real numbers'.format(param_name)
+		return exp_dict
+
 class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 	""" Numpy vector where every element is a real number greater than the previous element	"""
 	def __init__(self):
@@ -205,6 +246,13 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
 		return self.includes(test_obj)
+
+	def exception(self, param_name):	#pylint: disable=R0201
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Parameter `{0}` is not a Numpy vector of increasing real numbers'.format(param_name)
+		return exp_dict
 
 class File(object):	#pylint: disable=R0903
 	""" File name string """
@@ -259,7 +307,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 	def __init__(self, types):
 		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
 			raise TypeError('Parameter `types` is of the wrong type')
-		self.pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
+		self.pseudo_types = _get_pseudo_types()['type']
 		for element_type in types:
 			if (type(element_type) not in self.pseudo_types) and (not isinstance(element_type, type)) and (element_type is not None):
 				raise TypeError('Parameter `types` element is of the wrong type')
@@ -315,7 +363,7 @@ def type_match(test_obj, ref_obj):
 	Heterogeneous iterables are not supported in part because there is no elegant way to distinguish, for example, between a 1-element list, a list of the type [str, float, int, str] and a list
 	with all elements of the same type but one in which the length of the list is not known a priori (like a list containing the independent variable of an experiment)
 	"""
-	pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType, File, Function]
+	pseudo_types = _get_pseudo_types(False)['type']
 	if ref_obj is None:	# Check for None
 		ret_val = test_obj is None
 	elif type(ref_obj) in pseudo_types:	# Check for pseudo-types
@@ -362,7 +410,7 @@ def check_parameter_internal(param_name, param_spec, func, *args, **kwargs):
 	check_parameter_type_internal(param_name, param_spec, func, *args, **kwargs)
 	param = create_parameter_dictionary(func, *args, **kwargs).get(param_name)
 	if param is not None:
-		pseudo_types = [Number, Real, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, PolymorphicType, File, Function]
+		pseudo_types = _get_pseudo_types(False)['type']
 		if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
 			ekwargs = {'param_name':param_name} if type(param_spec) != PolymorphicType else {'param_name':param_name, 'param':param, 'test_obj':param_spec}
 			exp_dict = param_spec.exception(**ekwargs)	#pylint: disable=W0142
@@ -391,3 +439,11 @@ def check_parameter(param_name, param_spec):	#pylint: disable=R0912
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator
+
+def _get_pseudo_types(base=True):
+	""" Returns all pseduo-types available """
+	base_types = [Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
+	all_types = base_types+[PolymorphicType]
+	base_desc = ['number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
+	all_desc = base_desc+['polymorphic type']
+	return {'type':base_types, 'desc':base_desc} if base else {'type':all_types, 'desc':all_desc}

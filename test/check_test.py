@@ -33,11 +33,36 @@ def test_number_istype():
 	ref_obj = putil.check.Number()
 	assert (ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (True, True, True, False, False)
 
+def test_number_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLength class behaves appropriately when inproper parameter type is passed """
+	assert putil.check.Number().exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a number"}
+
+###
+# Test for PositiveInteger class
+###
+def test_positiveinteger_no_exception():	#pylint: disable=C0103
+	"""	Test that PositiveInteger class behaves appropriately when all parameters are correctly specified """
+	putil.check.PositiveInteger()
+
+def test_positiveinteger_includes():
+	"""	Test that the includes method of PositiveInteger class behaves appropriately """
+	ref_obj = putil.check.PositiveInteger()
+	assert (ref_obj.includes(-1), ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (False, True, False, False, False, False)
+
+def test_positiveinteger_istype():
+	"""	Test that the istype method of PositiveInteger class behaves appropriately """
+	ref_obj = putil.check.PositiveInteger()
+	assert (ref_obj.istype(-1), ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (False, True, False, False, False, False)
+
+def test_positiveinteger_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLength class behaves appropriately when inproper parameter type is passed """
+	assert putil.check.PositiveInteger().exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a positive integer"}
+
 ###
 # Test for Real class
 ###
 def test_real_no_exception():
-	"""	Test that Real class behaves appropriately when all parameters are correctly specified	"""
+	"""	Test that Real class behaves appropriately when all parameters are correctly specified """
 	putil.check.Real()
 
 def test_real_includes():
@@ -50,30 +75,70 @@ def test_real_istype():
 	ref_obj = putil.check.Real()
 	assert (ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (True, True, False, False, False)
 
+def test_real_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLength class behaves appropriately when inproper parameter type is passed """
+	assert putil.check.Real().exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a real number"}
+
+###
+# Test for PositiveReal class
+###
+def test_positivereal_no_exception():	#pylint: disable=C0103
+	"""	Test that PositiveReal class behaves appropriately when all parameters are correctly specified """
+	putil.check.PositiveReal()
+
+def test_positivereal_includes():
+	"""	Test that the includes method of PositiveReal class behaves appropriately """
+	ref_obj = putil.check.PositiveReal()
+	assert (ref_obj.includes(-1.0), ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (False, True, True, False, False, False)
+
+def test_positivereal_istype():
+	"""	Test that the istype method of PositiveReal class behaves appropriately """
+	ref_obj = putil.check.PositiveReal()
+	assert (ref_obj.istype(-1.0), ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (False, True, True, False, False, False)
+
+def test_positivereal_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLength class behaves appropriately when inproper parameter type is passed """
+	assert putil.check.PositiveReal().exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a positive real number"}
+
 ###
 # Test for ArbitraryLength class
 ###
 def test_arbitrary_length_no_exception():	#pylint: disable=C0103
 	"""	Tests that ArbitraryLength class behaves appropriately when all parameters are correctly specified """
+	iter_type = list
 	obj_type = str
-	obj = putil.check.ArbitraryLength(obj_type)
-	assert obj.element_type == obj_type
+	obj = putil.check.ArbitraryLength(iter_type, obj_type)
+	assert (obj.iter_type == iter_type, obj.element_type == obj_type) == (True, True)
 
 def test_arbitrary_length_exception():	#pylint: disable=C0103
 	"""	Tests that ArbitraryLength class behaves appropriately when inproper parameter type is passed """
+	test_list = list()
+	# These statements should raise an execption
 	with pytest.raises(TypeError) as excinfo:
-		putil.check.ArbitraryLength('a')
-	assert excinfo.value.message == 'Parameter `element_type` is of the wrong type'
+		putil.check.ArbitraryLength('a', str)
+	test_list.append(excinfo.value.message == 'Parameter `iter_type` is of the wrong type')
+	with pytest.raises(TypeError) as excinfo:
+		putil.check.ArbitraryLength(list, 'a')
+	test_list.append(excinfo.value.message == 'Parameter `element_type` is of the wrong type')
+	# These statements should not raise an exception
+	putil.check.ArbitraryLength(list, int)
+	putil.check.ArbitraryLength(set, int)
+	putil.check.ArbitraryLength(tuple, int)
+	assert test_list == 2*[True]
 
 def test_arbitrary_length_includes():
 	"""	Test that the includes method of ArbitraryLength class behaves appropriately """
-	ref_obj = putil.check.ArbitraryLength(int)
-	assert (ref_obj.includes([1, 2]), ref_obj.includes((1, 2)), ref_obj.includes(set([1.0, 2.0])), ref_obj.includes(1+2j), ref_obj.includes('a')) == (True, True, False, False, False)
+	ref_obj = putil.check.ArbitraryLength(list, int)
+	assert (ref_obj.includes([1, 2]), ref_obj.includes((1, 2)), ref_obj.includes(set([1.0, 2.0])), ref_obj.includes(1+2j), ref_obj.includes('a')) == (True, False, False, False, False)
 
 def test_arbitrary_length_istype():
 	"""	Test that the istype method of ArbitraryLength class behaves appropriately """
-	ref_obj = putil.check.ArbitraryLength(int)
-	assert (ref_obj.istype([1, 2]), ref_obj.istype((1, 2)), ref_obj.istype(set([1.0, 2.0])), ref_obj.istype(1+2j), ref_obj.istype('a')) == (True, True, False, False, False)
+	ref_obj = putil.check.ArbitraryLength(tuple, int)
+	assert (ref_obj.istype([1, 2]), ref_obj.istype((1, 2)), ref_obj.istype(set([1.0, 2.0])), ref_obj.istype(1+2j), ref_obj.istype('a')) == (False, True, False, False, False)
+
+def test_arbitrary_length_type_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLength class behaves appropriately when inproper element in iterable is passed """
+	assert putil.check.ArbitraryLength(set, int).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a set of int objects"}
 
 ###
 # Test for ArbitraryLengthList class
@@ -100,6 +165,10 @@ def test_arbitrary_length_list_istype():	#pylint: disable=C0103
 	ref_obj = putil.check.ArbitraryLengthList(int)
 	assert (ref_obj.istype([1, 2]), ref_obj.istype(set([1, 2])), ref_obj.istype((1, 2)), ref_obj.istype('a')) == (True, False, False, False)
 
+def test_arbitrary_length_list_type_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLengthList class behaves appropriately when inproper element in list is passed """
+	assert putil.check.ArbitraryLengthList(int).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a list of int objects"}
+
 ###
 # Test for ArbitraryLengthTuple class
 ###
@@ -125,6 +194,10 @@ def test_arbitrary_length_tuple_type():	#pylint: disable=C0103
 	ref_obj = putil.check.ArbitraryLengthTuple(float)
 	assert (ref_obj.istype((1.0, 2.0)), ref_obj.istype([1, 2]), ref_obj.istype(set([1, 2])), ref_obj.istype('a')) == (True, False, False, False)
 
+def test_arbitrary_length_tuple_type_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLengthTuple class behaves appropriately when inproper element in tuple is passed """
+	assert putil.check.ArbitraryLengthTuple(str).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a tuple of str objects"}
+
 ###
 # Test for ArbitraryLengthSet class
 ###
@@ -149,6 +222,10 @@ def test_arbitrary_length_set_istype():	#pylint: disable=C0103
 	""" Test that the istype method of ArbitraryLengthSet class behaves appropriately """
 	ref_obj = putil.check.ArbitraryLengthSet(float)
 	assert (ref_obj.istype(set([1.0, 2.0])), ref_obj.istype([1, 2]), ref_obj.istype((1, 2)), ref_obj.istype('a')) == (True, False, False, False)
+
+def test_arbitrary_length_set_type_exception():	#pylint: disable=C0103
+	"""	Tests that ArbitraryLengthSet class behaves appropriately when inproper element in set is passed """
+	assert putil.check.ArbitraryLengthSet(float).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not a set of float objects"}
 
 ###
 # Test for OneOf class
@@ -179,29 +256,39 @@ def test_one_of_proper_contains_behavior():	#pylint: disable=C0103
 	""" Tests that OneOf class behaves properly extracting type information """
 	obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
 	obj2 = putil.check.OneOf(['c', 'D', putil.check.IncreasingRealNumpyVector()], case_sensitive=False)
-	assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2, numpy.array([1, 2, 3]) in obj2, numpy.array([1.0, 0.0, -1.0]) in obj2) == \
-		(True, True, True, True, False, False, False, True, True, False, False, True, False)
+	obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
+	obj4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False)
+	assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2, numpy.array([1, 2, 3]) in obj2, numpy.array([1.0, 0.0, -1.0]) in obj2,
+		-2 in obj3, 3 in obj3, -2.0 in obj4, 0.001 in obj4) == (True, True, True, True, False, False, False, True, True, False, False, True, False, False, True, False, True)
 
 def test_one_of_includes():	#pylint: disable=C0103
 	"""Test that the includes method of OneOf class behaves appropriately """
 	ref_obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
 	ref_obj2 = putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False)
+	ref_obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
+	ref_obj4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False)
 	assert (ref_obj1.includes('a'), ref_obj1.includes('b'), ref_obj1.includes(3.0), ref_obj1.includes(2), ref_obj1.includes(putil.check.Number()), ref_obj1.includes('c'), ref_obj1.includes('A'),
-		 ref_obj2.includes('none'), ref_obj2.includes('autos')) == (True, True, True, True, False, False, False, True, False)
+		 ref_obj2.includes('none'), ref_obj2.includes('autos'), ref_obj3.includes(-1), ref_obj3.includes(1), ref_obj4.includes(-0.001), ref_obj4.includes(0.001)) == \
+		(True, True, True, True, False, False, False, True, False, False, True, False, True)
 
 def test_one_of_istype():	#pylint: disable=C0103
 	"""Test that the istype method of OneOf class behaves appropriately """
 	ref_obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
 	ref_obj2 = putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False)
+	ref_obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
+	ref_obj4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False)
 	assert (ref_obj1.istype('a'), ref_obj1.istype('b'), ref_obj1.istype(3.0), ref_obj1.istype(2), ref_obj1.istype(putil.check.Number()), ref_obj1.istype('c'), ref_obj1.istype('A'),
-		 ref_obj2.istype('none'), ref_obj2.istype('autos'), ref_obj2.istype(set([1, 2]))) == (True, True, True, True, False, True, True, True, True, False)
+		 ref_obj2.istype('none'), ref_obj2.istype('autos'), ref_obj2.istype(set([1, 2])), ref_obj3.istype(-1), ref_obj3.istype(1), ref_obj4.istype(-0.001), ref_obj4.istype(0.001)) == \
+		(True, True, True, True, False, True, True, True, True, False, False, True, False, True)
 
 def test_one_of_exception():
 	""" Tests that exception method of OneOf class behaves appropriately """
 	test1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=False).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case insensitive)"}
 	test2 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"}
 	test3 = putil.check.OneOf([3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not one of [3.0, 2]"}
-	assert (test1, test2, test3) == (True, True, True)
+	test4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False).exception('par1') == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['g', 'H', positive real number] (case insensitive)"}
+	print putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False).exception('par1')
+	assert (test1, test2, test3, test4) == (True, True, True, True)
 
 ###
 # Test for NumberRange class
@@ -283,6 +370,10 @@ def test_real_numpy_vector_istype():	#pylint: disable=C0103
 	assert (ref_obj.istype('a'), ref_obj.istype([1, 2, 3]), ref_obj.istype(numpy.array([])), ref_obj.istype(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.istype(numpy.array(['a', 'b'])),
 		 ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0])), ref_obj.istype(numpy.array([10.0]))) == (False, False, False, False, False, True, True, True)
 
+def test_real_numpy_vector_exception():    #pylint: disable=C0103
+	""" Tests that exception method of RealNumpyVector class behaves appropriately """
+	assert putil.check.RealNumpyVector().exception('par1') == {'type':ValueError, 'msg':'Parameter `par1` is not a Numpy vector of real numbers'}
+
 ###
 # Test IncreasingRealNumpyVector class
 ###
@@ -303,6 +394,10 @@ def test_increasing_real_numpy_vector_istype():	#pylint: disable=C0103
 	assert (ref_obj.istype('a'), ref_obj.istype([1, 2, 3]), ref_obj.istype(numpy.array([])), ref_obj.istype(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.istype(numpy.array(['a', 'b'])),
 		 ref_obj.istype(numpy.array([1, 0, -3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0])), ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 12.1, 12.5])), ref_obj.istype(numpy.array([10.0]))) == \
 		(False, False, False, False, False, False, False, True, True, True)
+
+def test_increasing_real_numpy_vector_exception():    #pylint: disable=C0103
+	""" Tests that exception method of RealNumpyVector class behaves appropriately """
+	assert putil.check.IncreasingRealNumpyVector().exception('par1') == {'type':ValueError, 'msg':'Parameter `par1` is not a Numpy vector of increasing real numbers'}
 
 ###
 # Test File class
@@ -391,6 +486,8 @@ def test_polymorphic_type_includes():	#pylint: disable=C0103
 	ref_obj1 = putil.check.PolymorphicType(test_instances)
 	ref_obj2 = putil.check.PolymorphicType([float, putil.check.IncreasingRealNumpyVector()])
 	ref_obj3 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)])
+	ref_obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger()])
+	ref_obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal()])
 	def foo1(par1, par2, par3):	#pylint: disable=C0111
 		return par1, par2, par3
 	def foo2(par1, par2):	#pylint: disable=C0111
@@ -398,8 +495,9 @@ def test_polymorphic_type_includes():	#pylint: disable=C0103
 	assert (ref_obj1.includes(5), ref_obj1.includes(None), ref_obj1.includes([1, 2, 3]), ref_obj1.includes((2.0, 3.0)), ref_obj1.includes(set(['a', 'b', 'c'])), ref_obj1.includes('MANUAL'), ref_obj1.includes(2),
 		 ref_obj1.includes(100.0), ref_obj1.includes(10+20j), ref_obj1.includes(numpy.array([10, 0.0, 30])), ref_obj1.includes('hello world'), ref_obj1.includes([1.0, 2.0, 3.0]), ref_obj1.includes('auto'),
 		 ref_obj1.includes(numpy.array([])), ref_obj1.includes(numpy.array(['a', 'b', 'c'])), ref_obj2.includes(1), ref_obj2.includes(set([1, 2])), ref_obj2.includes(numpy.array([1, 0, -1])),
-		 ref_obj2.includes(numpy.array([10.0, 20.0, 30.0])), ref_obj2.includes(5.0), ref_obj3.includes(3), ref_obj3.includes('/some/file'), ref_obj3.includes(foo1), ref_obj3.includes(foo2)) == \
-		 (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True, False, True, False, True)
+		 ref_obj2.includes(numpy.array([10.0, 20.0, 30.0])), ref_obj2.includes(5.0), ref_obj3.includes(3), ref_obj3.includes('/some/file'), ref_obj3.includes(foo1), ref_obj3.includes(foo2), ref_obj4.includes(-1),
+		 ref_obj4.includes(1), ref_obj5.includes(-0.001), ref_obj5.includes(0.001)) == \
+		 (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True, False, True, False, True, False, True, False, True)
 
 def test_polymorphic_type_istype():	#pylint: disable=C0103
 	""" Test that the istype method of PolymorphicType class behaves appropriately """
@@ -408,23 +506,30 @@ def test_polymorphic_type_istype():	#pylint: disable=C0103
 	ref_obj1 = putil.check.PolymorphicType(test_instances)
 	ref_obj2 = putil.check.PolymorphicType([float, putil.check.IncreasingRealNumpyVector()])
 	ref_obj3 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)])
+	ref_obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger()])
+	ref_obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal()])
 	def foo1(par1, par2, par3):	#pylint: disable=C0111
 		return par1, par2, par3
 	assert (ref_obj1.istype(5), ref_obj1.istype(None), ref_obj1.istype([1, 2, 3]), ref_obj1.istype((2.0, 3.0)), ref_obj1.istype(set(['a', 'b', 'c'])), ref_obj1.istype('MANUAL'), ref_obj1.istype(2),
 		 ref_obj1.istype(100.0), ref_obj1.istype(10+20j), ref_obj1.istype(numpy.array([10, 0.0, 30])), ref_obj1.istype('hello world'), ref_obj1.istype([1.0, 2.0, 3.0]), ref_obj1.istype('auto'),
 		 ref_obj1.istype(numpy.array([])), ref_obj1.istype(numpy.array(['a', 'b', 'c'])), ref_obj2.istype(1), ref_obj2.istype(set([1, 2])), ref_obj2.istype(numpy.array([1, 0, -1])),
-		 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0), ref_obj3.istype(3), ref_obj3.istype('/some/file'), ref_obj3.istype(foo1)) == \
-		 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True)
+		 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0), ref_obj3.istype(3), ref_obj3.istype('/some/file'), ref_obj3.istype(foo1), ref_obj4.istype(-1),
+		 ref_obj4.istype(1), ref_obj5.istype(-0.001), ref_obj5.istype(0.001)) == \
+		 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True, False, True, False, True)
 
 def test_polymorphic_exception():
 	""" Tests that exception method of PolymorphicType class behaves appropriately """
 	obj1 = putil.check.PolymorphicType([putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.NumberRange(minimum=15, maximum=20)])
 	obj2 = putil.check.PolymorphicType([putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.File(True)])
 	obj3 = putil.check.PolymorphicType([putil.check.File(True), putil.check.Function(num_pars=2)])
+	obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger(), putil.check.NumberRange(minimum=15, maximum=20)])
+	obj5 = putil.check.PolymorphicType([None, putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.PositiveReal()])
 	test1 = obj1.exception('par1', 5) == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nParameter `par1` is not in the range [15, 20]"}
 	test2 = obj2.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':"(ValueError) Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File _not_valid_ could not be found"}
 	test3 = obj3.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':'(IOError) File _not_valid_ could not be found\n(ValueError) Parameter `par1` is not a function with 2 parameters'}
-	assert (test1, test2, test3) == (True, True, True)
+	test4 = obj4.exception('par1', -1) == {'type':ValueError, 'msg':"Parameter `par1` is not a positive integer\nParameter `par1` is not in the range [15, 20]"}
+	test5 = obj5.exception('par1', -1) == {'type':ValueError, 'msg':"Parameter `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nParameter `par1` is not a positive real number"}
+	assert (test1, test2, test3, test4, test5) == (True, True, True, True, True)
 
 ##
 # Tests for get_function_args()
