@@ -3,7 +3,7 @@
 # See LICENSE for details
 
 """
-Decorators for API parameter checks
+Decorators for API argument checks
 """
 
 import os
@@ -28,7 +28,7 @@ class Number(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a number'.format(param_name)
+		exp_dict['msg'] = 'Argument `{0}` is not a number'.format(param_name)
 		return exp_dict
 
 class PositiveInteger(object):	#pylint: disable=R0903
@@ -45,7 +45,7 @@ class PositiveInteger(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a positive integer'.format(param_name)
+		exp_dict['msg'] = 'Argument `{0}` is not a positive integer'.format(param_name)
 		return exp_dict
 
 class Real(object):	#pylint: disable=R0903
@@ -62,7 +62,7 @@ class Real(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a real number'.format(param_name)
+		exp_dict['msg'] = 'Argument `{0}` is not a real number'.format(param_name)
 		return exp_dict
 
 class PositiveReal(object):	#pylint: disable=R0903
@@ -79,16 +79,16 @@ class PositiveReal(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a positive real number'.format(param_name)
+		exp_dict['msg'] = 'Argument `{0}` is not a positive real number'.format(param_name)
 		return exp_dict
 
 class ArbitraryLength(object):	#pylint: disable=R0903
 	""" Base class for arbitrary length iterables """
 	def __init__(self, iter_type, element_type):
 		if iter_type not in [list, tuple, set]:
-			raise TypeError('Parameter `iter_type` is of the wrong type')
+			raise TypeError('Argument `iter_type` is of the wrong type')
 		if not isinstance(element_type, type):
-			raise TypeError('Parameter `element_type` is of the wrong type')
+			raise TypeError('Argument `element_type` is of the wrong type')
 		self.element_type = element_type
 		self.iter_type = iter_type
 
@@ -109,7 +109,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a {1} of {2} objects'.format(param_name, str(self.iter_type)[7:-2], str(self.element_type)[7:-2])
+		exp_dict['msg'] = 'Argument `{0}` is not a {1} of {2} objects'.format(param_name, str(self.iter_type)[7:-2], str(self.element_type)[7:-2])
 		return exp_dict
 
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
@@ -131,12 +131,12 @@ class OneOf(object):	#pylint: disable=R0903
 	""" Class for parmeters that can only take a value from a finite set """
 	def __init__(self, choices, case_sensitive=False):
 		if not isinstance(case_sensitive, bool):
-			raise TypeError('Parameter `case_sensitive` is of the wrong type')
-		# Check if choices parameter is an iterable with finite length, it can be made of heterogeneous, but finite, elements
+			raise TypeError('Argument `case_sensitive` is of the wrong type')
+		# Check if choices argument is an iterable with finite length, it can be made of heterogeneous, but finite, elements
 		try:
 			len(choices)
 		except:
-			raise TypeError('Parameter `choices` is of the wrong type')
+			raise TypeError('Argument `choices` is of the wrong type')
 		pseudo_types_dict = _get_pseudo_types()
 		self.pseudo_types = pseudo_types_dict['type']
 		self.choices = choices
@@ -174,21 +174,21 @@ class OneOf(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not one of {1}{2}'.format(param_name, self.desc, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
+		exp_dict['msg'] = 'Argument `{0}` is not one of {1}{2}'.format(param_name, self.desc, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
 		return exp_dict
 
 class NumberRange(object):	#pylint: disable=R0903
-	"""	Class for numeric parameters that can only take values in a certain range """
+	"""	Class for numeric arguments that can only take values in a certain range """
 	def __init__(self, minimum=None, maximum=None):
 		for value, name in zip([minimum, maximum], ['minimum', 'maximum']):
 			if (value is not None) and (not putil.misc.isreal(value)):
-				raise TypeError('Parameter `{0}` is of the wrong type'.format(name))
+				raise TypeError('Argument `{0}` is of the wrong type'.format(name))
 		if (minimum is None) and (maximum is None):
-			raise TypeError('Either parameter `minimum` or parameter `maximum` needs to be specified')
+			raise TypeError('Either argument `minimum` or argument `maximum` needs to be specified')
 		if (minimum is not None) and (maximum is not None) and (type(minimum) != type(maximum)):
-			raise TypeError('Parameters `minimum` and `maximum` have different types')
+			raise TypeError('Arguments `minimum` and `maximum` have different types')
 		if (minimum is not None) and (maximum is not None) and (minimum > maximum):
-			raise ValueError('Parameter `minimum` greater than parameter `maximum`')
+			raise ValueError('Argument `minimum` greater than argument `maximum`')
 		self.minimum = minimum
 		self.maximum = maximum
 		self.type = type(self.minimum if self.minimum is not None else self.maximum)
@@ -206,7 +206,7 @@ class NumberRange(object):	#pylint: disable=R0903
 		""" Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
+		exp_dict['msg'] = 'Argument `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
 		return exp_dict
 
 class RealNumpyVector(object):	#pylint: disable=R0903
@@ -231,7 +231,7 @@ class RealNumpyVector(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a Numpy vector of real numbers'.format(param_name)
+		exp_dict['msg'] = 'Argument `{0}` is not a Numpy vector of real numbers'.format(param_name)
 		return exp_dict
 
 class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
@@ -251,14 +251,14 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a Numpy vector of increasing real numbers'.format(param_name)
+		exp_dict['msg'] = 'Argument `{0}` is not a Numpy vector of increasing real numbers'.format(param_name)
 		return exp_dict
 
 class File(object):	#pylint: disable=R0903
 	""" File name string """
 	def __init__(self, check_existance=False):
 		if not isinstance(check_existance, bool):
-			raise TypeError('Parameter `check_existance` is of the wrong type')
+			raise TypeError('Argument `check_existance` is of the wrong type')
 		self.check_existance = check_existance
 
 	def includes(self, test_obj):
@@ -280,7 +280,7 @@ class Function(object):	#pylint: disable=R0903
 	""" Function pointer """
 	def __init__(self, num_pars=None):
 		if (num_pars is not None) and (not isinstance(num_pars, int)):
-			raise TypeError('Parameter `num_pars` is of the wrong type')
+			raise TypeError('Argument `num_pars` is of the wrong type')
 		self.num_pars = num_pars
 
 	def includes(self, test_obj):
@@ -299,18 +299,18 @@ class Function(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		exp_dict = dict()
 		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Parameter `{0}` is not a function with {1} parameter{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')
+		exp_dict['msg'] = 'Argument `{0}` is not a function with {1} argument{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')
 		return exp_dict
 
 class PolymorphicType(object):	#pylint: disable=R0903
-	""" Class for polymorphic parameters """
+	""" Class for polymorphic arguments """
 	def __init__(self, types):
 		if (not isinstance(types, list)) and (not isinstance(types, tuple)) and (not isinstance(types, set)):
-			raise TypeError('Parameter `types` is of the wrong type')
+			raise TypeError('Argument `types` is of the wrong type')
 		self.pseudo_types = _get_pseudo_types()['type']
 		for element_type in types:
 			if (type(element_type) not in self.pseudo_types) and (not isinstance(element_type, type)) and (element_type is not None):
-				raise TypeError('Parameter `types` element is of the wrong type')
+				raise TypeError('Argument `types` element is of the wrong type')
 		self.instances = types
 		self.types = [sub_type if type(sub_type) == type else type(sub_type) for sub_type in types]	# Custom types are technically objects of a pseudo-type class, so true type extraction is necessary
 
@@ -347,10 +347,10 @@ def get_function_args(func):
 	par_dict = funcsigs.signature(func).parameters
 	return tuple(['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict])
 
-def create_parameter_dictionary(func, *args, **kwargs):
+def create_argument_dictionary(func, *args, **kwargs):
 	"""
-	Creates a dictionary where the keys are the parameter names and the values are the passed parameters values (if any)
-	An empty dictionary is returned if an error is detected, such as more parameters than in the function definition, parameter(s) defined by position and keyword, etc.
+	Creates a dictionary where the keys are the argument names and the values are the passed arguments values (if any)
+	An empty dictionary is returned if an error is detected, such as more arguments than in the function definition, argument(s) defined by position and keyword, etc.
 	"""
 	try:
 		return funcsigs.signature(func).bind_partial(*args, **kwargs).arguments
@@ -399,16 +399,16 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 			return False
 	return True
 
-def check_parameter_type_internal(param_name, param_type, func, *args, **kwargs):
-	""" Checks that a parameter is of a certain type """
-	param = create_parameter_dictionary(func, *args, **kwargs).get(param_name)
+def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
+	""" Checks that a argument is of a certain type """
+	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
 	if (param is not None) and (not type_match(param, param_type)):
-		raise TypeError('Parameter `{0}` is of the wrong type'.format(param_name))
+		raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
 
-def check_parameter_internal(param_name, param_spec, func, *args, **kwargs):
-	"""	Checks that a parameter conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
-	check_parameter_type_internal(param_name, param_spec, func, *args, **kwargs)
-	param = create_parameter_dictionary(func, *args, **kwargs).get(param_name)
+def check_argument_internal(param_name, param_spec, func, *args, **kwargs):
+	"""	Checks that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
+	check_argument_type_internal(param_name, param_spec, func, *args, **kwargs)
+	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
 	if param is not None:
 		pseudo_types = _get_pseudo_types(False)['type']
 		if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
@@ -416,26 +416,26 @@ def check_parameter_internal(param_name, param_spec, func, *args, **kwargs):
 			exp_dict = param_spec.exception(**ekwargs)	#pylint: disable=W0142
 			raise exp_dict['type'](exp_dict['msg'])
 
-def check_parameter_type(param_name, param_type):
-	""" Decorator to check that a parameter is of a certain type """
+def check_argument_type(param_name, param_type):
+	""" Decorator to check that a argument is of a certain type """
 	def actual_decorator(func):
 		"""	Actual decorator """
 		@functools.wraps(func)
 		def wrapper(*args, **kwargs):
-			"""	Wrapper function to test parameter type	"""
-			check_parameter_type_internal(param_name, param_type, func, *args, **kwargs)
+			"""	Wrapper function to test argument type	"""
+			check_argument_type_internal(param_name, param_type, func, *args, **kwargs)
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator
 
-def check_parameter(param_name, param_spec):	#pylint: disable=R0912
-	"""	Decorator to check that a parameter conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
+def check_argument(param_name, param_spec):	#pylint: disable=R0912
+	"""	Decorator to check that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
 	def actual_decorator(func):
 		"""	Actual decorator """
 		@functools.wraps(func)
 		def wrapper(*args, **kwargs):
-			"""	Wrapper function to test parameter specification """
-			check_parameter_internal(param_name, param_spec, func, *args, **kwargs)
+			"""	Wrapper function to test argument specification """
+			check_argument_internal(param_name, param_spec, func, *args, **kwargs)
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator

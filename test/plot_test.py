@@ -41,7 +41,7 @@ def indep_min_max_type(func, param):
 	for param_value in ['a', False]:
 		with pytest.raises(TypeError) as excinfo:
 			func(**{param:param_value})	#pylint: disable=W0142
-		comp.append(excinfo.value.message == 'Parameter `{0}` is of the wrong type'.format(param))
+		comp.append(excinfo.value.message == 'Argument `{0}` is of the wrong type'.format(param))
 	# Valid values, these should not raise an exception
 	for param_value in [None, 1, 2.0]:
 		kwarg = {param:param_value}	#pylint: disable=W0612
@@ -52,7 +52,7 @@ def indep_min_max_type(func, param):
 	for param_value in ['a', False]:
 		with pytest.raises(TypeError) as excinfo:
 			exec("obj.{0} = {1}".format(param, "'{0}'".format(param_value) if isinstance(param_value, str) else param_value))	#pylint: disable=W0122
-		comp.append(excinfo.value.message == 'Parameter `{0}` is of the wrong type'.format(param))
+		comp.append(excinfo.value.message == 'Argument `{0}` is of the wrong type'.format(param))
 	# Valid values, these should not raise an exception
 	for param_value in [None, 1, 2.0]:
 		exec('obj.{0} = {1}'.format(param, param_value))	#pylint: disable=W0122
@@ -66,13 +66,13 @@ def indep_min_greater_than_indep_max(func):	#pylint: disable=C0103
 	obj = func(indep_min=45)
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_max = 0
-	comp.append(excinfo.value.message == 'Parameter `indep_min` is greater than parameter `indep_max`')
+	comp.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
 	# Assign indep_max first
 	obj = func()
 	obj.indep_max = 40
 	with pytest.raises(ValueError) as excinfo:
 		obj.indep_min = 50
-	comp.append(excinfo.value.message == 'Parameter `indep_min` is greater than parameter `indep_max`')
+	comp.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
 	assert comp == 2*[True]
 
 ###
@@ -99,15 +99,15 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		# Wrong type
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.BasicSource(indep_var='a')
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
 		# Non monotonically increasing vector
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.BasicSource(indep_var=numpy.array([1.0, 2.0, 0.0, 3.0]))
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
 		# Empty vector
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.BasicSource(indep_var=numpy.array([]))
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
 		# Valid values, these should not raise any exception
 		comp.append(putil.plot.BasicSource(indep_var=None).indep_var == None)
 		comp.append((putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3])).indep_var == numpy.array([1, 2, 3])).all())
@@ -117,40 +117,40 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		obj = putil.plot.BasicSource(indep_min=45)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_var = numpy.array([1, 2, 3])
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 		# Assign indep_min via attribute
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_min = 10
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 		# Assign indep_max via attribute
 		obj = putil.plot.BasicSource(indep_max=0)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_var = numpy.array([1, 2, 3])
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 		# Assign indep_max via attribute
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]))
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_max = 0
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 		# Assign both indep_min and indep_max via __init__ path
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), indep_min=4, indep_max=10)
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 		# Managed attribute path
 		obj = putil.plot.BasicSource()
 		# Wrong type
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.BasicSource(indep_var='a')
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
 		# Non monotonically increasing vector
 		with pytest.raises(TypeError) as excinfo:
 			obj.indep_var = numpy.array([1.0, 2.0, 0.0, 3.0])
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
 		# Empty vector
 		with pytest.raises(TypeError) as excinfo:
 			obj.indep_var = numpy.array([])
-		comp.append(excinfo.value.message == 'Parameter `indep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
 		obj.indep_var = None
 		comp.append(obj.indep_var == None)
 		obj.indep_var = numpy.array([1, 2, 3])
@@ -166,11 +166,11 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		# Wrong type
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.BasicSource(dep_var='a')
-		comp.append(excinfo.value.message == 'Parameter `dep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
 		# Empty vector
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.BasicSource(dep_var=numpy.array([]))
-		comp.append(excinfo.value.message == 'Parameter `dep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
 		# Valid values, these should not raise any exception
 		comp.append(putil.plot.BasicSource(dep_var=None).dep_var == None)
 		comp.append((putil.plot.BasicSource(dep_var=numpy.array([1, 2, 3])).dep_var == numpy.array([1, 2, 3])).all())
@@ -180,11 +180,11 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		# Wrong type
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.BasicSource(dep_var='a')
-		comp.append(excinfo.value.message == 'Parameter `dep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
 		# Empty vector
 		with pytest.raises(TypeError) as excinfo:
 			obj.dep_var = numpy.array([])
-		comp.append(excinfo.value.message == 'Parameter `dep_var` is of the wrong type')
+		comp.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
 		obj.dep_var = None
 		comp.append(obj.dep_var == None)
 		obj.dep_var = numpy.array([1, 2, 3])
@@ -200,12 +200,12 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30, 40, 50, 60]), indep_min=30, indep_max=50)
 		with pytest.raises(ValueError) as excinfo:
 			obj.dep_var = numpy.array([100, 200, 300])
-		comp.append(excinfo.value.message == 'Parameters `indep_var` and `dep_var` must have the same number of elements')
+		comp.append(excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements')
 		# dep_var set first
 		obj = putil.plot.BasicSource(dep_var=numpy.array([100, 200, 300]), indep_min=30, indep_max=50)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
-		comp.append(excinfo.value.message == 'Parameters `indep_var` and `dep_var` must have the same number of elements')
+		comp.append(excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements')
 		assert comp == 2*[True]
 
 	def test_complete(self):	#pylint: disable=C0103,R0201
@@ -296,7 +296,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# This assignment should raise an exception
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(file_name=5)
-		comp = excinfo.value.message == 'Parameter `file_name` is of the wrong type'
+		comp = excinfo.value.message == 'Argument `file_name` is of the wrong type'
 		# This assignment should not raise an exception
 		putil.plot.CsvSource(file_name=None)
 		assert comp == True
@@ -318,7 +318,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# This assignment should raise an exception
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(dfilter=5)
-		comp = excinfo.value.message == 'Parameter `dfilter` is of the wrong type'
+		comp = excinfo.value.message == 'Argument `dfilter` is of the wrong type'
 		# This assignment should not raise an exception
 		putil.plot.CsvSource(dfilter=None)
 		assert comp == True
@@ -340,7 +340,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# These assignments should raise an exception
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(indep_col_label=5)
-		test_list.append(excinfo.value.message == 'Parameter `indep_col_label` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `indep_col_label` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col99')
 		test_list.append(excinfo.value.message == 'Column COL99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
@@ -356,7 +356,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# This assignment should raise an exception
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(dep_col_label=5)
-		test_list.append(excinfo.value.message == 'Parameter `dep_col_label` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `dep_col_label` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, dep_col_label='Col99')
 		test_list.append(excinfo.value.message == 'Column COL99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
@@ -399,10 +399,10 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# These assignments should raise an exception
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(fproc=5)
-		test_list.append(excinfo.value.message == 'Parameter `fproc` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `fproc` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.CsvSource(fproc=fproc1)
-		test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) does not have at least 2 arguments')
+		test_list.append(excinfo.value.message == 'Argument `fproc` (function fproc1) does not have at least 2 arguments')
 		# These assignments should not raise an exception
 		putil.plot.CsvSource(fproc=fproc2)
 		putil.plot.CsvSource(fproc=fproc3)
@@ -410,7 +410,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		assert test_list == [True]*2
 
 	def test_fproc_wrong_return(self, tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103,R0201,R0912,R0914
-		""" Test if object behaves correctly when fproc returns the wrong type and/or number of parameters """
+		""" Test if object behaves correctly when fproc returns the wrong type and/or number of arguments """
 		file_name = str(tmpdir.join('sub/tmp.csv'))
 		def fproc1(indep_var, dep_var):	#pylint: disable=C0111,W0613
 			return True
@@ -442,10 +442,10 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# These assignments should raise an exception
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1)
-		test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc1) return value is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `fproc` (function fproc1) return value is of the wrong type')
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc2)
-		test_list.append(excinfo.value.message == 'Parameter `fproc` (function fproc2) returned an illegal number of values')
+		test_list.append(excinfo.value.message == 'Argument `fproc` (function fproc2) returned an illegal number of values')
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc4)
 		test_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
@@ -472,7 +472,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		test_list.append(excinfo.value.message == 'Processed independent and dependent variables are of different length')
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
-		msg = 'Processing function fproc13 threw an exception when called with the following arguments:\n'
+		msg = 'Processing function fproc13 raised an exception when called with the following arguments:\n'
 		msg += 'indep_var: [ 1.0, 2.0, 3.0 ]\n'
 		msg += 'dep_var: [ 1.0, 2.0, 3.0 ]\n'
 		msg += 'par1: 13\n'
@@ -488,13 +488,13 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# This assignment should raise an exception
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.CsvSource(fproc_eargs=5)
-		comp = excinfo.value.message == 'Parameter `fproc_eargs` is of the wrong type'
+		comp = excinfo.value.message == 'Argument `fproc_eargs` is of the wrong type'
 		# These assignments should not raise an exception
 		putil.plot.CsvSource(fproc_eargs=None)
 		putil.plot.CsvSource(fproc_eargs={'arg1':23})
 		assert comp == True
 
-	def test_fproc_eargs_parameter_name_validation(self):	#pylint: disable=W0621,W0613,C0103,R0201
+	def test_fproc_eargs_argument_name_validation(self):	#pylint: disable=W0621,W0613,C0103,R0201
 		""" Test if object behaves correctly when checking if the arguments in the fprog_eargs dictionary exist """
 		def fproc1(indep_var, dep_var):	#pylint: disable=C0111,W0613
 			pass
@@ -510,10 +510,10 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# These assignments should raise an exception
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.CsvSource(fproc=fproc1, fproc_eargs={'par1':5})
-		test_list.append(excinfo.value.message == 'Extra argument `par1` not found in parameter `fproc` (function fproc1) definition')
+		test_list.append(excinfo.value.message == 'Extra argument `par1` not found in argument `fproc` (function fproc1) definition')
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.CsvSource(fproc=fproc2, fproc_eargs={'par3':5})
-		test_list.append(excinfo.value.message == 'Extra argument `par3` not found in parameter `fproc` (function fproc2) definition')
+		test_list.append(excinfo.value.message == 'Extra argument `par3` not found in argument `fproc` (function fproc2) definition')
 		# These assignments should not raise an exception
 		putil.plot.CsvSource(fproc=fproc3, fproc_eargs={'par99':5})
 		putil.plot.CsvSource(fproc=fproc4, fproc_eargs={'par98':5})
@@ -521,7 +521,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		assert test_list == [True]*2
 
 	def test_fproc_works(self, tmpdir, tmp_csv_file):	#pylint: disable=W0621,W0613,C0103,R0201
-		""" Test if object behaves correctly when executing function defined in fproc parameter with extra arguments defined in fproc_eargs parameter """
+		""" Test if object behaves correctly when executing function defined in fproc argument with extra arguments defined in fproc_eargs argument """
 		file_name = str(tmpdir.join('sub/tmp.csv'))
 		def fproc1(indep_var, dep_var, indep_offset, dep_offset):	#pylint: disable=C0111,W0613
 			return indep_var+indep_offset, dep_var+dep_offset
@@ -656,15 +656,15 @@ class TestSeries(object):	#pylint: disable=W0232
 		# These assignments should raise an exception
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.Series(data_source=putil.plot.BasicSource(), label='test')
-		test_list.append(excinfo.value.message == 'Parameter `data_source` is not fully specified')
+		test_list.append(excinfo.value.message == 'Argument `data_source` is not fully specified')
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.Series(data_source=5, label='test')
-		test_list.append(excinfo.value.message == 'Parameter `data_source` does not have `indep_var` attribute')
+		test_list.append(excinfo.value.message == 'Argument `data_source` does not have `indep_var` attribute')
 		obj = TestSource()
 		obj.indep_var = numpy.array([5, 6, 7, 8])	#pylint: disable=W0201
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.Series(data_source=obj, label='test')
-		test_list.append(excinfo.value.message == 'Parameter `data_source` does not have `dep_var` attribute')
+		test_list.append(excinfo.value.message == 'Argument `data_source` does not have `dep_var` attribute')
 		obj.dep_var = numpy.array([0, -10, 5, 4])	#pylint: disable=W0201
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=None, label='test')
@@ -679,7 +679,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Series(data_source=default_source, label=5)
-		test_list.append(excinfo.value.message == 'Parameter `label` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `label` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=default_source, label=None)
 		obj = putil.plot.Series(data_source=default_source, label='test')
@@ -692,7 +692,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', color=default_source)
-		test_list.append(excinfo.value.message == 'Parameter `color` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `color` is of the wrong type')
 		invalid_color_list = ['invalid_color_name', -0.01, 1.1, '#ABCDEX', (-1, 1, 1), [1, 2, 0.5], [1, 1, 2], (-1, 1, 1, 1), [1, 2, 0.5, 0.5], [1, 1, 2, 1], (1, 1, 1, -1)]
 		valid_color_list = [None, 'moccasin', 0.5, '#ABCDEF', (0.5, 0.5, 0.5), [0.25, 0.25, 0.25, 0.25]]
 		for color in invalid_color_list:
@@ -715,7 +715,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', marker='hello')
-		test_list.append(excinfo.value.message == 'Parameter `marker` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `marker` is of the wrong type')
 		# These assignments should not raise an exception
 		obj = putil.plot.Series(data_source=default_source, label='test', marker=None)
 		test_list.append(obj.marker == None)
@@ -731,10 +731,10 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', interp=5)
-		test_list.append(excinfo.value.message == 'Parameter `interp` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `interp` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', interp='NOT_AN_OPTION')
-		test_list.append(excinfo.value.message == "Parameter `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)")
+		test_list.append(excinfo.value.message == "Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)")
 		source_obj = putil.plot.BasicSource(indep_var=numpy.array([5]), dep_var=numpy.array([0]))
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.Series(data_source=source_obj, label='test', interp='CUBIC')
@@ -762,10 +762,10 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', line_style=5)
-		test_list.append(excinfo.value.message == 'Parameter `line_style` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `line_style` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', line_style='x')
-		test_list.append(excinfo.value.message == "Parameter `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive)")
+		test_list.append(excinfo.value.message == "Argument `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive)")
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=default_source, label='test', line_style=None)
 		obj = putil.plot.Series(data_source=default_source, label='test', line_style='-')
@@ -786,7 +786,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Series(data_source=default_source, label='test', secondary_axis=5)
-		test_list.append(excinfo.value.message == 'Parameter `secondary_axis` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `secondary_axis` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=default_source, label='test', secondary_axis=None)
 		obj = putil.plot.Series(data_source=default_source, label='test', secondary_axis=False)
@@ -931,7 +931,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Panel(series=default_series, primary_axis_label=5)
-		test_list.append(excinfo.value.message == 'Parameter `primary_axis_label` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `primary_axis_label` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Panel(series=default_series, primary_axis_label=None)
 		obj = putil.plot.Panel(series=default_series, primary_axis_label='test')
@@ -944,7 +944,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Panel(series=default_series, primary_axis_units=5)
-		test_list.append(excinfo.value.message == 'Parameter `primary_axis_units` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `primary_axis_units` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Panel(series=default_series, primary_axis_units=None)
 		obj = putil.plot.Panel(series=default_series, primary_axis_units='test')
@@ -957,7 +957,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Panel(series=default_series, secondary_axis_label=5)
-		test_list.append(excinfo.value.message == 'Parameter `secondary_axis_label` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `secondary_axis_label` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Panel(series=default_series, secondary_axis_label=None)
 		obj = putil.plot.Panel(series=default_series, secondary_axis_label='test')
@@ -970,7 +970,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Panel(series=default_series, secondary_axis_units=5)
-		test_list.append(excinfo.value.message == 'Parameter `secondary_axis_units` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `secondary_axis_units` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Panel(series=default_series, secondary_axis_units=None)
 		obj = putil.plot.Panel(series=default_series, secondary_axis_units='test')
@@ -983,7 +983,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Panel(series=default_series, log_dep_axis=5)
-		test_list.append(excinfo.value.message == 'Parameter `log_dep_axis` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `log_dep_axis` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.Panel(series=default_series, log_dep_axis=True)
 		test_list.append(excinfo.value.message == 'Series element 0 cannot be plotted in a logarithmic axis because it contains negative data points')
@@ -1004,7 +1004,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Panel(series=default_series, legend_props=5)
-		test_list.append(excinfo.value.message == 'Parameter `legend_props` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `legend_props` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.Panel(series=default_series, legend_props={'not_a_valid_prop':5})
 		test_list.append(excinfo.value.message == 'Illegal legend property `not_a_valid_prop`')
@@ -1411,7 +1411,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, indep_var_label=5)
-		test_list.append(excinfo.value.message == 'Parameter `indep_var_label` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `indep_var_label` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Figure(panels=default_panel, indep_var_label=None)
 		putil.plot.Figure(panels=default_panel, indep_var_label='sec')
@@ -1425,7 +1425,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, indep_var_units=5)
-		test_list.append(excinfo.value.message == 'Parameter `indep_var_units` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `indep_var_units` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Figure(panels=default_panel, indep_var_units=None)
 		putil.plot.Figure(panels=default_panel, indep_var_units='sec')
@@ -1439,7 +1439,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, title=5)
-		test_list.append(excinfo.value.message == 'Parameter `title` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `title` is of the wrong type')
 		# These assignments should not raise an exception
 		putil.plot.Figure(panels=default_panel, title=None)
 		putil.plot.Figure(panels=default_panel, title='sec')
@@ -1453,7 +1453,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, log_indep_axis=5)
-		test_list.append(excinfo.value.message == 'Parameter `log_indep_axis` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `log_indep_axis` is of the wrong type')
 		negative_data_source = putil.plot.BasicSource(indep_var=numpy.array([-5, 6, 7, 8]), dep_var=numpy.array([0.1, 10, 5, 4]))
 		negative_series = putil.plot.Series(data_source=negative_data_source, label='negative data series')
 		negative_panel = putil.plot.Panel(series=negative_series)
@@ -1475,7 +1475,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, fig_width='a')
-		test_list.append(excinfo.value.message == 'Parameter `fig_width` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `fig_width` is of the wrong type')
 		# These assignments should not raise an exception
 		obj = putil.plot.Figure(panels=None)
 		test_list.append(obj.fig_width == None)
@@ -1491,7 +1491,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=default_panel, fig_height='a')
-		test_list.append(excinfo.value.message == 'Parameter `fig_height` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `fig_height` is of the wrong type')
 		# These assignments should not raise an exception
 		obj = putil.plot.Figure(panels=None)
 		test_list.append(obj.fig_height == None)
@@ -1507,7 +1507,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.plot.Figure(panels=5)
-		test_list.append(excinfo.value.message == 'Parameter `panels` is of the wrong type')
+		test_list.append(excinfo.value.message == 'Argument `panels` is of the wrong type')
 		with pytest.raises(RuntimeError) as excinfo:
 			putil.plot.Figure(panels=[default_panel, putil.plot.Panel(series=None)])
 		test_list.append(excinfo.value.message == 'Panel 1 is not fully specified')

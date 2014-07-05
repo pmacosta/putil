@@ -32,11 +32,15 @@ Number of mantissa significant digits
 LINE_WIDTH = 2.5
 """
 Line width in points
+
+:type: float
 """	#pylint: disable=W0105
 
 MARKER_SIZE = 14
 """
 Marker size in points
+
+:type: integer
 """	#pylint: disable=W0105
 
 MIN_TICKS = 6
@@ -88,13 +92,13 @@ Scale factor for panel legend. The legend font size in points is equal to the ax
 
 class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
-	Container to hold data sets intended for plotting
+	Objects of this class hold a given data set intended for plotting
 
 	:param	indep_var:			independent variable vector
 	:type	indep_var:			increasing real Numpy vector
 	:param	dep_var:			dependent variable vector
 	:type	dep_var:			real Numpy vector
-	:param	indep_min:			mini:mum independent variable value
+	:param	indep_min:			mininmum independent variable value
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
@@ -113,7 +117,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
 		# Public attributes
 		self._indep_var, self._dep_var, self._indep_min, self._indep_max = None, None, None, None
-		# Assignment of parameters to attributes
+		# Assignment of arguments to attributes
 		# Assign minimum and maximum first so as not to trigger unnecessary tresholding if the dependent and independent variables are already assigned
 		self._set_indep_min(indep_min)
 		self._set_indep_max(indep_max)
@@ -123,10 +127,10 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_var(self):	#pylint: disable=C0111
 		return self._indep_var
 
-	@putil.check.check_parameter('indep_var', putil.check.PolymorphicType([None, putil.check.IncreasingRealNumpyVector()]))
+	@putil.check.check_argument('indep_var', putil.check.PolymorphicType([None, putil.check.IncreasingRealNumpyVector()]))
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
-			raise ValueError('Parameters `indep_var` and `dep_var` must have the same number of elements')
+			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
 		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -134,20 +138,20 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_dep_var(self):	#pylint: disable=C0111
 		return self._dep_var
 
-	@putil.check.check_parameter('dep_var', putil.check.PolymorphicType([None, putil.check.RealNumpyVector()]))
+	@putil.check.check_argument('dep_var', putil.check.PolymorphicType([None, putil.check.RealNumpyVector()]))
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
 		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):
-			raise ValueError('Parameters `indep_var` and `dep_var` must have the same number of elements')
+			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
 		self._raw_dep_var = putil.misc.smart_round(dep_var, PRECISION)
 		self._update_dep_var()
 
 	def _get_indep_min(self):	#pylint: disable=C0111
 		return self._indep_min
 
-	@putil.check.check_parameter('indep_min', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_argument('indep_min', putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
-			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
+			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
 		self._indep_min = putil.misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -155,10 +159,10 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_max(self):	#pylint: disable=C0111
 		return self._indep_max
 
-	@putil.check.check_parameter('indep_max', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_argument('indep_max', putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
-			raise ValueError('Parameter `indep_min` is greater than parameter `indep_max`')
+			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
 		self._indep_max = putil.misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
 		self._update_dep_var()
@@ -170,7 +174,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 				(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
 			self._indep_var = self._raw_indep_var[self._indep_var_indexes]
 			if len(self.indep_var) == 0:
-				raise ValueError('Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+				raise ValueError('Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 
 	def _update_dep_var(self):
 		""" Update dependent variable (if assigned) to match the independent variable range bounding """
@@ -198,11 +202,11 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		real number
 	:raises:
-	 * TypeError (Parameter `indep_min` is of the wrong type)
+	 * TypeError (Argument `indep_min` is of the wrong type)
 
-	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
-	 * ValueError (Parameter `indep_min` is greater than parameter `indep_max`)
+	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
 	"""	#pylint: disable=W0105
 
 	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
@@ -211,11 +215,11 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		real number
 	:raises:
-	 * TypeError (Parameter `indep_max` is of the wrong type)
+	 * TypeError (Argument `indep_max` is of the wrong type)
 
-	 * ValueError (Parameter `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
-	 * ValueError (Parameter `indep_min` is greater than parameter `indep_max`)
+	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
 	"""	#pylint: disable=W0105
 
 	indep_var = property(_get_indep_var, _set_indep_var, None, doc='Independent variable Numpy vector')
@@ -224,11 +228,11 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		increasing real Numpy vector
 	:raises:
-	 * TypeError (Parameter `indep_var` is of the wrong type)
+	 * TypeError (Argument `indep_var` is of the wrong type)
 
-	 * ValueError (Parameters `indep_var` and `dep_var` must have the same number of elements)
+	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
 
-	 * ValueError (Parameters `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Arguments `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 	"""	#pylint: disable=W0105
 
 	dep_var = property(_get_dep_var, _set_dep_var, None, doc='Dependent variable Numpy vector')
@@ -237,14 +241,14 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		real Numpy vector
 	:raises:
-	 * TypeError (Parameter `dep_var` is of the wrong type)
+	 * TypeError (Argument `dep_var` is of the wrong type)
 
-	 * ValueError (Parameters `indep_var` and `dep_var` must have the same number of elements)
+	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
 	"""	#pylint: disable=W0105
 
 class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
-	Retrieves data set from a comma-separated file
+	Objects of this class hold a data set from a CSV file intended for plotting
 
 	:param	file_name:			comma-separated file name
 	:type	file_name:			string
@@ -252,18 +256,24 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	:type	indep_col_label:	string (case insensitive)
 	:param	dep_col_label:		dependent variable column label
 	:type	dep_col_label:		string (case insensitive)
-	:param	dfilter:			data filter definition. See :py:attr:`putil.plot.CsvSource.data_filter`
+	:param	dfilter:			data filter definition. See :py:attr:`putil.plot.CsvSource.dfilter`
 	:type	dfilter:			dictionary
 	:param	indep_min:			minimum independent variable value
 	:type	indep_min:			number
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number
-	:param	fproc:				processing function
+	:param	fproc:				data processing function
 	:type	fproc:				function pointer
-	:param	fproc_eargs:		processing function extra arguments
+	:param	fproc_eargs:		data processing function extra arguments
 	:type	fproc_eargs:		dictionary
 	:rtype:						:py:class:`putil.plot.CsvSource()` object
 	:raises:
+	 * Same as :py:attr:`putil.plot.CsvSource.file_name`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.indep_col_label`
+
+	 * Same as :py:attr:`putil.plot.CsvSource.dep_col_label`
+
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
 
 	 * Same as :py:attr:`putil.plot.BasicSource.dep_var`
@@ -272,13 +282,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_max`
 
-	 * Same as :py:attr:`putil.plot.CsvSource.file_name`
-
 	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.indep_col_label`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.dep_col_label`
 
 	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
 
@@ -290,7 +294,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 		self._csv_obj, self._reverse_data = None, False
 		# Public attributes
 		self._file_name, self._dfilter, self._indep_col_label, self._dep_col_label, self._fproc, self._fproc_eargs = None, None, None, None, None, None
-		# Assignment of parameters to attributes
+		# Assignment of arguments to attributes
 		self._set_indep_col_label(indep_col_label)
 		self._set_dep_col_label(dep_col_label)
 		self._set_fproc(fproc)
@@ -301,7 +305,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_file_name(self):	#pylint: disable=C0111
 		return self._file_name
 
-	@putil.check.check_parameter('file_name', putil.check.PolymorphicType([None, putil.check.File(check_existance=True)]))
+	@putil.check.check_argument('file_name', putil.check.PolymorphicType([None, putil.check.File(check_existance=True)]))
 	def _set_file_name(self, file_name):	#pylint: disable=C0111
 		if file_name is not None:
 			self._file_name = file_name
@@ -312,7 +316,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
 
-	@putil.check.check_parameter('dfilter', putil.check.PolymorphicType([None, dict]))
+	@putil.check.check_argument('dfilter', putil.check.PolymorphicType([None, dict]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
 		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# putil.pcsv is case insensitive and all caps
 		self._apply_dfilter()
@@ -321,7 +325,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_indep_col_label(self):	#pylint: disable=C0111
 		return self._indep_col_label
 
-	@putil.check.check_parameter('indep_col_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('indep_col_label', putil.check.PolymorphicType([None, str]))
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
 		self._indep_col_label = indep_col_label.upper() if isinstance(indep_col_label, str) else indep_col_label	# putil.pcsv is case insensitive and all caps
 		self._check_indep_col_label()
@@ -331,7 +335,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_dep_col_label(self):	#pylint: disable=C0111
 		return self._dep_col_label
 
-	@putil.check.check_parameter('dep_col_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('dep_col_label', putil.check.PolymorphicType([None, str]))
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
 		self._dep_col_label = dep_col_label.upper() if isinstance(dep_col_label, str) else dep_col_label	 	# putil.pcsv is case insensitive and all caps
 		self._check_dep_col_label()
@@ -341,12 +345,12 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
 
-	@putil.check.check_parameter('fproc', putil.check.PolymorphicType([None, putil.check.Function()]))
+	@putil.check.check_argument('fproc', putil.check.PolymorphicType([None, putil.check.Function()]))
 	def _set_fproc(self, fproc):	#pylint: disable=C0111
 		if fproc is not None:
 			args = putil.check.get_function_args(fproc)
 			if (fproc is not None) and (len(args) < 2) and ('*args' not in args) and ('**kwargs' not in args):
-				raise ValueError('Parameter `fproc` (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
+				raise ValueError('Argument `fproc` (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
 		self._fproc = fproc
 		self._check_fproc_eargs()
 		self._process_data()
@@ -354,7 +358,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_fproc_eargs(self):	#pylint: disable=C0111
 		return self._fproc_eargs
 
-	@putil.check.check_parameter('fproc_eargs', putil.check.PolymorphicType([None, dict]))
+	@putil.check.check_argument('fproc_eargs', putil.check.PolymorphicType([None, dict]))
 	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable=C0111
 		# Check that extra argnuments to see if they are in the function definition
 		self._fproc_eargs = fproc_eargs
@@ -367,7 +371,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			args = putil.check.get_function_args(self._fproc)
 			for key in self.fproc_eargs:
 				if (key not in args) and ('*args' not in args) and ('**kwargs' not in args):
-					raise RuntimeError('Extra argument `{0}` not found in parameter `fproc` (function {1}) definition'.format(key, self.fproc.__name__))
+					raise RuntimeError('Extra argument `{0}` not found in argument `fproc` (function {1}) definition'.format(key, self.fproc.__name__))
 
 	def _check_indep_col_label(self):
 		""" Check that independent column label can be found in comma-separated file header """
@@ -399,7 +403,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_indep_var_from_file(self):
 		""" Retrieve independent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.indep_col_label is not None):
-			self._check_indep_col_label()	# When object is given all parameters at construction the column label checking cannot happen at property assignment because file data is not yet loaded
+			self._check_indep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array(self._csv_obj.filtered_data(self.indep_col_label))
 			if (len(data) == 0) or ((data == [None]*len(data)).all()):
 				raise ValueError('Filtered independent variable is empty')
@@ -414,7 +418,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_dep_var_from_file(self):
 		""" Retrieve dependent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.dep_col_label is not None):
-			self._check_dep_col_label()	# When object is given all parameters at construction the column label checking cannot happen at property assignment because file data is not yet loaded
+			self._check_dep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array(self._csv_obj.filtered_data(self.dep_col_label))
 			if (len(data) == 0) or ((data == [None]*len(data)).all()):
 				raise ValueError('Filtered dependent variable is empty')
@@ -426,7 +430,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			try:
 				ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
 			except Exception as error_msg:
-				msg = 'Processing function {0} threw an exception when called with the following arguments:\n'.format(self.fproc.__name__)
+				msg = 'Processing function {0} raised an exception when called with the following arguments:\n'.format(self.fproc.__name__)
 				msg += 'indep_var: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, limit=10))
 				msg += 'dep_var: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, limit=10))
 				if self.fproc_eargs is not None:
@@ -435,9 +439,9 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 				msg += 'Exception error: {0}'.format(error_msg)
 				raise RuntimeError(msg)
 			if (not isinstance(ret, list)) and (not isinstance(ret, tuple)):
-				raise TypeError('Parameter `fproc` (function {0}) return value is of the wrong type'.format(self.fproc.__name__))
+				raise TypeError('Argument `fproc` (function {0}) return value is of the wrong type'.format(self.fproc.__name__))
 			if len(ret) != 2:
-				raise RuntimeError('Parameter `fproc` (function {0}) returned an illegal number of values'.format(self.fproc.__name__))
+				raise RuntimeError('Argument `fproc` (function {0}) returned an illegal number of values'.format(self.fproc.__name__))
 			indep_var = ret[0]
 			dep_var = ret[1]
 			self._check_var(indep_var, 'independent variable')
@@ -484,26 +488,48 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	file_name = property(_get_file_name, _set_file_name, doc='Comma-separated file name')
 	"""
-	Comma-separated file from which data series is to be extracted
+	Comma-separated file from which data series is to be extracted. It is assumed that the first line of file contains unique headers for each column
 
 	:type:		string
 	:raises:
-	 * TypeError (Parameter `file_name` is of the wrong type)
+	 * TypeError (Argument `file_name` is of the wrong type)
 
 	 * IOError (File *[file_name]* could not be found)
 
 	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
-
-	.. warning:: The first line of the comma-separated file must contain unique headers for each column
 	"""	#pylint: disable=W0105
 
 	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
 	"""
-	Data filter
+	Data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and a column value (dictionary value). All rows which cointain the specified value in the
+	specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified by each individual filter. For example, if the file name to be processed is:
+
+	+------+-----+--------+
+	| Ctrl | Ref | Result |
+	+======+=====+========+
+	|    1 |   3 |     10 |
+	+------+-----+--------+
+	|    1 |   4 |     20 |
+	+------+-----+--------+
+	|    2 |   4 |     30 |
+	+------+-----+--------+
+	|    2 |   5 |     40 |
+	+------+-----+--------+
+
+	Then the filter specification ``dfilter = {'Ctrl':2, 'Ref':5}`` would result in the following filtered data set:
+
+	+------+-----+--------+
+	| Ctrl | Ref | Result |
+	+======+=====+========+
+	|    2 |   5 |     40 |
+	+------+-----+--------+
+
+	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an exception because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
+	the `Ref` individual filter.
 
 	:type:		dictionary
 	:raises:
-	 * TypeError (Parameter `dfilter` is of the wrong type)
+	 * TypeError (Argument `dfilter` is of the wrong type)
 
 	 * ValueError (Filtered independent variable is empty)
 
@@ -514,10 +540,6 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
 
 	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
-
-	.. note::
-	   The filter definition dictionary consists of a series of key-value pairs. For each key-value pair, the filter key is a column name in the comma-separated file; all rows which cointain the specified filter \
-	   value for the specified filter column are going to be kept for that particular key-value pair. The overall data set is the intersection of all the filter dictionary key-value data sets.
 	"""	#pylint: disable=W0105
 
 	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
@@ -526,11 +548,9 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:type:	string
 	:raises:
-	 * TypeError (Parameter `indep_col_label` is of the wrong type)
+	 * TypeError (Argument `indep_col_label` is of the wrong type)
 
 	 * ValueError (Column *[indep_col_label]* (independent column label) could not be found in comma-separated file *[file_name]* header)
-
-	 * ValueError (Filtered independent variable is empty)
 
 	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 	"""	#pylint: disable=W0105
@@ -541,24 +561,34 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	:type:	string
 	:raises:
-	 * TypeError (Parameter `dep_col_label` is of the wrong type)
+	 * TypeError (Argument `dep_col_label` is of the wrong type)
 
 	 * ValueError (Column *[dep_col_label]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
-
-	 * ValueError (Filtered dependent variable is empty)
 
 	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 	"""	#pylint: disable=W0105
 
 	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
 	"""
-	Data processing function pointer
+	Data processing function pointer. The processing function is useful for "light" data massaging, like scaling, unit conversion, etc.; it is called after the data has been retrieved from the comma-separated value and\
+	the resulting filtered data set has been thresholded by **indep_var_min** and **dep_var_min** (if applicable).
+
+	The processing function is given two arguments, a Numpy vector containing the independent variable array (first argument) and a Numpy vector containing the dependent variable array (second argument). \
+	The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second element being the processed dependent variable array. One valid processing \
+	function could be::
+
+		def my_proc_func(indep_var, dep_var):
+			# indep_var is a Numpy vector, in this example  time, in seconds
+			# dep_var is a Numpy vector
+			indep_var = indep_var/1e-12	# Want to plot time in pico-seconds
+			dep_var = dep_var-dep_var[0]	# Want to remove initial offset
+			return indep_var, dep_var	# Return value is a 2-element tuple
 
 	:type:	function pointer
 	:raises:
-	 * TypeError (Parameter `fproc` is of the wrong type)
+	 * TypeError (Argument `fproc` is of the wrong type)
 
-	 * TypeError (Parameter `fproc` (function *[function name pointed by fproc]*) return value is of the wrong type)
+	 * TypeError (Argument `fproc` (function *[function name pointed by fproc]*) return value is of the wrong type)
 
 	 * TypeError (Processed independent variable is of the wrong type)
 
@@ -568,53 +598,45 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Processed dependent variable is empty)
 
-	 * ValueError (Parameter `fproc` (function *[function name pointed by fproc]*) does not have at least 2 arguments)
+	 * ValueError (Argument `fproc` (function *[function name pointed by fproc]*) does not have at least 2 arguments)
 
 	 * ValueError (Processed independent and dependent variables are of different length)
 
-	 * RuntimeError (Parameter `fproc` (function *[function name pointed by fproc]*) returned an illegal number of values)
+	 * RuntimeError (Argument `fproc` (function *[function name pointed by fproc]*) returned an illegal number of values)
 
-	 * RuntimeError (Processing function *[function name pointed by fproc]* threw an exception when called with the following arguments [...])
+	 * RuntimeError (Processing function *[function name pointed by fproc]* raised an exception when called with the following arguments [...])
 
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
 
 	 * Same as :py:attr:`putil.plot.BasicSource.dep_var`
 
 	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
-
-	.. note::
-	   The processing function is useful to do "light" data massaging, like scaling, etc; it is called after the data has been retrieved from the comma-separated value and the resulting filtered data set has been \
-	   thresholded by **indep_var_min** and **dep_var_min** (if applicable).
-
-	   The processing function is given two arguments, a Numpy vector representing the independent variable array (first argument) and a Numpy vector representing the dependent variable array (second argument). \
-	   The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second element being the processed dependent variable array.
 	"""	#pylint: disable=W0105
 
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
 	"""
-	Extra arguments for the data processing function
+	Extra arguments for the data processing function. The arguments are specified by key-value pairs of a dictionary, for each dictionary element the dictionary key specifies the argument name and the dictionary value
+	specifies the argument value. For example, if ``fproc_eargs={'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
+
+		def my_proc_func(indep_var, dep_var, par1, par2):
+			print '2*5 = 10 = {0}'.format(2*par1)
+			print 'list sum is 6 = {0}'.format(sum(par2))
+			return indep_var+(2*par1), dep_var+sum(par2)
 
 	:type:	dictionary
 	:raises:
-	 * TypeError (Parameter `fproc_eargs` is of the wrong type)
+	 * TypeError (Argument `fproc_eargs` is of the wrong type)
 
-	 * ValueError (Extra argument `par1` not found in parameter `fproc` (function *[function name pointed by fproc]*) definition)
+	 * ValueError (Extra argument *[argument name]* not found in argument `fproc` (function *[function name pointed by fproc]*) definition)
 
 	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
-
-	.. note::
-	   Extra parameters can be passed to the processing function using **fproc_eargs**. For example, if **fproc_eargs** is ``{'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
-
-	       def my_proc_func(indep_var, dep_var, par1, par2):
-	           # Do some data processing
-	           return indep_var, dep_var
 	"""	#pylint: disable=W0105
 
 	# indep_var is read only
-	indep_var = property(BasicSource._get_indep_var, None, doc='Independent variable Numpy vector')	#pylint: disable=E0602
+	indep_var = property(BasicSource._get_indep_var, None, doc='Independent variable Numpy vector (read only)')	#pylint: disable=E0602
 
 	# dep_var is read only
-	dep_var = property(BasicSource._get_dep_var, None, doc='Dependent variable Numpy vector')	#pylint: disable=E0602
+	dep_var = property(BasicSource._get_dep_var, None, doc='Dependent variable Numpy vector (read only)')	#pylint: disable=E0602
 
 class Series(object):	#pylint: disable=R0902,R0903
 	"""
@@ -664,7 +686,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		self.indep_var, self.dep_var = None, None
 		self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
 		self._data_source, self._label, self._color, self._marker, self._interp, self._line_style, self._secondary_axis = None, None, 'k', 'o', 'CUBIC', '-', False
-		# Assignment of parameters to attributes
+		# Assignment of arguments to attributes
 		self._set_label(label)
 		self._set_color(color)
 		self._set_marker(marker)
@@ -680,9 +702,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 		if data_source is not None:
 			for method in ['indep_var', 'dep_var']:
 				if method not in dir(data_source):
-					raise RuntimeError('Parameter `data_source` does not have `{0}` attribute'.format(method))
+					raise RuntimeError('Argument `data_source` does not have `{0}` attribute'.format(method))
 			if ('_complete' in dir(data_source)) and (not data_source._complete()):	#pylint: disable=W0212
-				raise RuntimeError('Parameter `data_source` is not fully specified')
+				raise RuntimeError('Argument `data_source` is not fully specified')
 			self._data_source = data_source
 			self.indep_var = self.data_source.indep_var
 			self.dep_var = self.data_source.dep_var
@@ -692,14 +714,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_label(self):	#pylint: disable=C0111
 		return self._label
 
-	@putil.check.check_parameter('label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('label', putil.check.PolymorphicType([None, str]))
 	def _set_label(self, label):	#pylint: disable=C0111
 		self._label = label
 
 	def _get_color(self):	#pylint: disable=C0111
 		return self._color
 
-	@putil.check.check_parameter('color', putil.check.PolymorphicType([None, putil.check.Number(), str, list, tuple]))
+	@putil.check.check_argument('color', putil.check.PolymorphicType([None, putil.check.Number(), str, list, tuple]))
 	def _set_color(self, color):	#pylint: disable=C0111
 		valid_html_colors = [
 			'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
@@ -737,7 +759,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	def _set_marker(self, marker):	#pylint: disable=C0111
 		if not self._validate_marker(marker):
-			raise TypeError('Parameter `marker` is of the wrong type')
+			raise TypeError('Argument `marker` is of the wrong type')
 		self._marker = marker
 		self._marker_spec = self.marker if self.marker not in ["None", None, ' ', ''] else ''
 		self._check_series_is_plottable()
@@ -745,7 +767,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_interp(self):	#pylint: disable=C0111
 		return self._interp
 
-	@putil.check.check_parameter('interp', putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
+	@putil.check.check_argument('interp', putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
 	def _set_interp(self, interp):	#pylint: disable=C0111
 		self._interp = interp.upper().strip() if isinstance(interp, str) else interp
 		self._check_series_is_plottable()
@@ -757,7 +779,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_line_style(self):	#pylint: disable=C0111
 		return self._line_style
 
-	@putil.check.check_parameter('line_style', putil.check.PolymorphicType([None, putil.check.OneOf(['-', '--', '-.', ':'])]))
+	@putil.check.check_argument('line_style', putil.check.PolymorphicType([None, putil.check.OneOf(['-', '--', '-.', ':'])]))
 	def _set_line_style(self, line_style):	#pylint: disable=C0111
 		self._line_style = line_style
 		self._update_linestyle_spec()
@@ -767,7 +789,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_secondary_axis(self):	#pylint: disable=C0111
 		return self._secondary_axis
 
-	@putil.check.check_parameter('secondary_axis', putil.check.PolymorphicType([None, bool]))
+	@putil.check.check_argument('secondary_axis', putil.check.PolymorphicType([None, bool]))
 	def _set_secondary_axis(self, secondary_axis):	#pylint: disable=C0111
 		self._secondary_axis = secondary_axis
 
@@ -949,13 +971,13 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:type:	:py:class:`putil.plot.BasicSource()` object, :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
 	:raises:
-	 * TypeError (Parameter `data_source` is of the wrong type)
+	 * TypeError (Argument `data_source` is of the wrong type)
 
-	 * RuntimeError (Parameter `data_source` does not have `indep_var` attribute)
+	 * RuntimeError (Argument `data_source` does not have `indep_var` attribute)
 
-	 * RuntimeError (Parameter `data_source` does not have `dep_var` attribute)
+	 * RuntimeError (Argument `data_source` does not have `dep_var` attribute)
 
-	 * RuntimeError (Parameter `data_source` is not fully specified)
+	 * RuntimeError (Argument `data_source` is not fully specified)
 
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_var` or :py:attr:`putil.plot.CsvSource.indep_var` or exceptions thrown by custom data source class while handling independent variable retrieval
 
@@ -969,7 +991,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Series label, to be used in panel legend
 
 	:type:	string
-	:raises: TypeError (Parameter `label` is of the wrong type)
+	:raises: TypeError (Argument `label` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	color = property(_get_color, _set_color, doc='Series line and marker color')
@@ -978,7 +1000,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:type:	Matplotlib color
 	:raises:
-	 * TypeError (Parameter `color` is of the wrong type)
+	 * TypeError (Argument `color` is of the wrong type)
 
 	 * TypeError (Invalid color specification)
 	"""	#pylint: disable=W0105
@@ -988,7 +1010,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Plot data point markers flag
 
 	:type:	Matplotlib marker specification
-	:raises: TypeError (Parameter `marker` is of the wrong type)
+	:raises: TypeError (Argument `marker` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	interp = property(_get_interp, _set_interp, doc='Series interpolation option, one of `STRAIGHT`, `CUBIC` or `LINREG` (case insensitive)')
@@ -997,9 +1019,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:type:	string
 	:raises:
-	 * TypeError (Parameter `interp` is of the wrong type)
+	 * TypeError (Argument `interp` is of the wrong type)
 
-	 * ValueError (Parameter `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
+	 * ValueError (Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
 	"""	#pylint: disable=W0105
 
 	line_style = property(_get_line_style, _set_line_style, doc='Series line style, one of `-`, `--`, `-.` or `:`')
@@ -1008,9 +1030,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:type:	Matplotlib line specification
 	:raises:
-	 * TypeError (Parameter `line_syle` is of the wrong type)
+	 * TypeError (Argument `line_syle` is of the wrong type)
 
-	 * ValueError (Parameter `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive))
+	 * ValueError (Argument `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive))
 	"""	#pylint: disable=W0105
 
 	secondary_axis = property(_get_secondary_axis, _set_secondary_axis, doc='Series secondary axis flag')
@@ -1018,7 +1040,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Secondary axis flag. If true, the series belongs to the secondary (right) panel axis.
 
 	:type:	boolean
-	:raises: TypeError (Parameter `secondary_axis` is of the wrong type)
+	:raises: TypeError (Argument `secondary_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 class Panel(object):	#pylint: disable=R0902,R0903
@@ -1065,7 +1087,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self._secondary_dep_var_min, self._secondary_dep_var_max, self._secondary_dep_var_div, self._secondary_dep_var_unit_scale, self._secondary_dep_var_locs, self._secondary_dep_var_labels = None, None, None, None, None, None
 		self._legend_props_list = ['pos', 'cols']
 		self._legend_props_pos_list = ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER']
-		# Assignment of parameters to attributes
+		# Assignment of arguments to attributes
 		self._set_log_dep_axis(log_dep_axis)	# Order here is important to avoid unnecessary re-calculating of panel axes if log_dep_axis is True
 		self._set_series(series)
 		self._set_primary_axis_label(primary_axis_label)
@@ -1137,35 +1159,35 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	def _get_primary_axis_label(self):	#pylint: disable=C0111
 		return self._primary_axis_label
 
-	@putil.check.check_parameter('primary_axis_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('primary_axis_label', putil.check.PolymorphicType([None, str]))
 	def _set_primary_axis_label(self, primary_axis_label):	#pylint: disable=C0111
 		self._primary_axis_label = primary_axis_label
 
 	def _get_primary_axis_units(self):	#pylint: disable=C0111
 		return self._primary_axis_units
 
-	@putil.check.check_parameter('primary_axis_units', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('primary_axis_units', putil.check.PolymorphicType([None, str]))
 	def _set_primary_axis_units(self, primary_axis_units):	#pylint: disable=C0111
 		self._primary_axis_units = primary_axis_units
 
 	def _get_secondary_axis_label(self):	#pylint: disable=C0111
 		return self._secondary_axis_label
 
-	@putil.check.check_parameter('secondary_axis_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('secondary_axis_label', putil.check.PolymorphicType([None, str]))
 	def _set_secondary_axis_label(self, secondary_axis_label):	#pylint: disable=C0111
 		self._secondary_axis_label = secondary_axis_label
 
 	def _get_secondary_axis_units(self):	#pylint: disable=C0111
 		return self._secondary_axis_units
 
-	@putil.check.check_parameter('secondary_axis_units', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('secondary_axis_units', putil.check.PolymorphicType([None, str]))
 	def _set_secondary_axis_units(self, secondary_axis_units):	#pylint: disable=C0111
 		self._secondary_axis_units = secondary_axis_units
 
 	def _get_log_dep_axis(self):	#pylint: disable=C0111
 		return self._log_dep_axis
 
-	@putil.check.check_parameter('log_dep_axis', putil.check.PolymorphicType([None, bool]))
+	@putil.check.check_argument('log_dep_axis', putil.check.PolymorphicType([None, bool]))
 	def _set_log_dep_axis(self, log_dep_axis):	#pylint: disable=C0111
 		self._recalculate_series = self.log_dep_axis != log_dep_axis
 		self._log_dep_axis = log_dep_axis
@@ -1175,7 +1197,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	def _get_legend_props(self):	#pylint: disable=C0111
 		return self._legend_props
 
-	@putil.check.check_parameter('legend_props', putil.check.PolymorphicType([None, dict]))
+	@putil.check.check_argument('legend_props', putil.check.PolymorphicType([None, dict]))
 	def _set_legend_props(self, legend_props):	#pylint: disable=C0111
 		ref_pos_obj = putil.check.OneOf(self._legend_props_pos_list)
 		self._legend_props = legend_props if legend_props is not None else {'pos':'BEST', 'cols':1}
@@ -1186,7 +1208,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 				if key not in self._legend_props_list:
 					raise ValueError('Illegal legend property `{0}`'.format(key))
 				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props['pos'])):
-					raise TypeError(ref_pos_obj.exception('pos')['msg'].replace('Parameter', 'Legend property'))
+					raise TypeError(ref_pos_obj.exception('pos')['msg'].replace('Argument', 'Legend property'))
 				elif ((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
 					raise TypeError('Legend property `cols` is of the wrong type')
 			self._legend_props['pos'] = self._legend_props['pos'].upper()
@@ -1222,7 +1244,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		""" Verifies that elements of series list are of the right type and fully specified """
 		for num, obj in enumerate(self.series):
 			if type(obj) is not Series:
-				raise TypeError('Parameter `series` is of the wrong type')
+				raise TypeError('Argument `series` is of the wrong type')
 			if not obj._complete():	#pylint: disable=W0212
 				raise RuntimeError('Series element {0} is not fully specified'.format(num))
 			if (min(obj.dep_var) <= 0) and self.log_dep_axis:
@@ -1321,7 +1343,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel primary axis label
 
 	:type:	string
-	:raises: TypeError (Parameter `primary_axis_label` is of the wrong type)
+	:raises: TypeError (Argument `primary_axis_label` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	secondary_axis_label = property(_get_secondary_axis_label, _set_secondary_axis_label, doc='Panel secondary axis label')
@@ -1329,7 +1351,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel secondary axis label
 
 	:type:	string
-	:raises: TypeError (Parameter `secondary_axis_label` is of the wrong type)
+	:raises: TypeError (Argument `secondary_axis_label` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	primary_axis_units = property(_get_primary_axis_units, _set_primary_axis_units, doc='Panel primary axis units')
@@ -1337,7 +1359,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel primary axis units
 
 	:type:	string
-	:raises: TypeError (Parameter `primary_axis_units` is of the wrong type)
+	:raises: TypeError (Argument `primary_axis_units` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	secondary_axis_units = property(_get_secondary_axis_units, _set_secondary_axis_units, doc='Panel secondary axis units')
@@ -1345,7 +1367,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel secondary axis units
 
 	:type:	string
-	:raises: TypeError (Parameter `secondary_axis_units` is of the wrong type)
+	:raises: TypeError (Argument `secondary_axis_units` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	log_dep_axis = property(_get_log_dep_axis, _set_log_dep_axis, doc='Panel logarithmic dependent axis flag')
@@ -1353,7 +1375,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel logarithmic dependent axis flag
 
 	:type:	boolean
-	:raises: TypeError (Parameter `log_dep_axis` is of the wrong type)
+	:raises: TypeError (Argument `log_dep_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	legend_props = property(_get_legend_props, _set_legend_props, doc='Panel legend box properties')
@@ -1363,11 +1385,11 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	:type	props:	dictionary
 	:rtype:			dictionary
 	:raises:
-	 * TypeError (Parameter `legend_props` is of the wrong type)
+	 * TypeError (Argument `legend_props` is of the wrong type)
 
-	 * TypeError (Parameter `legend_props` key `props` is not one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive))
+	 * TypeError (Argument `legend_props` key `props` is not one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive))
 
-	 * TypeError ((Parameter `legend_props` key `cols` is of the wrong type)
+	 * TypeError ((Argument `legend_props` key `cols` is of the wrong type)
 
 	.. note:: No legend is shown if a panel has only one series in it
 
@@ -1417,7 +1439,7 @@ class Figure(object):	#pylint: disable=R0902
 	def __init__(self, panels=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep_axis=False):	#pylint: disable=R0913
 		# Public attributes
 		self._fig, self._panels, self._indep_var_label, self._indep_var_units, self._title, self._log_indep_axis, self._fig_width, self._fig_height, self._axes_list = None, None, None, None, None, None, None, None, list()
-		# Assignment of parameters to attributes
+		# Assignment of arguments to attributes
 		self._set_indep_var_label(indep_var_label)
 		self._set_indep_var_units(indep_var_units)
 		self._set_title(title)
@@ -1429,7 +1451,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_indep_var_label(self):	#pylint: disable=C0111
 		return self._indep_var_label
 
-	@putil.check.check_parameter('indep_var_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('indep_var_label', putil.check.PolymorphicType([None, str]))
 	def _set_indep_var_label(self, indep_var_label):	#pylint: disable=C0111
 		self._indep_var_label = indep_var_label
 		self._draw(force_redraw=True)
@@ -1437,7 +1459,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_indep_var_units(self):	#pylint: disable=C0111
 		return self._indep_var_units
 
-	@putil.check.check_parameter('indep_var_units', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('indep_var_units', putil.check.PolymorphicType([None, str]))
 	def _set_indep_var_units(self, indep_var_units):	#pylint: disable=C0111
 		self._indep_var_units = indep_var_units
 		self._draw(force_redraw=True)
@@ -1445,7 +1467,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_title(self):	#pylint: disable=C0111
 		return self._title
 
-	@putil.check.check_parameter('title', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('title', putil.check.PolymorphicType([None, str]))
 	def _set_title(self, title):	#pylint: disable=C0111
 		self._title = title
 		self._draw(force_redraw=True)
@@ -1453,7 +1475,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_log_indep_axis(self):	#pylint: disable=C0111
 		return self._log_indep_axis
 
-	@putil.check.check_parameter('log_indep_axis', putil.check.PolymorphicType([None, bool]))
+	@putil.check.check_argument('log_indep_axis', putil.check.PolymorphicType([None, bool]))
 	def _set_log_indep_axis(self, log_indep_axis):	#pylint: disable=C0111
 		self._log_indep_axis = log_indep_axis
 		self._draw(force_redraw=True)
@@ -1461,14 +1483,14 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_fig_width(self):	#pylint: disable=C0111
 		return self._fig_width
 
-	@putil.check.check_parameter('fig_width', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
+	@putil.check.check_argument('fig_width', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
 	def _set_fig_width(self, fig_width):	#pylint: disable=C0111
 		self._fig_width = fig_width
 
 	def _get_fig_height(self):	#pylint: disable=C0111
 		return self._fig_height
 
-	@putil.check.check_parameter('fig_height', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
+	@putil.check.check_argument('fig_height', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
 	def _set_fig_height(self, fig_height):	#pylint: disable=C0111
 		self._fig_height = fig_height
 
@@ -1485,7 +1507,7 @@ class Figure(object):	#pylint: disable=R0902
 		""" Verifies that elements of panel list are of the right type and fully specified """
 		for num, obj in enumerate(self.panels):
 			if type(obj) is not Panel:
-				raise TypeError('Parameter `panels` is of the wrong type')
+				raise TypeError('Argument `panels` is of the wrong type')
 			if not obj._complete():	#pylint: disable=W0212
 				raise RuntimeError('Panel {0} is not fully specified'.format(num))
 
@@ -1562,7 +1584,7 @@ class Figure(object):	#pylint: disable=R0902
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		plt.show()
 
-	@putil.check.check_parameter('file_name', putil.check.File())
+	@putil.check.check_argument('file_name', putil.check.File())
 	def save(self, file_name):
 		"""
 		Saves figure
@@ -1570,7 +1592,7 @@ class Figure(object):	#pylint: disable=R0902
 		:param	file_name:	File name of the hardcopy PNG
 		:type	file_name:	string
 		:raises:
-		 * TypeError (Parameter `file_name` is of the wrong type)
+		 * TypeError (Argument `file_name` is of the wrong type)
 
 		 * Same as :py:meth:`putil.plot.Figure.show()`
 		"""
@@ -1612,7 +1634,7 @@ class Figure(object):	#pylint: disable=R0902
 	:type:		string
 	:rtype:		string
 	:raises:
-	 * TypeError (Parameter `indep_var_label` is of the wrong type)
+	 * TypeError (Argument `indep_var_label` is of the wrong type)
 
 	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
@@ -1624,7 +1646,7 @@ class Figure(object):	#pylint: disable=R0902
 	:type:		string
 	:rtype:		string
 	:raises:
-	 * TypeError (Parameter `indep_var_units` is of the wrong type)
+	 * TypeError (Argument `indep_var_units` is of the wrong type)
 
 	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
@@ -1636,7 +1658,7 @@ class Figure(object):	#pylint: disable=R0902
 	:type:		string
 	:rtype:		string
 	:raises:
-	 * TypeError (Parameter `title` is of the wrong type)
+	 * TypeError (Argument `title` is of the wrong type)
 
 	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
@@ -1648,7 +1670,7 @@ class Figure(object):	#pylint: disable=R0902
 	:type:		boolean
 	:rtype:		boolean
 	:raises:
-	 * TypeError (Parameter `log_indep_axis` is of the wrong type)
+	 * TypeError (Argument `log_indep_axis` is of the wrong type)
 
 	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
@@ -1660,9 +1682,9 @@ class Figure(object):	#pylint: disable=R0902
 	:type:		positive number, float or integer
 	:rtype:		positive number, float or integer
 	:raises:
-	 * TypeError (Parameter `fig_width` is of the wrong type)
+	 * TypeError (Argument `fig_width` is of the wrong type)
 
-	 * ValueError (Parameter `fig_width` is not positive number)
+	 * ValueError (Argument `fig_width` is not positive number)
 	"""	#pylint: disable=W0105
 
 	fig_height = property(_get_fig_height, _set_fig_height, doc='height of the hardcopy plot')
@@ -1672,9 +1694,9 @@ class Figure(object):	#pylint: disable=R0902
 	:type:		positive number, float or integer
 	:rtype:		positive number, float or integer
 	:raises:
-	 * TypeError (Parameter `fig_height` is of the wrong type)
+	 * TypeError (Argument `fig_height` is of the wrong type)
 
-	 * ValueError (Parameter `fig_height` is not positive number)
+	 * ValueError (Argument `fig_height` is not positive number)
 	"""	#pylint: disable=W0105
 
 	panels = property(_get_panels, _set_panels, doc='Figure panel(s)')
@@ -1683,7 +1705,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	:type:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
 	:raises:
-	 * TypeError (Parameter `panels` is of the wrong type)
+	 * TypeError (Argument `panels` is of the wrong type)
 
 	 * RuntimeError (Panel *[number]* is not fully specified)
 
@@ -1872,7 +1894,7 @@ def _get_panel_prop(fig, axarr):
 
 def parametrized_color_space(series, offset=0, color='binary'):
 	"""
-	Computes a color space where lighter colors correspond to lower parameter values
+	Computes a color space where lighter colors correspond to lower argument values
 
 	:param	series:	data series
 	:type	series:	Numpy vector
