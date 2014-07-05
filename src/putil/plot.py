@@ -616,11 +616,11 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
 	"""
 	Extra arguments for the data processing function. The arguments are specified by key-value pairs of a dictionary, for each dictionary element the dictionary key specifies the argument name and the dictionary value
-	specifies the argument value. For example, if ``fproc_eargs={'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function would be::
+	specifies the argument value. For example, if ``fproc_eargs={'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function is::
 
 		def my_proc_func(indep_var, dep_var, par1, par2):
 			print '2*5 = 10 = {0}'.format(2*par1)
-			print 'list sum is 6 = {0}'.format(sum(par2))
+			print 'sum([1, 2, 3]) = 6 = {0}'.format(sum(par2))
 			return indep_var+(2*par1), dep_var+sum(par2)
 
 	:type:	dictionary
@@ -646,14 +646,15 @@ class Series(object):	#pylint: disable=R0902,R0903
 	:type	data_source:	:py:class:`putil.plot.BasicSource()` object or :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
 	:param	label:			series label, to be used in panel legend
 	:type	label:			string
-	:param	color:			series color
-	:type	color:			Matplotlib color
-	:param	marker:			plot data markers flag
-	:type	marker:			Matplotlib marker specification
-	:param	interp:			interpolation option, one of STRAIGHT, STEP, CUBIC or LINREG (case insensitive)
-	:type	interp:			string
-	:param	line_style:		line style, one of `-`, `--`, `-.` or `:`
-	:type	line_style:		Matplotlib line specification
+	:param	color:			series color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported.
+	:type	color:			polymorphic
+	:param	marker:			marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. *None* indicates no marker.
+	:type	marker:			string or None
+	:param	interp:			interpolation option, one of None (no interpolation) 'STRAIGHT' (straight line connects data points), 'STEP' (horizontal segments betweend data points), 'CUBIC' (cubic interpolation between \
+	data points) or 'LINREG' (linear regression based on data points). The interpolation option is case insensitive.
+	:type	interp:			string or None
+	:param	line_style:		line style.   All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. *None* indicates no line.
+	:type	line_style:		string or None
 	:param	secondary_axis:	secondary axis flag
 	:type	secondary_axis:	boolean
 	:raises:
@@ -824,39 +825,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 		except:	#pylint: disable=W0702
 			return False
 		return True
-		#marker_chars = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
-		#marker_consts = [matplotlib.markers.TICKLEFT, matplotlib.markers.TICKRIGHT, matplotlib.markers.TICKUP, matplotlib.markers.TICKDOWN, matplotlib.markers.CARETLEFT, matplotlib.markers.CARETRIGHT,
-		#		   matplotlib.markers.CARETUP, matplotlib.markers.CARETDOWN]
-		#marker_none = ["None", None, ' ', '']
-		## regular marker characters
-		#if isinstance(marker, str) and (marker.strip() in marker_chars):
-		#	return {'error':False, 'marker':marker.strip()}
-		## Global marker designations, no marker specification or Path options
-		#if (marker in marker_consts) or (marker in marker_none) or isinstance(marker, matplotlib.path.Path):
-		#	return {'error':False, 'marker':marker}
-		## Check for verts option
-		#if isinstance(marker, list) and all([(isinstance(element, list) or isinstance(element, tuple)) and (len(element) == 2) and putil.misc.isnumber(element[0]) and putil.misc.isnumber(element[1]) for element in marker]):
-		#	return {'error':False, 'marker':marker}
-		## Check for (verts, 0) option
-		#if isinstance(marker, list) and (len(marker) == 2) and (marker[1] == 0) and \
-		#		all([(isinstance(element, list) or isinstance(element, tuple)) and (len(element) == 2) and putil.misc.isnumber(element[0]) and putil.misc.isnumber(element[1]) for element in marker[0]]):
-		#	return {'error':False, 'marker':marker}
-		## (numside, style, angle) check
-		#if (isinstance(marker, list) or isinstance(marker, tuple)) and (len(marker) == 3) and isinstance(marker[0], int) and (marker[0] > 0) and isinstance(marker[1], int) and (marker[1] >= 0) and (marker[1] <= 3) \
-		#		and putil.misc.isnumber(marker[3]):
-		#	return {'error':False, 'marker':marker}
-		## mathtext
-		#if isinstance(marker, str) and (marker.strip()[0] == '$') and (marker.strip()[-1] == '$'):
-		#	marker = marker.strip()
-		#	try:
-		#		plt.plot(range(200))
-		#		plt.text(100, 50, marker)
-		#	except:
-		#		return {'error':True, 'marker':None}
-		#	return {'error':False, 'marker':marker}
-		## Anything else is an unsupported marker specification
-		#return {'error':True, 'marker':None}
-
 
 	def _print_marker(self):
 		""" Returns marker description """
@@ -967,9 +935,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	data_source = property(_get_data_source, _set_data_source, doc='Data source')
 	"""
-	Data source object. The independent and dependent data sets are obtained once the source is set.
+	Data source object. The independent and dependent data sets are obtained once this attribute is set. To be a valid, a data source object must have an ``indep_var`` attribute that contains a Numpy vector of increasing real \
+	numbers and a ``dep_var`` attribute that contains a Numpy vector of real numbers.
 
-	:type:	:py:class:`putil.plot.BasicSource()` object, :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
+	:type:	:py:class:`putil.plot.BasicSource()` object, :py:class:`putil.plot.CsvSource()` object or other objects conforming to the data source specification
 	:raises:
 	 * TypeError (Argument `data_source` is of the wrong type)
 
@@ -979,16 +948,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	 * RuntimeError (Argument `data_source` is not fully specified)
 
-	 * Same as :py:attr:`putil.plot.BasicSource.indep_var` or :py:attr:`putil.plot.CsvSource.indep_var` or exceptions thrown by custom data source class while handling independent variable retrieval
+	 * Same as :py:attr:`putil.plot.BasicSource.indep_var` or :py:attr:`putil.plot.CsvSource.indep_var` or exceptions raised by custom data source class while handling independent variable retrieval
 
-	 * Same as :py:attr:`putil.plot.BasicSource.dep_var` or :py:attr:`putil.plot.CsvSource.dep_var` or exceptions thrown by custom data source class while handling dependent variable retrieval
-
-	.. note:: The data source object must have ``indep_var`` and ``dep_var`` attributes returning Numpy vectors to be valid.
+	 * Same as :py:attr:`putil.plot.BasicSource.dep_var` or :py:attr:`putil.plot.CsvSource.dep_var` or exceptions raised by custom data source class while handling dependent variable retrieval
 	"""	#pylint: disable=W0105
 
 	label = property(_get_label, _set_label, doc='Series label')
 	"""
-	Series label, to be used in panel legend
+	Series label, to be used in the panel legend if the panel has more than one series.
 
 	:type:	string
 	:raises: TypeError (Argument `label` is of the wrong type)
@@ -996,9 +963,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	color = property(_get_color, _set_color, doc='Series line and marker color')
 	"""
-	Series line and marker color
+	Series line and marker color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported.
 
-	:type:	Matplotlib color
+	:type:	polymorphic
 	:raises:
 	 * TypeError (Argument `color` is of the wrong type)
 
@@ -1007,15 +974,16 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	marker = property(_get_marker, _set_marker, doc='Plot data point markers flag')
 	"""
-	Plot data point markers flag
+	Series marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. *None* indicates no marker.
 
-	:type:	Matplotlib marker specification
+	:type: string or None.
 	:raises: TypeError (Argument `marker` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	interp = property(_get_interp, _set_interp, doc='Series interpolation option, one of `STRAIGHT`, `CUBIC` or `LINREG` (case insensitive)')
 	"""
-	Interpolation option, one of STRAIGHT, CUBIC or LINREG (case insensitive)
+	Interpolation option, one of *None* (no interpolation) 'STRAIGHT' (straight line connects data points), 'STEP' (horizontal segments betweend data points), 'CUBIC' (cubic interpolation between \
+	data points) or 'LINREG' (linear regression based on data points). The interpolation option is case insensitive.
 
 	:type:	string
 	:raises:
@@ -1026,9 +994,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	line_style = property(_get_line_style, _set_line_style, doc='Series line style, one of `-`, `--`, `-.` or `:`')
 	"""
-	Line style, one of `-`, `--`, `-.` or `:`
+	Line style. All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. *None* indicates no line.
 
-	:type:	Matplotlib line specification
+	:type:	string or None
 	:raises:
 	 * TypeError (Argument `line_syle` is of the wrong type)
 
