@@ -200,7 +200,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Minimum independent variable limit
 
-	:type:		real number
+	:type:		real number, default is *None*
 	:raises:
 	 * TypeError (Argument `indep_min` is of the wrong type)
 
@@ -213,7 +213,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Maximum independent variable limit
 
-	:type:		real number
+	:type:		real number, default is *None*
 	:raises:
 	 * TypeError (Argument `indep_max` is of the wrong type)
 
@@ -226,7 +226,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Independent variable data
 
-	:type:		increasing real Numpy vector
+	:type:		increasing real Numpy vector, default is *None*
 	:raises:
 	 * TypeError (Argument `indep_var` is of the wrong type)
 
@@ -239,7 +239,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Dependent variable data
 
-	:type:		real Numpy vector
+	:type:		real Numpy vector, default is *None*
 	:raises:
 	 * TypeError (Argument `dep_var` is of the wrong type)
 
@@ -490,7 +490,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
 	Comma-separated file from which data series is to be extracted. It is assumed that the first line of file contains unique headers for each column
 
-	:type:		string
+	:type:		string, default is *None*
 	:raises:
 	 * TypeError (Argument `file_name` is of the wrong type)
 
@@ -527,7 +527,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an exception because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
 	the `Ref` individual filter.
 
-	:type:		dictionary
+	:type:		dictionary, default is *None*
 	:raises:
 	 * TypeError (Argument `dfilter` is of the wrong type)
 
@@ -546,7 +546,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
 	Independent variable column label (column name)
 
-	:type:	string
+	:type:	string, default is *None*
 	:raises:
 	 * TypeError (Argument `indep_col_label` is of the wrong type)
 
@@ -559,7 +559,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
 	Dependent variable column label (column name)
 
-	:type:	string
+	:type:	string, default is *None*
 	:raises:
 	 * TypeError (Argument `dep_col_label` is of the wrong type)
 
@@ -584,7 +584,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			dep_var = dep_var-dep_var[0]	# Want to remove initial offset
 			return indep_var, dep_var	# Return value is a 2-element tuple
 
-	:type:	function pointer
+	:type:	function pointer, default is *None*
 	:raises:
 	 * TypeError (Argument `fproc` is of the wrong type)
 
@@ -623,7 +623,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			print 'sum([1, 2, 3]) = 6 = {0}'.format(sum(par2))
 			return indep_var+(2*par1), dep_var+sum(par2)
 
-	:type:	dictionary
+	:type:	dictionary, default is *None*
 	:raises:
 	 * TypeError (Argument `fproc_eargs` is of the wrong type)
 
@@ -965,7 +965,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	Series line and marker color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported.
 
-	:type:	polymorphic
+	:type:	polymorphic, default is *'k'* (black)
 	:raises:
 	 * TypeError (Argument `color` is of the wrong type)
 
@@ -976,7 +976,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	Series marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. *None* indicates no marker.
 
-	:type: string or None.
+	:type: string or None, default is *'o'* (circle)
 	:raises: TypeError (Argument `marker` is of the wrong type)
 	"""	#pylint: disable=W0105
 
@@ -985,7 +985,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Interpolation option, one of *None* (no interpolation) 'STRAIGHT' (straight line connects data points), 'STEP' (horizontal segments betweend data points), 'CUBIC' (cubic interpolation between \
 	data points) or 'LINREG' (linear regression based on data points). The interpolation option is case insensitive.
 
-	:type:	string
+	:type:	string, default is *'CUBIC'*
 	:raises:
 	 * TypeError (Argument `interp` is of the wrong type)
 
@@ -996,7 +996,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	Line style. All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. *None* indicates no line.
 
-	:type:	string or None
+	:type:	string or None, default is *'-'*
 	:raises:
 	 * TypeError (Argument `line_syle` is of the wrong type)
 
@@ -1007,13 +1007,13 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	Secondary axis flag. If true, the series belongs to the secondary (right) panel axis.
 
-	:type:	boolean
+	:type:	boolean, default is *False*
 	:raises: TypeError (Argument `secondary_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 class Panel(object):	#pylint: disable=R0902,R0903
 	"""
-	Defines properties of a panel within a figure
+	Defines a panel within a figure
 
 	:param	series:					one or more data series
 	:type	series:					:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
@@ -1310,7 +1310,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	"""
 	Panel primary axis label
 
-	:type:	string
+	:type:	string default is *''*
 	:raises: TypeError (Argument `primary_axis_label` is of the wrong type)
 	"""	#pylint: disable=W0105
 
@@ -1318,7 +1318,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	"""
 	Panel secondary axis label
 
-	:type:	string
+	:type:	string, default is *''*
 	:raises: TypeError (Argument `secondary_axis_label` is of the wrong type)
 	"""	#pylint: disable=W0105
 
@@ -1326,7 +1326,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	"""
 	Panel primary axis units
 
-	:type:	string
+	:type:	string, default is *''*
 	:raises: TypeError (Argument `primary_axis_units` is of the wrong type)
 	"""	#pylint: disable=W0105
 
@@ -1334,38 +1334,35 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	"""
 	Panel secondary axis units
 
-	:type:	string
+	:type:	string, default is *''*
 	:raises: TypeError (Argument `secondary_axis_units` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	log_dep_axis = property(_get_log_dep_axis, _set_log_dep_axis, doc='Panel logarithmic dependent axis flag')
 	"""
-	Panel logarithmic dependent axis flag
+	Panel logarithmic dependent (primary and/or secondary) axis flag. Any plotted axis (primary, secondary or both) uses a logarithmic scale when this flag is *True*.
 
-	:type:	boolean
+	:type:	boolean, default is *False*
 	:raises: TypeError (Argument `log_dep_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	legend_props = property(_get_legend_props, _set_legend_props, doc='Panel legend box properties')
 	"""
-	Panel legend box properties
+	Panel legend box properties. A dictionary that has properties (dictionary key) and their associated values (dictionary values). Currently supported properties are:
 
-	:type	props:	dictionary
-	:rtype:			dictionary
+	* **pos** (*string*) -- legend box position, one of 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER' or 'CENTER' (case insensitive).
+
+	* **cols** (integer) -- number of columns of the legend box
+
+	.. note:: No legend is shown if a panel has only one series in it
+
+	:type:	dictionary, default is *{'pos':'BEST', 'cols':1}*
 	:raises:
 	 * TypeError (Argument `legend_props` is of the wrong type)
 
 	 * TypeError (Argument `legend_props` key `props` is not one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive))
 
 	 * TypeError ((Argument `legend_props` key `cols` is of the wrong type)
-
-	.. note:: No legend is shown if a panel has only one series in it
-
-	.. note:: Currently supported properties are
-
-	     * **pos** (*string*) -- legend position, one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive).
-
-	     * **cols** (integer) -- number of columns in the legend box
 	"""	#pylint: disable=W0105
 
 class Figure(object):	#pylint: disable=R0902
@@ -1555,9 +1552,9 @@ class Figure(object):	#pylint: disable=R0902
 	@putil.check.check_argument('file_name', putil.check.File())
 	def save(self, file_name):
 		"""
-		Saves figure
+		Saves figure in PNG format to a file
 
-		:param	file_name:	File name of the hardcopy PNG
+		:param	file_name:	File name
 		:type	file_name:	string
 		:raises:
 		 * TypeError (Argument `file_name` is of the wrong type)
@@ -1599,8 +1596,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""
 	Figure independent variable label
 
-	:type:		string
-	:rtype:		string
+	:type:		string or None, default is *''*
 	:raises:
 	 * TypeError (Argument `indep_var_label` is of the wrong type)
 
@@ -1611,8 +1607,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""
 	Figure independent variable units
 
-	:type:		string
-	:rtype:		string
+	:type:		string or None, default is *''*
 	:raises:
 	 * TypeError (Argument `indep_var_units` is of the wrong type)
 
@@ -1623,8 +1618,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""
 	Figure title
 
-	:type:		string
-	:rtype:		string
+	:type:		string or None, default is *''*
 	:raises:
 	 * TypeError (Argument `title` is of the wrong type)
 
@@ -1635,8 +1629,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""
 	Figure logarithmic independent axis flag
 
-	:type:		boolean
-	:rtype:		boolean
+	:type:		boolean, default is *False*
 	:raises:
 	 * TypeError (Argument `log_indep_axis` is of the wrong type)
 
@@ -1648,7 +1641,6 @@ class Figure(object):	#pylint: disable=R0902
 	Width of the hardcopy plot
 
 	:type:		positive number, float or integer
-	:rtype:		positive number, float or integer
 	:raises:
 	 * TypeError (Argument `fig_width` is of the wrong type)
 
@@ -1660,7 +1652,6 @@ class Figure(object):	#pylint: disable=R0902
 	Height of the hardcopy plot
 
 	:type:		positive number, float or integer
-	:rtype:		positive number, float or integer
 	:raises:
 	 * TypeError (Argument `fig_height` is of the wrong type)
 
@@ -1682,7 +1673,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	fig = property(_get_fig, doc='Figure handle')
 	"""
-	Figure handle. Useful if annotations or further customizations to the figure are needed.
+	Matplotlib figure handle. Useful if annotations or further customizations to the figure are needed.
 
 	:type:		Matplotlib figure handle if figure is fully specified, otherwise None
 	"""	#pylint: disable=W0105
@@ -1693,8 +1684,12 @@ class Figure(object):	#pylint: disable=R0902
 	plotted (top to bottom). Each panel entry is a dictionary containing the following keys:
 
 	* **number** (*integer*) -- panel number, panel 0 is the top-most panel
+
 	* **primary** (*Matplotlib axis object*) -- axis handle for the primary axis, *None* if the figure has not primary axis
+
 	* **secondary** (*Matplotlib axis object*) -- axis handle for the secondary axis, *None* if the figure has not secondary axis
+
+	:type: list
 	""" #pylint: disable=W0105
 
 def _first_label(label_list):
@@ -1868,22 +1863,22 @@ def parametrized_color_space(series, offset=0, color='binary'):
 	:type	series:	Numpy vector
 	:param	offset:	offset of the first (lightest) color
 	:type	offset: float between 0 and 1
-	:param	color:	color pallete. One of binary, Blues, BuGn, BuPu, gist_yarg, GnBu, Greens, Greys, Oranges, OrRd, PuBu, PuBuGn, PuRd, Purples, RdPu, Reds, YlGn, YlGnBu, YlOrBr, YlOrRd (case sensitive). \
-	See `<http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_ for a visual description of the colors.
+	:param	color:	`color pallete <http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_. One of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples',\
+	'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case sensitive).
 	:type	color:	string
 	:rtype:			Matplotlib color
 	:raises:
-	 * raise TypeError (Series has to be a list)
+	 * TypeError (Series has to be a list)
 
-	 * raise RuntimeError (Series is empty)
+	 * RuntimeError (Series is empty)
 
-	 * raise TypeError (Element *[index]* (*[value]*) is not a number)
+	 * TypeError (Element *[index]* (*[value]*) is not a number)
 
-	 * raise ValueError (Element *[index]* (*[value]*) is out of normal range [0, 1])
+	 * ValueError (Element *[index]* (*[value]*) is out of normal range [0, 1])
 
-	 * raise TypeError (Offset has to be a number)
+	 * TypeError (Offset has to be a number)
 
-	 * raise ValueError (Offset is out of normal range [0, 1])
+	 * ValueError (Offset is out of normal range [0, 1])
 	"""
 	if isinstance(series, list) is False:
 		raise TypeError('Series has to be a list')
