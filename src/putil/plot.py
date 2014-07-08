@@ -89,7 +89,6 @@ Scale factor for panel legend. The legend font size in points is equal to the ax
 :type:	number
 """	#pylint: disable=W0105
 
-
 class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Objects of this class hold a given data set intended for plotting
@@ -98,10 +97,10 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	:type	indep_var:			increasing real Numpy vector
 	:param	dep_var:			dependent variable vector
 	:type	dep_var:			real Numpy vector
-	:param	indep_min:			mininmum independent variable value
-	:type	indep_min:			number
+	:param	indep_min:			minimum independent variable value
+	:type	indep_min:			number or None
 	:param	indep_max:			maximum independent variable value
-	:type	indep_max:			number
+	:type	indep_max:			number or None
 	:rtype:						:py:class:`putil.plot.BasicSource()` object
 	:raises:
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
@@ -112,7 +111,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	 * Same as :py:attr:`putil.plot.BasicSource.indep_max`
 	"""
-	def __init__(self, indep_var=None, dep_var=None, indep_min=None, indep_max=None):
+	def __init__(self, indep_var, dep_var, indep_min=None, indep_max=None):
 		# Private attributes
 		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
 		# Public attributes
@@ -125,70 +124,71 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		self._set_dep_var(dep_var)
 
 	def _get_indep_var(self):	#pylint: disable=C0111
-		return self._indep_var
+		return self._indep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument('indep_var', putil.check.PolymorphicType([None, putil.check.IncreasingRealNumpyVector()]))
+	@putil.check.check_argument('indep_var', putil.check.IncreasingRealNumpyVector())
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
-		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):
+		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):	#pylint: disable=W0212
 			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
-		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)
-		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
-		self._update_dep_var()
+		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)	#pylint: disable=W0212
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
 
 	def _get_dep_var(self):	#pylint: disable=C0111
-		return self._dep_var
+		return self._dep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument('dep_var', putil.check.PolymorphicType([None, putil.check.RealNumpyVector()]))
+	@putil.check.check_argument('dep_var', putil.check.RealNumpyVector())
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
-		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):
+		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):	#pylint: disable=W0212
 			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
-		self._raw_dep_var = putil.misc.smart_round(dep_var, PRECISION)
-		self._update_dep_var()
+		self._raw_dep_var = putil.misc.smart_round(dep_var, PRECISION)	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
 
 	def _get_indep_min(self):	#pylint: disable=C0111
-		return self._indep_min
+		return self._indep_min	#pylint: disable=W0212
 
 	@putil.check.check_argument('indep_min', putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
 			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
-		self._indep_min = putil.misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min
-		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
-		self._update_dep_var()
+		self._indep_min = putil.misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min	#pylint: disable=W0212
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
 
 	def _get_indep_max(self):	#pylint: disable=C0111
-		return self._indep_max
+		return self._indep_max	#pylint: disable=W0212
 
 	@putil.check.check_argument('indep_max', putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
 			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
-		self._indep_max = putil.misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max
-		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns
-		self._update_dep_var()
+		self._indep_max = putil.misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max	#pylint: disable=W0212
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
 
 	def _update_indep_var(self):
 		""" Update independent variable according to its minimum and maximum limits """
-		if self._raw_indep_var is not None:
-			self._indep_var_indexes = numpy.where((self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0])) & \
-				(self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])))
-			self._indep_var = self._raw_indep_var[self._indep_var_indexes]
+		if self._raw_indep_var is not None:	#pylint: disable=W0212
+			min_indexes = (self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0]))	#pylint: disable=W0212
+			max_indexes = (self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1]))	#pylint: disable=W0212
+			self._indep_var_indexes = numpy.where(min_indexes & max_indexes)	#pylint: disable=W0212
+			self._indep_var = self._raw_indep_var[self._indep_var_indexes]	#pylint: disable=W0212
 			if len(self.indep_var) == 0:
 				raise ValueError('Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 
 	def _update_dep_var(self):
 		""" Update dependent variable (if assigned) to match the independent variable range bounding """
-		self._dep_var = self._raw_dep_var
-		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
-			self._dep_var = self._raw_dep_var[self._indep_var_indexes]
+		self._dep_var = self._raw_dep_var	#pylint: disable=W0212
+		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):	#pylint: disable=W0212
+			self._dep_var = self._raw_dep_var[self._indep_var_indexes]	#pylint: disable=W0212
 
 	def __str__(self):
 		""" Print comma-separated value source information """
 		ret = ''
-		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)
-		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)
-		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))
-		ret += 'Dependent variable: {0}'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))
+		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)	#pylint: disable=W0212
+		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)	#pylint: disable=W0212
+		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
+		ret += 'Dependent variable: {0}'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
 		return ret
 
 	def _complete(self):
@@ -200,7 +200,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Minimum independent variable limit
 
-	:type:		real number, default is *None*
+	:type:		number or None, default is *None*
 	:raises:
 	 * TypeError (Argument `indep_min` is of the wrong type)
 
@@ -213,7 +213,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Maximum independent variable limit
 
-	:type:		real number, default is *None*
+	:type:		number or None, default is *None*
 	:raises:
 	 * TypeError (Argument `indep_max` is of the wrong type)
 
@@ -226,7 +226,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Independent variable data
 
-	:type:		increasing real Numpy vector, default is *None*
+	:type:		increasing real Numpy vector
 	:raises:
 	 * TypeError (Argument `indep_var` is of the wrong type)
 
@@ -239,14 +239,14 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Dependent variable data
 
-	:type:		real Numpy vector, default is *None*
+	:type:		real Numpy vector
 	:raises:
 	 * TypeError (Argument `dep_var` is of the wrong type)
 
 	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
 	"""	#pylint: disable=W0105
 
-class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
+class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Objects of this class hold a data set from a CSV file intended for plotting
 
@@ -257,15 +257,15 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	:param	dep_col_label:		dependent variable column label
 	:type	dep_col_label:		string (case insensitive)
 	:param	dfilter:			data filter definition. See :py:attr:`putil.plot.CsvSource.dfilter`
-	:type	dfilter:			dictionary
+	:type	dfilter:			dictionary or None
 	:param	indep_min:			minimum independent variable value
-	:type	indep_min:			number
+	:type	indep_min:			number or None
 	:param	indep_max:			maximum independent variable value
-	:type	indep_max:			number
+	:type	indep_max:			number or None
 	:param	fproc:				data processing function
-	:type	fproc:				function pointer
+	:type	fproc:				function pointer or None
 	:param	fproc_eargs:		data processing function extra arguments
-	:type	fproc_eargs:		dictionary
+	:type	fproc_eargs:		dictionary or None
 	:rtype:						:py:class:`putil.plot.CsvSource()` object
 	:raises:
 	 * Same as :py:attr:`putil.plot.CsvSource.file_name`
@@ -288,30 +288,32 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 
 	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
 	"""
-	def __init__(self, file_name=None, indep_col_label=None, dep_col_label=None, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
-		BasicSource.__init__(self, indep_var=None, dep_var=None, indep_min=indep_min, indep_max=indep_max)
+	def __init__(self, file_name, indep_col_label, dep_col_label, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		# Private attributes
+		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
 		self._csv_obj, self._reverse_data = None, False
 		# Public attributes
+		self._indep_var, self._dep_var, self._indep_min, self._indep_max = None, None, None, None
 		self._file_name, self._dfilter, self._indep_col_label, self._dep_col_label, self._fproc, self._fproc_eargs = None, None, None, None, None, None
 		# Assignment of arguments to attributes
-		self._set_indep_col_label(indep_col_label)
-		self._set_dep_col_label(dep_col_label)
 		self._set_fproc(fproc)
 		self._set_fproc_eargs(fproc_eargs)
 		self._set_dfilter(dfilter)
+		self._set_indep_col_label(indep_col_label)
+		self._set_dep_col_label(dep_col_label)
+		self._set_indep_min(indep_min)	#pylint: disable=W0212
+		self._set_indep_max(indep_max)	#pylint: disable=W0212
 		self._set_file_name(file_name)
 
 	def _get_file_name(self):	#pylint: disable=C0111
 		return self._file_name
 
-	@putil.check.check_argument('file_name', putil.check.PolymorphicType([None, putil.check.File(check_existance=True)]))
+	@putil.check.check_argument('file_name', putil.check.File(check_existance=True))
 	def _set_file_name(self, file_name):	#pylint: disable=C0111
-		if file_name is not None:
-			self._file_name = file_name
-			self._csv_obj = putil.pcsv.CsvFile(file_name)
-			self._apply_dfilter()	# This also gets indep_var and dep_var from file
-			self._process_data()
+		self._file_name = file_name
+		self._csv_obj = putil.pcsv.CsvFile(file_name)
+		self._apply_dfilter()	# This also gets indep_var and dep_var from file
+		self._process_data()
 
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
@@ -325,7 +327,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_indep_col_label(self):	#pylint: disable=C0111
 		return self._indep_col_label
 
-	@putil.check.check_argument('indep_col_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('indep_col_label', str)
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
 		self._indep_col_label = indep_col_label.upper() if isinstance(indep_col_label, str) else indep_col_label	# putil.pcsv is case insensitive and all caps
 		self._check_indep_col_label()
@@ -335,12 +337,71 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	def _get_dep_col_label(self):	#pylint: disable=C0111
 		return self._dep_col_label
 
-	@putil.check.check_argument('dep_col_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument('dep_col_label', str)
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
 		self._dep_col_label = dep_col_label.upper() if isinstance(dep_col_label, str) else dep_col_label	 	# putil.pcsv is case insensitive and all caps
 		self._check_dep_col_label()
 		self._apply_dfilter()
 		self._process_data()
+
+	def _get_indep_var(self):	#pylint: disable=C0111
+		return self._indep_var	#pylint: disable=W0212
+
+	@putil.check.check_argument('indep_var', putil.check.IncreasingRealNumpyVector())
+	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
+		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):	#pylint: disable=W0212
+			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
+		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)	#pylint: disable=W0212
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
+
+	def _get_dep_var(self):	#pylint: disable=C0111
+		return self._dep_var	#pylint: disable=W0212
+
+	@putil.check.check_argument('dep_var', putil.check.RealNumpyVector())
+	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
+		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):	#pylint: disable=W0212
+			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
+		self._raw_dep_var = putil.misc.smart_round(dep_var, PRECISION)	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
+
+	def _get_indep_min(self):	#pylint: disable=C0111
+		return self._indep_min	#pylint: disable=W0212
+
+	@putil.check.check_argument('indep_min', putil.check.PolymorphicType([None, putil.check.Real()]))
+	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
+		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
+			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
+		self._indep_min = putil.misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min	#pylint: disable=W0212
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
+
+	def _get_indep_max(self):	#pylint: disable=C0111
+		return self._indep_max	#pylint: disable=W0212
+
+	@putil.check.check_argument('indep_max', putil.check.PolymorphicType([None, putil.check.Real()]))
+	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
+		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
+			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
+		self._indep_max = putil.misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max	#pylint: disable=W0212
+		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
+		self._update_dep_var()	#pylint: disable=W0212
+
+	def _update_indep_var(self):
+		""" Update independent variable according to its minimum and maximum limits """
+		if self._raw_indep_var is not None:	#pylint: disable=W0212
+			min_indexes = (self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0]))	#pylint: disable=W0212
+			max_indexes = (self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1]))	#pylint: disable=W0212
+			self._indep_var_indexes = numpy.where(min_indexes & max_indexes)	#pylint: disable=W0212
+			self._indep_var = self._raw_indep_var[self._indep_var_indexes]	#pylint: disable=W0212
+			if len(self.indep_var) == 0:
+				raise ValueError('Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+
+	def _update_dep_var(self):
+		""" Update dependent variable (if assigned) to match the independent variable range bounding """
+		self._dep_var = self._raw_dep_var	#pylint: disable=W0212
+		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):	#pylint: disable=W0212
+			self._dep_var = self._raw_dep_var[self._indep_var_indexes]	#pylint: disable=W0212
 
 	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
@@ -412,8 +473,8 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 				self._reverse_data = True
 				data = data[::-1]
 				if self.dep_var is not None:
-					self._set_dep_var(self.dep_var[::-1])
-			self._set_indep_var(data)
+					self._set_dep_var(self.dep_var[::-1])	#pylint: disable=W0212
+			self._set_indep_var(data)	#pylint: disable=W0212
 
 	def _get_dep_var_from_file(self):
 		""" Retrieve dependent data variable from comma-separated file """
@@ -422,7 +483,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			data = numpy.array(self._csv_obj.filtered_data(self.dep_col_label))
 			if (len(data) == 0) or ((data == [None]*len(data)).all()):
 				raise ValueError('Filtered dependent variable is empty')
-			self._set_dep_var(data[::-1] if self._reverse_data else data)
+			self._set_dep_var(data[::-1] if self._reverse_data else data)	#pylint: disable=W0212
 
 	def _process_data(self):
 		""" Process data through call-back function """
@@ -449,11 +510,12 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			if len(indep_var) != len(dep_var):
 				raise ValueError('Processed independent and dependent variables are of different length')
 			# The processing function could potentially expand (say, via interpolation) or shorten the data set length. To avoid errors that dependent and independet variables have different number of elements
-			# while setting the first processed variable (either independent or dependent) both are "reset" to None first
-			self._set_indep_var(None)
-			self._set_dep_var(None)
-			self._set_indep_var(indep_var)
-			self._set_dep_var(dep_var)
+			# while setting the first processed variable (either independent or dependent) both are "reset" to some dummy value first
+			self._raw_indep_var = None
+			self._raw_dep_var = None
+			self._indep_var_indexes = None
+			self._set_indep_var(indep_var)	#pylint: disable=W0212
+			self._set_dep_var(dep_var)	#pylint: disable=W0212
 
 	def _check_var(self, var, name):	#pylint:disable=R0201
 		""" Validate (in)dependent variable returned by processing function """
@@ -479,18 +541,21 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 			ofproc_eargs = OrderedDict(sorted(self.fproc_eargs.items(), key=lambda t: t[0]))
 			for key, value in ofproc_eargs.iteritems():
 				ret += '   {0}: {1}\n'.format(key, value)
-		ret += BasicSource.__str__(self)
+		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)	#pylint: disable=W0212
+		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)	#pylint: disable=W0212
+		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
+		ret += 'Dependent variable: {0}'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
 		return ret
 
 	def _complete(self):
 		""" Returns True if object is fully specified, otherwise returns False """
-		return (self.file_name is not None) and (self.indep_col_label is not None) and (self.dep_col_label is not None)
+		return (self.indep_var is not None) and (self.dep_var is not None)
 
 	file_name = property(_get_file_name, _set_file_name, doc='Comma-separated file name')
 	"""
 	Comma-separated file from which data series is to be extracted. It is assumed that the first line of file contains unique headers for each column
 
-	:type:		string, default is *None*
+	:type:		string
 	:raises:
 	 * TypeError (Argument `file_name` is of the wrong type)
 
@@ -546,7 +611,7 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
 	Independent variable column label (column name)
 
-	:type:	string, default is *None*
+	:type:	string
 	:raises:
 	 * TypeError (Argument `indep_col_label` is of the wrong type)
 
@@ -559,13 +624,39 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""
 	Dependent variable column label (column name)
 
-	:type:	string, default is *None*
+	:type:	string
 	:raises:
 	 * TypeError (Argument `dep_col_label` is of the wrong type)
 
 	 * ValueError (Column *[dep_col_label]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
 
 	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
+	"""	#pylint: disable=W0105
+
+	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
+	"""
+	Minimum independent variable limit
+
+	:type:		number or None, default is *None*
+	:raises:
+	 * TypeError (Argument `indep_min` is of the wrong type)
+
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
+	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+	"""	#pylint: disable=W0105
+
+	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
+	"""
+	Maximum independent variable limit
+
+	:type:		number or None, default is *None*
+	:raises:
+	 * TypeError (Argument `indep_max` is of the wrong type)
+
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
+	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
 	"""	#pylint: disable=W0105
 
 	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
@@ -614,9 +705,12 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
+	#pylint: disable=W1401
 	"""
 	Extra arguments for the data processing function. The arguments are specified by key-value pairs of a dictionary, for each dictionary element the dictionary key specifies the argument name and the dictionary value
-	specifies the argument value. For example, if ``fproc_eargs={'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function is::
+	specifies the argument value. The extra parameters are passed by keyword so they must appear in the function definition explicitly or keyword variable argument collection must be used (\*\*kwargs, for example).
+
+	For example, if ``fproc_eargs={'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function is::
 
 		def my_proc_func(indep_var, dep_var, par1, par2):
 			print '2*5 = 10 = {0}'.format(2*par1)
@@ -633,10 +727,10 @@ class CsvSource(BasicSource):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	# indep_var is read only
-	indep_var = property(BasicSource._get_indep_var, None, doc='Independent variable Numpy vector (read only)')	#pylint: disable=E0602
+	indep_var = property(_get_indep_var, None, doc='Independent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
 
 	# dep_var is read only
-	dep_var = property(BasicSource._get_dep_var, None, doc='Dependent variable Numpy vector (read only)')	#pylint: disable=E0602
+	dep_var = property(_get_dep_var, None, doc='Dependent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
 
 class Series(object):	#pylint: disable=R0902,R0903
 	"""

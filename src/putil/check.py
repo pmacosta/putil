@@ -352,10 +352,17 @@ def create_argument_dictionary(func, *args, **kwargs):
 	Creates a dictionary where the keys are the argument names and the values are the passed arguments values (if any)
 	An empty dictionary is returned if an error is detected, such as more arguments than in the function definition, argument(s) defined by position and keyword, etc.
 	"""
+	# Capture parameters that have been explicitly specified in function call
 	try:
-		return funcsigs.signature(func).bind_partial(*args, **kwargs).arguments
+		arg_dict = funcsigs.signature(func).bind_partial(*args, **kwargs).arguments
 	except:	#pylint: disable=W0702
 		return dict()
+	# Capture parameters that have not been explicitly specified but have default values
+	arguments = funcsigs.signature(func).parameters
+	for arg_name in arguments:
+		if (arguments[arg_name].default != funcsigs.Parameter.empty) and (arguments[arg_name].name not in arg_dict):
+			arg_dict[arguments[arg_name].name] = arguments[arg_name].default
+	return arg_dict
 
 def type_match(test_obj, ref_obj):
 	"""
@@ -401,8 +408,8 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 
 def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	""" Checks that a argument is of a certain type """
-	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
-	if (param is not None) and (not type_match(param, param_type)):
+	arg_dict = create_argument_dictionary(func, *args, **kwargs)
+	if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)):
 		raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
 
 def check_argument_internal(param_name, param_spec, func, *args, **kwargs):
@@ -412,7 +419,7 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):
 	if param is not None:
 		pseudo_types = _get_pseudo_types(False)['type']
 		if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
-			ekwargs = {'param_name':param_name} if type(param_spec) != PolymorphicType else {'param_name':param_name, 'param':param, 'test_obj':param_spec}
+			ekwargs = {'param':param} if type(param_spec) == File else ({'param_name':param_name} if type(param_spec) != PolymorphicType else {'param_name':param_name, 'param':param, 'test_obj':param_spec})
 			exp_dict = param_spec.exception(**ekwargs)	#pylint: disable=W0142
 			raise exp_dict['type'](exp_dict['msg'])
 
@@ -422,7 +429,7 @@ def check_argument_type(param_name, param_type):
 		"""	Actual decorator """
 		@functools.wraps(func)
 		def wrapper(*args, **kwargs):
-			"""	Wrapper function to test argument type	"""
+			"""	Wrapper function to test argument type """
 			check_argument_type_internal(param_name, param_type, func, *args, **kwargs)
 			return func(*args, **kwargs)
 		return wrapper

@@ -471,6 +471,27 @@ class TestFile(object):	#pylint: disable=W0232
 		""" Tests that exception method of File class behaves appropriately """
 		assert putil.check.File().exception('/some/path/file_name.ext') == {'type':IOError, 'msg':'File /some/path/file_name.ext could not be found'}
 
+	def test_in_code(self):    #pylint: disable=R0201
+		""" Test type checking in a real code scenario """
+		test_list = list()
+		@putil.check.check_argument('file_name', putil.check.File(check_existance=False))
+		def set_file_name1(file_name):	#pylint: disable=C0111
+			print file_name
+		@putil.check.check_argument('file_name', putil.check.File(check_existance=True))
+		def set_file_name2(file_name):	#pylint: disable=C0111
+			print file_name
+		with pytest.raises(TypeError) as excinfo:
+			set_file_name1(file_name=5)
+		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			set_file_name2(file_name=5)
+		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
+		with pytest.raises(IOError) as excinfo:
+			set_file_name2(file_name='file.csv')
+		test_list.append(excinfo.value.message == 'File file.csv could not be found')
+		set_file_name1(file_name='file.csv')
+		set_file_name2(file_name='check_test.py')
+		assert test_list == 3*[True]
 
 ###
 # Test Function class
@@ -819,14 +840,14 @@ class TestCheckType(object):	#pylint: disable=W0232
 	def test_argument_not_specified(self):	#pylint: disable=R0201,C0103
 		""" Test that function behaves properly when the argument to be checked is not specified in the function call """
 		@putil.check.check_argument_type(param_name='ppar2', param_type=putil.check.Number())
-		def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable=C0111
+		def func_check_type(ppar1, ppar2=35, ppar3=5):	#pylint: disable=C0111
 			return ppar1, ppar2, ppar3
-		assert func_check_type(3, ppar3=12) == (3, None, 12)
+		assert func_check_type(3, ppar3=12) == (3, 35, 12)
 
 	def test_argument_specified_by_position_and_keyword(self):	#pylint: disable=R0201,C0103
 		""" Test that function behaves properly when a argument is specified both by position and keyword """
 		@putil.check.check_argument_type(param_name='ppar2', param_type=putil.check.Number())
-		def func_check_type(ppar1, ppar2=None, ppar3=5):	#pylint: disable=C0111
+		def func_check_type(ppar1, ppar2=35, ppar3=5):	#pylint: disable=C0111
 			print ppar1, ppar2, ppar3
 		with pytest.raises(TypeError) as excinfo:
 			func_check_type(3, ppar3=12, ppar1=12)	#pylint: disable=E1124
