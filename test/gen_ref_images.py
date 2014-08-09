@@ -200,6 +200,6 @@ def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R09
 	return output_list
 
 if __name__ == '__main__':
-	#unittest_series_images(mode='ref')
-	#unittest_panel_images(mode='ref')
+	unittest_series_images(mode='ref')
+	unittest_panel_images(mode='ref')
 	unittest_figure_images(mode='ref')
