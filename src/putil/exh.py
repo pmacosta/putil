@@ -8,12 +8,13 @@ Exception handling classes, methods, functions and constants
 
 class ExHandle(object):
 	""" Exception handling class """
-	def __init__(self, ex_list):
-		tlist = list()
+	def __init__(self, func_name, ex_list):
 		for obj in ex_list:
+			obj['func'] = func_name
 			obj['checked'] = False
-			tlist.append(obj)
-		self._ex_list = tlist
+		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in ex_list)] # Remove duplicates
+		self._trace_on = False
+		self._trace_list = None
 
 	def get_exception_by_name(self, name):
 		""" Find exception object """
@@ -31,13 +32,13 @@ class ExHandle(object):
 		""" Raise exception by name if condition is true """
 		if condition:
 			self.raise_exception(name)
-		tlist = list()
 		for obj in self._ex_list:
-			obj['checked'] = True if obj['name'] == name else obj['checked']
-			tlist.append(obj)
-		self._ex_list = tlist
+			if obj['name'] == name:
+				obj['checked'] = True
+				break
 
 	def start_trace(self, func_name):
 		""" Traces which exceptions are being checked and in which routine """
-		pass
-
+		if self._trace_on:
+			raise RuntimeError('Exception tracing already on')
+		self._trace_on = True

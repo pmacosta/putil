@@ -394,7 +394,7 @@ def type_match_dict(test_obj, ref_obj):
 
 def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 	"""	Test that two fixed length iterables (lists, tuples, etc.) have the right element types at the right positions """
-	# Check that the iterable is not a set. Sets are un-ordered iterables, so it makes no sent to check them agains an ordered reference
+	# Check that the iterable is not a set. Sets are un-ordered iterables, so it makes no sense to check them against an ordered reference
 	if isinstance(ref_obj, set):
 		raise RuntimeError('Set is an un-ordered iterable, thus it cannot be type-checked against an ordered reference')
 	# Check that both reference and test objects are of the same type and have the same length
