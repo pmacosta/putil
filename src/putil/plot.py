@@ -50,12 +50,12 @@ Minimum number of ticks desired for the independent and dependent axis
 :type:	integer
 """	#pylint: disable=W0105
 
-MAX_TICKS = 10
+SUGGESTED_MAX_TICKS = 10
 """
-Maximum number of ticks desired for the independent and dependent axis. It is possible for a panel to have more than MAX_TICKS in the dependent axis
+Maximum number of ticks desired for the independent and dependent axis. It is possible for a panel to have more than SUGGESTED_MAX_TICKS in the dependent axis
 if one or more series are plotted with an interpolation function and at least one interpolated curve goes above or below the maximum and minimum data
-points of the panel. In this case the panel will have MAX_TICKS+1 ticks if some interpolation curve is above the maximum data point of the panel or
-below the minimum data point of the panel; or the panel will have MAX_TICKS+2 ticks if some interpolation curve(s) is(are) above the maximum data point
+points of the panel. In this case the panel will have SUGGESTED_MAX_TICKS+1 ticks if some interpolation curve is above the maximum data point of the panel or
+below the minimum data point of the panel; or the panel will have SUGGESTED_MAX_TICKS+2 ticks if some interpolation curve(s) is(are) above the maximum data point
 of the panel and below the minimum data point of the panel.
 
 :type:	integer
@@ -1879,12 +1879,12 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=Fals
 			series_delta = putil.misc.smart_round(max(series)-min(series), PRECISION)
 			working_series = series[:].tolist()
 			tick_list = list()
-			num_ticks = MAX_TICKS
+			num_ticks = SUGGESTED_MAX_TICKS
 			while (num_ticks >= MIN_TICKS) and (len(working_series) > 1):
 				data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
 				tick_spacing = putil.misc.gcd(data_spacing)
 				num_ticks = (series_delta/tick_spacing)+1
-				if (num_ticks >= MIN_TICKS) and (num_ticks <= MAX_TICKS):
+				if (num_ticks >= MIN_TICKS) and (num_ticks <= SUGGESTED_MAX_TICKS):
 					tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()
 					break
 				# Remove elements that cause minimum spacing, to see if with those elements removed the number of tick marks can be withing the acceptable range
@@ -1894,7 +1894,7 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=Fals
 					working_series = working_series[:-2]+[working_series[-1]]
 					data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
 				working_series = [working_series[0]]+[element for element, spacing in zip(working_series[1:], data_spacing) if spacing != min_data_spacing]
-			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), MAX_TICKS).tolist()
+			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), SUGGESTED_MAX_TICKS).tolist()
 			tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
 			# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
 			tight_left = False if (not tight) and (tick_list[0] >= series_min) else tight

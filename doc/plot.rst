@@ -5,9 +5,9 @@ plot module
 
 This is a library that can be used to create high-quality, presentation-ready X-Y graphs quickly and easily.
 
-The properties of the graph (figure in Matplotlib parlance) are defined in an an object of the :py:class:`putil.plot.Figure()` class.
+The properties of the graph (figure in Matplotlib parlance) are defined in an object of the :py:class:`putil.plot.Figure()` class.
 
-Each figure can have one or more panels, whose properties are defined by object(s) of the :py:class:`putil.plot.Panel()` class. Panels are arranged vertically in the figure and share the same independent axis. The limits of the independent axis of the figure result from the union of the independent data points of all the panels, and is shown in the bottom-most panel.
+Each figure can have one or more panels, whose properties are defined by objects of the :py:class:`putil.plot.Panel()` class. Panels are arranged vertically in the figure and share the same independent axis. The limits of the independent axis of the figure result from the union of the independent data points of all the panels, and is shown by default in the bottom-most panel (it can be configured to be in any panel or panels).
 
 Each panel can have one or more data series, whose properties are defined by objects of the :py:class:`putil.plot.Series()` class. A series can be associated with either the primary or secondary dependent axis of the panel. The limits of the primary and secondary dependent axis of the panel result from the union of the primary and secondary dependent data points of the series associated with each axis. The primary axis is shown on the left of the panel and the secondary axis is shown on the right of the panel.
 
