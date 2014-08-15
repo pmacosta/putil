@@ -474,10 +474,10 @@ class TestFile(object):	#pylint: disable=W0232
 	def test_in_code(self):    #pylint: disable=R0201
 		""" Test type checking in a real code scenario """
 		test_list = list()
-		@putil.check.check_argument('file_name', putil.check.File(check_existance=False))
+		@putil.check.check_argument(putil.check.File(check_existance=False))
 		def set_file_name1(file_name):	#pylint: disable=C0111
 			print file_name
-		@putil.check.check_argument('file_name', putil.check.File(check_existance=True))
+		@putil.check.check_argument(putil.check.File(check_existance=True))
 		def set_file_name2(file_name):	#pylint: disable=C0111
 			print file_name
 		with pytest.raises(TypeError) as excinfo:
@@ -866,12 +866,33 @@ class TestCheckType(object):	#pylint: disable=W0232
 ###
 # Tests for check_argument()
 ###
-class TestCheckArguments(object):	#pylint: disable=W0232
+class TestCheckArgument(object):	#pylint: disable=W0232
 	""" Tests for check_argument function """
+
+	def test_function_with_no_argument(self): #pylint: disable=R0201,C0103
+		""" Test that function behaves properly when a function has no arguments """
+		@putil.check.check_argument(int)
+		def func_check_type():	#pylint: disable=C0111
+			pass
+		class DummyClass(object): #pylint: disable=C0111,R0903
+			def __init__(self):
+				pass
+			@putil.check.check_argument(str)
+			def class_func_check_type(self):	#pylint: disable=C0111
+				pass
+		test_list = list()
+		with pytest.raises(RuntimeError) as excinfo:
+			func_check_type()
+		test_list.append(excinfo.value.message == 'Function func_check_type has no arguments')
+		obj = DummyClass()
+		with pytest.raises(RuntimeError) as excinfo:
+			obj.class_func_check_type()
+		test_list.append(excinfo.value.message == 'Function class_func_check_type has no arguments after self')
+		assert test_list == 2*[True]
 
 	def test_wrong_type(self):	#pylint: disable=R0201,C0103
 		""" Test that function behaves properly when a sigle (wrong) type is given (string, number, etc.) """
-		@putil.check.check_argument('ppar1', int)
+		@putil.check.check_argument(int)
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(TypeError) as excinfo:
@@ -882,7 +903,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is outside fixed number of string choices list with case sensitivity
 		"""
-		@putil.check.check_argument('ppar1', putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False))
+		@putil.check.check_argument(putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
@@ -893,7 +914,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is outside fixed number of string choices list with case insensitivity
 		"""
-		@putil.check.check_argument('ppar1', putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=True))
+		@putil.check.check_argument(putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=True))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
@@ -904,7 +925,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is outside fixed number of choices list
 		"""
-		@putil.check.check_argument('ppar1', putil.check.OneOf(range(3), case_sensitive=True))
+		@putil.check.check_argument(putil.check.OneOf(range(3), case_sensitive=True))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
@@ -915,7 +936,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is one of a fixed number of choices list
 		"""
-		@putil.check.check_argument('ppar1', putil.check.OneOf(range(3), case_sensitive=True))
+		@putil.check.check_argument(putil.check.OneOf(range(3), case_sensitive=True))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(2) == 2
@@ -924,7 +945,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is out of range when no maximum is defined
 		"""
-		@putil.check.check_argument('ppar1', putil.check.NumberRange(minimum=10))
+		@putil.check.check_argument(putil.check.NumberRange(minimum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
@@ -935,7 +956,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is in range when no maximum is defined
 		"""
-		@putil.check.check_argument('ppar1', putil.check.NumberRange(minimum=10))
+		@putil.check.check_argument(putil.check.NumberRange(minimum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(20) == 20
@@ -944,7 +965,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is out of range when no minimum is defined
 		"""
-		@putil.check.check_argument('ppar1', putil.check.NumberRange(maximum=10))
+		@putil.check.check_argument(putil.check.NumberRange(maximum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
@@ -955,7 +976,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is in range when no minimum is defined
 		"""
-		@putil.check.check_argument('ppar1', putil.check.NumberRange(maximum=10))
+		@putil.check.check_argument(putil.check.NumberRange(maximum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(5) == 5
@@ -964,7 +985,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is out of range when no minimum is defined
 		"""
-		@putil.check.check_argument('ppar1', putil.check.NumberRange(minimum=5.0, maximum=10.0))
+		@putil.check.check_argument(putil.check.NumberRange(minimum=5.0, maximum=10.0))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
@@ -975,7 +996,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is in range when no minimum is defined
 		"""
-		@putil.check.check_argument('ppar1', putil.check.NumberRange(minimum=100, maximum=200))
+		@putil.check.check_argument(putil.check.NumberRange(minimum=100, maximum=200))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(150) == 150
@@ -984,10 +1005,10 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is not in the polymorphic types allowed
 		"""
-		@putil.check.check_argument('ppar1', putil.check.PolymorphicType([None, float]))
+		@putil.check.check_argument(putil.check.PolymorphicType([None, float]))
 		def func_check_type1(ppar1):	#pylint: disable=C0111
 			print ppar1
-		@putil.check.check_argument('ppar1', putil.check.PolymorphicType([None, putil.check.NumberRange(minimum=5, maximum=10), putil.check.OneOf(['HELLO', 'WORLD'])]))
+		@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.NumberRange(minimum=5, maximum=10), putil.check.OneOf(['HELLO', 'WORLD'])]))
 		def func_check_type2(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(TypeError) as excinfo1:	# Type not in the definition
@@ -1002,7 +1023,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is in the polymorphic types allowed
 		"""
-		@putil.check.check_argument('ppar1', putil.check.PolymorphicType([None, int, putil.check.NumberRange(minimum=5.0, maximum=10.0), putil.check.OneOf(['HELLO', 'WORLD'])]))
+		@putil.check.check_argument(putil.check.PolymorphicType([None, int, putil.check.NumberRange(minimum=5.0, maximum=10.0), putil.check.OneOf(['HELLO', 'WORLD'])]))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert (func_check_type(None), func_check_type(3), func_check_type(7.0), func_check_type('WORLD')) == (None, 3, 7.0, 'WORLD')
@@ -1011,7 +1032,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is not a Numpy vector
 		"""
-		@putil.check.check_argument('ppar1', putil.check.RealNumpyVector())
+		@putil.check.check_argument(putil.check.RealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(TypeError) as excinfo:
@@ -1022,7 +1043,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is proper Numpy vector
 		"""
-		@putil.check.check_argument('ppar1', putil.check.RealNumpyVector())
+		@putil.check.check_argument(putil.check.RealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		func_check_type(numpy.array([1.0, 2.0, 1.0-1e-10]))
@@ -1031,7 +1052,7 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is not a Numpy vector
 		"""
-		@putil.check.check_argument('ppar1', putil.check.IncreasingRealNumpyVector())
+		@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
 		with pytest.raises(TypeError) as excinfo:
@@ -1046,7 +1067,66 @@ class TestCheckArguments(object):	#pylint: disable=W0232
 		"""
 		Test that function behaves properly when a argument is properly incresing Numpy vector
 		"""
-		@putil.check.check_argument('ppar1', putil.check.IncreasingRealNumpyVector())
+		@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		func_check_type(numpy.array([1, 2, 3]))
+
+###
+# Tests for check_arguments()
+###
+class TestCheckArguments(object):	#pylint: disable=W0232,R0903
+	""" Tests for check_arguments function """
+
+	def test_function_with_no_argument(self): #pylint: disable=R0201,C0103
+		""" Test that function behaves properly when a function has no arguments """
+		@putil.check.check_arguments({'par1':int})
+		def func_check_type():	#pylint: disable=C0111
+			pass
+		class DummyClass(object): #pylint: disable=C0111,R0903
+			def __init__(self):
+				pass
+			@putil.check.check_arguments({'par1':str})
+			def class_func_check_type(self):	#pylint: disable=C0111
+				pass
+		test_list = list()
+		with pytest.raises(RuntimeError) as excinfo:
+			func_check_type()
+		test_list.append(excinfo.value.message == 'Function func_check_type has no arguments')
+		obj = DummyClass()
+		with pytest.raises(RuntimeError) as excinfo:
+			obj.class_func_check_type()
+		test_list.append(excinfo.value.message == 'Function class_func_check_type has no arguments after self')
+		assert test_list == 2*[True]
+
+	def test_argument_not_declared(self): #pylint: disable=R0201
+		""" Test that function behaves correctly when the function to check does not have an argument in the validation list """
+		@putil.check.check_arguments({'par1':int})
+		def func_check_type(par0, par2):	#pylint: disable=C0111,W0613
+			pass
+		with pytest.raises(RuntimeError) as excinfo:
+			func_check_type(1, 2)
+		assert excinfo.value.message == 'Argument par1 is not an argument of function func_check_type'
+
+	def test_wrong_type(self): #pylint: disable=R0201
+		""" Test that function behaves correctly one of man parameters is of the wrong type """
+		@putil.check.check_arguments({'par1':int, 'par2':str})
+		def func_check_type1(par1, par2, par3):	#pylint: disable=C0111,W0613
+			pass
+		@putil.check.check_arguments({'par1':int, 'par2':str, 'par3':{'subpar1':float, 'subpar2':str}})
+		def func_check_type2(par1, par2, par3):	#pylint: disable=C0111,W0613
+			pass
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			func_check_type1(1, 2, 3)
+		test_list.append(excinfo.value.message == 'Argument `par2` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			func_check_type2(1, 'hello', {'subpar1':35.0, 'subpar2':1})
+		test_list.append(excinfo.value.message == 'Argument `par3` is of the wrong type')
+		func_check_type1(1, 'hello', None)
+		func_check_type2(1, 'hello', {'subpar1':35.0, 'subpar2':'no'})
+		assert test_list == 2*[True]
+
+
+
+

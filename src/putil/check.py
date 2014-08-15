@@ -435,14 +435,46 @@ def check_argument_type(param_name, param_type):
 		return wrapper
 	return actual_decorator
 
-def check_argument(param_name, param_spec):	#pylint: disable=R0912
+def check_argument(param_spec):	#pylint: disable=R0912
 	"""	Decorator to check that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
 	def actual_decorator(func):
 		"""	Actual decorator """
 		@functools.wraps(func)
 		def wrapper(*args, **kwargs):
 			"""	Wrapper function to test argument specification """
+			arguments = funcsigs.signature(func).parameters
+			if len(arguments) == 0:
+				raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
+			fiter = iter(arguments.items())
+			param_name = next(fiter)[0]
+			if param_name == 'self':
+				if len(arguments) == 1:
+					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
+				param_name = next(fiter)[0]
 			check_argument_internal(param_name, param_spec, func, *args, **kwargs)
+			return func(*args, **kwargs)
+		return wrapper
+	return actual_decorator
+
+def check_arguments(param_dict):	#pylint: disable=R0912
+	"""	Decorator to check that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
+	def actual_decorator(func):
+		"""	Actual decorator """
+		@functools.wraps(func)
+		def wrapper(*args, **kwargs):
+			"""	Wrapper function to test argument specification """
+			arguments = funcsigs.signature(func).parameters
+			if len(arguments) == 0:
+				raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
+			fiter = iter(arguments.items())
+			param_name = next(fiter)[0]
+			if param_name == 'self':
+				if len(arguments) == 1:
+					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
+			for param_name, param_spec in param_dict.items():
+				if param_name not in arguments:
+					raise RuntimeError('Argument {0} is not an argument of function {1}'.format(param_name, func.__name__))
+				check_argument_internal(param_name, param_spec, func, *args, **kwargs)
 			return func(*args, **kwargs)
 		return wrapper
 	return actual_decorator

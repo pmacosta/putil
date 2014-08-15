@@ -126,7 +126,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_var(self):	#pylint: disable=C0111
 		return self._indep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument('indep_var', putil.check.IncreasingRealNumpyVector())
+	@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):	#pylint: disable=W0212
 			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
@@ -137,7 +137,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_dep_var(self):	#pylint: disable=C0111
 		return self._dep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument('dep_var', putil.check.RealNumpyVector())
+	@putil.check.check_argument(putil.check.RealNumpyVector())
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
 		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):	#pylint: disable=W0212
 			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
@@ -147,7 +147,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_min(self):	#pylint: disable=C0111
 		return self._indep_min	#pylint: disable=W0212
 
-	@putil.check.check_argument('indep_min', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
 			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
@@ -158,7 +158,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_max(self):	#pylint: disable=C0111
 		return self._indep_max	#pylint: disable=W0212
 
-	@putil.check.check_argument('indep_max', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
 			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
@@ -308,7 +308,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_file_name(self):	#pylint: disable=C0111
 		return self._file_name
 
-	@putil.check.check_argument('file_name', putil.check.File(check_existance=True))
+	@putil.check.check_argument(putil.check.File(check_existance=True))
 	def _set_file_name(self, file_name):	#pylint: disable=C0111
 		self._file_name = file_name
 		self._csv_obj = putil.pcsv.CsvFile(file_name)
@@ -318,7 +318,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
 
-	@putil.check.check_argument('dfilter', putil.check.PolymorphicType([None, dict]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
 		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# putil.pcsv is case insensitive and all caps
 		self._apply_dfilter()
@@ -327,7 +327,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_col_label(self):	#pylint: disable=C0111
 		return self._indep_col_label
 
-	@putil.check.check_argument('indep_col_label', str)
+	@putil.check.check_argument(str)
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
 		self._indep_col_label = indep_col_label.upper() if isinstance(indep_col_label, str) else indep_col_label	# putil.pcsv is case insensitive and all caps
 		self._check_indep_col_label()
@@ -337,7 +337,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_dep_col_label(self):	#pylint: disable=C0111
 		return self._dep_col_label
 
-	@putil.check.check_argument('dep_col_label', str)
+	@putil.check.check_argument(str)
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
 		self._dep_col_label = dep_col_label.upper() if isinstance(dep_col_label, str) else dep_col_label	 	# putil.pcsv is case insensitive and all caps
 		self._check_dep_col_label()
@@ -347,7 +347,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_var(self):	#pylint: disable=C0111
 		return self._indep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument('indep_var', putil.check.IncreasingRealNumpyVector())
+	@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
 		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):	#pylint: disable=W0212
 			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
@@ -358,7 +358,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_dep_var(self):	#pylint: disable=C0111
 		return self._dep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument('dep_var', putil.check.RealNumpyVector())
+	@putil.check.check_argument(putil.check.RealNumpyVector())
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
 		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):	#pylint: disable=W0212
 			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
@@ -368,7 +368,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_min(self):	#pylint: disable=C0111
 		return self._indep_min	#pylint: disable=W0212
 
-	@putil.check.check_argument('indep_min', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
 		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
 			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
@@ -379,7 +379,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_max(self):	#pylint: disable=C0111
 		return self._indep_max	#pylint: disable=W0212
 
-	@putil.check.check_argument('indep_max', putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Real()]))
 	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
 		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
 			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
@@ -406,7 +406,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
 
-	@putil.check.check_argument('fproc', putil.check.PolymorphicType([None, putil.check.Function()]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Function()]))
 	def _set_fproc(self, fproc):	#pylint: disable=C0111
 		if fproc is not None:
 			args = putil.check.get_function_args(fproc)
@@ -419,7 +419,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_fproc_eargs(self):	#pylint: disable=C0111
 		return self._fproc_eargs
 
-	@putil.check.check_argument('fproc_eargs', putil.check.PolymorphicType([None, dict]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
 	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable=C0111
 		# Check that extra argnuments to see if they are in the function definition
 		self._fproc_eargs = fproc_eargs
@@ -809,14 +809,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_label(self):	#pylint: disable=C0111
 		return self._label
 
-	@putil.check.check_argument('label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_label(self, label):	#pylint: disable=C0111
 		self._label = label
 
 	def _get_color(self):	#pylint: disable=C0111
 		return self._color
 
-	@putil.check.check_argument('color', putil.check.PolymorphicType([None, putil.check.Number(), str, list, tuple]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Number(), str, list, tuple]))
 	def _set_color(self, color):	#pylint: disable=C0111
 		valid_html_colors = [
 			'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
@@ -862,7 +862,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_interp(self):	#pylint: disable=C0111
 		return self._interp
 
-	@putil.check.check_argument('interp', putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
 	def _set_interp(self, interp):	#pylint: disable=C0111
 		self._interp = interp.upper().strip() if isinstance(interp, str) else interp
 		self._check_series_is_plottable()
@@ -874,7 +874,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_line_style(self):	#pylint: disable=C0111
 		return self._line_style
 
-	@putil.check.check_argument('line_style', putil.check.PolymorphicType([None, putil.check.OneOf(['-', '--', '-.', ':'])]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.OneOf(['-', '--', '-.', ':'])]))
 	def _set_line_style(self, line_style):	#pylint: disable=C0111
 		self._line_style = line_style
 		self._update_linestyle_spec()
@@ -884,7 +884,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_secondary_axis(self):	#pylint: disable=C0111
 		return self._secondary_axis
 
-	@putil.check.check_argument('secondary_axis', putil.check.PolymorphicType([None, bool]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
 	def _set_secondary_axis(self, secondary_axis):	#pylint: disable=C0111
 		self._secondary_axis = secondary_axis
 
@@ -1221,35 +1221,35 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	def _get_primary_axis_label(self):	#pylint: disable=C0111
 		return self._primary_axis_label
 
-	@putil.check.check_argument('primary_axis_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_primary_axis_label(self, primary_axis_label):	#pylint: disable=C0111
 		self._primary_axis_label = primary_axis_label
 
 	def _get_primary_axis_units(self):	#pylint: disable=C0111
 		return self._primary_axis_units
 
-	@putil.check.check_argument('primary_axis_units', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_primary_axis_units(self, primary_axis_units):	#pylint: disable=C0111
 		self._primary_axis_units = primary_axis_units
 
 	def _get_secondary_axis_label(self):	#pylint: disable=C0111
 		return self._secondary_axis_label
 
-	@putil.check.check_argument('secondary_axis_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_secondary_axis_label(self, secondary_axis_label):	#pylint: disable=C0111
 		self._secondary_axis_label = secondary_axis_label
 
 	def _get_secondary_axis_units(self):	#pylint: disable=C0111
 		return self._secondary_axis_units
 
-	@putil.check.check_argument('secondary_axis_units', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_secondary_axis_units(self, secondary_axis_units):	#pylint: disable=C0111
 		self._secondary_axis_units = secondary_axis_units
 
 	def _get_log_dep_axis(self):	#pylint: disable=C0111
 		return self._log_dep_axis
 
-	@putil.check.check_argument('log_dep_axis', putil.check.PolymorphicType([None, bool]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
 	def _set_log_dep_axis(self, log_dep_axis):	#pylint: disable=C0111
 		self._recalculate_series = self.log_dep_axis != log_dep_axis
 		self._log_dep_axis = log_dep_axis
@@ -1259,7 +1259,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	def _get_legend_props(self):	#pylint: disable=C0111
 		return self._legend_props
 
-	@putil.check.check_argument('legend_props', putil.check.PolymorphicType([None, dict]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
 	def _set_legend_props(self, legend_props):	#pylint: disable=C0111
 		ref_pos_obj = putil.check.OneOf(self._legend_props_pos_list)
 		self._legend_props = legend_props if legend_props is not None else {'pos':'BEST', 'cols':1}
@@ -1510,7 +1510,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_indep_var_label(self):	#pylint: disable=C0111
 		return self._indep_var_label
 
-	@putil.check.check_argument('indep_var_label', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_indep_var_label(self, indep_var_label):	#pylint: disable=C0111
 		self._indep_var_label = indep_var_label
 		self._draw(force_redraw=True)
@@ -1518,7 +1518,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_indep_var_units(self):	#pylint: disable=C0111
 		return self._indep_var_units
 
-	@putil.check.check_argument('indep_var_units', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_indep_var_units(self, indep_var_units):	#pylint: disable=C0111
 		self._indep_var_units = indep_var_units
 		self._draw(force_redraw=True)
@@ -1526,7 +1526,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_title(self):	#pylint: disable=C0111
 		return self._title
 
-	@putil.check.check_argument('title', putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
 	def _set_title(self, title):	#pylint: disable=C0111
 		self._title = title
 		self._draw(force_redraw=True)
@@ -1534,7 +1534,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_log_indep_axis(self):	#pylint: disable=C0111
 		return self._log_indep_axis
 
-	@putil.check.check_argument('log_indep_axis', putil.check.PolymorphicType([None, bool]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
 	def _set_log_indep_axis(self, log_indep_axis):	#pylint: disable=C0111
 		self._log_indep_axis = log_indep_axis
 		self._draw(force_redraw=True)
@@ -1542,14 +1542,14 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_fig_width(self):	#pylint: disable=C0111
 		return self._fig_width
 
-	@putil.check.check_argument('fig_width', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
 	def _set_fig_width(self, fig_width):	#pylint: disable=C0111
 		self._fig_width = fig_width
 
 	def _get_fig_height(self):	#pylint: disable=C0111
 		return self._fig_height
 
-	@putil.check.check_argument('fig_height', putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
 	def _set_fig_height(self, fig_height):	#pylint: disable=C0111
 		self._fig_height = fig_height
 
@@ -1643,7 +1643,7 @@ class Figure(object):	#pylint: disable=R0902
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		plt.show()
 
-	@putil.check.check_argument('file_name', putil.check.File())
+	@putil.check.check_argument(putil.check.File())
 	def save(self, file_name):
 		"""
 		Saves figure in PNG format to a file
