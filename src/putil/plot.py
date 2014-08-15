@@ -2,6 +2,8 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
+# TODO: Add test for figure too small exception, add show_indep_axis flag to str of Panel(), update documentation of exception
+
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -1123,6 +1125,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	:type	log_dep_axis:			boolean
 	:param	legend_props:			legend properties. See :py:attr:`putil.plot.Panel.legend_props()`
 	:type	legend_props:			dictionary
+	:param	show_indep_axis:		display primary axis flag
+	:type	show_indep_axis:		boolean
 	:raises:
 	 * Same as :py:attr:`putil.plot.Panel.series`
 
@@ -1137,11 +1141,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	 * Same as :py:attr:`putil.plot.Panel.secondary_axis_units`
 
 	 * Same as :py:attr:`putil.plot.Panel.legend_props`
+
+	 * Same as :py:attr:`putil.plot.Panel.show_indep_axis`
 	"""
-	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props={'pos':'BEST', 'cols':1}):	#pylint: disable=W0102,R0913
+	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props={'pos':'BEST', 'cols':1}, show_indep_axis=False):	#pylint: disable=W0102,R0913
 		# Private attributes
-		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props = \
-			None, None, None, None, None, None, False, {'pos':'BEST', 'cols':1}
+		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props, self._show_indep_axis = \
+			None, None, None, None, None, None, False, {'pos':'BEST', 'cols':1}, None
 		# Private attributes
 		self._legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
 		self._panel_has_primary_axis, self._panel_has_secondary_axis = False, False
@@ -1157,6 +1163,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self._set_secondary_axis_label(secondary_axis_label)
 		self._set_secondary_axis_units(secondary_axis_units)
 		self._set_legend_props(legend_props)
+		self._set_show_indep_axis(show_indep_axis)
 
 	def _get_series(self):	#pylint: disable=C0111
 		return self._series
@@ -1256,6 +1263,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		if self._recalculate_series:
 			self._set_series(self._series)
 
+	def _get_show_indep_axis(self):	#pylint: disable=C0111
+		return self._show_indep_axis
+
+	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
+	def _set_show_indep_axis(self, show_indep_axis):	#pylint: disable=C0111
+		self._show_indep_axis = show_indep_axis
+
 	def _get_legend_props(self):	#pylint: disable=C0111
 		return self._legend_props
 
@@ -1347,7 +1361,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			unit_scale = '' if axis_scale is None else axis_scale.strip()
 			fset_label_text(axis_label + ('' if (unit_scale == '') and (axis_units == '') else (' ['+unit_scale+('-' if axis_units == '' else axis_units)+']')), fontdict={'fontsize':AXIS_LABEL_FONT_SIZE})
 
-	def _draw_panel(self, axarr_prim, indep_axis_dict=None):	#pylint: disable=R0912,R0914,R0915
+	def _draw_panel(self, axarr_prim, indep_axis_dict, print_indep_axis):	#pylint: disable=R0912,R0914,R0915
 		""" Draw panel series """
 		axarr_sec = axarr_prim.twinx() if self._panel_has_secondary_axis else None
 		# Place data series in their appropriate axis (primary or secondary)
@@ -1381,10 +1395,11 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		#  Print independent axis tick marks and label
 		indep_var_min, indep_var_max, indep_var_locs = indep_axis_dict['indep_var_min'], indep_axis_dict['indep_var_max'], indep_axis_dict['indep_var_locs']
 		indep_var_labels = indep_axis_dict['indep_var_labels'] if ('indep_var_labels' in indep_axis_dict) and (indep_axis_dict['indep_var_labels'] is not None) else None
-		indep_axis_label = '' if indep_axis_dict['indep_axis_label'] is None else indep_axis_dict['indep_axis_label'].strip()
+		indep_axis_label = '' if indep_axis_dict['indep_axis_label'] is None or not print_indep_axis else indep_axis_dict['indep_axis_label'].strip()
 		indep_axis_units = '' if indep_axis_dict['indep_axis_units'] is None else indep_axis_dict['indep_axis_units'].strip()
 		indep_axis_unit_scale = '' if indep_axis_dict['indep_axis_unit_scale'] is None else indep_axis_dict['indep_axis_unit_scale'].strip()
 		self._setup_axis('INDEP', axarr_prim, indep_var_min, indep_var_max, indep_var_locs, indep_var_labels, indep_axis_label, indep_axis_units, indep_axis_unit_scale)
+		plt.setp(axarr_prim.get_xticklabels(), visible=print_indep_axis)
 		return {'primary':None if not self._panel_has_primary_axis else axarr_prim, 'secondary':None if not self._panel_has_secondary_axis else axarr_sec}
 
 	series = property(_get_series, _set_series, doc='Panel series')
@@ -1457,6 +1472,14 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	 * TypeError (Argument `legend_props` key `props` is not one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive))
 
 	 * TypeError ((Argument `legend_props` key `cols` is of the wrong type)
+	"""	#pylint: disable=W0105
+
+	show_indep_axis = property(_get_show_indep_axis, _set_show_indep_axis, doc='Show independent axis flag')
+	"""
+	Show independent axis flag.
+
+	:type:	boolean, default is *False*
+	:raises: TypeError (Argument `show_indep_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 class Figure(object):	#pylint: disable=R0902
@@ -1602,10 +1625,12 @@ class Figure(object):	#pylint: disable=R0902
 			# Draw panels
 			indep_axis_dict = {'indep_var_min':indep_var_min, 'indep_var_max':indep_var_max, 'indep_var_locs':indep_var_locs,
 						 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
+			indep_axis_dict = {'log_indep':self.log_indep_axis, 'indep_var_min':indep_var_min, 'indep_var_max':indep_var_max, 'indep_var_locs':indep_var_locs,
+						 'indep_var_labels':indep_var_labels, 'indep_axis_label':self.indep_var_label, 'indep_axis_units':self.indep_var_units, 'indep_axis_unit_scale':indep_var_unit_scale}
+			panels_with_indep_axis_list = [num for num, panel_obj in enumerate(self.panels) if panel_obj.show_indep_axis is True]
+			panels_with_indep_axis_list = [num_panels-1] if len(panels_with_indep_axis_list) == 0 else panels_with_indep_axis_list
 			for num, (panel_obj, axarr) in enumerate(zip(self.panels, axes)):
-				panel_dict = panel_obj._draw_panel(axarr, dict(indep_axis_dict, log_indep=self.log_indep_axis, indep_var_labels=indep_var_labels if num == num_panels-1 else None,	#pylint: disable=W0212,C0326
-													  indep_axis_label=self.indep_var_label if num == num_panels-1 else None, indep_axis_units=self.indep_var_units if num == num_panels-1 else None,
-													  indep_axis_unit_scale=indep_var_unit_scale if num == num_panels-1 else None))	#pylint: disable=C0326
+				panel_dict = panel_obj._draw_panel(axarr, indep_axis_dict, num in panels_with_indep_axis_list)	#pylint: disable=C0326,W0212
 				self._axes_list.append({'number':num, 'primary':panel_dict['primary'], 'secondary':panel_dict['secondary']})
 			if self.title not in [None, '']:
 				axes[0].set_title(self.title, horizontalalignment='center', verticalalignment='bottom', multialignment='center', fontsize=TITLE_FONT_SIZE)
@@ -1628,6 +1653,8 @@ class Figure(object):	#pylint: disable=R0902
 		panel_dims = [(yaxis_height+xaxis_height, yaxis_width+xaxis_width) for (yaxis_height, yaxis_width), (xaxis_height, xaxis_width) in zip(yaxis_dims, xaxis_dims)]
 		min_fig_width = round((max(title_width, max([panel_width for _, panel_width in panel_dims])))/float(self._fig.dpi), 2)
 		min_fig_height = round((((len(self._axes_list)*max([panel_height for panel_height, _ in panel_dims]))+title_height)/float(self._fig.dpi)), 2)
+		if ((self.fig_width is not None) and (self.fig_width < min_fig_width)) or ((self.fig_height is not None) and (self.fig_height < min_fig_height)):
+			raise RuntimeError('Figure size is too small, minimum width = {0}, minimum size {1}'.format(min_fig_width, min_fig_height))
 		self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
 		self.fig_height = min_fig_height if self.fig_height is None else self.fig_height
 

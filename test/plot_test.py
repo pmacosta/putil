@@ -1076,6 +1076,22 @@ class TestPanel(object):	#pylint: disable=W0232
 		test_list.append(obj.log_dep_axis == False)
 		assert test_list == [True]*5
 
+	def test_show_indep_axis_wrong_type(self, default_series):	#pylint: disable=C0103,R0201,W0621
+		""" Test show_indep_axis data validation """
+		# This assignments should raise an exception
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.Panel(series=default_series, show_indep_axis=5)
+		test_list.append(excinfo.value.message == 'Argument `show_indep_axis` is of the wrong type')
+		# These assignments should not raise an exception
+		obj = putil.plot.Panel(series=default_series, show_indep_axis=False)
+		test_list.append(obj.show_indep_axis == False)
+		obj = putil.plot.Panel(series=default_series, show_indep_axis=True)
+		test_list.append(obj.show_indep_axis == True)
+		obj = putil.plot.Panel(series=default_series)
+		test_list.append(obj.show_indep_axis == False)
+		assert test_list == [True]*4
+
 	def test_legend_props_wrong_type(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test legend_props data validation """
 		# These assignments should raise an exception
