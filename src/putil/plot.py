@@ -2,8 +2,6 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-# TODO: Add test for figure too small exception, add show_indep_axis flag to str of Panel(), update documentation of exception
-
 """
 Utility classes, methods and functions to handle plotting
 """
@@ -1308,6 +1306,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		ret += 'Secondary axis label: {0}\n'.format(self.secondary_axis_label if self.secondary_axis_label not in ['', None] else 'not specified')
 		ret += 'Secondary axis units: {0}\n'.format(self.secondary_axis_units if self.secondary_axis_units not in ['', None] else 'not specified')
 		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
+		ret += 'Show independent axis: {0}\n'.format(self.show_indep_axis)
 		if self.legend_props is None:
 			ret += 'Legend properties: None'
 		else:
@@ -1515,6 +1514,8 @@ class Figure(object):	#pylint: disable=R0902
 
 	 * Same as :py:attr:`putil.plot.Figure.fig_height`
 
+	 * RuntimeError (Figure size is too small: minimum width = *[min_width]*, minimum height *[min_height]*)
+
 	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be retrieved using \
 	:py:attr:`putil.plot.Figure.fig_width` and/or :py:attr:`putil.plot.Figure.fig_height` attributes.
 	"""
@@ -1654,7 +1655,7 @@ class Figure(object):	#pylint: disable=R0902
 		min_fig_width = round((max(title_width, max([panel_width for _, panel_width in panel_dims])))/float(self._fig.dpi), 2)
 		min_fig_height = round((((len(self._axes_list)*max([panel_height for panel_height, _ in panel_dims]))+title_height)/float(self._fig.dpi)), 2)
 		if ((self.fig_width is not None) and (self.fig_width < min_fig_width)) or ((self.fig_height is not None) and (self.fig_height < min_fig_height)):
-			raise RuntimeError('Figure size is too small, minimum width = {0}, minimum size {1}'.format(min_fig_width, min_fig_height))
+			raise RuntimeError('Figure size is too small: minimum width = {0}, minimum height {1}'.format(min_fig_width, min_fig_height))
 		self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
 		self.fig_height = min_fig_height if self.fig_height is None else self.fig_height
 

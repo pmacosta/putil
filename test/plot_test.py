@@ -1422,11 +1422,12 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Secondary axis label: not specified\n'
 		ret += 'Secondary axis units: not specified\n'
 		ret += 'Logarithmic dependent axis: False\n'
+		ret += 'Show independent axis: False\n'
 		ret += 'Legend properties:\n'
 		ret += '   pos: BEST\n'
 		ret += '   cols: 1'
 		test_list.append(str(obj) == ret)
-		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts')
+		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts', show_indep_axis=True)
 		ret = 'Series 0:\n'
 		ret += '   Data source: putil.plot.BasicSource class object\n'
 		ret += '   Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
@@ -1442,6 +1443,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Secondary axis label: Input\n'
 		ret += 'Secondary axis units: Watts\n'
 		ret += 'Logarithmic dependent axis: False\n'
+		ret += 'Show independent axis: True\n'
 		ret += 'Legend properties:\n'
 		ret += '   pos: BEST\n'
 		ret += '   cols: 1'
@@ -1633,6 +1635,20 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		test_list.append(comp_list == len(obj.axes_list)*[True])
 		assert test_list == 2*[True]
 
+	def test_specified_figure_size_too_small(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test that method behaves correctly when requested figure size is too small """
+		test_list = list()
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph', fig_width=0.1, fig_height=200)
+		test_list.append(excinfo.value.message == 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph', fig_width=200, fig_height=0.1)
+		test_list.append(excinfo.value.message == 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph', fig_width=0.1, fig_height=0.1)
+		test_list.append(excinfo.value.message == 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+		assert test_list == 3*[True]
+
 	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that _complete() method behaves correctly """
 		test_list = list()
@@ -1671,6 +1687,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += '   Secondary axis label: Secondary axis\n'
 		ret += '   Secondary axis units: B\n'
 		ret += '   Logarithmic dependent axis: False\n'
+		ret += '   Show independent axis: False\n'
 		ret += '   Legend properties:\n'
 		ret += '      pos: BEST\n'
 		ret += '      cols: 1\n'
