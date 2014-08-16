@@ -3,11 +3,13 @@ util_plot library usage example
 """
 
 def main():
-	"""
-	Example of how to use the util_plot library to generate presentation-quality plots
-	"""
+	""" Example of how to use the util_plot library to generate presentation-quality plots """
 	import numpy
 	import putil.plot
+	###
+	# Series definition (Series class)
+	###
+	# Extract data from a comma-separated (csv) file using the CsvSource class
 	series1_obj = [putil.plot.Series(
 		data_source=putil.plot.CsvSource(
 			file_name='data.csv',
@@ -26,6 +28,7 @@ def main():
 		line_style='-',
 		secondary_axis=False
 	)]
+	# Literal data can be used with the BasicSource class
 	series2_obj = [putil.plot.Series(
 		data_source=putil.plot.BasicSource(
 			indep_var=numpy.array([0e-3, 1e-3, 2e-3]),
@@ -62,6 +65,9 @@ def main():
 		line_style=None,
 		secondary_axis=True
 	)]
+	###
+	# Panels definition (Panel class)
+	###
 	panel_obj = putil.plot.Panel(
 		series=series1_obj+series2_obj+series3_obj+series4_obj,
 		primary_axis_label='Primary axis label',
@@ -70,15 +76,19 @@ def main():
 		secondary_axis_units='W',
 		legend_props={'pos':'lower right', 'cols':1}
 	)
+	###
+	# Figure definition (Figure class)
+	###
 	fig_obj = putil.plot.Figure(
 		panels=panel_obj,
 		indep_var_label='Indep. var.',
 		indep_var_units='S',
 		log_indep_axis=False,
-		fig_width=None,
-		fig_height=None,
+		fig_width=4*2.25,
+		fig_height=3*2.25,
 		title='Library putil.plot Example'
 	)
+	# Save figure
 	fig_obj.save('./example_plot.png')
 
 def series1_proc_func(indep_var, dep_var, xoffset):	#pylint: disable=W0613
