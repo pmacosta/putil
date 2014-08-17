@@ -24,35 +24,35 @@ import putil.check
 
 PRECISION = 10
 """
-Number of mantissa significant digits
+Number of mantissa significant digits used in all computations
 
 :type:	integer
 """	#pylint: disable=W0105
 
 LINE_WIDTH = 2.5
 """
-Line width in points
+Series line width in points
 
 :type: float
 """	#pylint: disable=W0105
 
 MARKER_SIZE = 14
 """
-Marker size in points
+Series marker size in points
 
 :type: integer
 """	#pylint: disable=W0105
 
 MIN_TICKS = 6
 """
-Minimum number of ticks desired for the independent and dependent axis
+Minimum number of ticks desired for the independent and dependent axis of a panel
 
 :type:	integer
 """	#pylint: disable=W0105
 
 SUGGESTED_MAX_TICKS = 10
 """
-Maximum number of ticks desired for the independent and dependent axis. It is possible for a panel to have more than SUGGESTED_MAX_TICKS in the dependent axis
+Maximum number of ticks desired for the independent and dependent axis of a panel. It is possible for a panel to have more than SUGGESTED_MAX_TICKS in the dependent axis
 if one or more series are plotted with an interpolation function and at least one interpolated curve goes above or below the maximum and minimum data
 points of the panel. In this case the panel will have SUGGESTED_MAX_TICKS+1 ticks if some interpolation curve is above the maximum data point of the panel or
 below the minimum data point of the panel; or the panel will have SUGGESTED_MAX_TICKS+2 ticks if some interpolation curve(s) is(are) above the maximum data point
@@ -91,7 +91,8 @@ Scale factor for panel legend. The legend font size in points is equal to the ax
 
 class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
-	Objects of this class hold a given data set intended for plotting
+	Objects of this class hold a given data set intended for plotting. It is intended as a convenient way to plot manually-entered data or data coming from
+	a source that does not export to a comma-separated values (CSV) file.
 
 	:param	indep_var:			independent variable vector
 	:type	indep_var:			increasing real Numpy vector
@@ -248,7 +249,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""
-	Objects of this class hold a data set from a CSV file intended for plotting
+	Objects of this class hold a data set from a CSV file intended for plotting. The raw data from the file can be filtered and a callback function can be used for more general data pre-processing. 
 
 	:param	file_name:			comma-separated file name
 	:type	file_name:			string

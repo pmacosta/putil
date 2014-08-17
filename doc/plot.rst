@@ -1,31 +1,54 @@
+###########
 plot module
-===========
+###########
 
 
+
+***************
+Class hierarchy
+***************
 
 This is a library that can be used to create high-quality, presentation-ready X-Y graphs quickly and easily.
 
 The properties of the graph (figure in Matplotlib parlance) are defined in an object of the :py:class:`putil.plot.Figure()` class.
 
-Each figure can have one or more panels, whose properties are defined by objects of the :py:class:`putil.plot.Panel()` class. Panels are arranged vertically in the figure and share the same independent axis. The limits of the independent axis of the figure result from the union of the independent data points of all the panels, and is shown by default in the bottom-most panel (it can be configured to be in any panel or panels).
+Each figure can have one or more panels, whose properties are defined by objects of the :py:class:`putil.plot.Panel()` class. Panels are arranged vertically in the figure and share the same independent axis.
+The limits of the independent axis of the figure result from the union of the limits of the independent axis of all the panels. The independent axis is shown by default in the bottom-most panel althought it
+can be configured to be in any panel or panels.
 
-Each panel can have one or more data series, whose properties are defined by objects of the :py:class:`putil.plot.Series()` class. A series can be associated with either the primary or secondary dependent axis of the panel. The limits of the primary and secondary dependent axis of the panel result from the union of the primary and secondary dependent data points of all the series associated with each axis. The primary axis is shown on the left of the panel and the secondary axis is shown on the right of the panel.
+Each panel can have one or more data series, whose properties are defined by objects of the :py:class:`putil.plot.Series()` class. A series can be associated with either the primary or secondary dependent axis
+of the panel. The limits of the primary and secondary dependent axis of the panel result from the union of the primary and secondary dependent data points of all the series associated with each axis. The primary
+axis is shown on the left of the panel and the secondary axis is shown on the right of the panel. Axes can be linear or logarithmic.
 
-The data for a series is defined by a source. Two data sources are provided: the :py:class:`putil.plot.BasicSource()` class provides basic data validation and minimum/maximum independent variable range bounding. The :py:class:`putil.plot.CsvSource()` class builds upon the functionality of the  :py:class:`putil.plot.BasicSource()` class and offers a simple way of accessing data from a comma-separated (CSV) file. Other data sources can be programmed (and may optionally inherit from the :py:class:`putil.plot.BasicSource()` class) and used as long as the source objects have two attributes, *indep_var* and *dep_var*, that contain an increasing real Numpy vector and a real Numpy vector respectively. 
+The data for a series is defined by a source. Two data sources are provided: the :py:class:`putil.plot.BasicSource()` class provides basic data validation and minimum/maximum independent variable range bounding.
+The :py:class:`putil.plot.CsvSource()` class builds upon the functionality of the  :py:class:`putil.plot.BasicSource()` class and offers a simple way of accessing data from a comma-separated values (CSV) file.
+Other data sources can be programmed (and may optionally inherit from the :py:class:`putil.plot.BasicSource()` class) and used as long as the source objects have two attributes, *indep_var* and *dep_var*, that
+contain an increasing real Numpy vector and a real Numpy vector respectively. 
 
 .. figure:: ./support/Class_hierarchy_example.png
    :scale: 100%
 
-   Diagram of the class hierarchy in the putil.plot module
+   Figure 1: Example diagram of the class hierarchy that composes a figure. In this particular example the figure consists of 3 panels. Panel 1 has a series whose data comes from a basic source, panel 2 has three series, two of which come from comma-separated values (CSV) files and one that comes from a basic source. Panel 3 has one series whose data comes from a basic source. 
 
+***************
+Axes tick marks
+***************
+
+Axes tick marks are selected so as to create the most readable graph. Two global variables control the actual number of ticks, :py:data:`putil.plot.MIN_TICKS` and :py:data:`putil.plot.SUGGESTED_MAX_TICKS`. In general
+the number of ticks are between these two bounds; one or two more ticks can be present if a data series uses cubic interpolation and the interpolated curve goes above (below) the lagest (smallest) data point. Tick
+spacing is chosen so as to have the most number of data points "on grid". Engineering notation (i.e. 1K = 1000, 1m = 0.001, etc.) is used for the axis tick marks.
+
+*******
 Example
--------
+*******
+
+example_plot.py:
 
 .. literalinclude:: ./support/example_plot.py
     :language: python
     :linenos:
     :tab-width: 3
-    :lines: 5-92
+    :lines: 5-95
 
 |
 
@@ -38,14 +61,41 @@ Example
 .. figure:: ./support/example_plot.png
    :scale: 100%
 
-   example_plot.png 
+   Figure 2: example_plot.png generated by example_plot.py 
 
 |
 
+***************************************
 Application programming interface (API)
----------------------------------------
+***************************************
 
 .. automodule:: putil.plot
     :members:
     :undoc-members:
     :show-inheritance:
+
+*******
+License
+*******
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Pablo Acosta-Serafini
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -1,9 +1,12 @@
 """
-util_plot library usage example
+putil.plot library usage example
 """
 
 def main():
-	""" Example of how to use the util_plot library to generate presentation-quality plots """
+	"""
+	Example of how to use the putil.plot library
+	to generate presentation-quality plots
+	"""
 	import numpy
 	import putil.plot
 	###
