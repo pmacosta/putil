@@ -12,3 +12,4 @@
 *.rot
 *.pyc
 doc/_build
+!doc/support/*.png
