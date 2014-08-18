@@ -7,6 +7,24 @@ plot module
 
 This module can be used to create high-quality, presentation-ready X-Y graphs quickly and easily.
 
+***********
+Interpreter
+***********
+
+The module has been developed using Python 2.7, but in all likelihood the module will also work with Python 3 provided that the dependent libraries have ports to the newer interpreter version.
+
+************
+Dependencies
+************
+
+The following libraries are used:
+
+* `matplotlib <http://matplotlib.org/>`_
+
+* `scipy <http://www.scipy.org/>`_
+
+* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_ (needed for Python 2.7, it is part of Python 3)
+
 ***************
 Class hierarchy
 ***************
@@ -69,6 +87,21 @@ example_plot.py:
 ***************************************
 Application programming interface (API)
 ***************************************
+
+Global variables
+================
+
+.. autodata:: putil.plot.AXIS_LABEL_FONT_SIZE
+.. autodata:: putil.plot.LINE_WIDTH
+.. autodata:: putil.plot.LEGEND_SCALE
+.. autodata:: putil.plot.MARKER_SIZE
+.. autodata:: putil.plot.MIN_TICKS
+.. autodata:: putil.plot.PRECISION
+.. autodata:: putil.plot.SUGGESTED_MAX_TICKS
+.. autodata:: putil.plot.TITLE_FONT_SIZE
+
+Classes
+=======
 
 .. automodule:: putil.plot
     :members:
