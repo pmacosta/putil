@@ -4,11 +4,12 @@ plot module
 
 
 
+
+This module can be used to create high-quality, presentation-ready X-Y graphs quickly and easily.
+
 ***************
 Class hierarchy
 ***************
-
-This is a library that can be used to create high-quality, presentation-ready X-Y graphs quickly and easily.
 
 The properties of the graph (figure in Matplotlib parlance) are defined in an object of the :py:class:`putil.plot.Figure()` class.
 
