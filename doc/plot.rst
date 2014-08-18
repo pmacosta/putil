@@ -54,7 +54,7 @@ Axes tick marks
 ***************
 
 Axes tick marks are selected so as to create the most readable graph. Two global variables control the actual number of ticks, :py:data:`putil.plot.MIN_TICKS` and :py:data:`putil.plot.SUGGESTED_MAX_TICKS`. In general
-the number of ticks are between these two bounds; one or two more ticks can be present if a data series uses cubic interpolation and the interpolated curve goes above (below) the lagest (smallest) data point. Tick
+the number of ticks are between these two bounds; one or two more ticks can be present if a data series uses interpolation and the interpolated curve goes above (below) the lagest (smallest) data point. Tick
 spacing is chosen so as to have the most number of data points "on grid". Engineering notation (i.e. 1K = 1000, 1m = 0.001, etc.) is used for the axis tick marks.
 
 *******
@@ -91,20 +91,21 @@ Application programming interface (API)
 Global variables
 ================
 
-.. autodata:: putil.plot.AXIS_LABEL_FONT_SIZE
-.. autodata:: putil.plot.LINE_WIDTH
-.. autodata:: putil.plot.LEGEND_SCALE
-.. autodata:: putil.plot.MARKER_SIZE
-.. autodata:: putil.plot.MIN_TICKS
-.. autodata:: putil.plot.PRECISION
-.. autodata:: putil.plot.SUGGESTED_MAX_TICKS
-.. autodata:: putil.plot.TITLE_FONT_SIZE
+.. automodule:: putil.plot
+	:members: AXIS_LABEL_FONT_SIZE, LINE_WIDTH, LEGEND_SCALE, MARKER_SIZE, MIN_TICKS, PRECISION, SUGGESTED_MAX_TICKS, TITLE_FONT_SIZE
+	:member-order: 'alphabetical'
+
+Functions
+=========
+
+.. automodule:: putil.plot
+	:members: parametrized_color_space
 
 Classes
 =======
 
 .. automodule:: putil.plot
-    :members:
+    :members: BasicSource, CsvSource, Series, Panel, Figure
     :undoc-members:
     :show-inheritance:
 

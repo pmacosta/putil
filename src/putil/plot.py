@@ -1882,7 +1882,7 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=Fals
 				tick_spacing = putil.misc.gcd(data_spacing)
 				num_ticks = (series_delta/tick_spacing)+1
 				if (num_ticks >= MIN_TICKS) and (num_ticks <= SUGGESTED_MAX_TICKS):
-					tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()	#pylint: disable-msg=E1103
+					tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()	#pylint: disable=E1103
 					break
 				# Remove elements that cause minimum spacing, to see if with those elements removed the number of tick marks can be withing the acceptable range
 				min_data_spacing = min(data_spacing)
@@ -1891,7 +1891,7 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=Fals
 					working_series = working_series[:-2]+[working_series[-1]]
 					data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
 				working_series = [working_series[0]]+[element for element, spacing in zip(working_series[1:], data_spacing) if spacing != min_data_spacing]
-			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), SUGGESTED_MAX_TICKS).tolist()	#pylint: disable-msg=E1103
+			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), SUGGESTED_MAX_TICKS).tolist()	#pylint: disable=E1103
 			tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
 			# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
 			tight_left = False if (not tight) and (tick_list[0] >= series_min) else tight
