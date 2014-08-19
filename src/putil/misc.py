@@ -138,9 +138,13 @@ def make_dir(file_name):
 
 def normalize(value, series, offset=0):
 	"""
-	Normalize a value based on the minimum and maximum of a series
+	Scale a series to the [0, 1] interval
 	"""
-	return offset+(((value-min(series))/float(max(series)-min(series)))/(1.0-offset))
+	if (offset < 0) or (offset > 1):
+		raise ValueError('Argument `offset` has to be in the [0.0, 1.0] range')
+	if (value < min(series)) or (value > max(series)):
+		raise ValueError('Argument `value` has to be within the bounds of the argument `series`')
+	return offset+(((value-float(min(series)))/(float(max(series))-float(min(series))))*(1.0-offset))
 
 def gcd(vector, precision=None):
 	"""

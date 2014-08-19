@@ -1796,5 +1796,7 @@ class TestParameterizedColorSpace(object):	#pylint: disable=W0232,R0903
 
 	def test_function_works(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test for correct behavior of function """
-		result = putil.plot.parameterized_color_space([0, 0.5, 1], 0.1, 'Greys')
-		assert result == [(0.95386390125050269, 0.95386390125050269, 0.95386390125050269, 1.0), (0.42002307281774631, 0.42002307281774631, 0.42002307281774631, 1.0), (0.0, 0.0, 0.0, 1.0)]
+		import matplotlib.pyplot as plt
+		color_space = plt.cm.Greys	#pylint: disable=E1101
+		result = putil.plot.parameterized_color_space([0, 2/3.0, 4/3.0, 2], 0.25, 'Greys')
+		assert result == [color_space(0.25), color_space(0.5), color_space(0.75), color_space(1.0)]

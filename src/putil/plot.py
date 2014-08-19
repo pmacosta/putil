@@ -1978,7 +1978,7 @@ _COLOR_SPACE_NAME_LIST = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu'
 @putil.check.check_arguments({'param_list':putil.check.ArbitraryLengthList(putil.check.Number()), 'offset':putil.check.NumberRange(0, 1), 'color_space':putil.check.OneOf(_COLOR_SPACE_NAME_LIST)})
 def parameterized_color_space(param_list, offset=0, color_space='binary'):
 	"""
-	Computes a color space where lighter colors correspond to lower argument values
+	Computes a color space where lighter colors correspond to lower parameter values
 
 	:param	param_list:		parameter list
 	:type	param_list:		list of numbers (parameter values)
@@ -1993,9 +1993,14 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
 
 	 * ValueError (Argument `param_list` is empty)
 
-	 * TypeError (')
+	 * TypeError (Argument `offset` is of the wrong type)
 
-	 * ValueError (Offset is out of normal range [0, 1])
+	 * ValueError (Argument `offset` is not in the range [0.0, 1.0])
+
+	 * ValueError (Argument `color_space` is of the wrong type')
+
+	 * ValueError (Argument `color_space` is not one of ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', \
+	 'YlOrBr', 'YlOrRd'] (case insensitive))
 	"""
 	if len(param_list) == 0:
 		raise TypeError('Argument `param_list` is empty')

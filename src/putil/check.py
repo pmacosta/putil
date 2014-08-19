@@ -14,6 +14,7 @@ import functools
 
 import putil.misc
 
+
 class Number(object):	#pylint: disable=R0903
 	"""	Number class (integer, real or complex)	"""
 	def includes(self, test_obj):	#pylint: disable=R0201
@@ -30,6 +31,7 @@ class Number(object):	#pylint: disable=R0903
 		exp_dict['type'] = ValueError
 		exp_dict['msg'] = 'Argument `{0}` is not a number'.format(param_name)
 		return exp_dict
+
 
 class PositiveInteger(object):	#pylint: disable=R0903
 	"""	PositiveInteger class (Integer greater than zero) """
@@ -48,6 +50,7 @@ class PositiveInteger(object):	#pylint: disable=R0903
 		exp_dict['msg'] = 'Argument `{0}` is not a positive integer'.format(param_name)
 		return exp_dict
 
+
 class Real(object):	#pylint: disable=R0903
 	"""	Real class (integer or real) """
 	def includes(self, test_obj):	#pylint: disable=R0201
@@ -64,6 +67,7 @@ class Real(object):	#pylint: disable=R0903
 		exp_dict['type'] = ValueError
 		exp_dict['msg'] = 'Argument `{0}` is not a real number'.format(param_name)
 		return exp_dict
+
 
 class PositiveReal(object):	#pylint: disable=R0903
 	"""	PositiveReal class (integer or real greater than zero) """
@@ -82,6 +86,7 @@ class PositiveReal(object):	#pylint: disable=R0903
 		exp_dict['msg'] = 'Argument `{0}` is not a positive real number'.format(param_name)
 		return exp_dict
 
+
 class ArbitraryLength(object):	#pylint: disable=R0903
 	""" Base class for arbitrary length iterables """
 	def __init__(self, iter_type, element_type):
@@ -95,7 +100,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
-		if not isinstance(test_obj, self.iter_type):
+		if (not isinstance(test_obj, self.iter_type)) or (isinstance(test_obj, self.iter_type) and (type(test_obj) != self.iter_type)):
 			return False
 		pseudo_types = _get_pseudo_types(False)['type']
 		for test_subobj in test_obj:
@@ -107,9 +112,8 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		if (not isinstance(test_obj, self.iter_type)) or (isinstance(test_obj, self.iter_type) and (type(test_obj) != self.iter_type)):
 			return False
-		pseudo_types = _get_pseudo_types(False)['type']
 		for test_subobj in test_obj:
-			if ((type(self.element_type) in pseudo_types) and (not self.element_type.istype(test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
+			if not type_match(test_subobj, self.element_type):
 				return False
 		return True
 
@@ -120,20 +124,24 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		exp_dict['msg'] = 'Argument `{0}` is not a {1} of {2} objects'.format(param_name, str(self.iter_type)[7:-2], str(self.element_type)[7:-2])
 		return exp_dict
 
+
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length lists """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, list, element_type)
+
 
 class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length tuple """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, tuple, element_type)
 
+
 class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, set, element_type)
+
 
 class OneOf(object):	#pylint: disable=R0903
 	""" Class for parmeters that can only take a value from a finite set """
@@ -185,6 +193,7 @@ class OneOf(object):	#pylint: disable=R0903
 		exp_dict['msg'] = 'Argument `{0}` is not one of {1}{2}'.format(param_name, self.desc, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
 		return exp_dict
 
+
 class NumberRange(object):	#pylint: disable=R0903
 	"""	Class for numeric arguments that can only take values in a certain range """
 	def __init__(self, minimum=None, maximum=None):
@@ -215,6 +224,7 @@ class NumberRange(object):	#pylint: disable=R0903
 		exp_dict['msg'] = 'Argument `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
 		return exp_dict
 
+
 class RealNumpyVector(object):	#pylint: disable=R0903
 	""" Numpy vector where every element is a real number """
 	def __init__(self):
@@ -240,6 +250,7 @@ class RealNumpyVector(object):	#pylint: disable=R0903
 		exp_dict['msg'] = 'Argument `{0}` is not a Numpy vector of real numbers'.format(param_name)
 		return exp_dict
 
+
 class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 	""" Numpy vector where every element is a real number greater than the previous element	"""
 	def __init__(self):
@@ -259,6 +270,7 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 		exp_dict['type'] = ValueError
 		exp_dict['msg'] = 'Argument `{0}` is not a Numpy vector of increasing real numbers'.format(param_name)
 		return exp_dict
+
 
 class File(object):	#pylint: disable=R0903
 	""" File name string """
@@ -281,6 +293,7 @@ class File(object):	#pylint: disable=R0903
 		exp_dict['type'] = IOError
 		exp_dict['msg'] = 'File {0} could not be found'.format(param)
 		return exp_dict
+
 
 class Function(object):	#pylint: disable=R0903
 	""" Function pointer """
@@ -307,6 +320,7 @@ class Function(object):	#pylint: disable=R0903
 		exp_dict['type'] = ValueError
 		exp_dict['msg'] = 'Argument `{0}` is not a function with {1} argument{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')
 		return exp_dict
+
 
 class PolymorphicType(object):	#pylint: disable=R0903
 	""" Class for polymorphic arguments """
@@ -347,6 +361,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 		exp_dict['type'] = exp_type
 		exp_dict['msg'] = '\n'.join(exp_msg)
 		return exp_dict
+
 
 def get_function_args(func):
 	"""	Returns a list of the argument names, in order, as defined by the function """
