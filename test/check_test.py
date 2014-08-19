@@ -143,17 +143,22 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 		putil.check.ArbitraryLength(list, int)
 		putil.check.ArbitraryLength(set, int)
 		putil.check.ArbitraryLength(tuple, int)
+		putil.check.ArbitraryLength(list, putil.check.Number())
 		assert test_list == 2*[True]
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of ArbitraryLength class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLength(list, int)
-		assert (ref_obj.includes([1, 2]), ref_obj.includes((1, 2)), ref_obj.includes(set([1.0, 2.0])), ref_obj.includes(1+2j), ref_obj.includes('a')) == (True, False, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLength(list, int)
+		ref_obj2 = putil.check.ArbitraryLength(list, putil.check.Number())
+		assert (ref_obj1.includes([1, 2]), ref_obj1.includes((1, 2)), ref_obj1.includes(set([1.0, 2.0])), ref_obj1.includes(1+2j), ref_obj1.includes('a'), ref_obj2.includes([1, 2.0, 3]), ref_obj2.includes([1, 2.0, None])) \
+			== (True, False, False, False, False, True, False)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of ArbitraryLength class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLength(tuple, int)
-		assert (ref_obj.istype([1, 2]), ref_obj.istype((1, 2)), ref_obj.istype(set([1.0, 2.0])), ref_obj.istype(1+2j), ref_obj.istype('a')) == (False, True, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLength(tuple, int)
+		ref_obj2 = putil.check.ArbitraryLength(list, putil.check.PositiveReal())
+		assert (ref_obj1.istype([1, 2]), ref_obj1.istype((1, 2)), ref_obj1.istype(set([1.0, 2.0])), ref_obj1.istype(1+2j), ref_obj1.istype('a'), ref_obj2.istype([1, 2]), ref_obj2.istype([1, -1])) \
+			== (False, True, False, False, False, True, False)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLength class behaves appropriately when inproper element in iterable is passed """
@@ -180,13 +185,16 @@ class TestArbitraryLengthList(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		"""	Test that the includes method of ArbitraryLengthList class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLengthList(int)
-		assert (ref_obj.includes([1, 2]), ref_obj.includes(set([1, 2])), ref_obj.includes((1, 2)), ref_obj.includes('a')) == (True, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLengthList(int)
+		ref_obj2 = putil.check.ArbitraryLengthList(putil.check.NumberRange(0, 1))
+		assert (ref_obj1.includes([1, 2]), ref_obj1.includes(set([1, 2])), ref_obj1.includes((1, 2)), ref_obj1.includes('a'), ref_obj2.includes([0.5]), ref_obj2.includes([-0.01])) == (True, False, False, False, True, False)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		"""	Test that the istype method of ArbitraryLengthList class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLengthList(int)
-		assert (ref_obj.istype([1, 2]), ref_obj.istype(set([1, 2])), ref_obj.istype((1, 2)), ref_obj.istype('a')) == (True, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLengthList(int)
+		ref_obj2 = putil.check.ArbitraryLengthList(putil.check.NumberRange(0, 1))
+		assert (ref_obj1.istype([1, 2]), ref_obj1.istype(set([1, 2])), ref_obj1.istype((1, 2)), ref_obj1.istype('a'), ref_obj2.istype([0.5]), ref_obj2.istype([-0.01]), ref_obj2.istype(['a'])) == \
+			(True, False, False, False, True, True, False)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthList class behaves appropriately when inproper element in list is passed """
@@ -213,13 +221,16 @@ class TestArbitraryLengthTuple(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		"""	Test that the includes method of ArbitraryLengthTuple class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLengthTuple(float)
-		assert (ref_obj.includes((1.0, 2.0)), ref_obj.includes([1, 2]), ref_obj.includes(set([1, 2])), ref_obj.includes('a')) == (True, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLengthTuple(float)
+		ref_obj2 = putil.check.ArbitraryLengthTuple(putil.check.NumberRange(0, 1))
+		assert (ref_obj1.includes((1.0, 2.0)), ref_obj1.includes([1, 2]), ref_obj1.includes(set([1, 2])), ref_obj1.includes('a'), ref_obj2.includes((0.5,)), ref_obj2.includes((-0.01,))) == (True, False, False, False, True, False)
 
 	def test_type(self):	#pylint: disable=R0201,C0103
 		"""	Test that the istype method of ArbitraryLengthTuple class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLengthTuple(float)
-		assert (ref_obj.istype((1.0, 2.0)), ref_obj.istype([1, 2]), ref_obj.istype(set([1, 2])), ref_obj.istype('a')) == (True, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLengthTuple(float)
+		ref_obj2 = putil.check.ArbitraryLengthTuple(putil.check.NumberRange(0, 1))
+		assert (ref_obj1.istype((1.0, 2.0)), ref_obj1.istype([1, 2]), ref_obj1.istype(set([1, 2])), ref_obj1.istype('a'), ref_obj2.istype((0.5,)), ref_obj2.istype((-0.01,)), ref_obj2.istype(('a'))) == \
+			(True, False, False, False, True, True, False)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthTuple class behaves appropriately when inproper element in tuple is passed """
@@ -246,13 +257,17 @@ class TestArbitraryLengthSet(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of ArbitraryLengthSet class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLengthSet(float)
-		assert (ref_obj.includes(set([1.0, 2.0])), ref_obj.includes([1, 2]), ref_obj.includes((1, 2)), ref_obj.includes('a')) == (True, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLengthSet(float)
+		ref_obj2 = putil.check.ArbitraryLengthSet(putil.check.NumberRange(0, 1))
+		assert (ref_obj1.includes(set([1.0, 2.0])), ref_obj1.includes([1, 2]), ref_obj1.includes((1, 2)), ref_obj1.includes('a'), ref_obj2.includes(set([0.5])), ref_obj2.includes(set([-0.01]))) == \
+			(True, False, False, False, True, False)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of ArbitraryLengthSet class behaves appropriately """
-		ref_obj = putil.check.ArbitraryLengthSet(float)
-		assert (ref_obj.istype(set([1.0, 2.0])), ref_obj.istype([1, 2]), ref_obj.istype((1, 2)), ref_obj.istype('a')) == (True, False, False, False)
+		ref_obj1 = putil.check.ArbitraryLengthSet(float)
+		ref_obj2 = putil.check.ArbitraryLengthSet(putil.check.NumberRange(0, 1))
+		assert (ref_obj1.istype(set([1.0, 2.0])), ref_obj1.istype([1, 2]), ref_obj1.istype((1, 2)), ref_obj1.istype('a'), ref_obj2.istype(set([0.5])), ref_obj2.istype(set([-0.01])), ref_obj2.istype(set(['a']))) == \
+			(True, False, False, False, True, True, False)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthSet class behaves appropriately when inproper element in set is passed """
@@ -350,12 +365,6 @@ class TestNumberRange(object):	#pylint: disable=W0232
 			putil.check.NumberRange(minimum=None, maximum=None)
 		assert excinfo.value.message == 'Either argument `minimum` or argument `maximum` needs to be specified'
 
-	def test_minimum_and_maximum_are_of_different_type(self):	#pylint: disable=R0201,C0103
-		""" Tests that NumberRange class behaves properly when minimum is either integer or float and maximum is either float or integer """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.NumberRange(minimum=1.5, maximum=3)
-		assert excinfo.value.message == 'Arguments `minimum` and `maximum` have different types'
-
 	def test_minimum_greater_than_maximum(self):	#pylint: disable=R0201,C0103
 		""" Tests that NumberRange class behaves properly when minimum is greater than maximum """
 		with pytest.raises(ValueError) as excinfo:
@@ -373,19 +382,19 @@ class TestNumberRange(object):	#pylint: disable=W0232
 		ref_obj2 = putil.check.NumberRange(100.0, 200.0)
 		assert (ref_obj1.includes(5), ref_obj1.includes(10), ref_obj1.includes(13), ref_obj1.includes(15), ref_obj1.includes(20), ref_obj1.includes(13.0),
 			 ref_obj2.includes(75.1), ref_obj2.includes(100.0), ref_obj2.includes(150.0), ref_obj2.includes(200.0), ref_obj2.includes(200.1), ref_obj2.includes(200)) == \
-			 (False, True, True, True, False, False, False, True, True, True, False, False)
+			 (False, True, True, True, False, True, False, True, True, True, False, True)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of NumberRange class behaves appropriately """
 		ref_obj1 = putil.check.NumberRange(10, 15)
 		ref_obj2 = putil.check.NumberRange(100.0, 200.0)
 		assert (ref_obj1.istype(5), ref_obj1.istype(10), ref_obj1.istype(13), ref_obj1.istype(15), ref_obj1.istype(20), ref_obj1.istype(13.0),
-			 ref_obj2.istype(75.1), ref_obj2.istype(100.0), ref_obj2.istype(150.0), ref_obj2.istype(200.0), ref_obj2.istype(200.1), ref_obj2.istype(200)) == \
-			 (True, True, True, True, True, False, True, True, True, True, True, False)
+			 ref_obj2.istype(75.1), ref_obj2.istype(100.0), ref_obj2.istype(150.0), ref_obj2.istype(200.0), ref_obj2.istype(200.1), ref_obj2.istype(200), ref_obj2.istype('a')) == \
+			 (True, True, True, True, True, True, True, True, True, True, True, True, False)
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		""" Tests that exception method of NumberRange class behaves appropriately """
-		test1 = putil.check.NumberRange(maximum=15).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not in the range [-inf, 15]'}
+		test1 = putil.check.NumberRange(maximum=15).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not in the range [-inf, 15.0]'}
 		test2 = putil.check.NumberRange(minimum=20.0).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not in the range [20.0, +inf]'}
 		test3 = putil.check.NumberRange(minimum=3.5, maximum=4.75).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not in the range [3.5, 4.75]'}
 		assert (test1, test2, test3) == (True, True, True)
@@ -604,10 +613,10 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		obj3 = putil.check.PolymorphicType([putil.check.File(True), putil.check.Function(num_pars=2)])
 		obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger(), putil.check.NumberRange(minimum=15, maximum=20)])
 		obj5 = putil.check.PolymorphicType([None, putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.PositiveReal()])
-		test1 = obj1.exception('par1', 5) == {'type':ValueError, 'msg':"Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nArgument `par1` is not in the range [15, 20]"}
+		test1 = obj1.exception('par1', 5) == {'type':ValueError, 'msg':"Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nArgument `par1` is not in the range [15.0, 20.0]"}
 		test2 = obj2.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':"(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File _not_valid_ could not be found"}
 		test3 = obj3.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':'(IOError) File _not_valid_ could not be found\n(ValueError) Argument `par1` is not a function with 2 arguments'}
-		test4 = obj4.exception('par1', -1) == {'type':ValueError, 'msg':"Argument `par1` is not a positive integer\nArgument `par1` is not in the range [15, 20]"}
+		test4 = obj4.exception('par1', -1) == {'type':ValueError, 'msg':"Argument `par1` is not a positive integer\nArgument `par1` is not in the range [15.0, 20.0]"}
 		test5 = obj5.exception('par1', -1) == {'type':ValueError, 'msg':"Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nArgument `par1` is not a positive real number"}
 		assert (test1, test2, test3, test4, test5) == (True, True, True, True, True)
 
@@ -950,7 +959,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
 			func_check_type(1)
-		assert excinfo.value.message == 'Argument `ppar1` is not in the range [10, +inf]'
+		assert excinfo.value.message == 'Argument `ppar1` is not in the range [10.0, +inf]'
 
 	def test_range_no_maximum_in_range(self):	#pylint: disable=R0201,C0103
 		"""
@@ -970,7 +979,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 			print ppar1
 		with pytest.raises(ValueError) as excinfo:
 			func_check_type(20)
-		assert excinfo.value.message == 'Argument `ppar1` is not in the range [-inf, 10]'
+		assert excinfo.value.message == 'Argument `ppar1` is not in the range [-inf, 10.0]'
 
 	def test_range_no_minimum_in_range(self):	#pylint: disable=R0201,C0103
 		"""
@@ -1016,7 +1025,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		eobj1 = excinfo1.value.message == 'Argument `ppar1` is of the wrong type'
 		with pytest.raises(ValueError) as excinfo2:	# Type not in the definition
 			func_check_type2(2)
-		eobj2 = excinfo2.value.message == "Argument `ppar1` is not in the range [5, 10]\nArgument `ppar1` is not one of ['HELLO', 'WORLD'] (case insensitive)"
+		eobj2 = excinfo2.value.message == "Argument `ppar1` is not in the range [5.0, 10.0]\nArgument `ppar1` is not one of ['HELLO', 'WORLD'] (case insensitive)"
 		assert (eobj1, eobj2) == (True, True)
 
 	def test_polymorphic_type_no_error(self):	#pylint: disable=R0201,C0103

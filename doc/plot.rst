@@ -99,7 +99,7 @@ Functions
 =========
 
 .. automodule:: putil.plot
-	:members: parametrized_color_space
+	:members: parameterized_color_space
 
 Classes
 =======

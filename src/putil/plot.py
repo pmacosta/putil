@@ -1974,51 +1974,32 @@ def _get_panel_prop(fig, axarr):
 	bbox = axarr.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
 	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
 
-def parametrized_color_space(series, offset=0, color='binary'):
+_COLOR_SPACE_NAME_LIST = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
+@putil.check.check_arguments({'param_list':putil.check.ArbitraryLengthList(putil.check.Number()), 'offset':putil.check.NumberRange(0, 1), 'color_space':putil.check.OneOf(_COLOR_SPACE_NAME_LIST)})
+def parameterized_color_space(param_list, offset=0, color_space='binary'):
 	"""
 	Computes a color space where lighter colors correspond to lower argument values
 
-	:param	series:	data series
-	:type	series:	Numpy vector
-	:param	offset:	offset of the first (lightest) color
-	:type	offset: float between 0 and 1
-	:param	color:	`color pallete <http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_. One of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples',\
-	'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case sensitive).
-	:type	color:	string
-	:rtype:			Matplotlib color
+	:param	param_list:		parameter list
+	:type	param_list:		list of numbers (parameter values)
+	:param	offset:			offset of the first (lightest) color
+	:type	offset:			float between 0 and 1
+	:param	color_space:	`color pallete <http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_. One of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', \
+	'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case sensitive).
+	:type	color_space:	string
+	:rtype:					Matplotlib color
 	:raises:
-	 * TypeError (Series has to be a list)
+	 * TypeError (Argument `param_list` is of the wrong type)
 
-	 * RuntimeError (Series is empty)
+	 * ValueError (Argument `param_list` is empty)
 
-	 * TypeError (Element *[index]* (*[value]*) is not a number)
-
-	 * ValueError (Element *[index]* (*[value]*) is out of normal range [0, 1])
-
-	 * TypeError (Offset has to be a number)
+	 * TypeError (')
 
 	 * ValueError (Offset is out of normal range [0, 1])
 	"""
-	if isinstance(series, list) is False:
-		raise TypeError('Series has to be a list')
-	if len(series) == 0:
-		raise RuntimeError('Series is empty')
-	for num, element in enumerate(series):
-		if putil.misc.isnumber(element) is False:
-			raise TypeError('Element {0} ({1}) is not a number'.format(num, element))
-		if (element < 0) or (element > 1):
-			raise ValueError('Element {0} ({1}) is out of normal range [0, 1]'.format(num, element))
-	if putil.misc.isnumber(offset) is False:
-		raise TypeError('Offset has to be a number')
-	if (offset < 0) or (offset > 1):
-		raise ValueError('Offset is out of normal range [0, 1]')
-	color_name_list = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
+	if len(param_list) == 0:
+		raise TypeError('Argument `param_list` is empty')
 	color_pallete_list = [plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.gist_yarg, plt.cm.GnBu, plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,	#pylint: disable=E1101
 					   plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds, plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd]	#pylint: disable=E1101
-	if color not in color_name_list:
-		raise ValueError('Color pallete is not valid')
-	color_dict = dict(zip(color_name_list, color_pallete_list))
-	#color_dict = {'binary':plt.cm.binary, 'Blues':plt.cm.Blues, 'BuGn':plt.cm.BuGn, 'BuPu':plt.cm.BuPu, 'gist_yarg':plt.cm.gist_yarg, 'GnBu':plt.cm.GnBu, 'Greens':plt.cm.Greens, 'Greys':plt.cm.Greys,	#pylint: disable=E1101
-	#		'Oranges':plt.cm.Oranges, 'OrRd':plt.cm.OrRd, 'PuBu':plt.cm.PuBu, 'PuBuGn':plt.cm.PuBuGn, 'PuRd':plt.cm.PuRd, 'Purples':plt.cm.Purples, 'RdPu':plt.cm.RdPu, 'Reds':plt.cm.Reds,	#pylint: disable=E1101
-	#		'YlGn':plt.cm.YlGn, 'YlGnBu':plt.cm.YlGnBu, 'YlOrBr':plt.cm.YlOrBr, 'YlOrRd':plt.cm.YlOrRd}	#pylint: disable=E1101
-	return [color_dict[color](putil.misc.normalize(value, series, offset)) for value in series]	#pylint: disable=E1101
+	color_dict = dict(zip(_COLOR_SPACE_NAME_LIST, color_pallete_list))
+	return [color_dict[color_space](putil.misc.normalize(value, param_list, offset)) for value in param_list]	#pylint: disable=E1101

@@ -1746,3 +1746,55 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			test_list.append(result)
 		assert test_list == [True]*len(images_dict_list)
+
+###
+# Tests for parameterized_color_space
+###
+class TestParameterizedColorSpace(object):	#pylint: disable=W0232,R0903
+	""" Tests for function parameterized_color_space """
+	def test_param_list_wrong_type(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test for invalid series parameter """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.parameterized_color_space('a')
+		test_list.append(excinfo.value.message == 'Argument `param_list` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.parameterized_color_space(list())
+		test_list.append(excinfo.value.message == 'Argument `param_list` is empty')
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.parameterized_color_space(['a', None, False])
+		test_list.append(excinfo.value.message == 'Argument `param_list` is of the wrong type')
+		# This should not raise an exception
+		putil.plot.parameterized_color_space([0, 1, 2, 3.3])
+		assert test_list == 3*[True]
+
+	def test_offset_wrong_type(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test for invalid offset parameter """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.parameterized_color_space([1, 2], 'a')
+		test_list.append(excinfo.value.message == 'Argument `offset` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:
+			putil.plot.parameterized_color_space([1, 2], -0.1)
+		test_list.append(excinfo.value.message == 'Argument `offset` is not in the range [0.0, 1.0]')
+		# This should not raise an exception
+		putil.plot.parameterized_color_space([0, 1, 2, 3.3], 0.5)
+		assert test_list == 2*[True]
+
+	def test_color_space_wrong_type(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test for invalid offset parameter """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.plot.parameterized_color_space([1, 2], color_space=3)
+		test_list.append(excinfo.value.message == 'Argument `color_space` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:
+			putil.plot.parameterized_color_space([1, 2], color_space='a')
+		test_list.append(excinfo.value.message == "Argument `color_space` is not one of ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd'] (case insensitive)")	#pylint: disable=C0301
+		# This should not raise an exception
+		putil.plot.parameterized_color_space([0, 1, 2, 3.3], color_space='Blues')
+		assert test_list == 2*[True]
+
+	def test_function_works(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test for correct behavior of function """
+		result = putil.plot.parameterized_color_space([0, 0.5, 1], 0.1, 'Greys')
+		assert result == [(0.95386390125050269, 0.95386390125050269, 0.95386390125050269, 1.0), (0.42002307281774631, 0.42002307281774631, 0.42002307281774631, 1.0), (0.0, 0.0, 0.0, 1.0)]

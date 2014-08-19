@@ -87,7 +87,8 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 	def __init__(self, iter_type, element_type):
 		if iter_type not in [list, tuple, set]:
 			raise TypeError('Argument `iter_type` is of the wrong type')
-		if not isinstance(element_type, type):
+		pseudo_types = _get_pseudo_types(False)['type']
+		if (type(element_type) not in pseudo_types) and (not isinstance(element_type, type)):
 			raise TypeError('Argument `element_type` is of the wrong type')
 		self.element_type = element_type
 		self.iter_type = iter_type
@@ -96,14 +97,21 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		""" Test that an object belongs to the pseudo-type """
 		if not isinstance(test_obj, self.iter_type):
 			return False
+		pseudo_types = _get_pseudo_types(False)['type']
 		for test_subobj in test_obj:
-			if type(test_subobj) != self.element_type:
+			if ((type(self.element_type) in pseudo_types) and (not self.element_type.includes(test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
 				return False
 		return True
 
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
-		return self.includes(test_obj)
+		if (not isinstance(test_obj, self.iter_type)) or (isinstance(test_obj, self.iter_type) and (type(test_obj) != self.iter_type)):
+			return False
+		pseudo_types = _get_pseudo_types(False)['type']
+		for test_subobj in test_obj:
+			if ((type(self.element_type) in pseudo_types) and (not self.element_type.istype(test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
+				return False
+		return True
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
@@ -185,22 +193,20 @@ class NumberRange(object):	#pylint: disable=R0903
 				raise TypeError('Argument `{0}` is of the wrong type'.format(name))
 		if (minimum is None) and (maximum is None):
 			raise TypeError('Either argument `minimum` or argument `maximum` needs to be specified')
-		if (minimum is not None) and (maximum is not None) and (type(minimum) != type(maximum)):
-			raise TypeError('Arguments `minimum` and `maximum` have different types')
 		if (minimum is not None) and (maximum is not None) and (minimum > maximum):
 			raise ValueError('Argument `minimum` greater than argument `maximum`')
-		self.minimum = minimum
-		self.maximum = maximum
-		self.type = type(self.minimum if self.minimum is not None else self.maximum)
+		self.minimum = float(minimum) if minimum is not None else minimum
+		self.maximum = float(maximum) if maximum is not None else maximum
+		self.type = float
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		"""	Test that an object belongs to the pseudo-type """
-		return putil.misc.isreal(test_obj) and (type(test_obj) == self.type) and (test_obj >= self.minimum if self.minimum is not None else test_obj) and \
+		return putil.misc.isreal(test_obj) and (test_obj >= self.minimum if self.minimum is not None else test_obj) and \
 			(test_obj <= self.maximum if self.maximum is not None else test_obj)
 
-	def istype(self, test_obj):
+	def istype(self, test_obj):	#pylint: disable=R0201
 		"""	Checks to see if object is of the same class type """
-		return type(test_obj) == self.type
+		return (type(test_obj) == int) or (type(test_obj) == float)
 
 	def exception(self, param_name):
 		""" Returns a suitable exception message """
