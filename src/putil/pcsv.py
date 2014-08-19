@@ -10,6 +10,7 @@ import os
 import csv
 
 import putil.misc
+import putil.check
 
 def write_file(file_name, row_list, append=True):
 	"""
@@ -38,25 +39,15 @@ class CsvFile(object):
 	"""
 	Read CSV files, filter and retrieve information. First row must contain headers, the rest of the data must be numbers
 	"""
+	@putil.check.check_argument(putil.check.File(check_existance=True))
 	def __init__(self, file_name):
-		if isinstance(file_name, str) is False:
-			msg = 'file_name has to be a string'
-			raise TypeError(msg)
-		if os.path.exists(file_name) is False:
-			msg = 'File '+file_name+' could not be found'
-			raise IOError(msg)
 		self.current_header = None
 		self.current_data = None
 		self.current_filtered_data = None
 		self.current_filter = None
-		try:
-			file_handle = open(file_name, 'r')
+		with open(file_name, 'rU') as file_handle:
 			csv_obj = csv.reader(file_handle)
 			self.current_data = [row for row in csv_obj]
-			file_handle.close()
-		except:
-			msg = 'Cannot open file '+file_name
-			raise IOError(msg)
 		# Find start of data row
 		num = 0
 		for num, row in enumerate(self.current_data[1:]):
@@ -82,16 +73,19 @@ class CsvFile(object):
 		if isinstance(current_filter, dict) is False:
 			msg = 'current_filter must be a dictionary'
 			raise TypeError(msg)
+		for key in current_filter:
+			if key.upper() not in self.current_header:
+				raise RuntimeError(key+' not in CSV file header')
 		self.current_filtered_data = list()
 		for row in self.current_data:
 			add = True
 			for key in current_filter:
-				if key.upper() not in self.current_header:
-					msg = key+' not in CSV file header'
-					raise RuntimeError(msg)
 				col_num = self.current_header.index(key.upper())
-				add = True if (row[col_num] == current_filter[key]) and add is True else False
-			if add is True:
+				if putil.misc.isiterable(current_filter[key]):
+					add = True if (any([row[col_num] == value for value in current_filter[key]]) and add) else False
+				else:
+					add = True if ((row[col_num] == current_filter[key]) and add) else False
+			if add:
 				self.current_filtered_data.append(row)
 		self.current_filter = current_filter
 
@@ -102,7 +96,7 @@ class CsvFile(object):
 		if isinstance(current_filter, dict) is False:
 			msg = 'current_filter must be a dictionary'
 			raise TypeError(msg)
-		current_filter = dict(self.current_filter.items() + current_filter.items())
+		current_filter = dict(self.current_filter.items() + current_filter.items()) if self.current_filter is not None else current_filter
 		self.set_filter(current_filter)
 
 	def get_filter(self):
