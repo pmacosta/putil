@@ -6,7 +6,6 @@
 Utility classes, methods and functions to handle comma-delimited file as a quasi database
 """
 
-import os
 import csv
 
 import putil.misc
@@ -40,111 +39,159 @@ class CsvFile(object):
 	Read CSV files, filter and retrieve information. First row must contain headers, the rest of the data must be numbers
 	"""
 	@putil.check.check_argument(putil.check.File(check_existance=True))
-	def __init__(self, file_name):
-		self.current_header = None
-		self.current_data = None
-		self.current_filtered_data = None
-		self.current_filter = None
+	def __init__(self, file_name, dfilter=None):
+		self._header, self._data, self._fdata, self._dfilter = None, None, None, None
 		with open(file_name, 'rU') as file_handle:
-			csv_obj = csv.reader(file_handle)
-			self.current_data = [row for row in csv_obj]
+			self._raw_data = [row for row in csv.reader(file_handle)]
+		# Process header
+		if len(self._raw_data) == 0:
+			raise RuntimeError('File {0} is empty'.format(file_name))
+		self._header = [col.upper() for col in self._raw_data[0]]
+		if len(set(self._header)) != len(self._header):
+			raise ValueError('Column headers are not unique')
 		# Find start of data row
 		num = 0
-		for num, row in enumerate(self.current_data[1:]):
-			if _float_failsafe(row[0]) != row[0]:
+		for num, row in enumerate(self._raw_data[1:]):
+			if any([_float_failsafe(row[col]) != row[col] for col in row]):
 				break
 		else:
 			raise ValueError('No data was detected in comma-separated file {0}'.format(file_name))
 		# Set up class properties
-		self.current_header = [col.upper() for col in self.current_data[0]]
-		self.current_data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self.current_data[num+1:]]
-		self.current_filtered_data = self.current_data[:]
+		self._data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self._raw_data[num:]]
+		self.reset_dfilter()
+		self._set_dfilter(dfilter)
 
-	def reset_filter(self):
-		"""
-		Reset filter
-		"""
-		self.current_filtered_data = self.current_data[:]
+	def reset_dfilter(self):
+		""" Resets (clears) data filter """
+		self._fdata = self._data[:]
+		self._dfilter = None
 
-	def set_filter(self, current_filter):
+	def _get_dfilter(self):	#pylint: disable=C0111
+		return self._dfilter	#pylint: disable=W0212
+
+	@putil.check.check_argument(dict)
+	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
+		if len(dfilter) == 0:
+			raise ValueError('Argument `dfilter` is empty')
+		for key in dfilter:
+			self._in_header(key)
+		col_nums = [self._header.index(key.upper()) for key in dfilter]
+		col_values = [element if not putil.misc.isiterable(element) else [value for value in element] for key, element in dfilter.items()]
+		self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
+		self._dfilter = dfilter
+
+	@putil.check.check_argument(dict)
+	def add_filter(self, dfilter):
 		"""
-		Filter data
+		Adds more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
+
+		:param	dfilter:	Filter specification. See :py:attr:`putil.pcsv.CsvFile.dfilter`
+		:type	dfilter:	dictionary
+		:raises: Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
 		"""
-		if isinstance(current_filter, dict) is False:
-			msg = 'current_filter must be a dictionary'
-			raise TypeError(msg)
-		for key in current_filter:
-			if key.upper() not in self.current_header:
-				raise RuntimeError(key+' not in CSV file header')
-		self.current_filtered_data = list()
-		for row in self.current_data:
-			add = True
-			for key in current_filter:
-				col_num = self.current_header.index(key.upper())
-				if putil.misc.isiterable(current_filter[key]):
-					add = True if (any([row[col_num] == value for value in current_filter[key]]) and add) else False
+		if dfilter is None:
+			self._dfilter = dfilter
+		else:
+			for key in dfilter:
+				if key in self._dfilter:
+					self._dfilter[key] = list(set((self._dfilter[key] if isinstance(self._dfilter[key], list) else [self._dfilter[key]]) + (dfilter[key] if isinstance(dfilter[key], list) else [dfilter[key]])))
 				else:
-					add = True if ((row[col_num] == current_filter[key]) and add) else False
-			if add:
-				self.current_filtered_data.append(row)
-		self.current_filter = current_filter
+					self._dfilter[key] = dfilter[key]
+		self._set_dfilter(dfilter)
 
-	def add_filter(self, current_filter):
-		"""
-		Add to current filter
-		"""
-		if isinstance(current_filter, dict) is False:
-			msg = 'current_filter must be a dictionary'
-			raise TypeError(msg)
-		current_filter = dict(self.current_filter.items() + current_filter.items()) if self.current_filter is not None else current_filter
-		self.set_filter(current_filter)
+	def _get_header(self):	#pylint: disable=C0111
+		return self._header	#pylint: disable=W0212
 
-	def get_filter(self):
+	def data(self, col=None, filtered=False):
 		"""
-		Query the currently applied filter
-		"""
-		return self.current_filter
+		Returns (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list
+		corresponds to a column of the CSV file.
 
-	def header(self):
+		:param	col:	Column(s) to extract from filtered data
+		:type	col:	string or list of strings
+		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is returned, if **filtered** is *False* the raw (original) file data is returned
+		:rtype:	list
 		"""
-		Return header
-		"""
-		return self.current_header
+		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
-	def data(self, col=None):
-		"""
-		Return data
-		"""
-		return self.current_data if col is None else self.core_data(self.data, col)
-
-	def filtered_data(self, col=None):
-		"""
-		Return filtered data
-		"""
-		return self.current_filtered_data if col is None else self.core_data(self.filtered_data, col)
-
-	def core_data(self, data_pointer, col=None):
-		"""
-		Slide and return data
-		"""
-		if isinstance(col, str) is True:
+	def _in_header(self, col):
+		""" Validate column name(s) against the column names in the file header """
+		col_list = [col] if isinstance(col, str) else col
+		for col in col_list:
 			col = col.upper()
 			if col not in self.header():
-				msg = col+' not in CSV file header'
-				raise RuntimeError(msg)
-			col_num = self.header().index(col)
-			return [row[col_num] for row in data_pointer()]
-		elif isinstance(col, list) is True:
+				raise ValueError('Column {0} not found in header'.format(col))
+
+	@putil.check.check_argument(putil.check.PolymorphicType([str, putil.check.ArbitraryLengthList(str)]))
+	def _core_data(self, data, col=None):
+		""" Extract columns from data """
+		self._in_header(col)
+		if isinstance(col, str):
+			col_num = self.header().index(col.upper())
+			return [row[col_num] for row in data]
+		elif isinstance(col, list):
 			col_list = col[:]
-			for col in col_list:
-				if isinstance(col, str) is False:
-					msg = 'col must be a list of strings'
-					raise TypeError(msg)
-				if col.upper() not in self.header():
-					msg = col.upper()+' not in CSV file header'
-					raise RuntimeError(msg)
 			col_index_list = [self.header().index(col.upper()) for col in col_list]
-			return [[row[index] for index in col_index_list] for row in data_pointer()]
-		else:
-			msg = 'Invalid column(s) type'
-			raise TypeError(msg)
+			return [[row[index] for index in col_index_list] for row in data]
+
+	# Managed attributes
+	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')
+	"""
+	Comma-separated file (CSV) header
+
+	:rtype:	list of strings
+	"""	#pylint: disable=W0105
+
+	dfilter = property(_get_dfilter, _set_dfilter, None, doc='Data filter')
+	"""
+	Data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and either a value representing a column value or an iterable (dictionary value). If the
+	dictionary value is a column value all rows which cointain the specified value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified
+	by each individual filter. For example, if the file name to be processed is:
+
+	+------+-----+--------+
+	| Ctrl | Ref | Result |
+	+======+=====+========+
+	|    1 |   3 |     10 |
+	+------+-----+--------+
+	|    1 |   4 |     20 |
+	+------+-----+--------+
+	|    2 |   4 |     30 |
+	+------+-----+--------+
+	|    2 |   5 |     40 |
+	+------+-----+--------+
+	|    3 |   5 |     50 |
+	+------+-----+--------+
+
+	Then the filter specification ``dfilter = {'Ctrl':2, 'Ref':5}`` would result in the following filtered data set:
+
+	+------+-----+--------+
+	| Ctrl | Ref | Result |
+	+======+=====+========+
+	|    2 |   5 |     40 |
+	+------+-----+--------+
+
+	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an exception because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
+	the `Ref` individual filter.
+
+	If the dictionarly value is an iterable (typically a list), the element of the iterable represent all the values to be kept for a particular column. So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would
+	result in the following filtered data set:
+
+	+------+-----+--------+
+	| Ctrl | Ref | Result |
+	+======+=====+========+
+	|    2 |   5 |     40 |
+	+------+-----+--------+
+	|    3 |   5 |     50 |
+	+------+-----+--------+
+
+	:type:		dictionary, default is *None*
+	:rtype:		dictionary or None
+	:raises:
+	* TypeError (Argument `dfilter` is of the wrong type)
+
+	* ValueError (Argument `dfilter` is empty)
+
+	* ValueError ('Column *[column name]* not found in header')
+	"""	#pylint: disable=W0105
+
+

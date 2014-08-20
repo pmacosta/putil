@@ -90,7 +90,7 @@ class PositiveReal(object):	#pylint: disable=R0903
 class ArbitraryLength(object):	#pylint: disable=R0903
 	""" Base class for arbitrary length iterables """
 	def __init__(self, iter_type, element_type):
-		if iter_type not in [list, tuple, set]:
+		if iter_type not in [list, tuple, set, dict]:
 			raise TypeError('Argument `iter_type` is of the wrong type')
 		pseudo_types = _get_pseudo_types(False)['type']
 		if (type(element_type) not in pseudo_types) and (not isinstance(element_type, type)):
@@ -103,7 +103,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		if (not isinstance(test_obj, self.iter_type)) or (isinstance(test_obj, self.iter_type) and (type(test_obj) != self.iter_type)):
 			return False
 		pseudo_types = _get_pseudo_types(False)['type']
-		for test_subobj in test_obj:
+		for test_subobj in test_obj if not isinstance(test_obj, dict) else test_obj.values():
 			if ((type(self.element_type) in pseudo_types) and (not self.element_type.includes(test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
 				return False
 		return True
@@ -112,7 +112,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		"""	Checks to see if object is of the same class type """
 		if (not isinstance(test_obj, self.iter_type)) or (isinstance(test_obj, self.iter_type) and (type(test_obj) != self.iter_type)):
 			return False
-		for test_subobj in test_obj:
+		for test_subobj in test_obj if not isinstance(test_obj, dict) else test_obj.values():
 			if not type_match(test_subobj, self.element_type):
 				return False
 		return True
@@ -141,6 +141,12 @@ class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, set, element_type)
+
+
+class ArbitraryLengthDict(ArbitraryLength):	#pylint: disable=R0903
+	"""	Arbitrary length set """
+	def __init__(self, element_type):
+		ArbitraryLength.__init__(self, dict, element_type)
 
 
 class OneOf(object):	#pylint: disable=R0903
