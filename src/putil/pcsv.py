@@ -29,6 +29,8 @@ def write_file(file_name, row_list, append=True):
 
 def _float_failsafe(obj):
 	""" Convert to float if object is a number string """
+	if 'inf' in obj.lower():
+		return obj
 	try:
 		return float(obj)
 	except:	#pylint: disable=W0702
@@ -40,19 +42,22 @@ class CsvFile(object):
 	"""
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
 	def __init__(self, file_name, dfilter=None):
-		self._header, self._data, self._fdata, self._dfilter = None, None, None, None
+		self._header, self._header_upper, self._data, self._fdata, self._dfilter = None, None, None, None, None
 		with open(file_name, 'rU') as file_handle:
 			self._raw_data = [row for row in csv.reader(file_handle)]
 		# Process header
 		if len(self._raw_data) == 0:
 			raise RuntimeError('File {0} is empty'.format(file_name))
-		self._header = [col.upper() for col in self._raw_data[0]]
-		if len(set(self._header)) != len(self._header):
+		self._header = self._raw_data[0]
+		self._header_upper = [col.upper() for col in self.header]
+
+		if len(set(self._header_upper)) != len(self._header_upper):
 			raise RuntimeError('Column headers are not unique')
 		# Find start of data row
 		num = 0
 		for num, row in enumerate(self._raw_data[1:]):
-			if any([_float_failsafe(col) != col for col in row]):
+			print [isinstance(_float_failsafe(col), float) for col in row]
+			if any([isinstance(_float_failsafe(col), float) for col in row]):
 				break
 		else:
 			raise RuntimeError('File {0} has no data'.format(file_name))
@@ -66,22 +71,30 @@ class CsvFile(object):
 		self._fdata = self._data[:]
 		self._dfilter = None
 
+	def _validate_dfilter(self, dfilter):
+		""" Validate that all columns in filter are in header """
+		if dfilter is not None:
+			if len(dfilter) == 0:
+				raise ValueError('Argument `dfilter` is empty')
+			for key in dfilter:
+				self._in_header(key)
+
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter	#pylint: disable=W0212
 
-	@putil.check.check_argument(dict)
+	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
-		if len(dfilter) == 0:
-			raise ValueError('Argument `dfilter` is empty')
-		for key in dfilter:
-			self._in_header(key)
-		col_nums = [self._header.index(key.upper()) for key in dfilter]
-		col_values = [[element] if not putil.misc.isiterable(element) else [value for value in element] for element in dfilter.values()]
-		self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
-		self._dfilter = dfilter
+		if dfilter is None:
+			self._dfilter = None
+		else:
+			self._validate_dfilter(dfilter)
+			col_nums = [self._header_upper.index(key.upper()) for key in dfilter]
+			col_values = [[element] if not putil.misc.isiterable(element) else [value for value in element] for element in dfilter.values()]
+			self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
+			self._dfilter = dfilter
 
 	@putil.check.check_argument(dict)
-	def add_filter(self, dfilter):
+	def add_dfilter(self, dfilter):
 		"""
 		Adds more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
 
@@ -89,6 +102,7 @@ class CsvFile(object):
 		:type	dfilter:	dictionary
 		:raises: Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
 		"""
+		self._validate_dfilter(dfilter)
 		if dfilter is None:
 			self._dfilter = dfilter
 		else:
@@ -97,7 +111,7 @@ class CsvFile(object):
 					self._dfilter[key] = list(set((self._dfilter[key] if isinstance(self._dfilter[key], list) else [self._dfilter[key]]) + (dfilter[key] if isinstance(dfilter[key], list) else [dfilter[key]])))
 				else:
 					self._dfilter[key] = dfilter[key]
-		self._set_dfilter(dfilter)
+		self._set_dfilter(self._dfilter)
 
 	def _get_header(self):	#pylint: disable=C0111
 		return self._header	#pylint: disable=W0212
@@ -117,25 +131,25 @@ class CsvFile(object):
 
 		* TypeError ('Argument `filtered` is of the wrong type')
 		"""
+		self._in_header(col)
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """
-		col_list = [col] if isinstance(col, str) else col
-		for col in col_list:
-			col = col.upper()
-			if col not in self.header:
-				raise ValueError('Column {0} not found in header'.format(col))
+		if col is not None:
+			col_list = [col] if isinstance(col, str) else col
+			for col in col_list:
+				if col.upper() not in self._header_upper:
+					raise ValueError('Column {0} not found in header'.format(col))
 
 	def _core_data(self, data, col=None):
 		""" Extract columns from data """
-		self._in_header(col)
 		if isinstance(col, str):
-			col_num = self.header().index(col.upper())
-			return [row[col_num] for row in data]
+			col_num = self._header_upper.index(col.upper())
+			return [[row[col_num]] for row in data]
 		elif isinstance(col, list):
 			col_list = col[:]
-			col_index_list = [self.header().index(col.upper()) for col in col_list]
+			col_index_list = [self._header_upper.index(col.upper()) for col in col_list]
 			return [[row[index] for index in col_index_list] for row in data]
 
 	# Managed attributes
