@@ -295,18 +295,19 @@ class TestArbitraryLengthDict(object):	#pylint: disable=W0232
 		"""	Test that the includes method of ArbitraryLengthDict class behaves appropriately """
 		ref_obj1 = putil.check.ArbitraryLengthDict(int)
 		ref_obj2 = putil.check.ArbitraryLengthDict(putil.check.NumberRange(0, 1))
-		assert (ref_obj1.includes({'a':1, 'b':2}), ref_obj1.includes(set([1, 2])), ref_obj1.includes((1, 2)), ref_obj1.includes({'a':'a'}), ref_obj2.includes([0.5]), ref_obj2.includes([-0.01])) == (True, False, False, False, True, False)
+		assert (ref_obj1.includes({'a':1, 'b':2}), ref_obj1.includes(set([1, 2])), ref_obj1.includes((1, 2)), ref_obj1.includes({'a':'a'}), ref_obj2.includes({'c':0.5}), ref_obj2.includes({'d':-0.01})) == \
+				(True, False, False, False, True, False)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		"""	Test that the istype method of ArbitraryLengthDict class behaves appropriately """
 		ref_obj1 = putil.check.ArbitraryLengthDict(int)
 		ref_obj2 = putil.check.ArbitraryLengthDict(putil.check.NumberRange(0, 1))
-		assert (ref_obj1.istype([1, 2]), ref_obj1.istype(set([1, 2])), ref_obj1.istype((1, 2)), ref_obj1.istype('a'), ref_obj2.istype([0.5]), ref_obj2.istype([-0.01]), ref_obj2.istype(['a'])) == \
-			(True, False, False, False, True, True, False)
+		assert (ref_obj1.istype({'a':1, 'b':2}), ref_obj1.istype(set([1, 2])), ref_obj1.istype((1, 2)), ref_obj1.istype({'a':'a'}), ref_obj2.istype({'c':0.5}), ref_obj2.istype({'d':-0.01})) == \
+				(True, False, False, False, True, True)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthDict class behaves appropriately when inproper element in list is passed """
-		assert putil.check.ArbitraryLengthDict(int).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a list of int objects"}
+		assert putil.check.ArbitraryLengthDict(int).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a dict of int objects"}
 
 
 ###

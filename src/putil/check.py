@@ -100,7 +100,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
-		if (not isinstance(test_obj, self.iter_type)) or (isinstance(test_obj, self.iter_type) and (type(test_obj) != self.iter_type)):
+		if not isinstance(test_obj, self.iter_type):
 			return False
 		pseudo_types = _get_pseudo_types(False)['type']
 		for test_subobj in test_obj if not isinstance(test_obj, dict) else test_obj.values():
@@ -110,7 +110,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
-		if (not isinstance(test_obj, self.iter_type)) or (isinstance(test_obj, self.iter_type) and (type(test_obj) != self.iter_type)):
+		if not isinstance(test_obj, self.iter_type):
 			return False
 		for test_subobj in test_obj if not isinstance(test_obj, dict) else test_obj.values():
 			if not type_match(test_subobj, self.element_type):

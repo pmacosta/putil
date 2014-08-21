@@ -38,7 +38,7 @@ class CsvFile(object):
 	"""
 	Read CSV files, filter and retrieve information. First row must contain headers, the rest of the data must be numbers
 	"""
-	@putil.check.check_argument(putil.check.File(check_existance=True))
+	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
 	def __init__(self, file_name, dfilter=None):
 		self._header, self._data, self._fdata, self._dfilter = None, None, None, None
 		with open(file_name, 'rU') as file_handle:
@@ -48,16 +48,16 @@ class CsvFile(object):
 			raise RuntimeError('File {0} is empty'.format(file_name))
 		self._header = [col.upper() for col in self._raw_data[0]]
 		if len(set(self._header)) != len(self._header):
-			raise ValueError('Column headers are not unique')
+			raise RuntimeError('Column headers are not unique')
 		# Find start of data row
 		num = 0
 		for num, row in enumerate(self._raw_data[1:]):
-			if any([_float_failsafe(row[col]) != row[col] for col in row]):
+			if any([_float_failsafe(col) != col for col in row]):
 				break
 		else:
-			raise ValueError('No data was detected in comma-separated file {0}'.format(file_name))
+			raise RuntimeError('File {0} has no data'.format(file_name))
 		# Set up class properties
-		self._data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self._raw_data[num:]]
+		self._data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
 		self.reset_dfilter()
 		self._set_dfilter(dfilter)
 
@@ -76,7 +76,7 @@ class CsvFile(object):
 		for key in dfilter:
 			self._in_header(key)
 		col_nums = [self._header.index(key.upper()) for key in dfilter]
-		col_values = [element if not putil.misc.isiterable(element) else [value for value in element] for key, element in dfilter.items()]
+		col_values = [[element] if not putil.misc.isiterable(element) else [value for value in element] for element in dfilter.values()]
 		self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
 		self._dfilter = dfilter
 
@@ -102,6 +102,7 @@ class CsvFile(object):
 	def _get_header(self):	#pylint: disable=C0111
 		return self._header	#pylint: disable=W0212
 
+	@putil.check.check_arguments({'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool})
 	def data(self, col=None, filtered=False):
 		"""
 		Returns (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list
@@ -111,6 +112,10 @@ class CsvFile(object):
 		:type	col:	string or list of strings
 		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is returned, if **filtered** is *False* the raw (original) file data is returned
 		:rtype:	list
+		:raises:
+		* TypeError ('Argument `col` is of the wrong type')
+
+		* TypeError ('Argument `filtered` is of the wrong type')
 		"""
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
@@ -119,10 +124,9 @@ class CsvFile(object):
 		col_list = [col] if isinstance(col, str) else col
 		for col in col_list:
 			col = col.upper()
-			if col not in self.header():
+			if col not in self.header:
 				raise ValueError('Column {0} not found in header'.format(col))
 
-	@putil.check.check_argument(putil.check.PolymorphicType([str, putil.check.ArbitraryLengthList(str)]))
 	def _core_data(self, data, col=None):
 		""" Extract columns from data """
 		self._in_header(col)
