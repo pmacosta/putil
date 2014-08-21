@@ -134,6 +134,12 @@ class CsvFile(object):
 		self._in_header(col)
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
+	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'append':bool})
+	def write(self, file_name, col=None, filtered=False, append=True):
+		""" Writes data to a CSV file """
+		self._in_header(col)
+		write_file(file_name, [self.header]+self.data(col=col, filtered=filtered), append=append)
+
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """
 		if col is not None:
