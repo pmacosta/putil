@@ -7,21 +7,48 @@ import csv
 import putil.misc
 import putil.check
 
-def write_file(file_name, row_list, append=True):
+@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'data':putil.check.ArbitraryLengthList(list), 'append':bool})
+def write_file(file_name, data, append=True):
 	"""
-	Save (potentially incrementally) CSV file
+	Writes data to a specified comma-separated values (CSV) file
+
+	:param	file_name:	File name of the comma-separated values file to be written
+	:type	file_name:	string
+	:param	data:	Data to write to file.
+	:type	data:	list
+	:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
+	possibly overwriting an exisiting file with the same name
+	:type	append: boolean
+	:raises:
+	 * TypeError (Argument `file_name` is of the wrong type)
+
+	 * TypeError (Argument `data` is of the wrong type)
+
+	 * TypeError (Argument `data` is empty)
+
+	 * TypeError (Argument `append` is of the wrong type)
+
+	 * IOError (File *[file_name]* could not be created: *[reason]*)
+
+	 * OSError (File *[file_name]* could not be created: *[reason]*)
+
+	 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
 	"""
+	if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
+		raise ValueError('Argument `data` is empty')
 	try:
 		putil.misc.make_dir(file_name)
 		file_handle = open(file_name, 'wb' if append is False else 'ab')
 		csv_handle = csv.writer(file_handle, delimiter=',')
-		for row in row_list:
+		for row in data:
 			csv_handle.writerow(row)
 		file_handle.close()
 	except IOError as msg:
-		raise IOError('File {0} could not be created: {1}'.format(file_name, msg))
+		raise IOError('File {0} could not be created: {1}'.format(file_name, msg.strerror))
+	except OSError as msg:
+		raise OSError('File {0} could not be created: {1}'.format(file_name, msg.strerror))
 	except Exception as msg:
-		raise RuntimeError('Unknown error: {0}'.format(msg))
+		raise RuntimeError('File {0} could not be created: {1}'.format(file_name, msg.strerror))
 
 def _float_failsafe(obj):
 	""" Convert to float if object is a number string """
@@ -42,17 +69,17 @@ class CsvFile(object):
 	:type	dfilter:	dictionary
 	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
 	:raises:
-	* TypeError (Argument `file_name` is of the wrong type)
+	 * TypeError (Argument `file_name` is of the wrong type)
 
-	* IOError (File *[file_name]* could not be found)
+	 * IOError (File *[file_name]* could not be found)
 
-	* RuntimeError (File *[file_name]* is empty)
+	 * RuntimeError (File *[file_name]* is empty)
 
-	* RuntimeError (Column headers are not unique)
+	 * RuntimeError (Column headers are not unique)
 
-	* RuntimeError (File *[file_name]* has no data)
+	 * RuntimeError (File *[file_name]* has no data)
 
-	* Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
+	 * Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
 	"""
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
 	def __init__(self, file_name, dfilter=None):
@@ -133,27 +160,26 @@ class CsvFile(object):
 	@putil.check.check_arguments({'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool})
 	def data(self, col=None, filtered=False):
 		"""
-		Returns (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list
-		corresponds to a column of the CSV file.
-
 		:param	col:	Column(s) to extract from filtered data. If no column specification is given (or **col** is *None*) all columns are returned
 		:type	col:	string, list of strings or None, default is *None*
 		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is returned, if **filtered** is *False* the raw (original) file data is returned
 		:type	filtered: boolean
+		:returns: (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list corresponds to a column of the CSV file.
 		:rtype:	list
 		:raises:
-		* TypeError (Argument `col` is of the wrong type)
+		 * TypeError (Argument `col` is of the wrong type)
 
-		* TypeError (Argument `filtered` is of the wrong type)
+		 * TypeError (Argument `filtered` is of the wrong type)
 
-		* ValueError (Column *[column_name]* not found in header)
+		 * ValueError (Column *[column_name]* not found in header)
 		"""
 		self._in_header(col)
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'append':bool})
 	def write(self, file_name, col=None, filtered=False, append=True):
-		"""Writes (processed) data to a specified comma-separated values (CSV) file
+		"""
+		Writes (processed) data to a specified comma-separated values (CSV) file
 
 		:param	file_name:	File name of the comma-separated values file to be written
 		:type	file_name:	string
@@ -161,16 +187,29 @@ class CsvFile(object):
 		:type	col:	string, list of strings or None, default is *None*
 		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is written, if **filtered** is *False* the raw (original) file data is written
 		:type	filtered: boolean
-		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, possibly overwriting an exisiting file with the same name
+		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
+		possibly overwriting an exisiting file with the same name
 		:type	append: boolean
 		:raises:
-		* TypeError(Argument `file_name` is of the wrong type)
+		 * TypeError (Argument `file_name` is of the wrong type)
 
-		* Same as :py:attr:`putil.pcsv.CsvFile.data`
+		 * TypeError (Argument `append` is of the wrong type)
 
+		 * ValueError (There is no data to save to file)
+
+		 * IOError (File *[file_name]* could not be created: *[reason]*)
+
+		 * OSError (File *[file_name]* could not be created: *[reason]*)
+
+		 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
+
+		 * Same as :py:attr:`putil.pcsv.CsvFile.data`
 		"""
 		self._in_header(col)
-		write_file(file_name, [self.header]+self.data(col=col, filtered=filtered), append=append)
+		data = self.data(col=col, filtered=filtered)
+		if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
+			raise ValueError('There is no data to save to file')
+		write_file(file_name, [self.header]+data, append=append)
 
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """
@@ -193,14 +232,13 @@ class CsvFile(object):
 	# Managed attributes
 	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')
 	"""
-	Comma-separated file (CSV) header
-
+	:returns: Header of the comma-separated values file. Each column is an element of the list.
 	:rtype:	list of strings
 	"""	#pylint: disable=W0105
 
 	dfilter = property(_get_dfilter, _set_dfilter, None, doc='Data filter')
 	"""
-	Data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and either a value representing a column value or an iterable (dictionary value). If the
+	The data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and either a value representing a column value or an iterable (dictionary value). If the
 	dictionary value is a column value all rows which cointain the specified value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified
 	by each individual filter. For example, if the file name to be processed is:
 
@@ -226,7 +264,7 @@ class CsvFile(object):
 	|    2 |   5 |     40 |
 	+------+-----+--------+
 
-	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an exception because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
+	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an empty list because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
 	the `Ref` individual filter.
 
 	If the dictionarly value is an iterable (typically a list), the element of the iterable represent all the values to be kept for a particular column. So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would
@@ -241,11 +279,12 @@ class CsvFile(object):
 	+------+-----+--------+
 
 	:type:		dictionary, default is *None*
+	:returns:	current data filter
 	:rtype:		dictionary or None
 	:raises:
-	* TypeError (Argument `dfilter` is of the wrong type)
+	 * TypeError (Argument `dfilter` is of the wrong type)
 
-	* ValueError (Argument `dfilter` is empty)
+	 * ValueError (Argument `dfilter` is empty)
 
-	* ValueError ('Column *[column name]* not found in header')
+	 * ValueError (Column *[column name]* not found in header)
 	"""	#pylint: disable=W0105

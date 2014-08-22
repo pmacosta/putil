@@ -7,6 +7,7 @@ putil.pcsv unit tests
 """
 
 import pytest
+import tempfile
 
 import putil.pcsv
 
@@ -61,6 +62,12 @@ def tmp_csv_file(tmpdir):
 
 class TestCsvFile(object):	#pylint: disable=W0232
 	""" Tests for CsvFile class """
+	def test_file_name_wrong_type(self):	#pylint: disable=C0103,R0201
+		""" Test that the rigth exception is raised when the CSV file does not exist """
+		with pytest.raises(TypeError) as excinfo:
+			putil.pcsv.CsvFile(file_name=5)
+		assert excinfo.value.message == 'Argument `file_name` is of the wrong type'
+
 	def test_file_does_not_exist(self):	#pylint: disable=C0103,R0201
 		""" Test that the rigth exception is raised when the CSV file does not exist """
 		file_name = '/file/does/not/exist.csv'
@@ -120,9 +127,11 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list.append(obj.data(filtered=True) == [[2, 5, 40]])
 		obj.dfilter = {'Ctrl':[2, 3], 'Ref':5}
 		test_list.append(obj.data(filtered=True) == [[2, 5, 40], [3, 5, 50]])
+		obj.dfilter = {'Result':100}
+		test_list.append(obj.data(filtered=True) == [])
 		obj.dfilter = None
 		test_list.append(obj.dfilter == None)
-		assert test_list == 4*[True]
+		assert test_list == 5*[True]
 
 	def test_reset_dfilter_works(self, tmpdir, tmp_csv_file):	#pylint: disable=W0613,W0621,C0103,R0201
 		""" Test if data filter reset works """
@@ -219,6 +228,46 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list.append(obj.data(col=['Ctrl', 'Result']) == [[1, 10], [1, 20], [2, 30], [2, 40], [3, 50]])
 		test_list.append(obj.data(col=['Ctrl', 'Result'], filtered=True) == [[1, 20]])
 		assert test_list == 6*[True]
+
+	def test_write_errors(self, tmpdir, tmp_csv_file):	#pylint: disable=W0613,W0621,C0103,R0201
+		""" Test if write() method raises the right exceptions when its arguments are of the wrong type or are badly specified """
+		file_name = str(tmpdir.join('sub/tmp.csv'))
+		obj = putil.pcsv.CsvFile(file_name=file_name)
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			obj.write(file_name=5)
+		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			obj.write(file_name='/some/file', append='a')
+		test_list.append(excinfo.value.message == 'Argument `append` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			obj.write(file_name='/some/file', col=5)
+		test_list.append(excinfo.value.message == 'Argument `col` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			obj.write(file_name='/some/file', col=['a', 5])
+		test_list.append(excinfo.value.message == 'Argument `col` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			obj.write(file_name='/some/file', filtered=5)
+		test_list.append(excinfo.value.message == 'Argument `filtered` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:
+			obj.write(file_name='/some/file', col='NotACol')
+		test_list.append(excinfo.value.message == 'Column NotACol not found in header')
+		obj.dfilter = {'Result':100}
+		with pytest.raises(ValueError) as excinfo:
+			obj.write(file_name='/some/file', filtered=True)
+		test_list.append(excinfo.value.message == 'There is no data to save to file')
+		with pytest.raises(OSError) as excinfo:
+			obj.write(file_name='/some/file')
+		test_list.append(excinfo.value.message == 'File /some/file could not be created: Permission denied')
+		assert test_list == 8*[True]
+
+	def test_write_works(self, tmpdir, tmp_csv_file):	#pylint: disable=W0613,W0621,C0103,R0201
+		""" Test if write() method behaves properly """
+		file_name = str(tmpdir.join('sub/tmp.csv'))
+		obj = putil.pcsv.CsvFile(file_name=file_name)
+		with tempfile.NamedTemporaryFile() as fobj:
+			file_name = fobj.name
+			obj.write(file_name=file_name, col='Result', filtered=True, append=False)
 
 	def test_cannot_delete_attributes(self, tmpdir, tmp_csv_file):	#pylint: disable=W0613,W0621,C0103,R0201
 		""" Test that del method raises an exception on all class attributes """
