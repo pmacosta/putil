@@ -221,6 +221,7 @@ class CsvFile(object):
 			header = self.header if col is None else [self.header[self._header_upper.index(element.upper())] for element in col]
 		if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
 			raise ValueError('There is no data to save to file')
+		data = [["''" if col is None else col for col in row] for row in data]
 		write(file_name, [header]+data if headers else data, append=append)
 
 	def _in_header(self, col):
