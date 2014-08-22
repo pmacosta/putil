@@ -1,10 +1,6 @@
-# pcsv.py
+# pcsv.py	pylint:disable=C0111
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Utility classes, methods and functions to handle comma-delimited file as a quasi database
-"""
 
 import csv
 
@@ -38,7 +34,25 @@ def _float_failsafe(obj):
 
 class CsvFile(object):
 	"""
-	Read CSV files, filter and retrieve information. First row must contain headers, the rest of the data must be numbers
+	Process comma-separated values (CSV) files
+
+	:param	file_name:	File name of the comma-separated values file to be read
+	:type	file_name:	string
+	:param	dfilter:	Data filter. See :py:attr:`putil.pcsv.CsvFile.dfilter`
+	:type	dfilter:	dictionary
+	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
+	:raises:
+	* TypeError (Argument `file_name` is of the wrong type)
+
+	* IOError (File *[file_name]* could not be found)
+
+	* RuntimeError (File *[file_name]* is empty)
+
+	* RuntimeError (Column headers are not unique)
+
+	* RuntimeError (File *[file_name]* has no data)
+
+	* Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
 	"""
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
 	def __init__(self, file_name, dfilter=None):
@@ -122,21 +136,39 @@ class CsvFile(object):
 		Returns (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list
 		corresponds to a column of the CSV file.
 
-		:param	col:	Column(s) to extract from filtered data
-		:type	col:	string or list of strings
+		:param	col:	Column(s) to extract from filtered data. If no column specification is given (or **col** is *None*) all columns are returned
+		:type	col:	string, list of strings or None, default is *None*
 		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is returned, if **filtered** is *False* the raw (original) file data is returned
+		:type	filtered: boolean
 		:rtype:	list
 		:raises:
-		* TypeError ('Argument `col` is of the wrong type')
+		* TypeError (Argument `col` is of the wrong type)
 
-		* TypeError ('Argument `filtered` is of the wrong type')
+		* TypeError (Argument `filtered` is of the wrong type)
+
+		* ValueError (Column *[column_name]* not found in header)
 		"""
 		self._in_header(col)
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
-	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'append':bool})
+	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'append':bool})
 	def write(self, file_name, col=None, filtered=False, append=True):
-		""" Writes data to a CSV file """
+		"""Writes (processed) data to a specified comma-separated values (CSV) file
+
+		:param	file_name:	File name of the comma-separated values file to be written
+		:type	file_name:	string
+		:param	col:	Column(s) to write to file. If no column specification is given (or **col** is *None*) all columns in data are written
+		:type	col:	string, list of strings or None, default is *None*
+		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is written, if **filtered** is *False* the raw (original) file data is written
+		:type	filtered: boolean
+		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, possibly overwriting an exisiting file with the same name
+		:type	append: boolean
+		:raises:
+		* TypeError(Argument `file_name` is of the wrong type)
+
+		* Same as :py:attr:`putil.pcsv.CsvFile.data`
+
+		"""
 		self._in_header(col)
 		write_file(file_name, [self.header]+self.data(col=col, filtered=filtered), append=append)
 
@@ -217,5 +249,3 @@ class CsvFile(object):
 
 	* ValueError ('Column *[column name]* not found in header')
 	"""	#pylint: disable=W0105
-
-

@@ -317,7 +317,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
-		self._dfilter = dict([(key.upper(), value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# putil.pcsv is case insensitive and all caps
+		self._dfilter = dict([(key, value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# putil.pcsv is case insensitive and all caps
 		self._apply_dfilter()
 		self._process_data()
 
@@ -326,7 +326,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	@putil.check.check_argument(str)
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
-		self._indep_col_label = indep_col_label.upper() if isinstance(indep_col_label, str) else indep_col_label	# putil.pcsv is case insensitive and all caps
+		self._indep_col_label = indep_col_label if isinstance(indep_col_label, str) else indep_col_label	# putil.pcsv is case insensitive and all caps
 		self._check_indep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -336,7 +336,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	@putil.check.check_argument(str)
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
-		self._dep_col_label = dep_col_label.upper() if isinstance(dep_col_label, str) else dep_col_label	 	# putil.pcsv is case insensitive and all caps
+		self._dep_col_label = dep_col_label if isinstance(dep_col_label, str) else dep_col_label	 	# putil.pcsv is case insensitive and all caps
 		self._check_dep_col_label()
 		self._apply_dfilter()
 		self._process_data()
@@ -433,28 +433,28 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	def _check_indep_col_label(self):
 		""" Check that independent column label can be found in comma-separated file header """
-		if (self._csv_obj is not None) and (self.indep_col_label is not None) and (self.indep_col_label not in self._csv_obj.header()):
+		if (self._csv_obj is not None) and (self.indep_col_label is not None) and (self.indep_col_label not in self._csv_obj.header):
 			raise ValueError('Column {0} (independent column label) could not be found in comma-separated file {1} header'.format(self.indep_col_label, self.file_name))
 
 	def _check_dep_col_label(self):
 		""" Check that dependent column label can be found in comma-separated file header """
-		if (self._csv_obj is not None) and (self.dep_col_label is not None) and (self.dep_col_label not in self._csv_obj.header()):
+		if (self._csv_obj is not None) and (self.dep_col_label is not None) and (self.dep_col_label not in self._csv_obj.header):
 			raise ValueError('Column {0} (dependent column label) could not be found in comma-separated file {1} header'.format(self.dep_col_label, self.file_name))
 
 	def _check_dfilter(self):
 		""" Check that columns in filter specification can be found in comma-separated file header """
 		if (self._csv_obj is not None) and (self.dfilter is not None):
 			for key in self.dfilter:
-				if key not in self._csv_obj.header():
+				if key not in self._csv_obj.header:
 					raise ValueError('Column {0} in data filter not found in comma-separated file {1} header'.format(key, self.file_name))
 
 	def _apply_dfilter(self):
 		""" Apply data filters to loaded data """
 		self._check_dfilter()
 		if (self.dfilter is not None) and (len(self.dfilter) > 0) and (self._csv_obj is not None):
-			self._csv_obj.set_filter(self.dfilter)
+			self._csv_obj.dfilter = self.dfilter
 		elif self._csv_obj is not None:
-			self._csv_obj.reset_filter()
+			self._csv_obj.reset_dfilter()
 		self._get_indep_var_from_file()
 		self._get_dep_var_from_file()
 
@@ -462,7 +462,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 		""" Retrieve independent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.indep_col_label is not None):
 			self._check_indep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
-			data = numpy.array(self._csv_obj.filtered_data(self.indep_col_label))
+			data = numpy.array([row[0] for row in self._csv_obj.data(self.indep_col_label, filtered=True)])
 			if (len(data) == 0) or ((data == [None]*len(data)).all()):
 				raise ValueError('Filtered independent variable is empty')
 			# Flip data if it is in descending order (affects interpolation)
@@ -477,7 +477,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 		""" Retrieve dependent data variable from comma-separated file """
 		if (self._csv_obj is not None) and (self.dep_col_label is not None):
 			self._check_dep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
-			data = numpy.array(self._csv_obj.filtered_data(self.dep_col_label))
+			data = numpy.array([row[0] for row in self._csv_obj.data(self.dep_col_label, filtered=True)])
 			if (len(data) == 0) or ((data == [None]*len(data)).all()):
 				raise ValueError('Filtered dependent variable is empty')
 			self._set_dep_var(data[::-1] if self._reverse_data else data)	#pylint: disable=W0212

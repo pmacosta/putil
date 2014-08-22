@@ -13,11 +13,11 @@ Provides a personal standard Python library
 Contents:
 
 .. toctree::
-   :maxdepth: 4
+	:maxdepth: 2
 
-   misc
-   plot
-
+	misc
+	pcsv
+	plot
 
 Indices and tables
 ==================

@@ -433,7 +433,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		# This assignment should raise an exception
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter={'Col99':500})
-		test = excinfo.value.message == 'Column COL99 in data filter not found in comma-separated file {0} header'.format(file_name)
+		test = excinfo.value.message == 'Column Col99 in data filter not found in comma-separated file {0} header'.format(file_name)
 		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter={'Col1':0})
 		assert test == True
 
@@ -450,7 +450,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		test_list.append(excinfo.value.message == 'Argument `indep_col_label` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col99', dep_col_label='Col2')
-		test_list.append(excinfo.value.message == 'Column COL99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
+		test_list.append(excinfo.value.message == 'Column Col99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
 		# These assignments should not raise an exception
 		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter={'Col1':0})
 		assert test_list == 3*[True]
@@ -468,7 +468,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		test_list.append(excinfo.value.message == 'Argument `dep_col_label` is of the wrong type')
 		with pytest.raises(ValueError) as excinfo:
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col99')
-		test_list.append(excinfo.value.message == 'Column COL99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
+		test_list.append(excinfo.value.message == 'Column Col99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
 		# These assignments should not raise an exception
 		putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col3')
 		assert test_list == 3*[True]
@@ -640,27 +640,27 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		test_list = list()
 		# dfilter
 		obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3'))
-		ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
+		ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
 		ref += 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 2.0, 4.0, 1.0 ]'
 		test_list.append(obj == ref)
 		# fproc
 		obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2e-3, indep_max=200, fproc=fproc1))
-		ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc1\nProcessing function extra arguments: None\n'.format(file_name)
+		ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc1\nProcessing function extra arguments: None\n'.format(file_name)
 		ref += 'Independent variable minimum: 0.002\nIndependent variable maximum: 200\nIndependent variable: [ 0.002, 0.003 ]\nDependent variable: [ 5.0, 2.0 ]'
 		test_list.append(obj == ref)
 		# fproc_eargs
 		obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, indep_max=200, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
-		ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
+		ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
 		ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
 		test_list.append(obj == ref)
 		# indep_min set
 		obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
-		ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
+		ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
 		ref += 'Independent variable minimum: -2\nIndependent variable maximum: +inf\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
 		test_list.append(obj == ref)
 		# indep_max set
 		obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, indep_max=200, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
-		ref = 'File name: {0}\nData filter: \n   COL1: 0\nIndependent column label: COL2\nDependent column label: COL3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
+		ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
 		ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
 		test_list.append(obj == ref)
 		assert test_list == 5*[True]

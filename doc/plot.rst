@@ -4,7 +4,6 @@ plot module
 
 
 
-
 This module can be used to create high-quality, presentation-ready X-Y graphs quickly and easily.
 
 ***********
@@ -91,15 +90,19 @@ Application programming interface (API)
 Global variables
 ================
 
-.. automodule:: putil.plot
-	:members: AXIS_LABEL_FONT_SIZE, LINE_WIDTH, LEGEND_SCALE, MARKER_SIZE, MIN_TICKS, PRECISION, SUGGESTED_MAX_TICKS, TITLE_FONT_SIZE
-	:member-order: 'alphabetical'
+.. autodata:: putil.plot.AXIS_LABEL_FONT_SIZE
+.. autodata:: putil.plot.LINE_WIDTH
+.. autodata:: putil.plot.LEGEND_SCALE
+.. autodata:: putil.plot.MARKER_SIZE
+.. autodata:: putil.plot.MIN_TICKS
+.. autodata:: putil.plot.PRECISION
+.. autodata:: putil.plot.SUGGESTED_MAX_TICKS
+.. autodata:: putil.plot.TITLE_FONT_SIZE
 
 Functions
 =========
 
-.. automodule:: putil.plot
-	:members: parameterized_color_space
+.. autofunction:: putil.plot.parameterized_color_space
 
 Classes
 =======
