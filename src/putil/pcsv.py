@@ -146,6 +146,8 @@ class CsvFile(object):
 		self._validate_dfilter(dfilter)
 		if dfilter is None:
 			self._dfilter = dfilter
+		elif self._dfilter is None:
+			self._dfilter = dfilter
 		else:
 			for key in dfilter:
 				if key in self._dfilter:

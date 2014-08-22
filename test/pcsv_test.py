@@ -162,28 +162,32 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_add_dfilter_works(self):	#pylint: disable=R0201
 		""" Test if adding filters to existing data filtering works """
 		test_list = list()
+		# No previous filter
 		with TmpFile(write_file) as file_name:
+			obj = putil.pcsv.CsvFile(file_name=file_name)
+			obj.add_dfilter({'Result':20})
+			test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
+			# Two single elements
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
-		# Two single elements
-		test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
-		obj.add_dfilter({'Result':40})
-		test_list.append(obj.data(filtered=True) == [[1, 4, 20], [2, 5, 40]])
-		# Single element to list
-		obj.dfilter = {'Result':[10, 30]}
-		test_list.append(obj.data(filtered=True) == [[1, 3, 10], [2, 4, 30]])
-		obj.add_dfilter({'Result':50})
-		test_list.append(obj.data(filtered=True) == [[1, 3, 10], [2, 4, 30], [3, 5, 50]])
-		# List to list
-		obj.dfilter = {'Result':[10, 20]}
-		test_list.append(obj.data(filtered=True) == [[1, 3, 10], [1, 4, 20]])
-		obj.add_dfilter({'Result':[40, 50]})
-		test_list.append(obj.data(filtered=True) == [[1, 3, 10], [1, 4, 20], [2, 5, 40], [3, 5, 50]])
-		# List to single element
-		obj.dfilter = {'Result':20}
-		test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
-		obj.add_dfilter({'Result':[40, 50]})
-		test_list.append(obj.data(filtered=True) == [[1, 4, 20], [2, 5, 40], [3, 5, 50]])
-		assert test_list == 8*[True]
+			test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
+			obj.add_dfilter({'Result':40})
+			test_list.append(obj.data(filtered=True) == [[1, 4, 20], [2, 5, 40]])
+			# Single element to list
+			obj.dfilter = {'Result':[10, 30]}
+			test_list.append(obj.data(filtered=True) == [[1, 3, 10], [2, 4, 30]])
+			obj.add_dfilter({'Result':50})
+			test_list.append(obj.data(filtered=True) == [[1, 3, 10], [2, 4, 30], [3, 5, 50]])
+			# List to list
+			obj.dfilter = {'Result':[10, 20]}
+			test_list.append(obj.data(filtered=True) == [[1, 3, 10], [1, 4, 20]])
+			obj.add_dfilter({'Result':[40, 50]})
+			test_list.append(obj.data(filtered=True) == [[1, 3, 10], [1, 4, 20], [2, 5, 40], [3, 5, 50]])
+			# List to single element
+			obj.dfilter = {'Result':20}
+			test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
+			obj.add_dfilter({'Result':[40, 50]})
+			test_list.append(obj.data(filtered=True) == [[1, 4, 20], [2, 5, 40], [3, 5, 50]])
+		assert test_list == 9*[True]
 
 	def test_header_works(self):	#pylint: disable=R0201
 		""" Test if header attribute works """
