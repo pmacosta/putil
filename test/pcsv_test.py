@@ -6,29 +6,11 @@
 putil.pcsv unit tests
 """
 
-import os
 import pytest
 import tempfile
 
 import putil.pcsv
-
-###
-# Context manager to create temporary files and delete them after it has been read
-class TmpFile(object):	#pylint: disable=R0903
-	""" Context class for creating a temporary file, writing it and then deleting it """
-	def __init__(self, fpointer):
-		self.file_name = None
-		self.fpointer = fpointer
-	def __enter__(self):
-		with tempfile.NamedTemporaryFile(delete=False) as fobj:
-			self.fpointer(fobj)
-			self.file_name = fobj.name
-		return self.file_name
-
-	def __exit__(self, exc_type, exc_value, exc_tb):
-		os.remove(self.file_name)
-		if exc_type is not None:
-			return False
+import putil.misc
 
 
 ###
@@ -77,34 +59,34 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_file_empty(self):	#pylint: disable=R0201
 		""" Test if the right exception is raised when the CSV file exists but is empty """
 		with pytest.raises(RuntimeError) as excinfo:
-			with TmpFile(write_file_empty) as file_name:
+			with putil.misc.TmpFile(write_file_empty) as file_name:
 				putil.pcsv.CsvFile(file_name=file_name)
 		assert excinfo.value.message == 'File {0} is empty'.format(file_name)
 
 	def test_header_cols_not_unique(self):	#pylint: disable=R0201
 		""" Test if the right exception is raised when the header has duplicate column names """
 		with pytest.raises(RuntimeError) as excinfo:
-			with TmpFile(write_cols_not_unique) as file_name:
+			with putil.misc.TmpFile(write_cols_not_unique) as file_name:
 				putil.pcsv.CsvFile(file_name=file_name)
 		assert excinfo.value.message == 'Column headers are not unique'
 
 	def test_no_data_in_file(self):	#pylint: disable=R0201
 		""" Test if the right exception is raised when the file has a header but no data """
 		with pytest.raises(RuntimeError) as excinfo:
-			with TmpFile(write_no_data) as file_name:
+			with putil.misc.TmpFile(write_no_data) as file_name:
 				putil.pcsv.CsvFile(file_name=file_name)
 		assert excinfo.value.message == 'File {0} has no data'.format(file_name)
 
 	def test_data_start(self):	#pylint: disable=R0201
 		""" Test if the right row is picked for the data start """
-		with TmpFile(write_data_start_file) as file_name:
+		with putil.misc.TmpFile(write_data_start_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 		assert obj.data() == [[2, None, 30], [2, 5, 40], [3, 5, 50]]
 
 	def test_dfilter_errors(self):	#pylint: disable=R0201
 		""" Test if the right exception is raised when parameter dfilter is of the wrong type or some columns in the filter specification are not present in CSV file header """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			with pytest.raises(TypeError) as excinfo:
 				putil.pcsv.CsvFile(file_name=file_name, dfilter='a')
 			test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
@@ -119,7 +101,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_dfilter_works(self):	#pylint: disable=R0201
 		""" Test if data filtering works """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 			test_list.append(obj.dfilter == None)
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Ctrl':2, 'Ref':5})
@@ -135,7 +117,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_reset_dfilter_works(self):	#pylint: disable=R0201
 		""" Test if data filter reset works """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Ctrl':2, 'Ref':5})
 		test_list.append(obj.data(filtered=True) == [[2, 5, 40]])
 		obj.reset_dfilter()
@@ -146,7 +128,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_add_dfilter_errors(self):	#pylint: disable=R0201
 		""" Test if the right exception is raised when parameter dfilter is of the wrong type or some columns in the filter specification are not present in CSV file header """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 		with pytest.raises(TypeError) as excinfo:
 			obj.add_dfilter('a')
@@ -163,7 +145,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		""" Test if adding filters to existing data filtering works """
 		test_list = list()
 		# No previous filter
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 			obj.add_dfilter({'Result':20})
 			test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
@@ -191,14 +173,14 @@ class TestCsvFile(object):	#pylint: disable=W0232
 
 	def test_header_works(self):	#pylint: disable=R0201
 		""" Test if header attribute works """
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 		assert obj.header == ['Ctrl', 'Ref', 'Result']
 
 	def test_data_errors(self):	#pylint: disable=R0201
 		""" Test if data() method raises the right exceptions """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
 		with pytest.raises(TypeError) as excinfo:
 			obj.data(col=5)
@@ -222,7 +204,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_data_works(self):	#pylint: disable=R0201
 		""" Test if data() method behaves properly """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
 		test_list.append(obj.data() == [[1, 3, 10], [1, 4, 20], [2, 4, 30], [2, 5, 40], [3, 5, 50]])
 		test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
@@ -235,7 +217,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_write_errors(self):	#pylint: disable=R0201
 		""" Test if write() method raises the right exceptions when its arguments are of the wrong type or are badly specified """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 			with pytest.raises(TypeError) as excinfo:
 				obj.write(file_name=5)
@@ -271,7 +253,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_write_works(self):	#pylint: disable=R0201
 		""" Test if write() method behaves properly """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 		with tempfile.NamedTemporaryFile() as fwobj:
 			file_name = fwobj.name
@@ -301,7 +283,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 			with open(file_name, 'r') as frobj:
 				written_data = frobj.read()
 		test_list.append(written_data == 'Ctrl,Ref,Result\r\n1,3,10\r\n2,4,30\r\n1,4,20\r\n3,5,50\r\n')
-		with TmpFile(write_data_start_file) as file_name:
+		with putil.misc.TmpFile(write_data_start_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 			with tempfile.NamedTemporaryFile() as fwobj:
 				file_name = fwobj.name
@@ -314,7 +296,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_cannot_delete_attributes(self):	#pylint: disable=R0201
 		""" Test that del method raises an exception on all class attributes """
 		test_list = list()
-		with TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.header

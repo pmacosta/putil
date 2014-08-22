@@ -10,8 +10,10 @@ import os
 import numpy
 import inspect
 import textwrap
+import tempfile
 
 import putil.eng
+import putil.check
 
 def pcolor(text, color, tab=0):
 	"""
@@ -269,3 +271,33 @@ def elapsed_time_string(start_time, stop_time):
 		return ret_list[0]+' and '+ret_list[1]
 	else:
 		return (', '.join(ret_list[0:-1]))+' and '+ret_list[-1]
+
+###
+# Context manager to create temporary files and delete them after it has been read
+###
+class TmpFile(object):	#pylint: disable=R0903
+	"""
+	Context manager for temporary files
+
+	:param	fpointer: Function pointer to a function that writes data to file
+	:type	fpointer: Function pointer or None, default *None*
+	:returns:	File name of temporary file
+	:rtype:		string
+	:raises:	TypeError (Argument `fpointer` is of the wrong type)
+	"""
+	def __init__(self, fpointer=None):
+		putil.check.check_arguments({'fpointer':putil.check.Function()})
+		self.file_name = None
+		self.fpointer = fpointer
+
+	def __enter__(self):
+		with tempfile.NamedTemporaryFile(delete=False) as fobj:
+			if self.fpointer is not None:
+				self.fpointer(fobj)
+			self.file_name = fobj.name
+		return self.file_name
+
+	def __exit__(self, exc_type, exc_value, exc_tb):
+		os.remove(self.file_name)
+		if exc_type is not None:
+			return False

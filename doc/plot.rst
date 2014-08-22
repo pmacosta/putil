@@ -10,19 +10,17 @@ This module can be used to create high-quality, presentation-ready X-Y graphs qu
 Interpreter
 ***********
 
-The module has been developed using Python 2.7, but in all likelihood the module will also work with Python 3 provided that the dependent libraries have ports to the newer interpreter version.
+The module has been developed using Python 2.7, but in all likelihood the module will also work with Python 3.x provided that the external libraries have ports to the newer interpreter version.
 
-************
-Dependencies
-************
-
-The following libraries are used:
+******************
+External libraries
+******************
 
 * `matplotlib <http://matplotlib.org/>`_
 
 * `scipy <http://www.scipy.org/>`_
 
-* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_ (needed for Python 2.7, it is part of Python 3)
+* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_ (needed for Python 2.7, it is part of Python 3.x)
 
 ***************
 Class hierarchy
@@ -56,9 +54,12 @@ Axes tick marks are selected so as to create the most readable graph. Two global
 the number of ticks are between these two bounds; one or two more ticks can be present if a data series uses interpolation and the interpolated curve goes above (below) the lagest (smallest) data point. Tick
 spacing is chosen so as to have the most number of data points "on grid". Engineering notation (i.e. 1K = 1000, 1m = 0.001, etc.) is used for the axis tick marks.
 
-*******
-Example
-*******
+********
+Examples
+********
+
+Base classes usage
+==================
 
 example_plot.py:
 

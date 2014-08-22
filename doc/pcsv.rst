@@ -6,9 +6,15 @@ pcsv module
 
 This module can be used to process information in comma-separated values (CSV) files
 
-************
-Dependencies
-************
+***********
+Interpreter
+***********
+
+The module has been developed using Python 2.7, but it *should* also work with Python 3.x
+
+******************
+External libraries
+******************
 
 None
 
