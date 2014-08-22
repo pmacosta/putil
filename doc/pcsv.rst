@@ -6,14 +6,33 @@ pcsv module
 
 This module can be used to process information in comma-separated values (CSV) files
 
+************
+Dependencies
+************
+
+None
+
 ***************************************
 Application programming interface (API)
 ***************************************
 
+Global variables
+================
+
+None
+
+Functions
+=========
+
+.. autofunction:: putil.pcsv.write()
+
+Classes
+=======
+
 .. automodule:: putil.pcsv
-	:members:
-	:undoc-members:
-	:show-inheritance:
+    :members: CsvFile
+    :undoc-members:
+    :show-inheritance:
 
 *******
 License

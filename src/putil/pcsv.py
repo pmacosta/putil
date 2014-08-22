@@ -8,7 +8,7 @@ import putil.misc
 import putil.check
 
 @putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'data':putil.check.ArbitraryLengthList(list), 'append':bool})
-def write_file(file_name, data, append=True):
+def write(file_name, data, append=True):
 	"""
 	Writes data to a specified comma-separated values (CSV) file
 
@@ -36,6 +36,7 @@ def write_file(file_name, data, append=True):
 	"""
 	if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
 		raise ValueError('Argument `data` is empty')
+	# Process data, turn None to '' and integer to integers
 	try:
 		putil.misc.make_dir(file_name)
 		file_handle = open(file_name, 'wb' if append is False else 'ab')
@@ -50,14 +51,19 @@ def write_file(file_name, data, append=True):
 	except Exception as msg:
 		raise RuntimeError('File {0} could not be created: {1}'.format(file_name, msg.strerror))
 
-def _float_failsafe(obj):
-	""" Convert to float if object is a number string """
+
+def _number_failsafe(obj):
+	""" Convert to float if object is a float string """
 	if 'inf' in obj.lower():
 		return obj
 	try:
-		return float(obj)
+		return int(obj)
 	except:	#pylint: disable=W0702
-		return obj
+		try:
+			return float(obj)
+		except:	#pylint: disable=W0702
+			return obj
+
 
 class CsvFile(object):
 	"""
@@ -97,20 +103,14 @@ class CsvFile(object):
 		# Find start of data row
 		num = 0
 		for num, row in enumerate(self._raw_data[1:]):
-			print [isinstance(_float_failsafe(col), float) for col in row]
-			if any([isinstance(_float_failsafe(col), float) for col in row]):
+			if any([putil.misc.isnumber(_number_failsafe(col)) for col in row]):
 				break
 		else:
 			raise RuntimeError('File {0} has no data'.format(file_name))
 		# Set up class properties
-		self._data = [[None if col.strip() == '' else _float_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
+		self._data = [[None if col.strip() == '' else _number_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
 		self.reset_dfilter()
 		self._set_dfilter(dfilter)
-
-	def reset_dfilter(self):
-		""" Resets (clears) data filter """
-		self._fdata = self._data[:]
-		self._dfilter = None
 
 	def _validate_dfilter(self, dfilter):
 		""" Validate that all columns in filter are in header """
@@ -176,8 +176,13 @@ class CsvFile(object):
 		self._in_header(col)
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
-	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'append':bool})
-	def write(self, file_name, col=None, filtered=False, append=True):
+	def reset_dfilter(self):
+		""" Resets (clears) data filter """
+		self._fdata = self._data[:]
+		self._dfilter = None
+
+	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'headers':bool, 'append':bool})
+	def write(self, file_name, col=None, filtered=False, headers=True, append=True):	#pylint: disable=R0913
 		"""
 		Writes (processed) data to a specified comma-separated values (CSV) file
 
@@ -187,11 +192,15 @@ class CsvFile(object):
 		:type	col:	string, list of strings or None, default is *None*
 		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is written, if **filtered** is *False* the raw (original) file data is written
 		:type	filtered: boolean
+		:param	headers: Include headers flag. If **headers** is *True* headers and data are written, if **headers** is *False* only data is written
+		:type	headers: boolean
 		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
 		possibly overwriting an exisiting file with the same name
 		:type	append: boolean
 		:raises:
 		 * TypeError (Argument `file_name` is of the wrong type)
+
+		 * TypeError (Argument `headers` is of the wrong type)
 
 		 * TypeError (Argument `append` is of the wrong type)
 
@@ -207,9 +216,12 @@ class CsvFile(object):
 		"""
 		self._in_header(col)
 		data = self.data(col=col, filtered=filtered)
+		if headers:
+			col = [col] if isinstance(col, str) else col
+			header = self.header if col is None else [self.header[self._header_upper.index(element.upper())] for element in col]
 		if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
 			raise ValueError('There is no data to save to file')
-		write_file(file_name, [self.header]+data, append=append)
+		write(file_name, [header]+data if headers else data, append=append)
 
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """
@@ -230,12 +242,6 @@ class CsvFile(object):
 			return [[row[index] for index in col_index_list] for row in data]
 
 	# Managed attributes
-	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')
-	"""
-	:returns: Header of the comma-separated values file. Each column is an element of the list.
-	:rtype:	list of strings
-	"""	#pylint: disable=W0105
-
 	dfilter = property(_get_dfilter, _set_dfilter, None, doc='Data filter')
 	"""
 	The data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and either a value representing a column value or an iterable (dictionary value). If the
@@ -287,4 +293,10 @@ class CsvFile(object):
 	 * ValueError (Argument `dfilter` is empty)
 
 	 * ValueError (Column *[column name]* not found in header)
+	"""	#pylint: disable=W0105
+
+	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')
+	"""
+	:returns: Header of the comma-separated values file. Each column is an element of the list.
+	:rtype:	list of strings
 	"""	#pylint: disable=W0105

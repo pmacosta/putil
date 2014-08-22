@@ -232,11 +232,14 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	def test_write_errors(self, tmpdir, tmp_csv_file):	#pylint: disable=W0613,W0621,C0103,R0201
 		""" Test if write() method raises the right exceptions when its arguments are of the wrong type or are badly specified """
 		file_name = str(tmpdir.join('sub/tmp.csv'))
-		obj = putil.pcsv.CsvFile(file_name=file_name)
 		test_list = list()
+		obj = putil.pcsv.CsvFile(file_name=file_name)
 		with pytest.raises(TypeError) as excinfo:
 			obj.write(file_name=5)
 		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			obj.write(file_name='/some/file', headers='a')
+		test_list.append(excinfo.value.message == 'Argument `headers` is of the wrong type')
 		with pytest.raises(TypeError) as excinfo:
 			obj.write(file_name='/some/file', append='a')
 		test_list.append(excinfo.value.message == 'Argument `append` is of the wrong type')
@@ -259,21 +262,48 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		with pytest.raises(OSError) as excinfo:
 			obj.write(file_name='/some/file')
 		test_list.append(excinfo.value.message == 'File /some/file could not be created: Permission denied')
-		assert test_list == 8*[True]
+		assert test_list == 9*[True]
 
 	def test_write_works(self, tmpdir, tmp_csv_file):	#pylint: disable=W0613,W0621,C0103,R0201
 		""" Test if write() method behaves properly """
 		file_name = str(tmpdir.join('sub/tmp.csv'))
+		test_list = list()
 		obj = putil.pcsv.CsvFile(file_name=file_name)
-		with tempfile.NamedTemporaryFile() as fobj:
-			file_name = fobj.name
+		with tempfile.NamedTemporaryFile() as fwobj:
+			file_name = fwobj.name
 			obj.write(file_name=file_name, col='Result', filtered=True, append=False)
+			with open(file_name, 'r') as frobj:
+				written_data = frobj.read()
+		test_list.append(written_data == 'Result\r\n10\r\n20\r\n30\r\n40\r\n50\r\n')
+		with tempfile.NamedTemporaryFile() as fwobj:
+			file_name = fwobj.name
+			obj.write(file_name=file_name, append=False)
+			with open(file_name, 'r') as frobj:
+				written_data = frobj.read()
+		test_list.append(written_data == 'Ctrl,Ref,Result\r\n1,3,10\r\n1,4,20\r\n2,4,30\r\n2,5,40\r\n3,5,50\r\n')
+		with tempfile.NamedTemporaryFile() as fwobj:
+			file_name = fwobj.name
+			obj.write(file_name=file_name, col=['Ctrl', 'Result'], filtered=True, headers=False, append=False)
+			with open(file_name, 'r') as frobj:
+				written_data = frobj.read()
+		test_list.append(written_data == '1,10\r\n1,20\r\n2,30\r\n2,40\r\n3,50\r\n')
+		with tempfile.NamedTemporaryFile() as fwobj:
+			file_name = fwobj.name
+			obj.reset_dfilter()
+			obj.dfilter = {'Result':[10, 30]}
+			obj.write(file_name=file_name, filtered=True, headers=True, append=False)
+			obj.dfilter = {'Result':[20, 50]}
+			obj.write(file_name=file_name, filtered=True, headers=False, append=True)
+			with open(file_name, 'r') as frobj:
+				written_data = frobj.read()
+		test_list.append(written_data == 'Ctrl,Ref,Result\r\n1,3,10\r\n2,4,30\r\n1,4,20\r\n3,5,50\r\n')
+		assert test_list == 4*[True]
 
 	def test_cannot_delete_attributes(self, tmpdir, tmp_csv_file):	#pylint: disable=W0613,W0621,C0103,R0201
 		""" Test that del method raises an exception on all class attributes """
 		file_name = str(tmpdir.join('sub/tmp.csv'))
-		obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
 		test_list = list()
+		obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.header
 		test_list.append(excinfo.value.message == "can't delete attribute")
@@ -281,4 +311,3 @@ class TestCsvFile(object):	#pylint: disable=W0232
 			del obj.dfilter
 		test_list.append(excinfo.value.message == "can't delete attribute")
 		assert test_list == 2*[True]
-
