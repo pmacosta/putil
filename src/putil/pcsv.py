@@ -4,8 +4,12 @@
 
 import csv
 
+import putil.exh
 import putil.misc
 import putil.check
+
+
+_EXH = putil.exh.ExHandle()
 
 @putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'data':putil.check.ArbitraryLengthList(list), 'append':bool})
 def write(file_name, data, append=True):
@@ -144,6 +148,7 @@ class CsvFile(object):
 		:raises: Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
 		"""
 		self._validate_dfilter(dfilter)
+		print str(_EXH)
 		if dfilter is None:
 			self._dfilter = dfilter
 		elif self._dfilter is None:

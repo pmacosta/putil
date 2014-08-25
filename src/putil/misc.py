@@ -286,7 +286,7 @@ class TmpFile(object):	#pylint: disable=R0903
 	:raises:	TypeError (Argument `fpointer` is of the wrong type)
 	"""
 	def __init__(self, fpointer=None):
-		putil.check.check_arguments({'fpointer':putil.check.Function()})
+		putil.check.check_arguments({'fpointer':putil.check.PolymorphicType([None, putil.check.Function()])})
 		self.file_name = None
 		self.fpointer = fpointer
 

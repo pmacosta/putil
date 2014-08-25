@@ -348,7 +348,7 @@ class TestOneOf(object):	#pylint: disable=W0232
 			-2 in obj3, 3 in obj3, -2.0 in obj4, 0.001 in obj4) == (True, True, True, True, False, False, False, True, True, False, False, True, False, False, True, False, True)
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
-		"""Test that the includes method of OneOf class behaves appropriately """
+		""" Test that the includes method of OneOf class behaves appropriately """
 		ref_obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
 		ref_obj2 = putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False)
 		ref_obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
@@ -358,7 +358,7 @@ class TestOneOf(object):	#pylint: disable=W0232
 			(True, True, True, True, False, False, False, True, False, False, True, False, True)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
-		"""Test that the istype method of OneOf class behaves appropriately """
+		""" Test that the istype method of OneOf class behaves appropriately """
 		ref_obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
 		ref_obj2 = putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False)
 		ref_obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
@@ -945,9 +945,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == 'Argument `ppar1` is of the wrong type'
 
 	def test_one_of_error_case_insensitive(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is outside fixed number of string choices list with case sensitivity
-		"""
+		""" Test that function behaves properly when a argument is outside fixed number of string choices list with case sensitivity """
 		@putil.check.check_argument(putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -956,9 +954,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == "Argument `ppar1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)"
 
 	def test_one_of_error_case_sensitive(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is outside fixed number of string choices list with case insensitivity
-		"""
+		""" Test that function behaves properly when a argument is outside fixed number of string choices list with case insensitivity """
 		@putil.check.check_argument(putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=True))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -967,9 +963,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == "Argument `ppar1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case sensitive)"
 
 	def test_one_of_error_no_case_sensitivity(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is outside fixed number of choices list
-		"""
+		""" Test that function behaves properly when a argument is outside fixed number of choices list """
 		@putil.check.check_argument(putil.check.OneOf(range(3), case_sensitive=True))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -978,18 +972,14 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == 'Argument `ppar1` is not one of [0, 1, 2]'
 
 	def test_one_of_no_error(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is one of a fixed number of choices list
-		"""
+		""" Test that function behaves properly when a argument is one of a fixed number of choices list """
 		@putil.check.check_argument(putil.check.OneOf(range(3), case_sensitive=True))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(2) == 2
 
 	def test_range_no_maximum_out_of_range(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is out of range when no maximum is defined
-		"""
+		""" Test that function behaves properly when a argument is out of range when no maximum is defined """
 		@putil.check.check_argument(putil.check.NumberRange(minimum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -998,18 +988,14 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == 'Argument `ppar1` is not in the range [10.0, +inf]'
 
 	def test_range_no_maximum_in_range(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is in range when no maximum is defined
-		"""
+		""" Test that function behaves properly when a argument is in range when no maximum is defined """
 		@putil.check.check_argument(putil.check.NumberRange(minimum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(20) == 20
 
 	def test_range_no_minimum_out_of_range(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is out of range when no minimum is defined
-		"""
+		""" Test that function behaves properly when a argument is out of range when no minimum is defined """
 		@putil.check.check_argument(putil.check.NumberRange(maximum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -1018,18 +1004,14 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == 'Argument `ppar1` is not in the range [-inf, 10.0]'
 
 	def test_range_no_minimum_in_range(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is in range when no minimum is defined
-		"""
+		""" Test that function behaves properly when a argument is in range when no minimum is defined """
 		@putil.check.check_argument(putil.check.NumberRange(maximum=10))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(5) == 5
 
 	def test_range_minimum_and_maximum_specified_out_of_range(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is out of range when no minimum is defined
-		"""
+		""" Test that function behaves properly when a argument is out of range when no minimum is defined """
 		@putil.check.check_argument(putil.check.NumberRange(minimum=5.0, maximum=10.0))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -1038,18 +1020,14 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == 'Argument `ppar1` is not in the range [5.0, 10.0]'
 
 	def test_range_minimum_and_maximum_specified_in_range(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is in range when no minimum is defined
-		"""
+		""" Test that function behaves properly when a argument is in range when no minimum is defined """
 		@putil.check.check_argument(putil.check.NumberRange(minimum=100, maximum=200))
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		assert func_check_type(150) == 150
 
 	def test_polymorphic_type_error(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is not in the polymorphic types allowed
-		"""
+		""" Test that function behaves properly when a argument is not in the polymorphic types allowed """
 		@putil.check.check_argument(putil.check.PolymorphicType([None, float]))
 		def func_check_type1(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -1065,18 +1043,18 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert (eobj1, eobj2) == (True, True)
 
 	def test_polymorphic_type_no_error(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is in the polymorphic types allowed
-		"""
+		""" Test that function behaves properly when a argument is in the polymorphic types allowed """
 		@putil.check.check_argument(putil.check.PolymorphicType([None, int, putil.check.NumberRange(minimum=5.0, maximum=10.0), putil.check.OneOf(['HELLO', 'WORLD'])]))
-		def func_check_type(ppar1):	#pylint: disable=C0111
+		def func_check_type1(ppar1):	#pylint: disable=C0111
 			return ppar1
-		assert (func_check_type(None), func_check_type(3), func_check_type(7.0), func_check_type('WORLD')) == (None, 3, 7.0, 'WORLD')
+		# Test definitions consisting entireley of buil-in (i.e. non-pseudo-type) types
+		@putil.check.check_argument(putil.check.PolymorphicType([None, int, dict]))
+		def func_check_type2(ppar1):	#pylint: disable=C0111
+			return ppar1
+		assert (func_check_type1(None), func_check_type1(6), func_check_type1(7.0), func_check_type1('WORLD'), func_check_type2(None), func_check_type2(8), func_check_type2({'a':'b'})) == (None, 6, 7.0, 'WORLD', None, 8, {'a':'b'})
 
 	def test_numpy_vector_wrong_type(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is not a Numpy vector
-		"""
+		""" Test that function behaves properly when a argument is not a Numpy vector """
 		@putil.check.check_argument(putil.check.RealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -1085,18 +1063,14 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert excinfo.value.message == 'Argument `ppar1` is of the wrong type'
 
 	def test_numpy_vector_no_error(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is proper Numpy vector
-		"""
+		""" Test that function behaves properly when a argument is proper Numpy vector """
 		@putil.check.check_argument(putil.check.RealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
 		func_check_type(numpy.array([1.0, 2.0, 1.0-1e-10]))
 
 	def test_increasing_numpy_vector_wrong_type(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is not a Numpy vector
-		"""
+		""" Test that function behaves properly when a argument is not a Numpy vector """
 		@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
@@ -1109,9 +1083,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		assert (eobj1, eobj2) == (True, True)
 
 	def test_incresing_numpy_vector_no_error(self):	#pylint: disable=R0201,C0103
-		"""
-		Test that function behaves properly when a argument is properly incresing Numpy vector
-		"""
+		""" Test that function behaves properly when a argument is properly incresing Numpy vector """
 		@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
@@ -1171,7 +1143,3 @@ class TestCheckArguments(object):	#pylint: disable=W0232,R0903
 		func_check_type1(1, 'hello', None)
 		func_check_type2(1, 'hello', {'subpar1':35.0, 'subpar2':'no'})
 		assert test_list == 2*[True]
-
-
-
-

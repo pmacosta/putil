@@ -1,4 +1,5 @@
-﻿# check.py
+﻿# pylint: disable=W0212
+# check.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -7,6 +8,7 @@ Decorators for API argument checks
 """
 
 import os
+import sys
 import numpy
 import inspect
 import funcsigs
@@ -360,6 +362,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 	def exception(self, param_name, param=None, test_obj=None):
 		""" Returns a suitable exception message """
 		exp_dict_list = [sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if (sub_type in self.pseudo_types) and (not sub_inst.includes(test_obj))]
+		# Check if all exceptions are of the same type, in which case raise an exception of that type, otherwise raise RuntimeError
 		same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
 		exp_type = exp_dict_list[0]['type'] if same_exp  else RuntimeError
 		exp_msg = [('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in exp_dict_list]
@@ -433,22 +436,57 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 			return False
 	return True
 
+def get_clsname(name):
+	""" Get class name of decorated function """
+	frame_list = inspect.stack()
+	# Stack frame is a tuple with the following items:
+	# 0: the frame object
+	# 1: the filename
+	# 2: the line number of the current line
+	# 3: the function name
+	# 4: a list of lines of context from the source code
+	# 5:the index of the current line within that list.
+	for frame in frame_list:
+		if frame[3] == name:
+			return frame[0].f_locals['self'].__class__.__name__ if 'self' in frame[0].f_locals else None
+	raise RuntimeError('Function {0} could not be found in stack'.format(name))
+
 def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	""" Checks that a argument is of a certain type """
 	arg_dict = create_argument_dictionary(func, *args, **kwargs)
-	if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)):
-		raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
+	modobj = sys.modules[func.__module__]
+	if getattr(modobj, '_EXH', -1) != -1:
+		ex_name = '{0}_check_argument_type_internal_{1}'.format(func.__name__, param_name)
+		clsname = get_clsname(func.__name__)
+		modobj._EXH.ex_add(name=ex_name, funcname=(clsname+'.' if clsname else '')+func.__name__, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
+		modobj._EXH.raise_exception_if(ex_name, (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)))
+	else:
+		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)):
+			raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
 
-def check_argument_internal(param_name, param_spec, func, *args, **kwargs):
+def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pylint: disable=R0914
 	"""	Checks that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
 	check_argument_type_internal(param_name, param_spec, func, *args, **kwargs)
+	modobj = sys.modules[func.__module__]
+	pseudo_types = _get_pseudo_types(False)['type']
 	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
-	if param is not None:
-		pseudo_types = _get_pseudo_types(False)['type']
-		if (type(param_spec) in pseudo_types) and (not param_spec.includes(param)):
-			ekwargs = {'param':param} if type(param_spec) == File else ({'param_name':param_name} if type(param_spec) != PolymorphicType else {'param_name':param_name, 'param':param, 'test_obj':param_spec})
-			exp_dict = param_spec.exception(**ekwargs)	#pylint: disable=W0142
-			raise exp_dict['type'](exp_dict['msg'])
+	if (param is not None) and (type(param_spec) in pseudo_types):
+		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if sub_type in pseudo_types]
+		if sub_param_spec:	# Eliminate PolymorphicType definitions that do not have any pseduo-type
+			exp_dict_list = [param_spec.exception(**{'param':param} if type(param_spec) == File else {'param_name':param_name}) for param_spec in sub_param_spec if not param_spec.includes(param)]	#pylint: disable=W0142
+			if getattr(modobj, '_EXH', -1) != -1:
+				ex_dict_list_full = [param_spec.exception(**{'param':param} if type(param_spec) == File else {'param_name':param_name}) for param_spec in sub_param_spec]	#pylint: disable=W0142
+				for num, ex in enumerate(ex_dict_list_full):
+					ex_name = '{0}_check_argument_internal_{1}{2}'.format(func.__name__, param_name, '' if len(ex_dict_list_full) == 1 else num)
+					clsname = get_clsname(func.__name__)
+					modobj._EXH.ex_add(name=ex_name, funcname=(clsname+'.' if clsname else '')+func.__name__, extype=ex['type'], exmsg=ex['msg'])
+					modobj._EXH.raise_exception_if(name=ex_name, condition=False)
+			exp_dict = dict()
+			if len(exp_dict_list) == len(sub_param_spec):
+				same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
+				exp_dict['type'] = exp_dict_list[0]['type'] if same_exp else RuntimeError
+				exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in exp_dict_list])
+				raise exp_dict['type'](exp_dict['msg'])
 
 def check_argument_type(param_name, param_type):
 	""" Decorator to check that a argument is of a certain type """
@@ -465,7 +503,7 @@ def check_argument(param_spec):	#pylint: disable=R0912
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument specification """
 		arguments = funcsigs.signature(func).parameters
-		if len(arguments) == 0:
+		if not arguments:
 			raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
 		fiter = iter(arguments.items())
 		param_name = next(fiter)[0]
