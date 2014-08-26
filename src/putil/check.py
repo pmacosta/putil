@@ -447,25 +447,20 @@ def get_funcname(func):
 	# 4: a list of lines of context from the source code
 	# 5:the index of the current line within that list.
 	for frame in frame_list:
-		sfn = frame[3]
-		cfn = func.__name__
-		print 'sfn {0}'.format(sfn)
-		print 'cfn {0}'.format(cfn)
-		if sfn == cfn:
-			#if frame[3] == func.__name__:
-			return '{0}.{1}.{2}'.format(frame[0].f_locals['self'].__module__, frame[0].f_locals['self'].__class__.__name__, func.__name__) if 'self' in frame[0].f_locals else '{0}.{1}'.format(sys.modules[func.__module__], func.__name__)
+		if frame[3] == func.__name__:
+			print func.__module__
+			print sys.modules[func.__module__].__name__
+			modname = frame[0].f_locals['self'].__module__ if 'self' in frame[0].f_locals else sys.modules[func.__module__].__name__
+			clsname = frame[0].f_locals['self'].__class__.__name__ if 'self' in frame[0].f_locals else None
+			funcname = func.__name__
+			return '{0}.{1}.{2}'.format(modname, clsname, funcname) if 'self' in frame[0].f_locals else '{0}.{1}'.format(modname, funcname)
 	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
 
 def get_parent(func):
 	""" Get class name of calling function """
 	frame_list = inspect.stack()
 	for num, frame in enumerate(frame_list):
-		sfn = frame[3]
-		cfn = func.__name__
-		print 'sfn {0}'.format(sfn)
-		print 'cfn {0}'.format(cfn)
-		if sfn == cfn:
-			print frame_list[num+1]
+		if frame[3] == func.__name__:
 			fname = frame_list[num+1][3]
 			lcontext = frame_list[num+1][0].f_locals
 			gcontext = frame_list[num+1][0].f_globals
