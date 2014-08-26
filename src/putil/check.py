@@ -436,7 +436,7 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 			return False
 	return True
 
-def get_clsname(name):
+def get_funcname(func):
 	""" Get class name of decorated function """
 	frame_list = inspect.stack()
 	# Stack frame is a tuple with the following items:
@@ -447,19 +447,45 @@ def get_clsname(name):
 	# 4: a list of lines of context from the source code
 	# 5:the index of the current line within that list.
 	for frame in frame_list:
-		if frame[3] == name:
-			return frame[0].f_locals['self'].__class__.__name__ if 'self' in frame[0].f_locals else None
-	raise RuntimeError('Function {0} could not be found in stack'.format(name))
+		sfn = frame[3]
+		cfn = func.__name__
+		print 'sfn {0}'.format(sfn)
+		print 'cfn {0}'.format(cfn)
+		if sfn == cfn:
+			#if frame[3] == func.__name__:
+			return '{0}.{1}.{2}'.format(frame[0].f_locals['self'].__module__, frame[0].f_locals['self'].__class__.__name__, func.__name__) if 'self' in frame[0].f_locals else '{0}.{1}'.format(sys.modules[func.__module__], func.__name__)
+	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
+
+def get_parent(func):
+	""" Get class name of calling function """
+	frame_list = inspect.stack()
+	for num, frame in enumerate(frame_list):
+		sfn = frame[3]
+		cfn = func.__name__
+		print 'sfn {0}'.format(sfn)
+		print 'cfn {0}'.format(cfn)
+		if sfn == cfn:
+			print frame_list[num+1]
+			fname = frame_list[num+1][3]
+			lcontext = frame_list[num+1][0].f_locals
+			gcontext = frame_list[num+1][0].f_globals
+			scontext = lcontext['self'] if 'self' in lcontext else None
+			pfunc = lcontext[fname] if fname in lcontext else (gcontext[fname] if fname in gcontext else (getattr(scontext, fname) if ((scontext is not None) and (getattr(scontext, fname, -1) != -1)) else None))
+			if not pfunc:
+				raise RuntimeError('Context of parent function could not be obtained')
+			return get_funcname(pfunc) if frame != frame_list[-1] else None
+
+	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
 
 def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	""" Checks that a argument is of a certain type """
 	arg_dict = create_argument_dictionary(func, *args, **kwargs)
-	modobj = sys.modules[func.__module__]
-	if getattr(modobj, '_EXH', -1) != -1:
+	root_module = inspect.stack()[-1][0]
+	if '_EXH' in root_module.f_locals:
+		exhobj = root_module.f_locals['_EXH']
 		ex_name = '{0}_check_argument_type_internal_{1}'.format(func.__name__, param_name)
-		clsname = get_clsname(func.__name__)
-		modobj._EXH.ex_add(name=ex_name, funcname=(clsname+'.' if clsname else '')+func.__name__, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
-		modobj._EXH.raise_exception_if(ex_name, (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)))
+		exhobj.ex_add(name=ex_name, parent=get_parent(func), funcname=get_funcname(func), extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
+		exhobj.raise_exception_if(name=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)))
 	else:
 		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)):
 			raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
@@ -478,8 +504,7 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 				ex_dict_list_full = [param_spec.exception(**{'param':param} if type(param_spec) == File else {'param_name':param_name}) for param_spec in sub_param_spec]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = '{0}_check_argument_internal_{1}{2}'.format(func.__name__, param_name, '' if len(ex_dict_list_full) == 1 else num)
-					clsname = get_clsname(func.__name__)
-					modobj._EXH.ex_add(name=ex_name, funcname=(clsname+'.' if clsname else '')+func.__name__, extype=ex['type'], exmsg=ex['msg'])
+					modobj._EXH.ex_add(name=ex_name, parent=get_parent(func), funcname=get_funcname(func), extype=ex['type'], exmsg=ex['msg'])
 					modobj._EXH.raise_exception_if(name=ex_name, condition=False)
 			exp_dict = dict()
 			if len(exp_dict_list) == len(sub_param_spec):
