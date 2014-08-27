@@ -716,7 +716,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 ###
 @pytest.fixture
 def default_source():
-	""" Provides a default source to be used in teseting the putil.Series() class """
+	""" Provides a default source to be used in teseting the putil.plot.Series() class """
 	return putil.plot.BasicSource(indep_var=numpy.array([5, 6, 7, 8]), dep_var=numpy.array([0, -10, 5, 4]))
 
 class TestSeries(object):	#pylint: disable=W0232
@@ -996,7 +996,7 @@ class TestSeries(object):	#pylint: disable=W0232
 ###
 @pytest.fixture
 def default_series(default_source):	#pylint: disable=W0621
-	""" Provides a default series object to be used in teseting the putil.Panel() class """
+	""" Provides a default series object to be used in teseting the putil.plot.Panel() class """
 	return putil.plot.Series(data_source=default_source, label='test series')
 
 class TestPanel(object):	#pylint: disable=W0232
@@ -1494,7 +1494,7 @@ class TestPanel(object):	#pylint: disable=W0232
 ###
 @pytest.fixture
 def default_panel(default_series):	#pylint: disable=W0621
-	""" Provides a default panel object to be used in teseting the putil.Figure() class """
+	""" Provides a default panel object to be used in teseting the putil.plot.Figure() class """
 	return putil.plot.Panel(series=default_series, primary_axis_label='Primary axis', primary_axis_units='A', secondary_axis_label='Secondary axis', secondary_axis_units='B')
 
 class TestFigure(object):	#pylint: disable=W0232,R0903
