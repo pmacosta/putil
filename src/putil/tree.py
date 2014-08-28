@@ -93,7 +93,8 @@ class TreeNode(object):	#pylint: disable=R0903
 		self.data = (data if not self.data else (self.data if isinstance(self.data, list) else [self.data])+[data]) if (data is not None) else self.data
 
 	def __str__(self):
-		return 'Name: {0}\nParent: {1}\nChildren: {2}'.format(self.name, self.parent_name, self.children_names)
+		children_names_txt = None if not self.children_names else (self.children_names[0] if len(self.children_names) == 1 else ', '.join(self.children_names))
+		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(self.name, self.parent_name, children_names_txt, self.data)
 
 	def prt(self, tab=0):
 		"""

@@ -47,7 +47,7 @@ def default_trees():	#pylint: disable=R0914
 	t2l2b2_obj.add_children([t2l3b2b_obj, t2l3b2c_obj])
 	t2l2b2_obj.parent = t2l1_obj
 	#
-	t3l1_obj = putil.tree.TreeNode(name='t3l1', children=putil.tree.TreeNode(name='t3l2', data='Tree 2, level 2'), data='Tree 2, level 1')
+	t3l1_obj = putil.tree.TreeNode(name='t3l1', children=putil.tree.TreeNode(name='t3l2', data='Tree 2, level 2'), data='Tree 3, level 1')
 	t3l1_obj.children = None
 
 	return t1l1_obj, t2l1_obj, t3l1_obj
@@ -161,6 +161,21 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		#
 		assert test_list == len(test_list)*[True]
 
+	def test_parent_error(self):	#pylint: disable=C0103,R0201
+		""" Test that the rigth exception is raised when the node parent is of the wrong type """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.TreeNode(name='a', parent=5)
+		test_list.append(excinfo.value.message == 'Argument `parent` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.TreeNode(name='a', parent=dict())
+		test_list.append(excinfo.value.message == 'Argument `parent` is of the wrong type')
+		# These statement should not raise any exception
+		test_list.append(putil.tree.TreeNode(name='a').parent == None)
+		test_list.append(putil.tree.TreeNode(name='a', parent=putil.tree.TreeNode(name='b')).parent_name == 'b')
+		#
+		assert test_list == len(test_list)*[True]
+
 	def test_parent_and_parent_name_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the properties parent and parent_name work as expected """
 		tree1, tree2, tree3 = default_trees
@@ -241,5 +256,69 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		obj.add_data('world!')
 		test_list.append(obj.data == ['Hello', 'world!'])
 		#
+		assert test_list == len(test_list)*[True]
+
+	def test_str(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that the method __str__ works as expected """
+		tree1, tree2, tree3 = default_trees
+		obj = putil.tree.TreeNode(name='dtree', children=putil.tree.TreeNode(name='my_child', data='Tree 2, level 2'))
+		test_list = list()
+		#
+		test_list.append(str(tree1) == 'Name: t1l1\nParent: None\nChildren: t1l2b1, t1l2b2\nData: Tree 1, level 1')
+		tree2.children[0].children[1].add_data(14.3)
+		test_list.append(str(tree2.children[0].children[1]) == "Name: t2l3b1b\nParent: t2l2b1\nChildren: None\nData: ['Tree 2, level 3, branch 1, child b', 14.3]")
+		test_list.append(str(tree3) == 'Name: t3l1\nParent: None\nChildren: None\nData: Tree 3, level 1')
+		test_list.append(str(obj) == 'Name: dtree\nParent: None\nChildren: my_child\nData: None')
+		#
+		assert test_list == len(test_list)*[True]
+
+	def test_is_root(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that the property is_root works as expected """
+		tree1, tree2, tree3 = default_trees
+		test_list = list()
+		test_list.append(tree1.is_root == True)
+		test_list.append(tree2.children[0].is_root == False)
+		test_list.append(tree2.children[0].children[2].is_root == False)
+		test_list.append(tree3.is_root == True)
+		assert test_list == len(test_list)*[True]
+
+	def test_is_leaf(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that the property is_leaf works as expected """
+		tree1, tree2, tree3 = default_trees
+		test_list = list()
+		test_list.append(tree1.is_leaf == False)
+		test_list.append(tree2.children[0].is_leaf == False)
+		test_list.append(tree2.children[0].children[2].is_leaf == True)
+		test_list.append(tree3.is_leaf == True)
+		assert test_list == len(test_list)*[True]
+
+	def test_cannot_delete_attributes(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that del method raises an exception on all class attributes """
+		tree1, _, _ = default_trees
+		test_list = list()
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.children
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.children_names
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.is_leaf
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.is_root
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.data
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.name
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.parent
+		test_list.append(excinfo.value.message == "can't delete attribute")
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.parent_name
+		test_list.append(excinfo.value.message == "can't delete attribute")
 		assert test_list == len(test_list)*[True]
 
