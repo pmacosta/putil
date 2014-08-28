@@ -87,12 +87,10 @@ class TreeNode(object):	#pylint: disable=R0903
 		return self._db['data']
 
 	def _set_data(self, data):	#pylint: disable=C0111
-		data = data if not data else (data if isinstance(data, list) else [data])
-		if self.data and data:
-			for element in data:
-				if element in self.data:
-					raise ValueError('Node {0} already has {1} as its data'.format(self.name, element))
-		self._db['data'] = ((self.data if isinstance(self.data, list) else [self.data]) if self.data else list())+data if data else data
+		self._db['data'] = data
+
+	def add_data(self, data):	#pylint: disable=C0111
+		self.data = (data if not self.data else (self.data if isinstance(self.data, list) else [self.data])+[data]) if (data is not None) else self.data
 
 	def __str__(self):
 		return 'Name: {0}\nParent: {1}\nChildren: {2}'.format(self.name, self.parent_name, self.children_names)

@@ -1,4 +1,4 @@
-﻿# tree_test.py	#pylint:disable=C0302
+# tree_test.py	#pylint:disable=C0302
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -18,36 +18,36 @@ import putil.tree
 @pytest.fixture
 def default_trees():	#pylint: disable=R0914
 	""" Provides a default tree to be used in teseting the putil.tree.TreeNode() class """
-	t1l3b1a_obj = putil.tree.TreeNode(name='t1l3b1a', data='Tree 1, Level 3, branch 1, child a')
-	t1l3b1b_obj = putil.tree.TreeNode(name='t1l3b1b', data='Tree 1, Level 3, branch 1, child b')
-	t1l3b1c_obj = putil.tree.TreeNode(name='t1l3b1c', data='Tree 1, Level 3, branch 1, child c')
+	t1l3b1a_obj = putil.tree.TreeNode(name='t1l3b1a', data='Tree 1, level 3, branch 1, child a')
+	t1l3b1b_obj = putil.tree.TreeNode(name='t1l3b1b', data='Tree 1, level 3, branch 1, child b')
+	t1l3b1c_obj = putil.tree.TreeNode(name='t1l3b1c', data='Tree 1, level 3, branch 1, child c')
 	#
-	t1l3b2a_obj = putil.tree.TreeNode(name='t1l3b2a', data='Tree 1, Level 3, branch 2, child a')
-	t1l3b2b_obj = putil.tree.TreeNode(name='t1l3b2b', data='Tree 1, Level 3, branch 2, child b')
-	t1l3b2c_obj = putil.tree.TreeNode(name='t1l3b2c', data='Tree 1, Level 3, branch 2, child c')
+	t1l3b2a_obj = putil.tree.TreeNode(name='t1l3b2a', data='Tree 1, level 3, branch 2, child a')
+	t1l3b2b_obj = putil.tree.TreeNode(name='t1l3b2b', data='Tree 1, level 3, branch 2, child b')
+	t1l3b2c_obj = putil.tree.TreeNode(name='t1l3b2c', data='Tree 1, level 3, branch 2, child c')
 	#
-	t1l2b1_obj = putil.tree.TreeNode(name='t1l2b1', children=[t1l3b1a_obj, t1l3b1b_obj, t1l3b1c_obj], data='Tree 1, Level 2, branch 1')
-	t1l2b2_obj = putil.tree.TreeNode(name='t1l2b2', children=[t1l3b2a_obj, t1l3b2b_obj, t1l3b2c_obj], data='Tree 1, Level 2, branch 2')
+	t1l2b1_obj = putil.tree.TreeNode(name='t1l2b1', children=[t1l3b1a_obj, t1l3b1b_obj, t1l3b1c_obj], data='Tree 1, level 2, branch 1')
+	t1l2b2_obj = putil.tree.TreeNode(name='t1l2b2', children=[t1l3b2a_obj, t1l3b2b_obj, t1l3b2c_obj], data='Tree 1, level 2, branch 2')
 	#
-	t1l1_obj = putil.tree.TreeNode(name='t1l1', children=[t1l2b1_obj, t1l2b2_obj], data='Tree 1, Level 1')
+	t1l1_obj = putil.tree.TreeNode(name='t1l1', children=[t1l2b1_obj, t1l2b2_obj], data='Tree 1, level 1')
 	###
-	t2l1_obj = putil.tree.TreeNode(name='t2l1', data='Tree 2, Level 1')
+	t2l1_obj = putil.tree.TreeNode(name='t2l1', data='Tree 2, level 1')
 	#
-	t2l3b1a_obj = putil.tree.TreeNode(name='t2l3b1a', data='Tree 2, Level 3, branch 1, child a')
-	t2l3b1b_obj = putil.tree.TreeNode(name='t2l3b1b', data='Tree 2, Level 3, branch 1, child b')
-	t2l3b1c_obj = putil.tree.TreeNode(name='t2l3b1c', data='Tree 2, Level 3, branch 1, child c')
+	t2l3b1a_obj = putil.tree.TreeNode(name='t2l3b1a', data='Tree 2, level 3, branch 1, child a')
+	t2l3b1b_obj = putil.tree.TreeNode(name='t2l3b1b', data='Tree 2, level 3, branch 1, child b')
+	t2l3b1c_obj = putil.tree.TreeNode(name='t2l3b1c', data='Tree 2, level 3, branch 1, child c')
 	#
-	t2l2b1_obj = putil.tree.TreeNode(name='t2l2b1', parent=t2l1_obj, children=[t2l3b1a_obj, t2l3b1b_obj, t2l3b1c_obj], data='Tree 2, Level 2, branch 1')	#pylint: disable=W0612
+	t2l2b1_obj = putil.tree.TreeNode(name='t2l2b1', parent=t2l1_obj, children=[t2l3b1a_obj, t2l3b1b_obj, t2l3b1c_obj], data='Tree 2, level 2, branch 1')	#pylint: disable=W0612
 	#
-	t2l3b2a_obj = putil.tree.TreeNode(name='t2l3b2a', data='Tree 2, Level 3, branch 2, child a')
-	t2l3b2b_obj = putil.tree.TreeNode(name='t2l3b2b', data='Tree 2, Level 3, branch 2, child b')
-	t2l3b2c_obj = putil.tree.TreeNode(name='t2l3b2c', data='Tree 2, Level 3, branch 2, child c')
+	t2l3b2a_obj = putil.tree.TreeNode(name='t2l3b2a', data='Tree 2, level 3, branch 2, child a')
+	t2l3b2b_obj = putil.tree.TreeNode(name='t2l3b2b', data='Tree 2, level 3, branch 2, child b')
+	t2l3b2c_obj = putil.tree.TreeNode(name='t2l3b2c', data='Tree 2, level 3, branch 2, child c')
 	#
-	t2l2b2_obj = putil.tree.TreeNode(name='t2l2b2', children=t2l3b2a_obj, data='Tree 2, Level 2, branch 2')
+	t2l2b2_obj = putil.tree.TreeNode(name='t2l2b2', children=t2l3b2a_obj, data='Tree 2, level 2, branch 2')
 	t2l2b2_obj.add_children([t2l3b2b_obj, t2l3b2c_obj])
 	t2l2b2_obj.parent = t2l1_obj
 	#
-	t3l1_obj = putil.tree.TreeNode(name='t3l1', children=putil.tree.TreeNode(name='t3l2', data='Tree 2, Level 2'), data='Tree 2, Level 1')
+	t3l1_obj = putil.tree.TreeNode(name='t3l1', children=putil.tree.TreeNode(name='t3l2', data='Tree 2, level 2'), data='Tree 2, level 1')
 	t3l1_obj.children = None
 
 	return t1l1_obj, t2l1_obj, t3l1_obj
@@ -77,20 +77,34 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		_ = putil.tree.TreeNode(name='a', children=putil.tree.TreeNode(name='b'))
 		_ = putil.tree.TreeNode(name='a', children=putil.tree.TreeNode(name='b'))
 		_ = putil.tree.TreeNode(name='a', children=[putil.tree.TreeNode(name='b'), putil.tree.TreeNode(name='c')])
-		assert test_list == 3*[True]
+		#
+		assert test_list == len(test_list)*[True]
 
-	def test_children_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
-		""" Test that the method children() works as expected """
+	def test_children_and_children_names_work(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that the property children works as expected """
 		tree1, tree2, tree3 = default_trees
 		test_list = list()
 		test_list.append(tree1.children_names == ['t1l2b1', 't1l2b2'])
 		test_list.append(tree2.children_names == ['t2l2b1', 't2l2b2'])
 		test_list.append(tree1.children[0].children_names == ['t1l3b1a', 't1l3b1b', 't1l3b1c'])
+		test_list.append(tree1.children[0].children[0].children_names == None)
+		test_list.append(tree1.children[0].children[1].children_names == None)
+		test_list.append(tree1.children[0].children[2].children_names == None)
 		test_list.append(tree1.children[1].children_names == ['t1l3b2a', 't1l3b2b', 't1l3b2c'])
+		test_list.append(tree1.children[1].children[0].children_names == None)
+		test_list.append(tree1.children[1].children[1].children_names == None)
+		test_list.append(tree1.children[1].children[2].children_names == None)
 		test_list.append(tree2.children[0].children_names == ['t2l3b1a', 't2l3b1b', 't2l3b1c'])
+		test_list.append(tree2.children[0].children[0].children_names == None)
+		test_list.append(tree2.children[0].children[1].children_names == None)
+		test_list.append(tree2.children[0].children[2].children_names == None)
 		test_list.append(tree2.children[1].children_names == ['t2l3b2a', 't2l3b2b', 't2l3b2c'])
+		test_list.append(tree2.children[1].children[0].children_names == None)
+		test_list.append(tree2.children[1].children[1].children_names == None)
+		test_list.append(tree2.children[1].children[2].children_names == None)
 		test_list.append(tree3.children == None)
-		assert test_list == 7*[True]
+		#
+		assert test_list == len(test_list)*[True]
 
 	def test_add_children_error(self):	#pylint: disable=C0103,R0201
 		""" Test that the rigth exception is raised when add_children() method is given is of the wrong type """
@@ -108,7 +122,8 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		with pytest.raises(ValueError) as excinfo:
 			obj.add_children([putil.tree.TreeNode(name='c'), putil.tree.TreeNode(name='b')])
 		test_list.append(excinfo.value.message == 'Node b is already a child of current node')
-		assert test_list == 4*[True]
+		#
+		assert test_list == len(test_list)*[True]
 
 	def test_add_children_works(self):	#pylint: disable=C0103,R0201
 		""" Test that the method add_children() works as expected """
@@ -143,4 +158,88 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		test_list.append(obj.children_names == ['b'])
 		obj.add_children([putil.tree.TreeNode(name='c'), putil.tree.TreeNode(name='d')])
 		test_list.append(obj.children_names == ['b', 'c', 'd'])
-		assert test_list == 11*[True]
+		#
+		assert test_list == len(test_list)*[True]
+
+	def test_parent_and_parent_name_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that the properties parent and parent_name work as expected """
+		tree1, tree2, tree3 = default_trees
+		test_list = list()
+		#
+		test_list.append(tree1.parent == None)
+		test_list.append(tree1.parent_name == None)
+		test_list.append(tree1.children[0].parent == tree1)
+		test_list.append(tree1.children[0].parent_name == 't1l1')
+		test_list.append(tree1.children[1].parent == tree1)
+		test_list.append(tree1.children[1].parent_name == 't1l1')
+		test_list.append(tree1.children[0].children[0].parent == tree1.children[0])
+		test_list.append(tree1.children[0].children[0].parent_name == 't1l2b1')
+		test_list.append(tree1.children[0].children[1].parent == tree1.children[0])
+		test_list.append(tree1.children[0].children[1].parent_name == 't1l2b1')
+		test_list.append(tree1.children[0].children[2].parent == tree1.children[0])
+		test_list.append(tree1.children[0].children[2].parent_name == 't1l2b1')
+		test_list.append(tree1.children[1].children[0].parent == tree1.children[1])
+		test_list.append(tree1.children[1].children[0].parent_name == 't1l2b2')
+		test_list.append(tree1.children[1].children[1].parent == tree1.children[1])
+		test_list.append(tree1.children[1].children[1].parent_name == 't1l2b2')
+		test_list.append(tree1.children[1].children[2].parent == tree1.children[1])
+		test_list.append(tree1.children[1].children[2].parent_name == 't1l2b2')
+		#
+		test_list.append(tree2.parent == None)
+		test_list.append(tree2.parent_name == None)
+		test_list.append(tree2.children[0].parent == tree2)
+		test_list.append(tree2.children[0].parent_name == 't2l1')
+		test_list.append(tree2.children[1].parent == tree2)
+		test_list.append(tree2.children[1].parent_name == 't2l1')
+		test_list.append(tree2.children[0].children[0].parent == tree2.children[0])
+		test_list.append(tree2.children[0].children[0].parent_name == 't2l2b1')
+		test_list.append(tree2.children[0].children[1].parent == tree2.children[0])
+		test_list.append(tree2.children[0].children[1].parent_name == 't2l2b1')
+		test_list.append(tree2.children[0].children[2].parent == tree2.children[0])
+		test_list.append(tree2.children[0].children[2].parent_name == 't2l2b1')
+		test_list.append(tree2.children[1].children[0].parent == tree2.children[1])
+		test_list.append(tree2.children[1].children[0].parent_name == 't2l2b2')
+		test_list.append(tree2.children[1].children[1].parent == tree2.children[1])
+		test_list.append(tree2.children[1].children[1].parent_name == 't2l2b2')
+		test_list.append(tree2.children[1].children[2].parent == tree2.children[1])
+		test_list.append(tree2.children[1].children[2].parent_name == 't2l2b2')
+		#
+		test_list.append(tree3.parent == None)
+		test_list.append(tree3.parent_name == None)
+		#
+		assert test_list == len(test_list)*[True]
+
+	def test_data_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that the property data works as expected """
+		tree1, _, _ = default_trees
+		test_list = list()
+		#
+		test_list.append(tree1.data == 'Tree 1, level 1')
+		test_list.append(tree1.children[0].data == 'Tree 1, level 2, branch 1')
+		test_list.append(tree1.children[1].children[2].data == 'Tree 1, level 3, branch 2, child c')
+		tree1.children[1].children[2].data = None
+		test_list.append(tree1.children[1].children[2].data == None)
+		tree1.children[1].children[0].data = [5, 5, 2]
+		test_list.append(tree1.children[1].children[0].data == [5, 5, 2])
+		#
+		assert test_list == len(test_list)*[True]
+
+	def test_add_data_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that the method add_data() works as expected """
+		tree1, _, _ = default_trees
+		test_list = list()
+		#
+		test_list.append(tree1.data == 'Tree 1, level 1')
+		tree1.add_data(5)
+		test_list.append(tree1.data == ['Tree 1, level 1', 5])
+		obj = tree1.children[1]
+		test_list.append(obj.data == 'Tree 1, level 2, branch 2')
+		obj.data = None
+		test_list.append(obj.data == None)
+		obj.add_data('Hello')
+		test_list.append(obj.data == 'Hello')
+		obj.add_data('world!')
+		test_list.append(obj.data == ['Hello', 'world!'])
+		#
+		assert test_list == len(test_list)*[True]
+
