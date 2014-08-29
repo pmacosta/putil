@@ -670,20 +670,19 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of PolymorphicType class behaves appropriately """
+		test_list = list()
 		obj1 = putil.check.PolymorphicType([putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.NumberRange(minimum=15, maximum=20)])
 		obj2 = putil.check.PolymorphicType([putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.File(True)])
 		obj3 = putil.check.PolymorphicType([putil.check.File(True), putil.check.Function(num_pars=2)])
 		obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger(), putil.check.NumberRange(minimum=15, maximum=20)])
-		obj5 = putil.check.PolymorphicType([None, putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.PositiveReal()])
-		obj6 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
-		test1 = obj1.exception('par1', 5) == {'type':ValueError, 'msg':"Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nArgument `par1` is not in the range [15.0, 20.0]"}
-		test2 = obj2.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':"(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File _not_valid_ could not be found"}
-		test3 = obj3.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':'(IOError) File _not_valid_ could not be found\n(ValueError) Argument `par1` is not a function with 2 arguments'}
-		test4 = obj4.exception('par1', -1) == {'type':ValueError, 'msg':"Argument `par1` is not a positive integer\nArgument `par1` is not in the range [15.0, 20.0]"}
-		test5 = obj5.exception('par1', -1) == {'type':ValueError, 'msg':"Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nArgument `par1` is not a positive real number"}
-		test6 = obj6.exception('par1', -1) == {'type':None, 'msg':''}
-		print obj6.exception('par1', -1)
-		assert (test1, test2, test3, test4, test5, test6) == (True, True, True, True, True, True)
+		obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
+		test_list.append(obj1.exception(param_name='par1', test_obj=5) == {'type':ValueError, 'msg':'Argument `par1` is not in the range [15.0, 20.0]'})
+		test_list.append(obj2.exception(param_name='par1', param='_not_valid_', test_obj='not_a_file') == \
+				   {'type':RuntimeError, 'msg':"(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File _not_valid_ could not be found"})
+		test_list.append(obj3.exception(param_name='par1', param='_not_valid_', test_obj=32) == {'type':None, 'msg':''})
+		test_list.append(obj4.exception(param_name='par1', test_obj=-1) == {'type':ValueError, 'msg':'Argument `par1` is not in the range [15.0, 20.0]'})
+		test_list.append(obj5.exception(param_name='par1', test_obj=-1) == {'type':None, 'msg':''})
+		assert test_list == len(test_list)*[True]
 
 
 ##
@@ -1063,13 +1062,23 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.NumberRange(minimum=5, maximum=10), putil.check.OneOf(['HELLO', 'WORLD'])]))
 		def func_check_type2(ppar1):	#pylint: disable=C0111
 			print ppar1
-		with pytest.raises(TypeError) as excinfo1:	# Type not in the definition
+		@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.NumberRange(minimum=5, maximum=10), putil.check.NumberRange(minimum=20, maximum=30)]))
+		def func_check_type3(ppar1):	#pylint: disable=C0111
+			print ppar1
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:	# Type not in the definition
 			func_check_type1('a')
-		eobj1 = excinfo1.value.message == 'Argument `ppar1` is of the wrong type'
-		with pytest.raises(ValueError) as excinfo2:	# Type not in the definition
+		test_list.append(excinfo.value.message == 'Argument `ppar1` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:	# Type not in the definition
 			func_check_type2(2)
-		eobj2 = excinfo2.value.message == "Argument `ppar1` is not in the range [5.0, 10.0]\nArgument `ppar1` is not one of ['HELLO', 'WORLD'] (case insensitive)"
-		assert (eobj1, eobj2) == (True, True)
+		test_list.append(excinfo.value.message == 'Argument `ppar1` is not in the range [5.0, 10.0]')
+		with pytest.raises(ValueError) as excinfo:	# Type not in the definition
+			func_check_type2('teto')
+		test_list.append(excinfo.value.message == "Argument `ppar1` is not one of ['HELLO', 'WORLD'] (case insensitive)")
+		with pytest.raises(ValueError) as excinfo:	# Type not in the definition
+			func_check_type3(2)
+		test_list.append(excinfo.value.message == 'Argument `ppar1` is not in the range [5.0, 10.0]\nArgument `ppar1` is not in the range [20.0, 30.0]')
+		assert test_list == len(test_list)*[True]
 
 	def test_polymorphic_type_no_error(self):	#pylint: disable=R0201,C0103
 		""" Test that function behaves properly when a argument is in the polymorphic types allowed """
@@ -1176,3 +1185,54 @@ class TestCheckArguments(object):	#pylint: disable=W0232,R0903
 		func_check_type1(1, 'hello', None)
 		func_check_type2(1, 'hello', {'subpar1':35.0, 'subpar2':'no'})
 		assert test_list == 2*[True]
+
+###
+# Custom data type addition
+###
+class NodeName(object):	#pylint: disable=R0903
+	""" Hierarchical node name data type class """
+	def includes(self, test_obj):	#pylint: disable=R0201,W0613
+		"""	Test that an object belongs to the pseudo-type """
+		return False if (not isinstance(test_obj, str)) or (isinstance(test_obj, str) and (' ' in test_obj)) else all([element.strip() != '' for element in test_obj.strip().split('.')])
+
+	def istype(self, test_obj):	#pylint: disable=R0201
+		"""	Checks to see if object is of the same class type """
+		return isinstance(test_obj, str)
+
+	def exception(self, param_name):	#pylint: disable=R0201,W0613
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Argument `{0}` is not a valid node name'.format(param_name)
+		return exp_dict
+putil.check.register_new_type(NodeName, 'Hierarchical node name')
+
+class TestCustomDataTypeAddition(object):	#pylint: disable=W0232,R0903
+	""" Tests the creation of custom data types and its integration in the flow """
+
+	def test_custom_data_type_addition_works(self): #pylint: disable=R0201,C0103
+		""" Test that adding a custom data type to check module framework works """
+		@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.NumberRange(minimum=5.0, maximum=10.0), putil.check.OneOf(['HELLO', 'WORLD']), NodeName()]))
+		def func_check(par1):	#pylint: disable=C0111
+			return par1
+		test_list = list()
+		with pytest.raises(ValueError) as excinfo:
+			func_check('node1.node2   . node3')
+		test_list.append(excinfo.value.message == "Argument `par1` is not one of ['HELLO', 'WORLD'] (case insensitive)\nArgument `par1` is not a valid node name")
+		with pytest.raises(ValueError) as excinfo:
+			func_check(' node1.node2.node3')
+		test_list.append(excinfo.value.message == "Argument `par1` is not one of ['HELLO', 'WORLD'] (case insensitive)\nArgument `par1` is not a valid node name")
+		with pytest.raises(ValueError) as excinfo:
+			func_check('node1.node2.node3 ')
+		test_list.append(excinfo.value.message == "Argument `par1` is not one of ['HELLO', 'WORLD'] (case insensitive)\nArgument `par1` is not a valid node name")
+		with pytest.raises(ValueError) as excinfo:
+			func_check(1)
+		test_list.append(excinfo.value.message == 'Argument `par1` is not in the range [5.0, 10.0]')
+		with pytest.raises(TypeError) as excinfo:
+			func_check([1, 2])
+		test_list.append(excinfo.value.message == 'Argument `par1` is of the wrong type')
+		# These statements should not raise any exception
+		func_check(None)
+		func_check(7.5)
+		func_check('node1.node2.node3')
+		assert test_list == len(test_list)*[True]

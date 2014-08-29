@@ -380,17 +380,18 @@ class PolymorphicType(object):	#pylint: disable=R0903
 	def exception(self, param_name, param=None, test_obj=None):
 		""" Returns a suitable exception message """
 		exp_dict = dict()
-		if Any in self.types:
-			exp_dict['type'] = None
-			exp_dict['msg'] = ''
-		else:
-			exp_dict_list = [sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if (sub_type in self.pseudo_types) and (not sub_inst.includes(test_obj))]
-			# Check if all exceptions are of the same type, in which case raise an exception of that type, otherwise raise RuntimeError
-			same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
-			exp_type = exp_dict_list[0]['type'] if same_exp  else RuntimeError
-			exp_msg = [('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in exp_dict_list]
-			exp_dict['type'] = exp_type
-			exp_dict['msg'] = '\n'.join(exp_msg)
+		exp_dict['type'] = None
+		exp_dict['msg'] = ''
+		if Any not in self.types:
+			exp_dict_list = [sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if \
+					(sub_type in self.pseudo_types) and (sub_inst.istype(test_obj)) and (not sub_inst.includes(test_obj))]
+			if exp_dict_list:
+				# Check if all exceptions are of the same type, in which case raise an exception of that type, otherwise raise RuntimeError
+				same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
+				exp_type = exp_dict_list[0]['type'] if same_exp  else RuntimeError
+				exp_msg = [('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in exp_dict_list]
+				exp_dict['type'] = exp_type
+				exp_dict['msg'] = '\n'.join(exp_msg)
 		return exp_dict
 
 
@@ -514,11 +515,20 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 	pseudo_types = _get_pseudo_types(False)['type']
 	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
 	if (param is not None) and (type(param_spec) in pseudo_types):
-		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if (sub_type in pseudo_types) and (Any not in param_spec.types)]
-		if sub_param_spec:	# Eliminate PolymorphicType definitions that do not have any pseduo-type
-			exp_dict_list = [param_spec.exception(**{'param':param} if type(param_spec) == File else {'param_name':param_name}) for param_spec in sub_param_spec if not param_spec.includes(param)]	#pylint: disable=W0142
+		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if \
+			(sub_type in pseudo_types) and (sub_inst.istype(param)) and (Any not in param_spec.types)]
+		if sub_param_spec:	# Eliminate PolymorphicType definitions that do not have any pseudo-type
+			# Find out parameter expected by exception() method
+			exparam_dict_list = list()
+			for param_spec in sub_param_spec:
+				if not param_spec.includes(param):
+					exparam = funcsigs.signature(param_spec.exception).parameters
+					fiter = iter(exparam.items())
+					exparam_name = next(fiter)[0]
+					exparam_dict_list.append({'param':param} if exparam_name == 'param' else {'param_name':param_name})
+			exp_dict_list = [param_spec.exception(**exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not param_spec.includes(param)]	#pylint: disable=W0142
 			if getattr(modobj, '_EXH', -1) != -1:
-				ex_dict_list_full = [param_spec.exception(**{'param':param} if type(param_spec) == File else {'param_name':param_name}) for param_spec in sub_param_spec]	#pylint: disable=W0142
+				ex_dict_list_full = [param_spec.exception(**exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = '{0}_check_argument_internal_{1}{2}'.format(func.__name__, param_name, '' if len(ex_dict_list_full) == 1 else num)
 					modobj._EXH.ex_add(name=ex_name, parent=get_parent(func), funcname=get_funcname(func), extype=ex['type'], exmsg=ex['msg'])
@@ -577,10 +587,19 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 		return func(*args, **kwargs)
 	return wrapper
 
+_BASE_TYPES = [Any, Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
+_BASE_DESC = ['any', 'number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
 def _get_pseudo_types(base=True):
 	""" Returns all pseduo-types available """
-	base_types = [Any, Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
+	base_types = _BASE_TYPES
+	#base_types = [Any, Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
 	all_types = base_types+[PolymorphicType]
-	base_desc = ['any', 'number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
+	base_desc = _BASE_DESC
+	#base_desc = ['any', 'number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
 	all_desc = base_desc+['polymorphic type']
 	return {'type':base_types, 'desc':base_desc} if base else {'type':all_types, 'desc':all_desc}
+
+def register_new_type(cls, desc):
+	""" Register new pseudo-data type """
+	_BASE_TYPES.append(cls)
+	_BASE_DESC.append(desc)
