@@ -63,6 +63,15 @@ class TreeNode(object):	#pylint: disable=R0903
 					raise ValueError('Node {0} is already a child of current node'.format(name))
 		self.children = (self.children if self.children else list())+children if children else self.children
 
+	def collapse(self):
+		""" Elliminates nodes that only have only one child and no data """
+		if (not self.is_leaf) and (len(self.children) == 1) and (not self.children[0].data):
+			self.name = self.name+'.'+self.children[0].name
+			self.children = self.children[0].children
+		if not self.is_leaf:
+			for child in self.children:
+				child.collapse()
+
 	def _get_children(self):	#pylint: disable=C0111
 		return self._db['children']
 
@@ -178,17 +187,17 @@ def search_for_node(tree, name):
 	"""
 	Searches tree node and its children for a particular node name, which can be specified hierarchically. Returns *None* if node name not found.
 
-	:param	tree:	Root node of the search
+	:param	tree:	Root node of the tree to search
 	:type	tree:	:py:class:`putil.tree.TreeNode()` object
 	:param	name:	Node name to search for (case sensitive). Levels of hierarchy are denoted by '.', for example 'root.branch1.leaf2'.
 	:type	name:	string
-	:rtype:	:py:class:`putil.tree.TreeNode()` object or None
+	:rtype:	:py:class:`putil.tree.TreeNode()` object or *None* if node not found
 	:raises: ValueError (Node name is empty)
 	"""
 	if not name.strip():
 		raise ValueError('Node name is empty')
 	names = [element.strip() for element in name.strip().split('.')]
-	if (tree.name == names[0]) and (len(names) == 1):
+	if (tree.name == name) or ((tree.name == names[0]) and (len(names) == 1)):
 		return tree
 	if (tree.name != names[0]) or ((tree.name == names[0]) and (len(names) > 1) and (tree.is_leaf)) or ((tree.name == names[0]) and (len(names) > 1) and (not tree.is_leaf) and (names[1] not in tree.children_names)):
 		return None
@@ -200,3 +209,6 @@ def search_for_node(tree, name):
 	else:
 		raise RuntimeError('Malformed tree in hierarchical search')
 	return search_for_node(child, name)
+
+
+
