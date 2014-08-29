@@ -109,23 +109,34 @@ class PositiveReal(object):	#pylint: disable=R0903
 
 class ArbitraryLength(object):	#pylint: disable=R0903
 	""" Base class for arbitrary length iterables """
-	def __init__(self, iter_type, element_type):
+	def __init__(self, iter_type, element_type, check_keys=True):
 		if iter_type not in [list, tuple, set, dict]:
 			raise TypeError('Argument `iter_type` is of the wrong type')
-		pseudo_types = _get_pseudo_types(False)['type']
-		if (type(element_type) not in pseudo_types) and (not isinstance(element_type, type)):
+		if not is_type_def(element_type):
 			raise TypeError('Argument `element_type` is of the wrong type')
 		self.element_type = element_type
 		self.iter_type = iter_type
+		self.check_keys = check_keys
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
 		if not isinstance(test_obj, self.iter_type):
 			return False
 		pseudo_types = _get_pseudo_types(False)['type']
-		for test_subobj in test_obj if not isinstance(test_obj, dict) else test_obj.values():
-			if ((type(self.element_type) in pseudo_types) and (not self.element_type.includes(test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
-				return False
+		if isinstance(self.element_type, dict):
+			for test_subobj in test_obj:
+				if (not isinstance(test_subobj, dict)) or (isinstance(test_subobj, dict) and self.check_keys and (self.element_type.keys() != test_subobj.keys())):
+					return False
+				for key in self.element_type:
+					robj = self.element_type[key]
+					tobj = test_subobj[key]
+					if ((type(robj) in pseudo_types) and (not robj.includes(tobj))) or ((type(robj) not in pseudo_types) and (robj != type(tobj))):
+						return False
+			return True
+		else:
+			for test_subobj in test_obj if not isinstance(test_obj, dict) else test_obj.values():
+				if ((type(self.element_type) in pseudo_types) and (not self.element_type.includes(test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
+					return False
 		return True
 
 	def istype(self, test_obj):
@@ -166,7 +177,7 @@ class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable=R0903
 class ArbitraryLengthDict(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
-		ArbitraryLength.__init__(self, dict, element_type)
+		ArbitraryLength.__init__(self, dict, element_type, False)
 
 
 class OneOf(object):	#pylint: disable=R0903
@@ -355,7 +366,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 			raise TypeError('Argument `types` is of the wrong type')
 		self.pseudo_types = _get_pseudo_types()['type']
 		for element_type in types:
-			if (type(element_type) not in self.pseudo_types) and (not isinstance(element_type, type)) and (element_type is not None):
+			if (not is_type_def(element_type)) and (element_type is not None):
 				raise TypeError('Argument `types` element is of the wrong type')
 		self.instances = types
 		self.types = [sub_type if type(sub_type) == type else type(sub_type) for sub_type in types]	# Custom types are technically objects of a pseudo-type class, so true type extraction is necessary
@@ -400,6 +411,7 @@ def get_function_args(func):
 	par_dict = funcsigs.signature(func).parameters
 	return tuple(['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict])
 
+
 def create_argument_dictionary(func, *args, **kwargs):
 	"""
 	Creates a dictionary where the keys are the argument names and the values are the passed arguments values (if any)
@@ -416,6 +428,22 @@ def create_argument_dictionary(func, *args, **kwargs):
 		if (arguments[arg_name].default != funcsigs.Parameter.empty) and (arguments[arg_name].name not in arg_dict):
 			arg_dict[arguments[arg_name].name] = arguments[arg_name].default
 	return arg_dict
+
+def is_type_def(obj):
+	""" Check if object is a valid type definition """
+	pseudo_types = _get_pseudo_types(False)['type']
+	# Check for basic and pseudo-types
+	if isinstance(obj, str):
+		return False
+	if (type(obj) in pseudo_types) or isinstance(obj, type):
+		return True
+	# Check for dictionaries and check keys recursively
+	if isinstance(obj, dict):
+		return all([is_type_def(obj[key]) for key in obj])
+	else:
+		# Other iterators should use pseudo-types
+		return False
+
 
 def type_match(test_obj, ref_obj):
 	"""
@@ -436,6 +464,7 @@ def type_match(test_obj, ref_obj):
 		ret_val = type_match_fixed_length_iterable(test_obj, ref_obj)
 	return ret_val
 
+
 def type_match_dict(test_obj, ref_obj):
 	"""	Test if two dictionaries match type (keys in the test dictionary are in the reference dictionary and the value types match)	"""
 	if isinstance(test_obj, dict):
@@ -444,6 +473,7 @@ def type_match_dict(test_obj, ref_obj):
 				return False
 		return True
 	return False
+
 
 def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 	"""	Test that two fixed length iterables (lists, tuples, etc.) have the right element types at the right positions """
@@ -458,6 +488,7 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 		if not type_match(test_subobj, ref_subobj):
 			return False
 	return True
+
 
 def get_funcname(func):
 	""" Get class name of decorated function """
@@ -479,6 +510,7 @@ def get_funcname(func):
 			return '{0}.{1}.{2}'.format(modname, clsname, funcname) if 'self' in frame[0].f_locals else '{0}.{1}'.format(modname, funcname)
 	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
 
+
 def get_parent(func):
 	""" Get class name of calling function """
 	frame_list = inspect.stack()
@@ -495,6 +527,7 @@ def get_parent(func):
 
 	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
 
+
 def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	""" Checks that a argument is of a certain type """
 	arg_dict = create_argument_dictionary(func, *args, **kwargs)
@@ -507,6 +540,7 @@ def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	else:
 		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)):
 			raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
+
 
 def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pylint: disable=R0914
 	"""	Checks that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
@@ -540,6 +574,7 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 				exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in exp_dict_list])
 				raise exp_dict['type'](exp_dict['msg'])
 
+
 def check_argument_type(param_name, param_type):
 	""" Decorator to check that a argument is of a certain type """
 	@decorator.decorator
@@ -548,6 +583,7 @@ def check_argument_type(param_name, param_type):
 		check_argument_type_internal(param_name, param_type, func, *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
+
 
 def check_argument(param_spec):	#pylint: disable=R0912
 	"""	Decorator to check that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
@@ -566,6 +602,7 @@ def check_argument(param_spec):	#pylint: disable=R0912
 		check_argument_internal(param_name, param_spec, func, *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
+
 
 def check_arguments(param_dict):	#pylint: disable=R0912
 	"""	Decorator to check that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
@@ -587,8 +624,10 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 		return func(*args, **kwargs)
 	return wrapper
 
+
 _BASE_TYPES = [Any, Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
 _BASE_DESC = ['any', 'number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
+
 def _get_pseudo_types(base=True):
 	""" Returns all pseduo-types available """
 	base_types = _BASE_TYPES

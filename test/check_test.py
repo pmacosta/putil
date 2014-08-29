@@ -174,8 +174,10 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 		"""	Test that the includes method of ArbitraryLength class behaves appropriately """
 		ref_obj1 = putil.check.ArbitraryLength(list, int)
 		ref_obj2 = putil.check.ArbitraryLength(list, putil.check.Number())
-		assert (ref_obj1.includes([1, 2]), ref_obj1.includes((1, 2)), ref_obj1.includes(set([1.0, 2.0])), ref_obj1.includes(1+2j), ref_obj1.includes('a'), ref_obj2.includes([1, 2.0, 3]), ref_obj2.includes([1, 2.0, None])) \
-			== (True, False, False, False, False, True, False)
+		ref_obj3 = putil.check.ArbitraryLength(list, {'a':putil.check.Number(), 'b':str})
+		assert (ref_obj1.includes([1, 2]), ref_obj1.includes((1, 2)), ref_obj1.includes(set([1.0, 2.0])), ref_obj1.includes(1+2j), ref_obj1.includes('a'), ref_obj2.includes([1, 2.0, 3]), ref_obj2.includes([1, 2.0, None]), \
+			ref_obj3.includes(5), ref_obj3.includes([3]), ref_obj3.includes([{'a':'b', 'b':'b'}]), ref_obj3.includes([{'a':5, 'b':'b'}]), ref_obj3.includes([{'a':5, 'b':'b'}, {'a':True, 'b':'b'}])) == \
+			(True, False, False, False, False, True, False, False, False, False, True, False)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of ArbitraryLength class behaves appropriately """
@@ -788,10 +790,29 @@ class TestCreateArgumentDictionary(object):	#pylint: disable=W0232
 
 
 ###
+# Tests for is_type_def()
+###
+class TestIsTypeDef(object):	#pylint: disable=W0232,R0903
+	""" Tests for is_type_def function """
+	def test_is_type_def_works(self):	#pylint: disable=R0201
+		""" Test that is_type_def works as expected """
+		test_list = list()
+		test_list.append(putil.check.is_type_def('a') == False)
+		test_list.append(putil.check.is_type_def(str) == True)
+		test_list.append(putil.check.is_type_def(5) == False)
+		test_list.append(putil.check.is_type_def(putil.check.PolymorphicType([str, int])) == True)
+		test_list.append(putil.check.is_type_def([str, dict, list]) == False)
+		test_list.append(putil.check.is_type_def(itertools.count(start=0, step=1)) == False)
+		test_list.append(putil.check.is_type_def({'a':str, 'b':int}) == True)
+		test_list.append(putil.check.is_type_def({'a':str, 'b':[str, str]}) == False)
+		test_list.append(putil.check.is_type_def({'a':str, 'b':{'c':putil.check.Number(), 'd':float}}) == True)
+		assert test_list == len(test_list)*[True]
+
+###
 # Tests for type_match()
 ###
 class TestTypeMatch(object):	#pylint: disable=W0232
-	""" Tests for get_function_args function """
+	""" Tests for type_match function """
 
 	def test_str(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for string type """

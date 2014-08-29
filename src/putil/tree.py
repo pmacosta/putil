@@ -7,6 +7,27 @@
 
 import putil.check
 
+###
+# Node name custom pseudo-type
+###
+class NodeName(object):	#pylint: disable=R0903
+	""" Hierarchical node name data type class """
+	def includes(self, test_obj):	#pylint: disable=R0201,W0613
+		"""	Test that an object belongs to the pseudo-type """
+		return False if (not isinstance(test_obj, str)) or (isinstance(test_obj, str) and (' ' in test_obj)) else all([element.strip() != '' for element in test_obj.strip().split('.')])
+
+	def istype(self, test_obj):	#pylint: disable=R0201
+		"""	Checks to see if object is of the same class type """
+		return isinstance(test_obj, str)
+
+	def exception(self, param_name):	#pylint: disable=R0201,W0613
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = ValueError
+		exp_dict['msg'] = 'Argument `{0}` is not a valid node name'.format(param_name)
+		return exp_dict
+putil.check.register_new_type(NodeName, 'Hierarchical node name')
+
 
 class TreeNode(object):	#pylint: disable=R0903
 	"""
@@ -39,7 +60,7 @@ class TreeNode(object):	#pylint: disable=R0903
 	def _get_name(self):	#pylint: disable=C0111
 		return self._db['name']
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, NodeName()]))
 	def _set_name(self, name):	#pylint: disable=C0111
 		self._db['name'] = name.strip() if name else name
 
@@ -222,7 +243,10 @@ class TreeNode(object):	#pylint: disable=R0903
 
 	:type: string
 	:rtype: string
-	:raises: TypeError (Argument `name` is of the wrong type)
+	:raises:
+	 * TypeError (Argument `name` is of the wrong type)
+
+	 * ValueError (Argument `name` is not a valid node name)
 	"""	#pylint: disable=W0105
 
 	parent = property(_get_parent, _set_parent, None, doc='Node parent')
@@ -261,7 +285,7 @@ class TreeNode(object):	#pylint: disable=R0903
 	:rtype: Unicode string
 	"""	#pylint: disable=W0105
 
-@putil.check.check_arguments({'tree':TreeNode, 'name':str})
+@putil.check.check_arguments({'tree':TreeNode, 'name':NodeName()})
 def search_for_node(tree, name):
 	"""
 	Searches tree node and its children for a particular node name, which can be specified hierarchically. Returns *None* if node name not found.
@@ -271,10 +295,11 @@ def search_for_node(tree, name):
 	:param	name:	Node name to search for (case sensitive). Levels of hierarchy are denoted by '.', for example 'root.branch1.leaf2'.
 	:type	name:	string
 	:rtype:	:py:class:`putil.tree.TreeNode()` object or *None* if node not found
-	:raises: ValueError (Node name is empty)
+	:raises:
+	 * TypeError (Argument `tree` is of the wrong type)
+
+	 * Same as :py:attr:`putil.tree.TreeNode.name`
 	"""
-	if not name.strip():
-		raise ValueError('Node name is empty')
 	names = [element.strip() for element in name.strip().split('.')]
 	name_options = ['.'.join(names[:num]) for num in range(len(names), 0, -1)]
 	names_left = ['.'.join(names[num:len(names)]) for num in range(len(names), 0, -1)]
@@ -292,3 +317,29 @@ def search_for_node(tree, name):
 			if result:
 				return result
 	return None
+
+@putil.check.check_argument(putil.check.PolymorphicType([{'node':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'node':NodeName(), 'data':putil.check.Any()})]))
+def build_tree(tree_dict):
+	roots = list()
+	for name, data in tree_dict.items():
+		names = [element.strip() for element in name.strip().split('.')]
+		# Find or create tree to add nodes and data to
+		if not roots:
+			tobj = TreeNode(name=names[0])
+			roots.append(tobj)
+		else:
+			for root in roots:
+				tobj = search_for_node(root, name[0])
+				if tobj:
+					break
+			else:
+				tobj = TreeNode(name=names[0])
+				roots.append(tobj)
+		# Search for leaf node and create children as appropriate
+		for node_name in names:
+			cobj = search_for_node(tobj, node_name)
+			if not cobj:
+				cobj = TreeNode(name=node_name)
+				tobj.add_children(cobj)
+			tobj = cobj
+		tobj.add_data(data)

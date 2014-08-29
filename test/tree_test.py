@@ -58,11 +58,16 @@ class TestTreeNode(object):	#pylint: disable=W0232
 	""" Tests for CsvFile class """
 	def test_name_wrong_type(self):	#pylint: disable=C0103,R0201
 		""" Test that the rigth exception is raised when the node name is of the wrong type """
+		test_list = list()
 		with pytest.raises(TypeError) as excinfo:
 			putil.tree.TreeNode(name=5)
+		test_list.append(excinfo.value.message == 'Argument `name` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:
+			putil.tree.TreeNode(name='a.b. c')
+		test_list.append(excinfo.value.message == 'Argument `name` is not a valid node name')
 		# These statement should not raise any exception
-		_ = putil.tree.TreeNode(name='a').name
-		assert excinfo.value.message == 'Argument `name` is of the wrong type'
+		_ = putil.tree.TreeNode(name='a.b.c').name
+		assert test_list == len(test_list)*[True]
 
 	def test_children_error(self):	#pylint: disable=C0103,R0201
 		""" Test that the rigth exception is raised when the node children is of the wrong type """
@@ -380,6 +385,9 @@ class TestSearchForNode(object):	#pylint: disable=W0232
 		with pytest.raises(TypeError) as excinfo:
 			putil.tree.search_for_node(tree=putil.tree.TreeNode(name='root'), name=5)
 		test_list.append(excinfo.value.message == 'Argument `name` is of the wrong type')
+		with pytest.raises(ValueError) as excinfo:
+			putil.tree.search_for_node(tree=putil.tree.TreeNode(name='root'), name='a.b.c..d')
+		test_list.append(excinfo.value.message == 'Argument `name` is not a valid node name')
 		# This statements should not raise any exception
 		putil.tree.search_for_node(tree=putil.tree.TreeNode(name='root'), name='a')
 		assert test_list == len(test_list)*[True]
