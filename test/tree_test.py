@@ -323,8 +323,8 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		test_list.append(excinfo.value.message == "can't delete attribute")
 		assert test_list == len(test_list)*[True]
 
-	def test_pprint(self, default_trees):	#pylint: disable=C0103,R0201,W0621
-		""" Test that prt method works """
+	def test_pprint_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that pprint method works """
 		tree1, tree2, tree3 = default_trees
 		test_list = list()
 		tree1.children[0].children[0].children = putil.tree.TreeNode(name='leaf1')
@@ -338,6 +338,39 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		tree3.children = [putil.tree.TreeNode(name='leaf1'), putil.tree.TreeNode(name='leaf2')]
 		test_list.append(tree3.pprint() == u't3l1\n├leaf1\n└leaf2')
 		assert test_list == len(test_list)*[True]
+
+	def test_collapse_works(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test that collapse method works """
+		t1obj = putil.tree.TreeNode(name='l1')
+		t2obj = putil.tree.TreeNode(name='l2b1')
+		t3obj = putil.tree.TreeNode(name='l2b2')
+		t1obj.children = [t2obj, t3obj]
+		t4obj = putil.tree.TreeNode(name='l3b1b1')
+		t2obj.children = t4obj
+		t5obj = putil.tree.TreeNode(name='l3b2b1', data=5)
+		t3obj.children = t5obj
+		t6obj = putil.tree.TreeNode(name='l4b1b1b1')
+		t4obj.children = t6obj
+		t7obj = putil.tree.TreeNode(name='l4b2b1b1')
+		t5obj.children = t7obj
+		t8obj = putil.tree.TreeNode(name='l5b1b1b1b1')
+		t9obj = putil.tree.TreeNode(name='l5b1b1b1b2')
+		t6obj.children = [t8obj, t9obj]
+		taobj = putil.tree.TreeNode(name='l4b1b1b2')
+		t4obj.add_children(taobj)
+		tbobj = putil.tree.TreeNode(name='l5b1b1b2b1')
+		taobj.children = tbobj
+		tcobj = putil.tree.TreeNode(name='l6b1b1b2b1b1')
+		tbobj.children = tcobj
+		print t1obj.pprint()
+		t1obj.collapse()
+		print t1obj.pprint()
+		assert False
+
+		
+
+
+
 
 class TestSearchForNode(object):	#pylint: disable=W0232
 	""" Tests search_for_node function """
@@ -363,4 +396,3 @@ class TestSearchForNode(object):	#pylint: disable=W0232
 		test_list.append(putil.tree.search_for_node(tree2, 't2l1.t2l2b2').data == 'Tree 2, level 2, branch 2')
 		test_list.append(putil.tree.search_for_node(tree1, 't1l1.t1l2b1.t1l3b1c').data == 'Tree 1, level 3, branch 1, child c')
 		assert test_list == len(test_list)*[True]
-
