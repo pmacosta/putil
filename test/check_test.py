@@ -17,6 +17,30 @@ import putil.check
 
 
 ###
+# Test for Any class
+###
+class TestAny(object):	#pylint: disable=W0232
+	""" Tests for Any pseudo-type """
+
+	def test_no_exception(self):	#pylint: disable=R0201
+		"""	Test that Any class behaves appropriately when all arguments are correctly specified """
+		putil.check.Any()
+
+	def test_includes(self):	#pylint: disable=R0201
+		"""	Test that the includes method of Any class behaves appropriately	"""
+		ref_obj = putil.check.Any()
+		assert (ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (True, True, True, True, True)
+
+	def test_istype(self):	#pylint: disable=R0201
+		"""	Test that the istype method of Any class behaves appropriately """
+		ref_obj = putil.check.Any()
+		assert (ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (True, True, True, True, True)
+
+	def test_exception_method(self):	#pylint: disable=R0201
+		"""	Tests that Any class behaves appropriately when inproper argument type is passed """
+		assert putil.check.Any().exception('par1') == {'type':None, 'msg':''}
+
+###
 # Test for Number class
 ###
 class TestNumber(object):	#pylint: disable=W0232
@@ -598,7 +622,7 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 	def test_type_match_no_errors(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely when all arguments are correctly specified """
 		test_instances = [str, int, None, putil.check.ArbitraryLengthList, putil.check.ArbitraryLengthTuple, putil.check.ArbitraryLengthSet, putil.check.IncreasingRealNumpyVector, putil.check.RealNumpyVector, putil.check.OneOf,
-			  putil.check.NumberRange, putil.check.Number, putil.check.Real, putil.check.File, putil.check.Function]
+			  putil.check.NumberRange, putil.check.Number, putil.check.Real, putil.check.File, putil.check.Function, putil.check.Any]
 		obj = putil.check.PolymorphicType(test_instances)
 		test_types = test_instances[:]
 		test_types[2] = type(None)
@@ -613,6 +637,7 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		ref_obj3 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)])
 		ref_obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger()])
 		ref_obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal()])
+		ref_obj6 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
 		def foo1(par1, par2, par3):	#pylint: disable=C0111
 			return par1, par2, par3
 		def foo2(par1, par2):	#pylint: disable=C0111
@@ -621,8 +646,8 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 			 ref_obj1.includes(100.0), ref_obj1.includes(10+20j), ref_obj1.includes(numpy.array([10, 0.0, 30])), ref_obj1.includes('hello world'), ref_obj1.includes([1.0, 2.0, 3.0]), ref_obj1.includes('auto'),
 			 ref_obj1.includes(numpy.array([])), ref_obj1.includes(numpy.array(['a', 'b', 'c'])), ref_obj2.includes(1), ref_obj2.includes(set([1, 2])), ref_obj2.includes(numpy.array([1, 0, -1])),
 			 ref_obj2.includes(numpy.array([10.0, 20.0, 30.0])), ref_obj2.includes(5.0), ref_obj3.includes(3), ref_obj3.includes('/some/file'), ref_obj3.includes(foo1), ref_obj3.includes(foo2), ref_obj4.includes(-1),
-			 ref_obj4.includes(1), ref_obj5.includes(-0.001), ref_obj5.includes(0.001)) == \
-			 (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True, False, True, False, True, False, True, False, True)
+			 ref_obj4.includes(1), ref_obj5.includes(-0.001), ref_obj5.includes(0.001), ref_obj6.includes(None), ref_obj6.includes(2.0), ref_obj6.includes('a')) == \
+			 (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True, False, True, False, True, False, True, False, True, True, True, True)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of PolymorphicType class behaves appropriately """
@@ -633,14 +658,15 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		ref_obj3 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)])
 		ref_obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger()])
 		ref_obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal()])
+		ref_obj6 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
 		def foo1(par1, par2, par3):	#pylint: disable=C0111
 			return par1, par2, par3
 		assert (ref_obj1.istype(5), ref_obj1.istype(None), ref_obj1.istype([1, 2, 3]), ref_obj1.istype((2.0, 3.0)), ref_obj1.istype(set(['a', 'b', 'c'])), ref_obj1.istype('MANUAL'), ref_obj1.istype(2),
 			 ref_obj1.istype(100.0), ref_obj1.istype(10+20j), ref_obj1.istype(numpy.array([10, 0.0, 30])), ref_obj1.istype('hello world'), ref_obj1.istype([1.0, 2.0, 3.0]), ref_obj1.istype('auto'),
 			 ref_obj1.istype(numpy.array([])), ref_obj1.istype(numpy.array(['a', 'b', 'c'])), ref_obj2.istype(1), ref_obj2.istype(set([1, 2])), ref_obj2.istype(numpy.array([1, 0, -1])),
 			 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0), ref_obj3.istype(3), ref_obj3.istype('/some/file'), ref_obj3.istype(foo1), ref_obj4.istype(-1),
-			 ref_obj4.istype(1), ref_obj5.istype(-0.001), ref_obj5.istype(0.001)) == \
-			 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True, False, True, False, True)
+			 ref_obj4.istype(1), ref_obj5.istype(-0.001), ref_obj5.istype(0.001), ref_obj6.istype(None), ref_obj6.istype(2.0), ref_obj6.istype('a')) == \
+			 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True, False, True, False, True, True, True, True)
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of PolymorphicType class behaves appropriately """
@@ -649,12 +675,15 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		obj3 = putil.check.PolymorphicType([putil.check.File(True), putil.check.Function(num_pars=2)])
 		obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger(), putil.check.NumberRange(minimum=15, maximum=20)])
 		obj5 = putil.check.PolymorphicType([None, putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.PositiveReal()])
+		obj6 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
 		test1 = obj1.exception('par1', 5) == {'type':ValueError, 'msg':"Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nArgument `par1` is not in the range [15.0, 20.0]"}
 		test2 = obj2.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':"(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File _not_valid_ could not be found"}
 		test3 = obj3.exception('par1', '_not_valid_') == {'type':RuntimeError, 'msg':'(IOError) File _not_valid_ could not be found\n(ValueError) Argument `par1` is not a function with 2 arguments'}
 		test4 = obj4.exception('par1', -1) == {'type':ValueError, 'msg':"Argument `par1` is not a positive integer\nArgument `par1` is not in the range [15.0, 20.0]"}
 		test5 = obj5.exception('par1', -1) == {'type':ValueError, 'msg':"Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\nArgument `par1` is not a positive real number"}
-		assert (test1, test2, test3, test4, test5) == (True, True, True, True, True)
+		test6 = obj6.exception('par1', -1) == {'type':None, 'msg':''}
+		print obj6.exception('par1', -1)
+		assert (test1, test2, test3, test4, test5, test6) == (True, True, True, True, True, True)
 
 
 ##
@@ -1051,7 +1080,11 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		@putil.check.check_argument(putil.check.PolymorphicType([None, int, dict]))
 		def func_check_type2(ppar1):	#pylint: disable=C0111
 			return ppar1
-		assert (func_check_type1(None), func_check_type1(6), func_check_type1(7.0), func_check_type1('WORLD'), func_check_type2(None), func_check_type2(8), func_check_type2({'a':'b'})) == (None, 6, 7.0, 'WORLD', None, 8, {'a':'b'})
+		@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.NumberRange(minimum=5, maximum=10), putil.check.OneOf(['HELLO', 'WORLD']), putil.check.Any()]))
+		def func_check_type3(ppar1):	#pylint: disable=C0111
+			return ppar1
+		assert (func_check_type1(None), func_check_type1(6), func_check_type1(7.0), func_check_type1('WORLD'), func_check_type2(None), func_check_type2(8), func_check_type2({'a':'b'}), func_check_type3(True)) == \
+			(None, 6, 7.0, 'WORLD', None, 8, {'a':'b'}, True)
 
 	def test_numpy_vector_wrong_type(self):	#pylint: disable=R0201,C0103
 		""" Test that function behaves properly when a argument is not a Numpy vector """
