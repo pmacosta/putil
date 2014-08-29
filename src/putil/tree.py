@@ -65,9 +65,13 @@ class TreeNode(object):	#pylint: disable=R0903
 
 	def collapse(self):
 		""" Elliminates nodes that only have only one child and no data """
-		if (not self.is_leaf) and (len(self.children) == 1) and (not self.children[0].data):
-			self.name = self.name+'.'+self.children[0].name
-			self.children = self.children[0].children
+		while True:
+			if (not self.is_leaf) and (not self.data) and (len(self.children) == 1):
+				self.name = self.name+'.'+self.children[0].name
+				self.data = self.children[0].data
+				self.children = self.children[0].children
+			else:
+				break
 		if not self.is_leaf:
 			for child in self.children:
 				child.collapse()
@@ -197,18 +201,19 @@ def search_for_node(tree, name):
 	if not name.strip():
 		raise ValueError('Node name is empty')
 	names = [element.strip() for element in name.strip().split('.')]
-	if (tree.name == name) or ((tree.name == names[0]) and (len(names) == 1)):
-		return tree
-	if (tree.name != names[0]) or ((tree.name == names[0]) and (len(names) > 1) and (tree.is_leaf)) or ((tree.name == names[0]) and (len(names) > 1) and (not tree.is_leaf) and (names[1] not in tree.children_names)):
-		return None
-	name = '.'.join(names[1:])
-	child = None
-	for child in tree.children:
-		if child.name == names[1]:
+	name_options = ['.'.join(names[:num]) for num in range(len(names), 0, -1)]
+	names_left = ['.'.join(names[num:len(names)]) for num in range(len(names), 0, -1)]
+	node_name, leftover_node_names = None, None
+	for node_name, leftover_node_names in zip(name_options, names_left):
+		if (tree.name == node_name) and (node_name == name_options[0]):
+			return tree
+		elif tree.name == node_name:
 			break
 	else:
-		raise RuntimeError('Malformed tree in hierarchical search')
-	return search_for_node(child, name)
-
-
-
+		return None
+	if tree.children:
+		for child in tree.children:
+			result = search_for_node(child, leftover_node_names)
+			if result:
+				return result
+	return None
