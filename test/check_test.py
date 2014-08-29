@@ -1152,6 +1152,26 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 			return ppar1
 		func_check_type(numpy.array([1, 2, 3]))
 
+	def test_dict(self):	#pylint: disable=R0201,C0103
+		""" Test that function behaves properly when a argument is properly incresing Numpy vector """
+		@putil.check.check_argument({'a':str, 'b':putil.check.Number()})
+		def func_check_type(ppar1):	#pylint: disable=C0111
+			return ppar1
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			func_check_type({'x':'hello', 'b':45})
+		test_list.append(excinfo.value.message == 'Argument `ppar1` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			func_check_type({'a':'hello', 'b':45, 'c':60})
+		test_list.append(excinfo.value.message == 'Argument `ppar1` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			func_check_type({'a':'hello', 'b':True})
+		test_list.append(excinfo.value.message == 'Argument `ppar1` is of the wrong type')
+		# This statement should not raise any exception
+		func_check_type({'a':'hello', 'b':45})
+		assert test_list == len(test_list)*[True]
+
+
 ###
 # Tests for check_arguments()
 ###
