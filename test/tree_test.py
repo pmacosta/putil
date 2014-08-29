@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # tree_test.py	#pylint:disable=C0302
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
@@ -320,5 +321,46 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		with pytest.raises(AttributeError) as excinfo:
 			del tree1.parent_name
 		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert test_list == len(test_list)*[True]
+
+	def test_pprint(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that prt method works """
+		tree1, tree2, tree3 = default_trees
+		test_list = list()
+		tree1.children[0].children[0].children = putil.tree.TreeNode(name='leaf1')
+		tree1.children[0].children[2].children = putil.tree.TreeNode(name='leaf2')
+		tree1.children[0].children[2].children[0].children = [putil.tree.TreeNode(name='leaf3'), putil.tree.TreeNode(name='subleaf4')]
+		test_list.append(tree1.pprint() == u't1l1\n├t1l2b1\n│├t1l3b1a\n││└leaf1\n│├t1l3b1b\n│└t1l3b1c\n│ └leaf2\n│  ├leaf3\n│  └subleaf4\n└t1l2b2\n ├t1l3b2a\n ├t1l3b2b\n └t1l3b2c')
+		test_list.append(tree2.pprint() == u't2l1\n├t2l2b1\n│├t2l3b1a\n│├t2l3b1b\n│└t2l3b1c\n└t2l2b2\n ├t2l3b2a\n ├t2l3b2b\n └t2l3b2c')
+		test_list.append(tree3.pprint() == u't3l1')
+		tree3.children = putil.tree.TreeNode(name='leaf1')
+		test_list.append(tree3.pprint() == u't3l1\n└leaf1')
+		tree3.children = [putil.tree.TreeNode(name='leaf1'), putil.tree.TreeNode(name='leaf2')]
+		test_list.append(tree3.pprint() == u't3l1\n├leaf1\n└leaf2')
+		assert test_list == len(test_list)*[True]
+
+class TestSearchForNode(object):	#pylint: disable=W0232
+	""" Tests search_for_node function """
+	def test_search_for_node_errors(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test that function raises the right exception """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.search_for_node(tree=5, name='a')
+		test_list.append(excinfo.value.message == 'Argument `tree` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.search_for_node(tree=putil.tree.TreeNode(name='root'), name=5)
+		test_list.append(excinfo.value.message == 'Argument `name` is of the wrong type')
+		# This statements should not raise any exception
+		putil.tree.search_for_node(tree=putil.tree.TreeNode(name='root'), name='a')
+		assert test_list == len(test_list)*[True]
+
+	def test_search_for_node_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that function works as expected """
+		tree1, tree2, tree3 = default_trees
+		test_list = list()
+		test_list.append(putil.tree.search_for_node(tree3, 'zzzz') == None)
+		test_list.append(putil.tree.search_for_node(tree1, 't1l1').data == 'Tree 1, level 1')
+		test_list.append(putil.tree.search_for_node(tree2, 't2l1.t2l2b2').data == 'Tree 2, level 2, branch 2')
+		test_list.append(putil.tree.search_for_node(tree1, 't1l1.t1l2b1.t1l3b1c').data == 'Tree 1, level 3, branch 1, child c')
 		assert test_list == len(test_list)*[True]
 

@@ -96,14 +96,15 @@ class TreeNode(object):	#pylint: disable=R0903
 		children_names_txt = None if not self.children_names else (self.children_names[0] if len(self.children_names) == 1 else ', '.join(self.children_names))
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(self.name, self.parent_name, children_names_txt, self.data)
 
-	def prt(self, tab=0):
-		"""
-		Pretty print tree as a character-based tree structure
-		"""
-		subtree = 'False' if not self.children else (False if not len(self.children) else True)
-		if subtree is True:
-			for tree in self.children:
-				tree.prt(tab+1)
+	def pprint(self):
+		""" Pretty print tree as a character-based tree structure """
+		return self._prt()
+
+	def _prt(self, sep=unichr(0x2502), last=False):	#pylint: disable=C0111
+		# Characters from http://www.unicode.org/charts/PDF/U2500.pdf
+		ret = [(sep+(unichr(0x251C) if not last else unichr(0x2514)) if not self.is_root else '')+self.name]
+		ret += [tree._prt(sep='' if self.is_root else (sep+(unichr(0x2502) if not last else ' ')), last=tree == self.children[-1]) for tree in self.children] if not self.is_leaf else list()
+		return '\n'.join(ret)
 
 	def _get_is_root(self):	#pylint: disable=C0111
 		return True if not self.parent else False
@@ -172,8 +173,8 @@ class TreeNode(object):	#pylint: disable=R0903
 	"""	#pylint: disable=W0105
 
 
-@putil.check.check_arguments({'node':TreeNode, 'name':str})
-def search_for_node(node, name):
+@putil.check.check_arguments({'tree':TreeNode, 'name':str})
+def search_for_node(tree, name):
 	"""
 	Searches tree node and its children for a particular node name, which can be specified hierarchically. Returns *None* if node name not found.
 
@@ -187,13 +188,13 @@ def search_for_node(node, name):
 	if not name.strip():
 		raise ValueError('Node name is empty')
 	names = [element.strip() for element in name.strip().split('.')]
-	if (node.name == names[0]) and (len(names) == 1):
-		return node
-	if (node.name != names[0]) or ((node.name == names[0]) and (len(names) > 1) and (node.is_leaf)) or ((node.name == names[0]) and (len(names) > 1) and (not node.is_leaf) and (names[1] not in node.children_names)):
+	if (tree.name == names[0]) and (len(names) == 1):
+		return tree
+	if (tree.name != names[0]) or ((tree.name == names[0]) and (len(names) > 1) and (tree.is_leaf)) or ((tree.name == names[0]) and (len(names) > 1) and (not tree.is_leaf) and (names[1] not in tree.children_names)):
 		return None
 	name = '.'.join(names[1:])
 	child = None
-	for child in node.children:
+	for child in tree.children:
 		if child.name == names[1]:
 			break
 	else:
