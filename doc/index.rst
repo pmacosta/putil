@@ -16,6 +16,7 @@ Contents:
 	:maxdepth: 2
 
 	misc
+	tree
 	pcsv
 	plot
 

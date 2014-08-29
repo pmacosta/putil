@@ -1,11 +1,8 @@
-# pylint: disable=W0212
+# -*- coding: utf-8 -*-
+# pylint: disable=W0212,C0111
 # tree.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Lightweight tree structure
-"""
 
 
 import putil.check
@@ -13,7 +10,24 @@ import putil.check
 
 class TreeNode(object):	#pylint: disable=R0903
 	"""
-	Basic tree hierarchy/linked list
+	Provides basic data tree functionality
+
+	:param	name: Name of tree node
+	:type	name: string
+	:param	parent: Node parent, default is *None*
+	:type	parent: :py:class:`putil.tree.TreeNode()` object or None
+	:param	children: Children node(s), default is *None*
+	:type	children: :py:class:`putil.tree.TreeNode()` object, list of :py:class:`putil.tree.TreeNode()` objects or None
+	:param	data: Node data, default is *None*
+	:type	data: any type or list of any type
+	:raises:
+	 * Same as :py:attr:`putil.tree.TreeNode.name`
+
+	 * Same as :py:attr:`putil.tree.TreeNode.parent`
+
+	 * Same as :py:attr:`putil.tree.TreeNode.children`
+
+	 * Same as :py:attr:`putil.tree.TreeNode.data`
 	"""
 	def __init__(self, name, parent=None, children=None, data=None):	#pylint: disable-msg=R0913
 		self._db = {'name':None, 'parent':None, 'children':None, 'data':None}
@@ -42,6 +56,7 @@ class TreeNode(object):	#pylint: disable=R0903
 	def add_children(self, children):
 		"""
 		Add children to current node
+
 		:param	children: Children node(s) to add
 		:type	children: :py:class:`putil.tree.TreeNode()` object or list of :py:class:`putil.tree.TreeNode()` objects
 		:raises:
@@ -62,19 +77,6 @@ class TreeNode(object):	#pylint: disable=R0903
 				if name in self.children_names:
 					raise ValueError('Node {0} is already a child of current node'.format(name))
 		self.children = (self.children if self.children else list())+children if children else self.children
-
-	def collapse(self):
-		""" Elliminates nodes that only have only one child and no data """
-		while True:
-			if (not self.is_leaf) and (not self.data) and (len(self.children) == 1):
-				self.name = self.name+'.'+self.children[0].name
-				self.data = self.children[0].data
-				self.children = self.children[0].children
-			else:
-				break
-		if not self.is_leaf:
-			for child in self.children:
-				child.collapse()
 
 	def _get_children(self):	#pylint: disable=C0111
 		return self._db['children']
@@ -103,19 +105,65 @@ class TreeNode(object):	#pylint: disable=R0903
 		self._db['data'] = data
 
 	def add_data(self, data):	#pylint: disable=C0111
+		"""
+		Add data to node
+
+		:param	data: Node data
+		:type	data: any type or list of any type
+		:raises: Same as :py:attr:`putil.tree.TreeNode.data`
+		"""
 		self.data = (data if not self.data else (self.data if isinstance(self.data, list) else [self.data])+[data]) if (data is not None) else self.data
+
+	def collapse(self):
+		"""
+		Elliminates nodes that only have only one child and no data. For example:
+
+			>>> print tobj.ppstr
+			l1
+			├l2b1
+			│└l3b1b1
+			│ ├l4b1b1b1
+			│ │├l5b1b1b1b1
+			│ │└l5b1b1b1b2
+			│ └l4b1b1b2
+			│  └l5b1b1b2b1
+			│   └l6b1b1b2b1b1
+			└l2b2
+			 └l3b2b1 (*)
+			  └l4b2b1b1
+			>>> tobj.collapse()
+			>>> print tobj.ppstr
+			l1
+			├l2b1.l3b1b1
+			│├l4b1b1b1
+			││├l5b1b1b1b1
+			││└l5b1b1b1b2
+			│└l4b1b1b2.l5b1b1b2b1.l6b1b1b2b1b1
+			└l2b2.l3b2b1 (*)
+			 └l4b2b1b1
+
+		"""
+		while True:
+			if (not self.is_leaf) and (not self.data) and (len(self.children) == 1):
+				self.name = self.name+'.'+self.children[0].name
+				self.data = self.children[0].data
+				self.children = self.children[0].children
+			else:
+				break
+		if not self.is_leaf:
+			for child in self.children:
+				child.collapse()
 
 	def __str__(self):
 		children_names_txt = None if not self.children_names else (self.children_names[0] if len(self.children_names) == 1 else ', '.join(self.children_names))
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(self.name, self.parent_name, children_names_txt, self.data)
 
-	def pprint(self):
-		""" Pretty print tree as a character-based tree structure """
+	def _get_ppstr(self):
 		return self._prt()
 
 	def _prt(self, sep=unichr(0x2502), last=False):	#pylint: disable=C0111
 		# Characters from http://www.unicode.org/charts/PDF/U2500.pdf
-		ret = [(sep+(unichr(0x251C) if not last else unichr(0x2514)) if not self.is_root else '')+self.name]
+		ret = [(sep+(unichr(0x251C) if not last else unichr(0x2514)) if not self.is_root else '')+self.name+(' (*)' if self.data else '')]
 		ret += [tree._prt(sep='' if self.is_root else (sep+(unichr(0x2502) if not last else ' ')), last=tree == self.children[-1]) for tree in self.children] if not self.is_leaf else list()
 		return '\n'.join(ret)
 
@@ -126,65 +174,92 @@ class TreeNode(object):	#pylint: disable=R0903
 		return True if not self.children else False
 
 	# Managed attributes
-	children = property(_get_children, _set_children, None, doc='Children node object(s) of current node')
+	children = property(_get_children, _set_children, None, doc='Node children')
 	"""
-	:param	children: Children node(s) of current node
-	:type	children: :py:class:`putil.tree.TreeNode()` object or list of :py:class:`putil.tree.TreeNode()` objects
-	:rtype: :py:class:`putil.tree.TreeNode()` object or list of :py:class:`putil.tree.TreeNode()` objects
+	Node children
+
+	:type: :py:class:`putil.tree.TreeNode()` object or list of :py:class:`putil.tree.TreeNode()` objects or None
+	:rtype: :py:class:`putil.tree.TreeNode()` object, list of :py:class:`putil.tree.TreeNode()` objects or None
 	:raises:
 	 * TypeError (Argument `children` is of the wrong type)
 
 	 * ValueError (Argument `children` has repeated children)
 	"""	#pylint: disable=W0105
 
-	children_names = property(_get_children_names, None, None, doc='Node name to the children (down) of current node')
+	children_names = property(_get_children_names, None, None, doc='Node names of the current node children')
 	"""
-	Node names to the children (down) of current node, None if node is a leaf
+	Node names of the current node children, *None* if node is a leaf
+
 	:rtype: string, list of strings or None
+	"""	#pylint: disable=W0105
+
+	data = property(_get_data, _set_data, None, doc='Node data')
+	"""
+	Node data
+
+	:type: any type or list of any type
+	:rtype: any type or list of any type
+	:raises: TypeError ('Node *[node_name]* already has *[element]* as its data')
 	"""	#pylint: disable=W0105
 
 	is_leaf = property(_get_is_leaf, None, None, doc='Leaf node flag')
 	"""
 	Leaf node flag, *True* if current node is a leaf node (node with no children), *False* otherwise
+
 	:rtype: boolean
 	"""	#pylint: disable=W0105
 
 	is_root = property(_get_is_root, None, None, doc='Root node flag')
 	"""
 	Root node flag, *True* if current node is the root node (node with no ancestors), *False* otherwise
+
 	:rtype: boolean
 	"""	#pylint: disable=W0105
 
-	data = property(_get_data, _set_data, None, doc='Data of tree node')
+	name = property(_get_name, _set_name, None, doc='Node name')
 	"""
-	:param	data: Data of tree node
-	:type	data: any type or list of any type
-	:rtype: any type or list of any type
-	:raises: TypeError ('Node *[node_name]* already has *[element]* as its data')
-	"""	#pylint: disable=W0105
+	Node name
 
-	name = property(_get_name, _set_name, None, doc='Name of tree node')
-	"""
-	:param	name: Name of tree node
-	:type	name: string
+	:type: string
 	:rtype: string
 	:raises: TypeError (Argument `name` is of the wrong type)
 	"""	#pylint: disable=W0105
 
-	parent = property(_get_parent, _set_parent, None, doc='Parent node object of current node')
+	parent = property(_get_parent, _set_parent, None, doc='Node parent')
 	"""
-	:param	parent: Parent of current node
-	:type	parent: :py:class:`putil.tree.TreeNode()` object
-	:rtype: :py:class:`putil.tree.TreeNode()` object
+	Node parent
+
+	:type: :py:class:`putil.tree.TreeNode()` object or None
+	:rtype: :py:class:`putil.tree.TreeNode()` object or None
 	:raises: TypeError (Argument `parent` is of the wrong type)
 	"""	#pylint: disable=W0105
 
-	parent_name = property(_get_parent_name, None, None, doc='Parent node name of current node')
+	parent_name = property(_get_parent_name, None, None, doc='Parent name of current node')
 	"""
-	Parent node name of current node, *None* if node is root
+	Parent name of current node, *None* if node is root
+
 	:rtype: string, or None
 	"""	#pylint: disable=W0105
 
+	ppstr = property(_get_ppstr, None, None, doc='Pretty print tree structure string')
+	u"""
+	String with the tree structure pretty printed as a character-based tree structure. Only node names are shown, nodes with data are marked with an asterisk (*). For example:
+
+		>>> import putil.tree
+		>>> tleaf1 = putil.tree.TreeNode(name='leaf1')
+		>>> tleaf2 = putil.tree.TreeNode(name='leaf2', data='Hello world!')
+		>>> tbranch1 = putil.tree.TreeNode(name='branch1', children=[tleaf1, tleaf2], data=5)
+		>>> tbranch2 = putil.tree.TreeNode(name='branch2')
+		>>> tobj=putil.tree.TreeNode(name='root', children=[tbranch1, tbranch2])
+		>>> tobj.ppstr
+		root
+		├branch1 (*)
+		│├leaf1
+		│└leaf2 (*)
+		└branch2
+
+	:rtype: Unicode string
+	"""	#pylint: disable=W0105
 
 @putil.check.check_arguments({'tree':TreeNode, 'name':str})
 def search_for_node(tree, name):

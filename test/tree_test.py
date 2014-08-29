@@ -323,20 +323,20 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		test_list.append(excinfo.value.message == "can't delete attribute")
 		assert test_list == len(test_list)*[True]
 
-	def test_pprint_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
-		""" Test that pprint method works """
+	def test_ppstr_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that ppstr method works """
 		tree1, tree2, tree3 = default_trees
 		test_list = list()
 		tree1.children[0].children[0].children = putil.tree.TreeNode(name='leaf1')
 		tree1.children[0].children[2].children = putil.tree.TreeNode(name='leaf2')
 		tree1.children[0].children[2].children[0].children = [putil.tree.TreeNode(name='leaf3'), putil.tree.TreeNode(name='subleaf4')]
-		test_list.append(tree1.pprint() == u't1l1\n├t1l2b1\n│├t1l3b1a\n││└leaf1\n│├t1l3b1b\n│└t1l3b1c\n│ └leaf2\n│  ├leaf3\n│  └subleaf4\n└t1l2b2\n ├t1l3b2a\n ├t1l3b2b\n └t1l3b2c')
-		test_list.append(tree2.pprint() == u't2l1\n├t2l2b1\n│├t2l3b1a\n│├t2l3b1b\n│└t2l3b1c\n└t2l2b2\n ├t2l3b2a\n ├t2l3b2b\n └t2l3b2c')
-		test_list.append(tree3.pprint() == u't3l1')
+		test_list.append(tree1.ppstr == u't1l1 (*)\n├t1l2b1 (*)\n│├t1l3b1a (*)\n││└leaf1\n│├t1l3b1b (*)\n│└t1l3b1c (*)\n│ └leaf2\n│  ├leaf3\n│  └subleaf4\n└t1l2b2 (*)\n ├t1l3b2a (*)\n ├t1l3b2b (*)\n └t1l3b2c (*)')
+		test_list.append(tree2.ppstr == u't2l1 (*)\n├t2l2b1 (*)\n│├t2l3b1a (*)\n│├t2l3b1b (*)\n│└t2l3b1c (*)\n└t2l2b2 (*)\n ├t2l3b2a (*)\n ├t2l3b2b (*)\n └t2l3b2c (*)')
+		test_list.append(tree3.ppstr == u't3l1 (*)')
 		tree3.children = putil.tree.TreeNode(name='leaf1')
-		test_list.append(tree3.pprint() == u't3l1\n└leaf1')
+		test_list.append(tree3.ppstr == u't3l1 (*)\n└leaf1')
 		tree3.children = [putil.tree.TreeNode(name='leaf1'), putil.tree.TreeNode(name='leaf2')]
-		test_list.append(tree3.pprint() == u't3l1\n├leaf1\n└leaf2')
+		test_list.append(tree3.ppstr == u't3l1 (*)\n├leaf1\n└leaf2')
 		assert test_list == len(test_list)*[True]
 
 	def test_collapse_works(self):	#pylint: disable=C0103,R0201,W0621
@@ -363,12 +363,8 @@ class TestTreeNode(object):	#pylint: disable=W0232
 		taobj.children = tbobj
 		tcobj = putil.tree.TreeNode(name='l6b1b1b2b1b1')
 		tbobj.children = tcobj
-		print t1obj.pprint()
-		print putil.tree.search_for_node(t1obj, 'l1.l2b2.l3b2b1')
 		t1obj.collapse()
-		print t1obj.pprint()
-		print putil.tree.search_for_node(t1obj, 'l1.l2b2.l3b2b1')
-		test_list.append(t1obj.pprint() == u'l1\n├l2b1.l3b1b1\n│├l4b1b1b1\n││├l5b1b1b1b1\n││└l5b1b1b1b2\n│└l4b1b1b2.l5b1b1b2b1.l6b1b1b2b1b1\n└l2b2.l3b2b1\n └l4b2b1b1')
+		test_list.append(t1obj.ppstr == u'l1\n├l2b1.l3b1b1\n│├l4b1b1b1\n││├l5b1b1b1b1\n││└l5b1b1b1b2\n│└l4b1b1b2.l5b1b1b2b1.l6b1b1b2b1b1\n└l2b2.l3b2b1 (*)\n └l4b2b1b1')
 		test_list.append(putil.tree.search_for_node(t1obj, 'l1.l2b2.l3b2b1').data == 5)
 		assert test_list == len(test_list)*[True]
 
