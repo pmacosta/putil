@@ -320,6 +320,18 @@ def search_for_node(tree, name):
 
 @putil.check.check_argument(putil.check.PolymorphicType([{'node':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'node':NodeName(), 'data':putil.check.Any()})]))
 def build_tree(tree_info):
+	"""
+	Builds tree object
+
+	:param	tree_info:	Tree information. Each dictionary must contain only two keys, *node*, with a (hierarchical) node name, and *data*, with the node data. Multiple entries for a given node name may exist, \
+	and the resulting node data will be a list whose elements are the values of the *data* key of all dictionaries in **tree_info** that share the same node name
+	:type	tree_info:	dictionary or list of dictionaries.
+	:rtype:	:py:class:`putil.tree.TreeNode()` object or list of :py:class:`putil.tree.TreeNode()` objects if there are multiple root nodes
+	:raises:
+	 * TypeError (Argument `tree_info` is of the wrong type)
+
+	 * Same as :py:attr:`putil.tree.TreeNode.name`
+	"""
 	roots = list()
 	tree_dict_list = tree_info if isinstance(tree_info, list) else [tree_info]
 	for node_dict in tree_dict_list:

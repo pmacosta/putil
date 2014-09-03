@@ -30,6 +30,7 @@ None
 Functions
 =========
 
+.. autofunction:: putil.tree.build_tree
 .. autofunction:: putil.tree.search_for_node
 
 Classes
