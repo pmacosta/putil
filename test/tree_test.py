@@ -420,3 +420,91 @@ class TestSearchForNode(object):	#pylint: disable=W0232
 		test_list.append(putil.tree.search_for_node(tobj0, 'l1.l2b2.l3b2b1.l4b2b1b1').data == 7)
 		test_list.append(putil.tree.search_for_node(tobj0, 'l1.l2b1.l3b1b1.l4b1b1b2.l5b1b1b2b1.l6b1b1b2b1b1.dummy') == None)
 		assert test_list == len(test_list)*[True]
+
+	def test_build_tree_errors(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test error checking of build_tree function arguments """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree(5)
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree([5, 7])
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree({'node':'a'})
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree({'node':'a', 'data':5, 'extra_data':7})
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'b'}])
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'b', 'data':5, 'extra_data':7}])
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree({'node':None, 'data':5})
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree([{'node':None, 'data':5}, {'node':'b', 'data':5}])
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree({})
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree([{}])
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			putil.tree.build_tree([{'node':'a', 'data':5}, {}])
+		test_list.append(excinfo.value.message == 'Argument `tree_info` is of the wrong type')
+		# These statements should not raise an exception
+		putil.tree.build_tree({'node':'a', 'data':5})
+		putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'b', 'data':10}])
+		assert test_list == len(test_list)*[True]
+
+	def test_build_tree_works(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test error checking of build_tree function arguments """
+		test_list = list()
+		# 0-1
+		obj = putil.tree.build_tree({'node':'a', 'data':5})
+		test_list.append(obj.ppstr == 'a (*)')
+		test_list.append(putil.tree.search_for_node(obj, 'a').data == 5)
+		# 2-4
+		obj = putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'a.b', 'data':'hello'}])
+		test_list.append(obj.ppstr == u'a (*)\n└b (*)')
+		test_list.append(putil.tree.search_for_node(obj, 'a').data == 5)
+		test_list.append(putil.tree.search_for_node(obj, 'a.b').data == 'hello')
+		# 5-8
+		obj = putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'a.b', 'data':'hello'}, {'node':'a.c', 'data':37}])
+		test_list.append(obj.ppstr == u'a (*)\n├b (*)\n└c (*)')
+		test_list.append(putil.tree.search_for_node(obj, 'a').data == 5)
+		test_list.append(putil.tree.search_for_node(obj, 'a.b').data == 'hello')
+		test_list.append(putil.tree.search_for_node(obj, 'a.c').data == 37)
+		# 9-14
+		obj = putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'a.b', 'data':'hello'}, {'node':'a.c', 'data':37}, {'node':'a.c.d', 'data':None}, {'node':'a.c.d.e', 'data':'world!'}])
+		test_list.append(obj.ppstr == u'a (*)\n├b (*)\n└c (*)\n └d\n  └e (*)')
+		test_list.append(putil.tree.search_for_node(obj, 'a').data == 5)
+		test_list.append(putil.tree.search_for_node(obj, 'a.b').data == 'hello')
+		test_list.append(putil.tree.search_for_node(obj, 'a.c').data == 37)
+		test_list.append(putil.tree.search_for_node(obj, 'a.c.d').data == None)
+		test_list.append(putil.tree.search_for_node(obj, 'a.c.d.e').data == 'world!')
+		# 15-20
+		obj = putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'a.b', 'data':'hello'}, {'node':'a.c', 'data':37}, {'node':'a.c.d', 'data':None}, {'node':'a.c.d.e', 'data':'world!'}, {'node':'a.c', 'data':999}])
+		test_list.append(obj.ppstr == u'a (*)\n├b (*)\n└c (*)\n └d\n  └e (*)')
+		test_list.append(putil.tree.search_for_node(obj, 'a').data == 5)
+		test_list.append(putil.tree.search_for_node(obj, 'a.b').data == 'hello')
+		test_list.append(putil.tree.search_for_node(obj, 'a.c').data == [37, 999])
+		test_list.append(putil.tree.search_for_node(obj, 'a.c.d').data == None)
+		test_list.append(putil.tree.search_for_node(obj, 'a.c.d.e').data == 'world!')
+		# 21-28
+		obj = putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'a.b', 'data':'hello'}, {'node':'a.c', 'data':37}, {'node':'d', 'data':None}, {'node':'d.e', 'data':'world!'}, {'node':'d.f', 'data':999}])
+		test_list.append(obj[0].ppstr == u'a (*)\n├b (*)\n└c (*)')
+		test_list.append(putil.tree.search_for_node(obj[0], 'a').data == 5)
+		test_list.append(putil.tree.search_for_node(obj[0], 'a.b').data == 'hello')
+		test_list.append(putil.tree.search_for_node(obj[0], 'a.c').data == 37)
+		test_list.append(obj[1].ppstr == u'd\n├e (*)\n└f (*)')
+		test_list.append(putil.tree.search_for_node(obj[1], 'd').data == None)
+		test_list.append(putil.tree.search_for_node(obj[1], 'd.e').data == 'world!')
+		test_list.append(putil.tree.search_for_node(obj[1], 'd.f').data == 999)
+		assert test_list == len(test_list)*[True]
+

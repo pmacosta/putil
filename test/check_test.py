@@ -188,7 +188,7 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLength class behaves appropriately when inproper element in iterable is passed """
-		assert putil.check.ArbitraryLength(set, int).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a set of int objects"}
+		assert putil.check.ArbitraryLength(set, int).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
 
 
 ###
@@ -224,7 +224,7 @@ class TestArbitraryLengthList(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthList class behaves appropriately when inproper element in list is passed """
-		assert putil.check.ArbitraryLengthList(int).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a list of int objects"}
+		assert putil.check.ArbitraryLengthList(int).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
 
 
 ###
@@ -260,7 +260,7 @@ class TestArbitraryLengthTuple(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthTuple class behaves appropriately when inproper element in tuple is passed """
-		assert putil.check.ArbitraryLengthTuple(str).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a tuple of str objects"}
+		assert putil.check.ArbitraryLengthTuple(str).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
 
 
 ###
@@ -297,7 +297,7 @@ class TestArbitraryLengthSet(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthSet class behaves appropriately when inproper element in set is passed """
-		assert putil.check.ArbitraryLengthSet(float).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a set of float objects"}
+		assert putil.check.ArbitraryLengthSet(float).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
 
 ###
 # Test for ArbitraryLengthDict class
@@ -333,7 +333,7 @@ class TestArbitraryLengthDict(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthDict class behaves appropriately when inproper element in list is passed """
-		assert putil.check.ArbitraryLengthDict(int).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a dict of int objects"}
+		assert putil.check.ArbitraryLengthDict(int).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
 
 
 ###
@@ -664,14 +664,16 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		ref_obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger()])
 		ref_obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal()])
 		ref_obj6 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
+		ref_obj7 = putil.check.PolymorphicType([None, {'a':int, 'b':str}])
 		def foo1(par1, par2, par3):	#pylint: disable=C0111
 			return par1, par2, par3
 		assert (ref_obj1.istype(5), ref_obj1.istype(None), ref_obj1.istype([1, 2, 3]), ref_obj1.istype((2.0, 3.0)), ref_obj1.istype(set(['a', 'b', 'c'])), ref_obj1.istype('MANUAL'), ref_obj1.istype(2),
 			 ref_obj1.istype(100.0), ref_obj1.istype(10+20j), ref_obj1.istype(numpy.array([10, 0.0, 30])), ref_obj1.istype('hello world'), ref_obj1.istype([1.0, 2.0, 3.0]), ref_obj1.istype('auto'),
 			 ref_obj1.istype(numpy.array([])), ref_obj1.istype(numpy.array(['a', 'b', 'c'])), ref_obj2.istype(1), ref_obj2.istype(set([1, 2])), ref_obj2.istype(numpy.array([1, 0, -1])),
 			 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0), ref_obj3.istype(3), ref_obj3.istype('/some/file'), ref_obj3.istype(foo1), ref_obj4.istype(-1),
-			 ref_obj4.istype(1), ref_obj5.istype(-0.001), ref_obj5.istype(0.001), ref_obj6.istype(None), ref_obj6.istype(2.0), ref_obj6.istype('a')) == \
-			 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True, False, True, False, True, True, True, True)
+			 ref_obj4.istype(1), ref_obj5.istype(-0.001), ref_obj5.istype(0.001), ref_obj6.istype(None), ref_obj6.istype(2.0), ref_obj6.istype('a'),
+			 ref_obj7.istype(None), ref_obj7.istype({'c':5}), ref_obj7.istype({'a':5}), ref_obj7.istype({'a':5, 'b':'Hello'})) == \
+			 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True, False, True, False, True, True, True, True, True, False, False, True)
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of PolymorphicType class behaves appropriately """
@@ -1156,7 +1158,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		func_check_type(numpy.array([1, 2, 3]))
 
 	def test_dict(self):	#pylint: disable=R0201,C0103
-		""" Test that function behaves properly when a argument is properly incresing Numpy vector """
+		""" Test that function behaves properly when a argument is a dictionary """
 		@putil.check.check_argument({'a':str, 'b':putil.check.Number()})
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			return ppar1
@@ -1169,6 +1171,9 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		test_list.append(excinfo.value.message == 'Argument `ppar1` is of the wrong type')
 		with pytest.raises(TypeError) as excinfo:
 			func_check_type({'a':'hello', 'b':True})
+		test_list.append(excinfo.value.message == 'Argument `ppar1` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			func_check_type({'a':'hello'})
 		test_list.append(excinfo.value.message == 'Argument `ppar1` is of the wrong type')
 		# This statement should not raise any exception
 		func_check_type({'a':'hello', 'b':45})

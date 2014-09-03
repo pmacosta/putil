@@ -319,27 +319,27 @@ def search_for_node(tree, name):
 	return None
 
 @putil.check.check_argument(putil.check.PolymorphicType([{'node':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'node':NodeName(), 'data':putil.check.Any()})]))
-def build_tree(tree_dict):
+def build_tree(tree_info):
 	roots = list()
-	for name, data in tree_dict.items():
+	tree_dict_list = tree_info if isinstance(tree_info, list) else [tree_info]
+	for node_dict in tree_dict_list:
+		name = node_dict['node']
+		data = node_dict['data']
 		names = [element.strip() for element in name.strip().split('.')]
 		# Find or create tree to add nodes and data to
-		if not roots:
+		for root in roots:
+			tobj = search_for_node(root, name[0])
+			if tobj:
+				break
+		else:
 			tobj = TreeNode(name=names[0])
 			roots.append(tobj)
-		else:
-			for root in roots:
-				tobj = search_for_node(root, name[0])
-				if tobj:
-					break
-			else:
-				tobj = TreeNode(name=names[0])
-				roots.append(tobj)
 		# Search for leaf node and create children as appropriate
-		for node_name in names:
-			cobj = search_for_node(tobj, node_name)
+		for num, node_name in enumerate(names):
+			cobj = search_for_node(tobj, '.'.join(names[:num+1]))
 			if not cobj:
 				cobj = TreeNode(name=node_name)
-				tobj.add_children(cobj)
-			tobj = cobj
-		tobj.add_data(data)
+				search_for_node(tobj, '.'.join(names[:num])).add_children(cobj)
+		# Add data
+		cobj.add_data(data)
+	return roots[0] if len(roots) == 1 else (None if not roots else roots)

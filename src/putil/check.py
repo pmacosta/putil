@@ -192,7 +192,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		return {'type':ValueError, 'msg':'Argument `{0}` is not a {1} of {2} objects'.format(param_name, str(self.iter_type)[7:-2], str(self.element_type)[7:-2])}
+		return {'type':TypeError, 'msg':'Argument `{0}` is of the wrong type'.format(param_name)}
 
 
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
@@ -414,8 +414,8 @@ class PolymorphicType(object):	#pylint: disable=R0903
 
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
-		for sub_type, sub_inst in zip(self.types, self.instances):
-			if ((sub_type in self.pseudo_types) and get_istype(sub_inst, test_obj)) or ((sub_type not in self.pseudo_types) and (type(test_obj) == sub_type)):
+		for sub_inst in self.instances:
+			if type_match(test_obj, sub_inst, strict_dict=isinstance(sub_inst, dict)):
 				return True
 		return False
 
@@ -468,7 +468,7 @@ def is_type_def(obj):
 		return False
 
 
-def type_match(test_obj, ref_obj):
+def type_match(test_obj, ref_obj, strict_dict=False):
 	"""
 	Test if two objects match type. The reference object can be a single type, e.g. ref_obj = str or ref_obj = int, or it can be a complex defintion like ref_obj = [str, [int], dict('a':float)]
 	Heterogeneous iterables are not supported in part because there is no elegant way to distinguish, for example, between a 1-element list, a list of the type [str, float, int, str] and a list
@@ -482,15 +482,15 @@ def type_match(test_obj, ref_obj):
 	elif (not putil.misc.isiterable(ref_obj)) or isinstance(ref_obj, str):	# Check for non-iterable types annd strings
 		ret_val = isinstance(test_obj, ref_obj)
 	elif isinstance(ref_obj, dict):	# Dictionaries
-		ret_val = type_match_dict(test_obj, ref_obj)
+		ret_val = type_match_dict(test_obj, ref_obj, strict_dict=strict_dict)
 	else:	# Fixed length iterables
 		ret_val = type_match_fixed_length_iterable(test_obj, ref_obj)
 	return ret_val
 
 
-def type_match_dict(test_obj, ref_obj):
+def type_match_dict(test_obj, ref_obj, strict_dict=False):
 	"""	Test if two dictionaries match type (keys in the test dictionary are in the reference dictionary and the value types match)	"""
-	if isinstance(test_obj, dict):
+	if isinstance(test_obj, dict) and ((not strict_dict) or (strict_dict and sorted(test_obj.keys()) == sorted(ref_obj.keys()))):
 		for key, test_subobj in test_obj.iteritems():
 			if (key not in ref_obj) or ((key in ref_obj) and (not type_match(test_subobj, ref_obj[key]))):
 				return False
@@ -559,9 +559,9 @@ def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 		exhobj = root_module.f_locals['_EXH']
 		ex_name = '{0}_check_argument_type_internal_{1}'.format(func.__name__, param_name)
 		exhobj.ex_add(name=ex_name, parent=get_parent(func), funcname=get_funcname(func), extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
-		exhobj.raise_exception_if(name=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)))
+		exhobj.raise_exception_if(name=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))))
 	else:
-		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type)):
+		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))):
 			raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
 
 
