@@ -219,7 +219,7 @@ class OneOf(object):	#pylint: disable=R0903
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
 		for sub_type, sub_choice in zip(self.types, self.choices):
-			if ((sub_type in self.pseudo_types) and sub_choice.istype(test_obj)) or ((sub_type not in self.pseudo_types) and (sub_type == type(test_obj))):
+			if ((sub_type in self.pseudo_types) and get_istype(sub_choice, test_obj)) or ((sub_type not in self.pseudo_types) and (sub_type == type(test_obj))):
 				return True
 		return False
 
@@ -384,7 +384,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
 		for sub_type, sub_inst in zip(self.types, self.instances):
-			if ((sub_type in self.pseudo_types) and sub_inst.istype(test_obj)) or ((sub_type not in self.pseudo_types) and (type(test_obj) == sub_type)):
+			if ((sub_type in self.pseudo_types) and get_istype(sub_inst, test_obj)) or ((sub_type not in self.pseudo_types) and (type(test_obj) == sub_type)):
 				return True
 		return False
 
@@ -395,7 +395,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 		exp_dict['msg'] = ''
 		if Any not in self.types:
 			exp_dict_list = [sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if \
-					(sub_type in self.pseudo_types) and (sub_inst.istype(test_obj)) and (not sub_inst.includes(test_obj))]
+					(sub_type in self.pseudo_types) and (get_istype(sub_inst, test_obj)) and (not sub_inst.includes(test_obj))]
 			if exp_dict_list:
 				# Check if all exceptions are of the same type, in which case raise an exception of that type, otherwise raise RuntimeError
 				same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
@@ -406,11 +406,25 @@ class PolymorphicType(object):	#pylint: disable=R0903
 		return exp_dict
 
 
-def get_function_args(func):
+def get_function_args(func, no_self=False, no_varargs=False):
 	"""	Returns a list of the argument names, in order, as defined by the function """
 	par_dict = funcsigs.signature(func).parameters
-	return tuple(['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict])
+	args = ['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict]
+	self_filtered_args = args if not args else (args[1 if (args[0] == 'self') and no_self else 0:])
+	varargs_filtered_args = tuple([arg for arg in self_filtered_args if (not no_varargs) or (no_varargs and (not is_parg(arg)) and (not is_kwarg(arg)))])
+	return varargs_filtered_args
 
+def is_parg(arg):
+	""" Returns True if arg argument is the name of a positional variable argument (i.e. *pargs) """
+	return (len(arg) > 1) and (arg[0] == '*') and (arg[1] != '*')
+
+def is_kwarg(arg):
+	""" Returns True if arg argument is the name of a keyword variable argument (i.e. **kwargs) """
+	return (len(arg) > 2) and (arg[:2] == '**')
+
+def has_varargs(func):
+	""" Returns True if function call includes variable arguments (i.e. *pargs and/or **kwargs) """
+	return any([is_parg(arg) or is_kwarg(arg) for arg in get_function_args(func)])
 
 def create_argument_dictionary(func, *args, **kwargs):
 	"""
@@ -455,7 +469,7 @@ def type_match(test_obj, ref_obj):
 	if ref_obj is None:	# Check for None
 		ret_val = test_obj is None
 	elif type(ref_obj) in pseudo_types:	# Check for pseudo-types
-		ret_val = ref_obj.istype(test_obj)
+		ret_val = get_istype(ref_obj, test_obj)
 	elif (not putil.misc.isiterable(ref_obj)) or isinstance(ref_obj, str):	# Check for non-iterable types annd strings
 		ret_val = isinstance(test_obj, ref_obj)
 	elif isinstance(ref_obj, dict):	# Dictionaries
@@ -550,7 +564,7 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
 	if (param is not None) and (type(param_spec) in pseudo_types):
 		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if \
-			(sub_type in pseudo_types) and (sub_inst.istype(param)) and (Any not in param_spec.types)]
+			(sub_type in pseudo_types) and (get_istype(sub_inst, param)) and (Any not in param_spec.types)]
 		if sub_param_spec:	# Eliminate PolymorphicType definitions that do not have any pseudo-type
 			# Find out parameter expected by exception() method
 			exparam_dict_list = list()
@@ -625,6 +639,30 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 	return wrapper
 
 
+def get_istype(ptype, obj):
+	""" Get pseudo-type istype result with error checking """
+	class_name = str(ptype.__class__)[8:-2]
+	try:
+		ret = ptype.istype(obj)
+	except:
+		raise RuntimeError('Error trying to obtain pseudo type {0}.istype() result'.format(class_name))
+	if isinstance(ret, bool):
+		return ret
+	raise TypeError('Pseudo type {0}.istype() method needs to return a boolean value'.format(class_name))
+
+
+def get_includes(ptype, obj):
+	""" Get pseudo-type includes result with error checking """
+	class_name = str(ptype.__class__)[8:-2]
+	try:
+		ret = ptype.includes(obj)
+	except:
+		raise RuntimeError('Error trying to obtain pseudo type {0}.includes() result'.format(class_name))
+	if isinstance(ret, bool):
+		return ret
+	raise TypeError('Pseudo type {0}.includes() method needs to return a boolean value'.format(class_name))
+
+
 _BASE_TYPES = [Any, Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
 _BASE_DESC = ['any', 'number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
 
@@ -640,5 +678,21 @@ def _get_pseudo_types(base=True):
 
 def register_new_type(cls, desc):
 	""" Register new pseudo-data type """
+	# Validate pseudo-type implementation correctness
+	if not inspect.isclass(cls):
+		raise TypeError('Pseudo type has to be a class')
+	class_name = str(cls)[8:-2]
+	for method in ['istype', 'includes', 'exception']:
+		if getattr(cls, method, -1) == -1:
+			raise TypeError('Pseudo type {0} must have an {1}() method'.format(class_name, method))
+	nargs = len(get_function_args(cls.istype, no_self=True, no_varargs=True))
+	if ((nargs == 0) and (not has_varargs(cls.istype))) or (nargs > 1):
+		raise RuntimeError('Method {0}.istype() must have only one argument'.format(class_name))
+	nargs = len(get_function_args(cls.includes, no_self=True, no_varargs=True))
+	if ((nargs == 0) and (not has_varargs(cls.includes))) or (nargs > 1):
+		raise RuntimeError('Method {0}.includes() must have only one argument'.format(class_name))
+	args = get_function_args(cls.exception, no_self=True, no_varargs=True)
+	if ((len(args) == 0) and (not has_varargs(cls.exception))) or ((len(args) > 1) and (not any([arg in ['param', 'param_name'] for arg in args]))):
+		raise RuntimeError('Method {0}.exception() must have only `param` and/or `param_name` arguments'.format(class_name))
 	_BASE_TYPES.append(cls)
 	_BASE_DESC.append(desc)

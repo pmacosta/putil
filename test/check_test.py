@@ -1248,8 +1248,200 @@ class NodeName(object):	#pylint: disable=R0903
 		return exp_dict
 putil.check.register_new_type(NodeName, 'Hierarchical node name')
 
+
+class BadType1(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def some_method(self):	#pylint: disable=C0111
+		pass
+
+
+class BadType2(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return 5
+
+
+class BadType3(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return 5
+	def includes(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return 5
+
+
+class BadType4(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self):	#pylint: disable=C0111,R0201,W0613
+		return 5
+	def includes(self):	#pylint: disable=C0111,R0201,W0613
+		return 5
+	def exception(self):	#pylint: disable=C0111,R0201,W0613
+		return 5
+
+
+class BadType5(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj1, obj2, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, obj1, obj2, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, obj1, obj2, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+
+
+class BadType6(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self):	#pylint: disable=C0111,R0201,W0613
+		return 5
+	def exception(self):	#pylint: disable=C0111,R0201,W0613
+		return 5
+
+
+class BadType7(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, obj1, obj2, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, obj1, obj2, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+
+
+class BadType8(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return 5
+	def exception(self):	#pylint: disable=C0111,R0201,W0613
+		return 5
+
+
+class BadType9(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, obj1, obj2, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+
+
+class BadTypeA(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return 5
+	def includes(self, obj):	#pylint: disable=C0111,R0201,W0613
+		return 5
+	def exception(self, param):	#pylint: disable=C0111,R0201,W0613
+		return 5
+
+
+class BadTypeB(object):	#pylint: disable=R0903
+	""" Bad pseudo-type implementation for testing purposes """
+	def istype(self, obj):	#pylint: disable=C0111,R0201,W0613
+		raise RuntimeError('Intentional exception')
+	def includes(self, obj):	#pylint: disable=C0111,R0201,W0613
+		raise RuntimeError('Intentional exception')
+	def exception(self, param):	#pylint: disable=C0111,R0201,W0613
+		raise RuntimeError('Intentional exception')
+
+
+class GoodType1(object):	#pylint: disable=R0903
+	""" Good pseudo-type implementation for testing purposes """
+	def istype(self, *pargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, *pargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, *pargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+
+class GoodType2(object):	#pylint: disable=R0903
+	""" Good pseudo-type implementation for testing purposes """
+	def istype(self, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+
+class GoodType3(object):	#pylint: disable=R0903
+	""" Good pseudo-type implementation for testing purposes """
+	def istype(self, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+
+class GoodType4(object):	#pylint: disable=R0903
+	""" Good pseudo-type implementation for testing purposes """
+	def istype(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+
+
 class TestCustomDataTypeAddition(object):	#pylint: disable=W0232,R0903
 	""" Tests the creation of custom data types and its integration in the flow """
+
+	def test_get_istype(self):	#pylint: disable=R0201,C0103
+		""" Test that get_istype method behaves as expected """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.check.get_istype(BadTypeA(), 5)
+		test_list.append(excinfo.value.message == 'Pseudo type check_test.BadTypeA.istype() method needs to return a boolean value')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.get_istype(BadTypeB(), 5)
+		test_list.append(excinfo.value.message == 'Error trying to obtain pseudo type check_test.BadTypeB.istype() result')
+		# This statement should not raise any exception
+		putil.check.get_istype(NodeName(), 'a.b.c')
+		assert test_list == len(test_list)*[True]
+
+	def test_custom_data_type_errors(self):	#pylint: disable=R0201,C0103
+		""" Test that custom pseudo-type validation behaves as expected """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.check.register_new_type(5, 'Bad type')
+		test_list.append(excinfo.value.message == 'Pseudo type has to be a class')
+		with pytest.raises(TypeError) as excinfo:
+			putil.check.register_new_type(BadType1, 'Bad type')
+		test_list.append(excinfo.value.message == 'Pseudo type check_test.BadType1 must have an istype() method')
+		with pytest.raises(TypeError) as excinfo:
+			putil.check.register_new_type(BadType2, 'Bad type')
+		test_list.append(excinfo.value.message == 'Pseudo type check_test.BadType2 must have an includes() method')
+		with pytest.raises(TypeError) as excinfo:
+			putil.check.register_new_type(BadType3, 'Bad type')
+		test_list.append(excinfo.value.message == 'Pseudo type check_test.BadType3 must have an exception() method')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.register_new_type(BadType4, 'Bad type')
+		test_list.append(excinfo.value.message == 'Method check_test.BadType4.istype() must have only one argument')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.register_new_type(BadType5, 'Bad type')
+		test_list.append(excinfo.value.message == 'Method check_test.BadType5.istype() must have only one argument')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.register_new_type(BadType6, 'Bad type')
+		test_list.append(excinfo.value.message == 'Method check_test.BadType6.includes() must have only one argument')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.register_new_type(BadType7, 'Bad type')
+		test_list.append(excinfo.value.message == 'Method check_test.BadType7.includes() must have only one argument')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.register_new_type(BadType8, 'Bad type')
+		test_list.append(excinfo.value.message == 'Method check_test.BadType8.exception() must have only `param` and/or `param_name` arguments')
+		print excinfo.value.message
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.register_new_type(BadType9, 'Bad type')
+		test_list.append(excinfo.value.message == 'Method check_test.BadType9.exception() must have only `param` and/or `param_name` arguments')
+		# These statements should not raise any exception
+		putil.check.register_new_type(GoodType1, 'Good type')
+		putil.check.register_new_type(GoodType2, 'Good type')
+		putil.check.register_new_type(GoodType3, 'Good type')
+		putil.check.register_new_type(GoodType4, 'Good type')
+		assert test_list == len(test_list)*[True]
 
 	def test_custom_data_type_addition_works(self): #pylint: disable=R0201,C0103
 		""" Test that adding a custom data type to check module framework works """
