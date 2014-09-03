@@ -1388,6 +1388,15 @@ class GoodType4(object):	#pylint: disable=R0903
 	def exception(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
 		return True
 
+class GoodType5(object):	#pylint: disable=R0903
+	""" Good pseudo-type implementation for testing purposes """
+	def istype(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def includes(self, obj, *pargs, **kwargs):	#pylint: disable=C0111,R0201,W0613
+		return True
+	def exception(self, param):	#pylint: disable=C0111,R0201,W0613
+		return {'type':None, 'msg':''}
+
 
 class TestCustomDataTypeAddition(object):	#pylint: disable=W0232,R0903
 	""" Tests the creation of custom data types and its integration in the flow """
@@ -1404,6 +1413,36 @@ class TestCustomDataTypeAddition(object):	#pylint: disable=W0232,R0903
 		# This statement should not raise any exception
 		putil.check.get_istype(NodeName(), 'a.b.c')
 		assert test_list == len(test_list)*[True]
+
+
+	def test_get_includes(self):	#pylint: disable=R0201,C0103
+		""" Test that get_includes method behaves as expected """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.check.get_includes(BadTypeA(), 5)
+		test_list.append(excinfo.value.message == 'Pseudo type check_test.BadTypeA.includes() method needs to return a boolean value')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.get_includes(BadTypeB(), 5)
+		test_list.append(excinfo.value.message == 'Error trying to obtain pseudo type check_test.BadTypeB.includes() result')
+		# This statement should not raise any exception
+		putil.check.get_includes(NodeName(), 'a.b.c')
+		assert test_list == len(test_list)*[True]
+
+
+	def test_get_exception(self):	#pylint: disable=R0201,C0103
+		""" Test that get_exception method behaves as expected """
+		test_list = list()
+		with pytest.raises(TypeError) as excinfo:
+			putil.check.get_exception(BadTypeA(), param=5)
+		test_list.append(excinfo.value.message == 'Pseudo type check_test.BadTypeA.exception() method needs to return a dictionary with keys "type" and "msg", with the exception type object and exception message respectively')
+		with pytest.raises(RuntimeError) as excinfo:
+			putil.check.get_exception(BadTypeB(), param=5)
+		test_list.append(excinfo.value.message == 'Error trying to obtain pseudo type check_test.BadTypeB.exception() result')
+		# This statement should not raise any exception
+		putil.check.get_exception(GoodType5(), param='a.b.c')
+		putil.check.get_exception(NodeName(), param_name='a.b.c')
+		assert test_list == len(test_list)*[True]
+
 
 	def test_custom_data_type_errors(self):	#pylint: disable=R0201,C0103
 		""" Test that custom pseudo-type validation behaves as expected """

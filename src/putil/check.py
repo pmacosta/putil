@@ -17,6 +17,60 @@ import decorator
 import putil.misc
 
 
+def get_function_args(func, no_self=False, no_varargs=False):
+	"""	Returns a list of the argument names, in order, as defined by the function """
+	par_dict = funcsigs.signature(func).parameters
+	args = ['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict]
+	self_filtered_args = args if not args else (args[1 if (args[0] == 'self') and no_self else 0:])
+	varargs_filtered_args = tuple([arg for arg in self_filtered_args if (not no_varargs) or (no_varargs and (not is_parg(arg)) and (not is_kwarg(arg)))])
+	return varargs_filtered_args
+
+
+def is_parg(arg):
+	""" Returns True if arg argument is the name of a positional variable argument (i.e. *pargs) """
+	return (len(arg) > 1) and (arg[0] == '*') and (arg[1] != '*')
+
+
+def is_kwarg(arg):
+	""" Returns True if arg argument is the name of a keyword variable argument (i.e. **kwargs) """
+	return (len(arg) > 2) and (arg[:2] == '**')
+
+
+def has_varargs(func):
+	""" Returns True if function call includes variable arguments (i.e. *pargs and/or **kwargs) """
+	return any([is_parg(arg) or is_kwarg(arg) for arg in get_function_args(func)])
+
+
+_BASE_TYPES = list()
+_BASE_DESC = list()
+
+def _get_pseudo_types(base=True):
+	""" Returns all pseduo-types available """
+	return {'type':_BASE_TYPES, 'desc':_BASE_DESC} if base else {'type':_BASE_TYPES+[PolymorphicType], 'desc':_BASE_DESC+['polymorphic type']}
+
+
+def register_new_type(cls, desc):
+	""" Register new pseudo-data type """
+	# Validate pseudo-type implementation correctness
+	if not inspect.isclass(cls):
+		raise TypeError('Pseudo type has to be a class')
+	class_name = str(cls)[8:-2]
+	for method in ['istype', 'includes', 'exception']:
+		if getattr(cls, method, -1) == -1:
+			raise TypeError('Pseudo type {0} must have an {1}() method'.format(class_name, method))
+	nargs = len(get_function_args(cls.istype, no_self=True, no_varargs=True))
+	if ((nargs == 0) and (not has_varargs(cls.istype))) or (nargs > 1):
+		raise RuntimeError('Method {0}.istype() must have only one argument'.format(class_name))
+	nargs = len(get_function_args(cls.includes, no_self=True, no_varargs=True))
+	if ((nargs == 0) and (not has_varargs(cls.includes))) or (nargs > 1):
+		raise RuntimeError('Method {0}.includes() must have only one argument'.format(class_name))
+	args = get_function_args(cls.exception, no_self=True, no_varargs=True)
+	if ((len(args) == 0) and (not has_varargs(cls.exception))) or ((len(args) > 1) and (not any([arg in ['param', 'param_name'] for arg in args]))):
+		raise RuntimeError('Method {0}.exception() must have only `param` and/or `param_name` arguments'.format(class_name))
+	_BASE_TYPES.append(cls)
+	_BASE_DESC.append(desc)
+
+
 class Any(object):	#pylint: disable=R0903
 	""" Any data type class """
 	def includes(self, test_obj):	#pylint: disable=R0201,W0613
@@ -29,10 +83,8 @@ class Any(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201,W0613
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = None
-		exp_dict['msg'] = ''
-		return exp_dict
+		return {'type':None, 'msg':''}
+register_new_type(Any, 'any')
 
 
 class Number(object):	#pylint: disable=R0903
@@ -47,10 +99,8 @@ class Number(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a number'.format(param_name)
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a number'.format(param_name)}
+register_new_type(Number, 'number (real, integer or complex)')
 
 
 class PositiveInteger(object):	#pylint: disable=R0903
@@ -65,11 +115,8 @@ class PositiveInteger(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a positive integer'.format(param_name)
-		return exp_dict
-
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a positive integer'.format(param_name)}
+register_new_type(PositiveInteger, 'positive integer')
 
 class Real(object):	#pylint: disable=R0903
 	"""	Real class (integer or real) """
@@ -83,11 +130,8 @@ class Real(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a real number'.format(param_name)
-		return exp_dict
-
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a real number'.format(param_name)}
+register_new_type(Real, 'real number')
 
 class PositiveReal(object):	#pylint: disable=R0903
 	"""	PositiveReal class (integer or real greater than zero) """
@@ -101,10 +145,8 @@ class PositiveReal(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a positive real number'.format(param_name)
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a positive real number'.format(param_name)}
+register_new_type(PositiveReal, 'positive real number')
 
 
 class ArbitraryLength(object):	#pylint: disable=R0903
@@ -150,34 +192,35 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a {1} of {2} objects'.format(param_name, str(self.iter_type)[7:-2], str(self.element_type)[7:-2])
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a {1} of {2} objects'.format(param_name, str(self.iter_type)[7:-2], str(self.element_type)[7:-2])}
 
 
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length lists """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, list, element_type)
+register_new_type(ArbitraryLengthList, 'list')
 
 
 class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length tuple """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, tuple, element_type)
+register_new_type(ArbitraryLengthTuple, 'tuple')
 
 
 class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, set, element_type)
+register_new_type(ArbitraryLengthSet, 'set')
 
 
 class ArbitraryLengthDict(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, dict, element_type, False)
+register_new_type(ArbitraryLengthDict, 'dictionary')
 
 
 class OneOf(object):	#pylint: disable=R0903
@@ -225,10 +268,8 @@ class OneOf(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not one of {1}{2}'.format(param_name, self.desc, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not one of {1}{2}'.format(param_name, self.desc, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')}
+register_new_type(OneOf, 'one of many options')
 
 
 class NumberRange(object):	#pylint: disable=R0903
@@ -256,10 +297,8 @@ class NumberRange(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):
 		""" Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)}
+register_new_type(NumberRange, 'number interval')
 
 
 class RealNumpyVector(object):	#pylint: disable=R0903
@@ -282,10 +321,8 @@ class RealNumpyVector(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a Numpy vector of real numbers'.format(param_name)
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a Numpy vector of real numbers'.format(param_name)}
+register_new_type(RealNumpyVector, 'real Numpy Vector')
 
 
 class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
@@ -303,10 +340,8 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a Numpy vector of increasing real numbers'.format(param_name)
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a Numpy vector of increasing real numbers'.format(param_name)}
+register_new_type(IncreasingRealNumpyVector, 'increasing real Numpy Vector')
 
 
 class File(object):	#pylint: disable=R0903
@@ -326,10 +361,8 @@ class File(object):	#pylint: disable=R0903
 
 	def exception(self, param):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = IOError
-		exp_dict['msg'] = 'File {0} could not be found'.format(param)
-		return exp_dict
+		return {'type':IOError, 'msg':'File {0} could not be found'.format(param)}
+register_new_type(File, 'file')
 
 
 class Function(object):	#pylint: disable=R0903
@@ -353,10 +386,8 @@ class Function(object):	#pylint: disable=R0903
 
 	def exception(self, param):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a function with {1} argument{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a function with {1} argument{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')}
+register_new_type(Function, 'function')
 
 
 class PolymorphicType(object):	#pylint: disable=R0903
@@ -390,11 +421,9 @@ class PolymorphicType(object):	#pylint: disable=R0903
 
 	def exception(self, param_name, param=None, test_obj=None):
 		""" Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = None
-		exp_dict['msg'] = ''
+		exp_dict = {'type':None, 'msg':''}
 		if Any not in self.types:
-			exp_dict_list = [sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if \
+			exp_dict_list = [get_exception(sub_inst, **({'param_name':param_name} if sub_type != File else {'param':param})) for sub_type, sub_inst in zip(self.types, self.instances) if \
 					(sub_type in self.pseudo_types) and (get_istype(sub_inst, test_obj)) and (not get_includes(sub_inst, test_obj))]
 			if exp_dict_list:
 				# Check if all exceptions are of the same type, in which case raise an exception of that type, otherwise raise RuntimeError
@@ -405,26 +434,6 @@ class PolymorphicType(object):	#pylint: disable=R0903
 				exp_dict['msg'] = '\n'.join(exp_msg)
 		return exp_dict
 
-
-def get_function_args(func, no_self=False, no_varargs=False):
-	"""	Returns a list of the argument names, in order, as defined by the function """
-	par_dict = funcsigs.signature(func).parameters
-	args = ['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict]
-	self_filtered_args = args if not args else (args[1 if (args[0] == 'self') and no_self else 0:])
-	varargs_filtered_args = tuple([arg for arg in self_filtered_args if (not no_varargs) or (no_varargs and (not is_parg(arg)) and (not is_kwarg(arg)))])
-	return varargs_filtered_args
-
-def is_parg(arg):
-	""" Returns True if arg argument is the name of a positional variable argument (i.e. *pargs) """
-	return (len(arg) > 1) and (arg[0] == '*') and (arg[1] != '*')
-
-def is_kwarg(arg):
-	""" Returns True if arg argument is the name of a keyword variable argument (i.e. **kwargs) """
-	return (len(arg) > 2) and (arg[:2] == '**')
-
-def has_varargs(func):
-	""" Returns True if function call includes variable arguments (i.e. *pargs and/or **kwargs) """
-	return any([is_parg(arg) or is_kwarg(arg) for arg in get_function_args(func)])
 
 def create_argument_dictionary(func, *args, **kwargs):
 	"""
@@ -574,9 +583,9 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 					fiter = iter(exparam.items())
 					exparam_name = next(fiter)[0]
 					exparam_dict_list.append({'param':param} if exparam_name == 'param' else {'param_name':param_name})
-			exp_dict_list = [param_spec.exception(**exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
+			exp_dict_list = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
 			if getattr(modobj, '_EXH', -1) != -1:
-				ex_dict_list_full = [param_spec.exception(**exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
+				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = '{0}_check_argument_internal_{1}{2}'.format(func.__name__, param_name, '' if len(ex_dict_list_full) == 1 else num)
 					modobj._EXH.ex_add(name=ex_name, parent=get_parent(func), funcname=get_funcname(func), extype=ex['type'], exmsg=ex['msg'])
@@ -660,40 +669,22 @@ def get_includes(ptype, obj):
 		raise RuntimeError('Error trying to obtain pseudo type {0}.includes() result'.format(class_name))
 	if isinstance(ret, bool):
 		return ret
-	print ret
 	raise TypeError('Pseudo type {0}.includes() method needs to return a boolean value'.format(class_name))
 
 
-_BASE_TYPES = [Any, Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
-_BASE_DESC = ['any', 'number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
-
-def _get_pseudo_types(base=True):
-	""" Returns all pseduo-types available """
-	base_types = _BASE_TYPES
-	#base_types = [Any, Number, PositiveInteger, Real, PositiveReal, ArbitraryLengthList, ArbitraryLengthTuple, ArbitraryLengthSet, OneOf, NumberRange, IncreasingRealNumpyVector, RealNumpyVector, File, Function]
-	all_types = base_types+[PolymorphicType]
-	base_desc = _BASE_DESC
-	#base_desc = ['any', 'number (real, integer or complex)', 'positive integer', 'real number', 'positive real number', 'list', 'tuple', 'set', 'one of many types', 'increasing Numpy vector', 'real Numpy Vector', 'file', 'function']
-	all_desc = base_desc+['polymorphic type']
-	return {'type':base_types, 'desc':base_desc} if base else {'type':all_types, 'desc':all_desc}
-
-def register_new_type(cls, desc):
-	""" Register new pseudo-data type """
-	# Validate pseudo-type implementation correctness
-	if not inspect.isclass(cls):
-		raise TypeError('Pseudo type has to be a class')
-	class_name = str(cls)[8:-2]
-	for method in ['istype', 'includes', 'exception']:
-		if getattr(cls, method, -1) == -1:
-			raise TypeError('Pseudo type {0} must have an {1}() method'.format(class_name, method))
-	nargs = len(get_function_args(cls.istype, no_self=True, no_varargs=True))
-	if ((nargs == 0) and (not has_varargs(cls.istype))) or (nargs > 1):
-		raise RuntimeError('Method {0}.istype() must have only one argument'.format(class_name))
-	nargs = len(get_function_args(cls.includes, no_self=True, no_varargs=True))
-	if ((nargs == 0) and (not has_varargs(cls.includes))) or (nargs > 1):
-		raise RuntimeError('Method {0}.includes() must have only one argument'.format(class_name))
-	args = get_function_args(cls.exception, no_self=True, no_varargs=True)
-	if ((len(args) == 0) and (not has_varargs(cls.exception))) or ((len(args) > 1) and (not any([arg in ['param', 'param_name'] for arg in args]))):
-		raise RuntimeError('Method {0}.exception() must have only `param` and/or `param_name` arguments'.format(class_name))
-	_BASE_TYPES.append(cls)
-	_BASE_DESC.append(desc)
+def get_exception(ptype, **kwargs):
+	""" Get pseudo-type exception result with error checking """
+	class_name = str(ptype.__class__)[8:-2]
+	try:
+		ret = ptype.exception(**kwargs)
+	except:
+		raise RuntimeError('Error trying to obtain pseudo type {0}.exception() result'.format(class_name))
+	if isinstance(ret, dict) and (len(ret) == 2) and ('type' in ret) and ('msg' in ret) and isinstance(ret['msg'], str):
+		if (ret['type'] is None) and (ret['msg'] == ''):
+			return ret
+		try:
+			raise ret['type'](ret['msg'])
+		except:	#pylint: disable=W0702
+			if sys.exc_info()[1].message == ret['msg']:
+				return ret
+	raise TypeError('Pseudo type {0}.exception() method needs to return a dictionary with keys "type" and "msg", with the exception type object and exception message respectively'.format(class_name))
