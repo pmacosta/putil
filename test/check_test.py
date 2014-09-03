@@ -442,9 +442,12 @@ class TestNumberRange(object):	#pylint: disable=W0232
 		""" Test that the includes method of NumberRange class behaves appropriately """
 		ref_obj1 = putil.check.NumberRange(10, 15)
 		ref_obj2 = putil.check.NumberRange(100.0, 200.0)
+		ref_obj3 = putil.check.NumberRange(minimum=10)
+		ref_obj4 = putil.check.NumberRange(maximum=20)
 		assert (ref_obj1.includes(5), ref_obj1.includes(10), ref_obj1.includes(13), ref_obj1.includes(15), ref_obj1.includes(20), ref_obj1.includes(13.0),
-			 ref_obj2.includes(75.1), ref_obj2.includes(100.0), ref_obj2.includes(150.0), ref_obj2.includes(200.0), ref_obj2.includes(200.1), ref_obj2.includes(200)) == \
-			 (False, True, True, True, False, True, False, True, True, True, False, True)
+			 ref_obj2.includes(75.1), ref_obj2.includes(100.0), ref_obj2.includes(150.0), ref_obj2.includes(200.0), ref_obj2.includes(200.1), ref_obj2.includes(200),
+			 ref_obj3.includes(20), ref_obj3.includes(5), ref_obj4.includes(25), ref_obj4.includes(5)) == \
+			 (False, True, True, True, False, True, False, True, True, True, False, True, True, False, False, True)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of NumberRange class behaves appropriately """

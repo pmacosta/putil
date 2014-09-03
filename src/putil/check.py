@@ -130,12 +130,12 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 				for key in self.element_type:
 					robj = self.element_type[key]
 					tobj = test_subobj[key]
-					if ((type(robj) in pseudo_types) and (not robj.includes(tobj))) or ((type(robj) not in pseudo_types) and (robj != type(tobj))):
+					if ((type(robj) in pseudo_types) and (not get_includes(robj, tobj))) or ((type(robj) not in pseudo_types) and (robj != type(tobj))):
 						return False
 			return True
 		else:
 			for test_subobj in test_obj if not isinstance(test_obj, dict) else test_obj.values():
-				if ((type(self.element_type) in pseudo_types) and (not self.element_type.includes(test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
+				if ((type(self.element_type) in pseudo_types) and (not get_includes(self.element_type, test_subobj))) or ((type(self.element_type) not in pseudo_types) and (self.element_type != type(test_subobj))):
 					return False
 		return True
 
@@ -201,7 +201,7 @@ class OneOf(object):	#pylint: disable=R0903
 	def __contains__(self, test_obj):
 		for sub_type, sub_choice in zip(self.types, self.choices):
 			# Compare pseudo-types
-			if (sub_type in self.pseudo_types) and sub_choice.includes(test_obj):
+			if (sub_type in self.pseudo_types) and get_includes(sub_choice, test_obj):
 				return True
 			# Compare string with and without case sensitivity
 			if (type(sub_choice) == type(test_obj)) and (sub_type is str) and (self.case_sensitive is not None) and \
@@ -247,8 +247,8 @@ class NumberRange(object):	#pylint: disable=R0903
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		"""	Test that an object belongs to the pseudo-type """
-		return putil.misc.isreal(test_obj) and (test_obj >= self.minimum if self.minimum is not None else test_obj) and \
-			(test_obj <= self.maximum if self.maximum is not None else test_obj)
+		return putil.misc.isreal(test_obj) and (test_obj >= (self.minimum if self.minimum is not None else test_obj)) and \
+			(test_obj <= (self.maximum if self.maximum is not None else test_obj))
 
 	def istype(self, test_obj):	#pylint: disable=R0201
 		"""	Checks to see if object is of the same class type """
@@ -377,7 +377,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
 		for sub_type, sub_inst in zip(self.types, self.instances):
-			if ((sub_type in self.pseudo_types) and sub_inst.includes(test_obj)) or ((sub_type not in self.pseudo_types) and isinstance(test_obj, sub_type)):
+			if ((sub_type in self.pseudo_types) and get_includes(sub_inst, test_obj)) or ((sub_type not in self.pseudo_types) and isinstance(test_obj, sub_type)):
 				return True
 		return False
 
@@ -395,7 +395,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 		exp_dict['msg'] = ''
 		if Any not in self.types:
 			exp_dict_list = [sub_inst.exception(param_name if sub_type != File else param) for sub_type, sub_inst in zip(self.types, self.instances) if \
-					(sub_type in self.pseudo_types) and (get_istype(sub_inst, test_obj)) and (not sub_inst.includes(test_obj))]
+					(sub_type in self.pseudo_types) and (get_istype(sub_inst, test_obj)) and (not get_includes(sub_inst, test_obj))]
 			if exp_dict_list:
 				# Check if all exceptions are of the same type, in which case raise an exception of that type, otherwise raise RuntimeError
 				same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
@@ -569,12 +569,12 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 			# Find out parameter expected by exception() method
 			exparam_dict_list = list()
 			for param_spec in sub_param_spec:
-				if not param_spec.includes(param):
+				if not get_includes(param_spec, param):
 					exparam = funcsigs.signature(param_spec.exception).parameters
 					fiter = iter(exparam.items())
 					exparam_name = next(fiter)[0]
 					exparam_dict_list.append({'param':param} if exparam_name == 'param' else {'param_name':param_name})
-			exp_dict_list = [param_spec.exception(**exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not param_spec.includes(param)]	#pylint: disable=W0142
+			exp_dict_list = [param_spec.exception(**exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
 			if getattr(modobj, '_EXH', -1) != -1:
 				ex_dict_list_full = [param_spec.exception(**exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
@@ -660,6 +660,7 @@ def get_includes(ptype, obj):
 		raise RuntimeError('Error trying to obtain pseudo type {0}.includes() result'.format(class_name))
 	if isinstance(ret, bool):
 		return ret
+	print ret
 	raise TypeError('Pseudo type {0}.includes() method needs to return a boolean value'.format(class_name))
 
 
