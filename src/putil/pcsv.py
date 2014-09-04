@@ -3,6 +3,7 @@
 # See LICENSE for details
 
 import csv
+import inspect
 
 import putil.exh
 import putil.misc
@@ -91,24 +92,29 @@ class CsvFile(object):
 	"""
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
 	def __init__(self, file_name, dfilter=None):
-		self._header, self._header_upper, self._data, self._fdata, self._dfilter = None, None, None, None, None
+		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
+		# Register exceptions
+		root_module = inspect.stack()[-1][0]
+		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle()
+		self._exh.ex_add(name='file_not_found', extype=IOError, exmsg='File {0} could not be found'.format(file_name))
+		self._exh.ex_add(name='file_empty', extype=RuntimeError, exmsg='File {0} is empty'.format(file_name))
+		self._exh.ex_add(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
+		self._exh.ex_add(name='file_has_no_data', extype=RuntimeError, exmsg='File {0} has no data'.format(file_name))
+		#
+		self._exh.raise_exception_if(name='file_not_found', condition=False)	# Check is actually done in the context manager, which is unreachable
 		with open(file_name, 'rU') as file_handle:
 			self._raw_data = [row for row in csv.reader(file_handle)]
 		# Process header
-		if len(self._raw_data) == 0:
-			raise RuntimeError('File {0} is empty'.format(file_name))
+		self._exh.raise_exception_if(name='file_empty', condition=len(self._raw_data) == 0)
 		self._header = self._raw_data[0]
 		self._header_upper = [col.upper() for col in self.header]
-
-		if len(set(self._header_upper)) != len(self._header_upper):
-			raise RuntimeError('Column headers are not unique')
+		self._exh.raise_exception_if(name='column_headers_not_unique', condition=len(set(self._header_upper)) != len(self._header_upper))
 		# Find start of data row
-		num = 0
+		num = -1
 		for num, row in enumerate(self._raw_data[1:]):
 			if any([putil.misc.isnumber(_number_failsafe(col)) for col in row]):
 				break
-		else:
-			raise RuntimeError('File {0} has no data'.format(file_name))
+		self._exh.raise_exception_if(name='file_has_no_data', condition=num == -1)
 		# Set up class properties
 		self._data = [[None if col.strip() == '' else _number_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
 		self.reset_dfilter()
@@ -116,9 +122,9 @@ class CsvFile(object):
 
 	def _validate_dfilter(self, dfilter):
 		""" Validate that all columns in filter are in header """
+		self._exh.ex_add(name='dfilter_empty', extype=ValueError, exmsg='Argument `dfilter` is empty')
 		if dfilter is not None:
-			if len(dfilter) == 0:
-				raise ValueError('Argument `dfilter` is empty')
+			self._exh.raise_exception_if(name='dfilter_empty', condition=len(dfilter) == 0)
 			for key in dfilter:
 				self._in_header(key)
 
@@ -218,23 +224,25 @@ class CsvFile(object):
 
 		 * Same as :py:attr:`putil.pcsv.CsvFile.data`
 		"""
+		self._exh.ex_add(name='write', extype=ValueError, exmsg='There is no data to save to file')
 		self._in_header(col)
 		data = self.data(col=col, filtered=filtered)
 		if headers:
 			col = [col] if isinstance(col, str) else col
 			header = self.header if col is None else [self.header[self._header_upper.index(element.upper())] for element in col]
-		if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
-			raise ValueError('There is no data to save to file')
+		self._exh.raise_exception_if(name='write', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
+		#if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
+		#	raise ValueError('There is no data to save to file')
 		data = [["''" if col is None else col for col in row] for row in data]
 		write(file_name, [header]+data if headers else data, append=append)
 
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """
+		self._exh.ex_add(name='header_not_found', extype=ValueError, exmsg='Column *[column_name]* not found in header')
 		if col is not None:
 			col_list = [col] if isinstance(col, str) else col
 			for col in col_list:
-				if col.upper() not in self._header_upper:
-					raise ValueError('Column {0} not found in header'.format(col))
+				self._exh.raise_exception_if(name='header_not_found', condition=col.upper() not in self._header_upper, edata={'field':'column_name', 'value':col})
 
 	def _core_data(self, data, col=None):
 		""" Extract columns from data """

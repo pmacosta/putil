@@ -522,11 +522,9 @@ def get_funcname(func):
 	# 2: the line number of the current line
 	# 3: the function name
 	# 4: a list of lines of context from the source code
-	# 5:the index of the current line within that list.
+	# 5: the index of the current line within that list.
 	for frame in frame_list:
 		if frame[3] == func.__name__:
-			print func.__module__
-			print sys.modules[func.__module__].__name__
 			modname = frame[0].f_locals['self'].__module__ if 'self' in frame[0].f_locals else sys.modules[func.__module__].__name__
 			clsname = frame[0].f_locals['self'].__class__.__name__ if 'self' in frame[0].f_locals else None
 			funcname = func.__name__
@@ -557,8 +555,8 @@ def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	root_module = inspect.stack()[-1][0]
 	if '_EXH' in root_module.f_locals:
 		exhobj = root_module.f_locals['_EXH']
-		ex_name = '{0}_check_argument_type_internal_{1}'.format(func.__name__, param_name)
-		exhobj.ex_add(name=ex_name, parent=get_parent(func), funcname=get_funcname(func), extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
+		ex_name = 'check_argument_type_internal_{0}'.format(param_name)
+		exhobj.ex_add(name=ex_name, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
 		exhobj.raise_exception_if(name=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))))
 	else:
 		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))):
@@ -587,8 +585,8 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 			if getattr(modobj, '_EXH', -1) != -1:
 				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
-					ex_name = '{0}_check_argument_internal_{1}{2}'.format(func.__name__, param_name, '' if len(ex_dict_list_full) == 1 else num)
-					modobj._EXH.ex_add(name=ex_name, parent=get_parent(func), funcname=get_funcname(func), extype=ex['type'], exmsg=ex['msg'])
+					ex_name = 'check_argument_internal_{1}{2}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
+					modobj._EXH.ex_add(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
 					modobj._EXH.raise_exception_if(name=ex_name, condition=False)
 			exp_dict = dict()
 			if len(exp_dict_list) == len(sub_param_spec):

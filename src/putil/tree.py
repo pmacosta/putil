@@ -340,7 +340,7 @@ def build_tree(tree_info):
 		names = [element.strip() for element in name.strip().split('.')]
 		# Find or create tree to add nodes and data to
 		for root in roots:
-			tobj = search_for_node(root, name[0])
+			tobj = search_for_node(root, names[0])
 			if tobj:
 				break
 		else:

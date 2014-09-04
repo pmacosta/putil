@@ -497,14 +497,14 @@ class TestSearchForNode(object):	#pylint: disable=W0232
 		test_list.append(putil.tree.search_for_node(obj, 'a.c.d').data == None)
 		test_list.append(putil.tree.search_for_node(obj, 'a.c.d.e').data == 'world!')
 		# 21-28
-		obj = putil.tree.build_tree([{'node':'a', 'data':5}, {'node':'a.b', 'data':'hello'}, {'node':'a.c', 'data':37}, {'node':'d', 'data':None}, {'node':'d.e', 'data':'world!'}, {'node':'d.f', 'data':999}])
-		test_list.append(obj[0].ppstr == u'a (*)\n├b (*)\n└c (*)')
-		test_list.append(putil.tree.search_for_node(obj[0], 'a').data == 5)
-		test_list.append(putil.tree.search_for_node(obj[0], 'a.b').data == 'hello')
-		test_list.append(putil.tree.search_for_node(obj[0], 'a.c').data == 37)
-		test_list.append(obj[1].ppstr == u'd\n├e (*)\n└f (*)')
-		test_list.append(putil.tree.search_for_node(obj[1], 'd').data == None)
-		test_list.append(putil.tree.search_for_node(obj[1], 'd.e').data == 'world!')
-		test_list.append(putil.tree.search_for_node(obj[1], 'd.f').data == 999)
+		obj = putil.tree.build_tree([{'node':'aa', 'data':5}, {'node':'aa.b', 'data':'hello'}, {'node':'aa.c', 'data':37}, {'node':'dd', 'data':None}, {'node':'dd.e', 'data':'world!'}, {'node':'dd.f', 'data':999}])
+		test_list.append(obj[0].ppstr == u'aa (*)\n├b (*)\n└c (*)')
+		test_list.append(putil.tree.search_for_node(obj[0], 'aa').data == 5)
+		test_list.append(putil.tree.search_for_node(obj[0], 'aa.b').data == 'hello')
+		test_list.append(putil.tree.search_for_node(obj[0], 'aa.c').data == 37)
+		test_list.append(obj[1].ppstr == u'dd\n├e (*)\n└f (*)')
+		test_list.append(putil.tree.search_for_node(obj[1], 'dd').data == None)
+		test_list.append(putil.tree.search_for_node(obj[1], 'dd.e').data == 'world!')
+		test_list.append(putil.tree.search_for_node(obj[1], 'dd.f').data == 999)
 		assert test_list == len(test_list)*[True]
 
