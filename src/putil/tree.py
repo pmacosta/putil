@@ -29,80 +29,133 @@ class NodeName(object):	#pylint: disable=R0903
 putil.check.register_new_type(NodeName, 'Hierarchical node name')
 
 
-class TreeNode(object):	#pylint: disable=R0903
+class Tree(object):	#pylint: disable=R0903
 	"""
 	Provides basic data tree functionality
 
-	:param	name: Name of tree node
+	:param	name: Name of root node
 	:type	name: string
-	:param	parent: Node parent, default is *None*
-	:type	parent: :py:class:`putil.tree.TreeNode()` object or None
-	:param	children: Children node(s), default is *None*
-	:type	children: :py:class:`putil.tree.TreeNode()` object, list of :py:class:`putil.tree.TreeNode()` objects or None
 	:param	data: Node data, default is *None*
 	:type	data: any type or list of any type
 	:raises:
-	 * Same as :py:attr:`putil.tree.TreeNode.name`
-
-	 * Same as :py:attr:`putil.tree.TreeNode.parent`
-
-	 * Same as :py:attr:`putil.tree.TreeNode.children`
+	 * Same as :py:attr:`putil.tree.Tree.name`
 
 	 * Same as :py:attr:`putil.tree.TreeNode.data`
 	"""
-	def __init__(self, name, parent=None, children=None, data=None):	#pylint: disable-msg=R0913
-		self._db = {'name':None, 'parent':None, 'children':None, 'data':None}
-		self.name = name
-		self.parent = parent
-		self.children = children
-		self.data = data
+	@putil.check.check_arguments({'name':NodeName(), 'data':putil.check.Any()})
+	def __init__(self, name, data=None):	#pylint: disable-msg=R0913
+		self._db = {'name':name, 'payload':{'parent':None, 'children':None, 'data':data}}
 
-	def _get_name(self):	#pylint: disable=C0111
-		return self._db['name']
+	def _name_in_tree(self, name):	#pylint: disable=C0111
+		""" Validates that node name is in tree structure """
+		if name not in self._db:
+			raise RuntimeError('Node {0} not in tree'.format(name))
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, NodeName()]))
-	def _set_name(self, name):	#pylint: disable=C0111
-		self._db['name'] = name.strip() if name else name
+	@putil.check.check_argument(NodeName())
+	def get_parent(self, name):	#pylint: disable=C0111
+		"""
+		Retrieves parent of a node
 
-	def _get_parent(self):	#pylint: disable=C0111
-		return self._db['parent']
+		:param	name: Child node name
+		:type	name: string
+		:rtype	data: string
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
 
-	def _set_parent(self, parent):	#pylint: disable=C0111
-		if (parent is not None) and (not isinstance(parent, TreeNode)):
-			raise TypeError('Argument `parent` is of the wrong type')
-		self._db['parent'] = parent
-		if self.parent:
-			self.parent.add_children(self)
+		 * RuntimeError (Node *[name]* not in tree)
+		"""
+		self._name_in_tree(name)
+		return self._db[name]['parent']
 
-	def add_children(self, children):
+	@putil.check.check_arguments({'name':NodeName(), 'parent':NodeName()})
+	def set_parent(self, name, parent):	#pylint: disable=C0111
+		"""
+		Sets parent of a node
+
+		:param	name: Child node name
+		:type	name: string
+		:param	name: Parent node name
+		:type	name: string
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * TypeError (Argument `parent` is of the wrong type)
+
+		 * RuntimeError (Node *[name]* not in tree)
+
+		 * RuntimeError (Node *[parent]* not in tree)
+		"""
+		self._name_in_tree(name)
+		self._name_in_tree(parent)
+		# Remove child from former parent
+		children = self.get_children(self.get_parent(name))
+		self.set_children(self.get_parent(name), None if (not isinstance(children, list)) or (isinstance(children, list) and (len(children) == 1)) else [node for node in children if node != name])
+		# Add child to new parent
+		self._db[name]['parent'] = parent
+		self.add_children(parent, name)
+
+	@putil.check.check_arguments({'parent':NodeName(), 'children':putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())])})
+	def add_children(self, parent, children):
 		"""
 		Add children to current node
 
+		:param	name: Child node name
+		:type	name: string
 		:param	children: Children node(s) to add
 		:type	children: :py:class:`putil.tree.TreeNode()` object or list of :py:class:`putil.tree.TreeNode()` objects
 		:raises:
+		 * TypeError (Argument `parent` is of the wrong type)
+
 		 * TypeError (Argument `children` is of the wrong type)
 
 		 * ValueError (Argument `children` has repeated children)
 
 		 * ValueError (Node *[node_name]* is already a child of current node)
+
+		 * RuntimeError (Node *[parent]* not in tree)
 		"""
-		if (children is not None) and ((not isinstance(children, list) and (not isinstance(children, TreeNode))) or (isinstance(children, list) and any([not isinstance(child, TreeNode) for child in children]))):
-			raise TypeError('Argument `children` is of the wrong type')
 		children = children if not children else (children if isinstance(children, list) else [children])
 		if children and (len(set(children)) != len(children)):
 			raise ValueError('Argument `children` has repeated children')
 		# Check that node names are unique
-		if self.children and children:
+		if self.children(parent) and children:
 			for name in [child.name for child in children]:
-				if name in self.children_names:
-					raise ValueError('Node {0} is already a child of current node'.format(name))
-		self.children = (self.children if self.children else list())+children if children else self.children
+				if name in self.children(parent):
+					raise ValueError('Node {0} is already a child of parent node {1}'.format(name, parent))
+		self.set_children(parent, self.get_children(parent) if self.get_children(parent) else list())+children if children else self.get_children(parent))
 
-	def _get_children(self):	#pylint: disable=C0111
-		return self._db['children']
+	def get_children(self, name):	#pylint: disable=C0111
+		"""
+		Retrieves children of a node
 
-	def _set_children(self, children):	#pylint: disable=C0111
+		:param	name: Node name
+		:type	name: string
+		:rtype	data: string
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * RuntimeError (Node *[name]* not in tree)
+		"""
+		self._name_in_tree(name)
+		return self._db[name]['children']
+
+	def set_children(self, parent, children):	#pylint: disable=C0111
+		"""
+		Sets children of a node
+
+		:param	name: Parent node name
+		:type	name: string
+		:param	name: Child node name(s)
+		:type	name: string or list of strings
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * TypeError (Argument `parent` is of the wrong type)
+
+		 * RuntimeError (Node *[name]* not in tree)
+
+		 * RuntimeError (Node *[parent]* not in tree)
+		"""
 		if (children is not None) and ((not isinstance(children, list) and (not isinstance(children, TreeNode))) or (isinstance(children, list) and any([not isinstance(child, TreeNode) for child in children]))):
 			raise TypeError('Argument `children` is of the wrong type')
 		children = children if not children else (children if isinstance(children, list) else [children])
@@ -112,12 +165,6 @@ class TreeNode(object):	#pylint: disable=R0903
 		if self.children:
 			for child in self.children:
 				child._db['parent'] = self
-
-	def _get_parent_name(self):	#pylint: disable=C0111
-		return None if not self.parent else self.parent.name
-
-	def _get_children_names(self):	#pylint: disable=C0111
-		return self.children if not self.children else [node.name for node in self.children]
 
 	def _get_data(self):	#pylint: disable=C0111
 		return self._db['data']
@@ -235,18 +282,6 @@ class TreeNode(object):	#pylint: disable=R0903
 	Root node flag, *True* if current node is the root node (node with no ancestors), *False* otherwise
 
 	:rtype: boolean
-	"""	#pylint: disable=W0105
-
-	name = property(_get_name, _set_name, None, doc='Node name')
-	"""
-	Node name
-
-	:type: string
-	:rtype: string
-	:raises:
-	 * TypeError (Argument `name` is of the wrong type)
-
-	 * ValueError (Argument `name` is not a valid node name)
 	"""	#pylint: disable=W0105
 
 	parent = property(_get_parent, _set_parent, None, doc='Node parent')
