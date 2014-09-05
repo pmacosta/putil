@@ -86,7 +86,8 @@ class Tree(object):	#pylint: disable=R0903
 						parent = '.'.join(self._split_node_name(child)[:-1])
 						self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
 						self._db[parent]['children'] = list(sorted(set(self._db[parent]['children']+[child])))
-			self._db[name]['data'].append(data)
+			data = data if isinstance(data, list) and (len(data) > 0) else (list() if isinstance(data, list) else [data])
+			self._db[name]['data'] = self._db[name]['data']+data
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
 	def delete(self, nodes):
@@ -98,14 +99,17 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * TypeError (Argument `nodes` is of the wrong type)
 
+		 * ValueError (Argument `nodes` is not a valid node name)
+
 		 * RuntimeError (Node *[node_name]* not in tree)
 		"""
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		for node in nodes:
 			self._node_in_tree(node)
 			parent = '.'.join(self._split_node_name(node)[:-1])
-			# Delete link to parent
-			self._db[parent]['children'] = [child for child in self._db[parent]['children'] if child != node]
+			# Delete link to parent (if not root node)
+			if parent:
+				self._db[parent]['children'] = [child for child in self._db[parent]['children'] if child != node]
 			# Delete children (sub-tree)
 			for child in [key for key in self._db.keys() if key[:len(node)] == node]:
 				del self._db[child]
@@ -128,6 +132,8 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * TypeError (Argument `name` is of the wrong type)
 
+		 * ValueError (Argument `nodes` is not a valid node name)
+
 		 * RuntimeError (Node *[name]* not in tree)
 		"""
 		self._node_in_tree(name)
@@ -144,11 +150,14 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * TypeError (Argument `name` is of the wrong type)
 
+		 * ValueError (Argument `nodes` is not a valid node name)
+
 		 * RuntimeError (Node *[name]* not in tree)
 		"""
 		self._node_in_tree(name)
-		return self._db[self._db[name]['parent']]
+		return self._db[self._db[name]['parent']] if not self.is_root(name) else {}
 
+	@putil.check.check_argument(NodeName())
 	def get_children(self, name):	#pylint: disable=C0111
 		"""
 		Retrieves children of a node
@@ -158,6 +167,8 @@ class Tree(object):	#pylint: disable=R0903
 		:rtype	data: listg of strings
 		:raises:
 		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `nodes` is not a valid node name)
 
 		 * RuntimeError (Node *[name]* not in tree)
 		"""
@@ -175,6 +186,8 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * TypeError (Argument `name` is of the wrong type)
 
+		 * ValueError (Argument `nodes` is not a valid node name)
+
 		 * RuntimeError (Node *[name]* not in tree)
 		"""
 		self._node_in_tree(name)
@@ -191,6 +204,25 @@ class Tree(object):	#pylint: disable=R0903
 		:raises: TypeError (Argument `name` is of the wrong type)
 		"""
 		return name in self._db
+
+	@putil.check.check_argument(NodeName())
+	def print_node(self, name):	#pylint: disable=C0111
+		"""
+		Prints node information
+
+		:param	name: Node name
+		:type	name: string
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `nodes` is not a valid node name)
+
+		 * RuntimeError (Node *[name]* not in tree)
+		"""
+		node = self.get_node(name)
+		children = [self._split_node_name(child)[-1] for child in node['children']] if node['children'] else node['children']
+		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
+		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
 
 	def __str__(self):
 		u"""
@@ -237,6 +269,8 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * TypeError (Argument `name` is of the wrong type)
 
+		 * ValueError (Argument `nodes` is not a valid node name)
+
 		 * RuntimeError (Node *[name]* not in tree)
 		"""
 		self._node_in_tree(name)
@@ -253,8 +287,11 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * TypeError (Argument `name` is of the wrong type)
 
+		 * ValueError (Argument `nodes` is not a valid node name)
+
 		 * RuntimeError (Node *[name]* not in tree)
 		"""
+		self._node_in_tree(name)
 		return not self._db[name]['children']
 
 	# Managed attributes
