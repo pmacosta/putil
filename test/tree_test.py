@@ -19,39 +19,44 @@ import putil.tree
 @pytest.fixture
 def default_trees():	#pylint: disable=R0914
 	""" Provides a default tree to be used in teseting the putil.tree.TreeNode() class """
-	t1l3b1a_obj = putil.tree.TreeNode(name='t1l3b1a', data='Tree 1, level 3, branch 1, child a')
-	t1l3b1b_obj = putil.tree.TreeNode(name='t1l3b1b', data='Tree 1, level 3, branch 1, child b')
-	t1l3b1c_obj = putil.tree.TreeNode(name='t1l3b1c', data='Tree 1, level 3, branch 1, child c')
 	#
-	t1l3b2a_obj = putil.tree.TreeNode(name='t1l3b2a', data='Tree 1, level 3, branch 2, child a')
-	t1l3b2b_obj = putil.tree.TreeNode(name='t1l3b2b', data='Tree 1, level 3, branch 2, child b')
-	t1l3b2c_obj = putil.tree.TreeNode(name='t1l3b2c', data='Tree 1, level 3, branch 2, child c')
-	#
-	t1l2b1_obj = putil.tree.TreeNode(name='t1l2b1', children=[t1l3b1a_obj, t1l3b1b_obj, t1l3b1c_obj], data='Tree 1, level 2, branch 1')
-	t1l2b2_obj = putil.tree.TreeNode(name='t1l2b2', children=[t1l3b2a_obj, t1l3b2b_obj, t1l3b2c_obj], data='Tree 1, level 2, branch 2')
-	#
-	t1l1_obj = putil.tree.TreeNode(name='t1l1', children=[t1l2b1_obj, t1l2b2_obj], data='Tree 1, level 1')
-	###
-	t2l1_obj = putil.tree.TreeNode(name='t2l1', data='Tree 2, level 1')
-	#
-	t2l3b1a_obj = putil.tree.TreeNode(name='t2l3b1a', data='Tree 2, level 3, branch 1, child a')
-	t2l3b1b_obj = putil.tree.TreeNode(name='t2l3b1b', data='Tree 2, level 3, branch 1, child b')
-	t2l3b1c_obj = putil.tree.TreeNode(name='t2l3b1c', data='Tree 2, level 3, branch 1, child c')
-	#
-	t2l2b1_obj = putil.tree.TreeNode(name='t2l2b1', parent=t2l1_obj, children=[t2l3b1a_obj, t2l3b1b_obj, t2l3b1c_obj], data='Tree 2, level 2, branch 1')	#pylint: disable=W0612
-	#
-	t2l3b2a_obj = putil.tree.TreeNode(name='t2l3b2a', data='Tree 2, level 3, branch 2, child a')
-	t2l3b2b_obj = putil.tree.TreeNode(name='t2l3b2b', data='Tree 2, level 3, branch 2, child b')
-	t2l3b2c_obj = putil.tree.TreeNode(name='t2l3b2c', data='Tree 2, level 3, branch 2, child c')
-	#
-	t2l2b2_obj = putil.tree.TreeNode(name='t2l2b2', children=t2l3b2a_obj, data='Tree 2, level 2, branch 2')
-	t2l2b2_obj.add_children([t2l3b2b_obj, t2l3b2c_obj])
-	t2l2b2_obj.parent = t2l1_obj
-	#
-	t3l1_obj = putil.tree.TreeNode(name='t3l1', children=putil.tree.TreeNode(name='t3l2', data='Tree 2, level 2'), data='Tree 3, level 1')
-	t3l1_obj.children = None
+	t1obj = putil.tree.Tree()
+	t1obj.add({'name':'t1l1', 'data':'Tree 1, level 1'})
+	t1obj.add([
+		{'name':'t1l1.t1l2b1', 'data':'Tree 1, level 2, branch 1'},
+		{'name':'t1l1.t1l2b2', 'data':'Tree 1, level 2, branch 2'},
+		{'name':'t1l1.t1l2b1.t1l3b1a', 'data':'Tree 1, level 3, branch 1, child a'},
+		{'name':'t1l1.t1l2b1.t1l3b1b', 'data':'Tree 1, level 3, branch 1, child b'},
+		{'name':'t1l1.t1l2b1.t1l3b1c', 'data':'Tree 1, level 3, branch 1, child c'},
+		{'name':'t1l1.t1l2b1.t1l3b2a', 'data':'Tree 1, level 3, branch 2, child a'},
+		{'name':'t1l1.t1l2b1.t1l3b2b', 'data':'Tree 1, level 3, branch 2, child b'},
+		{'name':'t1l1.t1l2b1.t1l3b2c', 'data':'Tree 1, level 3, branch 2, child c'},
+	])
 
-	return t1l1_obj, t2l1_obj, t3l1_obj
+	###
+	t2obj = putil.tree.Tree()
+	#
+	t2obj.add({'name':'t2l1.t2l2b1.t2l3b1a', 'data':'Tree 2, level 3, branch 1, child a'})
+	t2obj.add({'name':'t2l1.t2l2b1.t2l3b1b', 'data':'Tree 2, level 3, branch 1, child b'})
+	t2obj.add({'name':'t2l1.t2l2b1.t2l3b1c', 'data':'Tree 2, level 3, branch 1, child c'})
+	#
+	t2obj.add({'name':'t2l1', 'data':'Tree 2, level 1'})
+	#
+	t2obj.add({'name':'t2l1.t2l2b1', 'data':'Tree 2, level 2, branch 1'})
+	#
+	t2obj.add([
+		{'name':'t2l1.t2l2b1.t2l3b2a', 'data':'Tree 2, level 3, branch 2, child a'},
+		{'name':'t2l1.t2l2b1.t2l3b2b', 'data':'Tree 2, level 3, branch 2, child b'},
+		{'name':'t2l1.t2l2b1.t2l3b2c', 'data':'Tree 2, level 3, branch 2, child c'},
+	])
+	#
+	t2obj.add({'name':'t2l1.t2l2b2', 'data':'Tree 2, level 2, branch 2'})
+	#
+	t3obj = putil.tree.Tree()
+	t3obj.add([{'name':'t3l1', 'data':'Tree 3, level 1'}, {'name':'t3l1.t3l2', 'data':'Tree 2, level 2'}])
+	t3obj.delete('t3l1.t3l2')
+
+	return t1obj, t2obj, t3obj
 
 
 class TestTreeNode(object):	#pylint: disable=W0232
