@@ -37,9 +37,13 @@ def write(file_name, data, append=True):
 
 	 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
 	"""
-	if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
-		raise ValueError('Argument `data` is empty')
-	# Process data, turn None to '' and integer to integers
+	root_module = inspect.stack()[-1][0]
+	_exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.csv.write')
+	_exh.ex_add(name='data_is_empty', extype=ValueError, exmsg='Argument `data` is empty')
+	_exh.ex_add(name='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.ex_add(name='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.ex_add(name='file_could_not_be_created_runtime', extype=RuntimeError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.raise_exception_if(name='data_is_empty', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
 	try:
 		putil.misc.make_dir(file_name)
 		file_handle = open(file_name, 'wb' if append is False else 'ab')
@@ -48,11 +52,14 @@ def write(file_name, data, append=True):
 			csv_handle.writerow(row)
 		file_handle.close()
 	except IOError as msg:
-		raise IOError('File {0} could not be created: {1}'.format(file_name, msg.strerror))
+		_exh.raise_exception_if(name='file_could_not_be_created_io', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg.strerror}])
 	except OSError as msg:
-		raise OSError('File {0} could not be created: {1}'.format(file_name, msg.strerror))
-	except Exception as msg:
-		raise RuntimeError('File {0} could not be created: {1}'.format(file_name, msg.strerror))
+		_exh.raise_exception_if(name='file_could_not_be_created_os', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg.strerror}])
+	except Exception as msg:	#pylint: disable=W0703
+		_exh.raise_exception_if(name='file_could_not_be_created_runtime', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg.strerror}])
+	_exh.raise_exception_if(name='file_could_not_be_created_io', condition=False)
+	_exh.raise_exception_if(name='file_could_not_be_created_os', condition=False)
+	_exh.raise_exception_if(name='file_could_not_be_created_runtime', condition=False)
 
 
 def _number_failsafe(obj):
