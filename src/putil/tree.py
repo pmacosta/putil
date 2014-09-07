@@ -38,7 +38,53 @@ class Tree(object):	#pylint: disable=R0903
 	def __init__(self):	#pylint: disable=R0913
 		self._db = dict()
 		self._root = None
+		self._vertical = unichr(0x2502)
+		self._vertical_and_right = unichr(0x251C)
+		self._up_and_right = unichr(0x2514)
 		#{'name':{'parent':None, 'children':None, 'data':data}}
+
+	def __str__(self):
+		u"""
+		String with the tree structure pretty printed as a character-based tree structure. Only node names are shown, nodes with data are marked with an asterisk (*). For example:
+
+			>>> import putil.tree
+			>>> tobj = putil.tree.Tree()
+			>>> tobj.add([
+			...		{'name':'root.branch1', 'data':5},
+			...		{'name':'root.branch2', 'data':None},
+			...		{'name':'root.branch1.leaf1', 'data':None},
+			...		{'name':'root.branch1.leaf2', 'data':'Hello world!'}
+			... ])
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			│└leaf2 (*)
+			└branch2
+
+		:rtype: Unicode string
+		"""
+		return self._prt(name=self.root_name, lparent=-1, sep='', pre1='', pre2='').encode('utf-8')
+
+	def _collapse_node(self, name):
+		""" Collapse a single node """
+		while True:
+			node = self._db[name]
+			if (len(node['children']) == 1) and (not node['data']):
+				child_name = node['children'][0]
+				self._db[child_name]['parent'] = node['parent']
+				self._db[self._db[name]['parent']]['children'].remove(name)
+				self._db[self._db[name]['parent']]['children'] = sorted(self._db[self._db[name]['parent']]['children']+[child_name])
+				del self._db[name]
+				name = child_name
+			else:
+				break
+		node = self._db[name]
+		for name in node['children'][:]:
+			self._collapse_node(name)
+
+	def _get_nodes(self):	#pylint: disable=C0111
+		return None if not self._db else sorted(self._db.keys())
 
 	def _get_root_node(self):	#pylint: disable=C0111
 		return None if not self.root_name else self.get_node(self.root_name)
@@ -49,6 +95,41 @@ class Tree(object):	#pylint: disable=R0903
 	def _node_in_tree(self, name):	#pylint: disable=C0111
 		if name not in self._db:
 			raise RuntimeError('Node {0} not in tree'.format(name))
+
+	def _prt(self, name, lparent, sep, pre1, pre2):	#pylint: disable=C0111,R0913,R0914
+		# Characters from http://www.unicode.org/charts/PDF/U2500.pdf
+		node_name = name[lparent+1:]
+		#node_name = name.split('.')[-1]
+		children = self._db[name]['children']
+		ncmu = len(children)-1
+		plist1 = ncmu*[self._vertical_and_right]+[self._up_and_right]
+		plist2 = ncmu*[self._vertical]+[' ']
+		slist = (ncmu+1)*[sep+pre2]
+		dmark = ' (*)' if self._db[name]['data'] else ''
+		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, node_name, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
+
+	def _rnode(self, root, name, hierarchy):	#pylint: disable=C0111,R0913,R0914
+		suffix = name[len(root):]
+		new_suffix = suffix.replace('.'+hierarchy, '').replace('..', '.')
+		new_name = root+new_suffix
+		if new_name != name:
+			if not self.in_tree(new_name):
+				self._db[new_name] = self._db[name].copy()
+				self._db[self._db[name]['parent']]['children'] = sorted(list(set([child for child in self._db[self._db[name]['parent']]['children'] if child != name]+[new_name])))
+			else:
+				if self._db[name]['data']:
+					raise RuntimeError('Hierarchy {0} cannot be deleted'.format(hierarchy))
+				if self._db[name]['parent'] == new_name:
+					self._db[self._db[name]['parent']]['children'] = sorted(list(set([child for child in self._db[self._db[name]['parent']]['children'] if child != name])))
+				new_children = sorted(self._db[new_name]['children']+self._db[name]['children'])
+				if len(new_children) != len(set(new_children)):
+					raise RuntimeError('Inconsitency when deleting hierarchy')
+				self._db[new_name]['children'] = new_children
+			for child in self.get_children(name):
+				self._db[child]['parent'] = new_name
+			del self._db[name]
+		for child in self.get_children(new_name):
+			self._rnode(root, child, hierarchy)
 
 	def _set_root_name(self, name):	#pylint: disable=C0111
 		self._root = name
@@ -89,6 +170,22 @@ class Tree(object):	#pylint: disable=R0903
 			data = data if isinstance(data, list) and (len(data) > 0) else (list() if isinstance(data, list) else [data])
 			self._db[name]['data'] = self._db[name]['data']+data
 
+	@putil.check.check_argument(NodeName())
+	def collapse(self, name):
+		""" Compress nodes that have no data """
+		self._node_in_tree(name)
+		for child in self._db[name]['children'][:]:
+			self._collapse_node(child)
+
+	def _get_subtree(self, name):
+		if self.is_leaf(name):
+			return [name]
+		children = self.get_children(name)
+		ret = [name]
+		for child in children:
+			ret += self._get_subtree(child)
+		return ret
+
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
 	def delete(self, nodes):
 		"""
@@ -106,12 +203,13 @@ class Tree(object):	#pylint: disable=R0903
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		for node in nodes:
 			self._node_in_tree(node)
-			parent = '.'.join(self._split_node_name(node)[:-1])
+			parent = self.get_node(node)['parent']
 			# Delete link to parent (if not root node)
+			del_list = self._get_subtree(node)
 			if parent:
 				self._db[parent]['children'] = [child for child in self._db[parent]['children'] if child != node]
 			# Delete children (sub-tree)
-			for child in [key for key in self._db.keys() if key[:len(node)] == node]:
+			for child in del_list:
 				del self._db[child]
 			if not len(self._db):
 				self._root = None
@@ -206,59 +304,6 @@ class Tree(object):	#pylint: disable=R0903
 		return name in self._db
 
 	@putil.check.check_argument(NodeName())
-	def print_node(self, name):	#pylint: disable=C0111
-		"""
-		Prints node information
-
-		:param	name: Node name
-		:type	name: string
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
-
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
-		"""
-		node = self.get_node(name)
-		children = [self._split_node_name(child)[-1] for child in node['children']] if node['children'] else node['children']
-		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
-		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
-
-	def __str__(self):
-		u"""
-		String with the tree structure pretty printed as a character-based tree structure. Only node names are shown, nodes with data are marked with an asterisk (*). For example:
-
-			>>> import putil.tree
-			>>> tobj = putil.tree.Tree()
-			>>> tobj.add([
-			...		{'name':'root.branch1', 'data':5},
-			...		{'name':'root.branch2', 'data':None},
-			...		{'name':'root.branch1.leaf1', 'data':None},
-			...		{'name':'root.branch1.leaf2', 'data':'Hello world!'}
-			... ])
-			>>> print str(tobj)
-			root
-			├branch1 (*)
-			│├leaf1
-			│└leaf2 (*)
-			└branch2
-
-		:rtype: Unicode string
-		"""
-		return self._prt(name=None).encode('utf-8')
-
-	def _prt(self, name, sep='', last=False):	#pylint: disable=C0111
-		# Characters from http://www.unicode.org/charts/PDF/U2500.pdf
-		vertical = unichr(0x2502)
-		vertical_and_right = unichr(0x251C)
-		up_and_right = unichr(0x2514)
-		name = name if name is not None else sorted(self._db.keys())[0]
-		node_name = name.split('.')[-1]
-		ret = [(sep+(vertical_and_right if not last else up_and_right) if not self.is_root(name) else '')+node_name+(' (*)' if self.get_data(name) else '')]
-		ret += [self._prt(child, sep='' if self.is_root(name) else (sep+(vertical if not last else ' ')), last=child == self.get_children(name)[-1]) for child in self.get_children(name)] if not self.is_leaf(name) else list()
-		return '\n'.join(ret)
-
-	@putil.check.check_argument(NodeName())
 	def is_root(self, name):	#pylint: disable=C0111
 		"""
 		Root node flag, *True* if node is the root node (node with no ancestors), *False* otherwise
@@ -294,7 +339,100 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return not self._db[name]['children']
 
+	@putil.check.check_argument(NodeName())
+	def make_root(self, name):	#pylint: disable=C0111
+		"""
+		Makes a sub-node the root node of tree
+
+		:param	name: Node name
+		:type	name: string
+		:rtype: boolean
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `name` is not a valid node name)
+
+		 * RuntimeError (Node *[name]* not in tree)
+		"""
+		self._node_in_tree(name)
+		dlist = [key for key in self.nodes if key.find(name) != 0]
+		for key in dlist:
+			del self._db[key]
+		self._db[name]['parent'] = ''
+		self._root = name
+
+		return not self._db[name]['children']
+
+	@putil.check.check_argument(NodeName())
+	def print_node(self, name):	#pylint: disable=C0111
+		"""
+		Prints node information
+
+		:param	name: Node name
+		:type	name: string
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `nodes` is not a valid node name)
+
+		 * RuntimeError (Node *[name]* not in tree)
+		"""
+		node = self.get_node(name)
+		children = [self._split_node_name(child)[-1] for child in node['children']] if node['children'] else node['children']
+		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
+		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
+
+
+	@putil.check.check_arguments({'name':NodeName(), 'hierarchy':NodeName()})
+	def remove_hierarchy(self, name, hierarchy):	#pylint: disable=C0111
+		"""
+		Get node data
+
+		:param	name:		Root node of sub-tree to remove hierarchy from
+		:type	name:		string
+		:param	hierarchy:	Hierarchy to remove from node names in sub-tree
+		:type	hierarhcy:	string
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `name` is not a valid node name)
+
+		 * TypeError (Argument `hierarchy` is of the wrong type)
+
+		 * ValueError (Argument `hierarchy` is not a valid node name)
+
+		 * RuntimeError (Node *[name]* not in tree)
+		"""
+		self._node_in_tree(name)
+		# REMOVE print 'Entry function children {0}'.format(self.get_children(name))
+		for child in self.get_children(name):
+			# REMOVE print 'Entry function child {0}'.format(child)
+			self._rnode(name, child, hierarchy)
+
+	@putil.check.check_argument(NodeName())
+	def remove_prefix(self, prefix):
+		index = self.root_name.find(prefix)
+		if index != 0:
+			raise ValueError('Illegal prefix')
+		cstart = len(prefix)+1
+		ndb = dict()
+		for key in self._db.keys():
+			new_key = key[cstart:]
+			self._db[key]['parent'] = self._db[key]['parent'] if not self._db[key]['parent'] else self._db[key]['parent'][cstart:]
+			self._db[key]['children'] = sorted([child[cstart:] for child in self._db[key]['children']])
+			ndb[new_key] = self._db[key].copy()
+			del self._db[key]
+		self._db = ndb
+		self._set_root_name(self.root_name[cstart:])
+
 	# Managed attributes
+	nodes = property(_get_nodes, None, None, doc='Tree nodes')
+	"""
+	Name of all tree nodes, *None* if an empty tree
+
+	:rtype: list or None
+	"""	#pylint: disable=W0105
+
 	root_node = property(_get_root_node, None, None, doc='Tree root node')
 	"""
 	Tree root node or *None* if :py:class:`putil.tree.Tree()` object has no nodes. See :py:meth:`putil.tree.Tree.get_node()` for details about returned dictionary.

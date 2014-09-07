@@ -513,42 +513,6 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 	return True
 
 
-def get_funcname(func):
-	""" Get class name of decorated function """
-	frame_list = inspect.stack()
-	# Stack frame is a tuple with the following items:
-	# 0: the frame object
-	# 1: the filename
-	# 2: the line number of the current line
-	# 3: the function name
-	# 4: a list of lines of context from the source code
-	# 5: the index of the current line within that list.
-	for frame in frame_list:
-		if frame[3] == func.__name__:
-			modname = frame[0].f_locals['self'].__module__ if 'self' in frame[0].f_locals else sys.modules[func.__module__].__name__
-			clsname = frame[0].f_locals['self'].__class__.__name__ if 'self' in frame[0].f_locals else None
-			funcname = func.__name__
-			return '{0}.{1}.{2}'.format(modname, clsname, funcname) if 'self' in frame[0].f_locals else '{0}.{1}'.format(modname, funcname)
-	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
-
-
-def get_parent(func):
-	""" Get class name of calling function """
-	frame_list = inspect.stack()
-	for num, frame in enumerate(frame_list):
-		if frame[3] == func.__name__:
-			fname = frame_list[num+1][3]
-			lcontext = frame_list[num+1][0].f_locals
-			gcontext = frame_list[num+1][0].f_globals
-			scontext = lcontext['self'] if 'self' in lcontext else None
-			pfunc = lcontext[fname] if fname in lcontext else (gcontext[fname] if fname in gcontext else (getattr(scontext, fname) if ((scontext is not None) and (getattr(scontext, fname, -1) != -1)) else None))
-			if not pfunc:
-				raise RuntimeError('Context of parent function could not be obtained')
-			return get_funcname(pfunc) if frame != frame_list[-1] else None
-
-	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
-
-
 def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	""" Checks that a argument is of a certain type """
 	arg_dict = create_argument_dictionary(func, *args, **kwargs)

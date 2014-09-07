@@ -95,17 +95,17 @@ class CsvFile(object):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
 		root_module = inspect.stack()[-1][0]
-		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle()
-		self._exh.ex_add(name='file_not_found', extype=IOError, exmsg='File {0} could not be found'.format(file_name))
-		self._exh.ex_add(name='file_empty', extype=RuntimeError, exmsg='File {0} is empty'.format(file_name))
+		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.csv.CsvFile')
+		self._exh.ex_add(name='file_not_found', extype=IOError, exmsg='File *[file_name]* could not be found')
+		self._exh.ex_add(name='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
 		self._exh.ex_add(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
-		self._exh.ex_add(name='file_has_no_data', extype=RuntimeError, exmsg='File {0} has no data'.format(file_name))
+		self._exh.ex_add(name='file_has_no_data', extype=RuntimeError, exmsg='File *[file_name]* has no data')
 		#
-		self._exh.raise_exception_if(name='file_not_found', condition=False)	# Check is actually done in the context manager, which is unreachable
+		self._exh.raise_exception_if(name='file_not_found', condition=False, edata={'field':'file_name', 'value':file_name})	# Check is actually done in the context manager, which is unreachable
 		with open(file_name, 'rU') as file_handle:
 			self._raw_data = [row for row in csv.reader(file_handle)]
 		# Process header
-		self._exh.raise_exception_if(name='file_empty', condition=len(self._raw_data) == 0)
+		self._exh.raise_exception_if(name='file_empty', condition=len(self._raw_data) == 0, edata={'field':'file_name', 'value':file_name})
 		self._header = self._raw_data[0]
 		self._header_upper = [col.upper() for col in self.header]
 		self._exh.raise_exception_if(name='column_headers_not_unique', condition=len(set(self._header_upper)) != len(self._header_upper))
@@ -114,7 +114,7 @@ class CsvFile(object):
 		for num, row in enumerate(self._raw_data[1:]):
 			if any([putil.misc.isnumber(_number_failsafe(col)) for col in row]):
 				break
-		self._exh.raise_exception_if(name='file_has_no_data', condition=num == -1)
+		self._exh.raise_exception_if(name='file_has_no_data', condition=num == -1, edata={'field':'file_name', 'value':file_name})
 		# Set up class properties
 		self._data = [[None if col.strip() == '' else _number_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
 		self.reset_dfilter()
