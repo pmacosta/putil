@@ -30,14 +30,14 @@ None
 Functions
 =========
 
-.. autofunction:: putil.tree.build_tree
+.. autofunction:: putil.tree.build_trees
 .. autofunction:: putil.tree.search_for_node
 
 Classes
 =======
 
 .. automodule:: putil.tree
-    :members: TreeNode
+    :members: Tree
     :undoc-members:
     :show-inheritance:
 

@@ -9,6 +9,36 @@ import putil.exh
 import putil.misc
 import putil.check
 
+# Exception tracing initialization code
+"""
+[[[cog
+import sys
+import tempfile
+import putil.exh
+import putil.misc
+import putil.pcsv
+mod_obj = sys.modules['__main__']
+setattr(mod_obj, '_EXH', putil.exh.ExHandle('putil.pcsv.CsvFile'))
+exobj = getattr(mod_obj, '_EXH')
+def write_file(file_handle):	#pylint: disable=C0111
+	file_handle.write('Ctrl,Ref,Result\n')
+	file_handle.write('1,3,10\n')
+	file_handle.write('1,4,20\n')
+	file_handle.write('2,4,30\n')
+	file_handle.write('2,5,40\n')
+	file_handle.write('3,5,50\n')
+
+with putil.misc.TmpFile(write_file) as file_name:
+	obj = putil.pcsv.CsvFile(file_name, dfilter={'Result':20})
+	obj.add_dfilter({'Result':20})
+	obj.dfilter = {'Result':20}
+	obj.data()
+	with tempfile.NamedTemporaryFile(delete=True) as fobj:
+		obj.write(file_name=fobj.name, col=None, filtered=False, headers=True, append=False)
+	exobj.build_ex_tree(no_print=True)
+]]]
+[[[end]]]
+"""	#pylint: disable=W0105
 
 @putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'data':putil.check.ArbitraryLengthList(list), 'append':bool})
 def write(file_name, data, append=True):
@@ -84,18 +114,8 @@ class CsvFile(object):
 	:param	dfilter:	Data filter. See :py:attr:`putil.pcsv.CsvFile.dfilter`
 	:type	dfilter:	dictionary
 	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
-	:raises:
-	 * TypeError (Argument `file_name` is of the wrong type)
-
-	 * IOError (File *[file_name]* could not be found)
-
-	 * RuntimeError (File *[file_name]* is empty)
-
-	 * RuntimeError (Column headers are not unique)
-
-	 * RuntimeError (File *[file_name]* has no data)
-
-	 * Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
+	.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('__init__')) ]]]
+	.. [[[end]]]
 	"""
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
 	def __init__(self, file_name, dfilter=None):
@@ -156,7 +176,8 @@ class CsvFile(object):
 
 		:param	dfilter:	Filter specification. See :py:attr:`putil.pcsv.CsvFile.dfilter`
 		:type	dfilter:	dictionary
-		:raises: Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
+		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('add_dfilter')) ]]]
+		.. [[[end]]]
 		"""
 		self._validate_dfilter(dfilter)
 		if dfilter is None:
@@ -183,12 +204,8 @@ class CsvFile(object):
 		:type	filtered: boolean
 		:returns: (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list corresponds to a column of the CSV file.
 		:rtype:	list
-		:raises:
-		 * TypeError (Argument `col` is of the wrong type)
-
-		 * TypeError (Argument `filtered` is of the wrong type)
-
-		 * ValueError (Column *[column_name]* not found in header)
+		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('data')) ]]]
+		.. [[[end]]]
 		"""
 		self._in_header(col)
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
@@ -214,22 +231,8 @@ class CsvFile(object):
 		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
 		possibly overwriting an exisiting file with the same name
 		:type	append: boolean
-		:raises:
-		 * TypeError (Argument `file_name` is of the wrong type)
-
-		 * TypeError (Argument `headers` is of the wrong type)
-
-		 * TypeError (Argument `append` is of the wrong type)
-
-		 * ValueError (There is no data to save to file)
-
-		 * IOError (File *[file_name]* could not be created: *[reason]*)
-
-		 * OSError (File *[file_name]* could not be created: *[reason]*)
-
-		 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
-
-		 * Same as :py:attr:`putil.pcsv.CsvFile.data`
+		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('write')) ]]]
+		.. [[[end]]]
 		"""
 		self._exh.ex_add(name='write', extype=ValueError, exmsg='There is no data to save to file')
 		self._in_header(col)
@@ -307,12 +310,8 @@ class CsvFile(object):
 	:type:		dictionary, default is *None*
 	:returns:	current data filter
 	:rtype:		dictionary or None
-	:raises:
-	 * TypeError (Argument `dfilter` is of the wrong type)
-
-	 * ValueError (Argument `dfilter` is empty)
-
-	 * ValueError (Column *[column name]* not found in header)
+	.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('dfilter')) ]]]
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')

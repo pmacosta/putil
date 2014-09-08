@@ -281,6 +281,23 @@ class ExHandle(object):	#pylint: disable=R0902
 				flag = True
 		return func_name
 
+	def get_sphinx_doc_for_member(self, member):
+		""" Returns Sphinx-compatible exception list """
+		if not self._exoutput:
+			raise RuntimeError('No exception table data')
+		ret = list()
+		block_on = False
+		for line in self._exoutput:
+			if block_on:
+				block_on = False if line == '<STOP MEMBER> {0}'.format(member) else block_on
+				if not block_on:
+					break
+				ret.append(line)
+			block_on = True if (not block_on) and (line == '<START MEMBER> {0}'.format(member)) else block_on
+		else:
+			raise RuntimeError('Memmber {0} not found in exception table'.format(member))
+		return '\n'.join(ret)
+
 	def print_ex_table(self):
 		""" Prints exception table """
 		if not self._exoutput:
@@ -314,7 +331,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		if condition:
 			self.raise_exception(name, **kargs)
 		self.get_exception_by_name(name)['checked'] = True
-
 
 def get_func_calling_hierarchy(frame_obj, func_obj):
 	""" Get class name of decorated function """

@@ -5,6 +5,7 @@
 import tempfile
 
 import putil.exh
+import putil.misc
 import putil.tree
 import putil.pcsv
 
@@ -20,9 +21,10 @@ def write_file(file_handle):	#pylint: disable=C0111
 	file_handle.write('2,5,40\n')
 	file_handle.write('3,5,50\n')
 
-def main():
+def trace(no_print=False):
 	""" Main loop """
-	print 'Tracing'
+	if not no_print:
+		print putil.misc.pcolor('Tracing', 'blue')
 	with putil.misc.TmpFile(write_file) as file_name:
 		obj = putil.pcsv.CsvFile(file_name, dfilter={'Result':20})
 		obj.add_dfilter({'Result':20})
@@ -30,9 +32,9 @@ def main():
 		obj.data()
 		with tempfile.NamedTemporaryFile(delete=True) as fobj:
 			obj.write(file_name=fobj.name, col=None, filtered=False, headers=True, append=False)
-		_EXH.build_ex_tree(no_print=False)
+		_EXH.build_ex_tree(no_print=no_print)
 		_EXH.print_ex_tree()
 		_EXH.print_ex_table()
 
 if __name__ == '__main__':
-	main()
+	trace()
