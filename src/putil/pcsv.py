@@ -114,6 +114,7 @@ class CsvFile(object):
 	:param	dfilter:	Data filter. See :py:attr:`putil.pcsv.CsvFile.dfilter`
 	:type	dfilter:	dictionary
 	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
+
 	.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('__init__')) ]]]
 	.. [[[end]]]
 	"""
@@ -176,6 +177,7 @@ class CsvFile(object):
 
 		:param	dfilter:	Filter specification. See :py:attr:`putil.pcsv.CsvFile.dfilter`
 		:type	dfilter:	dictionary
+
 		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('add_dfilter')) ]]]
 		.. [[[end]]]
 		"""
@@ -204,6 +206,7 @@ class CsvFile(object):
 		:type	filtered: boolean
 		:returns: (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list corresponds to a column of the CSV file.
 		:rtype:	list
+
 		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('data')) ]]]
 		.. [[[end]]]
 		"""
@@ -231,6 +234,7 @@ class CsvFile(object):
 		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
 		possibly overwriting an exisiting file with the same name
 		:type	append: boolean
+
 		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('write')) ]]]
 		.. [[[end]]]
 		"""
@@ -310,6 +314,7 @@ class CsvFile(object):
 	:type:		dictionary, default is *None*
 	:returns:	current data filter
 	:rtype:		dictionary or None
+
 	.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('dfilter')) ]]]
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
