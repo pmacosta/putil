@@ -116,6 +116,20 @@ class CsvFile(object):
 	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
 
 	.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('__init__')) ]]]
+
+	:raises:
+	 * IOError (File *[file_name]* could not be found)
+
+	 * RuntimeError (Column headers are not unique)
+
+	 * RuntimeError (File *[file_name]* has no data)
+
+	 * RuntimeError (File *[file_name]* is empty)
+
+	 * TypeError (Argument `file_name` is of the wrong type)
+
+	 * Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
+
 	.. [[[end]]]
 	"""
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
@@ -179,6 +193,9 @@ class CsvFile(object):
 		:type	dfilter:	dictionary
 
 		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('add_dfilter')) ]]]
+
+		:raises: Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
+
 		.. [[[end]]]
 		"""
 		self._validate_dfilter(dfilter)
@@ -208,6 +225,14 @@ class CsvFile(object):
 		:rtype:	list
 
 		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('data')) ]]]
+
+		:raises:
+		 * TypeError (Argument `col` is of the wrong type)
+
+		 * TypeError (Argument `filtered` is of the wrong type)
+
+		 * ValueError (Column *[column_name]* not found in header)
+
 		.. [[[end]]]
 		"""
 		self._in_header(col)
@@ -236,6 +261,14 @@ class CsvFile(object):
 		:type	append: boolean
 
 		.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('write')) ]]]
+
+		:raises:
+		 * TypeError (Argument `headers` is of the wrong type)
+
+		 * Same as :py:meth:`putil.pcsv.CsvFile.data`
+
+		 * Same as :py:meth:`putil.pcsv.write`
+
 		.. [[[end]]]
 		"""
 		self._exh.ex_add(name='write', extype=ValueError, exmsg='There is no data to save to file')
@@ -316,6 +349,14 @@ class CsvFile(object):
 	:rtype:		dictionary or None
 
 	.. [[[cog cog.out(exobj.get_sphinx_doc_for_member('dfilter')) ]]]
+
+	:raises:
+	 * TypeError (Argument `dfilter` is of the wrong type)
+
+	 * ValueError (Argument `dfilter` is empty)
+
+	 * ValueError (Column *[column_name]* not found in header)
+
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 

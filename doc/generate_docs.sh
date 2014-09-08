@@ -1,6 +1,6 @@
-#!/bin/bash
+﻿#!/bin/bash
 
-src_dir = $HOME/python/putil/src/putil/
+src_dir=$HOME/python/putil/src/putil
 # Default values for command line options
 rebuild=0
 
@@ -17,11 +17,13 @@ while getopts "r --long rebuild" opt; do
 done
 
 if [ $rebuild == 1 ]; then
-	echo 'Rebuilding exception documentation'
-	modules=(pcsv.py)
+	echo 'Rebuilding exceptions documentation'
+	modules=(pcsv)
 	for module in ${modules[@]}; do
-		echo '   Processing module '$module
-		cog.py -r "$src_dir"/"$module".py
+		module_file="$src_dir"/"$module".py
+		echo '   Processing module '$module_file
+		cog.py -e -x -r $module_file > /dev/null
+		cog.py -e -r $module_file > /dev/null
 	done
 fi
 echo ' '

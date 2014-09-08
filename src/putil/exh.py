@@ -285,7 +285,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Returns Sphinx-compatible exception list """
 		if not self._exoutput:
 			raise RuntimeError('No exception table data')
-		ret = list()
+		ret = ['']	# Sphinx requires a new line after the previous section, otherwise a warning is generated
 		block_on = False
 		for line in self._exoutput:
 			if block_on:
@@ -296,6 +296,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			block_on = True if (not block_on) and (line == '<START MEMBER> {0}'.format(member)) else block_on
 		else:
 			raise RuntimeError('Memmber {0} not found in exception table'.format(member))
+		ret.append('\n')	# Sphinx requires a new line after the section, otherwise a warning is generated
 		return '\n'.join(ret)
 
 	def print_ex_table(self):
