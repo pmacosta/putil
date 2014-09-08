@@ -92,6 +92,15 @@ class Tree(object):	#pylint: disable=R0903
 	def _get_root_name(self):	#pylint: disable=C0111
 		return self._root
 
+	def _get_subtree(self, name):
+		if self.is_leaf(name):
+			return [name]
+		children = self.get_children(name)
+		ret = [name]
+		for child in children:
+			ret += self._get_subtree(child)
+		return ret
+
 	def _node_in_tree(self, name):	#pylint: disable=C0111
 		if name not in self._db:
 			raise RuntimeError('Node {0} not in tree'.format(name))
@@ -172,19 +181,15 @@ class Tree(object):	#pylint: disable=R0903
 
 	@putil.check.check_argument(NodeName())
 	def collapse(self, name):
-		""" Compress nodes that have no data """
+		"""
+		Compress nodes that have no data
+
+		:param	name: Root of the sub-tree to collapse
+		:type	name: string
+		"""
 		self._node_in_tree(name)
 		for child in self._db[name]['children'][:]:
 			self._collapse_node(child)
-
-	def _get_subtree(self, name):
-		if self.is_leaf(name):
-			return [name]
-		children = self.get_children(name)
-		ret = [name]
-		for child in children:
-			ret += self._get_subtree(child)
-		return ret
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
 	def delete(self, nodes):
@@ -213,6 +218,25 @@ class Tree(object):	#pylint: disable=R0903
 				del self._db[child]
 			if not len(self._db):
 				self._root = None
+
+	@putil.check.check_argument(NodeName())
+	def flatten_on_hierarchy(self, name):
+		"""
+		Flattens hierarchy for nodes that split on a particular node
+
+		:param	name: Ending hierarchy node name to flatten around
+		:type	name: string
+		"""
+		if len(name.split('.')) > 1:
+			raise ValueError('Illegal ending hierarchy node name')
+		for node in self._db.keys():
+			if node.endswith(name) and (not self.is_root(node)):
+				parent = self._db[node]['parent']
+				children = self._db[node]['children']
+				for child in children:
+					self._db[child]['parent'] = parent
+				self._db[parent]['children'] = sorted([child for child in self._db[parent]['children'] if child != node]+children)
+				del self._db[node]
 
 	@putil.check.check_argument(NodeName())
 	def get_node(self, name):	#pylint: disable=C0111

@@ -82,16 +82,20 @@ class ExHandle(object):
 		# 5: the index of the current line within that list.
 		frame_list = inspect.stack()
 		func_name = ''
-		fobj_found = False
+		flag = False
 		for frame_obj, file_name, _, fname, fcontext, findex in frame_list:
-			if (('wrapper' in fname) and ('check.py' in file_name)) or ('exh.py' in file_name) or ('check.py' in file_name) or ((fcontext is None) and (findex is None) and fobj_found):
+			lcontext = frame_obj.f_locals
+			gcontext = frame_obj.f_globals
+			scontext = lcontext['self'] if 'self' in lcontext else None
+			func_obj = lcontext[fname] if fname in lcontext else (gcontext[fname] if fname in gcontext else (getattr(scontext, fname) if ((scontext is not None) and (getattr(scontext, fname, -1) != -1)) else None))
+			if (('wrapper' in fname) and ('check.py' in file_name)) or ('exh.py' in file_name) or ('check.py' in file_name) or ((file_name == '<string>') and (fcontext is None) and (findex is None) and flag):
 				pass
 			elif fname != '<module>':
-				func_name = get_func_calling_hierarchy(frame_obj)+('' if not func_name else '.')+func_name
-				fobj_found = True
+				func_name = get_func_calling_hierarchy(frame_obj, func_obj)+('' if not func_name else '.')+func_name
+				flag = True
 		return func_name
 
-	def build_ex_tree(self):	#pylint: disable=R0912,R0914
+	def build_ex_tree(self):	#pylint: disable=R0912,R0914,R0915
 		""" Builds exception tree """
 		tree_data = self._tree_data()
 		if not tree_data:
@@ -100,6 +104,7 @@ class ExHandle(object):
 		# Build tree
 		print 'Building tree'
 		self._tobj.add(tree_data)
+		print str(self._tobj)
 		# Collapse tree
 		print 'Collapsing tree'
 		self._tobj.collapse(self._tobj.root_name)
@@ -107,30 +112,37 @@ class ExHandle(object):
 		for node in self._tobj.nodes:
 			if self._cls in node:
 				break
-		# Remove class hierarchy
-		print 'Removing hierarchy {0}'.format(node)
-		self._tobj.remove_hierarchy(node, self._cls)
+		print str(self._tobj)
 		# Make class root node
-		print 'Making {0} root'.format(node)
-		self._tobj.make_root(node)
-		index = node.find(self._cls)
+		new_root_node = node
+		print 'Making {0} root'.format(new_root_node)
+		self._tobj.make_root(new_root_node)
+		index = new_root_node.find(self._cls)
 		if index != 0:
-			prefix = node[:index-1]
+			prefix = new_root_node[:index-1]
 			print 'Removing prefix {0}'.format(prefix)
 			self._tobj.remove_prefix(prefix)
+		print str(self._tobj)
+		# Flatten around class name
+		cls_name = self._cls.split('.')
+		for node in cls_name[::-1]:
+			print 'Flattening on {0}'.format(node)
+			self._tobj.flatten_on_hierarchy(node)
+		print str(self._tobj)
 		# Detect cross-usage
 		print 'Detecting cross-usage'
 		children = self._tobj.get_children(self._tobj.root_name)
 		for child1 in children:
-			grandchildren = self._tobj.get_children(child1)
+			grandchildren = self._tobj.get_children(child1)[:]
 			for grandchild in grandchildren:
 				for child2 in children:
 					if child1 != child2:
 						name_grandchild = grandchild[len(child1)+1:]
-						name_child = child2[len(self._cls)+1:]
+						name_child = child2
 						if name_child == name_grandchild:
 							self._tobj.delete(grandchild)
-							self._tobj.add({'name':child1, 'data':'Same as :py:{0}:`{1}`'.format('attr' if child2.split('.')[-1][:5] == '_set_' else 'meth', child2.replace('_set_', ''))})
+							fname = (self._cls+'.'+(child2.replace(self._cls+'.', '').split('.')[0])).replace('_set_', '')
+							self._tobj.add({'name':child1, 'data':'Same as :py:{0}:`{1}`'.format('attr' if child2.split('.')[-1][:5] == '_set_' else 'meth', fname)})
 							break
 		# Condense exceptions to class methods nodes
 		self._extable = dict()
@@ -162,7 +174,6 @@ class ExHandle(object):
 		if sex_members:
 			self._expand_same_ex_list(ret)
 		return ret
-
 
 	def print_ex_tree(self):
 		""" Prints exception tree """
@@ -230,7 +241,7 @@ def get_func_calling_hierarchy2(func):
 				return '{0}.{1}'.format(modname, funcname)
 	raise RuntimeError('Function {0} could not be found in stack'.format(func.__name__))
 
-def get_func_calling_hierarchy(frame_obj):
+def get_func_calling_hierarchy(frame_obj, func_obj):
 	""" Get class name of decorated function """
 	# Most of this code from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
 	ret = list()
@@ -245,7 +256,7 @@ def get_func_calling_hierarchy(frame_obj):
 			module_name = frame_obj.f_locals['self'].__module__
 			ret.append(module_name)
 		else:
-			module_name = ''
+			module_name = sys.modules[func_obj.__module__].__name__
 	# Work out the class name
 	try:
 		class_name = frame_obj.f_locals['self'].__class__.__name__
@@ -253,9 +264,10 @@ def get_func_calling_hierarchy(frame_obj):
 	except (KeyError, AttributeError):
 		class_name = ''
 	# Work out the current function or method
-	func_name = code.co_name
+	func_name = code.co_name.strip()
 	if func_name == '?':
 		func_name = '__main__'
+	if func_name == '':
+		func_name = func_obj.__name__
 	ret.append(func_name)
 	return '.'.join(ret)
-
