@@ -10,6 +10,7 @@ import sys
 import inspect
 
 import putil.check
+import putil.misc
 import putil.tree
 
 class ExHandle(object):
@@ -95,43 +96,68 @@ class ExHandle(object):
 				flag = True
 		return func_name
 
-	def build_ex_tree(self):	#pylint: disable=R0912,R0914,R0915
+	def build_ex_tree(self, no_print=True):	#pylint: disable=R0912,R0914,R0915
 		""" Builds exception tree """
 		tree_data = self._tree_data()
 		if not tree_data:
 			raise RuntimeError('No trace information')
 		self._tobj = putil.tree.Tree()
 		# Build tree
-		print 'Building tree'
+		if not no_print:
+			print putil.misc.pcolor('Building tree', 'blue')
 		self._tobj.add(tree_data)
-		print str(self._tobj)
+		if not no_print:
+			print str(self._tobj)
 		# Collapse tree
-		print 'Collapsing tree'
+		if not no_print:
+			print putil.misc.pcolor('Collapsing tree', 'blue')
 		self._tobj.collapse(self._tobj.root_name)
 		node = self._tobj.root_name
 		for node in self._tobj.nodes:
 			if self._cls in node:
 				break
-		print str(self._tobj)
+		if not no_print:
+			print str(self._tobj)
 		# Make class root node
 		new_root_node = node
-		print 'Making {0} root'.format(new_root_node)
+		if not no_print:
+			print putil.misc.pcolor('Making {0} root'.format(new_root_node), 'blue')
 		self._tobj.make_root(new_root_node)
+		if not no_print:
+			print str(self._tobj)
 		index = new_root_node.find(self._cls)
 		if index != 0:
 			prefix = new_root_node[:index-1]
-			print 'Removing prefix {0}'.format(prefix)
+			if not no_print:
+				print putil.misc.pcolor('Removing prefix {0}'.format(prefix), 'blue')
 			self._tobj.remove_prefix(prefix)
-		print str(self._tobj)
+		if not no_print:
+			print str(self._tobj)
 		# Flatten around class name
+		if not no_print:
+			print putil.misc.pcolor('Flattening hierarchu', 'blue')
 		cls_name = self._cls.split('.')
 		for node in cls_name[::-1]:
-			print 'Flattening on {0}'.format(node)
+			if not no_print:
+				print '\tFlattening on {0}'.format(node)
 			self._tobj.flatten_on_hierarchy(node)
-		print str(self._tobj)
-		# Detect cross-usage
-		print 'Detecting cross-usage'
+		if not no_print:
+			print str(self._tobj)
+		# Prune tree (delete class methods/attributes that have no exceptions
+		if not no_print:
+			print putil.misc.pcolor('Prunning tree', 'blue')
 		children = self._tobj.get_children(self._tobj.root_name)
+		for child in children:
+			if not self._tobj.get_data(child):
+				self._tobj.delete(child)
+		if not no_print:
+			print str(self._tobj)
+		# Detect cross-usage
+		if not no_print:
+			print putil.misc.pcolor('Detecting cross-usage', 'blue')
+		module = '.'.join(self._cls.split('.')[:-1])
+		children = self._tobj.get_children(self._tobj.root_name)
+		module_functions_ex = dict()
 		for child1 in children:
 			grandchildren = self._tobj.get_children(child1)[:]
 			for grandchild in grandchildren:
@@ -139,10 +165,19 @@ class ExHandle(object):
 					if child1 != child2:
 						name_grandchild = grandchild[len(child1)+1:]
 						name_child = child2
+						name_module_function = module+'.'+(grandchild.split('.')[-1])
 						if name_child == name_grandchild:
 							self._tobj.delete(grandchild)
 							fname = (self._cls+'.'+(child2.replace(self._cls+'.', '').split('.')[0])).replace('_set_', '')
 							self._tobj.add({'name':child1, 'data':'Same as :py:{0}:`{1}`'.format('attr' if child2.split('.')[-1][:5] == '_set_' else 'meth', fname)})
+							break
+						elif grandchild.endswith(name_module_function):
+							print 'Match!'
+							print name_module_function
+							fname = (self._cls+'.'+(child2.replace(self._cls+'.', '').split('.')[0])).replace('_set_', '')
+							self._tobj.add({'name':child1, 'data':'Same as :py:{0}:`{1}`'.format('meth', name_module_function)})
+							module_functions_ex[name_module_function] = self._tobj.get_data(grandchild)
+							self._tobj.delete(grandchild)
 							break
 		# Condense exceptions to class methods nodes
 		self._extable = dict()
@@ -160,19 +195,19 @@ class ExHandle(object):
 		# Recursively expand 'Same as [...] entries
 		expanded_table = dict()
 		for key in self._extable:
-			expanded_table[key] = self._expand_same_ex_list(self._extable[key], start=True)
+			expanded_table[key] = self._expand_same_ex_list(self._extable[key], module_functions_ex, start=True)
 		# Remove exceptions that could be in 'Same as [...]' entry
 		for key in self._extable:
 			self._extable[key] = [member for member in self._extable[key] if member not in expanded_table[key]]
 
-	def _expand_same_ex_list(self, data, start=False):
+	def _expand_same_ex_list(self, data, module_function_ex, start=False):
 		""" Create exception list where the 'Same as [...]' entries have been replaced for the exceptions in the method/attribute they point to """
 		ret = [ex_member for ex_member in data if ex_member.find('Same as') == -1] if not start else list()
-		sex_members = [ex_member.split('.')[-1][:-1] for ex_member in data if ex_member.find('Same as') != -1]
+		sex_members = [ex_member.split('.')[-1][:-1] if self._cls.split('.')[-1] in ex_member else ex_member[ex_member.find('`')+1:-1] for ex_member in data if ex_member.find('Same as') != -1]
 		for member in sex_members:
-			ret += self._extable[member]
+			ret += (self._extable[member] if member.find('.') == -1 else module_function_ex[member])
 		if sex_members:
-			self._expand_same_ex_list(ret)
+			self._expand_same_ex_list(ret, module_function_ex)
 		return ret
 
 	def print_ex_tree(self):

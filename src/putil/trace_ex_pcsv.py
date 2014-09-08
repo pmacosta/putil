@@ -30,7 +30,7 @@ def main():
 		obj.data()
 		with tempfile.NamedTemporaryFile(delete=True) as fobj:
 			obj.write(file_name=fobj.name, col=None, filtered=False, headers=True, append=False)
-		_EXH.build_ex_tree()
+		_EXH.build_ex_tree(no_print=False)
 		_EXH.print_ex_tree()
 		_EXH.print_ex_table()
 
