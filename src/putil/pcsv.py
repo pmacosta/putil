@@ -39,7 +39,7 @@ def write(file_name, data, append=True):
 	"""
 	root_module = inspect.stack()[-1][0]
 	_exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.csv.write')
-	_exh.ex_add(name='data_is_empty', extype=ValueError, exmsg='Argument `data` is empty')
+	_exh.ex_add(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
 	_exh.ex_add(name='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
 	_exh.ex_add(name='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
 	_exh.ex_add(name='file_could_not_be_created_runtime', extype=RuntimeError, exmsg='File *[file_name]* could not be created: *[reason]*')

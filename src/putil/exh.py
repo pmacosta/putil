@@ -88,15 +88,16 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._exoutput = list()
 		for child in sorted(self._extable.keys()):
 			self._exoutput.append('')
-			self._exoutput.append('[MEMBER] {0}'.format(child))
+			self._exoutput.append('<START MEMBER> {0}'.format(child))
 			if len(self._extable[child]) == 1:
 				self._exoutput.append(':raises: {0}'.format(self._extable[child][0]))
 			else:
 				self._exoutput.append(':raises:')
 				for exname in self._extable[child]:
 					self._exoutput.append(' * {0}'.format(exname))
-					if exname != self._extable[child]:
+					if exname != self._extable[child][-1]:
 						self._exoutput.append('')
+			self._exoutput.append('<STOP MEMBER> {0}'.format(child))
 
 	def _deduplicate_ex_table(self, no_print=True):
 		""" Remove exceptions that could be in 'Same as [...]' entry """
@@ -322,15 +323,15 @@ def get_func_calling_hierarchy(frame_obj, func_obj):
 	code = frame_obj.f_code
 	# Work out the module name
 	module = inspect.getmodule(code)
+	module_name = ''
 	if module:
 		module_name = module.__name__
-		ret.append(module_name)
 	else:
 		if 'self' in frame_obj.f_locals:
 			module_name = frame_obj.f_locals['self'].__module__
-			ret.append(module_name)
 		else:
 			module_name = sys.modules[func_obj.__module__].__name__
+	ret.append(module_name)
 	# Work out the class name
 	try:
 		class_name = frame_obj.f_locals['self'].__class__.__name__
@@ -344,4 +345,4 @@ def get_func_calling_hierarchy(frame_obj, func_obj):
 	if func_name == '':
 		func_name = func_obj.__name__
 	ret.append(func_name)
-	return '.'.join(ret)
+	return '' if (module_name.strip() == '') and (class_name.strip() == '') else '.'.join(ret)
