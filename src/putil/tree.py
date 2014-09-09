@@ -31,7 +31,7 @@ putil.check.register_new_type(NodeName, 'Hierarchical node name')
 
 class Tree(object):	#pylint: disable=R0903
 	"""
-	Provides basic data tree functionality
+	Provides basic trie (radix tree) functionality
 
 	:rtype: :py:class:`putil.tree.Tree()` object
 	"""
@@ -45,14 +45,14 @@ class Tree(object):	#pylint: disable=R0903
 
 	def __str__(self):
 		u"""
-		String with the tree structure pretty printed as a character-based tree structure. Only node names are shown, nodes with data are marked with an asterisk (*). For example:
+		String with the tree structure 'pretty printed' as a character-based tree structure. Only node names are shown, nodes with data are marked with an asterisk (*). For example:
 
 			>>> import putil.tree
 			>>> tobj = putil.tree.Tree()
 			>>> tobj.add([
 			...		{'name':'root.branch1', 'data':5},
-			...		{'name':'root.branch2', 'data':None},
-			...		{'name':'root.branch1.leaf1', 'data':None},
+			...		{'name':'root.branch2', 'data':list()},
+			...		{'name':'root.branch1.leaf1', 'data':list()},
 			...		{'name':'root.branch1.leaf2', 'data':'Hello world!'}
 			... ])
 			>>> print str(tobj)
@@ -151,13 +151,47 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Add nodes to tree
 
-		:param	nodes: Node(s) to add. Each dictionary must contain these exactly two entries, **name** (*string*) node name, and **data** (*any* or None) node data. If there are several list elements that refer to the same \
-		node the resulting node data is a list with all the data of the elements that have the same node name in addition to any existing data if the node is already present in the tree list element(s) that refer to an existing node.
-		:type	nodes: dictionary or list of dictionaries
-		:raises:
-		 * TypeError (Argument `nodes` is of the wrong type)
+		:param	nodes: Node(s) to add. Each dictionary must contain exactly two keys:
 
-		 * ValueError (Illegal node name *[node_name]*)
+		 * **name** (*string*) node name
+
+		 * **data** (*any*) node data.
+
+		 If there are several list items in **nodes** with the same node name the resulting node data is a list with items corresponding to the data of each entry in **nodes** with the same node name, in their order \
+		 of appearance, in addition to any existing node data if the node is already present in the tree.
+
+		 The node data should be an empty list to create a node without data, for example: `{'node':'a.b.c', 'data':list()}`
+
+		:type	nodes: dictionary or list of dictionaries
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add')) ]]]
+		.. [[[end]]]
+
+
+		For example:
+
+			>>> import putil.tree
+			>>> tobj = putil.tree.Tree()
+			>>> tobj.add([
+			...		{'name':'root.branch1', 'data':5},
+			...		{'name':'root.branch1', 'data':7},
+			...		{'name':'root.branch2', 'data':list()},
+			...		{'name':'root.branch1.leaf1', 'data':list()},
+			...		{'name':'root.branch1.leaf1.subleaf1', 'data':333},
+			...		{'name':'root.branch1.leaf2', 'data':'Hello world!'},
+			...		{'name':'root.branch1.leaf2.subleaf2', 'data':list()},
+			... ])
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.get_data('root.branch1')
+			[5, 7]
+
 		"""
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		if not self.root_name:
@@ -182,10 +216,36 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def collapse(self, name):
 		"""
-		Compress nodes that have no data
+		Collapses hierarchy. Nodes that have a single child and no data are combined with their children.
 
 		:param	name: Root of the sub-tree to collapse
 		:type	name: string
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse')) ]]]
+		.. [[[end]]]
+
+
+		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.collapse('branch1')
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1.subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+
+		``root.branch1.leaf1`` is collapsed because it only has one child (``root.branch1.leaf1.subleaf1``) and no data; ``root.branch1.leaf2`` is not collapsed because although it has one child (``root.branch1.leaf2.subleaf2``) \
+		it does have data associated with it, *'Hello world!'*
 		"""
 		self._node_in_tree(name)
 		for child in self._db[name]['children'][:]:
@@ -198,12 +258,27 @@ class Tree(object):	#pylint: disable=R0903
 
 		:param	nodes: Node(s) to delete
 		:type	nodes: string or list of strings
-		:raises:
-		 * TypeError (Argument `nodes` is of the wrong type)
 
-		 * ValueError (Argument `nodes` is not a valid node name)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
+		.. [[[end]]]
 
-		 * RuntimeError (Node *[node_name]* not in tree)
+		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.delete(['root.branch1.leaf1', 'root.branch2'])
+			>>> print str(tobj)
+			root
+			└branch1 (*)
+			 └leaf2 (*)
+			  └subleaf2
+
 		"""
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		for node in nodes:
@@ -241,22 +316,20 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def get_node(self, name):	#pylint: disable=C0111
 		"""
-		Get tree node in the form of a dictionary with three keys:
-		 * *parent* (*string*) Parent node name, *''* if not is root
+		Get tree node structure. The structure is a dictionary with the following keys:
 
-		 * *children* (*list*) Node names, empty list if node is a leaf
+		 * **parent** (*string*) Parent node name, *''* if node is the root node
 
-		 * *data* (*list*) Node data, empty list if node contains no data
+		 * **children** (*list*) Children node names, empty list if node is a leaf
+
+		 * **data** (*list*) Node data, empty list if node contains no data
 
 		:param	name: Node name
 		:type	name: string
 		:rtype: dictionary
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
 
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node')) ]]]
+		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
 		return self._db[name]
@@ -264,17 +337,14 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def get_node_parent(self, name):	#pylint: disable=C0111
 		"""
-		Retrieves parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about returned dictionary.
+		Retrieves parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure.
 
 		:param	name: Child node name
 		:type	name: string
 		:rtype: dictionary
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
 
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_parent')) ]]]
+		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else {}
@@ -282,17 +352,14 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def get_children(self, name):	#pylint: disable=C0111
 		"""
-		Retrieves children of a node
+		Retrieves children node names of a node
 
 		:param	name: Node name
 		:type	name: string
-		:rtype	data: listg of strings
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
+		:rtype	data: list of strings
 
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_children')) ]]]
+		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
 		return sorted(self._db[name]['children'])
@@ -304,13 +371,10 @@ class Tree(object):	#pylint: disable=R0903
 
 		:param	name: Node name
 		:type	name: string
-		:type	data: any type or list of any type
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
+		:type	data: any type or list of objects of any type
 
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_data')) ]]]
+		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
 		return self._db[name]['data']
@@ -318,12 +382,14 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def in_tree(self, name):
 		"""
-		Search tree for a paticular node
+		Search tree for a paticular node. Returns *True* if node name is in the tree, *False* otherwise
 
 		:param	name: Node name to search for
 		:type	name: string
 		:rtype	data: boolean
-		:raises: TypeError (Argument `name` is of the wrong type)
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
+		.. [[[end]]]
 		"""
 		return name in self._db
 
@@ -335,12 +401,9 @@ class Tree(object):	#pylint: disable=R0903
 		:param	name: Node name
 		:type	name: string
 		:rtype: boolean
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
 
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_root')) ]]]
+		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
 		return not self._db[name]['parent']
@@ -353,12 +416,9 @@ class Tree(object):	#pylint: disable=R0903
 		:param	name: Node name
 		:type	name: string
 		:rtype: boolean
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
 
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_leaf')) ]]]
+		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
 		return not self._db[name]['children']

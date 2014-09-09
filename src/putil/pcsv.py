@@ -77,10 +77,7 @@ class DataFilter(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201,W0613
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = TypeError
-		exp_dict['msg'] = 'Argument `{0}` is of the wrong type'.format(param_name)
-		return exp_dict
+		return {'type':TypeError, 'msg':'Argument `{0}` is of the wrong type'.format(param_name)}
 putil.check.register_new_type(DataFilter, 'Comma-separated values file data filter')
 
 
@@ -94,7 +91,7 @@ def write(file_name, data, append=True):
 	:param	data:	Data to write to file. Each item in **data** should contain a sub-list corresponding to a row of data; each item in the sub-lists should contain data corresponding to a particular column
 	:type	data:	list
 	:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
-	(overwriting an exisiting file with the same name if such file exists)
+	(overwriting an existing file with the same name if such file exists)
 	:type	append: boolean
 
 	.. [[[cog cog.out(exobj_funcs.get_sphinx_doc_for_member('write')) ]]]
@@ -115,7 +112,7 @@ def write(file_name, data, append=True):
 	 * ValueError (There is no data to save to file)
 
 	.. [[[end]]]
-"""
+	"""
 	root_module = inspect.stack()[-1][0]
 	_exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.csv.write')
 	_exh.ex_add(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
@@ -307,7 +304,7 @@ class CsvFile(object):
 		:param	headers: Include headers flag. If **headers** is *True* headers and data are written, if **headers** is *False* only data is written
 		:type	headers: boolean
 		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
-		(overwriting an exisiting file with the same name if such file exists)
+		(overwriting an existing file with the same name if such file exists)
 		:type	append: boolean
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('write')) ]]]
@@ -359,7 +356,7 @@ class CsvFile(object):
 	The data filter consists of individual filters; each individual filter in turn consists of column name (dictionary key) and either a value representing a column value, a string or a number, or a list of column values, \
 	strings or numbers (dictionary value).
 
-	If the dictionary value is a column value all rows which cointain the specified value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified
+	If the dictionary value is a column value all rows which contain the specified value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified
 	by each individual filter. For example, if the file to be processed is:
 
 	+------+-----+--------+
@@ -387,7 +384,7 @@ class CsvFile(object):
 	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an empty list because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
 	the `Ref` individual filter.
 
-	If the dictionarly value is a list, the items of the list represent all the values to be kept for a particular column (strings or numbers). So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would
+	If the dictionary value is a list, the items of the list represent all the values to be kept for a particular column (strings or numbers). So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would
 	result in the following filtered data set:
 
 	+------+-----+--------+
