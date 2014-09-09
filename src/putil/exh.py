@@ -7,6 +7,7 @@ Exception handling classes, methods, functions and constants
 """
 
 import sys
+import copy
 import inspect
 
 import putil.check
@@ -15,18 +16,38 @@ import putil.tree
 
 class ExHandle(object):	#pylint: disable=R0902
 	""" Exception handling class """
-	def __init__(self, cls, func_name=None, ex_list=None):
+	def __init__(self, cls):
 		self._cls = cls
 		self._trace_on = False
 		self._trace_list, self._tobj, self._extable, self._module_functions_extable, self._cross_usage_extable, self._exoutput = None, None, None, None, None, None
 		self._ex_list = list()
-		if ((func_name is None) and (ex_list is not None)) or ((func_name is not None) and (ex_list is None)):
-			raise RuntimeError('Arguments `func_name` and `ex_list` have to be either both defined or both undefined')
-		if (func_name is not None) and (ex_list is not None):
-			for obj in ex_list:
-				obj['func'] = func_name
-				obj['checked'] = False
-			self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in ex_list)] # Remove duplicates
+
+	def __copy__(self):
+		cobj = ExHandle(cls=self._cls)
+		cobj._cls = copy.copy(self._cls)	#pylint: disable=W0212
+		cobj._trace_on = copy.copy(self._trace_on)	#pylint: disable=W0212
+		cobj._trace_list = copy.copy(self._trace_list)	#pylint: disable=W0212
+		cobj._tobj = copy.copy(self._tobj)	#pylint: disable=W0212
+		cobj._extable = copy.copy(self._extable)	#pylint: disable=W0212
+		cobj._module_functions_extable = copy.copy(self._module_functions_extable)	#pylint: disable=W0212
+		cobj._cross_usage_extable = copy.copy(self._cross_usage_extable)	#pylint: disable=W0212
+		cobj._exoutput = copy.copy(self._exoutput)	#pylint: disable=W0212
+		cobj._ex_list = copy.copy(self._ex_list)	#pylint: disable=W0212
+		return cobj
+
+	def __deepcopy__(self, memodict=None):
+		memodict = dict() if memodict is None else memodict
+		cobj = ExHandle(cls=self._cls)
+		cobj._cls = copy.deepcopy(self._cls, memodict)	#pylint: disable=W0212
+		cobj._trace_on = copy.deepcopy(self._trace_on, memodict)	#pylint: disable=W0212
+		cobj._trace_list = copy.deepcopy(self._trace_list, memodict)	#pylint: disable=W0212
+		cobj._tobj = copy.deepcopy(self._tobj, memodict)	#pylint: disable=W0212
+		cobj._extable = copy.deepcopy(self._extable, memodict)	#pylint: disable=W0212
+		cobj._module_functions_extable = copy.deepcopy(self._module_functions_extable, memodict)	#pylint: disable=W0212
+		cobj._cross_usage_extable = copy.deepcopy(self._cross_usage_extable, memodict)	#pylint: disable=W0212
+		cobj._exoutput = copy.deepcopy(self._exoutput, memodict)	#pylint: disable=W0212
+		cobj._ex_list = copy.deepcopy(self._ex_list, memodict)	#pylint: disable=W0212
+		return cobj
 
 	def __str__(self):
 		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}\nChecked.: {4}'.format(ex['name'], ex['function'], self._ex_type_str(ex['type']), ex['msg'], ex['checked']) for ex in self._ex_list]
@@ -73,11 +94,14 @@ class ExHandle(object):	#pylint: disable=R0902
 			print putil.misc.pcolor('Condensing exceptions to class methods and attributes', 'blue')
 		self._extable = dict()
 		children = self._tobj.get_children(self._tobj.root_name)
-		for child in children:
-			exdesc_list = list()
-			for name in self._tobj._get_subtree(child):	#pylint: disable=W0212
-				exdesc_list += self._tobj.get_data(name)
-			self._extable[child.replace(self._cls+'.', '').split('.')[0].strip().replace('_set_', '')] = exdesc_list
+		if children:
+			for child in children:
+				exdesc_list = list()
+				for name in self._tobj._get_subtree(child):	#pylint: disable=W0212
+					exdesc_list += self._tobj.get_data(name)
+				self._extable[child.replace(self._cls+'.', '').split('.')[0].strip().replace('_set_', '')] = exdesc_list
+		else:
+			self._extable[self._tobj.root_name.replace(self._cls+'.', '').split('.')[0].strip().replace('_set_', '')] = self._tobj.get_data(self._tobj.root_name)
 
 	def _create_ex_table_output(self, no_print=True):
 		""" Create final exception table output """
@@ -132,6 +156,8 @@ class ExHandle(object):	#pylint: disable=R0902
 							self._module_functions_extable[name_module_function] = self._tobj.get_data(grandchild)
 							self._tobj.delete(grandchild)
 							break
+		if not no_print:
+			print str(self._tobj)
 
 	def _eliminate_ex_tree_prefix(self, node, no_print=True):
 		""" Remove prefix (usually main.__main__ or simmilar) from exception tree """
