@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 src_dir=$HOME/python/putil/src/putil
 # Default values for command line options

@@ -30,7 +30,7 @@ None
 Functions
 =========
 
-.. autofunction:: putil.pcsv.write()
+.. autofunction:: putil.pcsv.write
 
 Classes
 =======
