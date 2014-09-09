@@ -53,6 +53,37 @@ exobj_funcs = copy.deepcopy(exobj)
 [[[end]]]
 """	#pylint: disable=W0105
 
+###
+# DataFilter custom pseudo-type
+###
+class DataFilter(object):	#pylint: disable=R0903
+	""" Data filter specification pseudo-type """
+	def includes(self, test_obj):	#pylint: disable=R0201,W0613
+		"""	Test that an object belongs to the pseudo-type """
+		if not isinstance(test_obj, dict):
+			return False
+		for col_name in test_obj:
+			if (not isinstance(test_obj[col_name], list)) and (not putil.misc.isnumber(test_obj[col_name])) and (not isinstance(test_obj[col_name], str)):
+				return False
+			if isinstance(test_obj[col_name], list):
+				for element in test_obj[col_name]:
+					if (not putil.misc.isnumber(element)) and (not isinstance(element, str)):
+						return False
+		return True
+
+	def istype(self, test_obj):	#pylint: disable=R0201
+		"""	Checks to see if object is of the same class type """
+		return self.includes(test_obj)
+
+	def exception(self, param_name):	#pylint: disable=R0201,W0613
+		"""	Returns a suitable exception message """
+		exp_dict = dict()
+		exp_dict['type'] = TypeError
+		exp_dict['msg'] = 'Argument `{0}` is of the wrong type'.format(param_name)
+		return exp_dict
+putil.check.register_new_type(DataFilter, 'Comma-separated values file data filter')
+
+
 @putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'data':putil.check.ArbitraryLengthList(list), 'append':bool})
 def write(file_name, data, append=True):
 	"""
@@ -60,10 +91,10 @@ def write(file_name, data, append=True):
 
 	:param	file_name:	File name of the comma-separated values file to be written
 	:type	file_name:	string
-	:param	data:	Data to write to file.
+	:param	data:	Data to write to file. Each item in **data** should contain a sub-list corresponding to a row of data; each item in the sub-lists should contain data corresponding to a particular column
 	:type	data:	list
 	:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
-	possibly overwriting an exisiting file with the same name
+	(overwriting an exisiting file with the same name if such file exists)
 	:type	append: boolean
 
 	.. [[[cog cog.out(exobj_funcs.get_sphinx_doc_for_member('write')) ]]]
@@ -150,7 +181,7 @@ class CsvFile(object):
 
 	.. [[[end]]]
 	"""
-	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, dict])})
+	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, DataFilter()])})
 	def __init__(self, file_name, dfilter=None):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
@@ -191,7 +222,7 @@ class CsvFile(object):
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter	#pylint: disable=W0212
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
+	@putil.check.check_argument(putil.check.PolymorphicType([None, DataFilter()]))
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
 		if dfilter is None:
 			self._dfilter = None
@@ -202,7 +233,7 @@ class CsvFile(object):
 			self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
 			self._dfilter = dfilter
 
-	@putil.check.check_argument(dict)
+	@putil.check.check_argument(DataFilter())
 	def add_dfilter(self, dfilter):
 		"""
 		Adds more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
@@ -235,11 +266,12 @@ class CsvFile(object):
 	@putil.check.check_arguments({'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool})
 	def data(self, col=None, filtered=False):
 		"""
+		 Returns (filtered) file data. The returned object is a list, each item is a sub-list corresponding to a row of data; each item in the sub-lists contains data corresponding to a particular column
+
 		:param	col:	Column(s) to extract from filtered data. If no column specification is given (or **col** is *None*) all columns are returned
-		:type	col:	string, list of strings or None, default is *None*
+		:type	col:	string, list of strings or None
 		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is returned, if **filtered** is *False* the raw (original) file data is returned
 		:type	filtered: boolean
-		:returns: (filtered) file data. The returned object is a list of lists, where each sub-list corresponds to a row of the CSV file and each element in that sub-list corresponds to a column of the CSV file.
 		:rtype:	list
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('data')) ]]]
@@ -269,13 +301,13 @@ class CsvFile(object):
 		:param	file_name:	File name of the comma-separated values file to be written
 		:type	file_name:	string
 		:param	col:	Column(s) to write to file. If no column specification is given (or **col** is *None*) all columns in data are written
-		:type	col:	string, list of strings or None, default is *None*
+		:type	col:	string, list of strings or None
 		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is written, if **filtered** is *False* the raw (original) file data is written
 		:type	filtered: boolean
 		:param	headers: Include headers flag. If **headers** is *True* headers and data are written, if **headers** is *False* only data is written
 		:type	headers: boolean
 		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
-		possibly overwriting an exisiting file with the same name
+		(overwriting an exisiting file with the same name if such file exists)
 		:type	append: boolean
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('write')) ]]]
@@ -322,9 +354,13 @@ class CsvFile(object):
 	# Managed attributes
 	dfilter = property(_get_dfilter, _set_dfilter, None, doc='Data filter')
 	"""
-	The data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and either a value representing a column value or an iterable (dictionary value). If the
-	dictionary value is a column value all rows which cointain the specified value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified
-	by each individual filter. For example, if the file name to be processed is:
+	Sets or returns the data filter.
+
+	The data filter consists of individual filters; each individual filter in turn consists of column name (dictionary key) and either a value representing a column value, a string or a number, or a list of column values, \
+	strings or numbers (dictionary value).
+
+	If the dictionary value is a column value all rows which cointain the specified value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified
+	by each individual filter. For example, if the file to be processed is:
 
 	+------+-----+--------+
 	| Ctrl | Ref | Result |
@@ -351,7 +387,7 @@ class CsvFile(object):
 	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an empty list because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
 	the `Ref` individual filter.
 
-	If the dictionarly value is an iterable (typically a list), the element of the iterable represent all the values to be kept for a particular column. So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would
+	If the dictionarly value is a list, the items of the list represent all the values to be kept for a particular column (strings or numbers). So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would
 	result in the following filtered data set:
 
 	+------+-----+--------+
@@ -362,8 +398,7 @@ class CsvFile(object):
 	|    3 |   5 |     50 |
 	+------+-----+--------+
 
-	:type:		dictionary, default is *None*
-	:returns:	current data filter
+	:type:		dictionary
 	:rtype:		dictionary or None
 
 	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('dfilter')) ]]]
@@ -380,6 +415,6 @@ class CsvFile(object):
 
 	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')
 	"""
-	:returns: Header of the comma-separated values file. Each column is an element of the list.
+	:returns: Header of the comma-separated values file. Each list item is a column header
 	:rtype:	list of strings
 	"""	#pylint: disable=W0105

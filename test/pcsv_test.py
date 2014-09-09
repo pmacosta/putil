@@ -96,7 +96,13 @@ class TestCsvFile(object):	#pylint: disable=W0232
 			with pytest.raises(ValueError) as excinfo:
 				putil.pcsv.CsvFile(file_name=file_name, dfilter={'aaa':5})
 			test_list.append(excinfo.value.message == 'Column aaa not found in header')
-		assert test_list == 3*[True]
+			with pytest.raises(TypeError) as excinfo:
+				putil.pcsv.CsvFile(file_name=file_name, dfilter={'a':{'xx':2}})
+			test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
+			with pytest.raises(TypeError) as excinfo:
+				putil.pcsv.CsvFile(file_name=file_name, dfilter={'a':[3, {'xx':2}]})
+			test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
+		assert test_list == len(test_list)*[True]
 
 	def test_dfilter_works(self):	#pylint: disable=R0201
 		""" Test if data filtering works """
@@ -110,9 +116,11 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list.append(obj.data(filtered=True) == [[2, 5, 40], [3, 5, 50]])
 		obj.dfilter = {'Result':100}
 		test_list.append(obj.data(filtered=True) == [])
+		obj.dfilter = {'Result':'hello'}
+		test_list.append(obj.data(filtered=True) == [])
 		obj.dfilter = None
 		test_list.append(obj.dfilter == None)
-		assert test_list == 5*[True]
+		assert test_list == len(test_list)*[True]
 
 	def test_reset_dfilter_works(self):	#pylint: disable=R0201
 		""" Test if data filter reset works """
@@ -123,7 +131,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		obj.reset_dfilter()
 		test_list.append(obj.dfilter == None)
 		test_list.append(obj.data(filtered=True) == [[1, 3, 10], [1, 4, 20], [2, 4, 30], [2, 5, 40], [3, 5, 50]])
-		assert test_list == 3*[True]
+		assert test_list == len(test_list)*[True]
 
 	def test_add_dfilter_errors(self):	#pylint: disable=R0201
 		""" Test if the right exception is raised when parameter dfilter is of the wrong type or some columns in the filter specification are not present in CSV file header """
@@ -139,7 +147,13 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		with pytest.raises(ValueError) as excinfo:
 			obj.add_dfilter({'aaa':5})
 		test_list.append(excinfo.value.message == 'Column aaa not found in header')
-		assert test_list == 3*[True]
+		with pytest.raises(TypeError) as excinfo:
+			obj.add_dfilter({'a':{'xx':2}})
+		test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
+		with pytest.raises(TypeError) as excinfo:
+			obj.add_dfilter({'a':[3, {'xx':2}]})
+		test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
+		assert test_list == len(test_list)*[True]
 
 	def test_add_dfilter_works(self):	#pylint: disable=R0201
 		""" Test if adding filters to existing data filtering works """
@@ -169,7 +183,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 			test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
 			obj.add_dfilter({'Result':[40, 50]})
 			test_list.append(obj.data(filtered=True) == [[1, 4, 20], [2, 5, 40], [3, 5, 50]])
-		assert test_list == 9*[True]
+		assert test_list == len(test_list)*[True]
 
 	def test_header_works(self):	#pylint: disable=R0201
 		""" Test if header attribute works """
@@ -199,7 +213,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		obj.data(col=None, filtered=True)
 		obj.data(col='Ctrl')
 		obj.data(col=['Ctrl', 'Result'])
-		assert test_list == 4*[True]
+		assert test_list == len(test_list)*[True]
 
 	def test_data_works(self):	#pylint: disable=R0201
 		""" Test if data() method behaves properly """
@@ -212,7 +226,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list.append(obj.data(col='Ref', filtered=True) == [[4]])
 		test_list.append(obj.data(col=['Ctrl', 'Result']) == [[1, 10], [1, 20], [2, 30], [2, 40], [3, 50]])
 		test_list.append(obj.data(col=['Ctrl', 'Result'], filtered=True) == [[1, 20]])
-		assert test_list == 6*[True]
+		assert test_list == len(test_list)*[True]
 
 	def test_write_errors(self):	#pylint: disable=R0201
 		""" Test if write() method raises the right exceptions when its arguments are of the wrong type or are badly specified """
@@ -248,7 +262,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 			with pytest.raises(OSError) as excinfo:
 				obj.write(file_name='/some/file')
 			test_list.append(excinfo.value.message == 'File /some/file could not be created: Permission denied')
-		assert test_list == 9*[True]
+		assert test_list == len(test_list)*[True]
 
 	def test_write_works(self):	#pylint: disable=R0201
 		""" Test if write() method behaves properly """
@@ -291,7 +305,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 				with open(file_name, 'r') as frobj:
 					written_data = frobj.read()
 		test_list.append(written_data == "Ctrl,Ref,Result\r\n2,'',30\r\n2,5,40\r\n3,5,50\r\n")
-		assert test_list == 5*[True]
+		assert test_list == len(test_list)*[True]
 
 	def test_cannot_delete_attributes(self):	#pylint: disable=R0201
 		""" Test that del method raises an exception on all class attributes """
@@ -304,4 +318,4 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.dfilter
 		test_list.append(excinfo.value.message == "can't delete attribute")
-		assert test_list == 2*[True]
+		assert test_list == len(test_list)*[True]
