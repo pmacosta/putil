@@ -297,7 +297,7 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def flatten_subtree(self, name):
 		"""
-		Flattens sub-trees below node names whose hierarchy ends at a particular hierarchy node and that contain no data
+		Flatten sub-tree below a particular node if the node contains no data
 
 		:param	name: Ending hierarchy node whose sub-trees are to be flattened
 		:type	name: string
@@ -308,6 +308,7 @@ class Tree(object):	#pylint: disable=R0903
 		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
 			>>> tobj.add([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
+			...           {'name':'root.branch2.leaf1', 'data':'loren ipsum'},
 			...           {'name':'root.branch2.leaf1.another_subleaf1', 'data':list()},
 			...           {'name':'root.branch2.leaf1.another_subleaf2', 'data':list()}
 			...         ])
@@ -323,7 +324,7 @@ class Tree(object):	#pylint: disable=R0903
 			 └leaf1
 			  ├another_subleaf1
 			  └another_subleaf2
-			>>> tobj.flatten_subtree('leaf1')
+			>>> tobj.flatten_subtree('root1.branch1.leaf1')
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
@@ -331,21 +332,30 @@ class Tree(object):	#pylint: disable=R0903
 			│└leaf2 (*)
 			│ └subleaf2
 			└branch2
-			 ├leaf1.another_subleaf1
-			 └leaf1.another_subleaf2
+			 └leaf1 (*)
+			  ├another_subleaf1
+			  └another_subleaf2
+			>>> tobj.flatten_subtree('root1.branch2.leaf1')
+			root
+			├branch1 (*)
+			│├leaf1.subleaf1 (*)
+			│├leaf1.subleaf2
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			 └leaf1 (*)
+			  ├another_subleaf1
+			  └another_subleaf2
 
 		"""
-		if len(name.split('.')) > 1:
-			raise ValueError('Illegal ending hierarchy node name')
-		for node in self._db.keys():
-			hierarchy = self._split_node_name(node)
-			if (hierarchy[-1] == name) and (not self.is_root(node)) and (not self.get_data(node)):
-				parent = self._db[node]['parent']
-				children = self._db[node]['children']
-				for child in children:
-					self._db[child]['parent'] = parent
-				self._db[parent]['children'] = sorted([child for child in self._db[parent]['children'] if child != node]+children)
-				del self._db[node]
+		self._node_in_tree(name)
+		if (not self.is_root(name)) and (not self.get_data(name)):
+			parent = self._db[name]['parent']
+			children = self._db[name]['children']
+			for child in children:
+				self._db[child]['parent'] = parent
+			self._db[parent]['children'] = sorted([child for child in self._db[parent]['children'] if child != name]+children)
+			del self._db[name]
 
 	@putil.check.check_argument(NodeName())
 	def get_node(self, name):	#pylint: disable=C0111
@@ -369,9 +379,24 @@ class Tree(object):	#pylint: disable=R0903
 		return self._db[name]
 
 	@putil.check.check_argument(NodeName())
+	def get_node_children(self, name):	#pylint: disable=C0111
+		"""
+		Return list of children structures of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure.
+
+		:param	name: Child node name
+		:type	name: string
+		:rtype: list
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_parent')) ]]]
+		.. [[[end]]]
+		"""
+		self._node_in_tree(name)
+		return [self.get_node(child) for child in self.get_children(name)]
+
+	@putil.check.check_argument(NodeName())
 	def get_node_parent(self, name):	#pylint: disable=C0111
 		"""
-		Retrieves parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure.
+		Return parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure
 
 		:param	name: Child node name
 		:type	name: string
@@ -381,12 +406,12 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return self._db[self._db[name]['parent']] if not self.is_root(name) else {}
+		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
 	@putil.check.check_argument(NodeName())
 	def get_children(self, name):	#pylint: disable=C0111
 		"""
-		Retrieves children node names of a node
+		Return children node names of a node
 
 		:param	name: Node name
 		:type	name: string
@@ -401,7 +426,7 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def get_data(self, name):	#pylint: disable=C0111
 		"""
-		Get node data
+		Return node data
 
 		:param	name: Node name
 		:type	name: string
@@ -416,7 +441,7 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def in_tree(self, name):
 		"""
-		Search tree for a paticular node. Returns *True* if node name is in the tree, *False* otherwise
+		Return *True* if node name is in the tree, *False* otherwise
 
 		:param	name: Node name to search for
 		:type	name: string
@@ -460,26 +485,41 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def make_root(self, name):	#pylint: disable=C0111
 		"""
-		Makes a sub-node the root node of tree
+		Makes a sub-node the root node of the tree. All nodes not belonging to the sub-tree are deleted
 
-		:param	name: Node name
+		:param	name: New root node name
 		:type	name: string
 		:rtype: boolean
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
 
-		 * ValueError (Argument `name` is not a valid node name)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('make_root')) ]]]
+		.. [[[end]]]
 
-		 * RuntimeError (Node *[name]* not in tree)
+		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.make_root('root.branch1')
+			>>> print str(tobj)
+			root.branch1 (*)
+			├leaf1
+			│└subleaf1 (*)
+			└leaf2 (*)
+			 └subleaf2
+
 		"""
-		self._node_in_tree(name)
-		dlist = [key for key in self.nodes if key.find(name) != 0]
-		for key in dlist:
-			del self._db[key]
-		self._db[name]['parent'] = ''
-		self._root = name
-
-		return not self._db[name]['children']
+		if name != self.root_name:
+			self._node_in_tree(name)
+			dlist = [key for key in self.nodes if key.find(name) != 0]
+			for key in dlist:
+				del self._db[key]
+			self._db[name]['parent'] = ''
+			self._root = name
 
 	@putil.check.check_argument(NodeName())
 	def print_node(self, name):	#pylint: disable=C0111
@@ -500,37 +540,10 @@ class Tree(object):	#pylint: disable=R0903
 		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
 
-
-	@putil.check.check_arguments({'name':NodeName(), 'hierarchy':NodeName()})
-	def remove_hierarchy(self, name, hierarchy):	#pylint: disable=C0111
-		"""
-		Get node data
-
-		:param	name:		Root node of sub-tree to remove hierarchy from
-		:type	name:		string
-		:param	hierarchy:	Hierarchy to remove from node names in sub-tree
-		:type	hierarhcy:	string
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
-
-		 * ValueError (Argument `name` is not a valid node name)
-
-		 * TypeError (Argument `hierarchy` is of the wrong type)
-
-		 * ValueError (Argument `hierarchy` is not a valid node name)
-
-		 * RuntimeError (Node *[name]* not in tree)
-		"""
-		self._node_in_tree(name)
-		# REMOVE print 'Entry function children {0}'.format(self.get_children(name))
-		for child in self.get_children(name):
-			# REMOVE print 'Entry function child {0}'.format(child)
-			self._rnode(name, child, hierarchy)
-
 	@putil.check.check_argument(NodeName())
 	def remove_prefix(self, prefix):
 		index = self.root_name.find(prefix)
-		if index != 0:
+		if (index != 0) or (self.in_tree(prefix)):
 			raise ValueError('Illegal prefix')
 		cstart = len(prefix)+1
 		ndb = dict()
