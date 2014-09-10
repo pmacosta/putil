@@ -295,17 +295,51 @@ class Tree(object):	#pylint: disable=R0903
 				self._root = None
 
 	@putil.check.check_argument(NodeName())
-	def flatten_on_hierarchy(self, name):
+	def flatten_subtree(self, name):
 		"""
-		Flattens hierarchy for nodes that split on a particular node
+		Flattens sub-trees below node names whose hierarchy ends at a particular hierarchy node and that contain no data
 
-		:param	name: Ending hierarchy node name to flatten around
+		:param	name: Ending hierarchy node whose sub-trees are to be flattened
 		:type	name: string
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
+		.. [[[end]]]
+
+		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> tobj.add([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
+			...           {'name':'root.branch2.leaf1.another_subleaf1', 'data':list()},
+			...           {'name':'root.branch2.leaf1.another_subleaf2', 'data':list()}
+			...         ])
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││├subleaf1 (*)
+			││└subleaf2
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			 └leaf1
+			  ├another_subleaf1
+			  └another_subleaf2
+			>>> tobj.flatten_subtree('leaf1')
+			root
+			├branch1 (*)
+			│├leaf1.subleaf1 (*)
+			│├leaf1.subleaf2
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			 ├leaf1.another_subleaf1
+			 └leaf1.another_subleaf2
+
 		"""
 		if len(name.split('.')) > 1:
 			raise ValueError('Illegal ending hierarchy node name')
 		for node in self._db.keys():
-			if node.endswith(name) and (not self.is_root(node)):
+			hierarchy = self._split_node_name(node)
+			if (hierarchy[-1] == name) and (not self.is_root(node)) and (not self.get_data(node)):
 				parent = self._db[node]['parent']
 				children = self._db[node]['children']
 				for child in children:

@@ -192,7 +192,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		for node in cls_name[::-1]:
 			if not no_print:
 				print '\tFlattening on {0}'.format(node)
-			self._tobj.flatten_on_hierarchy(node)
+			self._tobj.flatten_subtree(node)
 		if not no_print:
 			print str(self._tobj)
 
