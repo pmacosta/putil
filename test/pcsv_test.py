@@ -12,7 +12,6 @@ import tempfile
 import putil.pcsv
 import putil.misc
 
-
 ###
 # Tests for CsvFile
 ###
@@ -43,39 +42,19 @@ def write_file(file_handle):	#pylint: disable=C0111
 
 class TestCsvFile(object):	#pylint: disable=W0232
 	""" Tests for CsvFile class """
-	def test_file_name_wrong_type(self):	#pylint: disable=C0103,R0201
-		""" Test that the rigth exception is raised when the CSV file does not exist """
-		with pytest.raises(TypeError) as excinfo:
-			putil.pcsv.CsvFile(file_name=5)
-		assert excinfo.value.message == 'Argument `file_name` is of the wrong type'
-
-	def test_file_does_not_exist(self):	#pylint: disable=C0103,R0201
-		""" Test that the rigth exception is raised when the CSV file does not exist """
+	def test_init_errors(self):	#pylint: disable=C0103,R0201
+		""" Test that the right exceptions are raised when wrong parameter is passed to argument file_name """
+		test_list = list()
 		file_name = '/file/does/not/exist.csv'
-		with pytest.raises(IOError) as excinfo:
-			putil.pcsv.CsvFile(file_name=file_name)
-		assert excinfo.value.message == 'File {0} could not be found'.format(file_name)
-
-	def test_file_empty(self):	#pylint: disable=R0201
-		""" Test if the right exception is raised when the CSV file exists but is empty """
-		with pytest.raises(RuntimeError) as excinfo:
-			with putil.misc.TmpFile(write_file_empty) as file_name:
-				putil.pcsv.CsvFile(file_name=file_name)
-		assert excinfo.value.message == 'File {0} is empty'.format(file_name)
-
-	def test_header_cols_not_unique(self):	#pylint: disable=R0201
-		""" Test if the right exception is raised when the header has duplicate column names """
-		with pytest.raises(RuntimeError) as excinfo:
-			with putil.misc.TmpFile(write_cols_not_unique) as file_name:
-				putil.pcsv.CsvFile(file_name=file_name)
-		assert excinfo.value.message == 'Column headers are not unique'
-
-	def test_no_data_in_file(self):	#pylint: disable=R0201
-		""" Test if the right exception is raised when the file has a header but no data """
-		with pytest.raises(RuntimeError) as excinfo:
-			with putil.misc.TmpFile(write_no_data) as file_name:
-				putil.pcsv.CsvFile(file_name=file_name)
-		assert excinfo.value.message == 'File {0} has no data'.format(file_name)
+		func_pointers = [(RuntimeError, 'File {0} is empty', write_file_empty), (RuntimeError, 'Column headers are not unique', write_cols_not_unique), (RuntimeError, 'File {0} has no data', write_no_data)]
+		test_list.append(putil.misc.trigger_exception(putil.pcsv.CsvFile, {'file_name':5}, TypeError, 'Argument `file_name` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name}, IOError, 'File {0} could not be found'.format(file_name)))
+		for extype, exmsg, fobj in func_pointers:
+			with pytest.raises(extype) as excinfo:
+				with putil.misc.TmpFile(fobj) as file_name:
+					putil.pcsv.CsvFile(file_name=file_name)
+			test_list.append(excinfo.value.message == (exmsg.format(file_name) if '{0}' in exmsg else exmsg))
+		assert test_list == len(test_list)*[True]
 
 	def test_data_start(self):	#pylint: disable=R0201
 		""" Test if the right row is picked for the data start """
@@ -87,21 +66,11 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		""" Test if the right exception is raised when parameter dfilter is of the wrong type or some columns in the filter specification are not present in CSV file header """
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
-			with pytest.raises(TypeError) as excinfo:
-				putil.pcsv.CsvFile(file_name=file_name, dfilter='a')
-			test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
-			with pytest.raises(ValueError) as excinfo:
-				putil.pcsv.CsvFile(file_name=file_name, dfilter={})
-			test_list.append(excinfo.value.message == 'Argument `dfilter` is empty')
-			with pytest.raises(ValueError) as excinfo:
-				putil.pcsv.CsvFile(file_name=file_name, dfilter={'aaa':5})
-			test_list.append(excinfo.value.message == 'Column aaa not found in header')
-			with pytest.raises(TypeError) as excinfo:
-				putil.pcsv.CsvFile(file_name=file_name, dfilter={'a':{'xx':2}})
-			test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				putil.pcsv.CsvFile(file_name=file_name, dfilter={'a':[3, {'xx':2}]})
-			test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
+			test_list.append(putil.misc.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':'a'}, TypeError, 'Argument `dfilter` is of the wrong type'))
+			test_list.append(putil.misc.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':dict()}, ValueError, 'Argument `dfilter` is empty'))
+			test_list.append(putil.misc.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'aaa':5}}, ValueError, 'Column aaa not found in header'))
+			test_list.append(putil.misc.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':{'xx':2}}}, TypeError, 'Argument `dfilter` is of the wrong type'))
+			test_list.append(putil.misc.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':[3, {'xx':2}]}}, TypeError, 'Argument `dfilter` is of the wrong type'))
 		assert test_list == len(test_list)*[True]
 
 	def test_dfilter_works(self):	#pylint: disable=R0201
@@ -138,21 +107,11 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
-		with pytest.raises(TypeError) as excinfo:
-			obj.add_dfilter('a')
-		test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
-		with pytest.raises(ValueError) as excinfo:
-			obj.add_dfilter({})
-		test_list.append(excinfo.value.message == 'Argument `dfilter` is empty')
-		with pytest.raises(ValueError) as excinfo:
-			obj.add_dfilter({'aaa':5})
-		test_list.append(excinfo.value.message == 'Column aaa not found in header')
-		with pytest.raises(TypeError) as excinfo:
-			obj.add_dfilter({'a':{'xx':2}})
-		test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			obj.add_dfilter({'a':[3, {'xx':2}]})
-		test_list.append(excinfo.value.message == 'Argument `dfilter` is of the wrong type')
+		test_list.append(putil.misc.trigger_exception(obj.add_dfilter, {'dfilter':'a'}, TypeError, 'Argument `dfilter` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.add_dfilter, {'dfilter':dict()}, ValueError, 'Argument `dfilter` is empty'))
+		test_list.append(putil.misc.trigger_exception(obj.add_dfilter, {'dfilter':{'aaa':5}}, ValueError, 'Column aaa not found in header'))
+		test_list.append(putil.misc.trigger_exception(obj.add_dfilter, {'dfilter':{'a':{'xx':2}}}, TypeError, 'Argument `dfilter` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.add_dfilter, {'dfilter':{'a':[3, {'xx':2}]}}, TypeError, 'Argument `dfilter` is of the wrong type'))
 		assert test_list == len(test_list)*[True]
 
 	def test_add_dfilter_works(self):	#pylint: disable=R0201
@@ -196,19 +155,10 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
-		with pytest.raises(TypeError) as excinfo:
-			obj.data(col=5)
-		test_list.append(excinfo.value.message == 'Argument `col` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			obj.data(col=['a', 5])
-		test_list.append(excinfo.value.message == 'Argument `col` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			obj.data(filtered=5)
-		test_list.append(excinfo.value.message == 'Argument `filtered` is of the wrong type')
-		with pytest.raises(ValueError) as excinfo:
-			obj.data(col='NotACol')
-		test_list.append(excinfo.value.message == 'Column NotACol not found in header')
-		# These should not raise any errors
+		test_list.append(putil.misc.trigger_exception(obj.data, {'col':5}, TypeError, 'Argument `col` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.data, {'col':['a', 5]}, TypeError, 'Argument `col` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.data, {'col':'NotACol'}, ValueError, 'Column NotACol not found in header'))
+		test_list.append(putil.misc.trigger_exception(obj.data, {'filtered':5}, TypeError, 'Argument `filtered` is of the wrong type'))
 		obj.data()
 		obj.data(col=None, filtered=True)
 		obj.data(col='Ctrl')
@@ -233,35 +183,17 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
-			with pytest.raises(TypeError) as excinfo:
-				obj.write(file_name=5)
-			test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				obj.write(file_name='/some/file', headers='a')
-			test_list.append(excinfo.value.message == 'Argument `headers` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				obj.write(file_name='/some/file', append='a')
-			test_list.append(excinfo.value.message == 'Argument `append` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				obj.write(file_name='/some/file', col=5)
-			test_list.append(excinfo.value.message == 'Argument `col` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				obj.write(file_name='/some/file', col=['a', 5])
-			test_list.append(excinfo.value.message == 'Argument `col` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				obj.write(file_name='/some/file', filtered=5)
-			test_list.append(excinfo.value.message == 'Argument `filtered` is of the wrong type')
-			with pytest.raises(ValueError) as excinfo:
-				obj.write(file_name='/some/file', col='NotACol')
-			test_list.append(excinfo.value.message == 'Column NotACol not found in header')
-			obj.dfilter = {'Result':100}
-			with pytest.raises(ValueError) as excinfo:
-				obj.write(file_name='/some/file', filtered=True)
-			test_list.append(excinfo.value.message == 'There is no data to save to file')
-			obj.reset_dfilter()
-			with pytest.raises(OSError) as excinfo:
-				obj.write(file_name='/some/file')
-			test_list.append(excinfo.value.message == 'File /some/file could not be created: Permission denied')
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':5}, TypeError, 'Argument `file_name` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file', 'headers':'a'}, TypeError, 'Argument `headers` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file', 'append':'a'}, TypeError, 'Argument `append` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file', 'col':5}, TypeError, 'Argument `col` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file', 'col':['a', 5]}, TypeError, 'Argument `col` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file', 'filtered':5}, TypeError, 'Argument `filtered` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file', 'col':'NotACol'}, ValueError, 'Column NotACol not found in header'))
+		obj.dfilter = {'Result':100}
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file', 'filtered':True}, ValueError, 'There is no data to save to file'))
+		obj.reset_dfilter()
+		test_list.append(putil.misc.trigger_exception(obj.write, {'file_name':'/some/file'}, OSError, 'File /some/file could not be created: Permission denied'))
 		assert test_list == len(test_list)*[True]
 
 	def test_write_works(self):	#pylint: disable=R0201

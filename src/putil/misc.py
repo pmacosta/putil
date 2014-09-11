@@ -8,6 +8,7 @@ Miscellaneous utility classes, methods, functions and constants
 
 import os
 import numpy
+import pytest
 import inspect
 import textwrap
 import tempfile
@@ -301,3 +302,9 @@ class TmpFile(object):	#pylint: disable=R0903
 		os.remove(self.file_name)
 		if exc_type is not None:
 			return False
+
+def trigger_exception(obj, args, extype, exmsg):
+	""" Triggers exception and records value """
+	with pytest.raises(extype) as excinfo:
+		obj(**args)	#pylint: disable=W0142
+	return excinfo.value.message == exmsg
