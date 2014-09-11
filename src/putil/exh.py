@@ -145,13 +145,14 @@ class ExHandle(object):	#pylint: disable=R0902
 						name_grandchild = grandchild[len(child1)+1:]
 						name_child = child2
 						name_module_function = module+'.'+(grandchild.split('.')[-1])
+						fname = child2[:]
 						if name_child == name_grandchild:
 							self._tobj.delete(grandchild)
-							fname = (self._cls+'.'+(child2.replace(self._cls+'.', '').split('.')[0])).replace('_set_', '')
+							fname = (self._cls+'.'+(fname.replace(self._cls+'.', '').split('.')[0])).replace('_set_', '')
 							self._tobj.add({'name':child1, 'data':'Same as :py:{0}:`{1}`'.format('attr' if child2.split('.')[-1][:5] == '_set_' else 'meth', fname)})
 							break
 						elif grandchild.endswith(name_module_function):
-							fname = (self._cls+'.'+(child2.replace(self._cls+'.', '').split('.')[0])).replace('_set_', '')
+							fname = (self._cls+'.'+(fname.replace(self._cls+'.', '').split('.')[0])).replace('_set_', '')
 							self._tobj.add({'name':child1, 'data':'Same as :py:{0}:`{1}`'.format('meth', name_module_function)})
 							self._module_functions_extable[name_module_function] = self._tobj.get_data(grandchild)
 							self._tobj.delete(grandchild)
@@ -174,6 +175,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Create exception list where the 'Same as [...]' entries have been replaced for the exceptions in the method/attribute they point to """
 		ret = [ex_member for ex_member in data if ex_member.find('Same as') == -1] if not start else list()
 		sex_members = [ex_member.split('.')[-1][:-1] if self._cls.split('.')[-1] in ex_member else ex_member[ex_member.find('`')+1:-1] for ex_member in data if ex_member.find('Same as') != -1]
+		print ret
+		print sex_members
+		print data
+		print
 		for member in sex_members:
 			ret += (self._extable[member] if member.find('.') == -1 else module_function_ex[member])
 		if sex_members:
@@ -189,10 +194,11 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not no_print:
 			print putil.misc.pcolor('Flattening hierarchy', 'blue')
 		cls_name = self._cls.split('.')
-		for node in cls_name[::-1]:
+		for node in ['.'.join(cls_name[:num]) for num in range(len(cls_name), 0, -1)]:
 			if not no_print:
 				print '\tFlattening on {0}'.format(node)
-			self._tobj.flatten_subtree(node)
+			if self._tobj.in_tree(node):
+				self._tobj.flatten_subtree(node)
 		if not no_print:
 			print str(self._tobj)
 
@@ -215,6 +221,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			print putil.misc.pcolor('Generating cross-usage expanded exception table', 'blue')
 		self._cross_usage_extable = dict()
 		for key in self._extable:
+			print key
 			self._cross_usage_extable[key] = self._expand_same_ex_list(self._extable[key], self._module_functions_extable, start=True)
 
 	def _prune_ex_tree(self, no_print=True):

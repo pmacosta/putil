@@ -4,8 +4,46 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
-
+import inspect
+import putil.exh
 import putil.check
+
+# Exception tracing initialization code
+"""
+[[[cog
+import sys
+import tempfile
+
+import putil.exh
+import putil.misc
+import putil.pcsv
+
+mod_obj = sys.modules['__main__']
+
+# Trace Tree class
+setattr(mod_obj, '_EXH', putil.exh.ExHandle('putil.pcsv.Tree'))
+exobj = getattr(mod_obj, '_EXH')
+with putil.misc.TmpFile(write_file) as file_name:
+	obj = putil.pcsv.CsvFile(file_name, dfilter={'Result':20})
+obj.add_dfilter({'Result':20})
+obj.dfilter = {'Result':20}
+obj.data()
+with tempfile.NamedTemporaryFile(delete=True) as fobj:
+	obj.write(file_name=fobj.name, col=None, filtered=False, headers=True, append=False)
+exobj.build_ex_tree(no_print=True)
+exobj_csvfile = copy.deepcopy(exobj)
+
+# Trace module functions
+setattr(mod_obj, '_EXH', putil.exh.ExHandle('putil.pcsv'))
+exobj = getattr(mod_obj, '_EXH')
+with tempfile.NamedTemporaryFile(delete=True) as fobj:
+	putil.pcsv.write(file_name=fobj.name, data=[['Col1', 'Col2'], [1, 2], [3, 4]], append=False)
+exobj.build_ex_tree(no_print=True)
+exobj_funcs = copy.deepcopy(exobj)
+]]]
+[[[end]]]
+"""	#pylint: disable=W0105
+
 
 ###
 # Node name custom pseudo-type
@@ -22,10 +60,7 @@ class NodeName(object):	#pylint: disable=R0903
 
 	def exception(self, param_name):	#pylint: disable=R0201,W0613
 		"""	Returns a suitable exception message """
-		exp_dict = dict()
-		exp_dict['type'] = ValueError
-		exp_dict['msg'] = 'Argument `{0}` is not a valid node name'.format(param_name)
-		return exp_dict
+		return {'type':ValueError, 'msg':'Argument `{0}` is not a valid node name'.format(param_name)}
 putil.check.register_new_type(NodeName, 'Hierarchical node name')
 
 
@@ -41,7 +76,8 @@ class Tree(object):	#pylint: disable=R0903
 		self._vertical = unichr(0x2502)
 		self._vertical_and_right = unichr(0x251C)
 		self._up_and_right = unichr(0x2514)
-		#{'name':{'parent':None, 'children':None, 'data':data}}
+		root_module = inspect.stack()[-1][0]
+		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.tree.Tree')
 
 	def __str__(self):
 		u"""
@@ -102,8 +138,8 @@ class Tree(object):	#pylint: disable=R0903
 		return ret
 
 	def _node_in_tree(self, name):	#pylint: disable=C0111
-		if name not in self._db:
-			raise RuntimeError('Node {0} not in tree'.format(name))
+		self._exh.ex_add(name='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
+		self._exh.raise_exception_if(name='node_not_in_tree', condition=name not in self._db, edata={'field':'node_name', 'value':name})
 
 	def _prt(self, name, lparent, sep, pre1, pre2):	#pylint: disable=C0111,R0913,R0914
 		# Characters from http://www.unicode.org/charts/PDF/U2500.pdf
@@ -118,6 +154,8 @@ class Tree(object):	#pylint: disable=R0903
 		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, node_name, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
 
 	def _rnode(self, root, name, hierarchy):	#pylint: disable=C0111,R0913,R0914
+		self._exh.ex_add(name='hierarchy_cannot_be_deleted', extype=RuntimeError, exmsg='Hierarchy *[node_name]* cannot be deleted')
+		self._exh.ex_add(name='inconsistency_deleting_hierarchy', extype=RuntimeError, exmsg='Inconsitency when deleting hierarchy')
 		suffix = name[len(root):]
 		new_suffix = suffix.replace('.'+hierarchy, '').replace('..', '.')
 		new_name = root+new_suffix
@@ -126,13 +164,11 @@ class Tree(object):	#pylint: disable=R0903
 				self._db[new_name] = self._db[name].copy()
 				self._db[self._db[name]['parent']]['children'] = sorted(list(set([child for child in self._db[self._db[name]['parent']]['children'] if child != name]+[new_name])))
 			else:
-				if self._db[name]['data']:
-					raise RuntimeError('Hierarchy {0} cannot be deleted'.format(hierarchy))
+				self._exh.raise_exception_if(name='hierarchy_cannot_be_deleted', condition=self._db[name]['data'], edata={'field':'hierarchy', 'value':hierarchy})
 				if self._db[name]['parent'] == new_name:
 					self._db[self._db[name]['parent']]['children'] = sorted(list(set([child for child in self._db[self._db[name]['parent']]['children'] if child != name])))
 				new_children = sorted(self._db[new_name]['children']+self._db[name]['children'])
-				if len(new_children) != len(set(new_children)):
-					raise RuntimeError('Inconsitency when deleting hierarchy')
+				self._exh.raise_exception_if(name='inconsistency_deleting_hierarchy', condition=len(new_children) != len(set(new_children)))
 				self._db[new_name]['children'] = new_children
 			for child in self.get_children(name):
 				self._db[child]['parent'] = new_name
@@ -193,6 +229,7 @@ class Tree(object):	#pylint: disable=R0903
 			[5, 7]
 
 		"""
+		self._exh.ex_add(name='illegal_node_name', extype=ValueError, exmsg='Illegal node name: *[node_name]*')
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		if not self.root_name:
 			self._set_root_name(nodes[0]['name'].split('.')[0].strip())
@@ -202,8 +239,7 @@ class Tree(object):	#pylint: disable=R0903
 			data = node_dict['data']
 			if not self.in_tree(name):
 				hierarchy = self._split_node_name(name)
-				if hierarchy[0] != self.root_name:
-					raise ValueError('Illegal node name: {0}'.format(name))
+				self._exh.raise_exception_if(name='illegal_node_name', condition=hierarchy[0] != self.root_name, edata={'field':'node_name', 'value':name})
 				for num in range(len(hierarchy)):
 					child = '.'.join(hierarchy[:num+1])
 					if not self.in_tree(child):
@@ -542,9 +578,9 @@ class Tree(object):	#pylint: disable=R0903
 
 	@putil.check.check_argument(NodeName())
 	def remove_prefix(self, prefix):
+		self._exh.ex_add(name='illegal_prefix', extype=ValueError, exmsg='Illegal prefix')
 		index = self.root_name.find(prefix)
-		if (index != 0) or (self.in_tree(prefix)):
-			raise ValueError('Illegal prefix')
+		self._exh.raise_exception_if(name='illegal_prefix', condition=(index != 0) or (self.in_tree(prefix)))
 		cstart = len(prefix)+1
 		ndb = dict()
 		for key in self._db.keys():
