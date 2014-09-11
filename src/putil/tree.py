@@ -394,6 +394,36 @@ class Tree(object):	#pylint: disable=R0903
 			del self._db[name]
 
 	@putil.check.check_argument(NodeName())
+	def get_children(self, name):	#pylint: disable=C0111
+		"""
+		Return children node names of a node
+
+		:param	name: Node name
+		:type	name: string
+		:rtype	data: list of strings
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_children')) ]]]
+		.. [[[end]]]
+		"""
+		self._node_in_tree(name)
+		return sorted(self._db[name]['children'])
+
+	@putil.check.check_argument(NodeName())
+	def get_data(self, name):	#pylint: disable=C0111
+		"""
+		Return node data
+
+		:param	name: Node name
+		:type	name: string
+		:type	data: any type or list of objects of any type
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_data')) ]]]
+		.. [[[end]]]
+		"""
+		self._node_in_tree(name)
+		return self._db[name]['data']
+
+	@putil.check.check_argument(NodeName())
 	def get_node(self, name):	#pylint: disable=C0111
 		"""
 		Get tree node structure. The structure is a dictionary with the following keys:
@@ -443,36 +473,6 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		self._node_in_tree(name)
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
-
-	@putil.check.check_argument(NodeName())
-	def get_children(self, name):	#pylint: disable=C0111
-		"""
-		Return children node names of a node
-
-		:param	name: Node name
-		:type	name: string
-		:rtype	data: list of strings
-
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_children')) ]]]
-		.. [[[end]]]
-		"""
-		self._node_in_tree(name)
-		return sorted(self._db[name]['children'])
-
-	@putil.check.check_argument(NodeName())
-	def get_data(self, name):	#pylint: disable=C0111
-		"""
-		Return node data
-
-		:param	name: Node name
-		:type	name: string
-		:type	data: any type or list of objects of any type
-
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_data')) ]]]
-		.. [[[end]]]
-		"""
-		self._node_in_tree(name)
-		return self._db[name]['data']
 
 	@putil.check.check_argument(NodeName())
 	def in_tree(self, name):
