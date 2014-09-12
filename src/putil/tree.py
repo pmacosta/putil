@@ -4,9 +4,12 @@
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
+
 import inspect
+
 import putil.exh
 import putil.check
+
 
 # Exception tracing initialization code
 """

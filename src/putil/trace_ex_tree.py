@@ -11,7 +11,7 @@ _EXH = None
 def trace_tree(no_print=False):
 	""" Trace Tree class """
 	global _EXH	#pylint: disable=W0603
-	_EXH = putil.exh.ExHandle('putil.tree.Tree')
+	_EXH = putil.exh.ExHandle(putil.tree.Tree)
 	obj = putil.tree.Tree()
 	obj.add([
 		{'name':'root.branch1', 'data':list()},
