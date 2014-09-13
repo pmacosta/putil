@@ -338,13 +338,15 @@ class ExHandle(object):	#pylint: disable=R0902
 			self._extable[child]['cross_names'] = sorted_cross_names
 			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[child], child.replace('_set_', '')) for child in sorted_cross_names])
 		# Detect trace class methods/properties or trace module-level functions that are identical
+		changed_entries = list()
 		for num1, key1 in enumerate(sorted_children):
-			for key2 in sorted_children[num1+1:]:
+			for key2 in [child for child in sorted_children[num1+1:] if child not in changed_entries]:
 				if self._extable[key1]['flat_exceptions'] == self._extable[key2]['flat_exceptions']:
 					self._extable[key2]['native_exceptions'] = list()
 					self._extable[key2]['cross_names'] = [key1]
 					self._extable[key2]['cross_hierarchical_exceptions'] = ['Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[key1], key1.replace('_set_', ''))]
-					self._extable[key2]['cross_flat_exceptions'] = self._extable[key1]['flat_exceptions']
+					self._extable[key2]['cross_flat_exceptions'] = copy.deepcopy(self._extable[key1]['flat_exceptions'])
+					changed_entries.append(key2)
 
 	def _print_extable_subkey(self, key, subkey):
 		""" Prints sub-key of exception table """
