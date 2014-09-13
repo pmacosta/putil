@@ -80,7 +80,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._vertical_and_right = unichr(0x251C)
 		self._up_and_right = unichr(0x2514)
 		root_module = inspect.stack()[-1][0]
-		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.tree.Tree')
+		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.tree.Tree)
 
 	def __str__(self):
 		u"""
@@ -182,8 +182,9 @@ class Tree(object):	#pylint: disable=R0903
 	def _set_root_name(self, name):	#pylint: disable=C0111
 		self._root = name
 
-	def _split_node_name(self, name):	#pylint: disable=C0111,R0201
-		return [element.strip() for element in name.strip().split('.')]
+	def _split_node_name(self, name, root_name=None):	#pylint: disable=C0111,R0201
+		root_hierarchy_length = 0 if not root_name else len(self._split_node_name(self.root_name))
+		return [element.strip() for element in name.strip().split('.')][root_hierarchy_length:]
 
 	@putil.check.check_argument(putil.check.PolymorphicType([{'name':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'name':NodeName(), 'data':putil.check.Any()})]))
 	def add(self, nodes):
@@ -241,14 +242,18 @@ class Tree(object):	#pylint: disable=R0903
 			name = node_dict['name']
 			data = node_dict['data']
 			if not self.in_tree(name):
+				root_hierarchy_length = len(self._split_node_name(self.root_name))
 				hierarchy = self._split_node_name(name)
-				self._exh.raise_exception_if(name='illegal_node_name', condition=hierarchy[0] != self.root_name, edata={'field':'node_name', 'value':name})
-				for num in range(len(hierarchy)):
-					child = '.'.join(hierarchy[:num+1])
-					if not self.in_tree(child):
-						parent = '.'.join(self._split_node_name(child)[:-1])
-						self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
-						self._db[parent]['children'] = list(sorted(set(self._db[parent]['children']+[child])))
+				node_root = '.'.join(hierarchy[:root_hierarchy_length])
+				self._exh.raise_exception_if(name='illegal_node_name', condition=node_root != self.root_name, edata={'field':'node_name', 'value':name})
+				if name != self.root_name:
+					hierarchy = self._split_node_name(name, self.root_name)
+					for num in range(len(hierarchy)):
+						child = self.root_name+('.'+('.'.join(hierarchy[:num+1])))
+						if not self.in_tree(child):
+							parent = '.'.join(self._split_node_name(child)[:-1])
+							self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
+							self._db[parent]['children'] = list(sorted(set(self._db[parent]['children']+[child])))
 			data = data if isinstance(data, list) and (len(data) > 0) else (list() if isinstance(data, list) else [data])
 			self._db[name]['data'] = self._db[name]['data']+data
 
@@ -289,6 +294,51 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		for child in self._db[name]['children'][:]:
 			self._collapse_node(child)
+
+	@putil.check.check_arguments({'source_node':NodeName(), 'dest_node':NodeName()})
+	def copy_subtree(self, source_node, dest_node):
+		"""
+		Copy a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-treeexist in the destination sub-tree
+
+		:param	source_name: Root node of the sub-tree to copy from
+		:type	source_name: string
+		:param	dest_name: Root node of the sub-tree to copy to
+		:type	dest_name: string
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('copy_subtree')) ]]]
+		.. [[[end]]]
+
+
+		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.copy_subtree('root.branch1', 'root.branch3')
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1.subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			├branch2
+			└branch3 (*)
+			 ├leaf1
+			 │└subleaf1 (*)
+			 └leaf2 (*)
+			  └subleaf2
+
+		"""
+		self._exh.ex_add(name='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
+		self._node_in_tree(source_node)
+		self._exh.raise_exception_if(name='illegal_dest_node', condition=not source_node.startswith(self.root_name+'.'))
+		for node in self._get_subtree(source_node):
+			self.add({'name':node.replace(source_node, dest_node, 1), 'data':self.get_data(node)})
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
 	def delete(self, nodes):
@@ -594,6 +644,16 @@ class Tree(object):	#pylint: disable=R0903
 			del self._db[key]
 		self._db = ndb
 		self._set_root_name(self.root_name[cstart:])
+
+	@putil.check.check_argument(NodeName())
+	def rename_node(self, name, new_name):
+		self._exh.ex_add(name='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
+		self._exh.ex_add(name='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
+		self._node_in_tree(name)
+		self._exh.raise_exception_if(name='new_name_exists', condition=self.in_tree(new_name), edata={'field':'node_name', 'value':new_name})
+		self._exh.raise_exception_if(name='illegal_new_name', condition=not new_name.startswith(self.root_name+'.'))
+		self.copy_subtree(name, new_name)
+		self.delete(name)
 
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')

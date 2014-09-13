@@ -415,3 +415,4 @@ class CsvFile(object):
 	:returns: Header of the comma-separated values file. Each list item is a column header
 	:rtype:	list of strings
 	"""	#pylint: disable=W0105
+
