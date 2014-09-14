@@ -1,14 +1,17 @@
 # Putil Library #
 
-A collection of utility modules to supplement the Python standard library
+A collection of personal utility modules
 
-* util_check: decorators to help API argument checking
-* util_csv: read/write of comma-separated files
-* util_dict: case insensitive keys dictionary
-* util_logging: convenience wrapper around the standard logging module
-* util_misc: miscellaneous helper functions
+* check: decorators to help API argument checking/validation
+* eng: enginering-related helper functions
+* pdict: case insensitive keys dictionary support
+* exh: exception handling and auto-documentation
+* log: convenience wrapper around the standard logging module
+* misc: miscellaneous helper functions
 
-* util_plot: easy generation of presentation-quality graps using Matplotlib
+* pcsv: read/write and lightweight filtering of comma-separated files
+* plot: easy generation of presentation-quality graps using Matplotlib
+* tree: lightweight trie creation and processing
 
 ### License ###
 
