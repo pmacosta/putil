@@ -18,7 +18,7 @@ done
 
 if [ $rebuild == 1 ]; then
 	echo 'Rebuilding exceptions documentation'
-	modules=(pcsv)
+	modules=(pcsv tree)
 	for module in ${modules[@]}; do
 		module_file="$src_dir"/"$module".py
 		echo '   Processing module '$module_file

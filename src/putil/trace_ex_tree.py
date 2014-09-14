@@ -26,6 +26,9 @@ def trace_tree(no_print=False):
 	obj.collapse('root.branch1')
 	print 'Collapsed tree'
 	print str(obj)
+	obj.copy_subtree('root.branch1', 'root.branch3')
+	print 'Copied tree'
+	print str(obj)
 	obj.delete('root.branch2')
 	print 'Deleted tree'
 	print str(obj)

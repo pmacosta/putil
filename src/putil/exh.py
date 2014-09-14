@@ -138,6 +138,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		if obj.__name__.startswith('_'):
 			raise ValueError('Hidden objects cannot be traced')
 		self._trace_obj = obj
+		self._trace_obj_type = inspect.isclass(obj)
 		self._trace_obj_name = '{0}.{1}'.format(obj.__module__, obj.__name__)
 		self._trace_pkg_props = _get_package_obj_type(obj)
 		self._trace_list, self._tobj, self._extable, self._module_functions_extable, self._cross_usage_extable, self._exoutput, self._clsattr = None, None, None, None, None, None, None
@@ -145,6 +146,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def __copy__(self):
 		cobj = ExHandle(obj=copy.copy(self._trace_obj))
+		cobj._trace_obj_type = copy.copy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.copy(self._trace_obj_name)	#pylint: disable=W0212
 		cobj._trace_pkg_props = copy.copy(self._trace_pkg_props)	#pylint: disable=W0212
 		cobj._trace_list = copy.copy(self._trace_list)	#pylint: disable=W0212
@@ -159,6 +161,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	def __deepcopy__(self, memodict=None):
 		memodict = dict() if memodict is None else memodict
 		cobj = ExHandle(obj=copy.deepcopy(self._trace_obj))
+		cobj._trace_obj_type = copy.deepcopy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.deepcopy(self._trace_obj_name, memodict)	#pylint: disable=W0212
 		cobj._trace_pkg_props = copy.deepcopy(self._trace_pkg_props)	#pylint: disable=W0212
 		cobj._trace_list = copy.deepcopy(self._trace_list, memodict)	#pylint: disable=W0212
@@ -284,59 +287,92 @@ class ExHandle(object):	#pylint: disable=R0902
 			self._extable[child_name]['cross_flat_exceptions'] = list()
 			self._extable[child_name]['cross_names'] = list()
 
-		if not no_print:
-			for key in sorted(self._extable.keys()):
-				print 'Member: {0}'.format(key)
-				print 'Native exceptions:'
-				self._print_extable_subkey(key, 'native_exceptions')
-				print 'Flat exceptions:'
-				self._print_extable_subkey(key, 'flat_exceptions')
-				print 'Cross hierarchical exceptions:'
-				self._print_extable_subkey(key, 'cross_hierarchical_exceptions')
-				print 'Cross names:'
-				self._print_extable_subkey(key, 'cross_names')
-				print
+		#if not no_print:
+		#	for key in sorted(self._extable.keys()):
+		#		print 'Member: {0}'.format(key)
+		#		print 'Native exceptions:'
+		#		self._print_extable_subkey(key, 'native_exceptions')
+		#		print 'Flat exceptions:'
+		#		self._print_extable_subkey(key, 'flat_exceptions')
+		#		print 'Cross hierarchical exceptions:'
+		#		self._print_extable_subkey(key, 'cross_hierarchical_exceptions')
+		#		print 'Cross names:'
+		#		self._print_extable_subkey(key, 'cross_names')
+		#		print
 
-	def _create_ex_table_output(self, no_print=True):
+	def _create_ex_table_output(self, no_print=True):	#pylint: disable=R0912
 		""" Create final exception table output """
 		if not no_print:
 			print putil.misc.pcolor('Creating final exception table output', 'blue')
 		if not self._extable:
 			raise RuntimeError('No exception table data')
-		self._exoutput = dict()
+		# Remove exception table entries that are package members but not trace class method/properies or module-level function
 		for child in sorted(self._extable.keys()):
-			child_name = child.replace(self._trace_obj_name+'.', '') if child != self._trace_obj_name else self._trace_obj_name.split('.')[-1]
+			if not child.startswith(self._tobj.root_name):
+				del self._extable[child]
+		# Create output table proper
+		self._exoutput = dict()
+		min_child_name_hierarchy = len(self._trace_obj_name.split('.'))-(0 if self._trace_obj_type else 1)
+		for child in sorted(self._extable.keys()):
+			child_name = child.split('.')[min_child_name_hierarchy]
 			exoutput = ['']
 			exlist = self._extable[child]['native_exceptions']+self._extable[child]['cross_hierarchical_exceptions']
+			if child_name.find('[') != -1:
+				prop_name = child_name[:child_name.find('[')]
+				for child2 in [member for member in sorted(self._extable.keys()) if member != child]:
+					child2_name = child2.split('.')[min_child_name_hierarchy]
+					if child2_name[:child2_name.find('[')] == prop_name:
+						token = child_name[child_name.find('[')+1:child_name.find(']')]
+						exoutput.append('When being {0}:'.format('set' if token == 'fset' else ('retrieved' if token == 'fget' else 'deleted')))
+					break
+				child_name = prop_name
 			if len(exlist) == 1:
 				exoutput.append(':raises: {0}'.format(exlist[0]))
+				exoutput.append('')
 			else:
 				exoutput.append(':raises:')
 				for exname in exlist:
 					exoutput.append(' * {0}'.format(exname))
-					if exname != exlist[-1]:
-						exoutput.append('')
-			self._exoutput[child_name] = exoutput
+					exoutput.append('')
+			if child_name in self._exoutput:
+				self._exoutput[child_name] += exoutput
+			else:
+				self._exoutput[child_name] = exoutput
 
-	def _deduplicate_ex_table(self, no_print=True):
+	def _deduplicate_ex_table(self, no_print=True):	#pylint: disable=R0912
 		""" Remove exceptions that could be in 'Same as [...]' entry or 'Same as [...] enties that have the same base exceptions """
 		if not no_print:
-			print putil.misc.pcolor('De-duplicate exception table', 'blue')
+			print putil.misc.pcolor('De-duplicating native exceptions', 'blue')
 		# Remove exceptions that could be in 'Same as [...]' entry
 		for key in self._extable:
 			self._extable[key]['native_exceptions'] = sorted(list(set([exdesc for exdesc in self._extable[key]['native_exceptions'] if exdesc not in self._extable[key]['cross_flat_exceptions']])))
+		if not no_print:
+			print putil.misc.pcolor('Homogenizing cross-exceptions', 'blue')
 		# Remove 'Same as [...]' entries that have the same exceptions
 		sorted_children = sorted(self._extable.keys())
 		for child in sorted_children:
 			sorted_cross_names = sorted(self._extable[child]['cross_names'])
-			num1 = 0
-			while num1 < len(sorted_cross_names)-1:
-				for key1 in sorted_cross_names:
-					new_cross_names = [key2 for num2, key2 in enumerate(sorted_cross_names) if (num2 > num1) and (self._extable[key1]['flat_exceptions'] != self._extable[key2]['flat_exceptions'])]
-				sorted_cross_names = new_cross_names
-				num1 += 1
-			self._extable[child]['cross_names'] = sorted_cross_names
-			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[child], child.replace('_set_', '')) for child in sorted_cross_names])
+			for key1 in [member for member in sorted_children[::-1] if member != child]:
+				new_list = list()
+				for key2 in sorted_cross_names:
+					new_list.append(key1 if (key1 != key2) and (self._extable[key1]['flat_exceptions'] == self._extable[key2]['flat_exceptions']) else key2)
+				sorted_cross_names = sorted(list(set(new_list[:])))
+			self._extable[child]['cross_names'] = copy.deepcopy(sorted_cross_names)
+			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[cross_name], cross_name) for cross_name in sorted_cross_names])
+		if not no_print:
+			print putil.misc.pcolor('Removing cross-exception loops', 'blue')
+		# Expand entries pointed by 'Same as [...]' that only have a 'Same as [...]' as exception
+		sorted_children = sorted(self._extable.keys())
+		for child in sorted_children:
+			sorted_cross_names = sorted(self._extable[child]['cross_names'])
+			for key1 in sorted_cross_names:
+				if (not self._extable[key1]['native_exceptions']) and (len(self._extable[key1]['cross_names']) == 1):
+					self._extable[key1]['native_exceptions'] = self._extable[key1]['flat_exceptions']
+					self._extable[key1]['cross_names'] = list()
+					self._extable[key1]['cross_flat_exceptions'] = list()
+					self._extable[key1]['cross_hierarchical_exceptions'] = list()
+		if not no_print:
+			print putil.misc.pcolor('Detecting exception table', 'blue')
 		# Detect trace class methods/properties or trace module-level functions that are identical
 		changed_entries = list()
 		for num1, key1 in enumerate(sorted_children):
@@ -359,7 +395,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	def _detect_ex_tree_cross_usage(self, no_print=True):	#pylint: disable=R0912,R0914
 		""" Replace exceptions from other class methods with 'Same as [...]' construct """
 		if not no_print:
-			print putil.misc.pcolor('Detecting cross-usage', 'blue')
+			print putil.misc.pcolor('Condensing private members', 'blue')
 		# Move all exceptions in private callable sub-tree to child
 		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
 			child_name = self._get_obj_full_name(child)
@@ -373,6 +409,8 @@ class ExHandle(object):	#pylint: disable=R0902
 					self._tobj.delete(grandchild)
 		if not no_print:
 			print str(self._tobj)
+		if not no_print:
+			print putil.misc.pcolor('Detecting cross-usage', 'blue')
 		# Detect cross-usage
 		# Remove prefix hierarchy in grandchild to find it in the package callable database (since all the callable nodes with no exceptions have been previously prunned, any grandchild _has_ exceptions)
 		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
@@ -597,7 +635,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Returns Sphinx-compatible exception list """
 		if not self._exoutput:
 			raise RuntimeError('No exception table data')
-		return '\n'.join(self._exoutput[member]) if member in self._exoutput else ''
+		return ('\n'.join(self._exoutput[member]))+'\n' if member in self._exoutput else ''
 
 	def print_ex_table(self):
 		""" Prints exception table """

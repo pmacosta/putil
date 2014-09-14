@@ -30,7 +30,7 @@ def write_file(file_handle):	#pylint: disable=C0111
 	file_handle.write('3,5,50\n')
 
 # Trace CsvFile class
-setattr(mod_obj, '_EXH', putil.exh.ExHandle('putil.pcsv.CsvFile'))
+setattr(mod_obj, '_EXH', putil.exh.ExHandle(putil.pcsv.CsvFile))
 exobj = getattr(mod_obj, '_EXH')
 with putil.misc.TmpFile(write_file) as file_name:
 	obj = putil.pcsv.CsvFile(file_name, dfilter={'Result':20})
@@ -43,7 +43,7 @@ exobj.build_ex_tree(no_print=True)
 exobj_csvfile = copy.deepcopy(exobj)
 
 # Trace module functions
-setattr(mod_obj, '_EXH', putil.exh.ExHandle('putil.pcsv'))
+setattr(mod_obj, '_EXH', putil.exh.ExHandle(putil.pcsv.write))
 exobj = getattr(mod_obj, '_EXH')
 with tempfile.NamedTemporaryFile(delete=True) as fobj:
 	putil.pcsv.write(file_name=fobj.name, data=[['Col1', 'Col2'], [1, 2], [3, 4]], append=False)
@@ -174,7 +174,7 @@ class CsvFile(object):
 
 	 * TypeError (Argument `file_name` is of the wrong type)
 
-	 * Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
+	 * Same as :py:meth:`putil.pcsv.CsvFile.add_dfilter`
 
 	.. [[[end]]]
 	"""
@@ -240,7 +240,12 @@ class CsvFile(object):
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('add_dfilter')) ]]]
 
-		:raises: Same as :py:attr:`putil.pcsv.CsvFile.dfilter`
+		:raises:
+		 * TypeError (Argument `dfilter` is of the wrong type)
+
+		 * ValueError (Argument `dfilter` is empty)
+
+		 * ValueError (Column *[column_name]* not found in header)
 
 		.. [[[end]]]
 		"""
@@ -312,9 +317,9 @@ class CsvFile(object):
 		:raises:
 		 * TypeError (Argument `headers` is of the wrong type)
 
-		 * Same as :py:meth:`putil.pcsv.CsvFile.data`
+		 * Same as :py:attr:`putil.pcsv.write`
 
-		 * Same as :py:meth:`putil.pcsv.write`
+		 * Same as :py:meth:`putil.pcsv.CsvFile.data`
 
 		.. [[[end]]]
 		"""
@@ -400,12 +405,7 @@ class CsvFile(object):
 
 	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('dfilter')) ]]]
 
-	:raises:
-	 * TypeError (Argument `dfilter` is of the wrong type)
-
-	 * ValueError (Argument `dfilter` is empty)
-
-	 * ValueError (Column *[column_name]* not found in header)
+	:raises: Same as :py:meth:`putil.pcsv.CsvFile.add_dfilter`
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
