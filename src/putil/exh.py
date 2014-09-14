@@ -217,7 +217,7 @@ class ExHandle(object):	#pylint: disable=R0902
 								mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
 								collapse_tree_needed = True
 			for key in new_dict:
-				self._trace_pkg_props[key] = new_dict[key]
+				self._trace_pkg_props[key] = copy.deepcopy(new_dict[key])
 			if collapse_tree_needed:
 				self._collapse_ex_tree(no_print=True)
 		if not no_print:
@@ -234,6 +234,16 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._tobj.add(tree_data)
 		if not no_print:
 			print str(self._tobj)
+
+	def _callable_list(self, node):
+		""" Returns list of callables from a exception call tree """
+		ret = list()
+		name = copy.deepcopy(node)
+		while name:
+			callable_name = self._get_obj_full_name(name)
+			ret.append(callable_name)
+			name = name[len(callable_name)+(1 if len(callable_name) < len(name) else 0):]
+		return ret
 
 	def _change_ex_tree_root_node(self, no_print=True):
 		""" Make class name of interest root node """
@@ -286,19 +296,6 @@ class ExHandle(object):	#pylint: disable=R0902
 			self._extable[child_name]['cross_hierarchical_exceptions'] = list()
 			self._extable[child_name]['cross_flat_exceptions'] = list()
 			self._extable[child_name]['cross_names'] = list()
-
-		#if not no_print:
-		#	for key in sorted(self._extable.keys()):
-		#		print 'Member: {0}'.format(key)
-		#		print 'Native exceptions:'
-		#		self._print_extable_subkey(key, 'native_exceptions')
-		#		print 'Flat exceptions:'
-		#		self._print_extable_subkey(key, 'flat_exceptions')
-		#		print 'Cross hierarchical exceptions:'
-		#		self._print_extable_subkey(key, 'cross_hierarchical_exceptions')
-		#		print 'Cross names:'
-		#		self._print_extable_subkey(key, 'cross_names')
-		#		print
 
 	def _create_ex_table_output(self, no_print=True):	#pylint: disable=R0912
 		""" Create final exception table output """
@@ -384,6 +381,21 @@ class ExHandle(object):	#pylint: disable=R0902
 					self._extable[key2]['cross_flat_exceptions'] = copy.deepcopy(self._extable[key1]['flat_exceptions'])
 					changed_entries.append(key2)
 
+	def _print_extable_for_debug(self, no_print=True):
+		""" Pretty prints exception table (mainly for debugging purposes) """
+		if not no_print:
+			for key in sorted(self._extable.keys()):
+				print 'Member: {0}'.format(key)
+				print 'Native exceptions:'
+				self._print_extable_subkey(key, 'native_exceptions')
+				print 'Flat exceptions:'
+				self._print_extable_subkey(key, 'flat_exceptions')
+				print 'Cross hierarchical exceptions:'
+				self._print_extable_subkey(key, 'cross_hierarchical_exceptions')
+				print 'Cross names:'
+				self._print_extable_subkey(key, 'cross_names')
+				print
+
 	def _print_extable_subkey(self, key, subkey):
 		""" Prints sub-key of exception table """
 		indent = 3*' '
@@ -395,7 +407,34 @@ class ExHandle(object):	#pylint: disable=R0902
 	def _detect_ex_tree_cross_usage(self, no_print=True):	#pylint: disable=R0912,R0914
 		""" Replace exceptions from other class methods with 'Same as [...]' construct """
 		if not no_print:
-			print putil.misc.pcolor('Condensing private members', 'blue')
+			print putil.misc.pcolor('Detecting cross-usage across sub-trees', 'blue')
+		# Generate trace class method/attribute or module-level class function callable list
+		trace_obj_callable_list = [self._get_obj_full_name(child) for child in sorted(self._tobj.get_children(self._tobj.root_name))]
+		# Detect cross-usage
+		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
+			child_name = self._get_obj_full_name(child)
+			grandchildren = self._tobj.get_children(child)
+			for grandchild in sorted(grandchildren):
+				sub_tree = sorted(self._tobj._get_subtree(grandchild), reverse=True)	#pylint: disable=W0212
+				for node in sub_tree:
+					callable_list = self._callable_list(node)
+					node_deleted = False
+					for num, callable_name in enumerate(callable_list[1:]):# The first element is the child name/1st level method/attribute/function
+						if callable_name in trace_obj_callable_list:
+							self._extable[child_name]['cross_names'].append(callable_name)
+							self._extable[child_name]['cross_hierarchical_exceptions'].append('Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[callable_name], callable_name))
+							self._tobj.delete('.'.join(callable_list[:num+2]))
+							node_deleted = True
+							break
+					if node_deleted:
+						break
+			self._extable[child_name]['cross_names'] = sorted(list(set(self._extable[child_name]['cross_names'])))
+			self._extable[child_name]['cross_hierarchical_exceptions'] = sorted(list(set(self._extable[child_name]['cross_hierarchical_exceptions'])))
+
+		if not no_print:
+			print str(self._tobj)
+		if not no_print:
+			print putil.misc.pcolor('Condensing private callables', 'blue')
 		# Move all exceptions in private callable sub-tree to child
 		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
 			child_name = self._get_obj_full_name(child)
@@ -409,20 +448,7 @@ class ExHandle(object):	#pylint: disable=R0902
 					self._tobj.delete(grandchild)
 		if not no_print:
 			print str(self._tobj)
-		if not no_print:
-			print putil.misc.pcolor('Detecting cross-usage', 'blue')
-		# Detect cross-usage
-		# Remove prefix hierarchy in grandchild to find it in the package callable database (since all the callable nodes with no exceptions have been previously prunned, any grandchild _has_ exceptions)
-		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
-			child_name = self._get_obj_full_name(child)
-			grandchildren = sorted(self._tobj.get_children(child)[:])
-			for grandchild in grandchildren:
-				grandchild_name = self._get_obj_full_name(grandchild[len(child)+1:])
-				self._extable[child_name]['cross_names'].append(grandchild_name)
-				self._extable[child_name]['cross_hierarchical_exceptions'].append('Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[grandchild_name], grandchild_name.replace('_set_', '')))
-				self._tobj.delete(grandchild)
-			self._extable[child_name]['cross_names'] = sorted(list(set(self._extable[child_name]['cross_names'])))
-			self._extable[child_name]['cross_hierarchical_exceptions'] = sorted(list(set(self._extable[child_name]['cross_hierarchical_exceptions'])))
+		# Generate flat cross-usage exceptions
 		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
 			child_name = self._get_obj_full_name(child)
 			self._extable[child_name]['cross_flat_exceptions'] = \
@@ -494,20 +520,6 @@ class ExHandle(object):	#pylint: disable=R0902
 				raise RuntimeError('Field {0} not in exception message'.format(field['field']))
 			msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 		return msg
-
-	def _generate_cross_usage_table(self, no_print=True):
-		""" Recursively expand 'Same as [...] entries """
-		if not no_print:
-			print putil.misc.pcolor('Generating cross-usage expanded exception table', 'blue')
-		self._cross_usage_extable = dict()
-		for key in self._extable:
-			# REMOVE if key == 'get_node_children':
-			# REMOVE 	print key
-			self._cross_usage_extable[key] = self._expand_same_ex_list(self._extable[key]['hier_exceptions'], self._module_functions_extable, start=True)
-			# REMOVE if key == 'get_node_children':
-			# REMOVE 	print self._cross_usage_extable[key]
-			# REMOVE 	print
-			# REMOVE print
 
 	def _get_obj_full_name(self, obj_name):
 		""" Find name in package callable dictionary """

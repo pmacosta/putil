@@ -45,6 +45,7 @@ obj.get_node('root')
 obj.get_node_children('root')
 obj.get_node_parent('root.branch1.leaf1.subleaf1')
 obj.get_children('root')
+obj.get_leafs('root')
 obj.get_data('root')
 obj.in_tree('root')
 obj.is_root('root')
@@ -120,7 +121,7 @@ class Tree(object):	#pylint: disable=R0903
 			node = self._db[name]
 			if (len(node['children']) == 1) and (not node['data']):
 				child_name = node['children'][0]
-				self._db[child_name]['parent'] = node['parent']
+				self._db[child_name]['parent'] = copy.deepcopy(node['parent'])
 				self._db[self._db[name]['parent']]['children'].remove(name)
 				self._db[self._db[name]['parent']]['children'] = sorted(self._db[self._db[name]['parent']]['children']+[child_name])
 				del self._db[name]
@@ -489,7 +490,7 @@ class Tree(object):	#pylint: disable=R0903
 			parent = self._db[name]['parent']
 			children = self._db[name]['children']
 			for child in children:
-				self._db[child]['parent'] = parent
+				self._db[child]['parent'] = copy.deepcopy(parent)
 			self._db[parent]['children'] = sorted([child for child in self._db[parent]['children'] if child != name]+children)
 			del self._db[name]
 
@@ -518,7 +519,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		:param	name: Node name
 		:type	name: string
-		:type	data: any type or list of objects of any type
+		:rtype	data: any type or list of objects of any type
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_data')) ]]]
 
@@ -528,6 +529,22 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		self._node_in_tree(name)
 		return self._db[name]['data']
+
+	@putil.check.check_argument(NodeName())
+	def get_leafs(self, name):	#pylint: disable=C0111
+		"""
+		Return sub-tree leaf node(s)
+
+		:param	name: Sub-tree root node name
+		:type	name: string
+		:rtype	data: list
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_leafs')) ]]]
+		.. [[[end]]]
+		"""
+		self._node_in_tree(name)
+		return [node for node in self._get_subtree(name) if self.is_leaf(node)]
+
 
 	@putil.check.check_argument(NodeName())
 	def get_node(self, name):	#pylint: disable=C0111
@@ -712,7 +729,7 @@ class Tree(object):	#pylint: disable=R0903
 		ndb = dict()
 		for key in self._db.keys():
 			new_key = key[cstart:]
-			self._db[key]['parent'] = self._db[key]['parent'] if not self._db[key]['parent'] else self._db[key]['parent'][cstart:]
+			self._db[key]['parent'] = copy.deepcopy(self._db[key]['parent']) if not self._db[key]['parent'] else self._db[key]['parent'][cstart:]
 			self._db[key]['children'] = sorted([child[cstart:] for child in self._db[key]['children']])
 			ndb[new_key] = copy.deepcopy(self._db[key])
 			del self._db[key]
