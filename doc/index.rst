@@ -3,12 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Pablo's utility functions documentation!
-===================================================
+Welcome to Putil's package documentation!
+=========================================
 
 
 
-Provides a personal standard Python library
+Provides a collection of utility modules to supplement the Python standard library
 
 Contents:
 

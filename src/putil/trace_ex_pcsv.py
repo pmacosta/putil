@@ -1,5 +1,5 @@
 # trace_ex_pcsv		pylint: disable=C0111
-# Copyright (c) 2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
 import tempfile

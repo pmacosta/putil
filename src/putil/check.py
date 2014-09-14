@@ -1,6 +1,6 @@
 ﻿# pylint: disable=W0212
 # check.py
-# Copyright (c) 2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
 """
