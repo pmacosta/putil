@@ -1,6 +1,6 @@
 # Putil Library #
 
-A collection of personal utility modules
+Provides a collection of utility modules to supplement the Python standard library:
 
 * check: decorators to help API argument checking/validation
 * eng: enginering-related helper functions
@@ -17,7 +17,7 @@ A collection of personal utility modules
 
 The MIT License (MIT)
 
-Copyright (c) 2014 Pablo Acosta-Serafini
+Copyright (c) 2013-2014 Pablo Acosta-Serafini
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
