@@ -117,20 +117,18 @@ class Tree(object):	#pylint: disable=R0903
 		return self._prt(name=self.root_name, lparent=-1, sep='', pre1='', pre2='').encode('utf-8')
 
 	def _collapse_node(self, name):
-		""" Collapse a single node """
-		while True:
-			node = self._db[name]
-			if (len(node['children']) == 1) and (not node['data']):
-				child_name = node['children'][0]
-				self._db[child_name]['parent'] = copy.deepcopy(node['parent'])
-				self._db[self._db[name]['parent']]['children'].remove(name)
-				self._db[self._db[name]['parent']]['children'] = sorted(self._db[self._db[name]['parent']]['children']+[child_name])
-				del self._db[name]
-				name = child_name
-			else:
-				break
+		""" Collapse a sub-tree """
+		# This method accesses the database object directly and not through methods (as ideally) because of speed
 		node = self._db[name]
-		for name in node['children'][:]:
+		while (len(node['children']) == 1) and (not node['data']):
+			child_name = node['children'][0]
+			self._db[child_name]['parent'] = node['parent']
+			self._db[self._db[name]['parent']]['children'].remove(name)
+			self._db[self._db[name]['parent']]['children'] = sorted(self._db[self._db[name]['parent']]['children']+[child_name])
+			del self._db[name]
+			name = child_name
+			node = self._db[name]
+		for name in copy.deepcopy(node['children']):
 			self._collapse_node(name)
 
 	def _get_nodes(self):	#pylint: disable=C0111
@@ -142,18 +140,10 @@ class Tree(object):	#pylint: disable=R0903
 	def _get_root_name(self):	#pylint: disable=C0111
 		return self._root
 
-	def get_subtree(self, name):
-		if self.is_leaf(name):
-			return [name]
-		children = self.get_children(name)
-		ret = [name]
-		for child in children:
-			ret += self.get_subtree(child)
-		return ret
-
 	def _node_in_tree(self, name):	#pylint: disable=C0111
 		self._exh.ex_add(name='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
 		self._exh.raise_exception_if(name='node_not_in_tree', condition=name not in self._db, edata={'field':'node_name', 'value':name})
+		return True
 
 	def _prt(self, name, lparent, sep, pre1, pre2):	#pylint: disable=C0111,R0913,R0914
 		# Characters from http://www.unicode.org/charts/PDF/U2500.pdf
@@ -314,7 +304,7 @@ class Tree(object):	#pylint: disable=R0903
 		it does have data associated with it, *'Hello world!'*
 		"""
 		self._node_in_tree(name)
-		for child in self._db[name]['children'][:]:
+		for child in copy.deepcopy(self._db[name]['children']):
 			self._collapse_node(child)
 
 	@putil.check.check_arguments({'source_node':NodeName(), 'dest_node':NodeName()})
@@ -370,7 +360,7 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		self._exh.ex_add(name='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
 		self._node_in_tree(source_node)
-		self._exh.raise_exception_if(name='illegal_dest_node', condition=not source_node.startswith(self.root_name+'.'))
+		self._exh.raise_exception_if(name='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
 		for node in self.get_subtree(source_node):
 			self.add({'name':node.replace(source_node, dest_node, 1), 'data':self.get_data(node)})
 
@@ -410,18 +400,17 @@ class Tree(object):	#pylint: disable=R0903
 
 		"""
 		nodes = nodes if isinstance(nodes, list) else [nodes]
-		for node in nodes:
-			self._node_in_tree(node)
-			parent = self.get_node(node)['parent']
+		for parent, node in [(self._db[node]['parent'], node) for node in nodes if self._node_in_tree(node)]:
 			# Delete link to parent (if not root node)
 			del_list = self.get_subtree(node)
 			if parent:
-				self._db[parent]['children'] = [child for child in self._db[parent]['children'] if child != node]
+				self._db[parent]['children'].remove(node)
 			# Delete children (sub-tree)
 			for child in del_list:
 				del self._db[child]
 			if not len(self._db):
 				self._root = None
+				self._root_hierarchy_length = None
 
 	@putil.check.check_argument(NodeName())
 	def flatten_subtree(self, name):
@@ -484,12 +473,13 @@ class Tree(object):	#pylint: disable=R0903
 
 		"""
 		self._node_in_tree(name)
-		if (not self.is_root(name)) and (not self.get_data(name)):
+		if (self._db[name]['parent']) and (not self._db[name]['data']):
 			parent = self._db[name]['parent']
 			children = self._db[name]['children']
 			for child in children:
-				self._db[child]['parent'] = copy.deepcopy(parent)
-			self._db[parent]['children'] = sorted([child for child in self._db[parent]['children'] if child != name]+children)
+				self._db[child]['parent'] = parent
+			self._db[parent]['children'].remove(name)
+			self._db[parent]['children'] = sorted(self._db[parent]['children']+children)
 			del self._db[name]
 
 	@putil.check.check_argument(NodeName())
@@ -604,6 +594,9 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
+	def get_subtree(self, name):
+		return [name]+[node for child in self.get_children(name) for node in self.get_subtree(child)]
+
 	@putil.check.check_argument(NodeName())
 	def in_tree(self, name):
 		"""
@@ -691,13 +684,12 @@ class Tree(object):	#pylint: disable=R0903
 			 └subleaf2
 
 		"""
-		if name != self.root_name:
-			self._node_in_tree(name)
-			dlist = [key for key in self.nodes if key.find(name) != 0]
-			for key in dlist:
+		if (name != self.root_name) and (self._node_in_tree(name)):
+			for key in [node for node in self.nodes if node.find(name) != 0]:
 				del self._db[key]
 			self._db[name]['parent'] = ''
 			self._root = name
+			self._root_hierarchy_length = len(self.root_name.split('.'))
 
 	@putil.check.check_argument(NodeName())
 	def print_node(self, name):	#pylint: disable=C0111
@@ -727,7 +719,7 @@ class Tree(object):	#pylint: disable=R0903
 		ndb = dict()
 		for key in self._db.keys():
 			new_key = key[cstart:]
-			self._db[key]['parent'] = copy.deepcopy(self._db[key]['parent']) if not self._db[key]['parent'] else self._db[key]['parent'][cstart:]
+			self._db[key]['parent'] = self._db[key]['parent'] if not self._db[key]['parent'] else self._db[key]['parent'][cstart:]
 			self._db[key]['children'] = sorted([child[cstart:] for child in self._db[key]['children']])
 			ndb[new_key] = copy.deepcopy(self._db[key])
 			del self._db[key]
