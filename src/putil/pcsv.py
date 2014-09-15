@@ -315,9 +315,13 @@ class CsvFile(object):
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('write')) ]]]
 
 		:raises:
+		 * TypeError (Argument `append` is of the wrong type)
+
+		 * TypeError (Argument `file_name` is of the wrong type)
+
 		 * TypeError (Argument `headers` is of the wrong type)
 
-		 * Same as :py:attr:`putil.pcsv.write`
+		 * ValueError (There is no data to save to file)
 
 		 * Same as :py:meth:`putil.pcsv.CsvFile.data`
 

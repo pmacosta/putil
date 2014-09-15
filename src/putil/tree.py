@@ -28,8 +28,8 @@ mod_obj = sys.modules['__main__']
 # Trace Tree class
 setattr(mod_obj, '_EXH', putil.exh.ExHandle(putil.tree.Tree))
 exobj = getattr(mod_obj, '_EXH')
-obj = putil.tree.Tree()
-obj.add([
+tobj = putil.tree.Tree()
+tobj.add([
 	{'name':'dummy.root.branch1', 'data':list()},
 	{'name':'dummy.root.branch2', 'data':list()},
 	{'name':'dummy.root.branch1.leaf1', 'data':list()},
@@ -37,24 +37,24 @@ obj.add([
 	{'name':'dummy.root.branch1.leaf2', 'data':'Hello world!'},
 	{'name':'dummy.root.branch1.leaf2.subleaf2', 'data':list()},
 ])
-obj.collapse('dummy.root.branch1')
-obj.copy_subtree('dummy.root.branch1', 'dummy.root.branch3')
-obj.delete('dummy.root.branch2')
-obj.flatten_subtree('dummy.root.branch1')
-obj.get_children('dummy.root')
-obj.get_data('dummy.root')
-obj.get_leafs('dummy.root')
-obj.get_node('dummy.root')
-obj.get_node_children('dummy.root')
-obj.get_node_parent('dummy.root.branch1.leaf1.subleaf1')
-obj.get_subtree('dummy.root.branch3')
-obj.is_root('dummy.root')
-obj.in_tree('dummy.root')
-obj.is_leaf('dummy.root')
-obj.make_root('dummy.root.branch3')
-obj.print_node('dummy.root.branch3')
-obj.remove_prefix('dummy')
-obj.rename_node('root.branch3.leaf1', 'root.branch3.mapleleaf2')
+tobj.collapse('dummy.root.branch1')
+tobj.copy_subtree('dummy.root.branch1', 'dummy.root.branch3')
+tobj.delete('dummy.root.branch2')
+tobj.flatten_subtree('dummy.root.branch1')
+tobj.get_children('dummy.root')
+tobj.get_data('dummy.root')
+tobj.get_leafs('dummy.root')
+tobj.get_node('dummy.root')
+tobj.get_node_children('dummy.root')
+tobj.get_node_parent('dummy.root.branch1.leaf1.subleaf1')
+tobj.get_subtree('dummy.root.branch3')
+tobj.is_root('dummy.root')
+tobj.in_tree('dummy.root')
+tobj.is_leaf('dummy.root')
+tobj.make_root('dummy.root.branch3')
+tobj.print_node('dummy.root.branch3')
+tobj.remove_prefix('dummy')
+tobj.rename_node('root.branch3.leaf1', 'root.branch3.mapleleaf2')
 exobj.build_ex_tree(no_print=True)
 exobj_tree = copy.deepcopy(exobj)
 ]]]
@@ -215,10 +215,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		 * ValueError (Illegal node name: *[node_name]*)
 
-		 * Same as :py:meth:`putil.tree.Tree.in_tree`
-
 		.. [[[end]]]
-
 
 		For example:
 
@@ -284,7 +281,6 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[end]]]
 
-
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
 			>>> print str(tobj)
@@ -335,7 +331,6 @@ class Tree(object):	#pylint: disable=R0903
 		 * Same as :py:meth:`putil.tree.Tree.collapse`
 
 		.. [[[end]]]
-
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
@@ -424,12 +419,9 @@ class Tree(object):	#pylint: disable=R0903
 		:param	name: Ending hierarchy node whose sub-trees are to be flattened
 		:type	name: string
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('flatten_subtree')) ]]]
 
-		:raises:
-		 * TypeError (Argument `nodes` is of the wrong type)
-
-		 * Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
 
 		.. [[[end]]]
 
@@ -532,6 +524,9 @@ class Tree(object):	#pylint: disable=R0903
 		:rtype	data: list
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_leafs')) ]]]
+
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
@@ -571,7 +566,7 @@ class Tree(object):	#pylint: disable=R0903
 		:type	name: string
 		:rtype: list
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_parent')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_children')) ]]]
 
 		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
 
@@ -599,6 +594,33 @@ class Tree(object):	#pylint: disable=R0903
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
 	def get_subtree(self, name):
+		"""
+		Return all node names in a sub-tree
+
+		:param	name: Sub-tree root node name
+		:type	name: string
+		:rtype: list
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_subtree')) ]]]
+
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+
+		.. [[[end]]]
+
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.get_subtree('root.branch1')
+			['root.branch1', 'root.branch1.leaf1', 'root.branch1.leaf1.subleaf1', 'root.branch1.leaf2', 'root.branch1.leaf2.subleaf2']
+
+		"""
 		return [name]+[node for child in self.get_children(name) for node in self.get_subtree(child)]
 
 	@putil.check.check_argument(NodeName())
@@ -698,16 +720,16 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.check.check_argument(NodeName())
 	def print_node(self, name):	#pylint: disable=C0111
 		"""
-		Prints node information
+		Prints node information (parent, children and data)
 
 		:param	name: Node name
 		:type	name: string
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
 
-		 * ValueError (Argument `nodes` is not a valid node name)
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('print_node')) ]]]
 
-		 * RuntimeError (Node *[name]* not in tree)
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+
+		.. [[[end]]]
 		"""
 		node = self.get_node(name)
 		children = [self._split_node_name(child)[-1] for child in node['children']] if node['children'] else node['children']
@@ -716,6 +738,55 @@ class Tree(object):	#pylint: disable=R0903
 
 	@putil.check.check_argument(NodeName())
 	def remove_prefix(self, prefix):
+		"""
+		Removes (deletes) a hierarchy prefix from all nodes in tree. The prefix has to be part of the root node name
+
+		:param	name: Prefix hierarchy to remove
+		:type	name: string
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('remove_prefix')) ]]]
+
+		:raises:
+		 * TypeError (Argument `prefix` is of the wrong type)
+
+		 * ValueError (Illegal prefix)
+
+		 * Same as :py:meth:`putil.tree.Tree.in_tree`
+
+		.. [[[end]]]
+
+		For example:
+
+			>>> tobj = putil.tree.Tree()
+			>>> tobj.add([
+			...		{'name':'dummy.levels.root.branch1', 'data':list()},
+			...		{'name':'dummy.levels.root.branch2', 'data':list()},
+			...		{'name':'dummy.levels.root.branch1.leaf1', 'data':list()},
+			...		{'name':'dummy.levels.root.branch1.leaf1.subleaf1', 'data':333},
+			...		{'name':'dummy.levels.root.branch1.leaf2', 'data':'Hello world!'},
+			...		{'name':'dummy.levels.root.branch1.leaf2.subleaf2', 'data':list()},
+			... ])
+			>>> tobj.make_root('dummy.levels.root')
+			>>> print str(tobj)
+			dummy.levels.root
+			├branch1
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>>tobj.remove_prefix('dummy.levels')
+			>>>print str(tobj)
+			root
+			├branch1
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+
+		"""
+
 		self._exh.ex_add(name='illegal_prefix', extype=ValueError, exmsg='Illegal prefix')
 		index = self.root_name.find(prefix)
 		self._exh.raise_exception_if(name='illegal_prefix', condition=(index != 0) or (self.in_tree(prefix)))
@@ -733,11 +804,53 @@ class Tree(object):	#pylint: disable=R0903
 
 	@putil.check.check_argument(NodeName())
 	def rename_node(self, name, new_name):
+		"""
+		Rename a tree node
+
+		:param	name: Node name to rename
+		:type	name: string
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('rename_node')) ]]]
+
+		:raises:
+		 * RuntimeError (Argument `new_name` has an illegal root node)
+
+		 * RuntimeError (Node *[node_name]* already exists)
+
+		 * Same as :py:meth:`putil.tree.Tree.copy_subtree`
+
+		 * Same as :py:meth:`putil.tree.Tree.delete`
+
+		 * Same as :py:meth:`putil.tree.Tree.in_tree`
+
+		.. [[[end]]]
+
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.rename_node('root.branch1.leaf1', 'root.branch1.mapleleaf1')
+			>>> print str(tobj)
+			root
+			├branch1
+			│├leaf2 (*)
+			││└subleaf2
+			│└mapleleaf1
+			│ └subleaf1 (*)
+			└branch2
+
+		"""
 		self._exh.ex_add(name='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
 		self._exh.ex_add(name='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
 		self._node_in_tree(name)
 		self._exh.raise_exception_if(name='new_name_exists', condition=self.in_tree(new_name), edata={'field':'node_name', 'value':new_name})
-		self._exh.raise_exception_if(name='illegal_new_name', condition=not new_name.startswith(self.root_name+'.'))
+		self._exh.raise_exception_if(name='illegal_new_name', condition=name.split('.')[:-1] != new_name.split('.')[:-1])
 		self.copy_subtree(name, new_name)
 		self.delete(name)
 
@@ -762,48 +875,3 @@ class Tree(object):	#pylint: disable=R0903
 
 	:rtype: string or None
 	"""	#pylint: disable=W0105
-
-@putil.check.check_arguments({'tree':Tree, 'name':NodeName()})
-def search_for_node(tree, name):
-	"""
-	Searches tree node and its children for a particular node name, which can be specified hierarchically. Returns *None* if node name not found.
-
-	:param	tree:	Tree to search
-	:type	tree:	:py:class:`putil.tree.Tree()` object
-	:param	name:	Node name to search for (case sensitive). Levels of hierarchy are denoted by '.', for example 'root.branch1.leaf2'.
-	:type	name:	string
-	:rtype:	same as :py:meth:`putil.tree.Tree.get_node()` or *None*
-	:raises:
-	 * TypeError (Argument `tree` is of the wrong type)
-
-	 * TypeError (Argument `name` is of the wrong type)
-	"""
-	return None if not tree.in_tree(name) else tree.get_node(name)
-
-@putil.check.check_argument(putil.check.PolymorphicType([{'node':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'node':NodeName(), 'data':putil.check.Any()})]))
-def build_trees(nodes):
-	"""
-	Build tree objects
-
-	:param	nodes:	Tree information. Each dictionary must contain only two keys, *name*, with a (hierarchical) node name, and *data*, with the node data. Multiple entries for a given node name may exist, \
-	and the resulting node data will be a list whose elements are the values of the *data* key of all dictionaries in **tree_info** that share the same node name
-	:type	nodes:	dictionary or list of dictionaries.
-	:rtype:	:py:class:`putil.tree.TreeNode()` object or list of :py:class:`putil.tree.TreeNode()` objects if there are multiple root nodes
-	:raises:
-	 * TypeError (Argument `tree_info` is of the wrong type)
-
-	 * Same as :py:attr:`putil.tree.TreeNode.name`
-	"""
-	roots = list()
-	nodes = nodes if isinstance(nodes, list) else [nodes]
-	for node in nodes:
-		root_name = [element.strip() for element in node['name'].strip().split('.')][0]
-		# Find or create tree to add nodes and data to
-		for tobj in roots:
-			if tobj.root_name == root_name:
-				break
-		else:
-			tobj = Tree()
-			roots.append(tobj)
-		tobj.add(node)
-	return roots

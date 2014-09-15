@@ -381,29 +381,6 @@ class ExHandle(object):	#pylint: disable=R0902
 					self._extable[key2]['cross_flat_exceptions'] = copy.deepcopy(self._extable[key1]['flat_exceptions'])
 					changed_entries.append(key2)
 
-	def _print_extable_for_debug(self, no_print=True):
-		""" Pretty prints exception table (mainly for debugging purposes) """
-		if not no_print:
-			for key in sorted(self._extable.keys()):
-				print 'Member: {0}'.format(key)
-				print 'Native exceptions:'
-				self._print_extable_subkey(key, 'native_exceptions')
-				print 'Flat exceptions:'
-				self._print_extable_subkey(key, 'flat_exceptions')
-				print 'Cross hierarchical exceptions:'
-				self._print_extable_subkey(key, 'cross_hierarchical_exceptions')
-				print 'Cross names:'
-				self._print_extable_subkey(key, 'cross_names')
-				print
-
-	def _print_extable_subkey(self, key, subkey):
-		""" Prints sub-key of exception table """
-		indent = 3*' '
-		if not self._extable[key][subkey]:
-			print '{0}None'.format(indent)
-		for member in self._extable[key][subkey]:
-			print '{0}{1}'.format(indent, member)
-
 	def _detect_ex_tree_cross_usage(self, no_print=True):	#pylint: disable=R0912,R0914
 		""" Replace exceptions from other class methods with 'Same as [...]' construct """
 		if not no_print:
@@ -423,7 +400,14 @@ class ExHandle(object):	#pylint: disable=R0902
 						if callable_name in trace_obj_callable_list:
 							self._extable[child_name]['cross_names'].append(callable_name)
 							self._extable[child_name]['cross_hierarchical_exceptions'].append('Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[callable_name], callable_name))
-							self._tobj.delete('.'.join(callable_list[:num+2]))
+							# Find out highest hierarchy node that contains cross-callable (because of collapse and flattenging, the ndoe might have several hierarchy levels after cross-callable)
+							del_node = None
+							for del_node in ['.'.join(callable_list[:num1+2]) for num1 in range(num, len(callable_list)-1)]:
+								if self._tobj.in_tree(del_node):
+									break
+							else:
+								raise RuntimeError('Could not find cross-usage node to delete')
+							self._tobj.delete(del_node)
 							node_deleted = True
 							break
 					if node_deleted:
@@ -541,6 +525,29 @@ class ExHandle(object):	#pylint: disable=R0902
 			print 'self._extable{0}:'.format(' ({0})'.format(msg) if msg else msg)
 			for key in sorted(self._extable.keys()):
 				print 'Member {0} ({1}): {2}\n'.format(key, self._extable[key]['obj_name'], self._extable[key]['hier_exceptions'])
+
+	def _print_extable_for_debug(self, no_print=True):
+		""" Pretty prints exception table (mainly for debugging purposes) """
+		if not no_print:
+			for key in sorted(self._extable.keys()):
+				print 'Member: {0}'.format(key)
+				print 'Native exceptions:'
+				self._print_extable_subkey(key, 'native_exceptions')
+				print 'Flat exceptions:'
+				self._print_extable_subkey(key, 'flat_exceptions')
+				print 'Cross hierarchical exceptions:'
+				self._print_extable_subkey(key, 'cross_hierarchical_exceptions')
+				print 'Cross names:'
+				self._print_extable_subkey(key, 'cross_names')
+				print
+
+	def _print_extable_subkey(self, key, subkey):
+		""" Prints sub-key of exception table """
+		indent = 3*' '
+		if not self._extable[key][subkey]:
+			print '{0}None'.format(indent)
+		for member in self._extable[key][subkey]:
+			print '{0}{1}'.format(indent, member)
 
 	def _prune_ex_tree(self, no_print=True):
 		""" Prune tree (delete trace object methods/attributes that have no exceptions """
