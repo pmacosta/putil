@@ -86,6 +86,7 @@ class Tree(object):	#pylint: disable=R0903
 	def __init__(self):	#pylint: disable=R0913
 		self._db = dict()
 		self._root = None
+		self._root_hierarchy_length = None
 		self._vertical = unichr(0x2502)
 		self._vertical_and_right = unichr(0x251C)
 		self._up_and_right = unichr(0x2514)
@@ -193,8 +194,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._root = name
 
 	def _split_node_name(self, name, root_name=None):	#pylint: disable=C0111,R0201
-		root_hierarchy_length = 0 if not root_name else len(self._split_node_name(self.root_name))
-		return [element.strip() for element in name.strip().split('.')][root_hierarchy_length:]
+		return [element.strip() for element in name.strip().split('.')][0 if not root_name else self._root_hierarchy_length:]
 
 	@putil.check.check_argument(putil.check.PolymorphicType([{'name':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'name':NodeName(), 'data':putil.check.Any()})]))
 	def add(self, nodes):
@@ -253,32 +253,30 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		self._exh.ex_add(name='illegal_node_name', extype=ValueError, exmsg='Illegal node name: *[node_name]*')
 		nodes = nodes if isinstance(nodes, list) else [nodes]
+		# Create root node (if needed)
 		if not self.root_name:
 			self._set_root_name(nodes[0]['name'].split('.')[0].strip())
 			self._db[self.root_name] = {'parent':'', 'children':list(), 'data':list()}
+			self._root_hierarchy_length = len(self.root_name.split('.'))
+		# Process new data
 		for node_dict in nodes:
-			name = node_dict['name']
-			data = node_dict['data']
-			if not self.in_tree(name):
-				root_hierarchy_length = len(self._split_node_name(self.root_name))
+			name, data = node_dict['name'], node_dict['data']
+			if name not in self._db:
+				# Validate node name (root of new node same as tree root)
 				hierarchy = self._split_node_name(name)
-				node_root = '.'.join(hierarchy[:root_hierarchy_length])
-				self._exh.raise_exception_if(name='illegal_node_name', condition=node_root != self.root_name, edata={'field':'node_name', 'value':name})
-				if name != self.root_name:
-					hierarchy = self._split_node_name(name, self.root_name)
-					for num in range(len(hierarchy)):
-						child = self.root_name+('.'+('.'.join(hierarchy[:num+1])))
-						if not self.in_tree(child):
-							parent = '.'.join(self._split_node_name(child)[:-1])
-							self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
-							self._db[parent]['children'] = list(sorted(set(self._db[parent]['children']+[child])))
-			data = data if isinstance(data, list) and (len(data) > 0) else (list() if isinstance(data, list) else [data])
-			self._db[name]['data'] = self._db[name]['data']+data
+				self._exh.raise_exception_if(name='illegal_node_name', condition=not name.startswith(self.root_name+'.'), edata={'field':'node_name', 'value':name})
+				# Create intermediate nodes if node not in tree
+				hierarchy = self._split_node_name(name, self.root_name)
+				node_tree = [self.root_name+'.'+('.'.join(hierarchy[:num+1])) for num in range(len(hierarchy))]
+				for parent, child in [(child[:child.rfind('.')], child) for child in node_tree if child not in self._db]:
+					self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
+					self._db[parent]['children'] = sorted(list(set(self._db[parent]['children']+[child])))
+			self._db[name]['data'] += (data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
 	@putil.check.check_argument(NodeName())
 	def collapse(self, name):
 		"""
-		Collapses hierarchy. Nodes that have a single child and no data are combined with their children.
+		Collapses hierarchy. Nodes that have a single child and no data are combined with their child as a single tree node
 
 		:param	name: Root of the sub-tree to collapse
 		:type	name: string
@@ -293,7 +291,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 
 
-		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
 			>>> print str(tobj)
 			root
@@ -345,7 +343,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 
 
-		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
 			>>> print str(tobj)
 			root
@@ -393,7 +391,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[end]]]
 
-		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
 			>>> print str(tobj)
 			root
@@ -442,7 +440,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[end]]]
 
-		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
 			>>> tobj.add([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
 			...           {'name':'root.branch2.leaf1', 'data':'loren ipsum'},
@@ -674,7 +672,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[end]]]
 
-		For example, using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
 			>>> print str(tobj)
 			root
@@ -735,6 +733,7 @@ class Tree(object):	#pylint: disable=R0903
 			del self._db[key]
 		self._db = ndb
 		self._set_root_name(self.root_name[cstart:])
+		self._root_hierarchy_length = len(self.root_name.split('.'))
 
 	@putil.check.check_argument(NodeName())
 	def rename_node(self, name, new_name):
