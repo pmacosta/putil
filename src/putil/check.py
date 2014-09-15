@@ -530,9 +530,10 @@ def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pylint: disable=R0914
 	"""	Checks that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
 	check_argument_type_internal(param_name, param_spec, func, *args, **kwargs)
-	modobj = sys.modules[func.__module__]
+	modobj = sys.modules['__main__']
 	pseudo_types = _get_pseudo_types(False)['type']
 	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
+	trace_on = getattr(modobj, '_EXH', -1) != -1
 	if (param is not None) and (type(param_spec) in pseudo_types):
 		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if \
 			(sub_type in pseudo_types) and (get_istype(sub_inst, param)) and (Any not in param_spec.types)]
@@ -540,23 +541,23 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 			# Find out parameter expected by exception() method
 			exparam_dict_list = list()
 			for param_spec in sub_param_spec:
-				if not get_includes(param_spec, param):
+				if (not get_includes(param_spec, param)) or trace_on:
 					exparam = funcsigs.signature(param_spec.exception).parameters
 					fiter = iter(exparam.items())
 					exparam_name = next(fiter)[0]
 					exparam_dict_list.append({'param':param} if exparam_name == 'param' else {'param_name':param_name})
-			exp_dict_list = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
-			if getattr(modobj, '_EXH', -1) != -1:
+			ex_dict_list = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
+			if trace_on:
 				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
-					ex_name = 'check_argument_internal_{1}{2}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
+					ex_name = 'check_argument_internal_{0}{1}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
 					modobj._EXH.ex_add(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
 					modobj._EXH.raise_exception_if(name=ex_name, condition=False)
 			exp_dict = dict()
-			if len(exp_dict_list) == len(sub_param_spec):
-				same_exp = all(item['type'] == exp_dict_list[0]['type'] for item in exp_dict_list)
-				exp_dict['type'] = exp_dict_list[0]['type'] if same_exp else RuntimeError
-				exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in exp_dict_list])
+			if len(ex_dict_list) == len(sub_param_spec):
+				same_exp = all(item['type'] == ex_dict_list[0]['type'] for item in ex_dict_list)
+				exp_dict['type'] = ex_dict_list[0]['type'] if same_exp else RuntimeError
+				exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in ex_dict_list])
 				raise exp_dict['type'](exp_dict['msg'])
 
 

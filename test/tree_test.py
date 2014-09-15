@@ -79,18 +79,6 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		test_list.append(putil.misc.trigger_exception(obj.add, {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]}, ValueError, 'Illegal node name: d.e'))
 		assert test_list == len(test_list)*[True]
 
-	def test_get_children_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
-		""" Test that get_children() method raises the right exceptions """
-		tree1, _, _ = default_trees
-		test_list = list()
-		with pytest.raises(ValueError) as excinfo:
-			tree1.get_children('a..b')
-		test_list.append(excinfo.value.message == 'Argument `name` is not a valid node name')
-		with pytest.raises(TypeError) as excinfo:
-			tree1.get_children(5)
-		test_list.append(excinfo.value.message == 'Argument `name` is of the wrong type')
-		assert test_list == len(test_list)*[True]
-
 	def test_add_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that add() method works """
 		tree1, tree2, tree3 = default_trees
@@ -115,6 +103,61 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		test_list.append(tree2.get_children('t2l1.t2l2b2.t2l3b2c') == list())
 		test_list.append(tree3.get_children('t3l1') == list())
 		#
+		assert test_list == len(test_list)*[True]
+
+	def test_collapse_errors(self):	#pylint: disable=C0103,R0201
+		""" Test that collapse() method raises the right exceptions """
+		obj = putil.tree.Tree()
+		test_list = list()
+		test_list.append(putil.misc.trigger_exception(obj.collapse, {'name':5}, TypeError, 'Argument `name` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(obj.collapse, {'name':'a.b..c'}, ValueError, 'Argument `name` is not a valid node name'))
+		test_list.append(putil.misc.trigger_exception(obj.collapse, {'name':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
+		assert test_list == len(test_list)*[True]
+
+	def test_collapse_works(self):	#pylint: disable=C0103,R0201,W0621
+		""" Test that collapse method works """
+		test_list = list()
+		t1obj = putil.tree.Tree()
+		t1obj.add([
+			{'name':'l0.l1', 'data':'hello'},
+			{'name':'l0.l1.l2.l3b2.l4b2b1', 'data':5},
+			{'name':'l0.l1.l2.l3b2.l4b2b1.l5b2b1b1', 'data':list()},
+			{'name':'l0.l1.l2.l3b1.l4b1b1.l5b1b1b1.l6b1b1b1b1', 'data':list()},
+			{'name':'l0.l1.l2.l3b1.l4b1b1.l5b1b1b1.l6b1b1b1b2', 'data':list()},
+			{'name':'l0.l1.l2.l3b1.l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1', 'data':list()},
+		])
+		# Original tree       Collapsed tree
+		# l0                  l0
+		# └l1 (*)             └l1 (*)
+		#  └l2                 └l2
+		#   ├l3b1               ├l3b1
+		#   │├l4b1b1            │├l4b1b1.l5b1b1b1
+		#   ││└l5b1b1b1         ││├l6b1b1b1b1
+		#   ││ ├l6b1b1b1b1      ││└l6b1b1b1b2
+		#   ││ └l6b1b1b1b2      │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1
+		#   │└l5b1b1            └l3b2.l4b2b1 (*)
+		#   │ └l5b1b1b2          └l5b2b1b1
+		#   │  └l6b1b1b2b1
+		#   │   └l7b1b1b2b1b1
+		#   └l3b2
+		#    └l4b2b1 (*)
+		#     └l5b2b1b1
+		t1obj.collapse(t1obj.root_name)
+		test_list.append(str(t1obj) == u'l0\n└l1 (*)\n └l2\n  ├l3b1\n  │├l4b1b1.l5b1b1b1\n  ││├l6b1b1b1b1\n  ││└l6b1b1b1b2\n  │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n  └l3b2.l4b2b1 (*)\n   └l5b2b1b1'.encode('utf-8'))
+		test_list.append(t1obj.get_data('l0.l1') == ['hello'])
+		test_list.append(t1obj.get_data('l0.l1.l2.l3b2.l4b2b1') == [5])
+		assert test_list == len(test_list)*[True]
+
+	def test_get_children_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that get_children() method raises the right exceptions """
+		tree1, _, _ = default_trees
+		test_list = list()
+		with pytest.raises(ValueError) as excinfo:
+			tree1.get_children('a..b')
+		test_list.append(excinfo.value.message == 'Argument `name` is not a valid node name')
+		with pytest.raises(TypeError) as excinfo:
+			tree1.get_children(5)
+		test_list.append(excinfo.value.message == 'Argument `name` is of the wrong type')
 		assert test_list == len(test_list)*[True]
 
 	def test_delete_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
@@ -401,20 +444,3 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		test_list.append(str(tree3) == u't3l1 (*)\n├leaf1\n└leaf2'.encode('utf-8'))
 		assert test_list == len(test_list)*[True]
 
-	def test_collapse_works(self):	#pylint: disable=C0103,R0201,W0621
-		""" Test that collapse method works """
-		test_list = list()
-		t1obj = putil.tree.Tree()
-		t1obj.add([
-			{'name':'l0.l1', 'data':'hello'},
-			{'name':'l0.l1.l2.l3b2.l4b2b1', 'data':5},
-			{'name':'l0.l1.l2.l3b2.l4b2b1.l5b2b1b1', 'data':list()},
-			{'name':'l0.l1.l2.l3b1.l4b1b1.l5b1b1b1.l6b1b1b1b1', 'data':list()},
-			{'name':'l0.l1.l2.l3b1.l4b1b1.l5b1b1b1.l6b1b1b1b2', 'data':list()},
-			{'name':'l0.l1.l2.l3b1.l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1', 'data':list()},
-		])
-		t1obj.collapse(t1obj.root_name)
-		test_list.append(str(t1obj) == u'l0\n└l1 (*)\n └l2\n  ├l3b1\n  │├l4b1b1.l5b1b1b1\n  ││├l6b1b1b1b1\n  ││└l6b1b1b1b2\n  │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n  └l3b2.l4b2b1 (*)\n   └l5b2b1b1'.encode('utf-8'))
-		test_list.append(t1obj.get_data('l0.l1') == ['hello'])
-		test_list.append(t1obj.get_data('l0.l1.l2.l3b2.l4b2b1') == [5])
-		assert test_list == len(test_list)*[True]

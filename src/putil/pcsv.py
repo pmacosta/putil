@@ -100,6 +100,8 @@ def write(file_name, data, append=True):
 	:raises:
 	 * IOError (File *[file_name]* could not be created: *[reason]*)
 
+	 * IOError (File /tmp/tmpoE8xZD could not be found)
+
 	 * OSError (File *[file_name]* could not be created: *[reason]*)
 
 	 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
@@ -166,6 +168,8 @@ class CsvFile(object):
 
 	:raises:
 	 * IOError (File *[file_name]* could not be found)
+
+	 * IOError (File /tmp/tmpAExQFT could not be found)
 
 	 * RuntimeError (Column headers are not unique)
 
@@ -317,6 +321,8 @@ class CsvFile(object):
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('write')) ]]]
 
 		:raises:
+		 * IOError (File /tmp/tmpCXgztR could not be found)
+
 		 * TypeError (Argument `append` is of the wrong type)
 
 		 * TypeError (Argument `file_name` is of the wrong type)

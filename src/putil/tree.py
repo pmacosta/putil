@@ -279,6 +279,8 @@ class Tree(object):	#pylint: disable=R0903
 
 		 * TypeError (Argument `name` is of the wrong type)
 
+		 * ValueError (Argument `name` is not a valid node name)
+
 		.. [[[end]]]
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
@@ -325,6 +327,10 @@ class Tree(object):	#pylint: disable=R0903
 		 * TypeError (Argument `dest_node` is of the wrong type)
 
 		 * TypeError (Argument `source_node` is of the wrong type)
+
+		 * ValueError (Argument `dest_node` is not a valid node name)
+
+		 * ValueError (Argument `source_node` is not a valid node name)
 
 		 * Same as :py:meth:`putil.tree.Tree.add`
 
@@ -375,6 +381,8 @@ class Tree(object):	#pylint: disable=R0903
 
 		:raises:
 		 * TypeError (Argument `nodes` is of the wrong type)
+
+		 * ValueError (Argument `nodes` is not a valid node name)
 
 		 * Same as :py:meth:`putil.tree.Tree.collapse`
 
@@ -652,7 +660,10 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
 
-		:raises: TypeError (Argument `name` is of the wrong type)
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `name` is not a valid node name)
 
 		.. [[[end]]]
 		"""
@@ -747,6 +758,8 @@ class Tree(object):	#pylint: disable=R0903
 
 		:raises:
 		 * TypeError (Argument `prefix` is of the wrong type)
+
+		 * ValueError (Argument `prefix` is not a valid node name)
 
 		 * ValueError (Illegal prefix)
 
