@@ -4,7 +4,7 @@ tree module
 
 
 
-This module can be used to build, handle, process and search data trees
+This module can be used to build, handle, process and search `tries <http://wikipedia.org/wiki/Trie>`_
 
 ***********
 Interpreter
@@ -16,11 +16,28 @@ The module has been developed using Python 2.7, but it *should* also work with P
 External libraries
 ******************
 
-None
+Standard Python library and other Putil library modules
 
 ***************************************
 Application programming interface (API)
 ***************************************
+Pseudo-types
+============
+
+NodeName
+--------
+
+The tree node name is a *string* where hierarchy levels are denoted by a period '.' in the name. Node names cannot contain spaces, empty hierarchy levels, start with a period or end with a period.
+
+For this example tree::
+
+	root
+	├branch1
+	│├leaf1
+	│└leaf2
+	└branch2
+
+The node names are ``'root'``, ``'root.branch1'``, ``'root.branch1.leaf1'``, ``'root.branch1.leaf2'`` and ``'root.branch2'``.
 
 Global variables
 ================

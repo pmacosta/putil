@@ -84,11 +84,12 @@ putil.check.register_new_type(DataFilter, 'Comma-separated values file data filt
 @putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'data':putil.check.ArbitraryLengthList(list), 'append':bool})
 def write(file_name, data, append=True):
 	"""
-	Writes data to a specified comma-separated values (CSV) file
+	Write data to a specified comma-separated values (CSV) file
 
 	:param	file_name:	File name of the comma-separated values file to be written
 	:type	file_name:	string
-	:param	data:	Data to write to file. Each item in **data** should contain a sub-list corresponding to a row of data; each item in the sub-lists should contain data corresponding to a particular column
+	:param	data:	Data to write to file. Each item in **data** should contain a sub-list corresponding to a row of data; each item in the sub-lists should contain data corresponding to a \
+	particular column
 	:type	data:	list
 	:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
 	(overwriting an existing file with the same name if such file exists)
@@ -157,8 +158,8 @@ class CsvFile(object):
 
 	:param	file_name:	File name of the comma-separated values file to be read
 	:type	file_name:	string
-	:param	dfilter:	Data filter. See :py:attr:`putil.pcsv.CsvFile.dfilter`
-	:type	dfilter:	dictionary
+	:param	dfilter:	Data filter. See `DataFilter`_ pseudo-type specification
+	:type	dfilter:	DataFilter
 	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
 
 	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('__init__')) ]]]
@@ -233,10 +234,10 @@ class CsvFile(object):
 	@putil.check.check_argument(DataFilter())
 	def add_dfilter(self, dfilter):
 		"""
-		Adds more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
+		Add more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
 
-		:param	dfilter:	Filter specification. See :py:attr:`putil.pcsv.CsvFile.dfilter`
-		:type	dfilter:	dictionary
+		:param	dfilter:	Data filter. See `DataFilter`_ pseudo-type specification
+		:type	dfilter:	DataFilter
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('add_dfilter')) ]]]
 
@@ -268,7 +269,8 @@ class CsvFile(object):
 	@putil.check.check_arguments({'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool})
 	def data(self, col=None, filtered=False):
 		"""
-		 Returns (filtered) file data. The returned object is a list, each item is a sub-list corresponding to a row of data; each item in the sub-lists contains data corresponding to a particular column
+		 Return (filtered) file data. The returned object is a list, each item is a sub-list corresponding to a row of data; each item in the sub-lists contains data corresponding to a \
+		 particular column
 
 		:param	col:	Column(s) to extract from filtered data. If no column specification is given (or **col** is *None*) all columns are returned
 		:type	col:	string, list of strings or None
@@ -291,14 +293,14 @@ class CsvFile(object):
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
 	def reset_dfilter(self):
-		""" Resets (clears) data filter """
+		""" Reset (clears) data filter """
 		self._fdata = self._data[:]
 		self._dfilter = None
 
 	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'headers':bool, 'append':bool})
 	def write(self, file_name, col=None, filtered=False, headers=True, append=True):	#pylint: disable=R0913
 		"""
-		Writes (processed) data to a specified comma-separated values (CSV) file
+		Write (processed) data to a specified comma-separated values (CSV) file
 
 		:param	file_name:	File name of the comma-separated values file to be written
 		:type	file_name:	string
@@ -360,52 +362,10 @@ class CsvFile(object):
 	# Managed attributes
 	dfilter = property(_get_dfilter, _set_dfilter, None, doc='Data filter')
 	"""
-	Sets or returns the data filter.
+	Set or return the data filter.
 
-	The data filter consists of individual filters; each individual filter in turn consists of column name (dictionary key) and either a value representing a column value, a string or a number, or a list of column values, \
-	strings or numbers (dictionary value).
-
-	If the dictionary value is a column value all rows which contain the specified value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified
-	by each individual filter. For example, if the file to be processed is:
-
-	+------+-----+--------+
-	| Ctrl | Ref | Result |
-	+======+=====+========+
-	|    1 |   3 |     10 |
-	+------+-----+--------+
-	|    1 |   4 |     20 |
-	+------+-----+--------+
-	|    2 |   4 |     30 |
-	+------+-----+--------+
-	|    2 |   5 |     40 |
-	+------+-----+--------+
-	|    3 |   5 |     50 |
-	+------+-----+--------+
-
-	Then the filter specification ``dfilter = {'Ctrl':2, 'Ref':5}`` would result in the following filtered data set:
-
-	+------+-----+--------+
-	| Ctrl | Ref | Result |
-	+======+=====+========+
-	|    2 |   5 |     40 |
-	+------+-----+--------+
-
-	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an empty list because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
-	the `Ref` individual filter.
-
-	If the dictionary value is a list, the items of the list represent all the values to be kept for a particular column (strings or numbers). So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would
-	result in the following filtered data set:
-
-	+------+-----+--------+
-	| Ctrl | Ref | Result |
-	+======+=====+========+
-	|    2 |   5 |     40 |
-	+------+-----+--------+
-	|    3 |   5 |     50 |
-	+------+-----+--------+
-
-	:type:		dictionary
-	:rtype:		dictionary or None
+	:type:		DataFilter. See `DataFilter`_ pseudo-type specification
+	:rtype:		DataFilter or None
 
 	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('dfilter')) ]]]
 
@@ -416,7 +376,8 @@ class CsvFile(object):
 
 	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')
 	"""
-	:returns: Header of the comma-separated values file. Each list item is a column header
+	Return the header of the comma-separated values file. Each list item is a column header
+
 	:rtype:	list of strings
 	"""	#pylint: disable=W0105
 
