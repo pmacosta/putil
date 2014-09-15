@@ -141,13 +141,13 @@ class Tree(object):	#pylint: disable=R0903
 	def _get_root_name(self):	#pylint: disable=C0111
 		return self._root
 
-	def _get_subtree(self, name):
+	def get_subtree(self, name):
 		if self.is_leaf(name):
 			return [name]
 		children = self.get_children(name)
 		ret = [name]
 		for child in children:
-			ret += self._get_subtree(child)
+			ret += self.get_subtree(child)
 		return ret
 
 	def _node_in_tree(self, name):	#pylint: disable=C0111
@@ -373,7 +373,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._exh.ex_add(name='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
 		self._node_in_tree(source_node)
 		self._exh.raise_exception_if(name='illegal_dest_node', condition=not source_node.startswith(self.root_name+'.'))
-		for node in self._get_subtree(source_node):
+		for node in self.get_subtree(source_node):
 			self.add({'name':node.replace(source_node, dest_node, 1), 'data':self.get_data(node)})
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
@@ -416,7 +416,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._node_in_tree(node)
 			parent = self.get_node(node)['parent']
 			# Delete link to parent (if not root node)
-			del_list = self._get_subtree(node)
+			del_list = self.get_subtree(node)
 			if parent:
 				self._db[parent]['children'] = [child for child in self._db[parent]['children'] if child != node]
 			# Delete children (sub-tree)
@@ -543,7 +543,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return [node for node in self._get_subtree(name) if self.is_leaf(node)]
+		return [node for node in self.get_subtree(name) if self.is_leaf(node)]
 
 
 	@putil.check.check_argument(NodeName())

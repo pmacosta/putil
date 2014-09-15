@@ -282,7 +282,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			child_name = self._get_obj_full_name(child)
 			self._extable[child_name] = dict()
 			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj.get_data(child))))
-			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj.get_data(name)])))	#pylint: disable=W0212
+			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj.get_subtree(child) for exdesc in self._tobj.get_data(name)])))	#pylint: disable=W0212
 			self._extable[child_name]['cross_hierarchical_exceptions'] = list()
 			self._extable[child_name]['cross_flat_exceptions'] = list()
 			self._extable[child_name]['cross_names'] = list()
@@ -292,7 +292,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			child_name = self._get_obj_full_name(child_call_name)
 			self._extable[child_name] = dict()
 			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj.get_data(child))))
-			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj.get_data(name)])))	#pylint: disable=W0212
+			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj.get_subtree(child) for exdesc in self._tobj.get_data(name)])))	#pylint: disable=W0212
 			self._extable[child_name]['cross_hierarchical_exceptions'] = list()
 			self._extable[child_name]['cross_flat_exceptions'] = list()
 			self._extable[child_name]['cross_names'] = list()
@@ -415,7 +415,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			child_name = self._get_obj_full_name(child)
 			grandchildren = self._tobj.get_children(child)
 			for grandchild in sorted(grandchildren):
-				sub_tree = sorted(self._tobj._get_subtree(grandchild), reverse=True)	#pylint: disable=W0212
+				sub_tree = sorted(self._tobj.get_subtree(grandchild), reverse=True)	#pylint: disable=W0212
 				for node in sub_tree:
 					callable_list = self._callable_list(node)
 					node_deleted = False
@@ -442,7 +442,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			for grandchild in grandchildren:
 				call_name = self._get_obj_full_name(grandchild.replace(child+'.', '', 1))
 				if call_name.split('.')[-1].startswith('_'):
-					for subnode in self._tobj._get_subtree(grandchild):	#pylint: disable=W0212
+					for subnode in self._tobj.get_subtree(grandchild):	#pylint: disable=W0212
 						self._extable[child_name]['native_exceptions'] += self._tobj.get_data(subnode)
 					self._extable[child_name]['native_exceptions'] = sorted(list(set(self._extable[child_name]['native_exceptions'])))
 					self._tobj.delete(grandchild)
