@@ -197,7 +197,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		:param	nodes: Node(s) to add. Each dictionary must contain exactly two keys:
 
-		 * **name** (*string*) node name
+		 * **name** (*NodeName*) Node name. See `NodeName`_ pseudo-type specification
 
 		 * **data** (*any*) node data.
 
@@ -269,8 +269,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Collapses hierarchy. Nodes that have a single child and no data are combined with their child as a single tree node
 
-		:param	name: Root of the sub-tree to collapse
-		:type	name: string
+		:param	name: Root of the sub-tree to collapse. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse')) ]]]
 
@@ -312,10 +312,10 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Copy a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-treeexist in the destination sub-tree
 
-		:param	source_name: Root node of the sub-tree to copy from
-		:type	source_name: string
-		:param	dest_name: Root node of the sub-tree to copy to
-		:type	dest_name: string
+		:param	source_name: Root node of the sub-tree to copy from. See `NodeName`_ pseudo-type specification
+		:type	source_name: NodeName
+		:param	dest_name: Root node of the sub-tree to copy to. See `NodeName`_ pseudo-type specification
+		:type	dest_name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('copy_subtree')) ]]]
 
@@ -368,8 +368,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Delete nodes (and their sub-trees) from tree
 
-		:param	nodes: Node(s) to delete
-		:type	nodes: string or list of strings
+		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
+		:type	nodes: NodeName or list of NodeNames
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
 
@@ -416,8 +416,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Flatten sub-tree below a particular node if the node contains no data
 
-		:param	name: Ending hierarchy node whose sub-trees are to be flattened
-		:type	name: string
+		:param	name: Ending hierarchy node whose sub-trees are to be flattened. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('flatten_subtree')) ]]]
 
@@ -483,9 +483,9 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Return children node names of a node
 
-		:param	name: Node name
-		:type	name: string
-		:rtype	data: list of strings
+		:param	name: Node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
+		:rtype: list of NodeNames
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_children')) ]]]
 
@@ -501,9 +501,9 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Return node data
 
-		:param	name: Node name
-		:type	name: string
-		:rtype	data: any type or list of objects of any type
+		:param	name: Node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeNames
+		:rtype: any type or list of objects of any type
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_data')) ]]]
 
@@ -519,9 +519,9 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Return sub-tree leaf node(s)
 
-		:param	name: Sub-tree root node name
-		:type	name: string
-		:rtype	data: list
+		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
+		:rtype: list of NodeNames
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_leafs')) ]]]
 
@@ -538,9 +538,9 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Get tree node structure. The structure is a dictionary with the following keys:
 
-		 * **parent** (*string*) Parent node name, *''* if node is the root node
+		 * **parent** (*NodeName*) Parent node name, *''* if node is the root node. See `NodeName`_ pseudo-type specification
 
-		 * **children** (*list*) Children node names, empty list if node is a leaf
+		 * **children** (*list of NodeNames*) Children node names, empty list if node is a leaf. See `NodeName`_ pseudo-type specification
 
 		 * **data** (*list*) Node data, empty list if node contains no data
 
@@ -562,8 +562,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Return list of children structures of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure.
 
-		:param	name: Child node name
-		:type	name: string
+		:param	name: Child node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 		:rtype: list
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_children')) ]]]
@@ -580,8 +580,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Return parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure
 
-		:param	name: Child node name
-		:type	name: string
+		:param	name: Child node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 		:rtype: dictionary
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_parent')) ]]]
@@ -597,9 +597,9 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Return all node names in a sub-tree
 
-		:param	name: Sub-tree root node name
-		:type	name: string
-		:rtype: list
+		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
+		:rtype: list of NodeNames
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_subtree')) ]]]
 
@@ -628,8 +628,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Root node flag, *True* if node is the root node (node with no ancestors), *False* otherwise
 
-		:param	name: Node name
-		:type	name: string
+		:param	name: Node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 		:rtype: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_root')) ]]]
@@ -646,8 +646,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Return *True* if node name is in the tree, *False* otherwise
 
-		:param	name: Node name to search for
-		:type	name: string
+		:param	name: Node name to search for. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 		:rtype	data: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
@@ -663,8 +663,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Leaf node flag, *True* if node is a leaf node (node with no children), *False* otherwise
 
-		:param	name: Node name
-		:type	name: string
+		:param	name: Node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 		:rtype: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_leaf')) ]]]
@@ -681,9 +681,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Makes a sub-node the root node of the tree. All nodes not belonging to the sub-tree are deleted
 
-		:param	name: New root node name
-		:type	name: string
-		:rtype: boolean
+		:param	name: New root node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('make_root')) ]]]
 
@@ -722,8 +721,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Prints node information (parent, children and data)
 
-		:param	name: Node name
-		:type	name: string
+		:param	name: Node name. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('print_node')) ]]]
 
@@ -741,8 +740,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Removes (deletes) a hierarchy prefix from all nodes in tree. The prefix has to be part of the root node name
 
-		:param	name: Prefix hierarchy to remove
-		:type	name: string
+		:param	name: Prefix hierarchy to remove. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('remove_prefix')) ]]]
 
@@ -807,8 +806,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		Rename a tree node
 
-		:param	name: Node name to rename
-		:type	name: string
+		:param	name: Node name to rename. See `NodeName`_ pseudo-type specification
+		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('rename_node')) ]]]
 
@@ -857,9 +856,9 @@ class Tree(object):	#pylint: disable=R0903
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')
 	"""
-	Name of all tree nodes, *None* if an empty tree
+	Name of all tree nodes, *None* if an empty tree. See `NodeName`_ pseudo-type specification
 
-	:rtype: list or None
+	:rtype: list of NodeNames or None
 	"""	#pylint: disable=W0105
 
 	root_node = property(_get_root_node, None, None, doc='Tree root node')
@@ -871,7 +870,7 @@ class Tree(object):	#pylint: disable=R0903
 
 	root_name = property(_get_root_name, None, None, doc='Tree root node name')
 	"""
-	Tree root node name, *None* if :py:class:`putil.tree.Tree()` object has no nodes.
+	Tree root node name, *None* if :py:class:`putil.tree.Tree()` object has no nodes. See `NodeName`_ pseudo-type specification
 
-	:rtype: string or None
+	:rtype: NodeName or None
 	"""	#pylint: disable=W0105

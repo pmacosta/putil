@@ -27,7 +27,7 @@ Pseudo-types
 NodeName
 --------
 
-The tree node name is a *string* where hierarchy levels are denoted by a period '.' in the name. Node names cannot contain spaces, empty hierarchy levels, start with a period or end with a period.
+A tree node name is a *string* where hierarchy levels are denoted by a periods ("."). Node names cannot contain spaces, empty hierarchy levels, start with a period or end with a period.
 
 For this example tree::
 
