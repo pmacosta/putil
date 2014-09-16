@@ -361,7 +361,7 @@ class File(object):	#pylint: disable=R0903
 
 	def exception(self, param):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
-		return {'type':IOError, 'msg':'File {0} could not be found'.format(param)}
+		return {'type':IOError, 'msg':'File *[file_name]* could not be found', 'edata':{'field':'file_name', 'value':param}}
 register_new_type(File, 'file')
 
 
@@ -552,13 +552,35 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = 'check_argument_internal_{0}{1}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
 					modobj._EXH.ex_add(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
-					modobj._EXH.raise_exception_if(name=ex_name, condition=False)
+					if ('edata' in ex) and len(ex['edata']):
+						modobj._EXH.raise_exception_if(name=ex_name, condition=False, edata=ex['edata'])
+					else:
+						modobj._EXH.raise_exception_if(name=ex_name, condition=False)
 			exp_dict = dict()
 			if len(ex_dict_list) == len(sub_param_spec):
 				same_exp = all(item['type'] == ex_dict_list[0]['type'] for item in ex_dict_list)
 				exp_dict['type'] = ex_dict_list[0]['type'] if same_exp else RuntimeError
-				exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg'] for exp_dict in ex_dict_list])
+				for exp_dict in ex_dict_list:
+					if ('edata' in exp_dict) and len(exp_dict['edata']):
+						ex_msg = format_msg(exp_dict['msg'], exp_dict['edata'])
+						exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+ex_msg])
+					else:
+						exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg']])
 				raise exp_dict['type'](exp_dict['msg'])
+
+
+def format_msg(msg, edata):
+	""" Substitute parameters in exception message """
+	edata = edata if isinstance(edata, list) else [edata]
+	for field in edata:
+		if 'field' not in field:
+			raise ValueError('Key `field` not in field definition')
+		if 'value' not in field:
+			raise ValueError('Key `value` not in field definition')
+		if '*[{0}]*'.format(field['field']) not in msg:
+			raise RuntimeError('Field {0} not in exception message'.format(field['field']))
+		msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
+	return msg
 
 
 def check_argument_type(param_name, param_type):
@@ -642,7 +664,8 @@ def get_exception(ptype, **kwargs):
 		ret = ptype.exception(**kwargs)
 	except:
 		raise RuntimeError('Error trying to obtain pseudo type {0}.exception() result'.format(class_name))
-	if isinstance(ret, dict) and (len(ret) == 2) and ('type' in ret) and ('msg' in ret) and isinstance(ret['msg'], str):
+	if isinstance(ret, dict) and (((len(ret) == 2) and ('type' in ret) and ('msg' in ret) and isinstance(ret['msg'], str)) or \
+							      ((len(ret) == 3) and ('type' in ret) and ('msg' in ret) and isinstance(ret['msg'], str) and ('edata' in ret))):
 		if (ret['type'] is None) and (ret['msg'] == ''):
 			return ret
 		try:

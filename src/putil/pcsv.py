@@ -100,7 +100,7 @@ def write(file_name, data, append=True):
 	:raises:
 	 * IOError (File *[file_name]* could not be created: *[reason]*)
 
-	 * IOError (File /tmp/tmpoE8xZD could not be found)
+	 * IOError (File *[file_name]* could not be found)
 
 	 * OSError (File *[file_name]* could not be created: *[reason]*)
 
@@ -117,7 +117,7 @@ def write(file_name, data, append=True):
 	.. [[[end]]]
 	"""
 	root_module = inspect.stack()[-1][0]
-	_exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.csv.write')
+	_exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.pcsv.write)
 	_exh.ex_add(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
 	_exh.ex_add(name='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
 	_exh.ex_add(name='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
@@ -169,11 +169,9 @@ class CsvFile(object):
 	:raises:
 	 * IOError (File *[file_name]* could not be found)
 
-	 * IOError (File /tmp/tmpAExQFT could not be found)
-
 	 * RuntimeError (Column headers are not unique)
 
-	 * RuntimeError (File *[file_name]* has no data)
+	 * RuntimeError (File *[file_name]* has no valid data)
 
 	 * RuntimeError (File *[file_name]* is empty)
 
@@ -188,11 +186,11 @@ class CsvFile(object):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
 		root_module = inspect.stack()[-1][0]
-		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle('putil.csv.CsvFile')
+		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.pcsv.CsvFile)
 		self._exh.ex_add(name='file_not_found', extype=IOError, exmsg='File *[file_name]* could not be found')
 		self._exh.ex_add(name='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
 		self._exh.ex_add(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
-		self._exh.ex_add(name='file_has_no_data', extype=RuntimeError, exmsg='File *[file_name]* has no data')
+		self._exh.ex_add(name='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
 		#
 		self._exh.raise_exception_if(name='file_not_found', condition=False, edata={'field':'file_name', 'value':file_name})	# Check is actually done in the context manager, which is unreachable
 		with open(file_name, 'rU') as file_handle:
@@ -207,7 +205,7 @@ class CsvFile(object):
 		for num, row in enumerate(self._raw_data[1:]):
 			if any([putil.misc.isnumber(_number_failsafe(col)) for col in row]):
 				break
-		self._exh.raise_exception_if(name='file_has_no_data', condition=num == -1, edata={'field':'file_name', 'value':file_name})
+		self._exh.raise_exception_if(name='file_has_no_valid_data', condition=num == -1, edata={'field':'file_name', 'value':file_name})
 		# Set up class properties
 		self._data = [[None if col.strip() == '' else _number_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
 		self.reset_dfilter()
@@ -321,7 +319,7 @@ class CsvFile(object):
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('write')) ]]]
 
 		:raises:
-		 * IOError (File /tmp/tmpCXgztR could not be found)
+		 * IOError (File *[file_name]* could not be found)
 
 		 * TypeError (Argument `append` is of the wrong type)
 
