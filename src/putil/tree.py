@@ -210,10 +210,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add')) ]]]
 
-		:raises:
-		 * TypeError (Argument `nodes` is of the wrong type)
-
-		 * ValueError (Illegal node name: *[node_name]*)
+		:raises: ValueError (Illegal node name: *[node_name]*)
 
 		.. [[[end]]]
 
@@ -274,12 +271,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse')) ]]]
 
-		:raises:
-		 * RuntimeError (Node *[node_name]* not in tree)
-
-		 * TypeError (Argument `name` is of the wrong type)
-
-		 * ValueError (Argument `name` is not a valid node name)
+		:raises: RuntimeError (Node *[node_name]* not in tree)
 
 		.. [[[end]]]
 
@@ -323,14 +315,6 @@ class Tree(object):	#pylint: disable=R0903
 
 		:raises:
 		 * RuntimeError (Illegal root in destination node)
-
-		 * TypeError (Argument `dest_node` is of the wrong type)
-
-		 * TypeError (Argument `source_node` is of the wrong type)
-
-		 * ValueError (Argument `dest_node` is not a valid node name)
-
-		 * ValueError (Argument `source_node` is not a valid node name)
 
 		 * Same as :py:meth:`putil.tree.Tree.add`
 
@@ -379,12 +363,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
 
-		:raises:
-		 * TypeError (Argument `nodes` is of the wrong type)
-
-		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
 
 		.. [[[end]]]
 
@@ -659,12 +638,6 @@ class Tree(object):	#pylint: disable=R0903
 		:rtype	data: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
-
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
-
-		 * ValueError (Argument `name` is not a valid node name)
-
 		.. [[[end]]]
 		"""
 		return name in self._db
@@ -756,14 +729,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('remove_prefix')) ]]]
 
-		:raises:
-		 * TypeError (Argument `prefix` is of the wrong type)
-
-		 * ValueError (Argument `prefix` is not a valid node name)
-
-		 * ValueError (Illegal prefix)
-
-		 * Same as :py:meth:`putil.tree.Tree.in_tree`
+		:raises: ValueError (Illegal prefix)
 
 		.. [[[end]]]
 
@@ -829,11 +795,9 @@ class Tree(object):	#pylint: disable=R0903
 
 		 * RuntimeError (Node *[node_name]* already exists)
 
+		 * Same as :py:meth:`putil.tree.Tree.collapse`
+
 		 * Same as :py:meth:`putil.tree.Tree.copy_subtree`
-
-		 * Same as :py:meth:`putil.tree.Tree.delete`
-
-		 * Same as :py:meth:`putil.tree.Tree.in_tree`
 
 		.. [[[end]]]
 

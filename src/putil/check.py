@@ -598,16 +598,21 @@ def check_argument(param_spec):	#pylint: disable=R0912
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument specification """
-		arguments = funcsigs.signature(func).parameters
-		if not arguments:
-			raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
-		fiter = iter(arguments.items())
-		param_name = next(fiter)[0]
-		if param_name == 'self':
-			if len(arguments) == 1:
-				raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
+		func_module = sys.modules.get(func.__module__, None)
+		global_varg = True if not func_module else (getattr(func_module, 'VALIDATE_ARGS') if hasattr(func_module, 'VALIDATE_ARGS') else True)
+		local_varg = getattr(func, 'validate_args') if hasattr(func_module, 'validate_args') else None
+		# Local validate_args attribute overrides global VALIDATE_ARGS
+		if local_varg or ((local_varg is None) and global_varg):
+			arguments = funcsigs.signature(func).parameters
+			if not arguments:
+				raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
+			fiter = iter(arguments.items())
 			param_name = next(fiter)[0]
-		check_argument_internal(param_name, param_spec, func, *args, **kwargs)
+			if param_name == 'self':
+				if len(arguments) == 1:
+					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
+				param_name = next(fiter)[0]
+			check_argument_internal(param_name, param_spec, func, *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -617,18 +622,23 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument specification """
-		arguments = funcsigs.signature(func).parameters
-		if len(arguments) == 0:
-			raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
-		fiter = iter(arguments.items())
-		param_name = next(fiter)[0]
-		if param_name == 'self':
-			if len(arguments) == 1:
-				raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
-		for param_name, param_spec in param_dict.items():
-			if param_name not in arguments:
-				raise RuntimeError('Argument {0} is not an argument of function {1}'.format(param_name, func.__name__))
-			check_argument_internal(param_name, param_spec, func, *args, **kwargs)
+		func_module = sys.modules.get(func.__module__, None)
+		global_varg = True if not func_module else (getattr(func_module, 'VALIDATE_ARGS') if hasattr(func_module, 'VALIDATE_ARGS') else True)
+		local_varg = getattr(func, 'validate_args') if hasattr(func_module, 'validate_args') else None
+		# Local validate_args attribute overrides global VALIDATE_ARGS
+		if local_varg or ((local_varg is None) and global_varg):
+			arguments = funcsigs.signature(func).parameters
+			if len(arguments) == 0:
+				raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
+			fiter = iter(arguments.items())
+			param_name = next(fiter)[0]
+			if param_name == 'self':
+				if len(arguments) == 1:
+					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
+			for param_name, param_spec in param_dict.items():
+				if param_name not in arguments:
+					raise RuntimeError('Argument {0} is not an argument of function {1}'.format(param_name, func.__name__))
+				check_argument_internal(param_name, param_spec, func, *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 
