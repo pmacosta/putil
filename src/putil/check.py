@@ -600,7 +600,14 @@ def check_argument(param_spec):	#pylint: disable=R0912
 		"""	Wrapper function to test argument specification """
 		func_module = sys.modules.get(func.__module__, None)
 		global_varg = True if not func_module else (getattr(func_module, 'VALIDATE_ARGS') if hasattr(func_module, 'VALIDATE_ARGS') else True)
-		local_varg = getattr(func, 'validate_args') if hasattr(func_module, 'validate_args') else None
+		if not isinstance(global_varg, bool):
+			raise TypeError('Global variable VALIDATE_ARGS is of the wrong type')
+		local_varg = getattr(func, 'validate') if hasattr(func, 'validate') else None
+		if local_varg and (not isinstance(local_varg, str)):
+			raise TypeError('Attribute `validate` is of the wrong type')
+		local_varg = local_varg.strip().lower() if local_varg else local_varg
+		print local_varg
+		print hasattr(func, 'validate')
 		# Local validate_args attribute overrides global VALIDATE_ARGS
 		if local_varg or ((local_varg is None) and global_varg):
 			arguments = funcsigs.signature(func).parameters
@@ -612,6 +619,8 @@ def check_argument(param_spec):	#pylint: disable=R0912
 				if len(arguments) == 1:
 					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
 				param_name = next(fiter)[0]
+			if isinstance(local_varg, str) and (local_varg != param_name):
+				raise ValueError('Argument `validate` does not refer to a valid function argument')
 			check_argument_internal(param_name, param_spec, func, *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
@@ -623,8 +632,13 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument specification """
 		func_module = sys.modules.get(func.__module__, None)
+		# Check for global or local argument validation control
 		global_varg = True if not func_module else (getattr(func_module, 'VALIDATE_ARGS') if hasattr(func_module, 'VALIDATE_ARGS') else True)
 		local_varg = getattr(func, 'validate_args') if hasattr(func_module, 'validate_args') else None
+		if (not isinstance(local_varg, str)) and (not isinstance(local_varg, list)) and (local_varg is not None):
+			raise TypeError('Attribute `validate` is of the wrong type')
+		local_varg = local_varg if local_varg is None else (local_varg if isinstance(local_varg, list) else [local_varg])
+		local_varg = [arg.strip().lower() for arg in local_varg]
 		# Local validate_args attribute overrides global VALIDATE_ARGS
 		if local_varg or ((local_varg is None) and global_varg):
 			arguments = funcsigs.signature(func).parameters
@@ -635,10 +649,15 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 			if param_name == 'self':
 				if len(arguments) == 1:
 					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
+			if not local_varg:
+				for arg in local_varg:
+					if arg not in param_dict:
+						raise ValueError('Parameter {0} is not a function argument'.format(arg))
 			for param_name, param_spec in param_dict.items():
 				if param_name not in arguments:
 					raise RuntimeError('Argument {0} is not an argument of function {1}'.format(param_name, func.__name__))
-				check_argument_internal(param_name, param_spec, func, *args, **kwargs)
+				if global_varg or (local_varg and (param_name in local_varg)):
+					check_argument_internal(param_name, param_spec, func, *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 

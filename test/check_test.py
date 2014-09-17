@@ -6,6 +6,7 @@
 Decorators for API argument checking unit tests
 """
 
+import sys
 import numpy
 import pytest
 import decimal
@@ -14,6 +15,51 @@ import functools
 import itertools
 
 import putil.check
+
+###
+# Test argument validation on/off
+###
+class TestArgumentValidation(object):	#pylint: disable=R0903
+	""" Tests that argument validation on/off works as expected, both with global and per-function control """
+
+	def test_global_check_argument(self):	#pylint: disable=R0201
+		""" Test that VALIDATE global parameter works with the check_argument decorator """
+		global VALIDATE_ARGS	# pylint: disable=W0601
+		@putil.check.check_argument(putil.check.Number())
+		def tfunc(arg):	#pylint: disable=C0111
+			return arg
+		test_list = list()
+		test_list.append(putil.misc.trigger_exception(tfunc, {'arg':'hello'}, TypeError, 'Argument `arg` is of the wrong type'))
+		VALIDATE_ARGS = True
+		test_list.append(putil.misc.trigger_exception(tfunc, {'arg':'hello'}, TypeError, 'Argument `arg` is of the wrong type'))
+		VALIDATE_ARGS = False
+		test_list.append(tfunc('hello') == 'hello')
+		VALIDATE_ARGS = [1, 2, 3]
+		test_list.append(putil.misc.trigger_exception(tfunc, {'arg':'hello'}, TypeError, 'Global variable VALIDATE_ARGS is of the wrong type'))
+		del VALIDATE_ARGS
+		test_list.append(putil.misc.trigger_exception(tfunc, {'arg':'hello'}, TypeError, 'Argument `arg` is of the wrong type'))
+		assert test_list == len(test_list)*[True]
+
+	def test_local_check_argument(self):	#pylint: disable=R0201
+		""" Test that [function object].validate local parameter works with the check_argument decorator """
+		@putil.check.check_argument(putil.check.Number())
+		def tfunc2(arg):	#pylint: disable=C0111
+			return arg
+		obj = getattr(sys.modules[tfunc2.__module__], 'tfunc2')
+		test_list = list()
+		tfunc2.validate = False
+		print 'Jejo '+str(tfunc2.validate)
+		test_list.append(putil.misc.trigger_exception(tfunc2, {'arg':'hello'}, TypeError, 'Argument `arg` is of the wrong type'))
+		tfunc2.validate = True
+		print 'Hello '+str(tfunc2.validate)
+		test_list.append(putil.misc.trigger_exception(tfunc2, {'arg':'hello'}, TypeError, 'Argument `arg` is of the wrong type'))
+		tfunc2.validate = None
+		test_list.append(putil.misc.trigger_exception(tfunc2, {'arg':'hello'}, TypeError, 'Argument `arg` is of the wrong type'))
+		tfunc2.validate = False
+		test_list.append(tfunc2('hello') == 'hello')
+		tfunc2.validate = [1, 2, 3]
+		test_list.append(putil.misc.trigger_exception(tfunc2, {'arg':'hello'}, TypeError, 'Global variable VALIDATE_ARGS is of the wrong type'))
+		assert test_list == len(test_list)*[True]
 
 
 ###
