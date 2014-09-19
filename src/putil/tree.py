@@ -123,17 +123,30 @@ class Tree(object):	#pylint: disable=R0903
 	def _collapse_node(self, name):
 		""" Collapse a sub-tree """
 		# This method accesses the database object directly and not through methods (as ideally) because of speed
-		node = self._db[name]
-		while (len(node['children']) == 1) and (not node['data']):
-			child_name = node['children'][0]
-			self._db[child_name]['parent'] = node['parent']
-			self._db[self._db[name]['parent']]['children'].remove(name)
-			self._db[self._db[name]['parent']]['children'] = sorted(self._db[self._db[name]['parent']]['children']+[child_name])
+		children = self._get_children(name)
+		data = self._get_data(name)
+		while (len(children) == 1) and (not data):
+			parent = self._get_parent(name)
+			child_name = children[0]
+			self._set_parent(child_name, parent)
+			self._get_children(parent).remove(name)
+			self._set_children(parent, self.get_children(parent)+[child_name])
 			del self._db[name]
 			name = child_name
-			node = self._db[name]
-		for name in copy.deepcopy(node['children']):
+			children = self._get_children(name)
+			data = self._get_data(name)
+		for name in copy.copy(children):
 			self._collapse_node(name)
+
+	def _create_node(self, name, parent, children, data):
+		""" Create new tree node """
+		self._db[name] = {'parent':parent, 'children':children, 'data':data}
+
+	def _get_children(self, name):
+		return self._db[name]['children']
+
+	def _get_data(self, name):
+		return self._db[name]['data']
 
 	def _get_nodes(self):	#pylint: disable=C0111
 		return None if not self._db else sorted(self._db.keys())
@@ -143,6 +156,9 @@ class Tree(object):	#pylint: disable=R0903
 
 	def _get_root_node(self):	#pylint: disable=C0111
 		return None if not self.root_name else self.get_node(self.root_name)
+
+	def _get_parent(self, name):
+		return self._db[name]['parent']
 
 	def _node_in_tree(self, name):	#pylint: disable=C0111
 		self._exh.ex_add(name='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
@@ -184,8 +200,17 @@ class Tree(object):	#pylint: disable=R0903
 		for child in self.get_children(new_name):
 			self._rnode(root, child, hierarchy)
 
+	def _set_children(self, name, children):
+		self._db[name]['children'] = sorted(list(set(children)))
+
+	def _set_data(self, name, data):
+		self._db[name]['data'] = data
+
 	def _set_root_name(self, name):	#pylint: disable=C0111
 		self._root = name
+
+	def _set_parent(self, name, parent):
+		self._db[name]['parent'] = parent
 
 	def _split_node_name(self, name, root_name=None):	#pylint: disable=C0111,R0201
 		return [element.strip() for element in name.strip().split('.')][0 if not root_name else self._root_hierarchy_length:]
@@ -244,8 +269,8 @@ class Tree(object):	#pylint: disable=R0903
 		# Create root node (if needed)
 		if not self.root_name:
 			self._set_root_name(nodes[0]['name'].split('.')[0].strip())
-			self._db[self.root_name] = {'parent':'', 'children':list(), 'data':list()}
 			self._root_hierarchy_length = len(self.root_name.split('.'))
+			self._create_node(name=self.root_name, parent='', children=list(), data=list())
 		# Process new data
 		for node_dict in nodes:
 			name, data = node_dict['name'], node_dict['data']
@@ -257,9 +282,9 @@ class Tree(object):	#pylint: disable=R0903
 				hierarchy = self._split_node_name(name, self.root_name)
 				node_tree = [self.root_name+'.'+('.'.join(hierarchy[:num+1])) for num in range(len(hierarchy))]
 				for parent, child in [(child[:child.rfind('.')], child) for child in node_tree if child not in self._db]:
-					self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
-					self._db[parent]['children'] = sorted(list(set(self._db[parent]['children']+[child])))
-			self._db[name]['data'] += (data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
+					self._create_node(child, parent=parent, children=list(), data=list())
+					self._set_children(parent, self._get_children(parent)+[child])
+			self._set_data(name, self._get_data(name)+(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data])))
 
 	@putil.check.check_argument(NodeName())
 	def collapse(self, name):
@@ -298,7 +323,7 @@ class Tree(object):	#pylint: disable=R0903
 		it does have data associated with it, *'Hello world!'*
 		"""
 		self._node_in_tree(name)
-		for child in copy.deepcopy(self._db[name]['children']):
+		for child in copy.copy(self._get_children(name)):
 			self._collapse_node(child)
 
 	@putil.check.check_arguments({'source_node':NodeName(), 'dest_node':NodeName()})
@@ -764,7 +789,6 @@ class Tree(object):	#pylint: disable=R0903
 			└branch2
 
 		"""
-
 		self._exh.ex_add(name='illegal_prefix', extype=ValueError, exmsg='Illegal prefix')
 		index = self.root_name.find(prefix)
 		self._exh.raise_exception_if(name='illegal_prefix', condition=(index != 0) or (self.in_tree(prefix)))
