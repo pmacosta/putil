@@ -446,9 +446,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		index = node.find(self._trace_obj_name)
 		if index != 0:
 			prefix = node[:index-1]
+			new_root = node[index:]
 			if not no_print:
 				print putil.misc.pcolor('Removing prefix {0}'.format(prefix), 'blue')
-			self._tobj.remove_prefix(prefix)
+			self._tobj.rename_node(self._tobj.root_name, new_root)
 		if not no_print:
 			print str(self._tobj)
 

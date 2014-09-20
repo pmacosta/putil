@@ -53,8 +53,7 @@ tobj.in_tree('dummy.root')
 tobj.is_leaf('dummy.root')
 tobj.make_root('dummy.root.branch3')
 tobj.print_node('dummy.root.branch3')
-tobj.remove_prefix('dummy')
-tobj.rename_node('root.branch3.leaf1', 'root.branch3.mapleleaf2')
+tobj.rename_node('dummy.root.branch3', 'root')
 exobj.build_ex_tree(no_print=True)
 exobj_tree = copy.deepcopy(exobj)
 ]]]
@@ -219,7 +218,10 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add')) ]]]
 
-		:raises: ValueError (Illegal node name: *[node_name]*)
+		:raises:
+		 * TypeError (Argument `nodes` is of the wrong type)
+
+		 * ValueError (Illegal node name: *[node_name]*)
 
 		.. [[[end]]]
 
@@ -280,7 +282,12 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse')) ]]]
 
-		:raises: RuntimeError (Node *[node_name]* not in tree)
+		:raises:
+		 * RuntimeError (Node *[node_name]* not in tree)
+
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `name` is not a valid node name)
 
 		.. [[[end]]]
 
@@ -324,6 +331,14 @@ class Tree(object):	#pylint: disable=R0903
 
 		:raises:
 		 * RuntimeError (Illegal root in destination node)
+
+		 * TypeError (Argument `dest_node` is of the wrong type)
+
+		 * TypeError (Argument `source_node` is of the wrong type)
+
+		 * ValueError (Argument `dest_node` is not a valid node name)
+
+		 * ValueError (Argument `source_node` is not a valid node name)
 
 		 * Same as :py:meth:`putil.tree.Tree.add`
 
@@ -373,7 +388,12 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises:
+		 * TypeError (Argument `nodes` is of the wrong type)
+
+		 * ValueError (Argument `nodes` is not a valid node name)
+
+		 * Same as :py:meth:`putil.tree.Tree.collapse`
 
 		.. [[[end]]]
 
@@ -588,7 +608,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
+		return self._db[self._get_parent(name)] if not self.is_root(name) else dict()
 
 	def get_subtree(self, name):
 		"""
@@ -636,7 +656,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return not self._db[name]['parent']
+		return not self._get_parent(name)
 
 	@putil.check.check_argument(NodeName())
 	def in_tree(self, name):
@@ -648,6 +668,12 @@ class Tree(object):	#pylint: disable=R0903
 		:rtype	data: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
+
+		:raises:
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `name` is not a valid node name)
+
 		.. [[[end]]]
 		"""
 		return name in self._db
@@ -668,7 +694,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return not self._db[name]['children']
+		return not self._get_children(name)
 
 	@putil.check.check_argument(NodeName())
 	def make_root(self, name):	#pylint: disable=C0111
@@ -706,7 +732,7 @@ class Tree(object):	#pylint: disable=R0903
 		if (name != self.root_name) and (self._node_in_tree(name)):
 			for key in [node for node in self.nodes if node.find(name) != 0]:
 				self._del_node(key)
-			self._db[name]['parent'] = ''
+			self._set_parent(name, '')
 			self._root = name
 			self._root_hierarchy_length = len(self.root_name.split('.'))
 
@@ -729,70 +755,11 @@ class Tree(object):	#pylint: disable=R0903
 		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
 
-	@putil.check.check_argument(NodeName())
-	def remove_prefix(self, prefix):
-		"""
-		Removes (deletes) a hierarchy prefix from all nodes in tree. The prefix has to be part of the root node name
-
-		:param	name: Prefix hierarchy to remove. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
-
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('remove_prefix')) ]]]
-
-		:raises: ValueError (Illegal prefix)
-
-		.. [[[end]]]
-
-		For example:
-
-			>>> tobj = putil.tree.Tree()
-			>>> tobj.add([
-			...		{'name':'dummy.levels.root.branch1', 'data':list()},
-			...		{'name':'dummy.levels.root.branch2', 'data':list()},
-			...		{'name':'dummy.levels.root.branch1.leaf1', 'data':list()},
-			...		{'name':'dummy.levels.root.branch1.leaf1.subleaf1', 'data':333},
-			...		{'name':'dummy.levels.root.branch1.leaf2', 'data':'Hello world!'},
-			...		{'name':'dummy.levels.root.branch1.leaf2.subleaf2', 'data':list()},
-			... ])
-			>>> tobj.make_root('dummy.levels.root')
-			>>> print str(tobj)
-			dummy.levels.root
-			├branch1
-			│├leaf1
-			││└subleaf1 (*)
-			│└leaf2 (*)
-			│ └subleaf2
-			└branch2
-			>>>tobj.remove_prefix('dummy.levels')
-			>>>print str(tobj)
-			root
-			├branch1
-			│├leaf1
-			││└subleaf1 (*)
-			│└leaf2 (*)
-			│ └subleaf2
-			└branch2
-
-		"""
-		self._exh.ex_add(name='illegal_prefix', extype=ValueError, exmsg='Illegal prefix')
-		index = self.root_name.find(prefix)
-		self._exh.raise_exception_if(name='illegal_prefix', condition=(index != 0) or (self.in_tree(prefix)))
-		cstart = len(prefix)+1
-		ndb = dict()
-		for key in self._db.keys():
-			new_key = key[cstart:]
-			self._db[key]['parent'] = self._db[key]['parent'] if not self._db[key]['parent'] else self._db[key]['parent'][cstart:]
-			self._db[key]['children'] = sorted([child[cstart:] for child in self._db[key]['children']])
-			ndb[new_key] = copy.deepcopy(self._db[key])
-			self._del_node(key)
-		self._db = ndb
-		self._set_root_name(self.root_name[cstart:])
-		self._root_hierarchy_length = len(self.root_name.split('.'))
-
-	@putil.check.check_argument(NodeName())
+	@putil.check.check_arguments({'name':NodeName(), 'new_name':NodeName()})
 	def rename_node(self, name, new_name):
 		"""
-		Rename a tree node
+		Rename a tree node. It is typical to have a root node name with more than one hierarchy level after using :py:meth:`putil.tree.Tree.make_root`. In this instance the root node *can* be \
+		renamed as long as the new root name has the same or less hierarchy levels as the old root name.
 
 		:param	name: Node name to rename. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -802,11 +769,17 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * RuntimeError (Argument `new_name` has an illegal root node)
 
+		 * RuntimeError (Argument `new_name` is an illegal root node name)
+
 		 * RuntimeError (Node *[node_name]* already exists)
+
+		 * TypeError (Argument `new_name` is of the wrong type)
+
+		 * ValueError (Argument `new_name` is not a valid node name)
 
 		 * Same as :py:meth:`putil.tree.Tree.collapse`
 
-		 * Same as :py:meth:`putil.tree.Tree.copy_subtree`
+		 * Same as :py:meth:`putil.tree.Tree.in_tree`
 
 		.. [[[end]]]
 
@@ -823,7 +796,7 @@ class Tree(object):	#pylint: disable=R0903
 			>>> tobj.rename_node('root.branch1.leaf1', 'root.branch1.mapleleaf1')
 			>>> print str(tobj)
 			root
-			├branch1
+			├branch1 (*)
 			│├leaf2 (*)
 			││└subleaf2
 			│└mapleleaf1
@@ -833,11 +806,33 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		self._exh.ex_add(name='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
 		self._exh.ex_add(name='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
+		self._exh.ex_add(name='illegal_new_root_name', extype=RuntimeError, exmsg='Argument `new_name` is an illegal root node name')
 		self._node_in_tree(name)
-		self._exh.raise_exception_if(name='new_name_exists', condition=self.in_tree(new_name), edata={'field':'node_name', 'value':new_name})
-		self._exh.raise_exception_if(name='illegal_new_name', condition=name.split('.')[:-1] != new_name.split('.')[:-1])
-		self.copy_subtree(name, new_name)
-		self.delete(name)
+		self._exh.raise_exception_if(name='new_name_exists', condition=self.in_tree(new_name) and (name != self.root_name), edata={'field':'node_name', 'value':new_name})
+		self._exh.raise_exception_if(name='illegal_new_name', condition=(name.split('.')[:-1] != new_name.split('.')[:-1]) and (name != self.root_name))
+		old_hierarchy_length = len(name.split('.'))
+		new_hierarchy_length = len(new_name.split('.'))
+		self._exh.raise_exception_if(name='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
+		# Update parent
+		if not self.is_root(name):
+			parent = self._get_parent(name)
+			self._get_children(parent).remove(name)
+			self._set_children(parent, self._get_children(parent)+[new_name])
+		# Update children
+		for key in self.get_subtree(name):
+			new_key = self._replace_hierarchy(key, new_name, old_hierarchy_length)
+			old_parent = self._get_parent(key)
+			self._create_node(name=new_key, parent=old_parent if key == name else self._replace_hierarchy(old_parent, new_name, old_hierarchy_length), \
+					 children=[self._replace_hierarchy(child, new_name, old_hierarchy_length) for child in self._get_children(key)], data=copy.deepcopy(self._get_data(key)))
+			self._del_node(key)
+		if name == self.root_name:
+			self._root = new_name
+			self._root_hierarchy_length = len(self.root_name.split('.'))
+
+	def _replace_hierarchy(self, node_name, hierarchy_name, hierarchy_length):	#pylint: disable=R0201
+		""" Replaces a certain number of hierarchy levels with new hierarchy """
+		suffix = '.'.join(node_name.split('.')[hierarchy_length:])
+		return hierarchy_name+('.' if suffix else '')+suffix
 
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')

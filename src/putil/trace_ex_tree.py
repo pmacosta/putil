@@ -39,8 +39,7 @@ def trace_tree(no_print=False):
 	tobj.is_leaf('dummy.root')
 	tobj.make_root('dummy.root.branch3')
 	tobj.print_node('dummy.root.branch3')
-	tobj.remove_prefix('dummy')
-	tobj.rename_node('root.branch3.leaf1', 'root.branch3.mapleleaf2')
+	tobj.rename_node('dummy.root.branch3', 'root')
 
 	_EXH.build_ex_tree(no_print=no_print)
 	_EXH.print_ex_tree()
