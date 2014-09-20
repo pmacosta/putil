@@ -121,18 +121,21 @@ class Tree(object):	#pylint: disable=R0903
 
 	def _collapse_node(self, name):
 		""" Collapse a sub-tree """
-		children = self._get_children(name)
-		data = self._get_data(name)
+		oname = name
+		children = self._db[name]['children']
+		data = self._db[name]['data']
+		del_list = list()
 		while (len(children) == 1) and (not data):
-			parent = self._get_parent(name)
-			child_name = children[0]
-			self._set_parent(child_name, parent)
-			self._get_children(parent).remove(name)
-			self._set_children(parent, self.get_children(parent)+[child_name])
-			self._del_node(name)
-			name = child_name
-			children = self._get_children(name)
-			data = self._get_data(name)
+			del_list.append(name)
+			name = children[0]
+			children = self._db[name]['children']
+			data = self._db[name]['data']
+		parent = self._db[oname]['parent']
+		self._db[name]['parent'] = parent
+		self._db[parent]['children'].remove(oname)
+		self._db[parent]['children'] = sorted(self._db[parent]['children']+[name])
+		for node in del_list:
+			self._del_node(node)
 		for name in copy.copy(children):
 			self._collapse_node(name)
 
@@ -163,6 +166,9 @@ class Tree(object):	#pylint: disable=R0903
 	def _get_root_node(self):	#pylint: disable=C0111
 		return None if not self.root_name else self.get_node(self.root_name)
 
+	def _get_subtree(self, name):
+		return [name]+[node for child in self._db[name]['children'] for node in self._get_subtree(child)]
+
 	def _get_parent(self, name):
 		return self._db[name]['parent']
 
@@ -182,6 +188,11 @@ class Tree(object):	#pylint: disable=R0903
 		slist = (ncmu+1)*[sep+pre2]
 		dmark = ' (*)' if self._db[name]['data'] else ''
 		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, node_name, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
+
+	def _replace_hierarchy(self, node_name, hierarchy_name, hierarchy_length):	#pylint: disable=R0201
+		""" Replaces a certain number of hierarchy levels with new hierarchy """
+		suffix = '.'.join(node_name.split('.')[hierarchy_length:])
+		return hierarchy_name+('.' if suffix else '')+suffix
 
 	def _set_children(self, name, children):
 		self._db[name]['children'] = sorted(list(set(children)))
@@ -375,7 +386,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._exh.ex_add(name='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
 		self._node_in_tree(source_node)
 		self._exh.raise_exception_if(name='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
-		for node in self.get_subtree(source_node):
+		for node in self._get_subtree(source_node):
 			self.add({'name':node.replace(source_node, dest_node, 1), 'data':copy.deepcopy(self.get_data(node))})
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
@@ -389,11 +400,11 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
 
 		:raises:
+		 * RuntimeError (Node *[node_name]* not in tree)
+
 		 * TypeError (Argument `nodes` is of the wrong type)
 
 		 * ValueError (Argument `nodes` is not a valid node name)
-
-		 * Same as :py:meth:`putil.tree.Tree.collapse`
 
 		.. [[[end]]]
 
@@ -418,7 +429,7 @@ class Tree(object):	#pylint: disable=R0903
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		for parent, node in [(self._get_parent(node), node) for node in nodes if self._node_in_tree(node)]:
 			# Delete link to parent (if not root node)
-			del_list = self.get_subtree(node)
+			del_list = self._get_subtree(node)
 			if parent:
 				self._get_children(parent).remove(node)
 			# Delete children (sub-tree)
@@ -547,7 +558,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return [node for node in self.get_subtree(name) if self.is_leaf(node)]
+		return [node for node in self._get_subtree(name) if self.is_leaf(node)]
 
 
 	@putil.check.check_argument(NodeName())
@@ -610,6 +621,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[self._get_parent(name)] if not self.is_root(name) else dict()
 
+	@putil.check.check_argument(NodeName())
 	def get_subtree(self, name):
 		"""
 		Return all node names in a sub-tree
@@ -638,7 +650,8 @@ class Tree(object):	#pylint: disable=R0903
 			['root.branch1', 'root.branch1.leaf1', 'root.branch1.leaf1.subleaf1', 'root.branch1.leaf2', 'root.branch1.leaf2.subleaf2']
 
 		"""
-		return [name]+[node for child in self.get_children(name) for node in self.get_subtree(child)]
+		self._node_in_tree(name)
+		return self._get_subtree(name)
 
 	@putil.check.check_argument(NodeName())
 	def is_root(self, name):	#pylint: disable=C0111
@@ -819,7 +832,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._get_children(parent).remove(name)
 			self._set_children(parent, self._get_children(parent)+[new_name])
 		# Update children
-		for key in self.get_subtree(name):
+		for key in self._get_subtree(name) if name != self.root_name else self.nodes:
 			new_key = self._replace_hierarchy(key, new_name, old_hierarchy_length)
 			old_parent = self._get_parent(key)
 			self._create_node(name=new_key, parent=old_parent if key == name else self._replace_hierarchy(old_parent, new_name, old_hierarchy_length), \
@@ -828,11 +841,6 @@ class Tree(object):	#pylint: disable=R0903
 		if name == self.root_name:
 			self._root = new_name
 			self._root_hierarchy_length = len(self.root_name.split('.'))
-
-	def _replace_hierarchy(self, node_name, hierarchy_name, hierarchy_length):	#pylint: disable=R0201
-		""" Replaces a certain number of hierarchy levels with new hierarchy """
-		suffix = '.'.join(node_name.split('.')[hierarchy_length:])
-		return hierarchy_name+('.' if suffix else '')+suffix
 
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')
