@@ -118,11 +118,10 @@ class Tree(object):	#pylint: disable=R0903
 
 		:rtype: Unicode string
 		"""
-		return self._prt(name=self.root_name, lparent=-1, sep='', pre1='', pre2='').encode('utf-8')
+		return '' if not self._db else self._prt(name=self.root_name, lparent=-1, sep='', pre1='', pre2='').encode('utf-8')
 
 	def _collapse_node(self, name):
 		""" Collapse a sub-tree """
-		# This method accesses the database object directly and not through methods (as ideally) because of speed
 		children = self._get_children(name)
 		data = self._get_data(name)
 		while (len(children) == 1) and (not data):
@@ -284,7 +283,7 @@ class Tree(object):	#pylint: disable=R0903
 				for parent, child in [(child[:child.rfind('.')], child) for child in node_tree if child not in self._db]:
 					self._create_node(child, parent=parent, children=list(), data=list())
 					self._set_children(parent, self._get_children(parent)+[child])
-			self._set_data(name, self._get_data(name)+(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data])))
+			self._set_data(name, self._get_data(name)+copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data])))
 
 	@putil.check.check_argument(NodeName())
 	def collapse(self, name):
@@ -361,7 +360,8 @@ class Tree(object):	#pylint: disable=R0903
 			>>> print str(tobj)
 			root
 			├branch1 (*)
-			│├leaf1.subleaf1 (*)
+			│├leaf1
+			││└subleaf1 (*)
 			│└leaf2 (*)
 			│ └subleaf2
 			├branch2
@@ -376,7 +376,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(source_node)
 		self._exh.raise_exception_if(name='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
 		for node in self.get_subtree(source_node):
-			self.add({'name':node.replace(source_node, dest_node, 1), 'data':self.get_data(node)})
+			self.add({'name':node.replace(source_node, dest_node, 1), 'data':copy.deepcopy(self.get_data(node))})
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
 	def delete(self, nodes):
