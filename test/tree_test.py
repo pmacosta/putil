@@ -7,6 +7,7 @@
 putil.tree unit tests
 """
 
+import copy
 import pytest
 
 import putil.misc
@@ -245,6 +246,41 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		#
 		assert test_list == len(test_list)*[True]
 
+	def test_flatten_subtree_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that flatten_subtree() method raises the right exceptions """
+		tree1, _, _, _ = default_trees
+		test_list = list()
+		test_list.append(putil.misc.trigger_exception(tree1.flatten_subtree, {'name':'a..b'}, ValueError, 'Argument `name` is not a valid node name'))
+		test_list.append(putil.misc.trigger_exception(tree1.flatten_subtree, {'name':5}, TypeError, 'Argument `name` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(tree1.flatten_subtree, {'name':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
+		assert test_list == len(test_list)*[True]
+
+	def test_flatten_subtree_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that flatten_subtree method works """
+		_, _, _, tree4 = default_trees
+		test_list = list()
+		tree4.add([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
+		          {'name':'root.branch2.leaf1', 'data':'loren ipsum'},
+		          {'name':'root.branch2.leaf1.another_subleaf1', 'data':list()},
+		          {'name':'root.branch2.leaf1.another_subleaf2', 'data':list()}
+		])
+		odata = copy.deepcopy(tree4.get_data('root.branch1.leaf1.subleaf1'))
+		tree4.flatten_subtree('root.branch1.leaf1')
+		test_list.append(str(tree4) == u'root\n├branch1 (*)\n│├leaf1.subleaf1 (*)\n│├leaf1.subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
+		test_list.append(tree4.get_data('root.branch1.leaf1.subleaf1') == odata)
+		tree4.flatten_subtree('root.branch2.leaf1')
+		test_list.append(str(tree4) == u'root\n├branch1 (*)\n│├leaf1.subleaf1 (*)\n│├leaf1.subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
+		assert test_list == len(test_list)*[True]
+
+	def test_get_children_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that get_children() method raises the right exceptions """
+		tree1, _, _, _ = default_trees
+		test_list = list()
+		test_list.append(putil.misc.trigger_exception(tree1.get_children, {'name':'a..b'}, ValueError, 'Argument `name` is not a valid node name'))
+		test_list.append(putil.misc.trigger_exception(tree1.get_children, {'name':5}, TypeError, 'Argument `name` is of the wrong type'))
+		test_list.append(putil.misc.trigger_exception(tree1.get_children, {'name':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
+		assert test_list == len(test_list)*[True]
+
 	def test_get_node_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_node() method raises the right exceptions """
 		tree1, _, _, _ = default_trees
@@ -258,18 +294,6 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		with pytest.raises(RuntimeError) as excinfo:
 			tree1.get_node('a.b')
 		test_list.append(excinfo.value.message == 'Node a.b not in tree')
-		assert test_list == len(test_list)*[True]
-
-	def test_get_children_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
-		""" Test that get_children() method raises the right exceptions """
-		tree1, _, _, _ = default_trees
-		test_list = list()
-		with pytest.raises(ValueError) as excinfo:
-			tree1.get_children('a..b')
-		test_list.append(excinfo.value.message == 'Argument `name` is not a valid node name')
-		with pytest.raises(TypeError) as excinfo:
-			tree1.get_children(5)
-		test_list.append(excinfo.value.message == 'Argument `name` is of the wrong type')
 		assert test_list == len(test_list)*[True]
 
 

@@ -130,7 +130,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._set_parent(child_name, parent)
 			self._get_children(parent).remove(name)
 			self._set_children(parent, self.get_children(parent)+[child_name])
-			del self._db[name]
+			self._del_node(name)
 			name = child_name
 			children = self._get_children(name)
 			data = self._get_data(name)
@@ -140,6 +140,10 @@ class Tree(object):	#pylint: disable=R0903
 	def _create_node(self, name, parent, children, data):
 		""" Create new tree node """
 		self._db[name] = {'parent':parent, 'children':children, 'data':data}
+
+	def _del_node(self, name):
+		""" Delete tree node """
+		del self._db[name]
 
 	def _get_children(self, name):
 		return self._db[name]['children']
@@ -195,7 +199,7 @@ class Tree(object):	#pylint: disable=R0903
 				self._db[new_name]['children'] = new_children
 			for child in self.get_children(name):
 				self._db[child]['parent'] = new_name
-			del self._db[name]
+			self._del_node(name)
 		for child in self.get_children(new_name):
 			self._rnode(root, child, hierarchy)
 
@@ -418,7 +422,7 @@ class Tree(object):	#pylint: disable=R0903
 				self._db[parent]['children'].remove(node)
 			# Delete children (sub-tree)
 			for child in del_list:
-				del self._db[child]
+				self._del_node(child)
 			if not len(self._db):
 				self._root = None
 				self._root_hierarchy_length = None
@@ -456,7 +460,7 @@ class Tree(object):	#pylint: disable=R0903
 			 └leaf1
 			  ├another_subleaf1
 			  └another_subleaf2
-			>>> tobj.flatten_subtree('root1.branch1.leaf1')
+			>>> tobj.flatten_subtree('root.branch1.leaf1')
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
@@ -467,7 +471,7 @@ class Tree(object):	#pylint: disable=R0903
 			 └leaf1 (*)
 			  ├another_subleaf1
 			  └another_subleaf2
-			>>> tobj.flatten_subtree('root1.branch2.leaf1')
+			>>> tobj.flatten_subtree('root.branch2.leaf1')
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
@@ -481,14 +485,14 @@ class Tree(object):	#pylint: disable=R0903
 
 		"""
 		self._node_in_tree(name)
-		if (self._db[name]['parent']) and (not self._db[name]['data']):
-			parent = self._db[name]['parent']
-			children = self._db[name]['children']
+		parent = self._get_parent(name)
+		if (parent) and (not self._get_data(name)):
+			children = self._get_children(name)
 			for child in children:
-				self._db[child]['parent'] = parent
-			self._db[parent]['children'].remove(name)
-			self._db[parent]['children'] = sorted(self._db[parent]['children']+children)
-			del self._db[name]
+				self._set_parent(child, parent)
+			self._get_children(parent).remove(name)
+			self._set_children(parent, self._get_children(parent)+children)
+			self._del_node(name)
 
 	@putil.check.check_argument(NodeName())
 	def get_children(self, name):	#pylint: disable=C0111
@@ -720,7 +724,7 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		if (name != self.root_name) and (self._node_in_tree(name)):
 			for key in [node for node in self.nodes if node.find(name) != 0]:
-				del self._db[key]
+				self._del_node(key)
 			self._db[name]['parent'] = ''
 			self._root = name
 			self._root_hierarchy_length = len(self.root_name.split('.'))
@@ -799,7 +803,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._db[key]['parent'] = self._db[key]['parent'] if not self._db[key]['parent'] else self._db[key]['parent'][cstart:]
 			self._db[key]['children'] = sorted([child[cstart:] for child in self._db[key]['children']])
 			ndb[new_key] = copy.deepcopy(self._db[key])
-			del self._db[key]
+			self._del_node(key)
 		self._db = ndb
 		self._set_root_name(self.root_name[cstart:])
 		self._root_hierarchy_length = len(self.root_name.split('.'))
