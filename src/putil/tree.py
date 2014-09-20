@@ -145,6 +145,10 @@ class Tree(object):	#pylint: disable=R0903
 		""" Delete tree node """
 		del self._db[name]
 
+	def _empty_tree(self):
+		""" Tests whether the object (tree) has any nodes/data """
+		return True if not self._db else False
+
 	def _get_children(self, name):
 		return self._db[name]['children']
 
@@ -179,29 +183,6 @@ class Tree(object):	#pylint: disable=R0903
 		slist = (ncmu+1)*[sep+pre2]
 		dmark = ' (*)' if self._db[name]['data'] else ''
 		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, node_name, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
-
-	def _rnode(self, root, name, hierarchy):	#pylint: disable=C0111,R0913,R0914
-		self._exh.ex_add(name='hierarchy_cannot_be_deleted', extype=RuntimeError, exmsg='Hierarchy *[node_name]* cannot be deleted')
-		self._exh.ex_add(name='inconsistency_deleting_hierarchy', extype=RuntimeError, exmsg='Inconsitency when deleting hierarchy')
-		suffix = name[len(root):]
-		new_suffix = suffix.replace('.'+hierarchy, '').replace('..', '.')
-		new_name = root+new_suffix
-		if new_name != name:
-			if not self.in_tree(new_name):
-				self._db[new_name] = copy.deepcopy(self._db[name])
-				self._db[self._db[name]['parent']]['children'] = sorted(list(set([child for child in self._db[self._db[name]['parent']]['children'] if child != name]+[new_name])))
-			else:
-				self._exh.raise_exception_if(name='hierarchy_cannot_be_deleted', condition=self._db[name]['data'], edata={'field':'hierarchy', 'value':hierarchy})
-				if self._db[name]['parent'] == new_name:
-					self._db[self._db[name]['parent']]['children'] = sorted(list(set([child for child in self._db[self._db[name]['parent']]['children'] if child != name])))
-				new_children = sorted(self._db[new_name]['children']+self._db[name]['children'])
-				self._exh.raise_exception_if(name='inconsistency_deleting_hierarchy', condition=len(new_children) != len(set(new_children)))
-				self._db[new_name]['children'] = new_children
-			for child in self.get_children(name):
-				self._db[child]['parent'] = new_name
-			self._del_node(name)
-		for child in self.get_children(new_name):
-			self._rnode(root, child, hierarchy)
 
 	def _set_children(self, name, children):
 		self._db[name]['children'] = sorted(list(set(children)))
@@ -415,15 +396,15 @@ class Tree(object):	#pylint: disable=R0903
 
 		"""
 		nodes = nodes if isinstance(nodes, list) else [nodes]
-		for parent, node in [(self._db[node]['parent'], node) for node in nodes if self._node_in_tree(node)]:
+		for parent, node in [(self._get_parent(node), node) for node in nodes if self._node_in_tree(node)]:
 			# Delete link to parent (if not root node)
 			del_list = self.get_subtree(node)
 			if parent:
-				self._db[parent]['children'].remove(node)
+				self._get_children(parent).remove(node)
 			# Delete children (sub-tree)
 			for child in del_list:
 				self._del_node(child)
-			if not len(self._db):
+			if self._empty_tree():
 				self._root = None
 				self._root_hierarchy_length = None
 

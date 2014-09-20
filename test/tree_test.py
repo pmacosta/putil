@@ -243,6 +243,10 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		tree2.delete('t2l1')
 		test_list.append(str(tree1) == u't1l1 (*)\n└t1l2b1 (*)\n ├t1l3b1a (*)\n └t1l3b1c (*)'.encode('utf-8'))
 		test_list.append(str(tree2) == '')
+		test_list.append(tree2.root_name == None)
+		tree2.add([{'name':'root.branch1', 'data':list()}, {'name':'root.branch1.x', 'data':1999}])
+		test_list.append(tree2.root_name == 'root')
+
 		#
 		assert test_list == len(test_list)*[True]
 
