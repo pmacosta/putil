@@ -15,10 +15,11 @@ Contents:
 .. toctree::
 	:maxdepth: 2
 
+	exh
 	misc
-	tree
 	pcsv
 	plot
+	tree
 
 Indices and tables
 ==================

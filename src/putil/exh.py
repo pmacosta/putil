@@ -131,7 +131,18 @@ def _public_callables(obj):
 # Classes
 ###
 class ExHandle(object):	#pylint: disable=R0902
-	""" Exception handling class """
+	"""
+	Manages exceptions and optionally automatically generates exception documentation in with `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ mark-up
+
+	:param	obj: Object to document exceptions for
+	:type	obj: Class object or module-level object
+	:rtype: :py:class:`putil.exh.ExHandle()` object
+
+	:raises:
+	 * TypeError (Argument `obj` is of the wrong type)
+
+	 * ValueError (Hidden objects cannot be traced)
+	"""
 	def __init__(self, obj):
 		if (not inspect.isclass(obj)) and (not hasattr(obj, '__call__')):
 			raise TypeError('Argument `obj` is of the wrong type')
@@ -609,7 +620,28 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._create_ex_table_output(no_print)
 
 	def ex_add(self, name, extype, exmsg):	#pylint: disable=R0913,R0914
-		""" Add exception to database """
+		""" Add exception to handler
+
+		:param	name: Exception name. Has to be unique within the namespace, duplicates are eliminated
+		:type	name: string
+		:param	extype: Exception type. *Must* be derived from `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
+		:type	name: Exception type object (i.e. RuntimeError, TypeError, etc.)
+		:param	exmsg: Exception message
+		:type	exmsg: string
+
+		:raises:
+		 * TypeError (Argument `exmsg` is of the wrong type)
+
+		 * TypeError (Argument `extype` is of the wrong type)
+
+		 * TypeError (Argument `name` is of the wrong type)
+		"""
+		if not isinstance(name, str):
+			raise TypeError('Argument `name` is of the wrong type')
+		if not str(extype).startswith("<type 'exceptions."):
+			raise TypeError('Argument `extype` is of the wrong type')
+		if not isinstance(exmsg, str):
+			raise TypeError('Argument `exmsg` is of the wrong type')
 		func_name = self.get_func_name()
 		self._ex_list.append({'name':self.get_ex_name(name), 'function':func_name, 'type':extype, 'msg':exmsg, 'checked':False})
 		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
