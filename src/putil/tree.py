@@ -828,16 +828,15 @@ class Tree(object):	#pylint: disable=R0903
 		self._exh.raise_exception_if(name='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
 		# Update parent
 		if not self.is_root(name):
-			parent = self._get_parent(name)
-			self._get_children(parent).remove(name)
-			self._set_children(parent, self._get_children(parent)+[new_name])
+			parent = self._db[name]['parent']
+			self._db[parent]['children'].remove(name)
+			self._db[parent]['children'] = sorted(self._db[parent]['children']+[new_name])
 		# Update children
 		for key in self._get_subtree(name) if name != self.root_name else self.nodes:
-			new_key = self._replace_hierarchy(key, new_name, old_hierarchy_length)
-			old_parent = self._get_parent(key)
-			self._create_node(name=new_key, parent=old_parent if key == name else self._replace_hierarchy(old_parent, new_name, old_hierarchy_length), \
-					 children=[self._replace_hierarchy(child, new_name, old_hierarchy_length) for child in self._get_children(key)], data=copy.deepcopy(self._get_data(key)))
-			self._del_node(key)
+			new_key = key.replace(name, new_name, 1)
+			new_parent = self._db[key]['parent'] if key == name else self._db[key]['parent'].replace(name, new_name, 1)
+			self._db[new_key] = {'parent':new_parent, 'children':[child.replace(name, new_name, 1) for child in self._db[key]['children']], 'data':copy.deepcopy(self._db[key]['data'])}
+			del self._db[key]
 		if name == self.root_name:
 			self._root = new_name
 			self._root_hierarchy_length = len(self.root_name.split('.'))
