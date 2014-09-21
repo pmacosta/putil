@@ -29,7 +29,7 @@ mod_obj = sys.modules['__main__']
 setattr(mod_obj, '_EXH', putil.exh.ExHandle(putil.tree.Tree))
 exobj = getattr(mod_obj, '_EXH')
 tobj = putil.tree.Tree()
-tobj.add([
+tobj.add_nodes([
 	{'name':'dummy.root.branch1', 'data':list()},
 	{'name':'dummy.root.branch2', 'data':list()},
 	{'name':'dummy.root.branch1.leaf1', 'data':list()},
@@ -37,9 +37,9 @@ tobj.add([
 	{'name':'dummy.root.branch1.leaf2', 'data':'Hello world!'},
 	{'name':'dummy.root.branch1.leaf2.subleaf2', 'data':list()},
 ])
-tobj.collapse('dummy.root.branch1')
+tobj.collapse_subtree('dummy.root.branch1')
 tobj.copy_subtree('dummy.root.branch1', 'dummy.root.branch3')
-tobj.delete('dummy.root.branch2')
+tobj.delete_subtree('dummy.root.branch2')
 tobj.flatten_subtree('dummy.root.branch1')
 tobj.get_children('dummy.root')
 tobj.get_data('dummy.root')
@@ -246,7 +246,7 @@ class Tree(object):	#pylint: disable=R0903
 		return [element.strip() for element in name.strip().split('.')][0 if not root_name else self._root_hierarchy_length:]
 
 	@putil.check.check_argument(putil.check.PolymorphicType([{'name':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'name':NodeName(), 'data':putil.check.Any()})]))
-	def add(self, nodes):
+	def add_nodes(self, nodes):
 		"""
 		Add nodes to tree
 
@@ -264,12 +264,6 @@ class Tree(object):	#pylint: disable=R0903
 		:type	nodes: dictionary or list of dictionaries
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add')) ]]]
-
-		:raises:
-		 * TypeError (Argument `nodes` is of the wrong type)
-
-		 * ValueError (Illegal node name: *[node_name]*)
-
 		.. [[[end]]]
 
 		For example:
@@ -314,7 +308,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._db[name]['data'] += copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
 	@putil.check.check_argument(NodeName())
-	def collapse(self, name):
+	def collapse_subtree(self, name):
 		"""
 		Collapses hierarchy. Nodes that have a single child and no data are combined with their child as a single tree node
 
@@ -322,14 +316,6 @@ class Tree(object):	#pylint: disable=R0903
 		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse')) ]]]
-
-		:raises:
-		 * RuntimeError (Node *[node_name]* not in tree)
-
-		 * TypeError (Argument `name` is of the wrong type)
-
-		 * ValueError (Argument `name` is not a valid node name)
-
 		.. [[[end]]]
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
@@ -422,10 +408,9 @@ class Tree(object):	#pylint: disable=R0903
 		parent = '.'.join(dest_node.split('.')[:-1])
 		self._db[dest_node]['parent'] = parent
 		self._db[parent]['children'] = sorted(self._db[parent]['children']+[dest_node])
-		#self.add({'name':node.replace(source_node, dest_node, 1), 'data':copy.deepcopy(self._db[node]['data'])})
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
-	def delete(self, nodes):
+	def delete_subtree(self, nodes):
 		"""
 		Delete nodes (and their sub-trees) from tree
 
@@ -433,14 +418,6 @@ class Tree(object):	#pylint: disable=R0903
 		:type	nodes: NodeName or list of NodeNames
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
-
-		:raises:
-		 * RuntimeError (Node *[node_name]* not in tree)
-
-		 * TypeError (Argument `nodes` is of the wrong type)
-
-		 * ValueError (Argument `nodes` is not a valid node name)
-
 		.. [[[end]]]
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
@@ -473,7 +450,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('flatten_subtree')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 
@@ -541,7 +518,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_children')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -559,7 +536,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_data')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -577,7 +554,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_leafs')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -602,7 +579,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -620,7 +597,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_children')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -638,7 +615,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_parent')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -656,7 +633,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_subtree')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 
@@ -688,7 +665,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_root')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -726,7 +703,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_leaf')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -743,7 +720,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('make_root')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 
@@ -783,7 +760,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('print_node')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse`
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 		"""
@@ -815,7 +792,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		 * ValueError (Argument `new_name` is not a valid node name)
 
-		 * Same as :py:meth:`putil.tree.Tree.collapse`
+		 * Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		 * Same as :py:meth:`putil.tree.Tree.in_tree`
 

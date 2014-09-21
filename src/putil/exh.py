@@ -231,7 +231,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._tobj = putil.tree.Tree()
 		if not no_print:
 			print putil.misc.pcolor('Building tree', 'blue')
-		self._tobj.add(tree_data)
+		self._tobj.add_nodes(tree_data)
 		if not no_print:
 			print str(self._tobj)
 
@@ -266,7 +266,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Eliminates nodes without exception data """
 		if not no_print:
 			print putil.misc.pcolor('Collapsing tree', 'blue')
-		self._tobj.collapse(self._tobj.root_name)
+		self._tobj.collapse_subtree(self._tobj.root_name)
 		if not no_print:
 			print str(self._tobj)
 

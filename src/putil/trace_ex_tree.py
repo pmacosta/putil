@@ -15,7 +15,7 @@ def trace_tree(no_print=False):
 		print putil.misc.pcolor('Tracing Tree', 'blue')
 	_EXH = putil.exh.ExHandle(putil.tree.Tree)
 	tobj = putil.tree.Tree()
-	tobj.add([
+	tobj.add_nodes([
 		{'name':'dummy.root.branch1', 'data':list()},
 		{'name':'dummy.root.branch2', 'data':list()},
 		{'name':'dummy.root.branch1.leaf1', 'data':list()},
@@ -23,9 +23,9 @@ def trace_tree(no_print=False):
 		{'name':'dummy.root.branch1.leaf2', 'data':'Hello world!'},
 		{'name':'dummy.root.branch1.leaf2.subleaf2', 'data':list()},
 	])
-	tobj.collapse('dummy.root.branch1')
+	tobj.collapse_subtree('dummy.root.branch1')
 	tobj.copy_subtree('dummy.root.branch1', 'dummy.root.branch3')
-	tobj.delete('dummy.root.branch2')
+	tobj.delete_subtree('dummy.root.branch2')
 	tobj.flatten_subtree('dummy.root.branch1')
 	tobj.get_children('dummy.root')
 	tobj.get_data('dummy.root')
