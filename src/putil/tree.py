@@ -179,7 +179,7 @@ class Tree(object):	#pylint: disable=R0903
 		return self._root
 
 	def _get_root_node(self):	#pylint: disable=C0111
-		return None if not self.root_name else self.get_node(self.root_name)
+		return None if not self.root_name else self._db[self.root_name]
 
 	def _get_subtree(self, name):
 		return [name]+[node for child in self._db[name]['children'] for node in self._get_subtree(child)]
@@ -415,7 +415,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(source_node)
 		self._exh.raise_exception_if(name='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
 		for node in self._get_subtree(source_node):
-			self.add({'name':node.replace(source_node, dest_node, 1), 'data':copy.deepcopy(self.get_data(node))})
+			self.add({'name':node.replace(source_node, dest_node, 1), 'data':copy.deepcopy(self._db[node]['data'])})
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
 	def delete(self, nodes):
@@ -618,7 +618,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return [self.get_node(child) for child in self.get_children(name)]
+		return [self._db[child] for child in self._db[name]['children']]
 
 	@putil.check.check_argument(NodeName())
 	def get_node_parent(self, name):	#pylint: disable=C0111
@@ -636,7 +636,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return self._db[self._get_parent(name)] if not self.is_root(name) else dict()
+		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
 	@putil.check.check_argument(NodeName())
 	def get_subtree(self, name):
@@ -686,7 +686,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return not self._get_parent(name)
+		return not self._db[name]['parent']
 
 	@putil.check.check_argument(NodeName())
 	def in_tree(self, name):
@@ -724,7 +724,7 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[end]]]
 		"""
 		self._node_in_tree(name)
-		return not self._get_children(name)
+		return not self._db[name]['children']
 
 	@putil.check.check_argument(NodeName())
 	def make_root(self, name):	#pylint: disable=C0111
@@ -761,8 +761,8 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		if (name != self.root_name) and (self._node_in_tree(name)):
 			for key in [node for node in self.nodes if node.find(name) != 0]:
-				self._del_node(key)
-			self._set_parent(name, '')
+				del self._db[key]
+			self._db[name]['parent'] = ''
 			self._root = name
 			self._root_hierarchy_length = len(self.root_name.split('.'))
 
@@ -780,7 +780,8 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[end]]]
 		"""
-		node = self.get_node(name)
+		self._node_in_tree(name)
+		node = self._db[name]
 		children = [self._split_node_name(child)[-1] for child in node['children']] if node['children'] else node['children']
 		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
@@ -844,20 +845,6 @@ class Tree(object):	#pylint: disable=R0903
 		new_hierarchy_length = len(new_name.split('.'))
 		self._exh.raise_exception_if(name='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
 		self._rename_node(name, new_name)
-		## Update parent
-		#if not self.is_root(name):
-		#	parent = self._db[name]['parent']
-		#	self._db[parent]['children'].remove(name)
-		#	self._db[parent]['children'] = sorted(self._db[parent]['children']+[new_name])
-		## Update children
-		#for key in self._get_subtree(name) if name != self.root_name else self.nodes:
-		#	new_key = key.replace(name, new_name, 1)
-		#	new_parent = self._db[key]['parent'] if key == name else self._db[key]['parent'].replace(name, new_name, 1)
-		#	self._db[new_key] = {'parent':new_parent, 'children':[child.replace(name, new_name, 1) for child in self._db[key]['children']], 'data':copy.deepcopy(self._db[key]['data'])}
-		#	del self._db[key]
-		#if name == self.root_name:
-		#	self._root = new_name
-		#	self._root_hierarchy_length = len(self.root_name.split('.'))
 
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')
