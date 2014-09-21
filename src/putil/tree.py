@@ -143,17 +143,25 @@ class Tree(object):	#pylint: disable=R0903
 		""" Create new tree node """
 		self._db[name] = {'parent':parent, 'children':children, 'data':data}
 
+	def _create_intermediate_nodes(self, name):
+		""" Create intermediate nodes if hierarchy does not exist """
+		hierarchy = self._split_node_name(name, self.root_name)
+		node_tree = [self.root_name+'.'+('.'.join(hierarchy[:num+1])) for num in range(len(hierarchy))]
+		for parent, child in [(child[:child.rfind('.')], child) for child in node_tree if child not in self._db]:
+			self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
+			self._db[parent]['children'] = sorted(self._db[parent]['children']+[child])
+
 	def _delete_subtree(self, nodes):
 		""" Delete subtree private method (no argument validation and usage of getter/setter private methods for speed) """
 		nodes = nodes if isinstance(nodes, list) else [nodes]
-		for parent, node in [(self._get_parent(node), node) for node in nodes if self._node_in_tree(node)]:
+		for parent, node in [(self._db[node]['parent'], node) for node in nodes if self._node_in_tree(node)]:
 			# Delete link to parent (if not root node)
 			del_list = self._get_subtree(node)
 			if parent:
-				self._get_children(parent).remove(node)
+				self._db[parent]['children'].remove(node)
 			# Delete children (sub-tree)
 			for child in del_list:
-				self._del_node(child)
+				del self._db[child]
 			if self._empty_tree():
 				self._root = None
 				self._root_hierarchy_length = None
@@ -301,15 +309,9 @@ class Tree(object):	#pylint: disable=R0903
 			name, data = node_dict['name'], node_dict['data']
 			if name not in self._db:
 				# Validate node name (root of new node same as tree root)
-				hierarchy = self._split_node_name(name)
 				self._exh.raise_exception_if(name='illegal_node_name', condition=not name.startswith(self.root_name+'.'), edata={'field':'node_name', 'value':name})
-				# Create intermediate nodes if node not in tree
-				hierarchy = self._split_node_name(name, self.root_name)
-				node_tree = [self.root_name+'.'+('.'.join(hierarchy[:num+1])) for num in range(len(hierarchy))]
-				for parent, child in [(child[:child.rfind('.')], child) for child in node_tree if child not in self._db]:
-					self._create_node(child, parent=parent, children=list(), data=list())
-					self._set_children(parent, self._get_children(parent)+[child])
-			self._set_data(name, self._get_data(name)+copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data])))
+				self._create_intermediate_nodes(name)
+			self._db[name]['data'] += copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
 	@putil.check.check_argument(NodeName())
 	def collapse(self, name):
@@ -353,7 +355,7 @@ class Tree(object):	#pylint: disable=R0903
 		it does have data associated with it, *'Hello world!'*
 		"""
 		self._node_in_tree(name)
-		for child in copy.copy(self._get_children(name)):
+		for child in copy.copy(self._db[name]['children']):
 			self._collapse_node(child)
 
 	@putil.check.check_arguments({'source_node':NodeName(), 'dest_node':NodeName()})
@@ -371,6 +373,8 @@ class Tree(object):	#pylint: disable=R0903
 		:raises:
 		 * RuntimeError (Illegal root in destination node)
 
+		 * RuntimeError (Node *[node_name]* not in tree)
+
 		 * TypeError (Argument `dest_node` is of the wrong type)
 
 		 * TypeError (Argument `source_node` is of the wrong type)
@@ -378,10 +382,6 @@ class Tree(object):	#pylint: disable=R0903
 		 * ValueError (Argument `dest_node` is not a valid node name)
 
 		 * ValueError (Argument `source_node` is not a valid node name)
-
-		 * Same as :py:meth:`putil.tree.Tree.add`
-
-		 * Same as :py:meth:`putil.tree.Tree.collapse`
 
 		.. [[[end]]]
 
@@ -415,7 +415,14 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(source_node)
 		self._exh.raise_exception_if(name='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
 		for node in self._get_subtree(source_node):
-			self.add({'name':node.replace(source_node, dest_node, 1), 'data':copy.deepcopy(self._db[node]['data'])})
+			self._db[node.replace(source_node, dest_node, 1)] = {'parent':self._db[node]['parent'].replace(source_node, dest_node, 1),
+														         'children':[child.replace(source_node, dest_node, 1) for child in self._db[node]['children']],
+														         'data':copy.deepcopy(self._db[node]['data'])}
+		self._create_intermediate_nodes(dest_node)
+		parent = '.'.join(dest_node.split('.')[:-1])
+		self._db[dest_node]['parent'] = parent
+		self._db[parent]['children'] = sorted(self._db[parent]['children']+[dest_node])
+		#self.add({'name':node.replace(source_node, dest_node, 1), 'data':copy.deepcopy(self._db[node]['data'])})
 
 	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
 	def delete(self, nodes):
@@ -514,14 +521,14 @@ class Tree(object):	#pylint: disable=R0903
 
 		"""
 		self._node_in_tree(name)
-		parent = self._get_parent(name)
-		if (parent) and (not self._get_data(name)):
-			children = self._get_children(name)
+		parent = self._db[name]['parent']
+		if (parent) and (not self._db[name]['data']):
+			children = self._db[name]['children']
 			for child in children:
-				self._set_parent(child, parent)
-			self._get_children(parent).remove(name)
-			self._set_children(parent, self._get_children(parent)+children)
-			self._del_node(name)
+				self._db[child]['parent'] = parent
+			self._db[parent]['children'].remove(name)
+			self._db[parent]['children'] = sorted(self._db[parent]['children']+children)
+			del self._db[name]
 
 	@putil.check.check_argument(NodeName())
 	def get_children(self, name):	#pylint: disable=C0111
