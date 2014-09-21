@@ -212,7 +212,7 @@ class ExHandle(object):	#pylint: disable=R0902
 						for fkey, fname in fattr_funcs.items():
 							mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
 							while mod_list:
-								self._tobj.rename_node(mod_list[0], mod_list[0].replace(fname, '{0}[{1}]'.format(key, fkey)))
+								self._tobj._rename_node(mod_list[0], mod_list[0].replace(fname, '{0}[{1}]'.format(key, fkey)))	#pylint: disable=W0212
 								new_dict['{0}[{1}]'.format(key, fkey)] = self._trace_pkg_props[fname]
 								mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
 								collapse_tree_needed = True
@@ -276,23 +276,23 @@ class ExHandle(object):	#pylint: disable=R0902
 			print putil.misc.pcolor('Creating exception table', 'blue')
 		self._extable = dict()
 		# Create flat exception table for each trace class method/property or module-level function
-		children = sorted(self._tobj.get_children(self._tobj.root_name))
-		module_function = [self._tobj.root_name] if self._tobj.get_data(self._tobj.root_name) else list()
+		children = self._tobj._get_children(self._tobj.root_name)	#pylint: disable=W0212
+		module_function = [self._tobj.root_name] if self._tobj._get_data(self._tobj.root_name) else list()	#pylint: disable=W0212
 		for child in children+module_function:
 			child_name = self._get_obj_full_name(child)
 			self._extable[child_name] = dict()
-			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj.get_data(child))))
-			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj.get_subtree(child) for exdesc in self._tobj.get_data(name)])))	#pylint: disable=W0212
+			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(child))))	#pylint: disable=W0212
+			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
 			self._extable[child_name]['cross_hierarchical_exceptions'] = list()
 			self._extable[child_name]['cross_flat_exceptions'] = list()
 			self._extable[child_name]['cross_names'] = list()
 		# Create entries for package callables outside the namespace of trace class or module-level function
-		pkg_call_list = [(grandchild, grandchild.replace(child+'.', '', 1)) for child in children for grandchild in self._tobj.get_children(child) if not grandchild.replace(child+'.', '', 1).startswith(self._tobj.root_name)]
+		pkg_call_list = [(grandchild, grandchild.replace(child+'.', '', 1)) for child in children for grandchild in self._tobj._get_children(child) if not grandchild.replace(child+'.', '', 1).startswith(self._tobj.root_name)]	#pylint: disable=W0212
 		for child, child_call_name in pkg_call_list:
 			child_name = self._get_obj_full_name(child_call_name)
 			self._extable[child_name] = dict()
-			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj.get_data(child))))
-			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj.get_subtree(child) for exdesc in self._tobj.get_data(name)])))	#pylint: disable=W0212
+			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(child))))	#pylint: disable=W0212
+			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
 			self._extable[child_name]['cross_hierarchical_exceptions'] = list()
 			self._extable[child_name]['cross_flat_exceptions'] = list()
 			self._extable[child_name]['cross_names'] = list()
@@ -407,7 +407,7 @@ class ExHandle(object):	#pylint: disable=R0902
 									break
 							else:
 								raise RuntimeError('Could not find cross-usage node to delete')
-							self._tobj.delete(del_node)
+							self._tobj._delete_subtree(del_node)	#pylint: disable=W0212
 							node_deleted = True
 							break
 					if node_deleted:
@@ -420,20 +420,20 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not no_print:
 			print putil.misc.pcolor('Condensing private callables', 'blue')
 		# Move all exceptions in private callable sub-tree to child
-		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
+		for child in sorted(self._tobj._get_children(self._tobj.root_name)):	#pylint: disable=W0212
 			child_name = self._get_obj_full_name(child)
-			grandchildren = sorted(self._tobj.get_children(child)[:])
+			grandchildren = self._tobj._get_children(child)[:]	#pylint: disable=W0212
 			for grandchild in grandchildren:
 				call_name = self._get_obj_full_name(grandchild.replace(child+'.', '', 1))
 				if call_name.split('.')[-1].startswith('_'):
-					for subnode in self._tobj.get_subtree(grandchild):	#pylint: disable=W0212
-						self._extable[child_name]['native_exceptions'] += self._tobj.get_data(subnode)
+					for subnode in self._tobj._get_subtree(grandchild):	#pylint: disable=W0212
+						self._extable[child_name]['native_exceptions'] += self._tobj._get_data(subnode)	#pylint: disable=W0212
 					self._extable[child_name]['native_exceptions'] = sorted(list(set(self._extable[child_name]['native_exceptions'])))
-					self._tobj.delete(grandchild)
+					self._tobj._delete_subtree(grandchild)	#pylint: disable=W0212
 		if not no_print:
 			print str(self._tobj)
 		# Generate flat cross-usage exceptions
-		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
+		for child in sorted(self._tobj._get_children(self._tobj.root_name)):	#pylint: disable=W0212
 			child_name = self._get_obj_full_name(child)
 			self._extable[child_name]['cross_flat_exceptions'] = \
 				sorted(list(set([exdesc for cross_name in self._extable[child_name]['cross_names'] for exdesc in self._extable[cross_name]['flat_exceptions']])))
@@ -554,10 +554,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Prune tree (delete trace object methods/attributes that have no exceptions """
 		if not no_print:
 			print putil.misc.pcolor('Prunning tree', 'blue')
-		children = self._tobj.get_children(self._tobj.root_name)
+		children = self._tobj._get_children(self._tobj.root_name)	#pylint: disable=W0212
 		for child in children:
-			if not self._tobj.get_data(child):
-				self._tobj.delete(child)
+			if not self._tobj._get_data(child):	#pylint: disable=W0212
+				self._tobj._delete_subtree(child)	#pylint: disable=W0212
 		if not no_print:
 			print str(self._tobj)
 

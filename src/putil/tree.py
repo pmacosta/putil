@@ -143,6 +143,21 @@ class Tree(object):	#pylint: disable=R0903
 		""" Create new tree node """
 		self._db[name] = {'parent':parent, 'children':children, 'data':data}
 
+	def _delete_subtree(self, nodes):
+		""" Delete subtree private method (no argument validation and usage of getter/setter private methods for speed) """
+		nodes = nodes if isinstance(nodes, list) else [nodes]
+		for parent, node in [(self._get_parent(node), node) for node in nodes if self._node_in_tree(node)]:
+			# Delete link to parent (if not root node)
+			del_list = self._get_subtree(node)
+			if parent:
+				self._get_children(parent).remove(node)
+			# Delete children (sub-tree)
+			for child in del_list:
+				self._del_node(child)
+			if self._empty_tree():
+				self._root = None
+				self._root_hierarchy_length = None
+
 	def _del_node(self, name):
 		""" Delete tree node """
 		del self._db[name]
@@ -189,10 +204,23 @@ class Tree(object):	#pylint: disable=R0903
 		dmark = ' (*)' if self._db[name]['data'] else ''
 		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, node_name, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
 
-	def _replace_hierarchy(self, node_name, hierarchy_name, hierarchy_length):	#pylint: disable=R0201
-		""" Replaces a certain number of hierarchy levels with new hierarchy """
-		suffix = '.'.join(node_name.split('.')[hierarchy_length:])
-		return hierarchy_name+('.' if suffix else '')+suffix
+	def _rename_node(self, name, new_name):
+		""" Rename node private method (no argument validation and usage of getter/setter private methods for speed) """
+		# Update parent
+		if not self.is_root(name):
+			parent = self._db[name]['parent']
+			self._db[parent]['children'].remove(name)
+			self._db[parent]['children'] = sorted(self._db[parent]['children']+[new_name])
+		# Update children
+		for key in self._get_subtree(name) if name != self.root_name else self.nodes:
+			new_key = key.replace(name, new_name, 1)
+			new_parent = self._db[key]['parent'] if key == name else self._db[key]['parent'].replace(name, new_name, 1)
+			self._db[new_key] = {'parent':new_parent, 'children':[child.replace(name, new_name, 1) for child in self._db[key]['children']], 'data':copy.deepcopy(self._db[key]['data'])}
+			del self._db[key]
+		if name == self.root_name:
+			self._root = new_name
+			self._root_hierarchy_length = len(self.root_name.split('.'))
+
 
 	def _set_children(self, name, children):
 		self._db[name]['children'] = sorted(list(set(children)))
@@ -426,18 +454,7 @@ class Tree(object):	#pylint: disable=R0903
 			  └subleaf2
 
 		"""
-		nodes = nodes if isinstance(nodes, list) else [nodes]
-		for parent, node in [(self._get_parent(node), node) for node in nodes if self._node_in_tree(node)]:
-			# Delete link to parent (if not root node)
-			del_list = self._get_subtree(node)
-			if parent:
-				self._get_children(parent).remove(node)
-			# Delete children (sub-tree)
-			for child in del_list:
-				self._del_node(child)
-			if self._empty_tree():
-				self._root = None
-				self._root_hierarchy_length = None
+		self._delete_subtree(nodes)
 
 	@putil.check.check_argument(NodeName())
 	def flatten_subtree(self, name):
@@ -826,20 +843,21 @@ class Tree(object):	#pylint: disable=R0903
 		old_hierarchy_length = len(name.split('.'))
 		new_hierarchy_length = len(new_name.split('.'))
 		self._exh.raise_exception_if(name='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
-		# Update parent
-		if not self.is_root(name):
-			parent = self._db[name]['parent']
-			self._db[parent]['children'].remove(name)
-			self._db[parent]['children'] = sorted(self._db[parent]['children']+[new_name])
-		# Update children
-		for key in self._get_subtree(name) if name != self.root_name else self.nodes:
-			new_key = key.replace(name, new_name, 1)
-			new_parent = self._db[key]['parent'] if key == name else self._db[key]['parent'].replace(name, new_name, 1)
-			self._db[new_key] = {'parent':new_parent, 'children':[child.replace(name, new_name, 1) for child in self._db[key]['children']], 'data':copy.deepcopy(self._db[key]['data'])}
-			del self._db[key]
-		if name == self.root_name:
-			self._root = new_name
-			self._root_hierarchy_length = len(self.root_name.split('.'))
+		self._rename_node(name, new_name)
+		## Update parent
+		#if not self.is_root(name):
+		#	parent = self._db[name]['parent']
+		#	self._db[parent]['children'].remove(name)
+		#	self._db[parent]['children'] = sorted(self._db[parent]['children']+[new_name])
+		## Update children
+		#for key in self._get_subtree(name) if name != self.root_name else self.nodes:
+		#	new_key = key.replace(name, new_name, 1)
+		#	new_parent = self._db[key]['parent'] if key == name else self._db[key]['parent'].replace(name, new_name, 1)
+		#	self._db[new_key] = {'parent':new_parent, 'children':[child.replace(name, new_name, 1) for child in self._db[key]['children']], 'data':copy.deepcopy(self._db[key]['data'])}
+		#	del self._db[key]
+		#if name == self.root_name:
+		#	self._root = new_name
+		#	self._root_hierarchy_length = len(self.root_name.split('.'))
 
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')
