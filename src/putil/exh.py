@@ -25,14 +25,7 @@ def _get_func_calling_hierarchy(frame_obj, func_obj):
 	code = frame_obj.f_code
 	# Work out the module name
 	module = inspect.getmodule(code)
-	module_name = ''
-	if module:
-		module_name = module.__name__
-	else:
-		if 'self' in frame_obj.f_locals:
-			module_name = frame_obj.f_locals['self'].__module__
-		else:
-			module_name = sys.modules[func_obj.__module__].__name__
+	module_name = module.__name__ if module else (frame_obj.f_locals['self'].__module__ if 'self' in frame_obj.f_locals else sys.modules[func_obj.__module__].__name__)
 	ret.append(module_name)
 	# Work out the class name
 	try:
@@ -41,13 +34,10 @@ def _get_func_calling_hierarchy(frame_obj, func_obj):
 	except (KeyError, AttributeError):
 		class_name = ''
 	# Work out the current function or method
-	func_name = code.co_name.strip()
-	if func_name == '?':
-		func_name = '__main__'
-	if func_name == '':
-		func_name = func_obj.__name__
+	func_name = code.co_name
+	func_name = '__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name)
 	ret.append(func_name)
-	return '' if (module_name.strip() == '') and (class_name.strip() == '') else '.'.join(ret)
+	return '' if (not module_name) and (not class_name) else '.'.join(ret)
 
 
 def _get_package_obj_type(obj):
