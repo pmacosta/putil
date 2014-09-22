@@ -609,7 +609,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Create Sphinx-formatted output
 		self._create_ex_table_output(no_print)
 
-	def ex_add(self, name, extype, exmsg):	#pylint: disable=R0913,R0914
+	def add_exception(self, name, extype, exmsg):	#pylint: disable=R0913,R0914
 		""" Add exception to handler
 
 		:param	name: Exception name. Has to be unique within the namespace, duplicates are eliminated

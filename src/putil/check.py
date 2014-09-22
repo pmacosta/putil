@@ -520,7 +520,7 @@ def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	if '_EXH' in root_module.f_locals:
 		exhobj = root_module.f_locals['_EXH']
 		ex_name = 'check_argument_type_internal_{0}'.format(param_name)
-		exhobj.ex_add(name=ex_name, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
+		exhobj.add_exception(name=ex_name, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
 		exhobj.raise_exception_if(name=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))))
 	else:
 		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))):
@@ -551,7 +551,7 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = 'check_argument_internal_{0}{1}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
-					modobj._EXH.ex_add(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
+					modobj._EXH.add_exception(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
 					if ('edata' in ex) and len(ex['edata']):
 						modobj._EXH.raise_exception_if(name=ex_name, condition=False, edata=ex['edata'])
 					else:

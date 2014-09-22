@@ -118,10 +118,10 @@ def write(file_name, data, append=True):
 	"""
 	root_module = inspect.stack()[-1][0]
 	_exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.pcsv.write)
-	_exh.ex_add(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
-	_exh.ex_add(name='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
-	_exh.ex_add(name='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
-	_exh.ex_add(name='file_could_not_be_created_runtime', extype=RuntimeError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.add_exception(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
+	_exh.add_exception(name='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.add_exception(name='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.add_exception(name='file_could_not_be_created_runtime', extype=RuntimeError, exmsg='File *[file_name]* could not be created: *[reason]*')
 	_exh.raise_exception_if(name='data_is_empty', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
 	try:
 		putil.misc.make_dir(file_name)
@@ -187,10 +187,10 @@ class CsvFile(object):
 		# Register exceptions
 		root_module = inspect.stack()[-1][0]
 		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.pcsv.CsvFile)
-		self._exh.ex_add(name='file_not_found', extype=IOError, exmsg='File *[file_name]* could not be found')
-		self._exh.ex_add(name='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
-		self._exh.ex_add(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
-		self._exh.ex_add(name='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
+		self._exh.add_exception(name='file_not_found', extype=IOError, exmsg='File *[file_name]* could not be found')
+		self._exh.add_exception(name='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
+		self._exh.add_exception(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
+		self._exh.add_exception(name='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
 		#
 		self._exh.raise_exception_if(name='file_not_found', condition=False, edata={'field':'file_name', 'value':file_name})	# Check is actually done in the context manager, which is unreachable
 		with open(file_name, 'rU') as file_handle:
@@ -213,7 +213,7 @@ class CsvFile(object):
 
 	def _validate_dfilter(self, dfilter):
 		""" Validate that all columns in filter are in header """
-		self._exh.ex_add(name='dfilter_empty', extype=ValueError, exmsg='Argument `dfilter` is empty')
+		self._exh.add_exception(name='dfilter_empty', extype=ValueError, exmsg='Argument `dfilter` is empty')
 		if dfilter is not None:
 			self._exh.raise_exception_if(name='dfilter_empty', condition=len(dfilter) == 0)
 			for key in dfilter:
@@ -333,7 +333,7 @@ class CsvFile(object):
 
 		.. [[[end]]]
 		"""
-		self._exh.ex_add(name='write', extype=ValueError, exmsg='There is no data to save to file')
+		self._exh.add_exception(name='write', extype=ValueError, exmsg='There is no data to save to file')
 		self._in_header(col)
 		data = self.data(col=col, filtered=filtered)
 		if headers:
@@ -347,7 +347,7 @@ class CsvFile(object):
 
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """
-		self._exh.ex_add(name='header_not_found', extype=ValueError, exmsg='Column *[column_name]* not found in header')
+		self._exh.add_exception(name='header_not_found', extype=ValueError, exmsg='Column *[column_name]* not found in header')
 		if col is not None:
 			col_list = [col] if isinstance(col, str) else col
 			for col in col_list:

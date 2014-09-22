@@ -196,7 +196,7 @@ class Tree(object):	#pylint: disable=R0903
 		return self._db[name]['parent']
 
 	def _node_in_tree(self, name):	#pylint: disable=C0111
-		self._exh.ex_add(name='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
+		self._exh.add_exception(name='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
 		self._exh.raise_exception_if(name='node_not_in_tree', condition=name not in self._db, edata={'field':'node_name', 'value':name})
 		return True
 
@@ -291,7 +291,7 @@ class Tree(object):	#pylint: disable=R0903
 			[5, 7]
 
 		"""
-		self._exh.ex_add(name='illegal_node_name', extype=ValueError, exmsg='Illegal node name: *[node_name]*')
+		self._exh.add_exception(name='illegal_node_name', extype=ValueError, exmsg='Illegal node name: *[node_name]*')
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		# Create root node (if needed)
 		if not self.root_name:
@@ -397,7 +397,7 @@ class Tree(object):	#pylint: disable=R0903
 			  └subleaf2
 
 		"""
-		self._exh.ex_add(name='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
+		self._exh.add_exception(name='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
 		self._node_in_tree(source_node)
 		self._exh.raise_exception_if(name='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
 		for node in self._get_subtree(source_node):
@@ -819,9 +819,9 @@ class Tree(object):	#pylint: disable=R0903
 			└branch2
 
 		"""
-		self._exh.ex_add(name='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
-		self._exh.ex_add(name='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
-		self._exh.ex_add(name='illegal_new_root_name', extype=RuntimeError, exmsg='Argument `new_name` is an illegal root node name')
+		self._exh.add_exception(name='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
+		self._exh.add_exception(name='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
+		self._exh.add_exception(name='illegal_new_root_name', extype=RuntimeError, exmsg='Argument `new_name` is an illegal root node name')
 		self._node_in_tree(name)
 		self._exh.raise_exception_if(name='new_name_exists', condition=self.in_tree(new_name) and (name != self.root_name), edata={'field':'node_name', 'value':new_name})
 		self._exh.raise_exception_if(name='illegal_new_name', condition=(name.split('.')[:-1] != new_name.split('.')[:-1]) and (name != self.root_name))
