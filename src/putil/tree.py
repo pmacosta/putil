@@ -263,7 +263,13 @@ class Tree(object):	#pylint: disable=R0903
 
 		:type	nodes: dictionary or list of dictionaries
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add_nodes')) ]]]
+
+		:raises:
+		 * TypeError (Argument `nodes` is of the wrong type)
+
+		 * ValueError (Illegal node name: *[node_name]*)
+
 		.. [[[end]]]
 
 		For example:
@@ -315,7 +321,15 @@ class Tree(object):	#pylint: disable=R0903
 		:param	name: Root of the sub-tree to collapse. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse_subtree')) ]]]
+
+		:raises:
+		 * RuntimeError (Node *[node_name]* not in tree)
+
+		 * TypeError (Argument `name` is of the wrong type)
+
+		 * ValueError (Argument `name` is not a valid node name)
+
 		.. [[[end]]]
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
@@ -417,7 +431,15 @@ class Tree(object):	#pylint: disable=R0903
 		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName or list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete_subtree')) ]]]
+
+		:raises:
+		 * RuntimeError (Node *[node_name]* not in tree)
+
+		 * TypeError (Argument `nodes` is of the wrong type)
+
+		 * ValueError (Argument `nodes` is not a valid node name)
+
 		.. [[[end]]]
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
