@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.abspath('/home/pacosta/python/psf/src/'))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
+#    'sphinx.ext.viewcode',
     'sphinx.ext.mathjax',
 ]
 
