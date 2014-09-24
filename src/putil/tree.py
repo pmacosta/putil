@@ -54,6 +54,9 @@ tobj.is_leaf('dummy.root')
 tobj.make_root('dummy.root.branch3')
 tobj.print_node('dummy.root.branch3')
 tobj.rename_node('dummy.root.branch3', 'root')
+tobj.nodes
+tobj.root_node
+tobj.root_name
 exobj.build_ex_tree(no_print=True)
 exobj_tree = copy.deepcopy(exobj)
 ]]]

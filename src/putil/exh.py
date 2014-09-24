@@ -18,27 +18,27 @@ import putil.tree
 ###
 # Functions
 ###
-def _get_func_calling_hierarchy(frame_obj, func_obj):
-	""" Get class name of decorated function """
-	# Most of this code from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
-	ret = list()
-	code = frame_obj.f_code
-	# Work out the module name
-	module = inspect.getmodule(code)
-	module_name = module.__name__ if module else (frame_obj.f_locals['self'].__module__ if 'self' in frame_obj.f_locals else sys.modules[func_obj.__module__].__name__)
-	ret.append(module_name)
-	# Work out the class name
-	try:
-		class_name = frame_obj.f_locals['self'].__class__.__name__
-		ret.append(class_name)
-	except (KeyError, AttributeError):
-		class_name = ''
-	# Work out the current function or method
-	func_name = code.co_name
-	func_name = '__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name)
-	ret.append(func_name)
-	return '' if (not module_name) and (not class_name) else '.'.join(ret)
+def _get_callable_name():	#pylint: disable=R0201
+	""" Get fully qualified calling function name """
+	# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
+	fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fn == '<module>'))]
+	return '.'.join([_get_callable_path(fobj, fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))) \
+		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]])
 
+def _get_callable_path(frame_obj, func_obj):
+	""" Get full path of callable """
+	# Most of this code refactored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
+	code = frame_obj.f_code
+	scontext = frame_obj.f_locals.get('self', None)
+	# Module name
+	module = inspect.getmodule(code)
+	ret = [module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)]
+	# Class name
+	ret.append(scontext.__class__.__name__ if scontext else '')
+	# Function/method/attribute name
+	func_name = code.co_name
+	ret.append('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
+	return '' if ret[:2] == ['', ''] else '.'.join(filter(None, ret))	#pylint: disable=W0141
 
 def _get_package_obj_type(obj):
 	""" Scans package and determines method/attribute/function property for function or class member """
@@ -632,7 +632,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			raise TypeError('Argument `extype` is of the wrong type')
 		if not isinstance(exmsg, str):
 			raise TypeError('Argument `exmsg` is of the wrong type')
-		func_name = self.get_func_name()
+		func_name = _get_callable_name()
 		self._ex_list.append({'name':self.get_ex_name(name), 'function':func_name, 'type':extype, 'msg':exmsg, 'checked':False})
 		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
 
@@ -644,34 +644,10 @@ class ExHandle(object):	#pylint: disable=R0902
 				return obj
 		raise ValueError('Exception name {0} not found'.format(name))
 
-	def get_ex_name(self, name):
+	def get_ex_name(self, name):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
-		func_name = self.get_func_name()
+		func_name = _get_callable_name()
 		return '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name)
-
-	def get_func_name(self):	#pylint: disable=R0201
-		""" Get calling function name """
-		# Stack frame is a tuple with the following items:
-		# 0: the frame object
-		# 1: the filename
-		# 2: the line number of the current line
-		# 3: the function name
-		# 4: a list of lines of context from the source code
-		# 5: the index of the current line within that list.
-		frame_list = inspect.stack()
-		func_name = ''
-		flag = False
-		for frame_obj, file_name, _, fname, fcontext, findex in frame_list:
-			lcontext = frame_obj.f_locals
-			gcontext = frame_obj.f_globals
-			scontext = lcontext['self'] if 'self' in lcontext else None
-			func_obj = lcontext[fname] if fname in lcontext else (gcontext[fname] if fname in gcontext else (getattr(scontext, fname) if ((scontext is not None) and (getattr(scontext, fname, -1) != -1)) else None))
-			if (('wrapper' in fname) and ('check.py' in file_name)) or ('exh.py' in file_name) or ('check.py' in file_name) or ((file_name == '<string>') and (fcontext is None) and (findex is None) and flag):
-				pass
-			elif fname != '<module>':
-				func_name = _get_func_calling_hierarchy(frame_obj, func_obj)+('' if not func_name else '.')+func_name
-				flag = True
-		return func_name
 
 	def get_sphinx_doc_for_member(self, member):
 		""" Returns Sphinx-compatible exception list """

@@ -40,6 +40,9 @@ def trace_tree(no_print=False):
 	tobj.make_root('dummy.root.branch3')
 	tobj.print_node('dummy.root.branch3')
 	tobj.rename_node('dummy.root.branch3', 'root')
+	tobj.nodes	#pylint: disable=W0104
+	tobj.root_node	#pylint: disable=W0104
+	tobj.root_name	#pylint: disable=W0104
 
 	_EXH.build_ex_tree(no_print=no_print)
 	_EXH.print_ex_tree()
