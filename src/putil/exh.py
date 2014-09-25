@@ -18,13 +18,6 @@ import putil.tree
 ###
 # Functions
 ###
-def _get_callable_name():	#pylint: disable=R0201
-	""" Get fully qualified calling function name """
-	# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
-	fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fn == '<module>'))]
-	return '.'.join([_get_callable_path(fobj, fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))) \
-		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]])
-
 def _get_callable_path(frame_obj, func_obj):
 	""" Get full path of callable """
 	# Most of this code refactored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
@@ -39,6 +32,7 @@ def _get_callable_path(frame_obj, func_obj):
 	func_name = code.co_name
 	ret.append('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
 	return '' if ret[:2] == ['', ''] else '.'.join(filter(None, ret))	#pylint: disable=W0141
+
 
 def _get_package_obj_type(obj):
 	""" Scans package and determines method/attribute/function property for function or class member """
@@ -72,7 +66,8 @@ def _make_module_callables_list(obj, cls_name=''):
 			call_full_name = '{0}.{1}.{2}'.format(obj.__module__, cls_name, call_name)
 		else:
 			call_full_name = '{0}.{1}'.format(base_obj.__module__, call_name) if not cls_name else '{0}.{1}.{2}'.format(base_obj.__module__, cls_name, call_name)
-		call_type = 'meth' if type(call_obj) == types.MethodType else 'attr'
+		call_type = 'attr' if any([hasattr(call_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
+		#call_type = 'meth' if type(call_obj) == types.MethodType else 'attr'
 		callable_dict[call_full_name] = call_type
 	# Sub-classes in object within package
 	for element_name in dir(obj):
@@ -141,7 +136,8 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._trace_obj = obj
 		self._trace_obj_type = inspect.isclass(obj)
 		self._trace_obj_name = '{0}.{1}'.format(obj.__module__, obj.__name__)
-		self._trace_pkg_props = _get_package_obj_type(obj)
+		self._trace_pkg_props = dict()
+		#self._trace_pkg_props = _get_package_obj_type(obj)
 		self._trace_list, self._tobj, self._extable, self._module_functions_extable, self._cross_usage_extable, self._exoutput, self._clsattr = None, None, None, None, None, None, None
 		self._ex_list = list()
 
@@ -507,6 +503,22 @@ class ExHandle(object):	#pylint: disable=R0902
 			msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 		return msg
 
+	def _get_callable_name(self):	#pylint: disable=R0201,R0914
+		""" Get fully qualified calling function name """
+		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
+		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fn == '<module>'))]
+		ret = list()
+		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
+			func_obj = fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))
+			if func_obj.__name__ not in self._trace_pkg_props:	#pylint: disable=W0212
+				fname = _get_callable_path(fobj, func_obj)
+				self._trace_pkg_props[fname] = 'attr' if any([hasattr(func_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
+				if hasattr(func_obj, 'im_class'):
+					cls_obj = func_obj.im_class
+					self._trace_pkg_props = dict(self._trace_pkg_props.items()+_make_module_callables_list(cls_obj, cls_obj.__name__).items())	#pylint: disable=W0212
+			ret.append(fname)
+		return '.'.join(ret)
+
 	def _get_obj_full_name(self, obj_name):
 		""" Find name in package callable dictionary """
 		obj_hierarchy = obj_name.split('.')
@@ -632,7 +644,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			raise TypeError('Argument `extype` is of the wrong type')
 		if not isinstance(exmsg, str):
 			raise TypeError('Argument `exmsg` is of the wrong type')
-		func_name = _get_callable_name()
+		func_name = self._get_callable_name()
 		self._ex_list.append({'name':self.get_ex_name(name), 'function':func_name, 'type':extype, 'msg':exmsg, 'checked':False})
 		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
 
@@ -646,7 +658,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def get_ex_name(self, name):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
-		func_name = _get_callable_name()
+		func_name = self._get_callable_name()
 		return '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name)
 
 	def get_sphinx_doc_for_member(self, member):
