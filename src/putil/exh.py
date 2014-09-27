@@ -34,47 +34,9 @@ def _get_callable_path(frame_obj, func_obj):
 	return '' if ret[:2] == ['', ''] else '.'.join(filter(None, ret))	#pylint: disable=W0141
 
 
-def _get_package_obj_type(obj):
-	""" Scans package and determines method/attribute/function property for function or class member """
-	try:
-		obj_module_name = (obj.__name__ if obj.__name__ in sys.modules else obj.__module__)
-	except:
-		raise RuntimeError('Argument `obj` is of the wrong type')
-	# Find top-level module
-	top_module_name = obj_module_name.split('.')[0]
-	top_module_obj = sys.modules[top_module_name]
-	# Get packages modules
-	sub_modules_obj_list = [top_module_obj]+_make_modules_obj_list(top_module_obj)
-	callables_dict = dict()
-	for sub_module_obj in sub_modules_obj_list:
-		callables_dict = dict(callables_dict.items()+_make_module_callables_list(sub_module_obj).items())
-	return callables_dict
-
-
 def _is_module(obj):
 	""" Determines whether an object is a module or not """
 	return hasattr(obj, '__name__') and (obj.__name__ in sys.modules)
-
-
-def _make_module_callables_list(obj, cls_name=''):
-	""" Creates a list of callable functions at and below an object hierarchy """
-	top_level_module = (obj.__name__ if obj.__name__ in sys.modules else obj.__module__).split('.')[0]
-	# Callables in object
-	callable_dict = dict()
-	for call_name, call_obj, base_obj in _public_callables(obj):
-		if call_name == '__init__':
-			call_full_name = '{0}.{1}.{2}'.format(obj.__module__, cls_name, call_name)
-		else:
-			call_full_name = '{0}.{1}'.format(base_obj.__module__, call_name) if not cls_name else '{0}.{1}.{2}'.format(base_obj.__module__, cls_name, call_name)
-		call_type = 'attr' if any([hasattr(call_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
-		#call_type = 'meth' if type(call_obj) == types.MethodType else 'attr'
-		callable_dict[call_full_name] = call_type
-	# Sub-classes in object within package
-	for element_name in dir(obj):
-		element_obj = getattr(obj, element_name)
-		if inspect.isclass(element_obj) and (element_obj.__module__.split('.')[0] == top_level_module):
-			callable_dict = dict(callable_dict.items()+_make_module_callables_list(element_obj, element_obj.__name__).items())
-	return callable_dict
 
 
 def _make_modules_obj_list(obj):
@@ -136,8 +98,8 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._trace_obj = obj
 		self._trace_obj_type = inspect.isclass(obj)
 		self._trace_obj_name = '{0}.{1}'.format(obj.__module__, obj.__name__)
-		self._trace_pkg_props = dict()
-		#self._trace_pkg_props = _get_package_obj_type(obj)
+		self._callable_db = dict()
+		self._module_db = list()
 		self._trace_list, self._tobj, self._extable, self._module_functions_extable, self._cross_usage_extable, self._exoutput, self._clsattr = None, None, None, None, None, None, None
 		self._ex_list = list()
 
@@ -145,7 +107,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		cobj = ExHandle(obj=copy.copy(self._trace_obj))
 		cobj._trace_obj_type = copy.copy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.copy(self._trace_obj_name)	#pylint: disable=W0212
-		cobj._trace_pkg_props = copy.copy(self._trace_pkg_props)	#pylint: disable=W0212
+		cobj._callable_db = copy.copy(self._callable_db)	#pylint: disable=W0212
 		cobj._trace_list = copy.copy(self._trace_list)	#pylint: disable=W0212
 		cobj._tobj = copy.copy(self._tobj)	#pylint: disable=W0212
 		cobj._extable = copy.copy(self._extable)	#pylint: disable=W0212
@@ -160,7 +122,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		cobj = ExHandle(obj=copy.deepcopy(self._trace_obj))
 		cobj._trace_obj_type = copy.deepcopy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.deepcopy(self._trace_obj_name, memodict)	#pylint: disable=W0212
-		cobj._trace_pkg_props = copy.deepcopy(self._trace_pkg_props)	#pylint: disable=W0212
+		cobj._callable_db = copy.deepcopy(self._callable_db)	#pylint: disable=W0212
 		cobj._trace_list = copy.deepcopy(self._trace_list, memodict)	#pylint: disable=W0212
 		cobj._tobj = copy.deepcopy(self._tobj, memodict)	#pylint: disable=W0212
 		cobj._extable = copy.deepcopy(self._extable, memodict)	#pylint: disable=W0212
@@ -177,45 +139,24 @@ class ExHandle(object):	#pylint: disable=R0902
 	def _alias_attributes(self, no_print=True):	#pylint: disable=R0912,R0914
 		""" Create attribute nodes in tree """
 		if inspect.isclass(self._trace_obj):
-			collapse_tree_needed = False
 			if not no_print:
 				print putil.misc.pcolor('Aliasing attributes', 'blue')
-			new_dict = dict()
-			for key in self._trace_pkg_props:
-				# Find class callables (class name in callable name and only one level of hierarchy after class name)
-				if key.startswith(self._trace_obj_name+'.') and (len(key.replace(self._trace_obj_name+'.', '').split('.')) == 1):
-					obj = getattr(self._trace_obj, key.replace(self._trace_obj_name+'.', '').split('.')[0])
-					fattr_funcs = dict()
-					for attr in ['fset', 'fget', 'fdel']:
-						if hasattr(obj, attr) and getattr(obj, attr):
-							attr_obj = getattr(obj, attr)
-							attr_code = attr_obj.func_code
-							attr_found = False
-							attr_key = None
-							for attr_key in self._trace_pkg_props:
-								if (attr_key == attr_obj.__name__) or (attr_key.endswith('.'+attr_obj.__name__)):
-									class_obj = eval('getattr({0}, "{1}")'.format(attr_key if attr_key == attr_obj.__name__ else ('.'.join(attr_key.split('.')[:-1])), attr_obj.__name__))	#pylint: disable=W0123
-									class_code = class_obj.func_code
-									if attr_code == class_code:
-										attr_found = True
-										break
-							if attr_found:
-								fattr_funcs[attr] = attr_key
-					if fattr_funcs:
-						if not no_print:
-							print '   Detected attribute {0}'.format(key)
-							for func in sorted(fattr_funcs.values()):
-								print '      {0}'.format(func)
-						for fkey, fname in fattr_funcs.items():
-							mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
-							while mod_list:
-								self._tobj._rename_node(mod_list[0], mod_list[0].replace(fname, '{0}[{1}]'.format(key, fkey)))	#pylint: disable=W0212
-								new_dict['{0}[{1}]'.format(key, fkey)] = self._trace_pkg_props[fname]
-								mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
-								collapse_tree_needed = True
-			for key in new_dict:
-				self._trace_pkg_props[key] = copy.deepcopy(new_dict[key])
-			if collapse_tree_needed:
+			# Select properties of traced class or module/level function
+			#for mkey, mval in self._callable_db.items():
+			#	print '{0}: {1}'.format(mkey, mval)
+			attr_list = [(mkey, mval['attr']) for mkey, mval in self._callable_db.items() if 'attr' in mval]
+			for key, fattr_funcs in attr_list:
+				if not no_print:
+					print '   Detected attribute {0}'.format(key)
+					for func in sorted(fattr_funcs.values()):
+						print '      {0}'.format(func)
+				for fkey, fname in fattr_funcs.items():
+					mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
+					while mod_list:
+						self._tobj._rename_node(mod_list[0], mod_list[0].replace(fname, '{0}[{1}]'.format(key, fkey)))	#pylint: disable=W0212
+						self._callable_db['{0}[{1}]'.format(key, fkey)] = copy.deepcopy(self._callable_db[fname])
+						mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
+			if attr_list:
 				self._collapse_ex_tree(no_print=True)
 		if not no_print:
 			print str(self._tobj)
@@ -352,7 +293,7 @@ class ExHandle(object):	#pylint: disable=R0902
 					new_list.append(key1 if (key1 != key2) and (self._extable[key1]['flat_exceptions'] == self._extable[key2]['flat_exceptions']) else key2)
 				sorted_cross_names = sorted(list(set(new_list[:])))
 			self._extable[child]['cross_names'] = copy.deepcopy(sorted_cross_names)
-			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[cross_name], cross_name) for cross_name in sorted_cross_names])
+			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._callable_db[cross_name]['type'], cross_name) for cross_name in sorted_cross_names])
 		if not no_print:
 			print putil.misc.pcolor('Removing cross-exception loops', 'blue')
 		# Expand entries pointed by 'Same as [...]' that only have a 'Same as [...]' as exception
@@ -374,7 +315,7 @@ class ExHandle(object):	#pylint: disable=R0902
 				if self._extable[key1]['flat_exceptions'] == self._extable[key2]['flat_exceptions']:
 					self._extable[key2]['native_exceptions'] = list()
 					self._extable[key2]['cross_names'] = [key1]
-					self._extable[key2]['cross_hierarchical_exceptions'] = ['Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[key1], key1.replace('_set_', ''))]
+					self._extable[key2]['cross_hierarchical_exceptions'] = ['Same as :py:{0}:`{1}`'.format(self._callable_db[key1]['type'], key1.replace('_set_', ''))]
 					self._extable[key2]['cross_flat_exceptions'] = copy.deepcopy(self._extable[key1]['flat_exceptions'])
 					changed_entries.append(key2)
 
@@ -396,7 +337,7 @@ class ExHandle(object):	#pylint: disable=R0902
 					for num, callable_name in enumerate(callable_list[1:]):# The first element is the child name/1st level method/attribute/function
 						if callable_name in trace_obj_callable_list:
 							self._extable[child_name]['cross_names'].append(callable_name)
-							self._extable[child_name]['cross_hierarchical_exceptions'].append('Same as :py:{0}:`{1}`'.format(self._trace_pkg_props[callable_name], callable_name))
+							self._extable[child_name]['cross_hierarchical_exceptions'].append('Same as :py:{0}:`{1}`'.format(self._callable_db[callable_name]['type'], callable_name))
 							# Find out highest hierarchy node that contains cross-callable (because of collapse and flattenging, the ndoe might have several hierarchy levels after cross-callable)
 							del_node = None
 							for del_node in ['.'.join(callable_list[:num1+2]) for num1 in range(num, len(callable_list)-1)]:
@@ -505,17 +446,24 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_callable_name(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
+		ret = list()
+		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fn == '<module>'))]
-		ret = list()
 		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
 			func_obj = fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))
-			if func_obj.__name__ not in self._trace_pkg_props:	#pylint: disable=W0212
-				fname = _get_callable_path(fobj, func_obj)
-				self._trace_pkg_props[fname] = 'attr' if any([hasattr(func_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
-				if hasattr(func_obj, 'im_class'):
-					cls_obj = func_obj.im_class
-					self._trace_pkg_props = dict(self._trace_pkg_props.items()+_make_module_callables_list(cls_obj, cls_obj.__name__).items())	#pylint: disable=W0212
+			fname = _get_callable_path(fobj, func_obj)
+			ftype = 'attr' if any([hasattr(func_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
+			# If callable is an attribute, "trace" module(s) where attributes are to find
+			if (fname not in self._callable_db) and (ftype == 'attr'):
+				self._make_module_callables_list(sys.modules[func_obj.__module__])
+			# Method in class
+			elif (fname not in self._callable_db) and hasattr(func_obj, 'im_class'):
+				cls_obj = func_obj.im_class
+				self._make_module_callables_list(cls_obj, cls_obj.__name__)
+			# Module-level function
+			elif fname not in self._callable_db:
+				self._callable_db[fname] = {'type':ftype, 'code':None if (ftype == 'attr') or (fname.split('.')[-1] == '__init__') else func_obj.func_code}
 			ret.append(fname)
 		return '.'.join(ret)
 
@@ -525,13 +473,38 @@ class ExHandle(object):	#pylint: disable=R0902
 		obj_hierarchy_list = ['.'.join(obj_hierarchy[:num]) for num in range(len(obj_hierarchy), 0, -1)]
 		# Search callable dictionary from object names from the highest number of hierarchy levels to the lowest
 		for obj_hierarchy_name in obj_hierarchy_list:
-			if obj_hierarchy_name in self._trace_pkg_props:
+			if obj_hierarchy_name in self._callable_db:
 				return obj_hierarchy_name
 		raise RuntimeError('Call {0} could not be found in package callable dictionary'.format(obj_name))
 
 	def _get_obj_type(self, obj_name):
 		""" Return object type (method, attribute, etc.) """
-		return self._trace_pkg_props[self._get_obj_full_name(obj_name)]
+		return self._callable_db[self._get_obj_full_name(obj_name)]
+
+	def _make_module_callables_list(self, obj, cls_name=''):	#pylint: disable=R0914
+		""" Creates a list of callable functions at and below an object hierarchy """
+		for call_name, call_obj, base_obj in _public_callables(obj):
+			call_full_name = '{0}.{1}.{2}'.format((obj if call_name == '__init__' else base_obj).__module__, cls_name, call_name) if cls_name else '{0}.{1}'.format(base_obj.__module__, call_name)
+			call_type = 'attr' if any([hasattr(call_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
+			self._callable_db[call_full_name] = {'type':call_type, 'code':None if (call_type == 'attr') or (call_name == '__init__') else call_obj.func_code}
+			# Setter/getter/deleter object have no introspective way of finding out what class (if any) they belong to
+			# Need to compare code objects with class or module memebers to find out cross-link
+			if call_type == 'attr':
+				attr_dict = dict()
+				# Object may have property but be None if it does not have a getter, setter or deleter assigned to it
+				for attr in [attrn for attrn in ['fset', 'fget', 'fdel'] if hasattr(call_obj, attrn) and getattr(call_obj, attrn)]:
+					attr_obj = getattr(call_obj, attr)
+					attr_module = attr_obj.__module__
+					# Scan module objects if not done before
+					if attr_module not in self._module_db:
+						self._module_db.append(attr_module)
+						self._make_module_callables_list(sys.modules[attr_module])
+					# Compare code objects, only reliable way of finding out if function object is the same as class/module object
+					for mkey, mvalue in [(mcall, mvalue) for mcall, mvalue in self._callable_db.items() if mcall.startswith(attr_module+'.') and self._callable_db[mcall].get('code', None)]:
+						if mvalue['code'] == attr_obj.func_code:
+							attr_dict[attr] = mkey
+							break
+				self._callable_db[call_full_name]['attr'] = attr_dict
 
 	def _print_ex_table(self, no_print=True, msg=''):
 		""" Prints exception table (for debugging purposes) """
