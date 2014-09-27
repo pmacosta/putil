@@ -280,7 +280,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			print putil.misc.pcolor('De-duplicating native exceptions', 'blue')
 		# Remove exceptions that could be in 'Same as [...]' entry
 		for key in self._extable:
-			self._extable[key]['native_exceptions'] = sorted(list(set([exdesc for exdesc in self._extable[key]['native_exceptions'] if exdesc not in self._extable[key]['cross_flat_exceptions']])))
+			self._extable[key]['native_exceptions'] = [exdesc for exdesc in self._extable[key]['native_exceptions'] if exdesc not in self._extable[key]['cross_flat_exceptions']]
 		if not no_print:
 			print putil.misc.pcolor('Homogenizing cross-exceptions', 'blue')
 		# Remove 'Same as [...]' entries that have the same exceptions
@@ -492,13 +492,13 @@ class ExHandle(object):	#pylint: disable=R0902
 			if call_type == 'attr':
 				attr_dict = dict()
 				# Object may have property but be None if it does not have a getter, setter or deleter assigned to it
-				for attr in [attrn for attrn in ['fset', 'fget', 'fdel'] if hasattr(call_obj, attrn) and getattr(call_obj, attrn)]:
-					attr_obj = getattr(call_obj, attr)
+				attr_tuple = [(attrn, getattr(call_obj, attrn)) for attrn in ['fset', 'fget', 'fdel'] if hasattr(call_obj, attrn) and getattr(call_obj, attrn)]
+				# Scan module objects if not done before
+				for modname in [attr_obj.__module__ for _, attr_obj in attr_tuple if attr_obj.__module__ not in self._module_db]:
+					self._module_db.append(modname)
+					self._make_module_callables_list(sys.modules[modname])
+				for attr, attr_obj in attr_tuple:
 					attr_module = attr_obj.__module__
-					# Scan module objects if not done before
-					if attr_module not in self._module_db:
-						self._module_db.append(attr_module)
-						self._make_module_callables_list(sys.modules[attr_module])
 					# Compare code objects, only reliable way of finding out if function object is the same as class/module object
 					for mkey, mvalue in [(mcall, mvalue) for mcall, mvalue in self._callable_db.items() if mcall.startswith(attr_module+'.') and self._callable_db[mcall].get('code', None)]:
 						if mvalue['code'] == attr_obj.func_code:
