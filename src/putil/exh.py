@@ -10,6 +10,7 @@ import sys
 import copy
 import types
 import inspect
+import operator
 
 import putil.check
 import putil.misc
@@ -20,18 +21,22 @@ import putil.tree
 ###
 def _get_callable_path(frame_obj, func_obj):
 	""" Get full path of callable """
+	comp = dict()
 	# Most of this code refactored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
 	code = frame_obj.f_code
 	scontext = frame_obj.f_locals.get('self', None)
 	# Module name
 	module = inspect.getmodule(code)
-	ret = [module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)]
+	comp['module'] = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
+	ret = [comp['module']]
 	# Class name
-	ret.append(scontext.__class__.__name__ if scontext else '')
+	comp['class'] = scontext.__class__.__name__ if scontext else ''
+	ret.append(comp['class'])
 	# Function/method/attribute name
 	func_name = code.co_name
-	ret.append('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
-	return '' if ret[:2] == ['', ''] else '.'.join(filter(None, ret))	#pylint: disable=W0141
+	comp['function'] = '__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name)
+	ret.append(comp['function'])
+	return '' if ret[:2] == ['', ''] else '.'.join(filter(None, ret)), comp	#pylint: disable=W0141
 
 
 def _is_module(obj):
@@ -449,11 +454,28 @@ class ExHandle(object):	#pylint: disable=R0902
 		ret = list()
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
-		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fn == '<module>'))]
+		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
+		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fn == '<module>') or (fn == '<lambda>'))]
 		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
 			func_obj = fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))
-			fname = _get_callable_path(fobj, func_obj)
+			fname, fdict = _get_callable_path(fobj, func_obj)
 			ftype = 'attr' if any([hasattr(func_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
+			# Methods that return a function have an empty function object. Strategy in this case is to find out which enclosing module-level function or class method returns the function
+			# by looking at the line numbers at which each enclosing callable starts, and comparing it with the callable line number
+			if fname and (not func_obj):
+				try:
+					mod_obj = sys.modules[fdict['module']]
+					container_obj = getattr(mod_obj, fdict['class'] if fdict['class'] else fdict['module'])
+				except:
+					raise RuntimeError('Could not get container object')
+				lines_dict = dict()
+				for element_name in dir(container_obj):
+					func_obj = getattr(container_obj, element_name)
+					if func_obj and getattr(func_obj, 'func_code', None):
+						lines_dict[element_name] = func_obj.func_code.co_firstlineno
+				sorted_lines_dict = sorted(lines_dict.items(), key=operator.itemgetter(1))
+				func_name = [member for member, line_no in sorted_lines_dict if line_no < fobj.f_lineno][-1]
+				fname = '.'.join(filter(None, [fdict['module'], fdict['class'], func_name, fdict['function']]))	#pylint: disable=W0141
 			# If callable is an attribute, "trace" module(s) where attributes are to find
 			if (fname not in self._callable_db) and (ftype == 'attr'):
 				self._make_module_callables_list(sys.modules[func_obj.__module__])
@@ -463,7 +485,7 @@ class ExHandle(object):	#pylint: disable=R0902
 				self._make_module_callables_list(cls_obj, cls_obj.__name__)
 			# Module-level function
 			elif fname not in self._callable_db:
-				self._callable_db[fname] = {'type':ftype, 'code':None if (ftype == 'attr') or (fname.split('.')[-1] == '__init__') else func_obj.func_code}
+				self._callable_db[fname] = {'type':ftype, 'code':None if not hasattr(func_obj, 'func_code') else func_obj.func_code}
 			ret.append(fname)
 		return '.'.join(ret)
 
@@ -486,7 +508,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		for call_name, call_obj, base_obj in _public_callables(obj):
 			call_full_name = '{0}.{1}.{2}'.format((obj if call_name == '__init__' else base_obj).__module__, cls_name, call_name) if cls_name else '{0}.{1}'.format(base_obj.__module__, call_name)
 			call_type = 'attr' if any([hasattr(call_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
-			self._callable_db[call_full_name] = {'type':call_type, 'code':None if (call_type == 'attr') or (call_name == '__init__') else call_obj.func_code}
+			self._callable_db[call_full_name] = {'type':call_type, 'code':None if not hasattr(call_obj, 'func_code') else call_obj.func_code}
 			# Setter/getter/deleter object have no introspective way of finding out what class (if any) they belong to
 			# Need to compare code objects with class or module memebers to find out cross-link
 			if call_type == 'attr':

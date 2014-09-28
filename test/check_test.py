@@ -543,7 +543,7 @@ class TestFile(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of File class behaves appropriately """
-		assert putil.check.File().exception('/some/path/file_name.ext') == {'type':IOError, 'msg':'File /some/path/file_name.ext could not be found'}
+		assert putil.check.File().exception('/some/path/file_name.ext') == {'type':IOError, 'msg':'File *[file_name]* could not be found', 'edata':{'field':'file_name', 'value':'/some/path/file_name.ext'}}
 
 	def test_in_code(self):    #pylint: disable=R0201
 		""" Test type checking in a real code scenario """
@@ -685,7 +685,8 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
 		test_list.append(obj1.exception(param_name='par1', test_obj=5) == {'type':ValueError, 'msg':'Argument `par1` is not in the range [15.0, 20.0]'})
 		test_list.append(obj2.exception(param_name='par1', param='_not_valid_', test_obj='not_a_file') == \
-				   {'type':RuntimeError, 'msg':"(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File _not_valid_ could not be found"})
+					{'type':RuntimeError, 'msg':"(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File *[file_name]* could not be found", \
+					'edata': {'field': 'file_name', 'value': '_not_valid_'}})
 		test_list.append(obj3.exception(param_name='par1', param='_not_valid_', test_obj=32) == {'type':None, 'msg':''})
 		test_list.append(obj4.exception(param_name='par1', test_obj=-1) == {'type':ValueError, 'msg':'Argument `par1` is not in the range [15.0, 20.0]'})
 		test_list.append(obj5.exception(param_name='par1', test_obj=-1) == {'type':None, 'msg':''})
@@ -1103,6 +1104,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		test_list.append(excinfo.value.message == "Argument `ppar1` is not one of ['HELLO', 'WORLD'] (case insensitive)")
 		with pytest.raises(ValueError) as excinfo:	# Type not in the definition
 			func_check_type3(2)
+		print excinfo.value.message
 		test_list.append(excinfo.value.message == 'Argument `ppar1` is not in the range [5.0, 10.0]\nArgument `ppar1` is not in the range [20.0, 30.0]')
 		assert test_list == len(test_list)*[True]
 

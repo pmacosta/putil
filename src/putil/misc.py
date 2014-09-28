@@ -304,7 +304,20 @@ class TmpFile(object):	#pylint: disable=R0903
 			return False
 
 def trigger_exception(obj, args, extype, exmsg):
-	""" Triggers exception and records value """
+	""" Triggers exception withing the Py.test environment and records value """
 	with pytest.raises(extype) as excinfo:
 		obj(**args)	#pylint: disable=W0142
 	return excinfo.value.message == exmsg
+
+def strframe(obj):
+	""" Pretty prints a stack frame """
+	# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
+	ret = list()
+	ret.append('Frame object ID: {0}'.format(hex(id(obj[0]))))
+	ret.append('File name......: {0}'.format(obj[1]))
+	ret.append('Line number....: {0}'.format(obj[2]))
+	ret.append('Functon name...: {0}'.format(obj[3]))
+	ret.append('Context........: {0}'.format(obj[4]))
+	ret.append('Index..........: {0}'.format(obj[5]))
+	return '\n'.join(ret)
+

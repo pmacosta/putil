@@ -517,14 +517,13 @@ def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 	""" Checks that a argument is of a certain type """
 	arg_dict = create_argument_dictionary(func, *args, **kwargs)
 	root_module = inspect.stack()[-1][0]
-	if '_EXH' in root_module.f_locals:
-		exhobj = root_module.f_locals['_EXH']
+	exhobj = root_module.f_locals.get('_EXH', None)
+	if exhobj:
 		ex_name = 'check_argument_type_internal_{0}'.format(param_name)
 		exhobj.add_exception(name=ex_name, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
 		exhobj.raise_exception_if(name=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))))
-	else:
-		if (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))):
-			raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
+	elif (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))):
+		raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
 
 
 def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pylint: disable=R0914
@@ -560,13 +559,15 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 			if len(ex_dict_list) == len(sub_param_spec):
 				same_exp = all(item['type'] == ex_dict_list[0]['type'] for item in ex_dict_list)
 				exp_dict['type'] = ex_dict_list[0]['type'] if same_exp else RuntimeError
-				for exp_dict in ex_dict_list:
-					if ('edata' in exp_dict) and len(exp_dict['edata']):
-						ex_msg = format_msg(exp_dict['msg'], exp_dict['edata'])
-						exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+ex_msg])
-					else:
-						exp_dict['msg'] = '\n'.join([('('+str(exp_dict['type'])[str(exp_dict['type']).rfind('.')+1:str(exp_dict['type']).rfind("'")]+') ' if not same_exp else '')+exp_dict['msg']])
+				exp_dict['msg'] = '\n'.join(['{0}{1}'.format('('+str_exception(exp_dict['type'])+') ' if not same_exp else '', \
+						format_msg(exp_dict['msg'], exp_dict['edata']) if ('edata' in exp_dict) and len(exp_dict['edata']) else exp_dict['msg']) for exp_dict in ex_dict_list])
 				raise exp_dict['type'](exp_dict['msg'])
+
+
+def str_exception(obj):
+	""" Returns string with exception type from exception type objct """
+	sobj = str(obj)
+	return sobj[sobj.rfind('.')+1:sobj.rfind("'")]
 
 
 def format_msg(msg, edata):
