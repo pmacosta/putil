@@ -94,12 +94,8 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		exdesc.append(({'name':5}, TypeError, 'Argument `name` is of the wrong type'))
 		exdesc.append(({'name':'a.b..c'}, ValueError, 'Argument `name` is not a valid node name'))
 		exdesc.append(({'name':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
-		expected_list, actual_list = list(), list()
-		for num, method in enumerate(method_list):
-			expected_msg_method, actual_msg_method = putil.test.evaluate_exception_series(getattr(obj, method), exdesc, len(exdesc)*num)
-			expected_list.append(expected_msg_method)
-			actual_list.append(actual_msg_method)
-		expected_msg, actual_msg = '\n'.join(expected_list), '\n'.join(actual_list)
+		exolist = [putil.test.evaluate_exception_series(getattr(obj, method), exdesc, len(exdesc)*num) for num, method in enumerate(method_list)]
+		expected_msg, actual_msg = '\n'.join(element[0] for element in exolist), '\n'.join(element[1] for element in exolist)
 		assert expected_msg == actual_msg
 
 	def test_add_errors(self):	#pylint: disable=C0103,R0201
