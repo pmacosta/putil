@@ -7,8 +7,8 @@ Miscellaneous utility classes, methods, functions and constants
 """
 
 import os
+import sys
 import numpy
-import pytest
 import inspect
 import textwrap
 import tempfile
@@ -281,7 +281,7 @@ class TmpFile(object):	#pylint: disable=R0903
 	Context manager for temporary files
 
 	:param	fpointer: Function pointer to a function that writes data to file
-	:type	fpointer: Function pointer or None, default *None*
+	:type	fpointer: function pointer
 	:returns:	File name of temporary file
 	:rtype:		string
 	:raises:	TypeError (Argument `fpointer` is of the wrong type)
@@ -303,14 +303,15 @@ class TmpFile(object):	#pylint: disable=R0903
 		if exc_type is not None:
 			return False
 
-def trigger_exception(obj, args, extype, exmsg):
-	""" Triggers exception withing the Py.test environment and records value """
-	with pytest.raises(extype) as excinfo:
-		obj(**args)	#pylint: disable=W0142
-	return excinfo.value.message == exmsg
 
 def strframe(obj):
-	""" Pretty prints a stack frame """
+	"""
+	Pretty prints a stack frame
+
+	:param	obj: Frame record, typically an item of a list produced by ``inspect.stack()``
+	:type	obj: frame record
+	:rtype:		string
+	"""
 	# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 	ret = list()
 	ret.append('Frame object ID: {0}'.format(hex(id(obj[0]))))
@@ -321,3 +322,54 @@ def strframe(obj):
 	ret.append('Index..........: {0}'.format(obj[5]))
 	return '\n'.join(ret)
 
+
+# From https://mail.python.org/pipermail/tutor/2006-August/048596.html
+def delete_module(modname, paranoid=None):
+	""" Deletes a previously imported module
+
+	:param	modname: Module name
+	:type	modname: string
+	:param	paranoid: Symbols where it is desired to explicitly delete module reference
+	:type	paranoid: list
+	:raises:
+	 * ValueError (Argument `paranoid` is not a finite list of symbols')
+
+	 * ValueError (Module *[modname]* is not imported)
+	"""
+	try:
+		thismod = sys.modules[modname]
+	except KeyError:
+		raise ValueError('Module {0} is not imported'.format(modname))
+	these_symbols = dir(thismod)
+	if paranoid:
+		try:
+			paranoid[:]  # sequence support
+		except:
+			raise ValueError('Argument `paranoid` is not a finite list of symbols')
+		else:
+			these_symbols = paranoid[:]
+	del sys.modules[modname]
+	for mod in sys.modules.values():
+		try:
+			delattr(mod, modname)
+		except AttributeError:
+			pass
+		if paranoid:
+			for symbol in these_symbols:
+				if symbol[:2] == '__':  # ignore special symbols
+					continue
+				try:
+					delattr(mod, symbol)
+				except AttributeError:
+					pass
+
+
+def quote_str(obj):
+	"""
+	Adds extra quotes to string object
+
+	:param	obj: Object to be quoted if string
+	:type	obj: any
+	:rtype:	Same as **obj**
+	"""
+	return obj if not isinstance(obj, str) else ('\'{0}\''.format(obj) if '"' in obj else '"{0}"'.format(obj))

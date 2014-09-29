@@ -13,6 +13,7 @@ import fractions
 import functools
 import itertools
 
+import putil.test
 import putil.check
 
 
@@ -28,17 +29,22 @@ class TestAny(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of Any class behaves appropriately	"""
-		ref_obj = putil.check.Any()
-		assert (ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (True, True, True, True, True)
+		cmd = putil.check.Any().includes
+		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', True), ([1, 2, 3], True)]
+		expected_msg, actual_msg = putil.test.evaluate_value_series(cmd, pairs)
+		assert expected_msg == actual_msg
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of Any class behaves appropriately """
-		ref_obj = putil.check.Any()
-		assert (ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (True, True, True, True, True)
+		cmd = putil.check.Any().istype
+		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', True), ([1, 2, 3], True)]
+		expected_msg, actual_msg = putil.test.evaluate_value_series(cmd, pairs)
+		assert expected_msg == actual_msg
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Any class behaves appropriately when inproper argument type is passed """
 		assert putil.check.Any().exception('par1') == {'type':None, 'msg':''}
+
 
 ###
 # Test for Number class
@@ -52,13 +58,17 @@ class TestNumber(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of Number class behaves appropriately	"""
-		ref_obj = putil.check.Number()
-		assert (ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (True, True, True, False, False)
+		cmd = putil.check.Number().includes
+		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', False), ([1, 2, 3], False)]
+		expected_msg, actual_msg = putil.test.evaluate_value_series(cmd, pairs)
+		assert expected_msg == actual_msg
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of Number class behaves appropriately """
-		ref_obj = putil.check.Number()
-		assert (ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (True, True, True, False, False)
+		cmd = putil.check.Number().istype
+		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', False), ([1, 2, 3], False)]
+		expected_msg, actual_msg = putil.test.evaluate_value_series(cmd, pairs)
+		assert expected_msg == actual_msg
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Number class behaves appropriately when inproper argument type is passed """
@@ -77,13 +87,17 @@ class TestPositiveInteger(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of PositiveInteger class behaves appropriately """
-		ref_obj = putil.check.PositiveInteger()
-		assert (ref_obj.includes(-1), ref_obj.includes(1), ref_obj.includes(2.0), ref_obj.includes(1+2j), ref_obj.includes('a'), ref_obj.includes([1, 2, 3])) == (False, True, False, False, False, False)
+		cmd = putil.check.PositiveInteger().includes
+		pairs = [(-1, False), (1, True), (2.0, False), (1+2j, False), ('a', False), ([1, 2, 3], False)]
+		expected_msg, actual_msg = putil.test.evaluate_value_series(cmd, pairs)
+		assert expected_msg == actual_msg
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of PositiveInteger class behaves appropriately """
-		ref_obj = putil.check.PositiveInteger()
-		assert (ref_obj.istype(-1), ref_obj.istype(1), ref_obj.istype(2.0), ref_obj.istype(1+2j), ref_obj.istype('a'), ref_obj.istype([1, 2, 3])) == (False, True, False, False, False, False)
+		cmd = putil.check.PositiveInteger().istype
+		pairs = [(-1, False), (1, True), (2.0, False), (1+2j, False), ('a', False), ([1, 2, 3], False)]
+		expected_msg, actual_msg = putil.test.evaluate_value_series(cmd, pairs)
+		assert expected_msg == actual_msg
 
 	def test_exception_method(self):	#pylint: disable=C0103,R0201
 		"""	Tests that PositiveInteger class behaves appropriately when inproper argument type is passed """

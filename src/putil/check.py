@@ -513,11 +513,9 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 	return True
 
 
-def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
+def check_argument_type_internal(param_name, param_type, func, exhobj, *args, **kwargs):
 	""" Checks that a argument is of a certain type """
 	arg_dict = create_argument_dictionary(func, *args, **kwargs)
-	root_module = inspect.stack()[-1][0]
-	exhobj = root_module.f_locals.get('_EXH', None)
 	if exhobj:
 		ex_name = 'check_argument_type_internal_{0}'.format(param_name)
 		exhobj.add_exception(name=ex_name, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
@@ -526,13 +524,11 @@ def check_argument_type_internal(param_name, param_type, func, *args, **kwargs):
 		raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
 
 
-def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pylint: disable=R0914
+def check_argument_internal(param_name, param_spec, func, exhobj, *args, **kwargs):	#pylint: disable=R0914
 	"""	Checks that a argument conforms to a certain specification (type, possibly range, one of a finite number of options, etc.)	"""
-	check_argument_type_internal(param_name, param_spec, func, *args, **kwargs)
-	modobj = sys.modules['__main__']
+	check_argument_type_internal(param_name, param_spec, func, exhobj, *args, **kwargs)
 	pseudo_types = _get_pseudo_types(False)['type']
 	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
-	trace_on = getattr(modobj, '_EXH', -1) != -1
 	if (param is not None) and (type(param_spec) in pseudo_types):
 		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if \
 			(sub_type in pseudo_types) and (get_istype(sub_inst, param)) and (Any not in param_spec.types)]
@@ -540,21 +536,21 @@ def check_argument_internal(param_name, param_spec, func, *args, **kwargs):	#pyl
 			# Find out parameter expected by exception() method
 			exparam_dict_list = list()
 			for param_spec in sub_param_spec:
-				if (not get_includes(param_spec, param)) or trace_on:
+				if (not get_includes(param_spec, param)) or exhobj:
 					exparam = funcsigs.signature(param_spec.exception).parameters
 					fiter = iter(exparam.items())
 					exparam_name = next(fiter)[0]
 					exparam_dict_list.append({'param':param} if exparam_name == 'param' else {'param_name':param_name})
 			ex_dict_list = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
-			if trace_on:
+			if exhobj:
 				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = 'check_argument_internal_{0}{1}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
-					modobj._EXH.add_exception(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
+					exhobj.add_exception(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
 					if ('edata' in ex) and len(ex['edata']):
-						modobj._EXH.raise_exception_if(name=ex_name, condition=False, edata=ex['edata'])
+						exhobj.raise_exception_if(name=ex_name, condition=False, edata=ex['edata'])
 					else:
-						modobj._EXH.raise_exception_if(name=ex_name, condition=False)
+						exhobj.raise_exception_if(name=ex_name, condition=False)
 			exp_dict = dict()
 			if len(ex_dict_list) == len(sub_param_spec):
 				same_exp = all(item['type'] == ex_dict_list[0]['type'] for item in ex_dict_list)
@@ -583,13 +579,17 @@ def format_msg(msg, edata):
 		msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 	return msg
 
+def get_exh_obj():
+	""" Get exception handler object (if any) """
+	root_module = inspect.stack()[-1][0]
+	return root_module.f_locals.get('_EXH', None) if root_module else None
 
 def check_argument_type(param_name, param_type):
 	""" Decorator to check that a argument is of a certain type """
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument type """
-		check_argument_type_internal(param_name, param_type, func, *args, **kwargs)
+		check_argument_type_internal(param_name, param_type, func, get_exh_obj(), *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -599,21 +599,16 @@ def check_argument(param_spec):	#pylint: disable=R0912
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument specification """
-		func_module = sys.modules.get(func.__module__, None)
-		global_varg = True if not func_module else (getattr(func_module, 'VALIDATE_ARGS') if hasattr(func_module, 'VALIDATE_ARGS') else True)
-		local_varg = getattr(func, 'validate_args') if hasattr(func_module, 'validate_args') else None
-		# Local validate_args attribute overrides global VALIDATE_ARGS
-		if local_varg or ((local_varg is None) and global_varg):
-			arguments = funcsigs.signature(func).parameters
-			if not arguments:
-				raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
-			fiter = iter(arguments.items())
+		arguments = funcsigs.signature(func).parameters
+		if not arguments:
+			raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
+		fiter = iter(arguments.items())
+		param_name = next(fiter)[0]
+		if param_name == 'self':
+			if len(arguments) == 1:
+				raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
 			param_name = next(fiter)[0]
-			if param_name == 'self':
-				if len(arguments) == 1:
-					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
-				param_name = next(fiter)[0]
-			check_argument_internal(param_name, param_spec, func, *args, **kwargs)
+		check_argument_internal(param_name, param_spec, func, get_exh_obj(), *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -623,23 +618,18 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument specification """
-		func_module = sys.modules.get(func.__module__, None)
-		global_varg = True if not func_module else (getattr(func_module, 'VALIDATE_ARGS') if hasattr(func_module, 'VALIDATE_ARGS') else True)
-		local_varg = getattr(func, 'validate_args') if hasattr(func_module, 'validate_args') else None
-		# Local validate_args attribute overrides global VALIDATE_ARGS
-		if local_varg or ((local_varg is None) and global_varg):
-			arguments = funcsigs.signature(func).parameters
-			if len(arguments) == 0:
-				raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
-			fiter = iter(arguments.items())
-			param_name = next(fiter)[0]
-			if param_name == 'self':
-				if len(arguments) == 1:
-					raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
-			for param_name, param_spec in param_dict.items():
-				if param_name not in arguments:
-					raise RuntimeError('Argument {0} is not an argument of function {1}'.format(param_name, func.__name__))
-				check_argument_internal(param_name, param_spec, func, *args, **kwargs)
+		arguments = funcsigs.signature(func).parameters
+		if len(arguments) == 0:
+			raise RuntimeError('Function {0} has no arguments'.format(func.__name__))
+		fiter = iter(arguments.items())
+		param_name = next(fiter)[0]
+		if param_name == 'self':
+			if len(arguments) == 1:
+				raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
+		for param_name, param_spec in param_dict.items():
+			if param_name not in arguments:
+				raise RuntimeError('Argument {0} is not an argument of function {1}'.format(param_name, func.__name__))
+			check_argument_internal(param_name, param_spec, func, get_exh_obj(), *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 
