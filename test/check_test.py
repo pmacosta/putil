@@ -14,8 +14,22 @@ import functools
 import itertools
 
 import putil.test
+import putil.misc
 import putil.check
 
+def evaluate_exception_method(pairs, offset=0):
+	""" Test exception method """
+	pairs = pairs if isinstance(pairs, list) else [pairs]
+	comp_text = '[{0}] {1}.exception({2}) -> {3} ({4})'
+	expected_list = list()
+	actual_list = list()
+	for num, (cmd, par, etype, emsg) in enumerate(pairs):
+		expected_list.append(comp_text.format(num+offset, cmd, putil.misc.quote_str(par), etype, emsg))
+		actual_dict = cmd.exception(par)
+		amsg = actual_dict['msg'] if 'edata' not in actual_dict else putil.check.format_msg(actual_dict['msg'], actual_dict['edata'])
+		actual_list.append(comp_text.format(num+offset, cmd, putil.misc.quote_str(par), actual_dict['type'], amsg))
+	expected_msg, actual_msg = '\n'.join(expected_list), '\n'.join(actual_list)
+	assert expected_msg == actual_msg
 
 ###
 # Test for Any class
@@ -43,8 +57,7 @@ class TestAny(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Any class behaves appropriately when inproper argument type is passed """
-		assert putil.check.Any().exception('par1') == {'type':None, 'msg':''}
-
+		evaluate_exception_method((putil.check.Any(), 'par1', None, ''))
 
 ###
 # Test for Number class
@@ -177,13 +190,14 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 		"""	Tests that ArbitraryLength class behaves appropriately when inproper argument type is passed """
 		exdesc = list()
 		exdesc.append(({'iter_type':'a', 'element_type':str}, TypeError, 'Argument `iter_type` is of the wrong type'))
-		exdesc.append(({'iter_type':list, 'element_type':'a'}, TypeError, 'Argument `element_type` is of the wrong type'))
+		exdesc.append(({'iter_type':list, 'element_type':'a'}, ValueError, 'Argument `element_type` is of the wrong type'))
 		exdesc.append(({'iter_type':list, 'element_type':int}, None, None))
 		exdesc.append(({'iter_type':set, 'element_type':int}, None, None))
 		exdesc.append(({'iter_type':tuple, 'element_type':int}, None, None))
 		exdesc.append(({'iter_type':list, 'element_type':putil.check.Number()}, None, None))
-		expected_msg, actual_msg = putil.test.evaluate_exception_series(putil.check.ArbitraryLength, exdesc)
-		assert expected_msg == actual_msg
+		putil.test.evaluate_exception_series2(putil.check.ArbitraryLength, exdesc)
+		#expected_msg, actual_msg = putil.test.evaluate_exception_series(putil.check.ArbitraryLength, exdesc)
+		#assert expected_msg == actual_msg
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of ArbitraryLength class behaves appropriately """
@@ -381,23 +395,23 @@ class TestOneOf(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of OneOf class behaves appropriately """
-		ref_obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
-		ref_obj2 = putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False)
-		ref_obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
-		ref_obj4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False)
-		assert (ref_obj1.includes('a'), ref_obj1.includes('b'), ref_obj1.includes(3.0), ref_obj1.includes(2), ref_obj1.includes(putil.check.Number()), ref_obj1.includes('c'), ref_obj1.includes('A'),
-			 ref_obj2.includes('none'), ref_obj2.includes('autos'), ref_obj3.includes(-1), ref_obj3.includes(1), ref_obj4.includes(-0.001), ref_obj4.includes(0.001)) == \
-			(True, True, True, True, False, False, False, True, False, False, True, False, True)
+		cmd1, cmd2 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).includes, putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False).includes
+		cmd3, cmd4 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False).includes, putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False).includes
+		cmd_pairs = [(cmd1, 'a', True), (cmd1, 'b', True), (cmd1, 3.0, True), (cmd1, 2, True), (cmd1, putil.check.Number(), False), (cmd1, 'c', False), (cmd1, 'A', False), (cmd2, 'none', True), (cmd2, 'autos', False), \
+			         (cmd3, -1, False), (cmd3, 1, True), (cmd4, -0.001, False), (cmd4, 0.001, True)]
+		expected_msg, actual_msg = putil.test.evaluate_command_value_series(cmd_pairs)
+		assert expected_msg == actual_msg
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of OneOf class behaves appropriately """
-		ref_obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
-		ref_obj2 = putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False)
-		ref_obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
-		ref_obj4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False)
-		assert (ref_obj1.istype('a'), ref_obj1.istype('b'), ref_obj1.istype(3.0), ref_obj1.istype(2), ref_obj1.istype(putil.check.Number()), ref_obj1.istype('c'), ref_obj1.istype('A'),
-			 ref_obj2.istype('none'), ref_obj2.istype('autos'), ref_obj2.istype(set([1, 2])), ref_obj3.istype(-1), ref_obj3.istype(1), ref_obj4.istype(-0.001), ref_obj4.istype(0.001)) == \
-			(True, True, True, True, False, True, True, True, True, False, False, True, False, True)
+		cmd1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).istype
+		cmd2 = putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=False).istype
+		cmd3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False).istype
+		cmd4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False).istype
+		cmd_pairs = [(cmd1, 'a', True), (cmd1, 'b', True), (cmd1, 3.0, True), (cmd1, 2, True), (cmd1, putil.check.Number(), False), (cmd1, 'c', True), (cmd1, 'A', True), (cmd2, 'none', True), (cmd2, 'autos', True), \
+					 (cmd2, set([1, 2]), False), (cmd3, -1, False), (cmd3, 1, True), (cmd4, -0.001, False), (cmd4, 0.001, True)]
+		expected_msg, actual_msg = putil.test.evaluate_command_value_series(cmd_pairs)
+		assert expected_msg == actual_msg
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		""" Tests that exception method of OneOf class behaves appropriately """
@@ -405,7 +419,6 @@ class TestOneOf(object):	#pylint: disable=W0232
 		test2 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"}
 		test3 = putil.check.OneOf([3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not one of [3.0, 2]"}
 		test4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not one of ['g', 'H', positive real number] (case insensitive)"}
-		print putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False).exception('par1')
 		assert (test1, test2, test3, test4) == (True, True, True, True)
 
 

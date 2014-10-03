@@ -304,7 +304,7 @@ class TmpFile(object):	#pylint: disable=R0903
 			return False
 
 
-def strframe(obj):
+def strframe(obj, extended=False):
 	"""
 	Pretty prints a stack frame
 
@@ -320,6 +320,16 @@ def strframe(obj):
 	ret.append('Functon name...: {0}'.format(obj[3]))
 	ret.append('Context........: {0}'.format(obj[4]))
 	ret.append('Index..........: {0}'.format(obj[5]))
+	if extended:
+		ret.append('f_back ID......: {0}'.format(hex(id(obj[0].f_back))))
+		ret.append('f_builtins.....: {0}'.format(obj[0].f_builtins))
+		ret.append('f_code.........: {0}'.format(obj[0].f_code))
+		ret.append('f_globals......: {0}'.format(obj[0].f_globals))
+		ret.append('f_lasti........: {0}'.format(obj[0].f_lasti))
+		ret.append('f_lineno.......: {0}'.format(obj[0].f_lineno))
+		ret.append('f_locals.......: {0}'.format(obj[0].f_locals))
+		ret.append('f_restricted...: {0}'.format(obj[0].f_restricted))
+		ret.append('f_trace........: {0}'.format(obj[0].f_trace))
 	return '\n'.join(ret)
 
 

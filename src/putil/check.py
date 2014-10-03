@@ -16,7 +16,6 @@ import decorator
 
 import putil.misc
 
-
 def get_function_args(func, no_self=False, no_varargs=False):
 	"""	Returns a list of the argument names, in order, as defined by the function """
 	par_dict = funcsigs.signature(func).parameters
@@ -84,6 +83,14 @@ class Any(object):	#pylint: disable=R0903
 	def exception(self, param_name):	#pylint: disable=R0201,W0613
 		"""	Returns a suitable exception message """
 		return {'type':None, 'msg':''}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.Any()'
 register_new_type(Any, 'any')
 
 
@@ -100,6 +107,14 @@ class Number(object):	#pylint: disable=R0903
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not a number'.format(param_name)}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.Number()'
 register_new_type(Number, 'number (real, integer or complex)')
 
 
@@ -116,6 +131,14 @@ class PositiveInteger(object):	#pylint: disable=R0903
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not a positive integer'.format(param_name)}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.PositiveInteger()'
 register_new_type(PositiveInteger, 'positive integer')
 
 class Real(object):	#pylint: disable=R0903
@@ -131,6 +154,14 @@ class Real(object):	#pylint: disable=R0903
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not a real number'.format(param_name)}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.Real()'
 register_new_type(Real, 'real number')
 
 class PositiveReal(object):	#pylint: disable=R0903
@@ -146,6 +177,14 @@ class PositiveReal(object):	#pylint: disable=R0903
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not a positive real number'.format(param_name)}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.PositiveReal()'
 register_new_type(PositiveReal, 'positive real number')
 
 
@@ -194,11 +233,27 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		"""	Returns a suitable exception message """
 		return {'type':TypeError, 'msg':'Argument `{0}` is of the wrong type'.format(param_name)}
 
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		iter_type_msg = 'list' if self.iter_type == list else ('tuple' if self.iter_type == tuple else ('set' if self.iter_type == set else 'dict'))
+		return 'putil.check.ArbitraryLength(iter_type={0}, element_type={1}, check_keys={2})'.format(iter_type_msg, self.element_type, self.check_keys)
 
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length lists """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, list, element_type)
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.ArbitraryLengthList(element_type={0})'.format(self.element_type)
 register_new_type(ArbitraryLengthList, 'list')
 
 
@@ -206,6 +261,10 @@ class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length tuple """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, tuple, element_type)
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.ArbitraryLengthTuple(element_type={0})'.format(self.element_type)
 register_new_type(ArbitraryLengthTuple, 'tuple')
 
 
@@ -213,6 +272,10 @@ class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, set, element_type)
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.ArbitraryLengthSet(element_type={0})'.format(self.element_type)
 register_new_type(ArbitraryLengthSet, 'set')
 
 
@@ -220,6 +283,10 @@ class ArbitraryLengthDict(ArbitraryLength):	#pylint: disable=R0903
 	"""	Arbitrary length set """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, dict, element_type, False)
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.ArbitraryLengthDict(element_type={0})'.format(self.element_type)
 register_new_type(ArbitraryLengthDict, 'dictionary')
 
 
@@ -269,6 +336,14 @@ class OneOf(object):	#pylint: disable=R0903
 	def exception(self, param_name):
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not one of {1}{2}'.format(param_name, self.desc, (' (case {0})'.format('sensitive' if self.case_sensitive else 'insensitive')) if self.case_sensitive is not None else '')}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.OneOf(choices={0}, case_sensitive={1})'.format(str(self.choices), self.case_sensitive)
 register_new_type(OneOf, 'one of many options')
 
 
@@ -298,6 +373,14 @@ class NumberRange(object):	#pylint: disable=R0903
 	def exception(self, param_name):
 		""" Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not in the range [{1}, {2}]'.format(param_name, '-inf' if self.minimum is None else self.minimum, '+inf' if self.maximum is None else self.maximum)}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.NumberRange(minimum={0}, maximum={1})'.format('-infinity' if not self.minimum else self.minimum, '+infinity' if not self.maximum else self.maximum)
 register_new_type(NumberRange, 'number interval')
 
 
@@ -322,6 +405,14 @@ class RealNumpyVector(object):	#pylint: disable=R0903
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not a Numpy vector of real numbers'.format(param_name)}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.RealNumpyVector()'
 register_new_type(RealNumpyVector, 'real Numpy Vector')
 
 
@@ -341,6 +432,14 @@ class IncreasingRealNumpyVector(RealNumpyVector):	#pylint: disable=R0903
 	def exception(self, param_name):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not a Numpy vector of increasing real numbers'.format(param_name)}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.IncreasingRealNumpyVector()'
 register_new_type(IncreasingRealNumpyVector, 'increasing real Numpy Vector')
 
 
@@ -362,6 +461,14 @@ class File(object):	#pylint: disable=R0903
 	def exception(self, param):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':IOError, 'msg':'File *[file_name]* could not be found', 'edata':{'field':'file_name', 'value':param}}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.File(check_existance={0})'.format(self.check_existance)
 register_new_type(File, 'file')
 
 
@@ -387,6 +494,14 @@ class Function(object):	#pylint: disable=R0903
 	def exception(self, param):	#pylint: disable=R0201
 		"""	Returns a suitable exception message """
 		return {'type':ValueError, 'msg':'Argument `{0}` is not a function with {1} argument{2}'.format(param, self.num_pars, 's' if (self.num_pars is not None) and (self.num_pars > 1) else '')}
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.Function(num_pars={0})'.format(self.num_pars)
 register_new_type(Function, 'function')
 
 
@@ -433,6 +548,14 @@ class PolymorphicType(object):	#pylint: disable=R0903
 				exp_dict['type'] = exp_type
 				exp_dict['msg'] = '\n'.join(exp_msg)
 		return exp_dict
+
+	def __repr__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return self.__str__()
+
+	def __str__(self):	#pylint: disable=R0201
+		""" String with object description and parameters """
+		return 'putil.check.PolymorphicType(type={0})'.format(self.types)
 
 
 def create_argument_dictionary(func, *args, **kwargs):
