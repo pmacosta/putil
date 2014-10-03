@@ -242,14 +242,11 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 		iter_type_msg = 'list' if self.iter_type == list else ('tuple' if self.iter_type == tuple else ('set' if self.iter_type == set else 'dict'))
 		return 'putil.check.ArbitraryLength(iter_type={0}, element_type={1}, check_keys={2})'.format(iter_type_msg, self.element_type, self.check_keys)
 
+
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
 	""" Arbitrary length lists """
 	def __init__(self, element_type):
 		ArbitraryLength.__init__(self, list, element_type)
-
-	def __repr__(self):	#pylint: disable=R0201
-		""" String with object description and parameters """
-		return self.__str__()
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
