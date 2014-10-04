@@ -88,7 +88,7 @@ def evaluate_command_value_series(cmd_pairs, cobj=None):
 
 def evaluate_exception_series(init_list, cobj=None, offset=0):	#pylint: disable=R0914
 	"""
-	Monitgor callable(s) for exception raising (exception raised or not, and if it is, type and message)
+	Monitor callable(s) for exception raising (exception raised or not, and if it is, type and message)
 
 	:param	init_list: Initialization specification tuple or list of initialization specification tuples. An initialization tuple is of the form (argument dictionary [of the **kwargs form], exception type, exception message) if \
 	callable is not specified or (initialization object, argument dictionary, exception type, exception message) otherwise
@@ -116,12 +116,12 @@ def evaluate_exception_series(init_list, cobj=None, offset=0):	#pylint: disable=
 	for num, (cobj, args, extype, exmsg) in enumerate(init_list):
 		callable_name = full_callable_name(cobj)
 		# Arguments, in the form [argument name]=[argument value] for pretty printing callable call
-		arg_text = ', '.join(['{0}={1}'.format(key, putil.misc.quote_str(value)) for key, value in args.items()])
+		arg_text = ', '.join(['{0}={1}'.format(key, putil.misc.quote_str(value)) for key, value in args.items()]) if args else ''
 		# Exception text of the form [exception type] ([exception message]) for pretty printing result of callable call
 		expected_msg = 'DID NOT RAISE' if (extype, exmsg) == (None, None) else ex_text.format(exception_type_str(extype), exmsg)
 		# Monitor callable call for exception raising
 		try:
-			cobj(**args)	#pylint: disable=W0142
+			cobj(**args) if args else cobj()	#pylint: disable=W0142
 		except:	#pylint: disable=W0702
 			eobj = sys.exc_info()
 			actual_msg = ex_text.format(exception_type_str(eobj[0]), eobj[1])
