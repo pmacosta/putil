@@ -1084,9 +1084,7 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		@putil.check.check_argument(putil.check.RealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
-		with pytest.raises(TypeError) as excinfo:
-			func_check_type(numpy.array([False]))
-		assert excinfo.value.message == 'Argument `ppar1` is of the wrong type'
+		putil.test.evaluate_exception_series((func_check_type, {'ppar1':numpy.array([False])}, TypeError, 'Argument `ppar1` is of the wrong type'))
 
 	def test_numpy_vector_no_error(self):	#pylint: disable=R0201,C0103
 		""" Test that function behaves properly when a argument is proper Numpy vector """
@@ -1100,13 +1098,10 @@ class TestCheckArgument(object):	#pylint: disable=W0232
 		@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
 		def func_check_type(ppar1):	#pylint: disable=C0111
 			print ppar1
-		with pytest.raises(TypeError) as excinfo:
-			func_check_type(numpy.array([False]))
-		eobj1 = excinfo.value.message == 'Argument `ppar1` is of the wrong type'
-		with pytest.raises(TypeError) as excinfo:
-			func_check_type(numpy.array([1.0, 2.0, 1.0-1e-10]))
-		eobj2 = excinfo.value.message == 'Argument `ppar1` is of the wrong type'
-		assert (eobj1, eobj2) == (True, True)
+		exdesc = list()
+		exdesc.append(({'ppar1':numpy.array([False])}, TypeError, 'Argument `ppar1` is of the wrong type'))
+		exdesc.append(({'ppar1':numpy.array([1.0, 2.0, 1.0-1e-10])}, TypeError, 'Argument `ppar1` is of the wrong type'))
+		putil.test.evaluate_exception_series(exdesc, func_check_type)
 
 	def test_incresing_numpy_vector_no_error(self):	#pylint: disable=R0201,C0103
 		""" Test that function behaves properly when a argument is properly incresing Numpy vector """
