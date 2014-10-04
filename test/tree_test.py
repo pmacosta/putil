@@ -98,19 +98,18 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 
 	def test_add_errors(self):	#pylint: disable=C0103,R0201
 		""" Test that add() method raises the right exceptions """
-		obj = putil.tree.Tree().add_nodes
 		exdesc = list()
-		exdesc.append((obj, {'nodes':5}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':{'key':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':{'name':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':{'data':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':{'name':'a.b', 'data':'a', 'edata':5}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':[{'name':'a.c', 'data':'a'}, {'key':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':[{'name':'a.c', 'data':'a'}, {'data':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a.b', 'data':'a', 'edata':5}]}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append((obj, {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]}, ValueError, 'Illegal node name: d.e'))
-		putil.test.evaluate_exception_series(exdesc)
+		exdesc.append(({'nodes':5}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':{'key':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':{'name':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':{'data':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':{'name':'a.b', 'data':'a', 'edata':5}}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'key':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'data':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a.b', 'data':'a', 'edata':5}]}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]}, ValueError, 'Illegal node name: d.e'))
+		putil.test.evaluate_exception_series(exdesc, putil.tree.Tree().add_nodes)
 
 	def test_add_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that add() method works """

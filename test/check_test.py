@@ -17,18 +17,35 @@ import putil.test
 import putil.misc
 import putil.check
 
-def evaluate_exception_method(pairs, offset=0):
+def evaluate_exception_method(emspec_list, cobj=None, offset=0, par='par1'):	#pylint: disable=R0914
 	""" Test exception method """
-	pairs = pairs if isinstance(pairs, list) else [pairs]
+	# Convert to list if a single tuples is given (if necessary)
+	emspec_list = emspec_list if isinstance(emspec_list, list) else [emspec_list]
+	# Add object to list of tuples (if necessary)
+	emspec_list = [(cobj, )+emspec_item for emspec_item in emspec_list] if cobj else emspec_list
+	# Add None as argument list (if necessary)
+	new_emspec_list = list()
+	for emspec_item in emspec_list:
+		if len(emspec_item) == 3:
+			emspec_item = list(emspec_item)
+			emspec_item.insert(1, None)
+			emspec_item = tuple(emspec_item)
+		new_emspec_list.append(emspec_item)
+	emspec_list = new_emspec_list
+	# Evaluate exception method list and produce readable test list
 	comp_text = '[{0}] {1}.exception({2}) -> {3} ({4})'
 	expected_list = list()
 	actual_list = list()
-	for num, (cmd, par, etype, emsg) in enumerate(pairs):
-		expected_list.append(comp_text.format(num+offset, cmd, putil.misc.quote_str(par), etype, emsg))
-		actual_dict = cmd.exception(par)
+	for num, (cobj, kwargs, etype, emsg) in enumerate(emspec_list):
+		# Test exception method
+		actual_dict = (cobj(**kwargs) if kwargs else cobj()).exception(par)
 		amsg = actual_dict['msg'] if 'edata' not in actual_dict else putil.check.format_msg(actual_dict['msg'], actual_dict['edata'])
-		actual_list.append(comp_text.format(num+offset, cmd, putil.misc.quote_str(par), actual_dict['type'], amsg))
+		# Produce expected and actual pretty printed results
+		expected_list.append(comp_text.format(num+offset, cobj, putil.misc.quote_str(par), etype, emsg))
+		actual_list.append(comp_text.format(num+offset, cobj, putil.misc.quote_str(par), actual_dict['type'], amsg))
+	# Produce final actual vs. expected pretty printed list
 	expected_msg, actual_msg = '\n'.join(expected_list), '\n'.join(actual_list)
+	# Evaluate results
 	assert expected_msg == actual_msg
 
 ###
@@ -55,7 +72,7 @@ class TestAny(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Any class behaves appropriately when inproper argument type is passed """
-		evaluate_exception_method((putil.check.Any(), 'par1', None, ''))
+		evaluate_exception_method((putil.check.Any, None, ''))
 
 ###
 # Test for Number class
@@ -81,7 +98,7 @@ class TestNumber(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Number class behaves appropriately when inproper argument type is passed """
-		assert putil.check.Number().exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a number"}
+		evaluate_exception_method((putil.check.Number, ValueError, 'Argument `par1` is not a number'))
 
 
 ###
@@ -108,7 +125,7 @@ class TestPositiveInteger(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=C0103,R0201
 		"""	Tests that PositiveInteger class behaves appropriately when inproper argument type is passed """
-		assert putil.check.PositiveInteger().exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a positive integer"}
+		evaluate_exception_method((putil.check.PositiveInteger, ValueError, 'Argument `par1` is not a positive integer'))
 
 
 ###
@@ -135,7 +152,7 @@ class TestReal(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that Real class behaves appropriately when inproper argument type is passed """
-		assert putil.check.Real().exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a real number"}
+		evaluate_exception_method((putil.check.Real, ValueError, 'Argument `par1` is not a real number'))
 
 
 ###
@@ -162,7 +179,7 @@ class TestPositiveReal(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that PositiveReal class behaves appropriately when inproper argument type is passed """
-		assert putil.check.PositiveReal().exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not a positive real number"}
+		evaluate_exception_method((putil.check.PositiveReal, ValueError, 'Argument `par1` is not a positive real number'))
 
 
 ###
@@ -178,15 +195,14 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 
 	def test_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLength class behaves appropriately when inproper argument type is passed """
-		obj = putil.check.ArbitraryLength
 		exdesc = list()
-		exdesc.append((obj, {'iter_type':'a', 'element_type':str}, TypeError, 'Argument `iter_type` is of the wrong type'))
-		exdesc.append((obj, {'iter_type':list, 'element_type':'a'}, TypeError, 'Argument `element_type` is of the wrong type'))
-		exdesc.append((obj, {'iter_type':list, 'element_type':int}, None, None))
-		exdesc.append((obj, {'iter_type':set, 'element_type':int}, None, None))
-		exdesc.append((obj, {'iter_type':tuple, 'element_type':int}, None, None))
-		exdesc.append((obj, {'iter_type':list, 'element_type':putil.check.Number()}, None, None))
-		putil.test.evaluate_exception_series(exdesc)
+		exdesc.append(({'iter_type':'a', 'element_type':str}, TypeError, 'Argument `iter_type` is of the wrong type'))
+		exdesc.append(({'iter_type':list, 'element_type':'a'}, TypeError, 'Argument `element_type` is of the wrong type'))
+		exdesc.append(({'iter_type':list, 'element_type':int}, ))
+		exdesc.append(({'iter_type':set, 'element_type':int}, ))
+		exdesc.append(({'iter_type':tuple, 'element_type':int}, ))
+		exdesc.append(({'iter_type':list, 'element_type':putil.check.Number()}, ))
+		putil.test.evaluate_exception_series(exdesc, putil.check.ArbitraryLength)
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of ArbitraryLength class behaves appropriately """
@@ -203,7 +219,7 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLength class behaves appropriately when inproper element in iterable is passed """
-		assert putil.check.ArbitraryLength(set, int).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
+		evaluate_exception_method((putil.check.ArbitraryLength, {'iter_type':set, 'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
 
 
 ###
@@ -235,7 +251,7 @@ class TestArbitraryLengthList(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthList class behaves appropriately when inproper element in list is passed """
-		assert putil.check.ArbitraryLengthList(int).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
+		evaluate_exception_method((putil.check.ArbitraryLengthList, {'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
 
 
 ###
@@ -267,7 +283,7 @@ class TestArbitraryLengthTuple(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthTuple class behaves appropriately when inproper element in tuple is passed """
-		assert putil.check.ArbitraryLengthTuple(str).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
+		evaluate_exception_method((putil.check.ArbitraryLengthTuple, {'element_type':str}, TypeError, 'Argument `par1` is of the wrong type'))
 
 
 ###
@@ -299,7 +315,7 @@ class TestArbitraryLengthSet(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthSet class behaves appropriately when inproper element in set is passed """
-		assert putil.check.ArbitraryLengthSet(float).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
+		evaluate_exception_method((putil.check.ArbitraryLengthSet, {'element_type':float}, TypeError, 'Argument `par1` is of the wrong type'))
 
 ###
 # Test for ArbitraryLengthDict class
@@ -330,7 +346,7 @@ class TestArbitraryLengthDict(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthDict class behaves appropriately when inproper element in list is passed """
-		assert putil.check.ArbitraryLengthDict(int).exception('par1') == {'type':TypeError, 'msg':"Argument `par1` is of the wrong type"}
+		evaluate_exception_method((putil.check.ArbitraryLengthDict, {'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
 
 
 ###
@@ -359,12 +375,11 @@ class TestOneOf(object):	#pylint: disable=W0232
 
 	def test_proper_contains_behavior(self):	#pylint: disable=R0201,C0103
 		""" Tests that OneOf class behaves properly extracting type information """
-		obj1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True)
-		obj2 = putil.check.OneOf(['c', 'D', putil.check.IncreasingRealNumpyVector()], case_sensitive=False)
-		obj3 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False)
-		obj4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False)
-		assert ('a' in obj1, 'b' in obj1, 3.0 in obj1, 2 in obj1, [1, 2] in obj1, 3.1 in obj1, 'A' in obj1, 'C' in obj2, 'd' in obj2, 'e' in obj2, 'E' in obj2, numpy.array([1, 2, 3]) in obj2, numpy.array([1.0, 0.0, -1.0]) in obj2,
-			-2 in obj3, 3 in obj3, -2.0 in obj4, 0.001 in obj4) == (True, True, True, True, False, False, False, True, True, False, False, True, False, False, True, False, True)
+		obj1, obj2 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True), putil.check.OneOf(['c', 'D', putil.check.IncreasingRealNumpyVector()], case_sensitive=False)
+		obj3, obj4 = putil.check.OneOf(['e', 'F', putil.check.PositiveInteger()], case_sensitive=False), putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False)
+		putil.test.evaluate_contains_series([(obj1, 'a', True), (obj1, 'b', True), (obj1, 3.0, True), (obj1, 2, True), (obj1, [1, 2], False), (obj1, 3.1, False), (obj1, 'A', False), \
+									         (obj2, 'C', True), (obj2, 'd', True), (obj2, 'e', False), (obj2, 'E', False), (obj2, numpy.array([1, 2, 3]), True), (obj2, numpy.array([1.0, 0.0, -1.0]), False), \
+									         (obj3, -2, False), (obj3, 3, True), (obj4, -2.0, False), (obj4, 0.001, True)])
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of OneOf class behaves appropriately """
@@ -386,11 +401,12 @@ class TestOneOf(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		""" Tests that exception method of OneOf class behaves appropriately """
-		test1 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=False).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not one of ['a', 'b', 3.0, 2] (case insensitive)"}
-		test2 = putil.check.OneOf(['a', 'b', 3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"}
-		test3 = putil.check.OneOf([3.0, 2], case_sensitive=True).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not one of [3.0, 2]"}
-		test4 = putil.check.OneOf(['g', 'H', putil.check.PositiveReal()], case_sensitive=False).exception('par1') == {'type':ValueError, 'msg':"Argument `par1` is not one of ['g', 'H', positive real number] (case insensitive)"}
-		assert (test1, test2, test3, test4) == (True, True, True, True)
+		exdesc = list()
+		exdesc.append(({'choices':['a', 'b', 3.0, 2], 'case_sensitive':False}, ValueError, "Argument `par1` is not one of ['a', 'b', 3.0, 2] (case insensitive)"))
+		exdesc.append(({'choices':['a', 'b', 3.0, 2], 'case_sensitive':True}, ValueError, "Argument `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"))
+		exdesc.append(({'choices':[3.0, 2], 'case_sensitive':True}, ValueError, "Argument `par1` is not one of [3.0, 2]"))
+		exdesc.append(({'choices':['g', 'H', putil.check.PositiveReal()], 'case_sensitive':False}, ValueError, "Argument `par1` is not one of ['g', 'H', positive real number] (case insensitive)"))
+		evaluate_exception_method(exdesc, putil.check.OneOf)
 
 
 ###
@@ -401,27 +417,19 @@ class TestNumberRange(object):	#pylint: disable=W0232
 
 	def test_minimum_not_a_number(self):	#pylint: disable=R0201,C0103
 		""" Tests that NumberRange class behaves properly when minimum is not a number """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.NumberRange(minimum=False, maximum=None)
-		assert excinfo.value.message == 'Argument `minimum` is of the wrong type'
+		putil.test.evaluate_exception_series((putil.check.NumberRange, {'minimum':False, 'maximum':None}, TypeError, 'Argument `minimum` is of the wrong type'))
 
 	def test_maximum_not_a_number(self):	#pylint: disable=R0201,C0103
 		""" Tests that NumberRange class behaves properly when maximum is not a number """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.NumberRange(minimum=None, maximum=True)
-		assert excinfo.value.message == 'Argument `maximum` is of the wrong type'
+		putil.test.evaluate_exception_series((putil.check.NumberRange, {'minimum':None, 'maximum':True}, TypeError, 'Argument `maximum` is of the wrong type'))
 
 	def test_minimum_and_maximum_not_specified(self):	#pylint: disable=R0201,C0103
 		""" Tests that NumberRange class behaves properly when neither minimum nor maximum are specified """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.NumberRange(minimum=None, maximum=None)
-		assert excinfo.value.message == 'Either argument `minimum` or argument `maximum` needs to be specified'
+		putil.test.evaluate_exception_series((putil.check.NumberRange, {'minimum':None, 'maximum':None}, TypeError, 'Either argument `minimum` or argument `maximum` needs to be specified'))
 
 	def test_minimum_greater_than_maximum(self):	#pylint: disable=R0201,C0103
 		""" Tests that NumberRange class behaves properly when minimum is greater than maximum """
-		with pytest.raises(ValueError) as excinfo:
-			putil.check.NumberRange(minimum=1.5, maximum=0.0)
-		assert excinfo.value.message == 'Argument `minimum` greater than argument `maximum`'
+		putil.test.evaluate_exception_series((putil.check.NumberRange, {'minimum':1.5, 'maximum':0.0}, ValueError, 'Argument `minimum` greater than argument `maximum`'))
 
 	def test_no_errors(self):	#pylint: disable=R0201,C0103
 		""" Tests that NumberRange class behaves properly when all arguments are correctly specified """
@@ -430,30 +438,25 @@ class TestNumberRange(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of NumberRange class behaves appropriately """
-		ref_obj1 = putil.check.NumberRange(10, 15)
-		ref_obj2 = putil.check.NumberRange(100.0, 200.0)
-		ref_obj3 = putil.check.NumberRange(minimum=10)
-		ref_obj4 = putil.check.NumberRange(maximum=20)
-		assert (ref_obj1.includes(5), ref_obj1.includes(10), ref_obj1.includes(13), ref_obj1.includes(15), ref_obj1.includes(20), ref_obj1.includes(13.0),
-			 ref_obj2.includes(75.1), ref_obj2.includes(100.0), ref_obj2.includes(150.0), ref_obj2.includes(200.0), ref_obj2.includes(200.1), ref_obj2.includes(200),
-			 ref_obj3.includes(20), ref_obj3.includes(5), ref_obj4.includes(25), ref_obj4.includes(5)) == \
-			 (False, True, True, True, False, True, False, True, True, True, False, True, True, False, False, True)
+		cmd1, cmd2, cmd3, cmd4 = putil.check.NumberRange(10, 15).includes, putil.check.NumberRange(100.0, 200.0).includes, putil.check.NumberRange(minimum=10).includes, putil.check.NumberRange(maximum=20).includes
+		cmd_pairs = [(cmd1, 5, False), (cmd1, 10, True), (cmd1, 13, True), (cmd1, 15, True), (cmd1, 20, False), (cmd1, 13.0, True), (cmd2, 75.1, False), (cmd2, 100.0, True), (cmd2, 150.0, True), (cmd2, 200.0, True), \
+			         (cmd2, 200.1, False), (cmd2, 200, True), (cmd3, 20, True), (cmd3, 5, False), (cmd4, 25, False), (cmd4, 5, True)]
+		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of NumberRange class behaves appropriately """
-		ref_obj1 = putil.check.NumberRange(10, 15)
-		ref_obj2 = putil.check.NumberRange(100.0, 200.0)
-		assert (ref_obj1.istype(5), ref_obj1.istype(10), ref_obj1.istype(13), ref_obj1.istype(15), ref_obj1.istype(20), ref_obj1.istype(13.0),
-			 ref_obj2.istype(75.1), ref_obj2.istype(100.0), ref_obj2.istype(150.0), ref_obj2.istype(200.0), ref_obj2.istype(200.1), ref_obj2.istype(200), ref_obj2.istype('a')) == \
-			 (True, True, True, True, True, True, True, True, True, True, True, True, False)
+		cmd1, cmd2 = putil.check.NumberRange(10, 15).istype, putil.check.NumberRange(100.0, 200.0).istype
+		cmd_pairs = [(cmd1, 5, True), (cmd1, 10, True), (cmd1, 13, True), (cmd1, 15, True), (cmd1, 20, True), (cmd1, 13.0, True), (cmd2, 75.1, True), (cmd2, 100.0, True), (cmd2, 150.0, True), (cmd2, 200.0, True), \
+			         (cmd2, 200.1, True), (cmd2, 200, True), (cmd2, 'a', False)]
+		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		""" Tests that exception method of NumberRange class behaves appropriately """
-		test1 = putil.check.NumberRange(maximum=15).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not in the range [-inf, 15.0]'}
-		test2 = putil.check.NumberRange(minimum=20.0).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not in the range [20.0, +inf]'}
-		test3 = putil.check.NumberRange(minimum=3.5, maximum=4.75).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not in the range [3.5, 4.75]'}
-		assert (test1, test2, test3) == (True, True, True)
-
+		exdesc = list()
+		exdesc.append(({'maximum':15}, ValueError, 'Argument `par1` is not in the range [-inf, 15.0]'))
+		exdesc.append(({'minimum':20}, ValueError, 'Argument `par1` is not in the range [20.0, +inf]'))
+		exdesc.append(({'minimum':3.5, 'maximum':4.75}, ValueError, 'Argument `par1` is not in the range [3.5, 4.75]'))
+		evaluate_exception_method(exdesc, putil.check.NumberRange)
 
 ###
 # Test RealNumpyVector class
@@ -467,19 +470,19 @@ class TestRealNumpyVector(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of RealNumpyVector class behaves appropriately """
-		ref_obj = putil.check.RealNumpyVector()
-		assert (ref_obj.includes('a'), ref_obj.includes([1, 2, 3]), ref_obj.includes(numpy.array([])), ref_obj.includes(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.includes(numpy.array(['a', 'b'])),
-			 ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0])), ref_obj.includes(numpy.array([10.0]))) == (False, False, False, False, False, True, True, True)
+		cmd_pairs = [('a', False), ([1, 2, 3], False), (numpy.array([]), False), (numpy.array([[1, 2, 3], [4, 5, 6]]), False), (numpy.array(['a', 'b']), False), (numpy.array([1, 2, 3]), True), \
+			         (numpy.array([10.0, 8.0, 2.0]), True), (numpy.array([10.0]), True)]
+		putil.test.evaluate_command_value_series(cmd_pairs, putil.check.RealNumpyVector().includes)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of RealNumpyVector class behaves appropriately """
-		ref_obj = putil.check.RealNumpyVector()
-		assert (ref_obj.istype('a'), ref_obj.istype([1, 2, 3]), ref_obj.istype(numpy.array([])), ref_obj.istype(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.istype(numpy.array(['a', 'b'])),
-			 ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0])), ref_obj.istype(numpy.array([10.0]))) == (False, False, False, False, False, True, True, True)
+		cmd_pairs = [('a', False), ([1, 2, 3], False), (numpy.array([]), False), (numpy.array([[1, 2, 3], [4, 5, 6]]), False), (numpy.array(['a', 'b']), False), (numpy.array([1, 2, 3]), True), \
+			         (numpy.array([10.0, 8.0, 2.0]), True), (numpy.array([10.0]), True)]
+		putil.test.evaluate_command_value_series(cmd_pairs, putil.check.RealNumpyVector().istype)
 
 	def test_exception_method(self):    #pylint: disable=R0201,C0103
 		""" Tests that exception method of RealNumpyVector class behaves appropriately """
-		assert putil.check.RealNumpyVector().exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not a Numpy vector of real numbers'}
+		evaluate_exception_method((putil.check.RealNumpyVector, ValueError, 'Argument `par1` is not a Numpy vector of real numbers'))
 
 
 ###
@@ -494,21 +497,19 @@ class TestIncreasingRealNumpyVector(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of IncreasingRealNumpyVector class behaves appropriately """
-		ref_obj = putil.check.IncreasingRealNumpyVector()
-		assert (ref_obj.includes('a'), ref_obj.includes([1, 2, 3]), ref_obj.includes(numpy.array([])), ref_obj.includes(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.includes(numpy.array(['a', 'b'])),
-			 ref_obj.includes(numpy.array([1, 0, -3])), ref_obj.includes(numpy.array([10.0, 8.0, 2.0])), ref_obj.includes(numpy.array([1, 2, 3])), ref_obj.includes(numpy.array([10.0, 12.1, 12.5])),
-			 ref_obj.includes(numpy.array([10.0]))) == (False, False, False, False, False, False, False, True, True, True)
+		cmd_pairs = [('a', False), ([1, 2, 3], False), (numpy.array([]), False), (numpy.array([[1, 2, 3], [4, 5, 6]]), False), (numpy.array(['a', 'b']), False), (numpy.array([1, 0, -3]), False), \
+                     (numpy.array([10.0, 8.0, 2.0]), False), (numpy.array([1, 2, 3]), True), (numpy.array([10.0, 12.1, 12.5]), True), (numpy.array([10.0]), True)]
+		putil.test.evaluate_command_value_series(cmd_pairs, putil.check.IncreasingRealNumpyVector().includes)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of IncreasingRealNumpyVector class behaves appropriately """
-		ref_obj = putil.check.IncreasingRealNumpyVector()
-		assert (ref_obj.istype('a'), ref_obj.istype([1, 2, 3]), ref_obj.istype(numpy.array([])), ref_obj.istype(numpy.array([[1, 2, 3], [4, 5, 6]])), ref_obj.istype(numpy.array(['a', 'b'])),
-			 ref_obj.istype(numpy.array([1, 0, -3])), ref_obj.istype(numpy.array([10.0, 8.0, 2.0])), ref_obj.istype(numpy.array([1, 2, 3])), ref_obj.istype(numpy.array([10.0, 12.1, 12.5])), ref_obj.istype(numpy.array([10.0]))) == \
-			(False, False, False, False, False, False, False, True, True, True)
+		cmd_pairs = [('a', False), ([1, 2, 3], False), (numpy.array([]), False), (numpy.array([[1, 2, 3], [4, 5, 6]]), False), (numpy.array(['a', 'b']), False), (numpy.array([1, 0, -3]), False), \
+                     (numpy.array([10.0, 8.0, 2.0]), False), (numpy.array([1, 2, 3]), True), (numpy.array([10.0, 12.1, 12.5]), True), (numpy.array([10.0]), True)]
+		putil.test.evaluate_command_value_series(cmd_pairs, putil.check.IncreasingRealNumpyVector().istype)
 
 	def test_exception_method(self):    #pylint: disable=R0201,C0103
 		""" Tests that exception method of RealNumpyVector class behaves appropriately """
-		assert putil.check.IncreasingRealNumpyVector().exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not a Numpy vector of increasing real numbers'}
+		evaluate_exception_method((putil.check.IncreasingRealNumpyVector, ValueError, 'Argument `par1` is not a Numpy vector of increasing real numbers'))
 
 
 ###
@@ -519,43 +520,37 @@ class TestFile(object):	#pylint: disable=W0232
 
 	def test_argument_wrong_type(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely when wrong type argument is given """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.File('a')
-		assert excinfo.value.message == 'Argument `check_existance` is of the wrong type'
+		putil.test.evaluate_exception_series((putil.check.File, {'check_existance':'a'}, TypeError, 'Argument `check_existance` is of the wrong type'))
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of File class behaves appropriately """
-		assert (putil.check.File().includes('/some/file.txt'), putil.check.File(True).includes('not a file'), putil.check.File(True).includes('./check_test.py')) == (True, False, True)
+		cmd1, cmd2 = putil.check.File().includes, putil.check.File(True).includes
+		putil.test.evaluate_command_value_series([(cmd1, '/some/file.txt', True), (cmd2, 'not a file', False), (cmd2, './check_test.py', True)])
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of File class behaves appropriately """
-		assert (putil.check.File().istype(3), putil.check.File(True).istype('not a file'), putil.check.File(True).istype('./putil.check_test.py')) == (False, True, True)
+		cmd1, cmd2 = putil.check.File().istype, putil.check.File(True).istype
+		putil.test.evaluate_command_value_series([(cmd1, 3, False), (cmd2, 'not a file', True), (cmd2, './check_test.py', True)])
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of File class behaves appropriately """
-		assert putil.check.File().exception('/some/path/file_name.ext') == {'type':IOError, 'msg':'File *[file_name]* could not be found', 'edata':{'field':'file_name', 'value':'/some/path/file_name.ext'}}
+		evaluate_exception_method((putil.check.File, IOError, 'File /some/path/file_name.ext could not be found'), par='/some/path/file_name.ext')
 
 	def test_in_code(self):    #pylint: disable=R0201
 		""" Test type checking in a real code scenario """
-		test_list = list()
 		@putil.check.check_argument(putil.check.File(check_existance=False))
 		def set_file_name1(file_name):	#pylint: disable=C0111
 			print file_name
 		@putil.check.check_argument(putil.check.File(check_existance=True))
 		def set_file_name2(file_name):	#pylint: disable=C0111
 			print file_name
-		with pytest.raises(TypeError) as excinfo:
-			set_file_name1(file_name=5)
-		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			set_file_name2(file_name=5)
-		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
-		with pytest.raises(IOError) as excinfo:
-			set_file_name2(file_name='file.csv')
-		test_list.append(excinfo.value.message == 'File file.csv could not be found')
-		set_file_name1(file_name='file.csv')
-		set_file_name2(file_name='check_test.py')
-		assert test_list == 3*[True]
+		exdesc = list()
+		exdesc.append((set_file_name1, {'file_name':5}, TypeError, 'Argument `file_name` is of the wrong type'))
+		exdesc.append((set_file_name2, {'file_name':5}, TypeError, 'Argument `file_name` is of the wrong type'))
+		exdesc.append((set_file_name2, {'file_name':'file.csv'}, IOError, 'File file.csv could not be found'))
+		exdesc.append((set_file_name1, {'file_name':'file.csv'}))
+		exdesc.append((set_file_name2, {'file_name':'check_test.py'}))
+		putil.test.evaluate_exception_series(exdesc)
 
 ###
 # Test Function class
