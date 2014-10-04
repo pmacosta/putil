@@ -382,4 +382,4 @@ def quote_str(obj):
 	:type	obj: any
 	:rtype:	Same as **obj**
 	"""
-	return obj if not isinstance(obj, str) else ('\'{0}\''.format(obj) if '"' in obj else '"{0}"'.format(obj))
+	return obj if not isinstance(obj, str) else ("'{0}'".format(obj) if '"' in obj else '"{0}"'.format(obj))

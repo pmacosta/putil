@@ -17,7 +17,7 @@ import putil.test
 import putil.misc
 import putil.check
 
-def evaluate_exception_method(emspec_list, cobj=None, offset=0, par='par1'):	#pylint: disable=R0914
+def evaluate_exception_method(emspec_list, cobj=None, offset=0, ekwargs=None):	#pylint: disable=R0914
 	""" Test exception method """
 	# Convert to list if a single tuples is given (if necessary)
 	emspec_list = emspec_list if isinstance(emspec_list, list) else [emspec_list]
@@ -25,10 +25,18 @@ def evaluate_exception_method(emspec_list, cobj=None, offset=0, par='par1'):	#py
 	emspec_list = [(cobj, )+emspec_item for emspec_item in emspec_list] if cobj else emspec_list
 	# Add None as argument list (if necessary)
 	new_emspec_list = list()
+	for num, item in enumerate(emspec_list):
+		print '{0}: {1}'.format(num, item)
+		print
 	for emspec_item in emspec_list:
 		if len(emspec_item) == 3:
 			emspec_item = list(emspec_item)
 			emspec_item.insert(1, None)
+			emspec_item = tuple(emspec_item)
+		if (len(emspec_item) == 4) and (not isinstance(emspec_item[-1], dict)):
+			ekwargs = {'param_name':'par1'} if not ekwargs else ekwargs
+			emspec_item = list(emspec_item)
+			emspec_item.append(ekwargs)
 			emspec_item = tuple(emspec_item)
 		new_emspec_list.append(emspec_item)
 	emspec_list = new_emspec_list
@@ -36,13 +44,15 @@ def evaluate_exception_method(emspec_list, cobj=None, offset=0, par='par1'):	#py
 	comp_text = '[{0}] {1}.exception({2}) -> {3} ({4})'
 	expected_list = list()
 	actual_list = list()
-	for num, (cobj, kwargs, etype, emsg) in enumerate(emspec_list):
+	for num, (cobj, kwargs, etype, emsg, ekwargs) in enumerate(emspec_list):
 		# Test exception method
-		actual_dict = (cobj(**kwargs) if kwargs else cobj()).exception(par)
+		actual_dict = (cobj(**kwargs) if kwargs else cobj()).exception(**ekwargs)
 		amsg = actual_dict['msg'] if 'edata' not in actual_dict else putil.check.format_msg(actual_dict['msg'], actual_dict['edata'])
+		# Arguments, in the form [argument name]=[argument value] for pretty printing callable call
+		arg_text = ', '.join(['{0}={1}'.format(key, putil.check.strtype(value)) for key, value in ekwargs.items()]) if ekwargs else ''
 		# Produce expected and actual pretty printed results
-		expected_list.append(comp_text.format(num+offset, cobj, putil.misc.quote_str(par), etype, emsg))
-		actual_list.append(comp_text.format(num+offset, cobj, putil.misc.quote_str(par), actual_dict['type'], amsg))
+		expected_list.append(comp_text.format(num+offset, cobj, arg_text, etype, emsg))
+		actual_list.append(comp_text.format(num+offset, cobj, arg_text, actual_dict['type'], amsg))
 	# Produce final actual vs. expected pretty printed list
 	expected_msg, actual_msg = '\n'.join(expected_list), '\n'.join(actual_list)
 	# Evaluate results
@@ -60,15 +70,11 @@ class TestAny(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of Any class behaves appropriately	"""
-		cmd = putil.check.Any().includes
-		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', True), ([1, 2, 3], True)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(1, True), (2.0, True), (1+2j, True), ('a', True), ([1, 2, 3], True)], putil.check.Any().includes)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of Any class behaves appropriately """
-		cmd = putil.check.Any().istype
-		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', True), ([1, 2, 3], True)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(1, True), (2.0, True), (1+2j, True), ('a', True), ([1, 2, 3], True)], putil.check.Any().istype)
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Any class behaves appropriately when inproper argument type is passed """
@@ -86,15 +92,11 @@ class TestNumber(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of Number class behaves appropriately	"""
-		cmd = putil.check.Number().includes
-		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(1, True), (2.0, True), (1+2j, True), ('a', False), ([1, 2, 3], False)], putil.check.Number().includes)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of Number class behaves appropriately """
-		cmd = putil.check.Number().istype
-		pairs = [(1, True), (2.0, True), (1+2j, True), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(1, True), (2.0, True), (1+2j, True), ('a', False), ([1, 2, 3], False)], putil.check.Number().istype)
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Number class behaves appropriately when inproper argument type is passed """
@@ -113,15 +115,11 @@ class TestPositiveInteger(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of PositiveInteger class behaves appropriately """
-		cmd = putil.check.PositiveInteger().includes
-		pairs = [(-1, False), (1, True), (2.0, False), (1+2j, False), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(-1, False), (1, True), (2.0, False), (1+2j, False), ('a', False), ([1, 2, 3], False)], putil.check.PositiveInteger().includes)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of PositiveInteger class behaves appropriately """
-		cmd = putil.check.PositiveInteger().istype
-		pairs = [(-1, False), (1, True), (2.0, False), (1+2j, False), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(-1, False), (1, True), (2.0, False), (1+2j, False), ('a', False), ([1, 2, 3], False)], putil.check.PositiveInteger().istype)
 
 	def test_exception_method(self):	#pylint: disable=C0103,R0201
 		"""	Tests that PositiveInteger class behaves appropriately when inproper argument type is passed """
@@ -140,15 +138,11 @@ class TestReal(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of Real class behaves appropriately """
-		cmd = putil.check.Real().includes
-		pairs = [(1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)], putil.check.Real().includes)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of Real class behaves appropriately """
-		cmd = putil.check.Real().istype
-		pairs = [(1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)], putil.check.Real().istype)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that Real class behaves appropriately when inproper argument type is passed """
@@ -167,15 +161,11 @@ class TestPositiveReal(object):	#pylint: disable=W0232
 
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of PositiveReal class behaves appropriately """
-		cmd = putil.check.PositiveReal().includes
-		pairs = [(-1, False), (1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(-1, False), (1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)], putil.check.PositiveReal().includes)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of PositiveReal class behaves appropriately """
-		cmd = putil.check.PositiveReal().istype
-		pairs = [(-1, False), (1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)]
-		putil.test.evaluate_value_series(cmd, pairs)
+		putil.test.evaluate_command_value_series([(-1, False), (1, True), (2.0, True), (1+2j, False), ('a', False), ([1, 2, 3], False)], putil.check.PositiveReal().istype)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that PositiveReal class behaves appropriately when inproper argument type is passed """
@@ -534,7 +524,7 @@ class TestFile(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of File class behaves appropriately """
-		evaluate_exception_method((putil.check.File, IOError, 'File /some/path/file_name.ext could not be found'), par='/some/path/file_name.ext')
+		evaluate_exception_method((putil.check.File, IOError, 'File /some/path/file_name.ext could not be found'), ekwargs={'param':'/some/path/file_name.ext'})
 
 	def test_in_code(self):    #pylint: disable=R0201
 		""" Test type checking in a real code scenario """
@@ -560,9 +550,7 @@ class TestFuntion(object):	#pylint: disable=W0232
 
 	def test_wrong_type(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely when wrong type argument is given """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.Function('a')
-		assert excinfo.value.message == 'Argument `num_pars` is of the wrong type'
+		putil.test.evaluate_exception_series((putil.check.Function, {'num_pars':'a'}, TypeError, 'Argument `num_pars` is of the wrong type'))
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of Function class behaves appropriately """
@@ -574,21 +562,25 @@ class TestFuntion(object):	#pylint: disable=W0232
 			return par1, kwargs
 		def foo4(par1, *args, **kwargs):	#pylint: disable=C0111
 			return par1, args, kwargs
-		assert (putil.check.Function().includes(3), putil.check.Function().includes(foo1), putil.check.Function(num_pars=3).includes(foo1), putil.check.Function(num_pars=2).includes(foo1),
-			putil.check.Function().includes(foo2), putil.check.Function(num_pars=5).includes(foo2), putil.check.Function(num_pars=2).includes(foo2),
-			putil.check.Function().includes(foo3), putil.check.Function(num_pars=5).includes(foo3), putil.check.Function(num_pars=2).includes(foo3),
-			putil.check.Function().includes(foo4), putil.check.Function(num_pars=5).includes(foo4), putil.check.Function(num_pars=2).includes(foo4)) == (False, True, False, True, True, True, True, True, True, True, True, True, True)
+		cmd1, cmd2, cmd3, cmd4 = putil.check.Function().includes, putil.check.Function(num_pars=3).includes, putil.check.Function(num_pars=2).includes, putil.check.Function(num_pars=5).includes
+		cmd_pairs = [(cmd1, 3, False), (cmd1, foo1, True), (cmd2, foo1, False), (cmd3, foo1, True), (cmd1, foo2, True), (cmd4, foo2, True), (cmd3, foo2, True), (cmd1, foo3, True), (cmd4, foo3, True), (cmd3, foo3, True), \
+			         (cmd1, foo4, True), (cmd4, foo4, True), (cmd3, foo4, True)]
+		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of Function class behaves appropriately """
 		def foo1(par1, par2):	#pylint: disable=C0111
 			return par1, par2
-		assert (putil.check.Function().istype(3), putil.check.Function().istype(foo1), putil.check.Function(num_pars=3).istype(foo1), putil.check.Function(num_pars=2).istype(foo1)) == (False, True, True, True)
+		cmd1, cmd2, cmd3 = putil.check.Function().istype, putil.check.Function(num_pars=3).istype, putil.check.Function(num_pars=2).istype
+		cmd_pairs = [(cmd1, 3, False), (cmd1, foo1, True), (cmd2, foo1, True), (cmd3, foo1, True)]
+		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception(self):    #pylint: disable=R0201
 		""" Tests that exception method of Function class behaves appropriately """
-		assert (putil.check.Function(num_pars=1).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not a function with 1 argument'},
-			putil.check.Function(num_pars=2).exception('par1') == {'type':ValueError, 'msg':'Argument `par1` is not a function with 2 arguments'}) == (True, True)
+		exdesc = list()
+		exdesc.append(({'num_pars':1}, ValueError, 'Argument `par1` is not a function with 1 argument'))
+		exdesc.append(({'num_pars':2}, ValueError, 'Argument `par1` is not a function with 2 arguments'))
+		evaluate_exception_method(exdesc, putil.check.Function, ekwargs={'param':'par1'})
 
 
 ###
@@ -599,84 +591,67 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 
 	def test_type_match_wrong_type(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely when wrong type argument is given """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.PolymorphicType('a')
-		assert excinfo.value.message == 'Argument `types` is of the wrong type'
+		putil.test.evaluate_exception_series(({'types':'a'}, TypeError, 'Argument `types` is of the wrong type'), putil.check.PolymorphicType)
 
 	def test_type_match_subtype_wrong_type(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely when wrong sub-type argument is given """
-		with pytest.raises(TypeError) as excinfo:
-			putil.check.PolymorphicType([str, int, 'a'])
-		assert excinfo.value.message == 'Argument `types` element is of the wrong type'
+		putil.test.evaluate_exception_series(({'types':[str, int, 'a']}, TypeError, 'Argument `types` element is of the wrong type'), putil.check.PolymorphicType)
 
 	def test_type_match_no_errors(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely when all arguments are correctly specified """
-		test_instances = [str, int, None, putil.check.ArbitraryLengthList, putil.check.ArbitraryLengthTuple, putil.check.ArbitraryLengthSet, putil.check.IncreasingRealNumpyVector, putil.check.RealNumpyVector, putil.check.OneOf,
-			  putil.check.NumberRange, putil.check.Number, putil.check.Real, putil.check.File, putil.check.Function, putil.check.Any]
+		test_instances = [str, int, None]+putil.check._get_pseudo_types()['type']	#pylint: disable=W0212
 		obj = putil.check.PolymorphicType(test_instances)
-		test_types = test_instances[:]
-		test_types[2] = type(None)
-		assert (obj.instances == test_instances, obj.types == test_types) == (True, True)
+		test_types = test_instances[0:2]+[type(None)]+test_instances[3:]
+		assert all([obj.instances == test_instances, obj.types == test_types])
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of PolymorphicType class behaves appropriately """
 		test_instances = [int, None, putil.check.ArbitraryLengthList(int), putil.check.ArbitraryLengthTuple(float), putil.check.ArbitraryLengthSet(str), putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=True),
-			  putil.check.NumberRange(1, 3), putil.check.Number(), putil.check.Real(), putil.check.RealNumpyVector()]
-		ref_obj1 = putil.check.PolymorphicType(test_instances)
-		ref_obj2 = putil.check.PolymorphicType([float, putil.check.IncreasingRealNumpyVector()])
-		ref_obj3 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)])
-		ref_obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger()])
-		ref_obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal()])
-		ref_obj6 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
+			              putil.check.NumberRange(1, 3), putil.check.Number(), putil.check.Real(), putil.check.RealNumpyVector()]
+		cmd1, cmd2 = putil.check.PolymorphicType(test_instances).includes, putil.check.PolymorphicType([float, putil.check.IncreasingRealNumpyVector()]).includes
+		cmd3, cmd4 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)]).includes, putil.check.PolymorphicType([None, putil.check.PositiveInteger()]).includes
+		cmd5, cmd6 = putil.check.PolymorphicType([None, putil.check.PositiveReal()]).includes, putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()]).includes
 		def foo1(par1, par2, par3):	#pylint: disable=C0111
 			return par1, par2, par3
 		def foo2(par1, par2):	#pylint: disable=C0111
 			return par1, par2
-		assert (ref_obj1.includes(5), ref_obj1.includes(None), ref_obj1.includes([1, 2, 3]), ref_obj1.includes((2.0, 3.0)), ref_obj1.includes(set(['a', 'b', 'c'])), ref_obj1.includes('MANUAL'), ref_obj1.includes(2),
-			 ref_obj1.includes(100.0), ref_obj1.includes(10+20j), ref_obj1.includes(numpy.array([10, 0.0, 30])), ref_obj1.includes('hello world'), ref_obj1.includes([1.0, 2.0, 3.0]), ref_obj1.includes('auto'),
-			 ref_obj1.includes(numpy.array([])), ref_obj1.includes(numpy.array(['a', 'b', 'c'])), ref_obj2.includes(1), ref_obj2.includes(set([1, 2])), ref_obj2.includes(numpy.array([1, 0, -1])),
-			 ref_obj2.includes(numpy.array([10.0, 20.0, 30.0])), ref_obj2.includes(5.0), ref_obj3.includes(3), ref_obj3.includes('/some/file'), ref_obj3.includes(foo1), ref_obj3.includes(foo2), ref_obj4.includes(-1),
-			 ref_obj4.includes(1), ref_obj5.includes(-0.001), ref_obj5.includes(0.001), ref_obj6.includes(None), ref_obj6.includes(2.0), ref_obj6.includes('a')) == \
-			 (True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False, True, True, False, True, False, True, False, True, False, True, True, True, True)
+		cmd_pairs = [(cmd1, 5, True), (cmd1, None, True), (cmd1, [1, 2, 3], True), (cmd1, (2.0, 3.0), True), (cmd1, set(['a', 'b', 'c']), True), (cmd1, 'MANUAL', True), (cmd1, 2, True), \
+                     (cmd1, 100.0, True), (cmd1, 10+20j, True), (cmd1, numpy.array([10, 0.0, 30]), True), (cmd1, 'hello world', False), (cmd1, [1.0, 2.0, 3.0], False), (cmd1, 'auto', False), \
+                     (cmd1, numpy.array([]), False), (cmd1, numpy.array(['a', 'b', 'c']), False), (cmd2, 1, False), (cmd2, set([1, 2]), False), (cmd2, numpy.array([1, 0, -1]), False), \
+                     (cmd2, numpy.array([10.0, 20.0, 30.0]), True), (cmd2, 5.0, True), (cmd3, 3, False), (cmd3, '/some/file', True), (cmd3, foo1, False), (cmd3, foo2, True), (cmd4, -1, False), \
+                     (cmd4, 1, True), (cmd5, -0.001, False), (cmd5, 0.001, True), (cmd6, None, True), (cmd6, 2.0, True), (cmd6, 'a', True)]
+		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of PolymorphicType class behaves appropriately """
 		test_instances = [int, None, putil.check.ArbitraryLengthList(int), putil.check.ArbitraryLengthTuple(float), putil.check.ArbitraryLengthSet(str), putil.check.OneOf(['NONE', 'MANUAL', 'AUTO'], case_sensitive=True),
-			  putil.check.NumberRange(1, 3), putil.check.Number(), putil.check.Real(), putil.check.RealNumpyVector()]
-		ref_obj1 = putil.check.PolymorphicType(test_instances)
-		ref_obj2 = putil.check.PolymorphicType([float, putil.check.IncreasingRealNumpyVector()])
-		ref_obj3 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)])
-		ref_obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger()])
-		ref_obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal()])
-		ref_obj6 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
-		ref_obj7 = putil.check.PolymorphicType([None, {'a':int, 'b':str}])
+			              putil.check.NumberRange(1, 3), putil.check.Number(), putil.check.Real(), putil.check.RealNumpyVector()]
+		cmd1, cmd2 = putil.check.PolymorphicType(test_instances).istype, putil.check.PolymorphicType([float, putil.check.IncreasingRealNumpyVector()]).istype
+		cmd3, cmd4 = putil.check.PolymorphicType([putil.check.File(check_existance=False), putil.check.Function(num_pars=2)]).istype, putil.check.PolymorphicType([None, putil.check.PositiveInteger()]).istype
+		cmd5, cmd6 = putil.check.PolymorphicType([None, putil.check.PositiveReal()]).istype, putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()]).istype
+		cmd7 = putil.check.PolymorphicType([None, {'a':int, 'b':str}]).istype
 		def foo1(par1, par2, par3):	#pylint: disable=C0111
 			return par1, par2, par3
-		assert (ref_obj1.istype(5), ref_obj1.istype(None), ref_obj1.istype([1, 2, 3]), ref_obj1.istype((2.0, 3.0)), ref_obj1.istype(set(['a', 'b', 'c'])), ref_obj1.istype('MANUAL'), ref_obj1.istype(2),
-			 ref_obj1.istype(100.0), ref_obj1.istype(10+20j), ref_obj1.istype(numpy.array([10, 0.0, 30])), ref_obj1.istype('hello world'), ref_obj1.istype([1.0, 2.0, 3.0]), ref_obj1.istype('auto'),
-			 ref_obj1.istype(numpy.array([])), ref_obj1.istype(numpy.array(['a', 'b', 'c'])), ref_obj2.istype(1), ref_obj2.istype(set([1, 2])), ref_obj2.istype(numpy.array([1, 0, -1])),
-			 ref_obj2.istype(numpy.array([10.0, 20.0, 30.0])), ref_obj2.istype(5.0), ref_obj3.istype(3), ref_obj3.istype('/some/file'), ref_obj3.istype(foo1), ref_obj4.istype(-1),
-			 ref_obj4.istype(1), ref_obj5.istype(-0.001), ref_obj5.istype(0.001), ref_obj6.istype(None), ref_obj6.istype(2.0), ref_obj6.istype('a'),
-			 ref_obj7.istype(None), ref_obj7.istype({'c':5}), ref_obj7.istype({'a':5}), ref_obj7.istype({'a':5, 'b':'Hello'})) == \
-			 (True, True, True, True, True, True, True, True, True, True, True, False, True, False, False, False, False, False, True, True, False, True, True, False, True, False, True, True, True, True, True, False, False, True)
+		cmd_pairs = [(cmd1, 5, True), (cmd1, None, True), (cmd1, [1, 2, 3], True), (cmd1, (2.0, 3.0), True), (cmd1, set(['a', 'b', 'c']), True), (cmd1, 'MANUAL', True), (cmd1, 2, True), \
+                     (cmd1, 100.0, True), (cmd1, 10+20j, True), (cmd1, numpy.array([10, 0.0, 30]), True), (cmd1, 'hello world', True), (cmd1, [1.0, 2.0, 3.0], False), (cmd1, 'auto', True), \
+                     (cmd1, numpy.array([]), False), (cmd1, numpy.array(['a', 'b', 'c']), False), (cmd2, 1, False), (cmd2, set([1, 2]), False), (cmd2, numpy.array([1, 0, -1]), False), \
+                     (cmd2, numpy.array([10.0, 20.0, 30.0]), True), (cmd2, 5.0, True), (cmd3, 3, False), (cmd3, '/some/file', True), (cmd3, foo1, True), (cmd4, -1, False), (cmd4, 1, True), \
+                     (cmd5, -0.001, False), (cmd5, 0.001, True), (cmd6, None, True), (cmd6, 2.0, True), (cmd6, 'a', True), (cmd7, None, True), (cmd7, {'c':5}, False), (cmd7, {'a':5}, False), \
+                     (cmd7, {'a':5, 'b':'Hello'}, True)]
+		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of PolymorphicType class behaves appropriately """
-		test_list = list()
-		obj1 = putil.check.PolymorphicType([putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.NumberRange(minimum=15, maximum=20)])
-		obj2 = putil.check.PolymorphicType([putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.File(True)])
-		obj3 = putil.check.PolymorphicType([putil.check.File(True), putil.check.Function(num_pars=2)])
-		obj4 = putil.check.PolymorphicType([None, putil.check.PositiveInteger(), putil.check.NumberRange(minimum=15, maximum=20)])
-		obj5 = putil.check.PolymorphicType([None, putil.check.PositiveReal(), putil.check.Any()])
-		test_list.append(obj1.exception(param_name='par1', test_obj=5) == {'type':ValueError, 'msg':'Argument `par1` is not in the range [15.0, 20.0]'})
-		test_list.append(obj2.exception(param_name='par1', param='_not_valid_', test_obj='not_a_file') == \
-					{'type':RuntimeError, 'msg':"(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] (case insensitive)\n(IOError) File *[file_name]* could not be found", \
-					'edata': {'field': 'file_name', 'value': '_not_valid_'}})
-		test_list.append(obj3.exception(param_name='par1', param='_not_valid_', test_obj=32) == {'type':None, 'msg':''})
-		test_list.append(obj4.exception(param_name='par1', test_obj=-1) == {'type':ValueError, 'msg':'Argument `par1` is not in the range [15.0, 20.0]'})
-		test_list.append(obj5.exception(param_name='par1', test_obj=-1) == {'type':None, 'msg':''})
-		assert test_list == len(test_list)*[True]
-
+		exdesc = list()
+		exdesc.append(({'types':[putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.NumberRange(minimum=15, maximum=20)]}, ValueError, \
+				        'Argument `par1` is not in the range [15.0, 20.0]', {'param_name':'par1', 'test_obj':5}))
+		exdesc.append(({'types':[putil.check.OneOf(['NONE', 'MANUAL', 'AUTO']), putil.check.File(True)]}, RuntimeError, "(ValueError) Argument `par1` is not one of ['NONE', 'MANUAL', 'AUTO'] " \
+				        "(case insensitive)\n(IOError) File _not_valid_ could not be found", {'param_name':'par1', 'param':'_not_valid_', 'test_obj':'not_a_file'}))
+		exdesc.append(({'types':[putil.check.File(True), putil.check.Function(num_pars=2)]}, None, '', {'param_name':'par1', 'param':'_not_valid_', 'test_obj':32}))
+		exdesc.append(({'types':[None, putil.check.PositiveInteger(), putil.check.NumberRange(minimum=15, maximum=20)]}, ValueError, \
+				        'Argument `par1` is not in the range [15.0, 20.0]', {'param_name':'par1', 'test_obj':-1}))
+		exdesc.append(({'types':[None, putil.check.PositiveReal(), putil.check.Any()]}, None, '', {'param_name':'par1', 'test_obj':-1}))
+		evaluate_exception_method(exdesc, putil.check.PolymorphicType)
 
 ##
 # Tests for get_function_args()
@@ -787,17 +762,10 @@ class TestIsTypeDef(object):	#pylint: disable=W0232,R0903
 	""" Tests for is_type_def function """
 	def test_is_type_def_works(self):	#pylint: disable=R0201
 		""" Test that is_type_def works as expected """
-		test_list = list()
-		test_list.append(putil.check.is_type_def('a') == False)
-		test_list.append(putil.check.is_type_def(str) == True)
-		test_list.append(putil.check.is_type_def(5) == False)
-		test_list.append(putil.check.is_type_def(putil.check.PolymorphicType([str, int])) == True)
-		test_list.append(putil.check.is_type_def([str, dict, list]) == False)
-		test_list.append(putil.check.is_type_def(itertools.count(start=0, step=1)) == False)
-		test_list.append(putil.check.is_type_def({'a':str, 'b':int}) == True)
-		test_list.append(putil.check.is_type_def({'a':str, 'b':[str, str]}) == False)
-		test_list.append(putil.check.is_type_def({'a':str, 'b':{'c':putil.check.Number(), 'd':float}}) == True)
-		assert test_list == len(test_list)*[True]
+		cmd_pairs = [('a', False), (str, True), (5, False), (putil.check.PolymorphicType([str, int]), True), ([str, dict, list], False), (itertools.count(start=0, step=1), False), \
+			         ({'a':str, 'b':int}, True), ({'a':str, 'b':[str, str]}, False), ({'a':str, 'b':{'c':putil.check.Number(), 'd':float}}, True)]
+		putil.test.evaluate_command_value_series(cmd_pairs, putil.check.is_type_def)
+
 
 ###
 # Tests for type_match()
@@ -862,9 +830,8 @@ class TestTypeMatch(object):	#pylint: disable=W0232
 
 	def test_fixed_length_set(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely for fixed-length set type """
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.check.type_match(set([1, 'a', 3.0]), set([int, str, float]))
-		assert excinfo.value.message == 'Set is an un-ordered iterable, thus it cannot be type-checked against an ordered reference'
+		exdesc = (putil.check.type_match, {'test_obj':set([1, 'a', 3.0]), 'ref_obj':set([int, str, float])}, RuntimeError, 'Set is an un-ordered iterable, thus it cannot be type-checked against an ordered reference')
+		putil.test.evaluate_exception_series(exdesc)
 
 	def test_one_of(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely for OneOf pseudo-type """

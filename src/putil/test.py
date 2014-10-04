@@ -43,13 +43,14 @@ def evaluate_value_series(cmd, pairs, offset=0, return_or_assert=True):
 	comp_text = '[{0}] {1}({2}) == {3}'
 	for num, (value, expected_result) in enumerate(pairs):
 		actual_result = cmd(value)
-		expected_list.append(comp_text.format(num+offset, cmd.im_self, value, expected_result))
-		actual_list.append(comp_text.format(num+offset, cmd.im_self, value, actual_result))
+		expected_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.check.strtype(value), expected_result))
+		actual_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.check.strtype(value), actual_result))
 	expected_msg, actual_msg = '\n'.join(expected_list), '\n'.join(actual_list)
 	if not return_or_assert:
 		return expected_msg, actual_msg
 	else:
 		assert expected_msg == actual_msg
+
 
 def evaluate_contains_series(cspec_list, cobj=None, offset=0):
 	""" Evaluates results of a command with multiple argument/value cspec_list """
@@ -83,7 +84,7 @@ def evaluate_command_value_series(cmd_pairs, cobj=None):
 	exolist = [evaluate_value_series(cmd, (value, result), num, return_or_assert=False) for num, (cmd, value, result) in enumerate(cmd_pairs)]
 	expected_msg, actual_msg = '\n'.join(element[0] for element in exolist), '\n'.join(element[1] for element in exolist)
 	# Evaluate results
-	assert expected_msg, actual_msg
+	assert expected_msg == actual_msg
 
 
 def evaluate_exception_series(init_list, cobj=None, offset=0):	#pylint: disable=R0914
@@ -116,7 +117,7 @@ def evaluate_exception_series(init_list, cobj=None, offset=0):	#pylint: disable=
 	for num, (cobj, args, extype, exmsg) in enumerate(init_list):
 		callable_name = full_callable_name(cobj)
 		# Arguments, in the form [argument name]=[argument value] for pretty printing callable call
-		arg_text = ', '.join(['{0}={1}'.format(key, putil.misc.quote_str(value)) for key, value in args.items()]) if args else ''
+		arg_text = ', '.join(['{0}={1}'.format(key, putil.check.strtype(value)) for key, value in args.items()]) if args else ''
 		# Exception text of the form [exception type] ([exception message]) for pretty printing result of callable call
 		expected_msg = 'DID NOT RAISE' if (extype, exmsg) == (None, None) else ex_text.format(exception_type_str(extype), exmsg)
 		# Monitor callable call for exception raising
