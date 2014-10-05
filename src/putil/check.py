@@ -340,7 +340,7 @@ class OneOf(object):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.OneOf(choices={0}, case_sensitive={1})'.format(str(self.choices), self.case_sensitive)
+		return 'putil.check.OneOf(choices={0}, case_sensitive={1})'.format(putil.misc.strtype(self.choices), self.case_sensitive)
 register_new_type(OneOf, 'one of many options')
 
 
@@ -552,7 +552,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.PolymorphicType(types=[{0}])'.format(', '.join([putil.misc.strtype(type_item) for type_item in self.types]))
+		return 'putil.check.PolymorphicType(types={0})'.format(putil.misc.strtype(self.instances))
 
 
 def create_argument_dictionary(func, *args, **kwargs):

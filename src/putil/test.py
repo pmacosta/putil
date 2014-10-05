@@ -19,7 +19,7 @@ def full_callable_name(cmd):
 	cmd_class = cmd.im_class.__name__ if hasattr(cmd, 'im_class') and getattr(cmd, 'im_class') else ''
 	cmd_function = cmd.__name__
 	cmd_name = '.'.join(filter(None, [cmd_module, cmd_class, cmd_function]))	#pylint: disable=W0141
-	return cmd_name
+	return '{0}.{1}'.format(cmd.im_self, cmd_function) if hasattr(cmd, 'im_self') else cmd_name
 
 
 def exception_type_str(extype):
@@ -45,8 +45,8 @@ def evaluate_value_series(cmd, pairs, offset=0, return_or_assert=True):
 		comp_text = '[{0}] {1}({2}) == {3}' if is_callable and (not isinstance(value, tuple)) else ('[{0}] {1}{2} == {3}' if is_callable else '[{0}] {1} == {2}')
 		if is_callable:
 			actual_result = cmd(*value) if isinstance(value, tuple) else cmd(value)
-			expected_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.misc.strtype(value), expected_result))
-			actual_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.misc.strtype(value), actual_result))
+			expected_list.append(comp_text.format(num+offset, putil.test.full_callable_name(cmd), putil.misc.strtype(value), expected_result))
+			actual_list.append(comp_text.format(num+offset, putil.test.full_callable_name(cmd), putil.misc.strtype(value), actual_result))
 		else:
 			actual_result = getattr(cmd, value)
 			prop_name = '{0}.{1}'.format(cmd, value)
