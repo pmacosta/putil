@@ -40,11 +40,18 @@ def evaluate_value_series(cmd, pairs, offset=0, return_or_assert=True):
 	# Evaluate pairs and produce readable test list
 	expected_list = list()
 	actual_list = list()
-	comp_text = '[{0}] {1}({2}) == {3}'
+	is_callable = '__call__' in dir(cmd)
 	for num, (value, expected_result) in enumerate(pairs):
-		actual_result = cmd(value)
-		expected_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.check.strtype(value), expected_result))
-		actual_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.check.strtype(value), actual_result))
+		comp_text = '[{0}] {1}({2}) == {3}' if is_callable and (not isinstance(value, tuple)) else ('[{0}] {1}{2} == {3}' if is_callable else '[{0}] {1} == {2}')
+		if is_callable:
+			actual_result = cmd(*value) if isinstance(value, tuple) else cmd(value)
+			expected_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.misc.strtype(value), expected_result))
+			actual_list.append(comp_text.format(num+offset, cmd.im_self if hasattr(cmd, 'im_self') else putil.test.full_callable_name(cmd), putil.misc.strtype(value), actual_result))
+		else:
+			actual_result = getattr(cmd, value)
+			prop_name = '{0}.{1}'.format(cmd, value)
+			expected_list.append(comp_text.format(num+offset, prop_name, putil.misc.strtype(expected_result)))
+			actual_list.append(comp_text.format(num+offset, prop_name, putil.misc.strtype(actual_result)))
 	expected_msg, actual_msg = '\n'.join(expected_list), '\n'.join(actual_list)
 	if not return_or_assert:
 		return expected_msg, actual_msg
@@ -117,7 +124,7 @@ def evaluate_exception_series(init_list, cobj=None, offset=0):	#pylint: disable=
 	for num, (cobj, args, extype, exmsg) in enumerate(init_list):
 		callable_name = full_callable_name(cobj)
 		# Arguments, in the form [argument name]=[argument value] for pretty printing callable call
-		arg_text = ', '.join(['{0}={1}'.format(key, putil.check.strtype(value)) for key, value in args.items()]) if args else ''
+		arg_text = ', '.join(['{0}={1}'.format(key, putil.misc.strtype(value)) for key, value in args.items()]) if args else ''
 		# Exception text of the form [exception type] ([exception message]) for pretty printing result of callable call
 		expected_msg = 'DID NOT RAISE' if (extype, exmsg) == (None, None) else ex_text.format(exception_type_str(extype), exmsg)
 		# Monitor callable call for exception raising

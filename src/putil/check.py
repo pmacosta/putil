@@ -16,21 +16,6 @@ import decorator
 
 import putil.misc
 
-def strtype_item(type_obj):
-	""" Generates a string of a type definition (int, str, etc.) otherwise returns the sting of the object via the str() function """
-	return str(type_obj)[7:-2] if isinstance(type_obj, type) else (putil.misc.quote_str(type_obj) if isinstance(type_obj, str) else str(type_obj))
-
-def strtype(type_obj):
-	""" Generates a string of a type definition (int, str, etc.) or type definition list otherwise returns the sting or list of the object(s) via the str() function """
-	if (not putil.misc.isiterable(type_obj)) or (type(type_obj) not in [dict, list, set, tuple]):
-		return strtype_item(type_obj)
-	if isinstance(type_obj, dict):
-		return '{'+(', '.join(['"{0}":{1}'.format(key, strtype(value)) for key, value in type_obj.items()]))+'}'
-	prefix = '[' if isinstance(type_obj, list) else ('(' if isinstance(type_obj, tuple) else 'set(')
-	suffix = ']' if isinstance(type_obj, list) else ')'
-	ret_list = [strtype_item(type_obj_item) for type_obj_item in type_obj]
-	return '{0}{1}{2}'.format(prefix, ', '.join(ret_list), suffix)
-
 
 def get_function_args(func, no_self=False, no_varargs=False):
 	"""	Returns a list of the argument names, in order, as defined by the function """
@@ -255,7 +240,7 @@ class ArbitraryLength(object):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.ArbitraryLength(iter_type={0}, element_type={1}, check_keys={2})'.format(strtype(self.iter_type), strtype(self.element_type), self.check_keys)
+		return 'putil.check.ArbitraryLength(iter_type={0}, element_type={1}, check_keys={2})'.format(putil.misc.strtype(self.iter_type), putil.misc.strtype(self.element_type), self.check_keys)
 
 
 class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
@@ -265,7 +250,7 @@ class ArbitraryLengthList(ArbitraryLength):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.ArbitraryLengthList(element_type={0})'.format(strtype(self.element_type))
+		return 'putil.check.ArbitraryLengthList(element_type={0})'.format(putil.misc.strtype(self.element_type))
 register_new_type(ArbitraryLengthList, 'list')
 
 
@@ -276,7 +261,7 @@ class ArbitraryLengthTuple(ArbitraryLength):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.ArbitraryLengthTuple(element_type={0})'.format(strtype(self.element_type))
+		return 'putil.check.ArbitraryLengthTuple(element_type={0})'.format(putil.misc.strtype(self.element_type))
 register_new_type(ArbitraryLengthTuple, 'tuple')
 
 
@@ -287,7 +272,7 @@ class ArbitraryLengthSet(ArbitraryLength):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.ArbitraryLengthSet(element_type={0})'.format(strtype(self.element_type))
+		return 'putil.check.ArbitraryLengthSet(element_type={0})'.format(putil.misc.strtype(self.element_type))
 register_new_type(ArbitraryLengthSet, 'set')
 
 
@@ -298,7 +283,7 @@ class ArbitraryLengthDict(ArbitraryLength):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.ArbitraryLengthDict(element_type={0})'.format(strtype(self.element_type))
+		return 'putil.check.ArbitraryLengthDict(element_type={0})'.format(putil.misc.strtype(self.element_type))
 register_new_type(ArbitraryLengthDict, 'dictionary')
 
 
@@ -567,7 +552,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check.PolymorphicType(types=[{0}])'.format(', '.join([strtype(type_item) for type_item in self.types]))
+		return 'putil.check.PolymorphicType(types=[{0}])'.format(', '.join([putil.misc.strtype(type_item) for type_item in self.types]))
 
 
 def create_argument_dictionary(func, *args, **kwargs):

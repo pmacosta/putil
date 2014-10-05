@@ -158,11 +158,11 @@ def gcd(vector, precision=None):
 	elif len(vector) == 1:
 		return vector[0]
 	elif len(vector) == 2:
-		return pgcd(vector[0], vector[1]) if precision is None else putil.misc.smart_round(pgcd(vector[0], vector[1]), precision)
+		return pgcd(vector[0], vector[1]) if precision is None else smart_round(pgcd(vector[0], vector[1]), precision)
 	else:
 		current_gcd = pgcd(vector[0], vector[1])
 		for element in vector[2:]:
-			current_gcd = pgcd(current_gcd, element) if precision is None else putil.misc.smart_round(pgcd(current_gcd, element), precision)
+			current_gcd = pgcd(current_gcd, element) if precision is None else smart_round(pgcd(current_gcd, element), precision)
 		return current_gcd
 
 def pgcd(num_a, num_b):
@@ -383,3 +383,22 @@ def quote_str(obj):
 	:rtype:	Same as **obj**
 	"""
 	return obj if not isinstance(obj, str) else ("'{0}'".format(obj) if '"' in obj else '"{0}"'.format(obj))
+
+
+def strtype_item(type_obj):
+	""" Generates a string of a type definition (int, str, etc.) otherwise returns the sting of the object via the str() function """
+	return str(type_obj).replace("<type '", '').replace("<class '", '')[:-2] if isinstance(type_obj, type) else (quote_str(type_obj) if isinstance(type_obj, str) else str(type_obj))
+
+
+def strtype(type_obj):
+	""" Generates a string of a type definition (int, str, etc.) or type definition list otherwise returns the sting or list of the object(s) via the str() function """
+	if (not isiterable(type_obj)) or (type(type_obj) not in [dict, list, set, tuple]):
+		return strtype_item(type_obj)
+	if isinstance(type_obj, dict):
+		return '{'+(', '.join(['"{0}":{1}'.format(key, strtype(value)) for key, value in type_obj.items()]))+'}'
+	prefix = '[' if isinstance(type_obj, list) else ('(' if isinstance(type_obj, tuple) else 'set(')
+	suffix = ']' if isinstance(type_obj, list) else ')'
+	ret_list = [strtype(type_obj_item) for type_obj_item in type_obj]
+	return '{0}{1}{2}'.format(prefix, ', '.join(ret_list), suffix)
+
+

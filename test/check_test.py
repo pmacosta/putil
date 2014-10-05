@@ -49,7 +49,7 @@ def evaluate_exception_method(emspec_list, cobj=None, offset=0, ekwargs=None):	#
 		actual_dict = (cobj(**kwargs) if kwargs else cobj()).exception(**ekwargs)
 		amsg = actual_dict['msg'] if 'edata' not in actual_dict else putil.check.format_msg(actual_dict['msg'], actual_dict['edata'])
 		# Arguments, in the form [argument name]=[argument value] for pretty printing callable call
-		arg_text = ', '.join(['{0}={1}'.format(key, putil.check.strtype(value)) for key, value in ekwargs.items()]) if ekwargs else ''
+		arg_text = ', '.join(['{0}={1}'.format(key, putil.misc.strtype(value)) for key, value in ekwargs.items()]) if ekwargs else ''
 		# Produce expected and actual pretty printed results
 		expected_list.append(comp_text.format(num+offset, cobj, arg_text, etype, emsg))
 		actual_list.append(comp_text.format(num+offset, cobj, arg_text, actual_dict['type'], amsg))
@@ -181,7 +181,7 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 	def test_no_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLength class behaves appropriately when all arguments are correctly specified """
 		obj = putil.check.ArbitraryLength(iter_type=list, element_type=str)
-		assert (obj.iter_type == list, obj.element_type == str) == (True, True)
+		putil.test.evaluate_command_value_series([('iter_type', list), ('element_type', str)], obj)
 
 	def test_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLength class behaves appropriately when inproper argument type is passed """
@@ -197,14 +197,14 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 	def test_includes(self):	#pylint: disable=R0201
 		"""	Test that the includes method of ArbitraryLength class behaves appropriately """
 		cmd1, cmd2, cmd3 = putil.check.ArbitraryLength(list, int).includes, putil.check.ArbitraryLength(list, putil.check.Number()).includes, putil.check.ArbitraryLength(list, {'a':putil.check.Number(), 'b':str}).includes
-		cmd_pairs = [(cmd1, [1, 2], True), (cmd1, (1, 2), False), (cmd1, set([1.0, 2.0]), False), (cmd1, 1+2j, False), (cmd1, 'a', False), (cmd2, [1, 2.0, 3], True), (cmd2, [1, 2.0, None], False),\
+		cmd_pairs = [(cmd1, [1, 2], True), (cmd1, ((1, 2), ), False), (cmd1, set([1.0, 2.0]), False), (cmd1, 1+2j, False), (cmd1, 'a', False), (cmd2, [1, 2.0, 3], True), (cmd2, [1, 2.0, None], False),\
 			         (cmd3, 5, False), (cmd3, [3], False), (cmd3, [{'a':'b', 'b':'b'}], False), (cmd3, [{'a':5, 'b':'b'}], True), (cmd3, [{'a':5, 'b':'b'}, {'a':True, 'b':'b'}], False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_istype(self):	#pylint: disable=R0201
 		"""	Test that the istype method of ArbitraryLength class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLength(tuple, int).istype, putil.check.ArbitraryLength(list, putil.check.PositiveReal()).istype
-		cmd_pairs = [(cmd1, [1, 2], False), (cmd1, (1, 2), True), (cmd1, set([1.0, 2.0]), False), (cmd1, 1+2j, False), (cmd1, 'a', False), (cmd2, [1, 2], True), (cmd2, [1, -1], False)]
+		cmd_pairs = [(cmd1, [1, 2], False), (cmd1, ((1, 2), ), True), (cmd1, set([1.0, 2.0]), False), (cmd1, 1+2j, False), (cmd1, 'a', False), (cmd2, [1, 2], True), (cmd2, [1, -1], False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
@@ -221,7 +221,7 @@ class TestArbitraryLengthList(object):	#pylint: disable=W0232
 	def test_no_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthList class behaves appropriately when all arguments are correctly specified """
 		obj = putil.check.ArbitraryLengthList(int)
-		assert (obj.element_type == int, obj.iter_type == list) == (True, True)
+		putil.test.evaluate_command_value_series([('element_type', int), ('iter_type', list)], obj)
 
 	def test_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthList class behaves appropriately when inproper argument type is passed """
@@ -230,13 +230,13 @@ class TestArbitraryLengthList(object):	#pylint: disable=W0232
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		"""	Test that the includes method of ArbitraryLengthList class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthList(int).includes, putil.check.ArbitraryLengthList(putil.check.NumberRange(0, 1)).includes
-		cmd_pairs = [(cmd1, [1, 2], True), (cmd1, set([1, 2]), False), (cmd1, (1, 2), False), (cmd1, 'a', False), (cmd2, [0.5], True), (cmd2, [-0.01], False)]
+		cmd_pairs = [(cmd1, [1, 2], True), (cmd1, set([1, 2]), False), (cmd1, ((1, 2), ), False), (cmd1, 'a', False), (cmd2, [0.5], True), (cmd2, [-0.01], False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		"""	Test that the istype method of ArbitraryLengthList class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthList(int).istype, putil.check.ArbitraryLengthList(putil.check.NumberRange(0, 1)).istype
-		cmd_pairs = [(cmd1, [1, 2], True), (cmd1, set([1, 2]), False), (cmd1, (1, 2), False), (cmd1, 'a', False), (cmd2, [0.5], True), (cmd2, [-0.01], True), (cmd2, 'a', False)]
+		cmd_pairs = [(cmd1, [1, 2], True), (cmd1, set([1, 2]), False), (cmd1, ((1, 2), ), False), (cmd1, 'a', False), (cmd2, [0.5], True), (cmd2, [-0.01], True), (cmd2, 'a', False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
@@ -253,7 +253,7 @@ class TestArbitraryLengthTuple(object):	#pylint: disable=W0232
 	def test_no_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthTuple class behaves appropriately when all arguments are correctly specified	"""
 		obj = putil.check.ArbitraryLengthTuple(int)
-		assert (obj.element_type == int, obj.iter_type == tuple) == (True, True)
+		putil.test.evaluate_command_value_series([('element_type', int), ('iter_type', tuple)], obj)
 
 	def test_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthTuple class behaves appropriately when inproper argument type is passed """
@@ -262,13 +262,13 @@ class TestArbitraryLengthTuple(object):	#pylint: disable=W0232
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		"""	Test that the includes method of ArbitraryLengthTuple class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthTuple(float).includes, putil.check.ArbitraryLengthTuple(putil.check.NumberRange(0, 1)).includes
-		cmd_pairs = [(cmd1, (1.0, 2.0), True), (cmd1, [1, 2], False), (cmd1, set([1, 2]), False), (cmd1, 'a', False), (cmd2, (0.5,), True), (cmd2, (-0.01,), False)]
+		cmd_pairs = [(cmd1, ((1.0, 2.0), ), True), (cmd1, [1, 2], False), (cmd1, set([1, 2]), False), (cmd1, 'a', False), (cmd2, ((0.5, ), ), True), (cmd2, ((-0.01, ), ), False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_type(self):	#pylint: disable=R0201,C0103
 		"""	Test that the istype method of ArbitraryLengthTuple class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthTuple(float).istype, putil.check.ArbitraryLengthTuple(putil.check.NumberRange(0, 1)).istype
-		cmd_pairs = [(cmd1, (1.0, 2.0), True), (cmd1, [1, 2], False), (cmd1, set([1, 2]), False), (cmd1, 'a', False), (cmd2, (0.5,), True), (cmd2, (-0.01,), True), (cmd2, 'a', False)]
+		cmd_pairs = [(cmd1, ((1.0, 2.0), ), True), (cmd1, [1, 2], False), (cmd1, set([1, 2]), False), (cmd1, 'a', False), (cmd2, ((0.5, ), ), True), (cmd2, ((-0.01, ), ), True), (cmd2, 'a', False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
@@ -285,7 +285,7 @@ class TestArbitraryLengthSet(object):	#pylint: disable=W0232
 	def test_no_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthSet class behaves appropriately when all arguments are correctly specified """
 		obj = putil.check.ArbitraryLengthSet(int)
-		assert (obj.element_type == int, obj.iter_type == set) == (True, True)
+		putil.test.evaluate_command_value_series([('element_type', int), ('iter_type', set)], obj)
 
 	def test_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthSet class behaves appropriately when inproper argument type is passed """
@@ -294,13 +294,13 @@ class TestArbitraryLengthSet(object):	#pylint: disable=W0232
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of ArbitraryLengthSet class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthSet(float).includes, putil.check.ArbitraryLengthSet(putil.check.NumberRange(0, 1)).includes
-		cmd_pairs = [(cmd1, set([1.0, 2.0]), True), (cmd1, [1, 2], False), (cmd1, (1, 2), False), (cmd1, 'a', False), (cmd2, set([0.5]), True), (cmd2, set([-0.01]), False)]
+		cmd_pairs = [(cmd1, set([1.0, 2.0]), True), (cmd1, [1, 2], False), (cmd1, ((1, 2), ), False), (cmd1, 'a', False), (cmd2, set([0.5]), True), (cmd2, set([-0.01]), False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of ArbitraryLengthSet class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthSet(float).istype, putil.check.ArbitraryLengthSet(putil.check.NumberRange(0, 1)).istype
-		cmd_pairs = [(cmd1, set([1.0, 2.0]), True), (cmd1, [1, 2], False), (cmd1, (1, 2), False), (cmd1, 'a', False), (cmd2, set([0.5]), True), (cmd2, set([-0.01]), True), (cmd2, set(['a']), False)]
+		cmd_pairs = [(cmd1, set([1.0, 2.0]), True), (cmd1, [1, 2], False), (cmd1, ((1, 2), ), False), (cmd1, 'a', False), (cmd2, set([0.5]), True), (cmd2, set([-0.01]), True), (cmd2, set(['a']), False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
@@ -316,7 +316,7 @@ class TestArbitraryLengthDict(object):	#pylint: disable=W0232
 	def test_no_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthDict class behaves appropriately when all arguments are correctly specified """
 		obj = putil.check.ArbitraryLengthDict(int)
-		assert (obj.element_type == int, obj.iter_type == dict) == (True, True)
+		putil.test.evaluate_command_value_series([('iter_type', dict), ('element_type', int)], obj)
 
 	def test_exception(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthDict class behaves appropriately when inproper argument type is passed """
@@ -325,13 +325,13 @@ class TestArbitraryLengthDict(object):	#pylint: disable=W0232
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		"""	Test that the includes method of ArbitraryLengthDict class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthDict(int).includes, putil.check.ArbitraryLengthDict(putil.check.NumberRange(0, 1)).includes
-		cmd_pairs = [(cmd1, {'a':1, 'b':2}, True), (cmd1, set([1, 2]), False), (cmd1, (1, 2), False), (cmd1, {'a':'a'}, False), (cmd2, {'c':0.5}, True), (cmd2, {'d':-0.01}, False)]
+		cmd_pairs = [(cmd1, {'a':1, 'b':2}, True), (cmd1, set([1, 2]), False), (cmd1, ((1, 2), ), False), (cmd1, {'a':'a'}, False), (cmd2, {'c':0.5}, True), (cmd2, {'d':-0.01}, False)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		"""	Test that the istype method of ArbitraryLengthDict class behaves appropriately """
 		cmd1, cmd2 = putil.check.ArbitraryLengthDict(int).istype, putil.check.ArbitraryLengthDict(putil.check.NumberRange(0, 1)).istype
-		cmd_pairs = [(cmd1, {'a':1, 'b':2}, True), (cmd1, set([1, 2]), False), (cmd1, (1, 2), False), (cmd1, {'a':'a'}, False), (cmd2, {'c':0.5}, True), (cmd2, {'d':-0.01}, True)]
+		cmd_pairs = [(cmd1, {'a':1, 'b':2}, True), (cmd1, set([1, 2]), False), (cmd1, ((1, 2), ), False), (cmd1, {'a':'a'}, False), (cmd2, {'c':0.5}, True), (cmd2, {'d':-0.01}, True)]
 		putil.test.evaluate_command_value_series(cmd_pairs)
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
@@ -351,7 +351,10 @@ class TestOneOf(object):	#pylint: disable=W0232
 
 	def test_case_insensitive_none_if_no_strings_in_choices(self):	#pylint: disable=R0201,C0103
 		""" Tests that OneOf class behaves properly when no string options given """
-		assert (putil.check.OneOf([1, 2, 3], case_sensitive=True).case_sensitive == None, putil.check.OneOf([1, 2, 3], case_sensitive=False).case_sensitive == None) == (True, True)
+		# case_sensitive is set to None if there is no string option
+		putil.test.evaluate_command_value_series([(putil.check.OneOf([1, 2, 3], case_sensitive=True), 'case_sensitive', None), \
+											      (putil.check.OneOf([1, 2, 4], case_sensitive=False), 'case_sensitive', None), \
+											      (putil.check.OneOf(['a', 'b', 'c'], case_sensitive=False), 'case_sensitive', False)])
 
 	def test_infinite_iterable_exception(self):	#pylint: disable=R0201,C0103
 		""" Tests that OneOf class behaves properly when an improper iterable is given """
@@ -361,7 +364,7 @@ class TestOneOf(object):	#pylint: disable=W0232
 		""" Tests that OneOf class behaves properly when all arguments are correctly specified """
 		test_choices = ['a', 2, 3.0, 'a', putil.check.Real()]
 		obj = putil.check.OneOf(test_choices, case_sensitive=True)
-		assert (obj.types == [type(element) for element in test_choices], obj.choices == test_choices, obj.case_sensitive == True) == (True, True, True)
+		putil.test.evaluate_command_value_series([('types', [type(element) for element in test_choices]), ('choices', test_choices), ('case_sensitive', True)], obj)
 
 	def test_proper_contains_behavior(self):	#pylint: disable=R0201,C0103
 		""" Tests that OneOf class behaves properly extracting type information """
@@ -424,7 +427,7 @@ class TestNumberRange(object):	#pylint: disable=W0232
 	def test_no_errors(self):	#pylint: disable=R0201,C0103
 		""" Tests that NumberRange class behaves properly when all arguments are correctly specified """
 		obj = putil.check.NumberRange(minimum=10, maximum=20)
-		assert (obj.minimum == 10, obj.maximum == 20) == (True, True)
+		putil.test.evaluate_command_value_series([('minimum', 10.0), ('maximum', 20.0)], obj)
 
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of NumberRange class behaves appropriately """
@@ -615,7 +618,7 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 			return par1, par2, par3
 		def foo2(par1, par2):	#pylint: disable=C0111
 			return par1, par2
-		cmd_pairs = [(cmd1, 5, True), (cmd1, None, True), (cmd1, [1, 2, 3], True), (cmd1, (2.0, 3.0), True), (cmd1, set(['a', 'b', 'c']), True), (cmd1, 'MANUAL', True), (cmd1, 2, True), \
+		cmd_pairs = [(cmd1, 5, True), (cmd1, None, True), (cmd1, [1, 2, 3], True), (cmd1, ((2.0, 3.0), ), True), (cmd1, set(['a', 'b', 'c']), True), (cmd1, 'MANUAL', True), (cmd1, 2, True), \
                      (cmd1, 100.0, True), (cmd1, 10+20j, True), (cmd1, numpy.array([10, 0.0, 30]), True), (cmd1, 'hello world', False), (cmd1, [1.0, 2.0, 3.0], False), (cmd1, 'auto', False), \
                      (cmd1, numpy.array([]), False), (cmd1, numpy.array(['a', 'b', 'c']), False), (cmd2, 1, False), (cmd2, set([1, 2]), False), (cmd2, numpy.array([1, 0, -1]), False), \
                      (cmd2, numpy.array([10.0, 20.0, 30.0]), True), (cmd2, 5.0, True), (cmd3, 3, False), (cmd3, '/some/file', True), (cmd3, foo1, False), (cmd3, foo2, True), (cmd4, -1, False), \
@@ -632,7 +635,7 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		cmd7 = putil.check.PolymorphicType([None, {'a':int, 'b':str}]).istype
 		def foo1(par1, par2, par3):	#pylint: disable=C0111
 			return par1, par2, par3
-		cmd_pairs = [(cmd1, 5, True), (cmd1, None, True), (cmd1, [1, 2, 3], True), (cmd1, (2.0, 3.0), True), (cmd1, set(['a', 'b', 'c']), True), (cmd1, 'MANUAL', True), (cmd1, 2, True), \
+		cmd_pairs = [(cmd1, 5, True), (cmd1, None, True), (cmd1, [1, 2, 3], True), (cmd1, ((2.0, 3.0), ), True), (cmd1, set(['a', 'b', 'c']), True), (cmd1, 'MANUAL', True), (cmd1, 2, True), \
                      (cmd1, 100.0, True), (cmd1, 10+20j, True), (cmd1, numpy.array([10, 0.0, 30]), True), (cmd1, 'hello world', True), (cmd1, [1.0, 2.0, 3.0], False), (cmd1, 'auto', True), \
                      (cmd1, numpy.array([]), False), (cmd1, numpy.array(['a', 'b', 'c']), False), (cmd2, 1, False), (cmd2, set([1, 2]), False), (cmd2, numpy.array([1, 0, -1]), False), \
                      (cmd2, numpy.array([10.0, 20.0, 30.0]), True), (cmd2, 5.0, True), (cmd3, 3, False), (cmd3, '/some/file', True), (cmd3, foo1, True), (cmd4, -1, False), (cmd4, 1, True), \
@@ -775,53 +778,53 @@ class TestTypeMatch(object):	#pylint: disable=W0232
 
 	def test_str(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for string type """
-		assert (putil.check.type_match('hello', str), putil.check.type_match(135, str)) == (True, False)
+		putil.test.evaluate_command_value_series([(('hello', str), True), ((135, str), False)], putil.check.type_match)
 
 	def test_float(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for float type """
-		assert (putil.check.type_match(1.5, float), putil.check.type_match(135, float)) == (True, False)
+		putil.test.evaluate_command_value_series([((1.5, float), True), ((135, float), False)], putil.check.type_match)
 
 	def test_int(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for integer type """
-		assert (putil.check.type_match(8, int), putil.check.type_match(135.0, int)) == (True, False)
+		putil.test.evaluate_command_value_series([((8, int), True), ((135.0, int), False)], putil.check.type_match)
 
 	def test_number(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for Number pseudo-type (integer, real or complex) """
-		assert (putil.check.type_match(1, putil.check.Number()), putil.check.type_match(135.0, putil.check.Number()), putil.check.type_match(1+1j, putil.check.Number()), putil.check.type_match('hello', putil.check.Number())) == \
-			(True, True, True, False)
+		obj = putil.check.Number()
+		putil.test.evaluate_command_value_series([((1, obj), True), ((135.0, obj), True), ((1+1j, obj), True), (('hello', obj), False)], putil.check.type_match)
 
 	def test_real(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for Real pseudo-type (integer or real) """
-		assert (putil.check.type_match(1, putil.check.Real()), putil.check.type_match(135.0, putil.check.Real()), putil.check.type_match(1+1j, putil.check.Real())) == (True, True, False)
+		putil.test.evaluate_command_value_series([((1, putil.check.Real()), True), ((135.0, putil.check.Real()), True), ((1+1j, putil.check.Real()), False)], putil.check.type_match)
 
 	def test_boolean(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for boolean type """
-		assert (putil.check.type_match(True, bool), putil.check.type_match(12.5, bool)) == (True, False)
+		putil.test.evaluate_command_value_series([((True, bool), True), ((12.5, bool), False)], putil.check.type_match)
 
 	def test_decimal(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for Decimal type """
-		assert (putil.check.type_match(decimal.Decimal(1.25), decimal.Decimal), putil.check.type_match(12.5, decimal.Decimal)) == (True, False)
+		putil.test.evaluate_command_value_series([((decimal.Decimal(1.25), decimal.Decimal), True), ((12.5, decimal.Decimal), False)], putil.check.type_match)
 
 	def test_fraction(self):	#pylint: disable=R0201
 		""" Test if function behaves proprely for Fraction type """
-		assert (putil.check.type_match(fractions.Fraction(4, 6), fractions.Fraction), putil.check.type_match(12.5, fractions.Fraction)) == (True, False)
+		putil.test.evaluate_command_value_series([((fractions.Fraction(4, 6), fractions.Fraction), True), ((12.5, fractions.Fraction), False)], putil.check.type_match)
 
 	def test_arbitrary_length_list(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely for ArbitraryLengthList pseudo-type """
-		assert (putil.check.type_match([1, 2, 3], putil.check.ArbitraryLengthList(int)), putil.check.type_match('hello', putil.check.ArbitraryLengthList(int))) == (True, False)
+		putil.test.evaluate_command_value_series([(([1, 2, 3], putil.check.ArbitraryLengthList(int)), True), (('hello', putil.check.ArbitraryLengthList(int)), False)], putil.check.type_match)
 
 	def test_arbitrary_length_tuple(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely for ArbitraryLengthTuple pseudo-type """
-		assert (putil.check.type_match((1, 2, 3), putil.check.ArbitraryLengthTuple(int)), putil.check.type_match((1, 2, 'a'), putil.check.ArbitraryLengthTuple(int))) == (True, False)
+		putil.test.evaluate_command_value_series([(((1, 2, 3), putil.check.ArbitraryLengthTuple(int)), True), (((1, 2, 'a'), putil.check.ArbitraryLengthTuple(int)), False)], putil.check.type_match)
 
 	def test_arbitrary_length_set(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely for ArbitraryLengthSet pseudo-type """
-		assert (putil.check.type_match(set([1, 2, 3]), putil.check.ArbitraryLengthSet(int)), putil.check.type_match(set([1, 2, 'a']), putil.check.ArbitraryLengthSet(int))) == (True, False)
+		putil.test.evaluate_command_value_series([((set([1, 2, 3]), putil.check.ArbitraryLengthSet(int)), True), ((set([1, 2, 'a']), putil.check.ArbitraryLengthSet(int)), False)], putil.check.type_match)
 
 	def test_fixed_length_list(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely for fixed-length list type """
-		assert (putil.check.type_match([1, 'a', 3.0], [int, str, float]), putil.check.type_match([1, 'a', 3.0, 4.0], [int, str, float]), putil.check.type_match([1, 'a', 3.0], [int, str, float, int]),
-			 putil.check.type_match([1, 2, 3.0], [int, str, float])) == (True, False, False, False)
+		putil.test.evaluate_command_value_series([(([1, 'a', 3.0], [int, str, float]), True), (([1, 'a', 3.0, 4.0], [int, str, float]), False), (([1, 'a', 3.0], [int, str, float, int]), False), \
+											      (([1, 2, 3.0], [int, str, float]), False)], putil.check.type_match)
 
 	def test_fixed_length_tuple(self):	#pylint: disable=R0201,C0103
 		""" Test if function behaves proprely for fixed-length tuple type """
