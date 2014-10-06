@@ -60,7 +60,7 @@ def evaluate_exception_method(emspec_list, cobj=None, offset=0, ekwargs=None):	#
 	:param	ekwargs: Exception method keyword arguments. If not given all items of **empsec_list** are tested with ``{'param_name':'par1'}``
 	:type	ekwargs: dictionary
 
-	There is flexibility in specifying how the ``.exception()`` method is to be called and evaluated; the most general exception specification tuple of **emspec_list** is:
+	There is flexibility in specifying how the class ``.exception()`` method is to be called and evaluated. The most general exception specification tuple of **emspec_list** is:
 
 	``(ptcls=cobj, kwargs=None, etype, emsg, tekwargs={'param_name':'par1'})``
 	 * **ptcls** `(class)` -- Pseudo-type class. Can be ommitted here and given in the function argument **cobj** if all items in **emspec_list** are to be evaluated using the same class
@@ -191,7 +191,13 @@ def evaluate_value_series(cmd, pairs, offset=0, return_or_assert=True):
 
 
 def exception_type_str(extype):
-	""" Returns a string with the exception type """
+	"""
+	Returns exception type string
+
+	:param	extype: Exception
+	:type	extype: type
+	:rtype: string
+	"""
 	return str(extype).split('.')[-1][:-2]
 
 

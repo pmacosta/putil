@@ -36,6 +36,7 @@ Functions
 =========
 
 .. autofunction:: putil.test.evaluate_exception_method
+.. autofunction:: putil.test.exception_type_str
 
 Classes
 =======
