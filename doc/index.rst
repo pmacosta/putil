@@ -19,6 +19,7 @@ Contents:
 	misc
 	pcsv
 	plot
+	test
 	tree
 
 Indices and tables

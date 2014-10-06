@@ -3,7 +3,6 @@
 # See LICENSE for details
 
 # TODO: Test evalaute_series_ and other test functions in this module and test module
-#       Add checks for __str__ and __repr__ methods in register pseudo type method
 #       Document test module and other test helper functions
 
 """
@@ -20,47 +19,6 @@ import itertools
 import putil.test
 import putil.misc
 import putil.check
-
-def evaluate_exception_method(emspec_list, cobj=None, offset=0, ekwargs=None):	#pylint: disable=R0914
-	""" Test exception method """
-	# Convert to list if a single tuples is given (if necessary)
-	emspec_list = emspec_list if isinstance(emspec_list, list) else [emspec_list]
-	# Add object to list of tuples (if necessary)
-	emspec_list = [(cobj, )+emspec_item for emspec_item in emspec_list] if cobj else emspec_list
-	# Add None as argument list (if necessary)
-	new_emspec_list = list()
-	for num, item in enumerate(emspec_list):
-		print '{0}: {1}'.format(num, item)
-		print
-	for emspec_item in emspec_list:
-		if len(emspec_item) == 3:
-			emspec_item = list(emspec_item)
-			emspec_item.insert(1, None)
-			emspec_item = tuple(emspec_item)
-		if (len(emspec_item) == 4) and (not isinstance(emspec_item[-1], dict)):
-			ekwargs = {'param_name':'par1'} if not ekwargs else ekwargs
-			emspec_item = list(emspec_item)
-			emspec_item.append(ekwargs)
-			emspec_item = tuple(emspec_item)
-		new_emspec_list.append(emspec_item)
-	emspec_list = new_emspec_list
-	# Evaluate exception method list and produce readable test list
-	comp_text = '[{0}] {1}.exception({2}) -> {3} ({4})'
-	expected_list = list()
-	actual_list = list()
-	for num, (cobj, kwargs, etype, emsg, ekwargs) in enumerate(emspec_list):
-		# Test exception method
-		actual_dict = (cobj(**kwargs) if kwargs else cobj()).exception(**ekwargs)
-		amsg = actual_dict['msg'] if 'edata' not in actual_dict else putil.check.format_msg(actual_dict['msg'], actual_dict['edata'])
-		# Arguments, in the form [argument name]=[argument value] for pretty printing callable call
-		arg_text = ', '.join(['{0}={1}'.format(key, putil.misc.strtype(value)) for key, value in ekwargs.items()]) if ekwargs else ''
-		# Produce expected and actual pretty printed results
-		expected_list.append(comp_text.format(num+offset, cobj, arg_text, etype, emsg))
-		actual_list.append(comp_text.format(num+offset, cobj, arg_text, actual_dict['type'], amsg))
-	# Produce final actual vs. expected pretty printed list
-	expected_msg, actual_msg = '\n'.join(expected_list), '\n'.join(actual_list)
-	# Evaluate results
-	assert expected_msg == actual_msg
 
 ###
 # Test for Any class
@@ -82,7 +40,7 @@ class TestAny(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Any class behaves appropriately when inproper argument type is passed """
-		evaluate_exception_method((putil.check.Any, None, ''))
+		putil.test.evaluate_exception_method((putil.check.Any, None, ''))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -108,7 +66,7 @@ class TestNumber(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201
 		"""	Tests that Number class behaves appropriately when inproper argument type is passed """
-		evaluate_exception_method((putil.check.Number, ValueError, 'Argument `par1` is not a number'))
+		putil.test.evaluate_exception_method((putil.check.Number, ValueError, 'Argument `par1` is not a number'))
 
 
 ###
@@ -131,7 +89,7 @@ class TestPositiveInteger(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=C0103,R0201
 		"""	Tests that PositiveInteger class behaves appropriately when inproper argument type is passed """
-		evaluate_exception_method((putil.check.PositiveInteger, ValueError, 'Argument `par1` is not a positive integer'))
+		putil.test.evaluate_exception_method((putil.check.PositiveInteger, ValueError, 'Argument `par1` is not a positive integer'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -157,7 +115,7 @@ class TestReal(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that Real class behaves appropriately when inproper argument type is passed """
-		evaluate_exception_method((putil.check.Real, ValueError, 'Argument `par1` is not a real number'))
+		putil.test.evaluate_exception_method((putil.check.Real, ValueError, 'Argument `par1` is not a real number'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -184,7 +142,7 @@ class TestPositiveReal(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that PositiveReal class behaves appropriately when inproper argument type is passed """
-		evaluate_exception_method((putil.check.PositiveReal, ValueError, 'Argument `par1` is not a positive real number'))
+		putil.test.evaluate_exception_method((putil.check.PositiveReal, ValueError, 'Argument `par1` is not a positive real number'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -228,7 +186,7 @@ class TestArbitraryLength(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLength class behaves appropriately when inproper element in iterable is passed """
-		evaluate_exception_method((putil.check.ArbitraryLength, {'iter_type':set, 'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
+		putil.test.evaluate_exception_method((putil.check.ArbitraryLength, {'iter_type':set, 'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -265,7 +223,7 @@ class TestArbitraryLengthList(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthList class behaves appropriately when inproper element in list is passed """
-		evaluate_exception_method((putil.check.ArbitraryLengthList, {'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
+		putil.test.evaluate_exception_method((putil.check.ArbitraryLengthList, {'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -302,7 +260,7 @@ class TestArbitraryLengthTuple(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthTuple class behaves appropriately when inproper element in tuple is passed """
-		evaluate_exception_method((putil.check.ArbitraryLengthTuple, {'element_type':str}, TypeError, 'Argument `par1` is of the wrong type'))
+		putil.test.evaluate_exception_method((putil.check.ArbitraryLengthTuple, {'element_type':str}, TypeError, 'Argument `par1` is of the wrong type'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -339,7 +297,7 @@ class TestArbitraryLengthSet(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthSet class behaves appropriately when inproper element in set is passed """
-		evaluate_exception_method((putil.check.ArbitraryLengthSet, {'element_type':float}, TypeError, 'Argument `par1` is of the wrong type'))
+		putil.test.evaluate_exception_method((putil.check.ArbitraryLengthSet, {'element_type':float}, TypeError, 'Argument `par1` is of the wrong type'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -375,7 +333,7 @@ class TestArbitraryLengthDict(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):	#pylint: disable=R0201,C0103
 		"""	Tests that ArbitraryLengthDict class behaves appropriately when inproper element in list is passed """
-		evaluate_exception_method((putil.check.ArbitraryLengthDict, {'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
+		putil.test.evaluate_exception_method((putil.check.ArbitraryLengthDict, {'element_type':int}, TypeError, 'Argument `par1` is of the wrong type'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -443,7 +401,7 @@ class TestOneOf(object):	#pylint: disable=W0232
 		exdesc.append(({'choices':['a', 'b', 3.0, 2], 'case_sensitive':True}, ValueError, "Argument `par1` is not one of ['a', 'b', 3.0, 2] (case sensitive)"))
 		exdesc.append(({'choices':[3.0, 2], 'case_sensitive':True}, ValueError, "Argument `par1` is not one of [3.0, 2]"))
 		exdesc.append(({'choices':['g', 'H', putil.check.PositiveReal()], 'case_sensitive':False}, ValueError, "Argument `par1` is not one of ['g', 'H', positive real number] (case insensitive)"))
-		evaluate_exception_method(exdesc, putil.check.OneOf)
+		putil.test.evaluate_exception_method(exdesc, putil.check.OneOf)
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -498,7 +456,7 @@ class TestNumberRange(object):	#pylint: disable=W0232
 		exdesc.append(({'maximum':15}, ValueError, 'Argument `par1` is not in the range [-inf, 15.0]'))
 		exdesc.append(({'minimum':20}, ValueError, 'Argument `par1` is not in the range [20.0, +inf]'))
 		exdesc.append(({'minimum':3.5, 'maximum':4.75}, ValueError, 'Argument `par1` is not in the range [3.5, 4.75]'))
-		evaluate_exception_method(exdesc, putil.check.NumberRange)
+		putil.test.evaluate_exception_method(exdesc, putil.check.NumberRange)
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -530,7 +488,7 @@ class TestRealNumpyVector(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):    #pylint: disable=R0201,C0103
 		""" Tests that exception method of RealNumpyVector class behaves appropriately """
-		evaluate_exception_method((putil.check.RealNumpyVector, ValueError, 'Argument `par1` is not a Numpy vector of real numbers'))
+		putil.test.evaluate_exception_method((putil.check.RealNumpyVector, ValueError, 'Argument `par1` is not a Numpy vector of real numbers'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -561,7 +519,7 @@ class TestIncreasingRealNumpyVector(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):    #pylint: disable=R0201,C0103
 		""" Tests that exception method of RealNumpyVector class behaves appropriately """
-		evaluate_exception_method((putil.check.IncreasingRealNumpyVector, ValueError, 'Argument `par1` is not a Numpy vector of increasing real numbers'))
+		putil.test.evaluate_exception_method((putil.check.IncreasingRealNumpyVector, ValueError, 'Argument `par1` is not a Numpy vector of increasing real numbers'))
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -591,7 +549,7 @@ class TestFile(object):	#pylint: disable=W0232
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of File class behaves appropriately """
-		evaluate_exception_method((putil.check.File, IOError, 'File /some/path/file_name.ext could not be found'), ekwargs={'param':'/some/path/file_name.ext'})
+		putil.test.evaluate_exception_method((putil.check.File, IOError, 'File /some/path/file_name.ext could not be found'), ekwargs={'param':'/some/path/file_name.ext'})
 
 	def test_in_code(self):    #pylint: disable=R0201
 		""" Test type checking in a real code scenario """
@@ -653,7 +611,7 @@ class TestFuntion(object):	#pylint: disable=W0232
 		exdesc = list()
 		exdesc.append(({'num_pars':1}, ValueError, 'Argument `par1` is not a function with 1 argument'))
 		exdesc.append(({'num_pars':2}, ValueError, 'Argument `par1` is not a function with 2 arguments'))
-		evaluate_exception_method(exdesc, putil.check.Function, ekwargs={'param':'par1'})
+		putil.test.evaluate_exception_method(exdesc, putil.check.Function, ekwargs={'param':'par1'})
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
@@ -729,7 +687,7 @@ class TestPolymorphicType(object):	#pylint: disable=W0232
 		exdesc.append(({'types':[None, putil.check.PositiveInteger(), putil.check.NumberRange(minimum=15, maximum=20)]}, ValueError, \
 				        'Argument `par1` is not in the range [15.0, 20.0]', {'param_name':'par1', 'test_obj':-1}))
 		exdesc.append(({'types':[None, putil.check.PositiveReal(), putil.check.Any()]}, None, '', {'param_name':'par1', 'test_obj':-1}))
-		evaluate_exception_method(exdesc, putil.check.PolymorphicType)
+		putil.test.evaluate_exception_method(exdesc, putil.check.PolymorphicType)
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
 		""" Test that both __str__() and __repr__() methods behave appropiately """
