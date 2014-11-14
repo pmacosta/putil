@@ -1,4 +1,4 @@
-﻿# dict_test.py
+﻿# test_pdict.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -54,7 +54,7 @@ class TestUtilDict(unittest.TestCase):	#pylint: disable=R0904
 		The first object of each item becomes a key in the new dictionary, and the second object the corresponding value. If a key occurs more than once,
 		the last value for that key becomes the corresponding value in the new dictionary.
 		"""
-		test_dict = putil.pdict.CiDict(zip(['FiRsT', 'SECOND'], [1,  2]))
+		test_dict = putil.pdict.CiDict(zip(['FiRsT', 'SECOND'], [1, 2]))
 		self.assertEqual({'first':1, 'second':2}, test_dict)
 
 	def test_cidict_positional_argument_list_keyword_arguments_null(self):	#pylint: disable=C0103
@@ -92,7 +92,7 @@ class TestUtilDict(unittest.TestCase):	#pylint: disable=R0904
 		If keyword arguments are given, the keyword arguments and their values are added to the dictionary created from the positional argument.
 		If a key being added is already present, the value from the keyword argument replaces the value from the positional argument.
 		"""
-		test_dict = putil.pdict.CiDict(zip(['FiRsT', 'SECOND'], [1,  2]), Third=3, sEcOnD=4)
+		test_dict = putil.pdict.CiDict(zip(['FiRsT', 'SECOND'], [1, 2]), Third=3, sEcOnD=4)
 		self.assertEqual({'first':1, 'second':4, 'third':3}, test_dict)
 
 	def test_cidict_positional_argument_list_keyword_arguments_not_null(self):	#pylint: disable=C0103

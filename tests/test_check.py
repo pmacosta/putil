@@ -1,4 +1,4 @@
-﻿# check_test.py		pylint: disable=C0302
+﻿# test_check.py		pylint: disable=C0302
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
@@ -540,12 +540,12 @@ class TestFile(object):	#pylint: disable=W0232
 	def test_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that the includes method of File class behaves appropriately """
 		cmd1, cmd2 = putil.check.File().includes, putil.check.File(True).includes
-		putil.test.evaluate_command_value_series([(cmd1, '/some/file.txt', True), (cmd2, 'not a file', False), (cmd2, './check_test.py', True)])
+		putil.test.evaluate_command_value_series([(cmd1, '/some/file.txt', True), (cmd2, 'not a file', False), (cmd2, './test_check.py', True)])
 
 	def test_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that the istype method of File class behaves appropriately """
 		cmd1, cmd2 = putil.check.File().istype, putil.check.File(True).istype
-		putil.test.evaluate_command_value_series([(cmd1, 3, False), (cmd2, 'not a file', True), (cmd2, './check_test.py', True)])
+		putil.test.evaluate_command_value_series([(cmd1, 3, False), (cmd2, 'not a file', True), (cmd2, './test_check.py', True)])
 
 	def test_exception_method(self):    #pylint: disable=R0201
 		""" Tests that exception method of File class behaves appropriately """
@@ -564,7 +564,7 @@ class TestFile(object):	#pylint: disable=W0232
 		exdesc.append((set_file_name2, {'file_name':5}, TypeError, 'Argument `file_name` is of the wrong type'))
 		exdesc.append((set_file_name2, {'file_name':'file.csv'}, IOError, 'File file.csv could not be found'))
 		exdesc.append((set_file_name1, {'file_name':'file.csv'}))
-		exdesc.append((set_file_name2, {'file_name':'check_test.py'}))
+		exdesc.append((set_file_name2, {'file_name':'test_check.py'}))
 		putil.test.evaluate_exception_series(exdesc)
 
 	def test_str_and_repr(self):	#pylint: disable=R0201
@@ -1200,7 +1200,7 @@ class NodeName(object):	#pylint: disable=R0903
 
 	def __str__(self):	#pylint: disable=R0201
 		""" String with object description and parameters """
-		return 'putil.check_test.NodeName()'
+		return 'putil.test_check.NodeName()'
 putil.check.register_new_type(NodeName, 'Hierarchical node name')
 
 
@@ -1211,7 +1211,7 @@ class BadType1(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType1()'
+		return 'putil.test_check.BadType1()'
 
 
 class BadType2(object):	#pylint: disable=R0903
@@ -1221,7 +1221,7 @@ class BadType2(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType2()'
+		return 'putil.test_check.BadType2()'
 
 
 class BadType3(object):	#pylint: disable=R0903
@@ -1233,7 +1233,7 @@ class BadType3(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType3()'
+		return 'putil.test_check.BadType3()'
 
 
 class BadType4(object):	#pylint: disable=R0903
@@ -1247,7 +1247,7 @@ class BadType4(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType4()'
+		return 'putil.test_check.BadType4()'
 
 
 class BadType5(object):	#pylint: disable=R0903
@@ -1261,7 +1261,7 @@ class BadType5(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType5()'
+		return 'putil.test_check.BadType5()'
 
 
 class BadType6(object):	#pylint: disable=R0903
@@ -1275,7 +1275,7 @@ class BadType6(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType6()'
+		return 'putil.test_check.BadType6()'
 
 
 class BadType7(object):	#pylint: disable=R0903
@@ -1289,7 +1289,7 @@ class BadType7(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType7()'
+		return 'putil.test_check.BadType7()'
 
 
 class BadType8(object):	#pylint: disable=R0903
@@ -1303,7 +1303,7 @@ class BadType8(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType8()'
+		return 'putil.test_check.BadType8()'
 
 
 class BadType9(object):	#pylint: disable=R0903
@@ -1317,7 +1317,7 @@ class BadType9(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadType9()'
+		return 'putil.test_check.BadType9()'
 
 
 class BadTypeA(object):	#pylint: disable=R0903
@@ -1331,7 +1331,7 @@ class BadTypeA(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadTypeA()'
+		return 'putil.test_check.BadTypeA()'
 
 
 class BadTypeB(object):	#pylint: disable=R0903
@@ -1345,7 +1345,7 @@ class BadTypeB(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.BadTypeB()'
+		return 'putil.test_check.BadTypeB()'
 
 class GoodType1(object):	#pylint: disable=R0903
 	""" Good pseudo-type implementation for testing purposes """
@@ -1358,7 +1358,7 @@ class GoodType1(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.GoodType1()'
+		return 'putil.test_check.GoodType1()'
 
 class GoodType2(object):	#pylint: disable=R0903
 	""" Good pseudo-type implementation for testing purposes """
@@ -1371,7 +1371,7 @@ class GoodType2(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.GoodType2()'
+		return 'putil.test_check.GoodType2()'
 
 class GoodType3(object):	#pylint: disable=R0903
 	""" Good pseudo-type implementation for testing purposes """
@@ -1384,7 +1384,7 @@ class GoodType3(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.GoodType3()'
+		return 'putil.test_check.GoodType3()'
 
 class GoodType4(object):	#pylint: disable=R0903
 	""" Good pseudo-type implementation for testing purposes """
@@ -1397,7 +1397,7 @@ class GoodType4(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.GoodType4()'
+		return 'putil.test_check.GoodType4()'
 
 class GoodType5(object):	#pylint: disable=R0903
 	""" Good pseudo-type implementation for testing purposes """
@@ -1410,7 +1410,7 @@ class GoodType5(object):	#pylint: disable=R0903
 	def __repr__(self):	#pylint: disable=C0111,R0201
 		return self.__str__()
 	def __str__(self):	#pylint: disable=C0111,R0201
-		return 'putil.check_test.GoodType5()'
+		return 'putil.test_check.GoodType5()'
 
 
 class TestCustomDataTypeAddition(object):	#pylint: disable=W0232,R0903
@@ -1419,25 +1419,25 @@ class TestCustomDataTypeAddition(object):	#pylint: disable=W0232,R0903
 	def test_get_istype(self):	#pylint: disable=R0201,C0103
 		""" Test that get_istype method behaves as expected """
 		exdesc = list()
-		exdesc.append(({'ptype':BadTypeA(), 'obj':5}, TypeError, 'Pseudo type check_test.BadTypeA.istype() method needs to return a boolean value'))
-		exdesc.append(({'ptype':BadTypeB(), 'obj':5}, RuntimeError, 'Error trying to obtain pseudo type check_test.BadTypeB.istype() result'))
+		exdesc.append(({'ptype':BadTypeA(), 'obj':5}, TypeError, 'Pseudo type test_check.BadTypeA.istype() method needs to return a boolean value'))
+		exdesc.append(({'ptype':BadTypeB(), 'obj':5}, RuntimeError, 'Error trying to obtain pseudo type test_check.BadTypeB.istype() result'))
 		exdesc.append(({'ptype':NodeName(), 'obj':'a.b.c'}, ))
 		putil.test.evaluate_exception_series(exdesc, putil.check.get_istype)
 
 	def test_get_includes(self):	#pylint: disable=R0201,C0103
 		""" Test that get_includes method behaves as expected """
 		exdesc = list()
-		exdesc.append(({'ptype':BadTypeA(), 'obj':5}, TypeError, 'Pseudo type check_test.BadTypeA.includes() method needs to return a boolean value'))
-		exdesc.append(({'ptype':BadTypeB(), 'obj':5}, RuntimeError, 'Error trying to obtain pseudo type check_test.BadTypeB.includes() result'))
+		exdesc.append(({'ptype':BadTypeA(), 'obj':5}, TypeError, 'Pseudo type test_check.BadTypeA.includes() method needs to return a boolean value'))
+		exdesc.append(({'ptype':BadTypeB(), 'obj':5}, RuntimeError, 'Error trying to obtain pseudo type test_check.BadTypeB.includes() result'))
 		exdesc.append(({'ptype':NodeName(), 'obj':'a.b.c'}, ))
 		putil.test.evaluate_exception_series(exdesc, putil.check.get_includes)
 
 	def test_get_exception(self):	#pylint: disable=R0201,C0103
 		""" Test that get_exception method behaves as expected """
 		exdesc = list()
-		exdesc.append(({'ptype':BadTypeA(), 'param':5}, TypeError, 'Pseudo type check_test.BadTypeA.exception() method needs to return a dictionary with keys "type" and "msg", '
+		exdesc.append(({'ptype':BadTypeA(), 'param':5}, TypeError, 'Pseudo type test_check.BadTypeA.exception() method needs to return a dictionary with keys "type" and "msg", '
 				                                                   'with the exception type object and exception message respectively'))
-		exdesc.append(({'ptype':BadTypeB(), 'param':5}, RuntimeError, 'Error trying to obtain pseudo type check_test.BadTypeB.exception() result'))
+		exdesc.append(({'ptype':BadTypeB(), 'param':5}, RuntimeError, 'Error trying to obtain pseudo type test_check.BadTypeB.exception() result'))
 		exdesc.append(({'ptype':GoodType5(), 'param':'a.b.c'}, ))
 		exdesc.append(({'ptype':NodeName(), 'param_name':'a.b.c'}, ))
 		putil.test.evaluate_exception_series(exdesc, putil.check.get_exception)
@@ -1446,15 +1446,15 @@ class TestCustomDataTypeAddition(object):	#pylint: disable=W0232,R0903
 		""" Test that custom pseudo-type validation behaves as expected """
 		exdesc = list()
 		exdesc.append(({'cls':5, 'desc':'Bad type'}, TypeError, 'Pseudo type has to be a class'))
-		exdesc.append(({'cls':BadType1, 'desc':'Bad type'}, TypeError, 'Pseudo type check_test.BadType1 must have an istype() method'))
-		exdesc.append(({'cls':BadType2, 'desc':'Bad type'}, TypeError, 'Pseudo type check_test.BadType2 must have an includes() method'))
-		exdesc.append(({'cls':BadType3, 'desc':'Bad type'}, TypeError, 'Pseudo type check_test.BadType3 must have an exception() method'))
-		exdesc.append(({'cls':BadType4, 'desc':'Bad type'}, RuntimeError, 'Method check_test.BadType4.istype() must have only one argument'))
-		exdesc.append(({'cls':BadType5, 'desc':'Bad type'}, RuntimeError, 'Method check_test.BadType5.istype() must have only one argument'))
-		exdesc.append(({'cls':BadType6, 'desc':'Bad type'}, RuntimeError, 'Method check_test.BadType6.includes() must have only one argument'))
-		exdesc.append(({'cls':BadType7, 'desc':'Bad type'}, RuntimeError, 'Method check_test.BadType7.includes() must have only one argument'))
-		exdesc.append(({'cls':BadType8, 'desc':'Bad type'}, RuntimeError, 'Method check_test.BadType8.exception() must have only `param` and/or `param_name` arguments'))
-		exdesc.append(({'cls':BadType9, 'desc':'Bad type'}, RuntimeError, 'Method check_test.BadType9.exception() must have only `param` and/or `param_name` arguments'))
+		exdesc.append(({'cls':BadType1, 'desc':'Bad type'}, TypeError, 'Pseudo type test_check.BadType1 must have an istype() method'))
+		exdesc.append(({'cls':BadType2, 'desc':'Bad type'}, TypeError, 'Pseudo type test_check.BadType2 must have an includes() method'))
+		exdesc.append(({'cls':BadType3, 'desc':'Bad type'}, TypeError, 'Pseudo type test_check.BadType3 must have an exception() method'))
+		exdesc.append(({'cls':BadType4, 'desc':'Bad type'}, RuntimeError, 'Method test_check.BadType4.istype() must have only one argument'))
+		exdesc.append(({'cls':BadType5, 'desc':'Bad type'}, RuntimeError, 'Method test_check.BadType5.istype() must have only one argument'))
+		exdesc.append(({'cls':BadType6, 'desc':'Bad type'}, RuntimeError, 'Method test_check.BadType6.includes() must have only one argument'))
+		exdesc.append(({'cls':BadType7, 'desc':'Bad type'}, RuntimeError, 'Method test_check.BadType7.includes() must have only one argument'))
+		exdesc.append(({'cls':BadType8, 'desc':'Bad type'}, RuntimeError, 'Method test_check.BadType8.exception() must have only `param` and/or `param_name` arguments'))
+		exdesc.append(({'cls':BadType9, 'desc':'Bad type'}, RuntimeError, 'Method test_check.BadType9.exception() must have only `param` and/or `param_name` arguments'))
 		exdesc.append(({'cls':GoodType1, 'desc':'Good type'}, ))
 		exdesc.append(({'cls':GoodType2, 'desc':'Good type'}, ))
 		exdesc.append(({'cls':GoodType3, 'desc':'Good type'}, ))

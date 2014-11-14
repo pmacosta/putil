@@ -11,5 +11,5 @@
 *.swo
 *.rot
 *.pyc
-doc/_build
-!doc/support/*.png
+docs/_build
+!docs/support/*.png

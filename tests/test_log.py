@@ -1,4 +1,4 @@
-﻿# log_test.py
+﻿# test_log.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 

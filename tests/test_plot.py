@@ -1,4 +1,4 @@
-# plot_test.py	#pylint:disable=C0302
+# test_plot.py	#pylint:disable=C0302
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 
