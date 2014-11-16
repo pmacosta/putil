@@ -4,10 +4,11 @@
 
 import csv
 import inspect
+import contracts
 
 import putil.exh
 import putil.misc
-import putil.check
+import putil.pcontracts
 
 # Exception tracing initialization code
 """
@@ -56,32 +57,26 @@ exobj_funcs = copy.deepcopy(exobj)
 ###
 # DataFilter custom pseudo-type
 ###
-class DataFilter(object):	#pylint: disable=R0903
+@contracts.new_contract
+def csv_data_filter(dfilter):
 	""" Data filter specification pseudo-type """
-	def includes(self, test_obj):	#pylint: disable=R0201,W0613
-		"""	Test that an object belongs to the pseudo-type """
-		if not isinstance(test_obj, dict):
-			return False
-		for col_name in test_obj:
-			if (not isinstance(test_obj[col_name], list)) and (not putil.misc.isnumber(test_obj[col_name])) and (not isinstance(test_obj[col_name], str)):
-				return False
-			if isinstance(test_obj[col_name], list):
-				for element in test_obj[col_name]:
-					if (not putil.misc.isnumber(element)) and (not isinstance(element, str)):
-						return False
-		return True
-
-	def istype(self, test_obj):	#pylint: disable=R0201
-		"""	Checks to see if object is of the same class type """
-		return self.includes(test_obj)
-
-	def exception(self, param_name):	#pylint: disable=R0201,W0613
-		"""	Returns a suitable exception message """
-		return {'type':TypeError, 'msg':'Argument `{0}` is of the wrong type'.format(param_name)}
-putil.check.register_new_type(DataFilter, 'Comma-separated values file data filter')
+	msg = 'Invalid data filter'
+	if dfilter == None:
+		return None
+	if (not isinstance(dfilter, dict)) or (isinstance(dfilter, dict) and (not len(dfilter))):
+		raise ValueError(msg)
+	if any([not isinstance(col_name, str) for col_name in dfilter.keys()]):
+		raise ValueError(msg)
+	for col_name in dfilter:
+		if (not isinstance(dfilter[col_name], list)) and (not putil.misc.isnumber(dfilter[col_name])) and (not isinstance(dfilter[col_name], str)):
+			raise ValueError(msg)
+		if isinstance(dfilter[col_name], list):
+			for element in dfilter[col_name]:
+				if (not putil.misc.isnumber(element)) and (not isinstance(element, str)):
+					raise ValueError(msg)
 
 
-@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'data':putil.check.ArbitraryLengthList(list), 'append':bool})
+@contracts.contract(file_name='file_name_exists', data='list(list)', append=bool)
 def write(file_name, data, append=True):
 	"""
 	Write data to a specified comma-separated values (CSV) file
@@ -116,6 +111,9 @@ def write(file_name, data, append=True):
 
 	.. [[[end]]]
 	"""
+	_write_int(file_name, data, append)
+
+def _write_int(file_name, data, append=True):
 	root_module = inspect.stack()[-1][0]
 	_exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.pcsv.write)
 	_exh.add_exception(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
@@ -181,18 +179,15 @@ class CsvFile(object):
 
 	.. [[[end]]]
 	"""
-	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=True), 'dfilter':putil.check.PolymorphicType([None, DataFilter()])})
+	@contracts.contract(file_name='file_name_exists', dfilter='csv_data_filter')
 	def __init__(self, file_name, dfilter=None):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
 		root_module = inspect.stack()[-1][0]
 		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.pcsv.CsvFile)
-		self._exh.add_exception(name='file_not_found', extype=IOError, exmsg='File *[file_name]* could not be found')
 		self._exh.add_exception(name='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
 		self._exh.add_exception(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
 		self._exh.add_exception(name='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
-		#
-		self._exh.raise_exception_if(name='file_not_found', condition=False, edata={'field':'file_name', 'value':file_name})	# Check is actually done in the context manager, which is unreachable
 		with open(file_name, 'rU') as file_handle:
 			self._raw_data = [row for row in csv.reader(file_handle)]
 		# Process header
@@ -209,7 +204,7 @@ class CsvFile(object):
 		# Set up class properties
 		self._data = [[None if col.strip() == '' else _number_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
 		self.reset_dfilter()
-		self._set_dfilter(dfilter)
+		self._set_dfilter_int(dfilter)	# dfilter already validated, can use internal function, not API end-point
 
 	def _validate_dfilter(self, dfilter):
 		""" Validate that all columns in filter are in header """
@@ -222,8 +217,11 @@ class CsvFile(object):
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter	#pylint: disable=W0212
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, DataFilter()]))
+	@contracts.contract(dfilter='csv_data_filter')
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
+		self._set_dfilter_int(dfilter)
+
+	def _set_dfilter_int(self, dfilter):	#pylint: disable=C0111
 		if dfilter is None:
 			self._dfilter = None
 		else:
@@ -233,7 +231,7 @@ class CsvFile(object):
 			self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
 			self._dfilter = dfilter
 
-	@putil.check.check_argument(DataFilter())
+	@contracts.contract(dfilter='csv_data_filter')
 	def add_dfilter(self, dfilter):
 		"""
 		Add more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
@@ -263,12 +261,12 @@ class CsvFile(object):
 					self._dfilter[key] = list(set((self._dfilter[key] if isinstance(self._dfilter[key], list) else [self._dfilter[key]]) + (dfilter[key] if isinstance(dfilter[key], list) else [dfilter[key]])))
 				else:
 					self._dfilter[key] = dfilter[key]
-		self._set_dfilter(self._dfilter)
+		self._set_dfilter_int(self._dfilter)
 
 	def _get_header(self):	#pylint: disable=C0111
 		return self._header	#pylint: disable=W0212
 
-	@putil.check.check_arguments({'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool})
+	@contracts.contract(col='None|str|list(str)', filtered=bool)
 	def data(self, col=None, filtered=False):
 		"""
 		 Return (filtered) file data. The returned object is a list, each item is a sub-list corresponding to a row of data; each item in the sub-lists contains data corresponding to a \
@@ -299,7 +297,7 @@ class CsvFile(object):
 		self._fdata = self._data[:]
 		self._dfilter = None
 
-	@putil.check.check_arguments({'file_name':putil.check.File(check_existance=False), 'col':putil.check.PolymorphicType([None, str, putil.check.ArbitraryLengthList(str)]), 'filtered':bool, 'headers':bool, 'append':bool})
+	@contracts.contract(file_name='file_name', col='None|str|list(str)', filtered=bool, headers=bool, append=bool)
 	def write(self, file_name, col=None, filtered=False, headers=True, append=True):	#pylint: disable=R0913
 		"""
 		Write (processed) data to a specified comma-separated values (CSV) file
@@ -343,7 +341,7 @@ class CsvFile(object):
 		#if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
 		#	raise ValueError('There is no data to save to file')
 		data = [["''" if col is None else col for col in row] for row in data]
-		write(file_name, [header]+data if headers else data, append=append)
+		_write_int(file_name, [header]+data if headers else data, append=append)
 
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """

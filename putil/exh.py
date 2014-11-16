@@ -455,7 +455,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
-		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fn == '<module>') or (fn == '<lambda>'))]
+		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
 		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
 			func_obj = fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))
 			fname, fdict = _get_callable_path(fobj, func_obj)
@@ -589,6 +589,10 @@ class ExHandle(object):	#pylint: disable=R0902
 			bex = [exname for exname in data if 'Same as' not in exname]
 			sex = [exname for exname in data if 'Same as' in exname]
 			self._extable[key]['hier_exceptions'] = sorted(list(set(bex)))+sorted(list(set(sex)))
+
+	def _valid_frame(self, fin, fna):	#pylint: disable-msg=R0201
+		""" Selects valid stack frame to process """
+		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
 	def build_ex_tree(self, no_print=True):	#pylint: disable=R0912,R0914,R0915
 		""" Builds exception tree """

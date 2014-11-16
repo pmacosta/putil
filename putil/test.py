@@ -8,6 +8,7 @@ Helper methods for unit testing
 
 import sys
 import pytest
+import contracts
 
 import putil.check
 import putil.misc
@@ -215,3 +216,11 @@ def trigger_exception(obj, args, extype, exmsg):
 	with pytest.raises(extype) as excinfo:
 		obj(**args)	#pylint: disable=W0142
 	return excinfo.value.message == exmsg
+
+def trigger_pcontract_exception(obj, args, exmsg):
+	""" Triggers exception withing the Py.test environment and records value """
+	with pytest.raises(contracts.ContractNotRespected) as excinfo:
+		obj(**args)	#pylint: disable=W0142
+	if exmsg not in excinfo.value.error:
+		print excinfo.value.error
+	return exmsg in excinfo.value.error

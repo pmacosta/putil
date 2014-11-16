@@ -400,5 +400,3 @@ def strtype(type_obj):
 	suffix = ']' if isinstance(type_obj, list) else ')'
 	ret_list = [strtype(type_obj_item) for type_obj_item in type_obj]
 	return '{0}{1}{2}'.format(prefix, ', '.join(ret_list), suffix)
-
-

@@ -39,5 +39,5 @@ def file_name_exists(name):
 		raise ValueError(msg)
 	# Check that file exists
 	if not os.path.exists(name):
-		raise ValueError('File does not exist')
+		raise ValueError('File {0} could not be found'.format(name))
 

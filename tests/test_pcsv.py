@@ -48,8 +48,8 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		file_name = '/file/does/not/exist.csv'
 		func_pointers = [(RuntimeError, 'File {0} is empty', write_file_empty), (RuntimeError, 'Column headers are not unique', write_cols_not_unique), (RuntimeError, 'File {0} has no valid data', write_no_data)]
-		test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':5}, TypeError, 'Argument `file_name` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name}, IOError, 'File {0} could not be found'.format(file_name)))
+		test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.CsvFile, {'file_name':5}, 'File name is not valid'))
+		test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.CsvFile, {'file_name':file_name}, 'File {0} could not be found'.format(file_name)))
 		for extype, exmsg, fobj in func_pointers:
 			with pytest.raises(extype) as excinfo:
 				with putil.misc.TmpFile(fobj) as file_name:
@@ -67,11 +67,11 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		""" Test if the right exception is raised when parameter dfilter is of the wrong type or some columns in the filter specification are not present in CSV file header """
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
-			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':'a'}, TypeError, 'Argument `dfilter` is of the wrong type'))
-			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':dict()}, ValueError, 'Argument `dfilter` is empty'))
+			test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':'a'}, 'Invalid data filter'))
+			test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':dict()}, 'Invalid data filter'))
 			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'aaa':5}}, ValueError, 'Column aaa not found in header'))
-			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':{'xx':2}}}, TypeError, 'Argument `dfilter` is of the wrong type'))
-			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':[3, {'xx':2}]}}, TypeError, 'Argument `dfilter` is of the wrong type'))
+			test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':{'xx':2}}}, 'Invalid data filter'))
+			test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':[3, {'xx':2}]}}, 'Invalid data filter'))
 		assert test_list == len(test_list)*[True]
 
 	def test_dfilter_works(self):	#pylint: disable=R0201
@@ -108,11 +108,11 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
-		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':'a'}, TypeError, 'Argument `dfilter` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':dict()}, ValueError, 'Argument `dfilter` is empty'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.add_dfilter, {'dfilter':'a'}, 'Invalid data filter'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.add_dfilter, {'dfilter':dict()}, 'Invalid data filter'))
 		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':{'aaa':5}}, ValueError, 'Column aaa not found in header'))
-		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':{'a':{'xx':2}}}, TypeError, 'Argument `dfilter` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':{'a':[3, {'xx':2}]}}, TypeError, 'Argument `dfilter` is of the wrong type'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.add_dfilter, {'dfilter':{'a':{'xx':2}}}, 'Invalid data filter'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.add_dfilter, {'dfilter':{'a':[3, {'xx':2}]}}, 'Invalid data filter'))
 		assert test_list == len(test_list)*[True]
 
 	def test_add_dfilter_works(self):	#pylint: disable=R0201
@@ -156,10 +156,10 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
-		test_list.append(putil.test.trigger_exception(obj.data, {'col':5}, TypeError, 'Argument `col` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.data, {'col':['a', 5]}, TypeError, 'Argument `col` is of the wrong type'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.data, {'col':5}, 'Could not satisfy any of the 3 clauses in None|str|list(str)'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.data, {'col':['a', 5]}, 'Could not satisfy any of the 3 clauses in None|str|list(str)'))
 		test_list.append(putil.test.trigger_exception(obj.data, {'col':'NotACol'}, ValueError, 'Column NotACol not found in header'))
-		test_list.append(putil.test.trigger_exception(obj.data, {'filtered':5}, TypeError, 'Argument `filtered` is of the wrong type'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.data, {'filtered':5}, "Expected type 'bool', got 'int'"))
 		obj.data()
 		obj.data(col=None, filtered=True)
 		obj.data(col='Ctrl')
@@ -184,12 +184,12 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
-		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':5}, TypeError, 'Argument `file_name` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'headers':'a'}, TypeError, 'Argument `headers` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'append':'a'}, TypeError, 'Argument `append` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'col':5}, TypeError, 'Argument `col` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'col':['a', 5]}, TypeError, 'Argument `col` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'filtered':5}, TypeError, 'Argument `filtered` is of the wrong type'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.write, {'file_name':5}, 'File name is not valid'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.write, {'file_name':'/some/file', 'headers':'a'}, "Expected type 'bool', got 'str'"))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.write, {'file_name':'/some/file', 'append':'a'}, "Expected type 'bool', got 'str'"))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.write, {'file_name':'/some/file', 'col':5}, 'Could not satisfy any of the 3 clauses in None|str|list(str)'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.write, {'file_name':'/some/file', 'col':['a', 5]}, 'Could not satisfy any of the 3 clauses in None|str|list(str)'))
+		test_list.append(putil.test.trigger_pcontract_exception(obj.write, {'file_name':'/some/file', 'filtered':5}, "Expected type 'bool', got 'int'"))
 		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'col':'NotACol'}, ValueError, 'Column NotACol not found in header'))
 		obj.dfilter = {'Result':100}
 		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'filtered':True}, ValueError, 'There is no data to save to file'))
