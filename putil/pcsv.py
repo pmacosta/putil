@@ -95,17 +95,9 @@ def write(file_name, data, append=True):
 	:raises:
 	 * IOError (File *[file_name]* could not be created: *[reason]*)
 
-	 * IOError (File *[file_name]* could not be found)
-
 	 * OSError (File *[file_name]* could not be created: *[reason]*)
 
 	 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
-
-	 * TypeError (Argument `append` is of the wrong type)
-
-	 * TypeError (Argument `data` is of the wrong type)
-
-	 * TypeError (Argument `file_name` is of the wrong type)
 
 	 * ValueError (There is no data to save to file)
 
@@ -165,17 +157,15 @@ class CsvFile(object):
 	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('__init__')) ]]]
 
 	:raises:
-	 * IOError (File *[file_name]* could not be found)
-
 	 * RuntimeError (Column headers are not unique)
 
 	 * RuntimeError (File *[file_name]* has no valid data)
 
 	 * RuntimeError (File *[file_name]* is empty)
 
-	 * TypeError (Argument `file_name` is of the wrong type)
+	 * ValueError (Argument `dfilter` is empty)
 
-	 * Same as :py:meth:`putil.pcsv.CsvFile.add_dfilter`
+	 * ValueError (Column *[column_name]* not found in header)
 
 	.. [[[end]]]
 	"""
@@ -242,8 +232,6 @@ class CsvFile(object):
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('add_dfilter')) ]]]
 
 		:raises:
-		 * TypeError (Argument `dfilter` is of the wrong type)
-
 		 * ValueError (Argument `dfilter` is empty)
 
 		 * ValueError (Column *[column_name]* not found in header)
@@ -280,12 +268,7 @@ class CsvFile(object):
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('data')) ]]]
 
-		:raises:
-		 * TypeError (Argument `col` is of the wrong type)
-
-		 * TypeError (Argument `filtered` is of the wrong type)
-
-		 * ValueError (Column *[column_name]* not found in header)
+		:raises: ValueError (Column *[column_name]* not found in header)
 
 		.. [[[end]]]
 		"""
@@ -317,13 +300,11 @@ class CsvFile(object):
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('write')) ]]]
 
 		:raises:
-		 * IOError (File *[file_name]* could not be found)
+		 * IOError (File *[file_name]* could not be created: *[reason]*)
 
-		 * TypeError (Argument `append` is of the wrong type)
+		 * OSError (File *[file_name]* could not be created: *[reason]*)
 
-		 * TypeError (Argument `file_name` is of the wrong type)
-
-		 * TypeError (Argument `headers` is of the wrong type)
+		 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
 
 		 * ValueError (There is no data to save to file)
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-src_dir=$HOME/python/putil/src/putil
+src_dir=$HOME/python/putil/putil
 # Default values for command line options
 rebuild=0
 

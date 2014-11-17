@@ -156,11 +156,14 @@ class ExHandle(object):	#pylint: disable=R0902
 					for func in sorted(fattr_funcs.values()):
 						print '      {0}'.format(func)
 				for fkey, fname in fattr_funcs.items():
-					mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
+					mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
 					while mod_list:
-						self._tobj._rename_node(mod_list[0], mod_list[0].replace(fname, '{0}[{1}]'.format(key, fkey)))	#pylint: disable=W0212
+						start_char = mod_list[0].find(fname) if mod_list[0].endswith(fname) else mod_list[0].find(fname+'.')
+						stop_char = len(mod_list[0]) if mod_list[0].endswith(fname) else start_char+len(fname)
+						name_to_replace = mod_list[0][start_char:stop_char] if mod_list[0].endswith(fname) else mod_list[0][start_char:stop_char]+'.'
+						self._tobj._rename_node(mod_list[0], mod_list[0].replace(name_to_replace, '{0}[{1}]{2}'.format(key, fkey, '' if mod_list[0].endswith(fname) else '.')))	#pylint: disable=W0212
 						self._callable_db['{0}[{1}]'.format(key, fkey)] = copy.deepcopy(self._callable_db[fname])
-						mod_list = sorted([node for node in self._tobj.nodes if node.find(fname) != -1])
+						mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
 			if attr_list:
 				self._collapse_ex_tree(no_print=True)
 		if not no_print:
@@ -248,7 +251,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			raise RuntimeError('No exception table data')
 		# Remove exception table entries that are package members but not trace class method/properies or module-level function
 		for child in sorted(self._extable.keys()):
-			if not child.startswith(self._tobj.root_name):
+			if not child.startswith(self._trace_obj_name):
 				del self._extable[child]
 		# Create output table proper
 		self._exoutput = dict()
