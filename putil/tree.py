@@ -5,12 +5,16 @@
 # See LICENSE for details
 
 
+import sys
 import copy
 import inspect
+import contracts
 
 import putil.exh
-import putil.check
 
+# Disable PyContracts if Sphinx is running, it conflicts with written type documentation
+if 'sphinx' in sys.modules.keys():
+	contracts.disable_all()
 
 # Exception tracing initialization code
 """
@@ -67,20 +71,23 @@ exobj_tree = copy.deepcopy(exobj)
 ###
 # Node name custom pseudo-type
 ###
-class NodeName(object):	#pylint: disable=R0903
+@contracts.new_contract
+def node_name(name):
 	""" Hierarchical node name data type class """
-	def includes(self, test_obj):	#pylint: disable=R0201,W0613
-		"""	Test that an object belongs to the pseudo-type """
-		return False if (not isinstance(test_obj, str)) or (isinstance(test_obj, str) and (' ' in test_obj)) else all([element.strip() != '' for element in test_obj.strip().split('.')])
+	if (not isinstance(name, str)) or (isinstance(name, str) and ((' ' in name) or any([element.strip() == '' for element in name.strip().split('.')]))):
+		raise ValueError('Invalid node name')
 
-	def istype(self, test_obj):	#pylint: disable=R0201
-		"""	Checks to see if object is of the same class type """
-		return isinstance(test_obj, str)
-
-	def exception(self, param_name):	#pylint: disable=R0201,W0613
-		"""	Returns a suitable exception message """
-		return {'type':ValueError, 'msg':'Argument `{0}` is not a valid node name'.format(param_name)}
-putil.check.register_new_type(NodeName, 'Hierarchical node name')
+@contracts.new_contract
+def node_names(names):
+	""" Hierarchical node names data type class """
+	msg = 'Invalid node name'
+	names = names if isinstance(names, list) else [names]
+	for ndict in names:
+		if not isinstance(ndict, dict) or (isinstance(ndict, dict) and (set(ndict.keys()) != set(['name', 'data']))):
+			raise ValueError(msg)
+		name = ndict['name']
+		if (not isinstance(name, str)) or (isinstance(name, str) and ((' ' in name) or any([element.strip() == '' for element in name.strip().split('.')]))):
+			raise ValueError(msg)
 
 
 class Tree(object):	#pylint: disable=R0903
@@ -205,15 +212,14 @@ class Tree(object):	#pylint: disable=R0903
 
 	def _prt(self, name, lparent, sep, pre1, pre2):	#pylint: disable=C0111,R0913,R0914
 		# Characters from http://www.unicode.org/charts/PDF/U2500.pdf
-		node_name = name[lparent+1:]
-		#node_name = name.split('.')[-1]
+		nname = name[lparent+1:]
 		children = self._db[name]['children']
 		ncmu = len(children)-1
 		plist1 = ncmu*[self._vertical_and_right]+[self._up_and_right]
 		plist2 = ncmu*[self._vertical]+[' ']
 		slist = (ncmu+1)*[sep+pre2]
 		dmark = ' (*)' if self._db[name]['data'] else ''
-		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, node_name, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
+		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, nname, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
 
 	def _rename_node(self, name, new_name):
 		""" Rename node private method (no argument validation and usage of getter/setter private methods for speed) """
@@ -248,7 +254,7 @@ class Tree(object):	#pylint: disable=R0903
 	def _split_node_name(self, name, root_name=None):	#pylint: disable=C0111,R0201
 		return [element.strip() for element in name.strip().split('.')][0 if not root_name else self._root_hierarchy_length:]
 
-	@putil.check.check_argument(putil.check.PolymorphicType([{'name':NodeName(), 'data':putil.check.Any()}, putil.check.ArbitraryLengthList({'name':NodeName(), 'data':putil.check.Any()})]))
+	@contracts.contract(nodes='node_names')
 	def add_nodes(self, nodes):
 		"""
 		Add nodes to tree
@@ -316,7 +322,7 @@ class Tree(object):	#pylint: disable=R0903
 				self._create_intermediate_nodes(name)
 			self._db[name]['data'] += copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def collapse_subtree(self, name):
 		"""
 		Collapses hierarchy. Nodes that have a single child and no data are combined with their child as a single tree node
@@ -361,7 +367,7 @@ class Tree(object):	#pylint: disable=R0903
 		for child in copy.copy(self._db[name]['children']):
 			self._collapse_node(child)
 
-	@putil.check.check_arguments({'source_node':NodeName(), 'dest_node':NodeName()})
+	@contracts.contract(source_node='node_name', dest_node='node_name')
 	def copy_subtree(self, source_node, dest_node):
 		"""
 		Copy a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-treeexist in the destination sub-tree
@@ -426,7 +432,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._db[dest_node]['parent'] = parent
 		self._db[parent]['children'] = sorted(self._db[parent]['children']+[dest_node])
 
-	@putil.check.check_argument(putil.check.PolymorphicType([NodeName(), putil.check.ArbitraryLengthList(NodeName())]))
+	@contracts.contract(nodes='node_name|list(node_name)')
 	def delete_subtree(self, nodes):
 		"""
 		Delete nodes (and their sub-trees) from tree
@@ -465,7 +471,7 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		self._delete_subtree(nodes)
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def flatten_subtree(self, name):
 		"""
 		Flatten sub-tree below a particular node if the node contains no data
@@ -532,7 +538,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._db[parent]['children'] = sorted(self._db[parent]['children']+children)
 			del self._db[name]
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def get_children(self, name):	#pylint: disable=C0111
 		"""
 		Return children node names of a node
@@ -550,7 +556,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return sorted(self._db[name]['children'])
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def get_data(self, name):	#pylint: disable=C0111
 		"""
 		Return node data
@@ -568,7 +574,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[name]['data']
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def get_leafs(self, name):	#pylint: disable=C0111
 		"""
 		Return sub-tree leaf node(s)
@@ -587,7 +593,7 @@ class Tree(object):	#pylint: disable=R0903
 		return [node for node in self._get_subtree(name) if self.is_leaf(node)]
 
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def get_node(self, name):	#pylint: disable=C0111
 		"""
 		Get tree node structure. The structure is a dictionary with the following keys:
@@ -611,7 +617,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[name]
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def get_node_children(self, name):	#pylint: disable=C0111
 		"""
 		Return list of children structures of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure.
@@ -629,7 +635,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return [self._db[child] for child in self._db[name]['children']]
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def get_node_parent(self, name):	#pylint: disable=C0111
 		"""
 		Return parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure
@@ -647,7 +653,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def get_subtree(self, name):
 		"""
 		Return all node names in a sub-tree
@@ -679,7 +685,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._get_subtree(name)
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def is_root(self, name):	#pylint: disable=C0111
 		"""
 		Root node flag, *True* if node is the root node (node with no ancestors), *False* otherwise
@@ -697,7 +703,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return not self._db[name]['parent']
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def in_tree(self, name):
 		"""
 		Return *True* if node name is in the tree, *False* otherwise
@@ -717,7 +723,7 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		return name in self._db
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def is_leaf(self, name):	#pylint: disable=C0111
 		"""
 		Leaf node flag, *True* if node is a leaf node (node with no children), *False* otherwise
@@ -735,7 +741,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return not self._db[name]['children']
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def make_root(self, name):	#pylint: disable=C0111
 		"""
 		Makes a sub-node the root node of the tree. All nodes not belonging to the sub-tree are deleted
@@ -775,7 +781,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._root = name
 			self._root_hierarchy_length = len(self.root_name.split('.'))
 
-	@putil.check.check_argument(NodeName())
+	@contracts.contract(name='node_name')
 	def print_node(self, name):	#pylint: disable=C0111
 		"""
 		Prints node information (parent, children and data)
@@ -795,7 +801,7 @@ class Tree(object):	#pylint: disable=R0903
 		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
 
-	@putil.check.check_arguments({'name':NodeName(), 'new_name':NodeName()})
+	@contracts.contract(name='node_name', new_name='node_name')
 	def rename_node(self, name, new_name):
 		"""
 		Rename a tree node. It is typical to have a root node name with more than one hierarchy level after using :py:meth:`putil.tree.Tree.make_root`. In this instance the root node *can* be \
