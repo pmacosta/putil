@@ -252,3 +252,33 @@ class TestCsvFile(object):	#pylint: disable=W0232
 			del obj.dfilter
 		test_list.append(excinfo.value.message == "can't delete attribute")
 		assert test_list == len(test_list)*[True]
+
+
+def test_write_function_errors():	#pylint: disable=R0201
+	""" Test if write() function raises the right exceptions when its arguments are of the wrong type or are badly specified """
+	test_list = list()
+	test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.write, {'file_name':5, 'data':[['Col1', 'Col2'], [1, 2]]}, 'File name is not valid'))
+	test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.write, {'file_name':'/some/file', 'data':[['Col1', 'Col2'], [1, 2]], 'append':'a'}, "Expected type 'bool', got 'str'"))
+	test_list.append(putil.test.trigger_exception(putil.pcsv.write, {'file_name':'/some/file', 'data':[['Col1', 'Col2'], [1, 2]]}, OSError, 'File /some/file could not be created: Permission denied'))
+	test_list.append(putil.test.trigger_pcontract_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[True, False]}, "Expected a sequence, got 'bool'"))
+	test_list.append(putil.test.trigger_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[[]]}, ValueError, 'There is no data to save to file'))
+	assert test_list == len(test_list)*[True]
+
+def test_write_function_works():	#pylint: disable=R0201
+	""" Test if write() method behaves properly """
+	test_list = list()
+	with tempfile.NamedTemporaryFile() as fwobj:
+		file_name = fwobj.name
+		putil.pcsv.write(file_name, [['Input', 'Output'], [1, 2], [3, 4]], append=False)
+		with open(file_name, 'r') as frobj:
+			written_data = frobj.read()
+	test_list.append(written_data == 'Input,Output\r\n1,2\r\n3,4\r\n')
+	with tempfile.NamedTemporaryFile() as fwobj:
+		file_name = fwobj.name
+		putil.pcsv.write(file_name, [['Input', 'Output'], [1, 2], [3, 4]], append=False)
+		putil.pcsv.write(file_name, [[5.0, 10]], append=True)
+		with open(file_name, 'r') as frobj:
+			written_data = frobj.read()
+	test_list.append(written_data == 'Input,Output\r\n1,2\r\n3,4\r\n5.0,10\r\n')
+	assert test_list == len(test_list)*[True]
+

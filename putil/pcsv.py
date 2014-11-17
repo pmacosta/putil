@@ -75,8 +75,10 @@ def csv_data_filter(dfilter):
 				if (not putil.misc.isnumber(element)) and (not isinstance(element, str)):
 					raise ValueError(msg)
 
-
-@contracts.contract(file_name='file_name_exists', data='list(list)', append=bool)
+###
+# Fuctions
+###
+@contracts.contract(file_name='file_name', data='list(list(str|int|float))', append=bool)
 def write(file_name, data, append=True):
 	"""
 	Write data to a specified comma-separated values (CSV) file
@@ -143,7 +145,9 @@ def _number_failsafe(obj):
 		except:	#pylint: disable=W0702
 			return obj
 
-
+###
+# Classes
+###
 class CsvFile(object):
 	"""
 	Process comma-separated values (CSV) files
