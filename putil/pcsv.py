@@ -83,7 +83,7 @@ def csv_data_filter(dfilter):
 ###
 # Fuctions
 ###
-@contracts.contract(file_name='file_name', data='list(list(str|int|float))', append=bool)
+@putil.pcontracts.contract(file_name='file_name', data='list(list(str|int|float))', append=bool)
 def write(file_name, data, append=True):
 	"""
 	Write data to a specified comma-separated values (CSV) file
@@ -178,7 +178,7 @@ class CsvFile(object):
 
 	.. [[[end]]]
 	"""
-	@contracts.contract(file_name='file_name_exists', dfilter='csv_data_filter')
+	@putil.pcontracts.contract(file_name='file_name_exists', dfilter='csv_data_filter')
 	def __init__(self, file_name, dfilter=None):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
@@ -216,7 +216,7 @@ class CsvFile(object):
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter	#pylint: disable=W0212
 
-	@contracts.contract(dfilter='csv_data_filter')
+	@putil.pcontracts.contract(dfilter='csv_data_filter')
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
 		self._set_dfilter_int(dfilter)
 
@@ -230,7 +230,7 @@ class CsvFile(object):
 			self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
 			self._dfilter = dfilter
 
-	@contracts.contract(dfilter='csv_data_filter')
+	@putil.pcontracts.contract(dfilter='csv_data_filter')
 	def add_dfilter(self, dfilter):
 		"""
 		Add more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
@@ -263,7 +263,7 @@ class CsvFile(object):
 	def _get_header(self):	#pylint: disable=C0111
 		return self._header	#pylint: disable=W0212
 
-	@contracts.contract(col='None|str|list(str)', filtered=bool)
+	@putil.pcontracts.contract(col='None|str|list(str)', filtered=bool)
 	def data(self, col=None, filtered=False):
 		"""
 		 Return (filtered) file data. The returned object is a list, each item is a sub-list corresponding to a row of data; each item in the sub-lists contains data corresponding to a \
@@ -289,7 +289,7 @@ class CsvFile(object):
 		self._fdata = self._data[:]
 		self._dfilter = None
 
-	@contracts.contract(file_name='file_name', col='None|str|list(str)', filtered=bool, headers=bool, append=bool)
+	@putil.pcontracts.contract(file_name='file_name', col='None|str|list(str)', filtered=bool, headers=bool, append=bool)
 	def write(self, file_name, col=None, filtered=False, headers=True, append=True):	#pylint: disable=R0913
 		"""
 		Write (processed) data to a specified comma-separated values (CSV) file

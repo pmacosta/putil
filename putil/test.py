@@ -217,6 +217,7 @@ def trigger_exception(obj, args, extype, exmsg):
 		obj(**args)	#pylint: disable=W0142
 	return excinfo.value.message == exmsg
 
+
 def trigger_pcontract_exception(obj, args, exmsg):
 	""" Triggers exception withing the Py.test environment and records value """
 	with pytest.raises(contracts.ContractNotRespected) as excinfo:

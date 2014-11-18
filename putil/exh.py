@@ -470,7 +470,8 @@ class ExHandle(object):	#pylint: disable=R0902
 					mod_obj = sys.modules[fdict['module']]
 					container_obj = getattr(mod_obj, fdict['class'] if fdict['class'] else fdict['module'])
 				except:
-					raise RuntimeError('Could not get container object')
+					raise
+				#	raise RuntimeError('Could not get container object')
 				lines_dict = dict()
 				for element_name in dir(container_obj):
 					func_obj = getattr(container_obj, element_name)
@@ -595,7 +596,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _valid_frame(self, fin, fna):	#pylint: disable-msg=R0201
 		""" Selects valid stack frame to process """
-		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
+		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
 	def build_ex_tree(self, no_print=True):	#pylint: disable=R0912,R0914,R0915
 		""" Builds exception tree """
@@ -688,10 +689,11 @@ class ExHandle(object):	#pylint: disable=R0902
 		if len(kargs) > 1:
 			raise RuntimeError('Illegal keyword argument{0} passed to raise_exception'.format('s' if len(kargs)-(1 if 'edata' in kargs else 0) > 1 else ''))
 		obj = self.get_exception_by_name(name)
+		_, _, tbobj = sys.exc_info()
 		if len(kargs):
-			raise obj['type'](self._format_msg(obj['msg'], kargs['edata']))
+			raise obj['type'], obj['type'](self._format_msg(obj['msg'], kargs['edata'])), tbobj
 		else:
-			raise obj['type'](obj['msg'])
+			raise obj['type'], obj['type'](obj['msg']), tbobj
 
 	def raise_exception_if(self, name, condition, **kargs):
 		""" Raise exception by name if condition is true """
