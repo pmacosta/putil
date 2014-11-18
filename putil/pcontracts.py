@@ -20,10 +20,10 @@ _CUSTOM_CONTRACTS = dict()
 # Custom contracts definition
 ###
 
-@contracts.new_contract
+@new_contract()
 def file_name(name):
 	""" Contract to validate a file name (i.e. file name does not have extraneous characters, etc.) """
-	msg = 'Argument `*[argument_name]*` is not valid'
+	msg = get_exdesc()
 	# Check that argument is a string
 	if not isinstance(name, str):
 		raise ValueError(msg)
@@ -35,12 +35,16 @@ def file_name(name):
 			os.access(name, os.W_OK)
 	except:
 		raise ValueError(msg)
-register_custom_contracts('file_name', 'Argument `*[argument_name]*` is not valid')
 
-@contracts.new_contract
+
+@new_contract({\
+	'argument_invalid':{'msg':'Argument `*[argument_name]*` is not valid'},
+	'file_not_found': {'msg':'File `*[file_name]*` could not be found', 'type':IOError} \
+})
 def file_name_exists(name):
 	""" Contract to validate that a file name is valid (i.e. file name does not have extraneous characters, etc.) and that the file exists """
-	msg = 'Argument `*[argument_name]*` is not valid'
+	exdesc = get_exdesc()
+	msg = exdesc['argument_invalid']
 	# Check that argument is a string
 	if not isinstance(name, str):
 		raise ValueError(msg)
@@ -51,28 +55,64 @@ def file_name_exists(name):
 		raise ValueError(msg)
 	# Check that file exists
 	if not os.path.exists(name):
-		raise ValueError('[START CUSTOM EXCEPTION MESSAGE]File *[file_name]* could not be found[STOP CUSTOM EXCEPTION MESSAGE]')
-register_custom_contracts('file_name_exists', ['Argument `*[argument_name]*` is not valid', ['File `*[file_name]*` could not be found', IOError]])
+		msg = exdesc['file_not_found']
+		raise ValueError(msg)
 
 
 ###
 # Functions
 ###
+def get_exdesc():
+	""" Get function attribute within function """
+	sobj = inspect.stack()
+	# First frame is own function (get_exdesc), next frame is the calling function, of which its name is needed
+	fname = sobj[1][3]
+	# Get globals variables, where function attributes reside
+	fobj = sobj[2][0].f_globals[fname]
+	# Return function attribute created by new contract decorator
+	exdesc = getattr(fobj, 'exdesc')
+	return exdesc if len(exdesc) > 1 else exdesc[exdesc.keys()[0]]
+
+
+def new_contract(exdesc=None):	#pylint: disable=R0912
+	"""	New contract decorator constructor """
+	def wrapper(func):	#pylint: disable=R0912,R0914
+		""" Decorator """
+		# Make exdesc default if no argument passed
+		exdesc_int = exdesc if exdesc != None else {'argument_invalid':{'msg':'Argument `*[argument_name]*` is not valid'}}
+		# Pass to the custom contract, via a property, only the exception descriptions
+		func.exdesc = dict([(name, value['msg']) for name, value in exdesc_int.items()])
+		# Register custom contract
+		register_custom_contracts(func.__name__, exdesc_int)
+		# Apply PyContract decorator
+		return contracts.new_contract(func)
+	return wrapper
+
+
 def register_custom_contracts(contract_name, contract_exceptions):
 	""" Homogenize custom contract exception definition """
 	global _CUSTOM_CONTRACTS	#pylint: disable=W0602
+	# Validate arguments and homogenize contract exceptions
 	if not isinstance(contract_name, str):
 		raise TypeError('Argument `contract_name` is of the wrong type')
-	if (not isinstance(contract_exceptions, str)) and (not isinstance(contract_exceptions, list)):
+	if not isinstance(contract_exceptions, dict):
 		raise TypeError('Argument `contract_exceptions` is of the wrong type')
-	contract_exceptions = contract_exceptions if isinstance(contract_exceptions, list) else [contract_exceptions]
-	for exception in contract_exceptions:
-		if ((not isinstance(exception, str)) and (not isinstance(exception, list))) or \
-			(isinstance(exception, list) and (len(exception) != 2)) or \
-			(isinstance(exception, list) and ((not isinstance(exception[0], str)) or (not isinstance(exception[0], type(RuntimeError))))):
-			raise TypeError('Argument `contract_exceptions` is of the wrong type')
-	_CUSTOM_CONTRACTS[contract_name] = [(RuntimeError, exception) if isinstance(exception, str) else exception for exception in contract_exceptions]
-
+	if any(not isinstance(key, str) for key in contract_exceptions.keys()):
+		raise TypeError('Contract exception name is of the wrong type')
+	for exname, exvalue in contract_exceptions.items():
+		if ((not isinstance(exvalue, str)) and (not isinstance(exvalue, dict))) or (isinstance(exvalue, dict) and ((set(exvalue.keys()) != set(['msg'])) or (set(exvalue.keys()) != set(['msg', 'type'])))) or \
+			(isinstance(exvalue, dict) and ((not isinstance(exvalue.get('msg', ''), str)) or (not isinstance(exvalue.get('type', type), str)))):
+			raise TypeError('Contract exception `{0}` is of the wrong type'.format(exname))
+		if isinstance(exvalue, str):
+			contract_exceptions[exname] = {'msg':exvalue, 'type':RuntimeError}
+		else:
+			contract_exceptions[exname] = {'msg':exvalue['msg'], 'type':exvalue.get('type', RuntimeError)}
+	# Verify that a custom contract is not being redefined
+	if (contract_name in _CUSTOM_CONTRACTS) and (_CUSTOM_CONTRACTS[contract_name] != contract_exceptions):
+		raise RuntimeError('Attemp to redefine custrom contract `{0}`'.format(contract_name))
+	# Register new contract
+	_CUSTOM_CONTRACTS[contract_name] = contract_exceptions
+	return contract_exceptions
 
 def get_exh_obj():
 	""" Get exception handler object (if any) """
@@ -88,9 +128,15 @@ def get_replacement_token(msg):
 def get_contract_exception_message(param_name, param_value, param_contracts):
 	""" Generate message for exception """
 	for custom_contract, contract_exceptions in _CUSTOM_CONTRACTS.items():
-		if custom_contract in param_contracts[param_name]:
-			contract_exceptions = contract_exceptions if isinstance(contract_exceptions, list) else [contract_exceptions]
-			ret = dict([(exmsg, (num, extype, get_replacement_token(exmsg), param_name if get_replacement_token(exmsg) == '*[argument_name]*' else param_value)) for num, (extype, exmsg) in enumerate(contract_exceptions)])
+		exmsgs = [exvalue['msg'] for exvalue in custom_exceptions.values()]
+		exfound = False
+		for exmsg in exmsgs:
+			if exmsg in param_contracts[param_name]:
+				contract_exceptions = contract_exceptions if isinstance(contract_exceptions, list) else [contract_exceptions]
+				ret = dict([(exmsg, (num, extype, get_replacement_token(exmsg), param_name if get_replacement_token(exmsg) == '*[argument_name]*' else param_value)) for num, (extype, exmsg) in enumerate(contract_exceptions)])
+				exfound = True
+				break
+		if exfound:
 			break
 	else:
 		ret = {'Argument `*[argument_name]*` is not valid':(0, RuntimeError, 'argument_name', param_name)}
