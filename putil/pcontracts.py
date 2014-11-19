@@ -24,9 +24,9 @@ def new_contract(exdesc=None):	#pylint: disable=R0912
 	def wrapper(func):	#pylint: disable=R0912,R0914
 		""" Decorator """
 		# Make exdesc default if no argument passed
-		exdesc_int = exdesc if exdesc != None else {'argument_invalid':{'msg':'Argument `*[argument_name]*` is not valid'}}
+		exdesc_int = exdesc if exdesc != None else [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid'}]
 		# Pass to the custom contract, via a property, only the exception descriptions
-		func.exdesc = dict([(name, value['msg']) for name, value in exdesc_int.items()])
+		func.exdesc = dict([(value['name'], value['msg']) for value in exdesc_int])
 		# Register custom contract
 		register_custom_contracts(func.__name__, exdesc_int)
 		# Apply PyContract decorator
@@ -131,30 +131,36 @@ def register_custom_contracts(contract_name, contract_exceptions):
 	# Validate arguments and homogenize contract exceptions
 	if not isinstance(contract_name, str):
 		raise TypeError('Argument `contract_name` is of the wrong type')
-	if (not isinstance(contract_exceptions, dict)) and (not isinstance(contract_exceptions, str)):
+	# A contract exceptin can be a string (only one exception, default exception type) or a dictionary of exception definitions, if there is more than one or if the type if different than the default
+	if (not isinstance(contract_exceptions, list)) and (not isinstance(contract_exceptions, str)) and (not isinstance(contract_exceptions, dict)):
 		raise TypeError('Argument `contract_exceptions` is of the wrong type')
-	if isinstance(contract_exceptions, dict) and any([not isinstance(key, str) for key in contract_exceptions.keys()]):
-		raise TypeError('Contract exception name is of the wrong type')
-	for num, (exname, exvalue) in enumerate(contract_exceptions.items()):
-		if isinstance(exvalue, dict):
-			print set(exvalue.keys())
-		if isinstance(exvalue, dict) and (not ((set(exvalue.keys()) == set(['msg'])) or (set(exvalue.keys()) == set(['msg', 'type'])))):
-			raise TypeError('Contract exception is of the wrong type')
-		if isinstance(exvalue, dict) and ((not isinstance(exvalue.get('msg', ''), str)) or (not isinstance(exvalue.get('type', type), type))):
-			raise TypeError('Contract exception is of the wrong type')
-		if isinstance(exvalue, str):
-			contract_exceptions[exname] = {'num':num, 'msg':exvalue, 'type':RuntimeError, 'field':get_replacement_token(exvalue)}
-		else:
-			contract_exceptions[exname] = {'num':num, 'msg':exvalue['msg'], 'type':exvalue.get('type', RuntimeError), 'field':get_replacement_token(exvalue['msg'])}
+	if isinstance(contract_exceptions, dict):
+		contract_exceptions = [contract_exceptions]
+	if isinstance(contract_exceptions, list) and any([not isinstance(key, str) for item in contract_exceptions for key in item.keys()]):
+		raise TypeError('Contract exception definition is of the wrong type')
+	# Validate individual exception definitions
+	if isinstance(contract_exceptions, list) and any([not ((set(item.keys()) == set(['name', 'msg'])) or (set(item.keys()) == set(['name', 'msg', 'type']))) for item in contract_exceptions]):
+		raise TypeError('Contract exception definition is of the wrong type')
+	extype = type(ValueError)
+	if isinstance(contract_exceptions, list) and any([(not isinstance(item['name'], str)) or (not isinstance(item['msg'], str)) or (not isinstance(item.get('type', extype), extype)) for item in contract_exceptions]):
+		raise TypeError('Contract exception definition is of the wrong type')
+	# Homegenize exception definitions
+	if isinstance(contract_exceptions, list):
+		homogenized_exdict = dict([(exdict['name'], {'num':exnum, 'msg':exdict['msg'], 'type':exdict.get('type', RuntimeError), 'field':get_replacement_token(exdict['msg'])}) for exnum, exdict in enumerate(contract_exceptions)])
+	else:
+		homogenized_exdict = {'default':{'num':0, 'msg':contract_exceptions, 'type':RuntimeError, 'field':get_replacement_token(contract_exceptions)}}
+	# Verify exception names are unique
+	if isinstance(contract_exceptions, list) and (len(homogenized_exdict) != len(contract_exceptions)):
+		raise ValueError('Contract exception names are not unique')
 	# Verify that exception messages are unique
-	msgs = [exvalue['msg'] for exvalue in contract_exceptions.values()]
+	msgs = [exvalue['msg'] for exvalue in homogenized_exdict.values()]
 	if len(set(msgs)) != len(msgs):
 		raise ValueError('Contract exception messages are not unique')
 	# Verify that a custom contract is not being redefined
 	if (contract_name in _CUSTOM_CONTRACTS) and (_CUSTOM_CONTRACTS[contract_name] != contract_exceptions):
 		raise RuntimeError('Attemp to redefine custrom contract `{0}`'.format(contract_name))
 	# Register new contract
-	_CUSTOM_CONTRACTS[contract_name] = contract_exceptions
+	_CUSTOM_CONTRACTS[contract_name] = homogenized_exdict
 	return contract_exceptions
 
 
@@ -186,10 +192,10 @@ def file_name(name):
 		raise ValueError(msg)
 
 
-@new_contract({ \
-	'argument_invalid':{'msg':'Argument `*[argument_name]*` is not valid'},
-	'file_not_found': {'msg':'File `*[file_name]*` could not be found', 'type':IOError} \
-})
+@new_contract([ \
+	{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid'},
+	{'name':'file_not_found', 'msg':'File `*[file_name]*` could not be found', 'type':IOError} \
+])
 def file_name_exists(name):
 	""" Contract to validate that a file name is valid (i.e. file name does not have extraneous characters, etc.) and that the file exists """
 	exdesc = get_exdesc()
