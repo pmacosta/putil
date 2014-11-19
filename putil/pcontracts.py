@@ -19,16 +19,40 @@ _CUSTOM_CONTRACTS = dict()
 ###
 # Functions
 ###
-def new_contract(exdesc=None):	#pylint: disable=R0912
+def parse_new_contract_args(*args, **kwargs):
+	""" Parse argument for new_contract() function """
+	if (len(args) == 0) and (len(kwargs) == 0):
+		return [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid'}]
+	# Validate args
+	if (len(args) > 1) or ((len(args) == 1) and (len(kwargs) > 0)):
+		raise TypeError('Illegal custom contract exception definition')
+	elif (len(args) == 1) and (not (isinstance(args[0], str) or isinstance(args[0], dict))):
+		raise TypeError('Illegal custom contract exception definition')
+	elif (len(args) == 1) and isinstance(args[0], str):
+		return [{'name':'default', 'msg':args[0], 'type':RuntimeError}]
+	elif (len(args) == 1) and isinstance(args[0], dict):
+		return [args[0]]
+	# Validate kwargs
+	ret = list()
+	for name, value in kwargs.items():
+		if (not isinstance(value, str)) and (not isinstance(value, dict)):
+			raise TypeError('Illegal custom contract exception definition: `{0}`'.format(value))
+		if isinstance(value, str):
+			ret.append({'name':name, 'msg':value, 'type':RuntimeError})
+		else:
+			ret.append(dict([('name', name)]+value.items()))
+	return ret
+
+
+def new_contract(*args, **kwargs):	#pylint: disable=R0912
 	"""	New contract decorator constructor """
 	def wrapper(func):	#pylint: disable=R0912,R0914
 		""" Decorator """
-		# Make exdesc default if no argument passed
-		exdesc_int = exdesc if exdesc != None else [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid'}]
+		exdesc = parse_new_contract_args(*args, **kwargs)
 		# Pass to the custom contract, via a property, only the exception descriptions
-		func.exdesc = dict([(value['name'], value['msg']) for value in exdesc_int])
+		func.exdesc = dict([(value['name'], value['msg']) for value in exdesc])
 		# Register custom contract
-		register_custom_contracts(func.__name__, exdesc_int)
+		register_custom_contracts(func.__name__, exdesc)
 		# Apply PyContract decorator
 		return contracts.new_contract(func)
 	return wrapper
@@ -192,10 +216,7 @@ def file_name(name):
 		raise ValueError(msg)
 
 
-@new_contract([ \
-	{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid'},
-	{'name':'file_not_found', 'msg':'File `*[file_name]*` could not be found', 'type':IOError} \
-])
+@new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', file_not_found={'msg':'File `*[file_name]*` could not be found', 'type':IOError})
 def file_name_exists(name):
 	""" Contract to validate that a file name is valid (i.e. file name does not have extraneous characters, etc.) and that the file exists """
 	exdesc = get_exdesc()

@@ -6,6 +6,7 @@
 """
 putil.pcontracts unit tests
 """
+import pytest
 import functools
 
 import putil.test
@@ -48,9 +49,32 @@ def test_get_replacement_token():
 	test_list.append(putil.pcontracts.get_replacement_token('Argument `*file_name*` could not be found') == None)
 	assert test_list == len(test_list)*[True]
 
+def test_parse_new_contract_args():
+	""" Test parse_new_contract_args() function """
+	fobj = putil.pcontracts.parse_new_contract_args
+	test_list = list()
+	# Validate *args
+	test_list.append(fobj() == [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid'}])
+	with pytest.raises(TypeError) as excinfo:
+		fobj('Desc1', file_not_found='Desc2')
+	test_list.append(excinfo.value.message == 'Illegal custom contract exception definition')
+	with pytest.raises(TypeError) as excinfo:
+		fobj('Desc1', 'Desc2')
+	test_list.append(excinfo.value.message == 'Illegal custom contract exception definition')
+	with pytest.raises(TypeError) as excinfo:
+		fobj(5)
+	test_list.append(excinfo.value.message == 'Illegal custom contract exception definition')
+	test_list.append(fobj('Desc') == [{'name':'default', 'msg':'Desc', 'type':RuntimeError}])
+	test_list.append(fobj({'a':5}) == [{'a':5}])
+	# Validate **kwargs
+	with pytest.raises(TypeError) as excinfo:
+		fobj(a=45)
+	test_list.append(excinfo.value.message == 'Illegal custom contract exception definition: `45`')
+	test_list.append(fobj(char='Desc1', other={'a':5}) == [{'name':'char', 'msg':'Desc1', 'type':RuntimeError}, {'name':'other', 'a':5}])
+	assert test_list == len(test_list)*[True]
 
 def test_register_custom_contracts():
-	""" Test register_custom_contracts """
+	""" Test register_custom_contracts() function """
 	fobj = putil.pcontracts.register_custom_contracts
 	test_list = list()
 	# Test data validation
