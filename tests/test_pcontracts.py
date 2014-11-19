@@ -110,6 +110,16 @@ def test_register_custom_contracts():
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	assert test_list == len(test_list)*[True]
 
+def test_new_contract():
+	""" Tests for new_contract decorator """
+	@putil.pcontracts.new_contract()
+	def func1(name):	#pylint: disable=C0111
+		return name, putil.pcontracts.get_exdesc()
+	test_list = list()
+	test_list.append(func1('a') == ('a', 'Argument `*[argument_name]*` is not valid'))
+	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func1':{'argument_invalid':{'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}}}) == 0)
+	assert test_list == len(test_list)*[True]
+
 ###
 # Tests for create_argument_dictionary()
 ###
