@@ -114,19 +114,23 @@ def test_parse_new_contract_args():
 def test_register_custom_contracts():
 	""" Test register_custom_contracts() function """
 	fobj = putil.pcontracts.register_custom_contracts
+	ftest = putil.test.trigger_exception
+	key1 = 'contract_name'
+	key2 = 'contract_exceptions'
 	test_list = list()
 	# Test data validation
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':5, 'contract_exceptions':{}}, TypeError, 'Argument `contract_name` is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':5}, TypeError, 'Argument `contract_exceptions` is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':{'msg':'b', 'key':'hole'}}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{5:'b'}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{'a':'b'}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{'name':'a', 'msg':'b', 'x':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{'name':5, 'msg':'b', 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{'name':'a', 'msg':5, 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{'name':'a', 'msg':'b', 'type':5}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{'name':'a', 'msg':'b'}, {'name':'a', 'msg':'c',}]}, ValueError, 'Contract exception names are not unique'))
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test', 'contract_exceptions':[{'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}]}, ValueError, 'Contract exception messages are not unique'))
+	test_list.append(ftest(fobj, {key1:5, key2:{}}, TypeError, 'Argument `contract_name` is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:5}, TypeError, 'Argument `contract_exceptions` is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:{'msg':'b', 'key':'hole'}}, TypeError, 'Contract exception definition is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{5:'b'}]}, TypeError, 'Contract exception definition is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'a':'b'}]}, TypeError, 'Contract exception definition is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b', 'x':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':5, 'msg':'b', 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':5, 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b', 'type':5}]}, TypeError, 'Contract exception definition is of the wrong type'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b'}, {'name':'a', 'msg':'c',}]}, ValueError, 'Contract exception names are not unique'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}]}, ValueError, 'Contract exception messages are not unique'))
+	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'x', 'msg':'I am *[spartacus]*'}, {'name':'y', 'msg':'A move is *[spartacus]*',}]}, ValueError, 'Multiple replacement fields to be substituted by argument value'))
 	putil.pcontracts.register_custom_contracts(contract_name='test1', contract_exceptions=[{'name':'a', 'msg':'desc'}])
 	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test1', 'contract_exceptions':[{'name':'a', 'msg':'other desc'}]}, RuntimeError, 'Attemp to redefine custom contract `test1`'))
 	# Test homogenization of exception definitions

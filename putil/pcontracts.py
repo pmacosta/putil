@@ -105,7 +105,6 @@ def contract(**contract_args):	#pylint: disable=R0912
 						break
 				else:
 					exdict = get_contract_exception_message('')['default']
-					print exdict
 				if exhobj:
 					exhobj.raise_exception_if(name=exname, condition=True, edata=edata)
 				else:
@@ -198,6 +197,10 @@ def register_custom_contracts(contract_name, contract_exceptions):
 	# Verify that a custom contract is not being redefined
 	if (contract_name in _CUSTOM_CONTRACTS) and (_CUSTOM_CONTRACTS[contract_name] != contract_exceptions):
 		raise RuntimeError('Attemp to redefine custom contract `{0}`'.format(contract_name))
+	# Verify that there are at most only two replacemente fields, and one of them should be argument_name
+	fields = [exdict['field'] for exdict in homogenized_exdict.values() if exdict['field'] != None]
+	if (len(fields) > 2) or ((len(fields) == 2) and (fields[0] != 'argument_name') and  (fields[1] != 'argument_name')):
+		raise ValueError('Multiple replacement fields to be substituted by argument value')
 	# Register new contract
 	_CUSTOM_CONTRACTS[contract_name] = homogenized_exdict
 	return contract_exceptions
