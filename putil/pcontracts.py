@@ -19,29 +19,43 @@ _CUSTOM_CONTRACTS = dict()
 ###
 # Functions
 ###
+def isexception(obj):
+	""" Tests whether an object is an exception object """
+	return False if not inspect.isclass(obj) else issubclass(obj, Exception)
+
+
+def format_arg(arg):
+	""" Validate one exception specification contract tuple/list """
+	if not (isinstance(arg, str) or isexception(arg) or isinstance(arg, tuple) or isinstance(arg, list)):
+		raise TypeError('Illegal custom contract exception definition')
+	if (isinstance(arg, tuple) or isinstance(arg, list)) and ((len(arg) == 0) or (len(arg) > 2)):
+		raise TypeError('Illegal custom contract exception definition')
+	if isinstance(arg, str):
+		return {'msg':arg, 'type':RuntimeError}
+	if isexception(arg):
+		return {'msg':'Argument `*[argument_name]*` is not valid', 'type':arg}
+	if (len(arg) == 1) and (not isinstance(arg[0], str)) and (not isexception(arg[0])):
+		raise TypeError('Illegal custom contract exception definition')
+	if (len(arg) == 2) and (not ((isinstance(arg[0], str) and isexception(arg[1])) or (isinstance(arg[1], str) and isexception(arg[0])))):
+		raise TypeError('Illegal custom contract exception definition')
+	if len(arg) == 1:
+		return {'msg':arg[0] if isinstance(arg[0], str) else 'Argument `*[argument_name]*` is not valid', 'type':arg[0] if isexception(arg[0]) else RuntimeError}
+	if len(arg) == 2:
+		return {'msg':arg[0] if isinstance(arg[0], str) else arg[1], 'type':arg[0] if isexception(arg[0]) else arg[1]}
+
+
 def parse_new_contract_args(*args, **kwargs):
 	""" Parse argument for new_contract() function """
+	# No arguments
 	if (len(args) == 0) and (len(kwargs) == 0):
-		return [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid'}]
-	# Validate args
+		return [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError}]
+	# Process args
 	if (len(args) > 1) or ((len(args) == 1) and (len(kwargs) > 0)):
 		raise TypeError('Illegal custom contract exception definition')
-	elif (len(args) == 1) and (not (isinstance(args[0], str) or isinstance(args[0], dict))):
-		raise TypeError('Illegal custom contract exception definition')
-	elif (len(args) == 1) and isinstance(args[0], str):
-		return [{'name':'default', 'msg':args[0], 'type':RuntimeError}]
-	elif (len(args) == 1) and isinstance(args[0], dict):
-		return [args[0]]
-	# Validate kwargs
-	ret = list()
-	for name, value in kwargs.items():
-		if (not isinstance(value, str)) and (not isinstance(value, dict)):
-			raise TypeError('Illegal custom contract exception definition: `{0}`'.format(value))
-		if isinstance(value, str):
-			ret.append({'name':name, 'msg':value, 'type':RuntimeError})
-		else:
-			ret.append(dict([('name', name)]+value.items()))
-	return ret
+	elif len(args) == 1:
+		return [dict([('name', 'default')]+format_arg(args[0]).items())]
+	# Process kwargs
+	return [dict([('name', name)]+format_arg(kwargs[name]).items()) for name in sorted(kwargs.keys())]
 
 
 def new_contract(*args, **kwargs):	#pylint: disable=R0912
@@ -90,7 +104,8 @@ def contract(**contract_args):	#pylint: disable=R0912
 						edata = {'field':exdict['field'], 'value':param_dict[param_name]} if exdict['field'] != 'argument_name' else None
 						break
 				else:
-					raise RuntimeError('Unable to translate contract exception message')
+					exdict = get_contract_exception_message('')['default']
+					print exdict
 				if exhobj:
 					exhobj.raise_exception_if(name=exname, condition=True, edata=edata)
 				else:
@@ -182,7 +197,7 @@ def register_custom_contracts(contract_name, contract_exceptions):
 		raise ValueError('Contract exception messages are not unique')
 	# Verify that a custom contract is not being redefined
 	if (contract_name in _CUSTOM_CONTRACTS) and (_CUSTOM_CONTRACTS[contract_name] != contract_exceptions):
-		raise RuntimeError('Attemp to redefine custrom contract `{0}`'.format(contract_name))
+		raise RuntimeError('Attemp to redefine custom contract `{0}`'.format(contract_name))
 	# Register new contract
 	_CUSTOM_CONTRACTS[contract_name] = homogenized_exdict
 	return contract_exceptions
@@ -193,7 +208,7 @@ def get_contract_exception_message(param_contracts):
 	for contract_name, contract_exceptions in _CUSTOM_CONTRACTS.items():
 		if re.match(r'\<{0}\>'.format(contract_name), param_contracts):
 			return contract_exceptions
-	return {'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}
+	return {'default':{'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}}
 
 
 ###
@@ -216,7 +231,7 @@ def file_name(name):
 		raise ValueError(msg)
 
 
-@new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', file_not_found={'msg':'File `*[file_name]*` could not be found', 'type':IOError})
+@new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', file_not_found=(IOError, 'File `*[file_name]*` could not be found'))
 def file_name_exists(name):
 	""" Contract to validate that a file name is valid (i.e. file name does not have extraneous characters, etc.) and that the file exists """
 	exdesc = get_exdesc()
@@ -233,6 +248,3 @@ def file_name_exists(name):
 	if not os.path.exists(name):
 		msg = exdesc['file_not_found']
 		raise ValueError(msg)
-
-
-
