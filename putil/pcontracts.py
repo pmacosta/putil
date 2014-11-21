@@ -30,6 +30,8 @@ def format_arg(arg):
 		raise TypeError('Illegal custom contract exception definition')
 	if (isinstance(arg, tuple) or isinstance(arg, list)) and ((len(arg) == 0) or (len(arg) > 2)):
 		raise TypeError('Illegal custom contract exception definition')
+	if isinstance(arg, str) and (len(arg) == 0):
+		raise ValueError('Empty custom contract exception message')
 	if isinstance(arg, str):
 		return {'msg':arg, 'type':RuntimeError}
 	if isexception(arg):
@@ -38,6 +40,10 @@ def format_arg(arg):
 		raise TypeError('Illegal custom contract exception definition')
 	if (len(arg) == 2) and (not ((isinstance(arg[0], str) and isexception(arg[1])) or (isinstance(arg[1], str) and isexception(arg[0])))):
 		raise TypeError('Illegal custom contract exception definition')
+	if (len(arg) == 1) and isinstance(arg[0], str) and (len(arg[0]) == 0):
+		raise ValueError('Empty custom contract exception message')
+	if (len(arg) == 2) and ((isinstance(arg[0], str) and (len(arg[0]) == 0)) or (isinstance(arg[1], str) and (len(arg[1]) == 0))):
+		raise ValueError('Empty custom contract exception message')
 	if len(arg) == 1:
 		return {'msg':arg[0] if isinstance(arg[0], str) else 'Argument `*[argument_name]*` is not valid', 'type':arg[0] if isexception(arg[0]) else RuntimeError}
 	if len(arg) == 2:
@@ -62,11 +68,12 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 	"""	New contract decorator constructor """
 	def wrapper(func):	#pylint: disable=R0912,R0914
 		""" Decorator """
+		contract_name = func.__name__
 		exdesc = parse_new_contract_args(*args, **kwargs)
 		# Pass to the custom contract, via a property, only the exception descriptions
-		func.exdesc = dict([(value['name'], value['msg']) for value in exdesc])
+		func.exdesc = dict([(value['name'], '[START CONTRACT MSG: {0}]{1}[STOP CONTRACT MSG]'.format(contract_name, value['msg'])) for value in exdesc])
 		# Register custom contract
-		register_custom_contracts(func.__name__, exdesc)
+		register_custom_contracts(contract_name, exdesc)
 		# Apply PyContract decorator
 		return contracts.new_contract(func)
 	return wrapper
@@ -87,7 +94,7 @@ def contract(**contract_args):	#pylint: disable=R0912
 			exhobj = get_exh_obj()
 			if exhobj:
 				for param_name, param_contract in contract_args.items():
-					for exdict in get_contract_exception_message(param_contract).values():
+					for exdict in get_contract_exception_dict(param_contract).values():
 						exname = 'contract_{0}_{1}'.format(param_name, exdict['num'])
 						exhobj.add_exception(name=exname, extype=exdict['type'], exmsg=exdict['msg'].replace('*[argument_name]*', param_name))
 			# Actually validate arguments
@@ -98,18 +105,13 @@ def contract(**contract_args):	#pylint: disable=R0912
 				# Extract which function parameter triggered exception
 				param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]	# re.search returns the string with quotes in it
 				# Raise exception
-				for exdict in get_contract_exception_message(contract_args[param_name]).values():
-					if exdict['msg'] in eobj.error:
-						exname = 'contract_{0}_{1}'.format(param_name, exdict['num'])
-						edata = {'field':exdict['field'], 'value':param_dict[param_name]} if exdict['field'] != 'argument_name' else None
-						break
-				else:
-					exdict = get_contract_exception_message('')['default']
+				exdict = get_contract_exception_dict(eobj.error)
+				exname = 'contract_{0}_{1}'.format(param_name, exdict['num'])
+				edata = {'field':exdict['field'], 'value':param_dict[param_name]} if exdict['field'] != 'argument_name' else None
 				if exhobj:
 					exhobj.raise_exception_if(name=exname, condition=True, edata=edata)
 				else:
-					msg = exdict['msg'].replace('*[{0}]*'.format(exdict['field']), param_name if exdict['field'] == 'argument_name' else param_dict[param_name])	#pylint: disable=W0631
-					# Extract custom message from long PyContracts exception message (needed if exception handler is not used)
+					msg = exdict['msg'].replace('*[{0}]*'.format(exdict['field']), param_name if exdict['field'] == 'argument_name' else '{0}'.format(param_dict[param_name]))	#pylint: disable=W0631
 					raise exdict['type'], exdict['type'](msg), tbobj
 			except:
 				# Re-raise exception if it was not due to invalid argument
@@ -147,12 +149,12 @@ def get_exdesc():
 	# First frame is own function (get_exdesc), next frame is the calling function, of which its name is needed
 	fname = sobj[1][3]
 	# Get globals variables, where function attributes reside
-	if fname in sobj[2][0].f_locals:
-		fobj = sobj[2][0].f_locals[fname]
-	elif fname in sobj[2][0].f_globals:
-		fobj = sobj[2][0].f_globals[fname]
+	for sitem in sobj[1:]:
+		fobj = sitem[0].f_locals[fname] if fname in sitem[0].f_locals else (sitem[0].f_globals[fname] if fname in sitem[0].f_globals else None)
+		if fobj and hasattr(fobj, 'exdesc'):
+			break
 	else:
-		raise RuntimeError('Function object could not be found')
+		raise RuntimeError('Function object could not be found for function `{0}`'.format(fname))
 	# Return function attribute created by new contract decorator
 	exdesc = getattr(fobj, 'exdesc')
 	return exdesc if len(exdesc) > 1 else exdesc[exdesc.keys()[0]]
@@ -206,12 +208,22 @@ def register_custom_contracts(contract_name, contract_exceptions):
 	return contract_exceptions
 
 
-def get_contract_exception_message(param_contracts):
+def get_contract_exception_dict(contract_msg):
 	""" Generate message for exception """
-	for contract_name, contract_exceptions in _CUSTOM_CONTRACTS.items():
-		if re.match(r'\<{0}\>'.format(contract_name), param_contracts):
-			return contract_exceptions
-	return {'default':{'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}}
+	# Get contract name:
+	start_token = '[START CONTRACT MSG: '
+	stop_token = '[STOP CONTRACT MSG]'
+	if contract_msg.find(start_token) == -1:
+		return {'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}
+	else:
+		contract_msg = contract_msg[contract_msg.find(start_token)+len(start_token):]
+		contract_name = contract_msg[:contract_msg.find(']')]
+		contract_msg = contract_msg[contract_msg.find(']')+1:contract_msg.find(stop_token)]
+		exdict = _CUSTOM_CONTRACTS[contract_name]
+		for exvalue in exdict.values():
+			if exvalue['msg'] == contract_msg:
+				return exvalue
+		raise RuntimeError('Exception definition for custom contract {0} could not be found'.format(contract_name))
 
 
 ###
