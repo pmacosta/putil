@@ -68,7 +68,8 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list = list()
 		with putil.misc.TmpFile(write_file) as file_name:
 			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':'a'}, RuntimeError, 'Argument `dfilter` is not valid'))
-			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':dict()}, RuntimeError, 'Argument `dfilter` is not valid'))
+			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':dict()}, ValueError, 'Argument `dfilter` is empty'))
+			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{5:10}}, RuntimeError, 'Argument `dfilter` is not valid'))
 			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'aaa':5}}, ValueError, 'Column aaa not found in header'))
 			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':{'xx':2}}}, RuntimeError, 'Argument `dfilter` is not valid'))
 			test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name, 'dfilter':{'a':[3, {'xx':2}]}}, RuntimeError, 'Argument `dfilter` is not valid'))
@@ -109,7 +110,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':'a'}, RuntimeError, 'Argument `dfilter` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':dict()}, RuntimeError, 'Argument `dfilter` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':dict()}, ValueError, 'Argument `dfilter` is empty'))
 		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':{'aaa':5}}, ValueError, 'Column aaa not found in header'))
 		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':{'a':{'xx':2}}}, RuntimeError, 'Argument `dfilter` is not valid'))
 		test_list.append(putil.test.trigger_exception(obj.add_dfilter, {'dfilter':{'a':[3, {'xx':2}]}}, RuntimeError, 'Argument `dfilter` is not valid'))
@@ -121,6 +122,12 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		# No previous filter
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
+			obj.add_dfilter(None)
+			test_list.append(obj.data(filtered=True) == [[1, 3, 10], [1, 4, 20], [2, 4, 30], [2, 5, 40], [3, 5, 50]])
+			obj.add_dfilter({'Ctrl':1})
+			obj.add_dfilter({'Result':20})
+			test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
+			obj.reset_dfilter()
 			obj.add_dfilter({'Result':20})
 			test_list.append(obj.data(filtered=True) == [[1, 4, 20]])
 			# Two single elements
@@ -195,6 +202,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file', 'filtered':True}, ValueError, 'There is no data to save to file'))
 		obj.reset_dfilter()
 		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/some/file'}, OSError, 'File /some/file could not be created: Permission denied'))
+		test_list.append(putil.test.trigger_exception(obj.write, {'file_name':'/test.csv'}, IOError, 'File /test.csv could not be created: Permission denied'))
 		assert test_list == len(test_list)*[True]
 
 	def test_write_works(self):	#pylint: disable=R0201

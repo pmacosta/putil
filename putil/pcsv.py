@@ -28,7 +28,7 @@ def csv_data_filter(dfilter):
 	exdesc = putil.pcontracts.get_exdesc()
 	if dfilter == None:
 		return None
-	if (not isinstance(dfilter, dict)) or (isinstance(dfilter, dict) and (not len(dfilter))):
+	if not isinstance(dfilter, dict):
 		raise ValueError(exdesc['argument_invalid'])
 	if not len(dfilter):
 		raise ValueError(exdesc['argument_empty'])
