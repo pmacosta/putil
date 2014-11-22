@@ -344,3 +344,14 @@ def test_file_name_exists_contract():
 	test_list.append(putil.test.trigger_exception(func, {'sfn':'_file_does_not_exist'}, IOError, 'File `_file_does_not_exist` could not be found'))
 	func(sys.executable)	# Test with Python executable (should be portable across systems)
 	assert test_list == len(test_list)*[True]
+
+
+def test_enable_disable_contracts():
+	""" Test wrappers around disable_all(), enable_all() and all_disabled() functions """
+	test_list = list()
+	test_list.append(putil.pcontracts.all_disabled() == False)
+	putil.pcontracts.disable_all()
+	test_list.append(putil.pcontracts.all_disabled() == True)
+	putil.pcontracts.enable_all()
+	test_list.append(putil.pcontracts.all_disabled() == False)
+	assert test_list == len(test_list)*[True]

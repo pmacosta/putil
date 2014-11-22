@@ -281,4 +281,3 @@ def test_write_function_works():	#pylint: disable=R0201
 			written_data = frobj.read()
 	test_list.append(written_data == 'Input,Output\r\n1,2\r\n3,4\r\n5.0,10\r\n')
 	assert test_list == len(test_list)*[True]
-

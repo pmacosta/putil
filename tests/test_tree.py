@@ -12,12 +12,46 @@ import pytest
 
 import putil.test
 import putil.tree
+import putil.pcontracts
 
 
 ###
-# Tests for CsvFile
+# Tests for pseudo-types
 ###
+def test_node_name():
+	""" Test for node_name custom PyContract contract """
+	@putil.pcontracts.contract(node='node_name')
+	def func1(node):
+		""" Test function """
+		return node
+	test_list = list()
+	test_list.append(putil.test.trigger_exception(func1, {'node':5}, RuntimeError, 'Argument `node` is not valid'))
+	test_list.append(putil.test.trigger_exception(func1, {'node':'a. b'}, RuntimeError, 'Argument `node` is not valid'))
+	test_list.append(putil.test.trigger_exception(func1, {'node':'a.b..c'}, RuntimeError, 'Argument `node` is not valid'))
+	test_list.append(func1('a.b.c.d') == 'a.b.c.d')
+	assert test_list == len(test_list)*[True]
 
+
+def test_node_names():
+	""" Test for node_names custom PyContract contract """
+	@putil.pcontracts.contract(nodes='node_names')
+	def func2(nodes):
+		""" Test function """
+		return nodes
+	test_list = list()
+	test_list.append(putil.test.trigger_exception(func2, {'nodes':3}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(func2, {'nodes':[{'name', 'hello'}, {'name':5, 'data':'a'}],}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(func2, {'nodes':{'name':5, 'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(func2, {'nodes':{'name':'a. b', 'data':None}}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(func2, {'nodes':{'name':'a.b..c', 'data':1.0}}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(cmp(func2({'name':'a.b.c', 'data':'a'}), {'name':'a.b.c', 'data':'a'}) == 0)
+	test_list.append(func2([{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}]) == [{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}])
+	assert test_list == len(test_list)*[True]
+
+
+###
+# Tests for Tree
+###
 @pytest.fixture
 def default_trees():	#pylint: disable=R0914
 	""" Provides a default tree to be used in teseting the putil.tree.TreeNode() class """
@@ -507,3 +541,61 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		tree3.add_nodes({'name':'t3l1.leaf2', 'data':list()})
 		test_list.append(str(tree3) == u't3l1 (*)\n├leaf1\n└leaf2'.encode('utf-8'))
 		assert test_list == len(test_list)*[True]
+
+	def test_get_node_parent_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that get_node_parent method works """
+		tree1, _, _, _ = default_trees
+		test_list = list()
+		test_list.append(tree1.get_node_parent('t1l1') == dict())
+		test_list.append(cmp(tree1.get_node_parent('t1l1.t1l2b1'), {'parent':'', 'children':['t1l1.t1l2b1', 't1l1.t1l2b2'], 'data':['Tree 1, level 1']}) == 0)
+		assert test_list == len(test_list)*[True]
+
+	def test_private_get_children_works(self, default_trees):	#pylint: disable=R0201,W0621
+		""" Test _get_children method works """
+		tree1, _, _, _ = default_trees
+		test_list = list()
+		test_list.append(sorted(tree1._get_children('t1l1')) == sorted(['t1l1.t1l2b1', 't1l1.t1l2b2']))	#pylint: disable=W0212
+		test_list.append(tree1._get_children('t1l1.t1l2b2.t1l3b2c') == list())	#pylint: disable=W0212
+		assert test_list == len(test_list)*[True]
+
+	def test_private_get_parent_works(self, default_trees):	#pylint: disable=R0201,W0621
+		""" Test _get_parent method works """
+		tree1, _, _, _ = default_trees
+		test_list = list()
+		test_list.append(tree1._get_parent('t1l1') == '')	#pylint: disable=W0212
+		test_list.append(tree1._get_parent('t1l1.t1l2b2.t1l3b2c') == 't1l1.t1l2b2')	#pylint: disable=W0212
+		assert test_list == len(test_list)*[True]
+
+	def test_private_get_data_works(self, default_trees):	#pylint: disable=R0201,W0621
+		""" Test _get_data method works """
+		_, _, _, tree4 = default_trees
+		test_list = list()
+		test_list.append(tree4._get_data('root.branch1.leaf1') == list())	#pylint: disable=W0212
+		test_list.append(tree4._get_data('root.branch1') == [5, 7])	#pylint: disable=W0212
+		assert test_list == len(test_list)*[True]
+
+	def test_private_set_children_works(self, default_trees):	#pylint: disable=R0201,W0621
+		""" Test _set_children method works """
+		_, _, _, tree4 = default_trees
+		test_list = list()
+		tree4._set_children('root.branch1.leaf2', ['root.branch1.leaf2.c', 'root.branch1.leaf2.x', 'root.branch1.leaf2.a'])	#pylint: disable=W0212
+		test_list.append(tree4._get_children('root.branch1.leaf2') == ['root.branch1.leaf2.a', 'root.branch1.leaf2.c', 'root.branch1.leaf2.x'])	#pylint: disable=W0212
+		assert test_list == len(test_list)*[True]
+
+	def test_private_set_data_works(self, default_trees):	#pylint: disable=R0201,W0621
+		""" Test _set_data method works """
+		_, _, _, tree4 = default_trees
+		test_list = list()
+		tree4._set_data('root.branch1', ['Hello world'])	#pylint: disable=W0212
+		test_list.append(tree4._get_data('root.branch1') == ['Hello world'])	#pylint: disable=W0212
+		assert test_list == len(test_list)*[True]
+
+	def test_private_set_parent_works(self, default_trees):	#pylint: disable=R0201,W0621
+		""" Test _set_parent method works """
+		_, _, _, tree4 = default_trees
+		test_list = list()
+		tree4._set_parent('root.branch1.leaf2.subleaf2', 'leaf_zzz')	#pylint: disable=W0212
+		test_list.append(tree4._get_parent('root.branch1.leaf2.subleaf2') == 'leaf_zzz')	#pylint: disable=W0212
+		assert test_list == len(test_list)*[True]
+
+

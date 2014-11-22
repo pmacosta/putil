@@ -3,17 +3,11 @@
 # See LICENSE for details
 
 import csv
-import sys
 import inspect
-import contracts
 
 import putil.exh
 import putil.misc
 import putil.pcontracts
-
-# Disable PyContracts if Sphinx is running, it conflicts with written type documentation
-if 'sphinx' in sys.modules.keys():
-	contracts.disable_all()
 
 # Exception tracing initialization code
 """

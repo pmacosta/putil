@@ -21,6 +21,11 @@ _CUSTOM_CONTRACTS = dict()
 ###
 # Functions
 ###
+def all_disabled():
+	""" Wrapper around contracts.all_disabled() function """
+	return contracts.all_disabled()
+
+
 def _create_argument_value_pairs(func, *args, **kwargs):
 	"""
 	Creates a dictionary where the keys are the argument names and the values are the passed arguments values (if any)
@@ -37,6 +42,16 @@ def _create_argument_value_pairs(func, *args, **kwargs):
 		if (arguments[arg_name].default != funcsigs.Parameter.empty) and (arguments[arg_name].name not in arg_dict):
 			arg_dict[arguments[arg_name].name] = arguments[arg_name].default
 	return arg_dict
+
+
+def disable_all():
+	""" Wrapper around contracts.disable_all() function """
+	contracts.disable_all()
+
+
+def enable_all():
+	""" Wrapper around contracts.enable_all() function """
+	contracts.enable_all()
 
 
 def _format_arg(arg):
