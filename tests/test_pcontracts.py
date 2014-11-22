@@ -6,12 +6,16 @@
 """
 putil.pcontracts unit tests
 """
+import sys
+import copy
 import pytest
 import functools
 
+import putil.exh
 import putil.test
 import putil.pcontracts	#pylint: disable=W0611
 
+_ORIGINAL_CUSTOM_CONTRACTS = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
 def test_isexception():
 	""" Test isexception() function """
 	test_list = list()
@@ -19,16 +23,6 @@ def test_isexception():
 	test_list.append(putil.pcontracts.isexception(3) == False)
 	test_list.append(putil.pcontracts.isexception(RuntimeError) == True)
 	assert test_list == len(test_list)*[True]
-
-
-_EXH = 'Test global variable'
-def test_get_exh_obj():
-	""" Test get_txh_obj() function """
-	test_list = list()
-	test_list.append(putil.pcontracts.get_exh_obj() == 'Test global variable')
-	del globals()['_EXH']
-	test_list.append(putil.pcontracts.get_exh_obj() == None)
-
 
 def sample_func_global():
 	""" Global test function to test get_exdesc() function """
@@ -248,9 +242,8 @@ class TestCreateArgumentDictionary(object):	#pylint: disable=W0232
 			pass
 		assert orig_func(1, 2, ppar1=5) == {}	#pylint: disable=E1124
 
-
 putil.pcontracts._CUSTOM_CONTRACTS = dict()
-def test_contract_no_exception_handler():	#pylint: disable=C0103
+def test_contract_no_exception_handler():	#pylint: disable=C0103,R0912
 	""" Test contract decorator """
 	@putil.pcontracts.new_contract('Illegal number: *[number]*')
 	def not_zero(number):	#pylint: disable=C0111,W0612
@@ -277,6 +270,12 @@ def test_contract_no_exception_handler():	#pylint: disable=C0103
 	@putil.pcontracts.contract(fname='str,file_name_valid')
 	def func3(fname, fnumber):	#pylint: disable=C0111
 		return fname, fnumber
+	@putil.pcontracts.new_contract('Illegal number: unity')
+	def not_one(number):	#pylint: disable=C0111,W0612
+		exdesc = putil.pcontracts.get_exdesc()
+		if number == 1:
+			raise ValueError(exdesc)
+		return True
 	test_list = list()
 	test_list.append(putil.test.trigger_exception(func1, {'number':'a string'}, RuntimeError, 'Argument `number` is not valid'))
 	test_list.append(putil.test.trigger_exception(func2, {'number':0}, RuntimeError, 'Illegal number: 0'))
@@ -286,30 +285,52 @@ def test_contract_no_exception_handler():	#pylint: disable=C0103
 	test_list.append(func1(5) == 5)
 	test_list.append(func2(10) == 10)
 	test_list.append(func3('hello', 'world') == ('hello', 'world'))
+	putil.exh._set_exh_obj(putil.exh.ExHandle(putil.pcontracts.format_arg))	# Any callable object will do
+	@putil.pcontracts.contract(fname='str,file_name_valid')
+	def func4(fname, fnumber):	#pylint: disable=C0111
+		return fname, fnumber
+	@putil.pcontracts.contract(num='float|not_one')
+	def func5(num):	#pylint: disable=C0111
+		return num
+	# Register exceptions
+	func4('x', 5)
+	func5(0)
+	exlist = putil.exh._get_exh_obj()._ex_list
+	pexlist = list()
+	for exitem in exlist:
+		pexlist.append({'name':exitem['name'][exitem['name'].rfind('.')+1:], 'type':exitem['type'], 'msg':exitem['msg']})
+	test_list.append(sorted(pexlist) == sorted([{'name':'contract_func5_num_0', 'type':RuntimeError, 'msg':'Illegal number: unity'}, \
+									            {'name':'contract_func4_fname_0', 'type':IOError, 'msg':'File name `*[file_name]*` not found'}, \
+									            {'name':'contract_func4_fname_1', 'type':RuntimeError, 'msg':'The argument fname is wrong'}]))
+	test_list.append(putil.test.trigger_exception(func4, {'fname':'a', 'fnumber':5}, RuntimeError, 'The argument fname is wrong'))
+	test_list.append(putil.test.trigger_exception(func4, {'fname':'b', 'fnumber':5}, IOError, 'File name `b` not found'))
+	test_list.append(putil.test.trigger_exception(func5, {'num':1}, RuntimeError, 'Illegal number: unity'))
+	putil.exh._del_exh_obj()
+	assert test_list == len(test_list)*[True]
+
+def test_file_name_contract():
+	""" Test for file_name custom contract """
+	putil.pcontracts._CUSTOM_CONTRACTS = _ORIGINAL_CUSTOM_CONTRACTS
+	@putil.pcontracts.contract(sfn='file_name')
+	def func(sfn):
+		""" Sample function to test file_name custom contract """
+		return sfn
+	test_list = list()
+	test_list.append(putil.test.trigger_exception(func, {'sfn':3}, RuntimeError, 'Argument `sfn` is not valid'))
+	test_list.append(putil.test.trigger_exception(func, {'sfn':'test\0'}, RuntimeError, 'Argument `sfn` is not valid'))
+	func(sys.executable)	# Test with Python executable (should be portable across systems), file should be valid although not having permissions to write it
 	assert test_list == len(test_list)*[True]
 
 
-#def test_file_name_contract():
-#	""" Test for file_name custom contract """
-#	@contracts.contract(sfn='file_name')
-#	def func(sfn):
-#		""" Sample function to test file_name custom contract """
-#		return sfn
-#	test_list = list()
-#	test_list.append(putil.test.trigger_pcontract_exception(func, {'sfn':3}, 'File name is not valid'))
-#	test_list.append(putil.test.trigger_pcontract_exception(func, {'sfn':'test\0'}, 'File name is not valid'))
-#	func(sys.executable)	# Test with Python executable (should be portable across systems), file should be valid although not having permissions to write it
-#	assert test_list == len(test_list)*[True]
-#
-#def test_file_name_exists_contract():
-#	""" Test for file_name_exists custom contract """
-#	@contracts.contract(sfn='file_name_exists')
-#	def func(sfn):
-#		""" Sample function to test file_name_exists custom contract """
-#		return sfn
-#	test_list = list()
-#	test_list.append(putil.test.trigger_pcontract_exception(func, {'sfn':3}, 'File name is not valid'))
-#	test_list.append(putil.test.trigger_pcontract_exception(func, {'sfn':'test\0'}, 'File name is not valid'))
-#	test_list.append(putil.test.trigger_pcontract_exception(func, {'sfn':'_file_does_not_exist'}, 'File _file_does_not_exist could not be found'))
-#	func(sys.executable)	# Test with Python executable (should be portable across systems)
-#	assert test_list == len(test_list)*[True]
+def test_file_name_exists_contract():
+	""" Test for file_name_exists custom contract """
+	@putil.pcontracts.contract(sfn='file_name_exists')
+	def func(sfn):
+		""" Sample function to test file_name_exists custom contract """
+		return sfn
+	test_list = list()
+	test_list.append(putil.test.trigger_exception(func, {'sfn':3}, RuntimeError, 'Argument `sfn` is not valid'))
+	test_list.append(putil.test.trigger_exception(func, {'sfn':'test\0'}, RuntimeError, 'Argument `sfn` is not valid'))
+	test_list.append(putil.test.trigger_exception(func, {'sfn':'_file_does_not_exist'}, IOError, 'File `_file_does_not_exist` could not be found'))
+	func(sys.executable)	# Test with Python executable (should be portable across systems)
+	assert test_list == len(test_list)*[True]

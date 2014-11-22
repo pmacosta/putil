@@ -19,6 +19,24 @@ import putil.tree
 ###
 # Functions
 ###
+def _set_exh_obj(value):
+	""" Create exception handler object """
+	mod_obj = sys.modules['__main__']
+	setattr(mod_obj, '_EXH', value)
+
+
+def _get_exh_obj():
+	""" Get exception handler object (if any) """
+	mod_obj = sys.modules['__main__']
+	return getattr(mod_obj, '_EXH') if hasattr(mod_obj, '_EXH') else None
+
+
+def _del_exh_obj():
+	""" Create exception handler object """
+	mod_obj = sys.modules['__main__']
+	delattr(mod_obj, '_EXH')
+
+
 def _get_callable_path(frame_obj, func_obj):
 	""" Get full path of callable """
 	comp = dict()
@@ -441,15 +459,16 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
 		""" Substitute parameters in exception message """
-		edata = edata if isinstance(edata, list) else [edata]
-		for field in edata:
-			if 'field' not in field:
-				raise ValueError('Key `field` not in field definition')
-			if 'value' not in field:
-				raise ValueError('Key `value` not in field definition')
-			if '*[{0}]*'.format(field['field']) not in msg:
-				raise RuntimeError('Field {0} not in exception message'.format(field['field']))
-			msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
+		if edata is not None:
+			edata = edata if isinstance(edata, list) else [edata]
+			for field in edata:
+				if 'field' not in field:
+					raise ValueError('Key `field` not in field definition')
+				if 'value' not in field:
+					raise ValueError('Key `value` not in field definition')
+				if '*[{0}]*'.format(field['field']) not in msg:
+					raise RuntimeError('Field {0} not in exception message'.format(field['field']))
+				msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 		return msg
 
 	def _get_callable_name(self):	#pylint: disable=R0201,R0914

@@ -14,6 +14,8 @@ import funcsigs
 import contracts
 import decorator
 
+import putil.exh
+
 _CUSTOM_CONTRACTS = dict()
 
 ###
@@ -91,11 +93,12 @@ def contract(**contract_args):	#pylint: disable=R0912
 			return func
 		else:
 			# Register exceptions if exception handler object exists
-			exhobj = get_exh_obj()
+			exhobj = putil.exh._get_exh_obj()	#pylint: disable=W0212
 			if exhobj:
-				for param_name, param_contract in contract_args.items():
-					for exdict in get_contract_exception_dict(param_contract).values():
-						exname = 'contract_{0}_{1}'.format(param_name, exdict['num'])
+				for param_name, param_contract in contract_args.items():	# param_name=param_value, as in num='str|float'
+					custom_contracts_dict = [item for sublist in [_CUSTOM_CONTRACTS[custom_contract].values() for custom_contract in _CUSTOM_CONTRACTS if re.search(r'\b{0}\b'.format(custom_contract), param_contract)] for item in sublist]
+					for exdict in custom_contracts_dict:
+						exname = 'contract_{0}_{1}_{2}'.format(func.__name__, param_name, exdict['num'])
 						exhobj.add_exception(name=exname, extype=exdict['type'], exmsg=exdict['msg'].replace('*[argument_name]*', param_name))
 			# Actually validate arguments
 			try:
@@ -106,8 +109,8 @@ def contract(**contract_args):	#pylint: disable=R0912
 				param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]	# re.search returns the string with quotes in it
 				# Raise exception
 				exdict = get_contract_exception_dict(eobj.error)
-				exname = 'contract_{0}_{1}'.format(param_name, exdict['num'])
-				edata = {'field':exdict['field'], 'value':param_dict[param_name]} if exdict['field'] != 'argument_name' else None
+				exname = 'contract_{0}_{1}_{2}'.format(func.__name__, param_name, exdict['num'])
+				edata = {'field':exdict['field'], 'value':param_dict[param_name]} if (exdict['field'] and (exdict['field'] != 'argument_name')) else None
 				if exhobj:
 					exhobj.raise_exception_if(name=exname, condition=True, edata=edata)
 				else:
@@ -135,12 +138,6 @@ def create_argument_dictionary(func, *args, **kwargs):
 		if (arguments[arg_name].default != funcsigs.Parameter.empty) and (arguments[arg_name].name not in arg_dict):
 			arg_dict[arguments[arg_name].name] = arguments[arg_name].default
 	return arg_dict
-
-
-def get_exh_obj():
-	""" Get exception handler object (if any) """
-	root_module = inspect.stack()[-1][0]
-	return root_module.f_locals.get('_EXH', None) if root_module else None
 
 
 def get_exdesc():
