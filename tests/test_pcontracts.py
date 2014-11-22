@@ -18,15 +18,15 @@ import putil.pcontracts	#pylint: disable=W0611
 _ORIGINAL_CUSTOM_CONTRACTS = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
 
 def sample_func_global():
-	""" Global test function to test _get_exdesc() function """
-	tmp_global = putil.pcontracts._get_exdesc()
+	""" Global test function to test get_exdesc() function """
+	tmp_global = putil.pcontracts.get_exdesc()
 	return tmp_global
 
 def test_get_exdesc():
-	""" Test _get_exdesc() function """
+	""" Test get_exdesc() function """
 	def sample_func_local():
-		""" Local test function to test _get_exdesc() function """
-		tmp_local = putil.pcontracts._get_exdesc()
+		""" Local test function to test get_exdesc() function """
+		tmp_local = putil.pcontracts.get_exdesc()
 		return tmp_local
 	test_list = list()
 	sample_func_local.exdesc = 'Test local function property'
@@ -34,7 +34,7 @@ def test_get_exdesc():
 	test_list.append(sample_func_local() == 'Test local function property')
 	test_list.append(sample_func_global() == 'Test global function property')
 	del globals()['sample_func_global']
-	test_list.append(putil.test.trigger_exception(putil.pcontracts._get_exdesc, {}, RuntimeError, 'Function object could not be found for function `trigger_exception`'))
+	test_list.append(putil.test.trigger_exception(putil.pcontracts.get_exdesc, {}, RuntimeError, 'Function object could not be found for function `trigger_exception`'))
 	assert test_list == len(test_list)*[True]
 
 
@@ -147,20 +147,20 @@ def test_new_contract():
 	""" Tests for new_contract decorator """
 	@putil.pcontracts.new_contract()
 	def func1(name1):	#pylint: disable=C0111
-		return name1, putil.pcontracts._get_exdesc()
+		return name1, putil.pcontracts.get_exdesc()
 	test_list = list()
 	test_list.append(func1('a') == ('a', '[START CONTRACT MSG: func1]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]'))
 	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func1':{'argument_invalid':{'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}}}) == 0)
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract('Simple message')
 	def func2(name2):	#pylint: disable=C0111
-		return name2, putil.pcontracts._get_exdesc()
+		return name2, putil.pcontracts.get_exdesc()
 	test_list.append(func2('bc') == ('bc', '[START CONTRACT MSG: func2]Simple message[STOP CONTRACT MSG]'))
 	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func2':{'default':{'num':0, 'msg':'Simple message', 'type':RuntimeError, 'field':None}}}) == 0)
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract(ex1='Medium message', ex2=('Complex *[data]*', TypeError))
 	def func3(name3):	#pylint: disable=C0111
-		return name3, putil.pcontracts._get_exdesc()
+		return name3, putil.pcontracts.get_exdesc()
 	test_list.append(func3('def') == ('def', {'ex1':'[START CONTRACT MSG: func3]Medium message[STOP CONTRACT MSG]', 'ex2':'[START CONTRACT MSG: func3]Complex *[data]*[STOP CONTRACT MSG]'}))
 	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func3':{'ex1':{'num':0, 'msg':'Medium message', 'type':RuntimeError, 'field':None}, 'ex2':{'num':1, 'msg':'Complex *[data]*', 'type':TypeError, 'field':'data'}}}) == 0)
 	assert test_list == len(test_list)*[True]
@@ -248,13 +248,13 @@ def test_contract():	#pylint: disable=C0103,R0912
 	""" Test contract decorator """
 	@putil.pcontracts.new_contract('Illegal number: *[number]*')
 	def not_zero(number):	#pylint: disable=C0111,W0612
-		exdesc = putil.pcontracts._get_exdesc()
+		exdesc = putil.pcontracts.get_exdesc()
 		if number == 0:
 			raise ValueError(exdesc)
 		return True
 	@putil.pcontracts.new_contract(wrong_file_name='The argument *[argument_name]* is wrong', file_not_found=(IOError, 'File name `*[file_name]*` not found'))
 	def file_name_valid(name):	#pylint: disable=C0111,W0612
-		exdesc = putil.pcontracts._get_exdesc()
+		exdesc = putil.pcontracts.get_exdesc()
 		if name == 'a':
 			raise ValueError(exdesc['wrong_file_name'])
 		if name == 'b':
@@ -273,7 +273,7 @@ def test_contract():	#pylint: disable=C0103,R0912
 		return fname, fnumber
 	@putil.pcontracts.new_contract('Illegal number: unity')
 	def not_one(number):	#pylint: disable=C0111,W0612
-		exdesc = putil.pcontracts._get_exdesc()
+		exdesc = putil.pcontracts.get_exdesc()
 		if number == 1:
 			raise ValueError(exdesc)
 		return True

@@ -92,10 +92,10 @@ def _get_custom_contract(param_contract):
 	return None
 
 
-def _get_exdesc():
+def get_exdesc():
 	""" Get function attribute within function """
 	sobj = inspect.stack()
-	# First frame is own function (_get_exdesc), next frame is the calling function, of which its name is needed
+	# First frame is own function (get_exdesc), next frame is the calling function, of which its name is needed
 	fname = sobj[1][3]
 	# Get globals variables, where function attributes reside
 	for sitem in sobj[1:]:
@@ -239,7 +239,7 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 @new_contract()
 def file_name(name):
 	""" Contract to validate a file name (i.e. file name does not have extraneous characters, etc.) """
-	msg = _get_exdesc()
+	msg = get_exdesc()
 	# Check that argument is a string
 	if not isinstance(name, str):
 		raise ValueError(msg)
@@ -256,7 +256,7 @@ def file_name(name):
 @new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', file_not_found=(IOError, 'File `*[file_name]*` could not be found'))
 def file_name_exists(name):
 	""" Contract to validate that a file name is valid (i.e. file name does not have extraneous characters, etc.) and that the file exists """
-	exdesc = _get_exdesc()
+	exdesc = get_exdesc()
 	msg = exdesc['argument_invalid']
 	# Check that argument is a string
 	if not isinstance(name, str):

@@ -277,7 +277,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		for child in sorted(self._extable.keys()):
 			child_name = child.split('.')[min_child_name_hierarchy]
 			exoutput = ['']
-			exlist = self._extable[child]['native_exceptions']+self._extable[child]['cross_hierarchical_exceptions']
+			exlist = self._extable[child]['native_exceptions']+self._extable[child]['cross_hierarchical_exceptions'] if self._trace_obj_type else self._extable[child]['flat_exceptions']
 			if child_name.find('[') != -1:
 				prop_name = child_name[:child_name.find('[')]
 				for child2 in [member for member in sorted(self._extable.keys()) if member != child]:

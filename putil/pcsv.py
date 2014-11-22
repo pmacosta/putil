@@ -28,23 +28,25 @@ exobj_funcs = trace_ex_pcsv.trace_functions(no_print=True)
 ###
 # DataFilter custom pseudo-type
 ###
-@contracts.new_contract
+@putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_empty=(ValueError, 'Argument `*[argument_name]*` is empty'))
 def csv_data_filter(dfilter):
 	""" Data filter specification pseudo-type """
-	msg = 'Invalid data filter'
+	exdesc = putil.pcontracts.get_exdesc()
 	if dfilter == None:
 		return None
 	if (not isinstance(dfilter, dict)) or (isinstance(dfilter, dict) and (not len(dfilter))):
-		raise ValueError(msg)
+		raise ValueError(exdesc['argument_invalid'])
+	if not len(dfilter):
+		raise ValueError(exdesc['argument_empty'])
 	if any([not isinstance(col_name, str) for col_name in dfilter.keys()]):
-		raise ValueError(msg)
+		raise ValueError(exdesc['argument_invalid'])
 	for col_name in dfilter:
 		if (not isinstance(dfilter[col_name], list)) and (not putil.misc.isnumber(dfilter[col_name])) and (not isinstance(dfilter[col_name], str)):
-			raise ValueError(msg)
+			raise ValueError(exdesc['argument_invalid'])
 		if isinstance(dfilter[col_name], list):
 			for element in dfilter[col_name]:
 				if (not putil.misc.isnumber(element)) and (not isinstance(element, str)):
-					raise ValueError(msg)
+					raise ValueError(exdesc['argument_invalid'])
 
 ###
 # Fuctions
@@ -66,11 +68,19 @@ def write(file_name, data, append=True):
 	.. [[[cog cog.out(exobj_funcs.get_sphinx_doc_for_member('write')) ]]]
 
 	:raises:
+	 * IOError (File *[file_name]* could not be created: *[reason]*)
+
+	 * OSError (File *[file_name]* could not be created: *[reason]*)
+
 	 * RuntimeError (Argument `append` is not valid)
 
 	 * RuntimeError (Argument `data` is not valid)
 
 	 * RuntimeError (Argument `file_name` is not valid)
+
+	 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
+
+	 * ValueError (There is no data to save to file)
 
 	.. [[[end]]]
 	"""
@@ -177,9 +187,7 @@ class CsvFile(object):
 
 	def _validate_dfilter(self, dfilter):
 		""" Validate that all columns in filter are in header """
-		self._exh.add_exception(name='dfilter_empty', extype=ValueError, exmsg='Argument `dfilter` is empty')
 		if dfilter is not None:
-			self._exh.raise_exception_if(name='dfilter_empty', condition=len(dfilter) == 0)
 			for key in dfilter:
 				self._in_header(key)
 
@@ -311,8 +319,6 @@ class CsvFile(object):
 			col = [col] if isinstance(col, str) else col
 			header = self.header if col is None else [self.header[self._header_upper.index(element.upper())] for element in col]
 		self._exh.raise_exception_if(name='write', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
-		#if (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)):
-		#	raise ValueError('There is no data to save to file')
 		data = [["''" if col is None else col for col in row] for row in data]
 		_write_int(file_name, [header]+data if headers else data, append=append)
 
@@ -355,4 +361,3 @@ class CsvFile(object):
 
 	:rtype:	list of strings
 	"""	#pylint: disable=W0105
-
