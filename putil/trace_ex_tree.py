@@ -1,19 +1,19 @@
 # trace_ex_tree		pylint: disable=C0111
 # Copyright (c) 2013-2014 Pablo Acosta-Serafini
 # See LICENSE for details
+# pylint: disable=W0212
+
+import copy
 
 import putil.exh
 import putil.misc
 import putil.tree
 
-_EXH = None
-
 def trace_tree(no_print=False):
 	""" Trace Tree class """
-	global _EXH	#pylint: disable=W0603
 	if not no_print:
 		print putil.misc.pcolor('Tracing Tree', 'blue')
-	_EXH = putil.exh.ExHandle(putil.tree.Tree)
+	putil.exh._set_exh_obj(putil.exh.ExHandle(putil.tree.Tree))
 	tobj = putil.tree.Tree()
 	tobj.add_nodes([
 		{'name':'dummy.root.branch1', 'data':list()},
@@ -44,9 +44,12 @@ def trace_tree(no_print=False):
 	tobj.root_node	#pylint: disable=W0104
 	tobj.root_name	#pylint: disable=W0104
 
-	_EXH.build_ex_tree(no_print=no_print)
-	_EXH.print_ex_tree()
-	_EXH.print_ex_table()
+	exobj = putil.exh._get_exh_obj()
+	exobj.build_ex_tree(no_print=no_print)
+	if not no_print:
+		exobj.print_ex_tree()
+		exobj.print_ex_table()
+	return copy.deepcopy(exobj)
 
 
 if __name__ == '__main__':

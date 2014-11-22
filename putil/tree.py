@@ -11,6 +11,7 @@ import inspect
 import contracts
 
 import putil.exh
+import putil.pcontracts
 
 # Disable PyContracts if Sphinx is running, it conflicts with written type documentation
 if 'sphinx' in sys.modules.keys():
@@ -19,50 +20,8 @@ if 'sphinx' in sys.modules.keys():
 # Exception tracing initialization code
 """
 [[[cog
-import sys
-import copy
-import tempfile
-
-import putil.exh
-import putil.misc
-import putil.pcsv
-
-mod_obj = sys.modules['__main__']
-
-# Trace Tree class
-setattr(mod_obj, '_EXH', putil.exh.ExHandle(putil.tree.Tree))
-exobj = getattr(mod_obj, '_EXH')
-tobj = putil.tree.Tree()
-tobj.add_nodes([
-	{'name':'dummy.root.branch1', 'data':list()},
-	{'name':'dummy.root.branch2', 'data':list()},
-	{'name':'dummy.root.branch1.leaf1', 'data':list()},
-	{'name':'dummy.root.branch1.leaf1.subleaf1', 'data':333},
-	{'name':'dummy.root.branch1.leaf2', 'data':'Hello world!'},
-	{'name':'dummy.root.branch1.leaf2.subleaf2', 'data':list()},
-])
-tobj.collapse_subtree('dummy.root.branch1')
-tobj.copy_subtree('dummy.root.branch1', 'dummy.root.branch3')
-tobj.delete_subtree('dummy.root.branch2')
-tobj.flatten_subtree('dummy.root.branch1')
-tobj.get_children('dummy.root')
-tobj.get_data('dummy.root')
-tobj.get_leafs('dummy.root')
-tobj.get_node('dummy.root')
-tobj.get_node_children('dummy.root')
-tobj.get_node_parent('dummy.root.branch1.leaf1.subleaf1')
-tobj.get_subtree('dummy.root.branch3')
-tobj.is_root('dummy.root')
-tobj.in_tree('dummy.root')
-tobj.is_leaf('dummy.root')
-tobj.make_root('dummy.root.branch3')
-tobj.print_node('dummy.root.branch3')
-tobj.rename_node('dummy.root.branch3', 'root')
-tobj.nodes
-tobj.root_node
-tobj.root_name
-exobj.build_ex_tree(no_print=True)
-exobj_tree = copy.deepcopy(exobj)
+import trace_ex_tree
+exobj_tree = trace_ex_tree.trace_tree(no_print=True)
 ]]]
 [[[end]]]
 """	#pylint: disable=W0105
@@ -71,16 +30,16 @@ exobj_tree = copy.deepcopy(exobj)
 ###
 # Node name custom pseudo-type
 ###
-@contracts.new_contract
+@putil.pcontracts.new_contract()
 def node_name(name):
 	""" Hierarchical node name data type class """
 	if (not isinstance(name, str)) or (isinstance(name, str) and ((' ' in name) or any([element.strip() == '' for element in name.strip().split('.')]))):
-		raise ValueError('Invalid node name')
+		raise ValueError(putil.pcontracts.get_exdesc())
 
-@contracts.new_contract
+@putil.pcontracts.new_contract()
 def node_names(names):
 	""" Hierarchical node names data type class """
-	msg = 'Invalid node name'
+	msg = putil.pcontracts.get_exdesc()
 	names = names if isinstance(names, list) else [names]
 	for ndict in names:
 		if not isinstance(ndict, dict) or (isinstance(ndict, dict) and (set(ndict.keys()) != set(['name', 'data']))):
@@ -254,7 +213,7 @@ class Tree(object):	#pylint: disable=R0903
 	def _split_node_name(self, name, root_name=None):	#pylint: disable=C0111,R0201
 		return [element.strip() for element in name.strip().split('.')][0 if not root_name else self._root_hierarchy_length:]
 
-	@contracts.contract(nodes='node_names')
+	@putil.pcontracts.contract(nodes='node_names')
 	def add_nodes(self, nodes):
 		"""
 		Add nodes to tree
@@ -274,7 +233,10 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add_nodes')) ]]]
 
-		:raises: ValueError (Illegal node name: *[node_name]*)
+		:raises:
+		 * RuntimeError (Argument `nodes` is not valid)
+
+		 * ValueError (Illegal node name: *[node_name]*)
 
 		.. [[[end]]]
 
@@ -319,7 +281,7 @@ class Tree(object):	#pylint: disable=R0903
 				self._create_intermediate_nodes(name)
 			self._db[name]['data'] += copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def collapse_subtree(self, name):
 		"""
 		Collapses hierarchy. Nodes that have a single child and no data are combined with their child as a single tree node
@@ -329,7 +291,10 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse_subtree')) ]]]
 
-		:raises: RuntimeError (Node *[node_name]* not in tree)
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[node_name]* not in tree)
 
 		.. [[[end]]]
 
@@ -359,7 +324,7 @@ class Tree(object):	#pylint: disable=R0903
 		for child in copy.copy(self._db[name]['children']):
 			self._collapse_node(child)
 
-	@contracts.contract(source_node='node_name', dest_node='node_name')
+	@putil.pcontracts.contract(source_node='node_name', dest_node='node_name')
 	def copy_subtree(self, source_node, dest_node):
 		"""
 		Copy a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-treeexist in the destination sub-tree
@@ -372,6 +337,10 @@ class Tree(object):	#pylint: disable=R0903
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('copy_subtree')) ]]]
 
 		:raises:
+		 * RuntimeError (Argument `dest_node` is not valid)
+
+		 * RuntimeError (Argument `source_node` is not valid)
+
 		 * RuntimeError (Illegal root in destination node)
 
 		 * RuntimeError (Node *[node_name]* not in tree)
@@ -416,7 +385,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._db[dest_node]['parent'] = parent
 		self._db[parent]['children'] = sorted(self._db[parent]['children']+[dest_node])
 
-	@contracts.contract(nodes='node_name|list(node_name)')
+	@putil.pcontracts.contract(nodes='node_name|list(node_name)')
 	def delete_subtree(self, nodes):
 		"""
 		Delete nodes (and their sub-trees) from tree
@@ -426,7 +395,10 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete_subtree')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `nodes` is not valid)
+
+		 * RuntimeError (Node *[node_name]* not in tree)
 
 		.. [[[end]]]
 
@@ -450,7 +422,7 @@ class Tree(object):	#pylint: disable=R0903
 		"""
 		self._delete_subtree(nodes)
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def flatten_subtree(self, name):
 		"""
 		Flatten sub-tree below a particular node if the node contains no data
@@ -517,7 +489,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._db[parent]['children'] = sorted(self._db[parent]['children']+children)
 			del self._db[name]
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def get_children(self, name):	#pylint: disable=C0111
 		"""
 		Return children node names of a node
@@ -535,7 +507,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return sorted(self._db[name]['children'])
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def get_data(self, name):	#pylint: disable=C0111
 		"""
 		Return node data
@@ -553,7 +525,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[name]['data']
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def get_leafs(self, name):	#pylint: disable=C0111
 		"""
 		Return sub-tree leaf node(s)
@@ -572,7 +544,7 @@ class Tree(object):	#pylint: disable=R0903
 		return [node for node in self._get_subtree(name) if self.is_leaf(node)]
 
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def get_node(self, name):	#pylint: disable=C0111
 		"""
 		Get tree node structure. The structure is a dictionary with the following keys:
@@ -596,7 +568,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[name]
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def get_node_children(self, name):	#pylint: disable=C0111
 		"""
 		Return list of children structures of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure.
@@ -614,7 +586,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return [self._db[child] for child in self._db[name]['children']]
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def get_node_parent(self, name):	#pylint: disable=C0111
 		"""
 		Return parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure
@@ -632,7 +604,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def get_subtree(self, name):
 		"""
 		Return all node names in a sub-tree
@@ -664,7 +636,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return self._get_subtree(name)
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def is_root(self, name):	#pylint: disable=C0111
 		"""
 		Root node flag, *True* if node is the root node (node with no ancestors), *False* otherwise
@@ -682,7 +654,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return not self._db[name]['parent']
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def in_tree(self, name):
 		"""
 		Return *True* if node name is in the tree, *False* otherwise
@@ -692,11 +664,14 @@ class Tree(object):	#pylint: disable=R0903
 		:rtype	data: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
+
+		:raises: RuntimeError (Argument `name` is not valid)
+
 		.. [[[end]]]
 		"""
 		return name in self._db
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def is_leaf(self, name):	#pylint: disable=C0111
 		"""
 		Leaf node flag, *True* if node is a leaf node (node with no children), *False* otherwise
@@ -714,7 +689,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._node_in_tree(name)
 		return not self._db[name]['children']
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def make_root(self, name):	#pylint: disable=C0111
 		"""
 		Makes a sub-node the root node of the tree. All nodes not belonging to the sub-tree are deleted
@@ -754,7 +729,7 @@ class Tree(object):	#pylint: disable=R0903
 			self._root = name
 			self._root_hierarchy_length = len(self.root_name.split('.'))
 
-	@contracts.contract(name='node_name')
+	@putil.pcontracts.contract(name='node_name')
 	def print_node(self, name):	#pylint: disable=C0111
 		"""
 		Prints node information (parent, children and data)
@@ -774,7 +749,7 @@ class Tree(object):	#pylint: disable=R0903
 		data = node['data'][0] if node['data'] and (len(node['data']) == 1) else node['data']
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
 
-	@contracts.contract(name='node_name', new_name='node_name')
+	@putil.pcontracts.contract(name='node_name', new_name='node_name')
 	def rename_node(self, name, new_name):
 		"""
 		Rename a tree node. It is typical to have a root node name with more than one hierarchy level after using :py:meth:`putil.tree.Tree.make_root`. In this instance the root node *can* be \
@@ -790,9 +765,13 @@ class Tree(object):	#pylint: disable=R0903
 
 		 * RuntimeError (Argument `new_name` is an illegal root node name)
 
+		 * RuntimeError (Argument `new_name` is not valid)
+
 		 * RuntimeError (Node *[node_name]* already exists)
 
 		 * Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+
+		 * Same as :py:meth:`putil.tree.Tree.in_tree`
 
 		.. [[[end]]]
 

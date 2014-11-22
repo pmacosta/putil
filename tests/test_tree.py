@@ -91,23 +91,23 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		method_list = ['collapse_subtree', 'flatten_subtree', 'get_children', 'get_data', 'get_leafs', 'get_node', 'get_node_children', 'get_node_parent', 'get_subtree', 'print_node', 'is_root', \
 				 'is_leaf', 'make_root']
 		exdesc = list()
-		exdesc.append(({'name':5}, TypeError, 'Argument `name` is of the wrong type'))
-		exdesc.append(({'name':'a.b..c'}, ValueError, 'Argument `name` is not a valid node name'))
+		exdesc.append(({'name':5}, RuntimeError, 'Argument `name` is not valid'))
+		exdesc.append(({'name':'a.b..c'}, RuntimeError, 'Argument `name` is not valid'))
 		exdesc.append(({'name':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
 		putil.test.evaluate_exception_series([(getattr(obj, method), args, extype, exmsg) for method in method_list for args, extype, exmsg in exdesc])
 
 	def test_add_errors(self):	#pylint: disable=C0103,R0201
 		""" Test that add() method raises the right exceptions """
 		exdesc = list()
-		exdesc.append(({'nodes':5}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':{'key':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':{'name':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':{'data':'a'}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':{'name':'a.b', 'data':'a', 'edata':5}}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'key':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'data':'a'}]}, TypeError, 'Argument `nodes` is of the wrong type'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a.b', 'data':'a', 'edata':5}]}, TypeError, 'Argument `nodes` is of the wrong type'))
+		exdesc.append(({'nodes':5}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':{'key':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':{'name':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':{'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':{'name':'a.b', 'data':'a', 'edata':5}}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'key':'a'}]}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a'}]}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'data':'a'}]}, RuntimeError, 'Argument `nodes` is not valid'))
+		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a.b', 'data':'a', 'edata':5}]}, RuntimeError, 'Argument `nodes` is not valid'))
 		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]}, ValueError, 'Illegal node name: d.e'))
 		putil.test.evaluate_exception_series(exdesc, putil.tree.Tree().add_nodes)
 
@@ -181,11 +181,11 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		obj = putil.tree.Tree()
 		obj.add_nodes([{'name':'root', 'data':list()}, {'name':'root.leaf1', 'data':5}, {'name':'root.leaf2', 'data':7}])
 		test_list = list()
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':5, 'dest_node':'root.x'}, TypeError, 'Argument `source_node` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'.x.y', 'dest_node':'root.x'}, ValueError, 'Argument `source_node` is not a valid node name'))
+		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':5, 'dest_node':'root.x'}, RuntimeError, 'Argument `source_node` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'.x.y', 'dest_node':'root.x'}, RuntimeError, 'Argument `source_node` is not valid'))
 		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'hello', 'dest_node':'root.x'}, RuntimeError, 'Node hello not in tree'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':5}, TypeError, 'Argument `dest_node` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':'x..y'}, ValueError, 'Argument `dest_node` is not a valid node name'))
+		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':5}, RuntimeError, 'Argument `dest_node` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':'x..y'}, RuntimeError, 'Argument `dest_node` is not valid'))
 		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':'teto.leaf2'}, RuntimeError, 'Illegal root in destination node'))
 		assert test_list == len(test_list)*[True]
 
@@ -227,10 +227,10 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		""" Test that delete() method raises the right exceptions """
 		tree1, _, _, _ = default_trees
 		test_list = list()
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':'a..b'}, ValueError, 'Argument `nodes` is not a valid node name'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 'a..b']}, TypeError, 'Argument `nodes` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':5}, TypeError, 'Argument `nodes` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 5]}, TypeError, 'Argument `nodes` is of the wrong type'))
+		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':'a..b'}, RuntimeError, 'Argument `nodes` is not valid'))
+		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 'a..b']}, RuntimeError, 'Argument `nodes` is not valid'))
+		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':5}, RuntimeError, 'Argument `nodes` is not valid'))
+		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 5]}, RuntimeError, 'Argument `nodes` is not valid'))
 		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
 		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 'a.b.c']}, RuntimeError, 'Node a.b.c not in tree'))
 		assert test_list == len(test_list)*[True]
@@ -365,8 +365,8 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		""" Test that in_tree() method raises the right exceptions """
 		tree1, _, _, _ = default_trees
 		test_list = list()
-		test_list.append(putil.test.trigger_exception(tree1.in_tree, {'name':'a..b'}, ValueError, 'Argument `name` is not a valid node name'))
-		test_list.append(putil.test.trigger_exception(tree1.in_tree, {'name':5}, TypeError, 'Argument `name` is of the wrong type'))
+		test_list.append(putil.test.trigger_exception(tree1.in_tree, {'name':'a..b'}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(putil.test.trigger_exception(tree1.in_tree, {'name':5}, RuntimeError, 'Argument `name` is not valid'))
 		assert test_list == len(test_list)*[True]
 
 	def test_in_tree_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
@@ -426,11 +426,11 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		""" Test that the method rename_node() raises the appropriate exceptions """
 		_, _, _, tree4 = default_trees
 		test_list = list()
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':5, 'new_name':'root.x'}, TypeError, 'Argument `name` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'a.b..c', 'new_name':'root.x'}, ValueError, 'Argument `name` is not a valid node name'))
+		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':5, 'new_name':'root.x'}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'a.b..c', 'new_name':'root.x'}, RuntimeError, 'Argument `name` is not valid'))
 		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'a.b.c', 'new_name':'root.x'}, RuntimeError, 'Node a.b.c not in tree'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':5}, TypeError, 'Argument `new_name` is of the wrong type'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':'a..b'}, ValueError, 'Argument `new_name` is not a valid node name'))
+		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':5}, RuntimeError, 'Argument `new_name` is not valid'))
+		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':'a..b'}, RuntimeError, 'Argument `new_name` is not valid'))
 		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root.branch1', 'new_name':'root.branch1'}, RuntimeError, 'Node root.branch1 already exists'))
 		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root.branch1', 'new_name':'a.b.c'}, RuntimeError, 'Argument `new_name` has an illegal root node'))
 		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':'dummy.hier'}, RuntimeError, 'Argument `new_name` is an illegal root node name'))
