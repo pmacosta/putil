@@ -242,6 +242,14 @@ class TestCreateArgumentDictionary(object):	#pylint: disable=W0232
 			pass
 		assert orig_func(1, 2, ppar1=5) == {}	#pylint: disable=E1124
 
+	def test_default_arguments(self):	#pylint: disable=R0201,C0103
+		""" Test that function behaves properly when omitting keyword arguments that have defaults"""
+		@decfunc
+		def orig_func(ppar1, ppar2, kpar1='a', kpar2=2):	#pylint: disable=C0103,C0111,R0913,W0613
+			pass
+		assert orig_func(1, 2, kpar2=20) == {'ppar1':1, 'ppar2':2, 'kpar1':'a', 'kpar2':20}	#pylint: disable=E1124
+
+
 putil.pcontracts._CUSTOM_CONTRACTS = dict()
 def test_contract_no_exception_handler():	#pylint: disable=C0103,R0912
 	""" Test contract decorator """
@@ -282,6 +290,9 @@ def test_contract_no_exception_handler():	#pylint: disable=C0103,R0912
 	test_list.append(putil.test.trigger_exception(func2, {'number':1}, TypeError, 'Unfathomable'))
 	test_list.append(putil.test.trigger_exception(func3, {'fname':'a', 'fnumber':5}, RuntimeError, 'The argument fname is wrong'))
 	test_list.append(putil.test.trigger_exception(func3, {'fname':'b', 'fnumber':5}, IOError, 'File name `b` not found'))
+	with pytest.raises(TypeError) as excinfo:
+		func3('x', 5, 10)	#pylint: disable=E1121
+	test_list.append(excinfo.value.message == 'func3() takes exactly 2 arguments (3 given)')
 	test_list.append(func1(5) == 5)
 	test_list.append(func2(10) == 10)
 	test_list.append(func3('hello', 'world') == ('hello', 'world'))
@@ -318,6 +329,7 @@ def test_file_name_contract():
 	test_list = list()
 	test_list.append(putil.test.trigger_exception(func, {'sfn':3}, RuntimeError, 'Argument `sfn` is not valid'))
 	test_list.append(putil.test.trigger_exception(func, {'sfn':'test\0'}, RuntimeError, 'Argument `sfn` is not valid'))
+	func('some_file.txt')
 	func(sys.executable)	# Test with Python executable (should be portable across systems), file should be valid although not having permissions to write it
 	assert test_list == len(test_list)*[True]
 
