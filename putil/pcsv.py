@@ -18,43 +18,9 @@ if 'sphinx' in sys.modules.keys():
 # Exception tracing initialization code
 """
 [[[cog
-import sys
-import copy
-import tempfile
-
-import putil.exh
-import putil.misc
-import putil.pcsv
-
-mod_obj = sys.modules['__main__']
-def write_file(file_handle):	#pylint: disable=C0111
-	file_handle.write('Ctrl,Ref,Result\n')
-	file_handle.write('1,3,10\n')
-	file_handle.write('1,4,20\n')
-	file_handle.write('2,4,30\n')
-	file_handle.write('2,5,40\n')
-	file_handle.write('3,5,50\n')
-
-# Trace CsvFile class
-setattr(mod_obj, '_EXH', putil.exh.ExHandle(putil.pcsv.CsvFile))
-exobj = getattr(mod_obj, '_EXH')
-with putil.misc.TmpFile(write_file) as file_name:
-	obj = putil.pcsv.CsvFile(file_name, dfilter={'Result':20})
-obj.add_dfilter({'Result':20})
-obj.dfilter = {'Result':20}
-obj.data()
-with tempfile.NamedTemporaryFile(delete=True) as fobj:
-	obj.write(file_name=fobj.name, col=None, filtered=False, headers=True, append=False)
-exobj.build_ex_tree(no_print=True)
-exobj_csvfile = copy.deepcopy(exobj)
-
-# Trace module functions
-setattr(mod_obj, '_EXH', putil.exh.ExHandle(putil.pcsv.write))
-exobj = getattr(mod_obj, '_EXH')
-with tempfile.NamedTemporaryFile(delete=True) as fobj:
-	putil.pcsv.write(file_name=fobj.name, data=[['Col1', 'Col2'], [1, 2], [3, 4]], append=False)
-exobj.build_ex_tree(no_print=True)
-exobj_funcs = copy.deepcopy(exobj)
+import trace_ex_pcsv
+exobj_csvfile = trace_ex_pcsv.trace_csvfile(no_print=True)
+exobj_funcs = trace_ex_pcsv.trace_functions(no_print=True)
 ]]]
 [[[end]]]
 """	#pylint: disable=W0105
@@ -100,13 +66,11 @@ def write(file_name, data, append=True):
 	.. [[[cog cog.out(exobj_funcs.get_sphinx_doc_for_member('write')) ]]]
 
 	:raises:
-	 * IOError (File *[file_name]* could not be created: *[reason]*)
+	 * RuntimeError (Argument `append` is not valid)
 
-	 * OSError (File *[file_name]* could not be created: *[reason]*)
+	 * RuntimeError (Argument `data` is not valid)
 
-	 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
-
-	 * ValueError (There is no data to save to file)
+	 * RuntimeError (Argument `file_name` is not valid)
 
 	.. [[[end]]]
 	"""
@@ -166,6 +130,12 @@ class CsvFile(object):
 	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('__init__')) ]]]
 
 	:raises:
+	 * IOError (File `*[file_name]*` could not be found)
+
+	 * RuntimeError (Argument `dfilter` is not valid)
+
+	 * RuntimeError (Argument `file_name` is not valid)
+
 	 * RuntimeError (Column headers are not unique)
 
 	 * RuntimeError (File *[file_name]* has no valid data)
@@ -241,6 +211,8 @@ class CsvFile(object):
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('add_dfilter')) ]]]
 
 		:raises:
+		 * RuntimeError (Argument `dfilter` is not valid)
+
 		 * ValueError (Argument `dfilter` is empty)
 
 		 * ValueError (Column *[column_name]* not found in header)
@@ -277,7 +249,12 @@ class CsvFile(object):
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('data')) ]]]
 
-		:raises: ValueError (Column *[column_name]* not found in header)
+		:raises:
+		 * RuntimeError (Argument `col` is not valid)
+
+		 * RuntimeError (Argument `filtered` is not valid)
+
+		 * ValueError (Column *[column_name]* not found in header)
 
 		.. [[[end]]]
 		"""
@@ -312,6 +289,12 @@ class CsvFile(object):
 		 * IOError (File *[file_name]* could not be created: *[reason]*)
 
 		 * OSError (File *[file_name]* could not be created: *[reason]*)
+
+		 * RuntimeError (Argument `append` is not valid)
+
+		 * RuntimeError (Argument `file_name` is not valid)
+
+		 * RuntimeError (Argument `headers` is not valid)
 
 		 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
 

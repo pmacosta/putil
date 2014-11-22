@@ -274,10 +274,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add_nodes')) ]]]
 
-		:raises:
-		 * TypeError (Argument `nodes` is of the wrong type)
-
-		 * ValueError (Illegal node name: *[node_name]*)
+		:raises: ValueError (Illegal node name: *[node_name]*)
 
 		.. [[[end]]]
 
@@ -332,12 +329,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse_subtree')) ]]]
 
-		:raises:
-		 * RuntimeError (Node *[node_name]* not in tree)
-
-		 * TypeError (Argument `name` is of the wrong type)
-
-		 * ValueError (Argument `name` is not a valid node name)
+		:raises: RuntimeError (Node *[node_name]* not in tree)
 
 		.. [[[end]]]
 
@@ -383,14 +375,6 @@ class Tree(object):	#pylint: disable=R0903
 		 * RuntimeError (Illegal root in destination node)
 
 		 * RuntimeError (Node *[node_name]* not in tree)
-
-		 * TypeError (Argument `dest_node` is of the wrong type)
-
-		 * TypeError (Argument `source_node` is of the wrong type)
-
-		 * ValueError (Argument `dest_node` is not a valid node name)
-
-		 * ValueError (Argument `source_node` is not a valid node name)
 
 		.. [[[end]]]
 
@@ -442,12 +426,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete_subtree')) ]]]
 
-		:raises:
-		 * RuntimeError (Node *[node_name]* not in tree)
-
-		 * TypeError (Argument `nodes` is of the wrong type)
-
-		 * ValueError (Argument `nodes` is not a valid node name)
+		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
 
 		.. [[[end]]]
 
@@ -713,12 +692,6 @@ class Tree(object):	#pylint: disable=R0903
 		:rtype	data: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
-
-		:raises:
-		 * TypeError (Argument `name` is of the wrong type)
-
-		 * ValueError (Argument `name` is not a valid node name)
-
 		.. [[[end]]]
 		"""
 		return name in self._db
@@ -819,13 +792,7 @@ class Tree(object):	#pylint: disable=R0903
 
 		 * RuntimeError (Node *[node_name]* already exists)
 
-		 * TypeError (Argument `new_name` is of the wrong type)
-
-		 * ValueError (Argument `new_name` is not a valid node name)
-
 		 * Same as :py:meth:`putil.tree.Tree.collapse_subtree`
-
-		 * Same as :py:meth:`putil.tree.Tree.in_tree`
 
 		.. [[[end]]]
 

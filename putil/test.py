@@ -215,6 +215,8 @@ def trigger_exception(obj, args, extype, exmsg):
 	""" Triggers exception withing the Py.test environment and records value """
 	with pytest.raises(extype) as excinfo:
 		obj(**args)	#pylint: disable=W0142
+	if excinfo.value.message != exmsg:
+		print excinfo.value.message
 	return excinfo.value.message == exmsg
 
 

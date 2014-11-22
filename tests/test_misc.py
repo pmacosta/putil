@@ -16,3 +16,13 @@ def test_pgcd():
 	test_list.append(putil.misc.pgcd(3, 4) == 1)
 	test_list.append(putil.misc.pgcd(0.05, 0.02) == 0.01)
 	assert test_list == [True]*4
+
+def test_isexception():
+	""" Test isexception() function """
+	test_list = list()
+	test_list.append(putil.misc.isexception(str) == False)
+	test_list.append(putil.misc.isexception(3) == False)
+	test_list.append(putil.misc.isexception(RuntimeError) == True)
+	assert test_list == len(test_list)*[True]
+
+

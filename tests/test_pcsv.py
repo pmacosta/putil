@@ -49,7 +49,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 		file_name = '/file/does/not/exist.csv'
 		func_pointers = [(RuntimeError, 'File {0} is empty', write_file_empty), (RuntimeError, 'Column headers are not unique', write_cols_not_unique), (RuntimeError, 'File {0} has no valid data', write_no_data)]
 		test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':5}, RuntimeError, 'Argument `file_name` is not valid'))
-		test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name}, RuntimeError, 'File {0} could not be found'.format(file_name)))
+		test_list.append(putil.test.trigger_exception(putil.pcsv.CsvFile, {'file_name':file_name}, IOError, 'File `{0}` could not be found'.format(file_name)))
 		for extype, exmsg, fobj in func_pointers:
 			with pytest.raises(extype) as excinfo:
 				with putil.misc.TmpFile(fobj) as file_name:
