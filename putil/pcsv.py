@@ -3,6 +3,7 @@
 # See LICENSE for details
 
 import csv
+import sys
 import inspect
 
 import putil.exh
@@ -95,12 +96,14 @@ def _write_int(file_name, data, append=True):
 		for row in data:
 			csv_handle.writerow(row)
 		file_handle.close()
-	except IOError as msg:
-		_exh.raise_exception_if(name='file_could_not_be_created_io', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg.strerror}])
-	except OSError as msg:
-		_exh.raise_exception_if(name='file_could_not_be_created_os', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg.strerror}])
-	except Exception as msg:	#pylint: disable=W0703
-		_exh.raise_exception_if(name='file_could_not_be_created_runtime', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg.strerror}])
+	except IOError as eobj:
+		_exh.raise_exception_if(name='file_could_not_be_created_io', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':eobj.strerror}])
+	except OSError as eobj:
+		_exh.raise_exception_if(name='file_could_not_be_created_os', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':eobj.strerror}])
+	except:	#pylint: disable=W0702
+		_, exvalue, _ = sys.exc_info()
+		msg = '{0}'.format(exvalue)
+		_exh.raise_exception_if(name='file_could_not_be_created_runtime', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg}])
 	_exh.raise_exception_if(name='file_could_not_be_created_io', condition=False)
 	_exh.raise_exception_if(name='file_could_not_be_created_os', condition=False)
 	_exh.raise_exception_if(name='file_could_not_be_created_runtime', condition=False)

@@ -6,6 +6,7 @@
 putil.pcsv unit tests
 """
 
+import mock
 import pytest
 import tempfile
 
@@ -270,6 +271,10 @@ def test_write_function_errors():	#pylint: disable=R0201
 	test_list.append(putil.test.trigger_exception(putil.pcsv.write, {'file_name':'/some/file', 'data':[['Col1', 'Col2'], [1, 2]]}, OSError, 'File /some/file could not be created: Permission denied'))
 	test_list.append(putil.test.trigger_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[True, False]}, RuntimeError, 'Argument `data` is not valid'))
 	test_list.append(putil.test.trigger_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[[]]}, ValueError, 'There is no data to save to file'))
+	with mock.patch('putil.misc.make_dir') as mock_make_dir:
+		mock_make_dir.side_effect = ValueError('Test message')
+		with tempfile.NamedTemporaryFile(delete=False) as fobj:
+			test_list.append(putil.test.trigger_exception(putil.pcsv.write, {'file_name':fobj.name, 'data':[['hello']]}, RuntimeError, 'File {0} could not be created: Test message'.format(fobj.name)))
 	assert test_list == len(test_list)*[True]
 
 def test_write_function_works():	#pylint: disable=R0201
