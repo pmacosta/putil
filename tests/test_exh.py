@@ -11,11 +11,11 @@ import putil.exh
 
 def test_get_exh_obj():
 	""" Test get_txh_obj() function """
-	putil.exh._set_exh_obj('Test global variable')
+	putil.exh.set_exh_obj('Test global variable')
 	test_list = list()
-	test_list.append(putil.exh._get_exh_obj() == 'Test global variable')
-	putil.exh._del_exh_obj()
-	test_list.append(putil.exh._get_exh_obj() == None)
+	test_list.append(putil.exh.get_exh_obj() == 'Test global variable')
+	putil.exh.del_exh_obj()
+	test_list.append(putil.exh.get_exh_obj() == None)
 	assert test_list == len(test_list)*[True]
 
 

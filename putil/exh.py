@@ -19,19 +19,19 @@ import putil.tree
 ###
 # Functions
 ###
-def _set_exh_obj(value):
+def set_exh_obj(value):
 	""" Create exception handler object """
 	mod_obj = sys.modules['__main__']
 	setattr(mod_obj, '_EXH', value)
 
 
-def _get_exh_obj():
+def get_exh_obj():
 	""" Get exception handler object (if any) """
 	mod_obj = sys.modules['__main__']
 	return getattr(mod_obj, '_EXH') if hasattr(mod_obj, '_EXH') else None
 
 
-def _del_exh_obj():
+def del_exh_obj():
 	""" Create exception handler object """
 	mod_obj = sys.modules['__main__']
 	delattr(mod_obj, '_EXH')
@@ -131,12 +131,14 @@ class ExHandle(object):	#pylint: disable=R0902
 		cobj._trace_obj_type = copy.copy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.copy(self._trace_obj_name)	#pylint: disable=W0212
 		cobj._callable_db = copy.copy(self._callable_db)	#pylint: disable=W0212
+		cobj._module_db = copy.copy(self._module_db)	#pylint: disable=W0212
 		cobj._trace_list = copy.copy(self._trace_list)	#pylint: disable=W0212
 		cobj._tobj = copy.copy(self._tobj)	#pylint: disable=W0212
 		cobj._extable = copy.copy(self._extable)	#pylint: disable=W0212
 		cobj._module_functions_extable = copy.copy(self._module_functions_extable)	#pylint: disable=W0212
 		cobj._cross_usage_extable = copy.copy(self._cross_usage_extable)	#pylint: disable=W0212
 		cobj._exoutput = copy.copy(self._exoutput)	#pylint: disable=W0212
+		cobj._clsattr = copy.copy(self._clsattr)	#pylint: disable=W0212
 		cobj._ex_list = copy.copy(self._ex_list)	#pylint: disable=W0212
 		return cobj
 
@@ -146,12 +148,14 @@ class ExHandle(object):	#pylint: disable=R0902
 		cobj._trace_obj_type = copy.deepcopy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.deepcopy(self._trace_obj_name, memodict)	#pylint: disable=W0212
 		cobj._callable_db = copy.deepcopy(self._callable_db)	#pylint: disable=W0212
+		cobj._module_db = copy.deepcopy(self._module_db)	#pylint: disable=W0212
 		cobj._trace_list = copy.deepcopy(self._trace_list, memodict)	#pylint: disable=W0212
 		cobj._tobj = copy.deepcopy(self._tobj, memodict)	#pylint: disable=W0212
 		cobj._extable = copy.deepcopy(self._extable, memodict)	#pylint: disable=W0212
 		cobj._module_functions_extable = copy.deepcopy(self._module_functions_extable, memodict)	#pylint: disable=W0212
 		cobj._cross_usage_extable = copy.deepcopy(self._cross_usage_extable, memodict)	#pylint: disable=W0212
 		cobj._exoutput = copy.deepcopy(self._exoutput, memodict)	#pylint: disable=W0212
+		cobj._clsattr = copy.deepcopy(self._clsattr)	#pylint: disable=W0212
 		cobj._ex_list = copy.deepcopy(self._ex_list, memodict)	#pylint: disable=W0212
 		return cobj
 

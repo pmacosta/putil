@@ -22,7 +22,7 @@ def trace_csvfile(no_print=False):
 	""" Trace CsvFile class """
 	if not no_print:
 		print putil.misc.pcolor('Tracing CsvFile', 'blue')
-	putil.exh._set_exh_obj(putil.exh.ExHandle(putil.pcsv.CsvFile))
+	putil.exh.set_exh_obj(putil.exh.ExHandle(putil.pcsv.CsvFile))
 	with putil.misc.TmpFile(write_file) as file_name:
 		obj = putil.pcsv.CsvFile(file_name, dfilter={'Result':20})
 	obj.add_dfilter({'Result':20})
@@ -30,7 +30,7 @@ def trace_csvfile(no_print=False):
 	obj.data()
 	with tempfile.NamedTemporaryFile(delete=True) as fobj:
 		obj.write(file_name=fobj.name, col=None, filtered=False, headers=True, append=False)
-	exobj = putil.exh._get_exh_obj()
+	exobj = putil.exh.get_exh_obj()
 	exobj.build_ex_tree(no_print=no_print)
 	if not no_print:
 		exobj.print_ex_tree()
@@ -41,10 +41,10 @@ def trace_functions(no_print=False):
 	""" Trace module-level functions """
 	if not no_print:
 		print putil.misc.pcolor('Tracing putil.pcsv functions', 'blue')
-	putil.exh._set_exh_obj(putil.exh.ExHandle(putil.pcsv.write))
+	putil.exh.set_exh_obj(putil.exh.ExHandle(putil.pcsv.write))
 	with tempfile.NamedTemporaryFile(delete=True) as fobj:
 		putil.pcsv.write(file_name=fobj.name, data=[['Col1', 'Col2'], [1, 2], [3, 4]], append=False)
-	exobj = putil.exh._get_exh_obj()
+	exobj = putil.exh.get_exh_obj()
 	exobj.build_ex_tree(no_print=no_print)
 	if not no_print:
 		exobj.print_ex_tree()

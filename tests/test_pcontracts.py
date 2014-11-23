@@ -290,7 +290,7 @@ def test_contract():	#pylint: disable=C0103,R0912
 	test_list.append(func1(5) == 5)
 	test_list.append(func2(10) == 10)
 	test_list.append(func3('hello', 'world', False) == ('hello', 'world'))
-	putil.exh._set_exh_obj(putil.exh.ExHandle(putil.pcontracts.contract))	# Any callable object will do
+	putil.exh.set_exh_obj(putil.exh.ExHandle(putil.pcontracts.contract))	# Any callable object will do
 	@putil.pcontracts.contract(fname='str,file_name_valid')
 	def func4(fname, fnumber):	#pylint: disable=C0111
 		return fname, fnumber
@@ -300,7 +300,7 @@ def test_contract():	#pylint: disable=C0103,R0912
 	# Register exceptions
 	func4('x', 5)
 	func5(0)
-	exlist = putil.exh._get_exh_obj()._ex_list
+	exlist = putil.exh.get_exh_obj()._ex_list
 	pexlist = list()
 	for exitem in exlist:
 		pexlist.append({'name':exitem['name'][exitem['name'].rfind('.')+1:], 'type':exitem['type'], 'msg':exitem['msg']})
@@ -314,7 +314,7 @@ def test_contract():	#pylint: disable=C0103,R0912
 	test_list.append(putil.test.trigger_exception(func5, {'num':1}, RuntimeError, 'Illegal number: unity'))
 	test_list.append(putil.test.trigger_exception(func5, {'num':1.0, 'flag':45}, RuntimeError, 'Argument `flag` is not valid'))
 	test_list.append(putil.test.trigger_exception(func5, {'num':1.0, 'fudge':1.0}, RuntimeError, 'Argument `fudge` is not valid'))
-	putil.exh._del_exh_obj()
+	putil.exh.del_exh_obj()
 	assert test_list == len(test_list)*[True]
 
 def test_file_name_contract():

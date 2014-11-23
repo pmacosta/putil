@@ -201,7 +201,7 @@ def contract(**contract_args):	#pylint: disable=R0912
 		""" Decorator """
 		param_dict = _create_argument_value_pairs(func, *args, **kwargs)
 		# Register exceptions if exception handler object exists
-		exhobj = putil.exh._get_exh_obj()	#pylint: disable=W0212
+		exhobj = putil.exh.get_exh_obj()	#pylint: disable=W0212
 		if exhobj:
 			for param_name, param_contract in [(param_name, param_contract) for (param_name, param_contract) in contract_args.items()]:	# param_name=param_value, as in num='str|float'
 				contracts_dicts = list()

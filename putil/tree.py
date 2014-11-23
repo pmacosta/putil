@@ -6,7 +6,6 @@
 
 
 import copy
-import inspect
 
 import putil.exh
 import putil.pcontracts
@@ -56,8 +55,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._vertical = unichr(0x2502)
 		self._vertical_and_right = unichr(0x251C)
 		self._up_and_right = unichr(0x2514)
-		root_module = inspect.stack()[-1][0]
-		self._exh = root_module.f_locals['_EXH'] if '_EXH' in root_module.f_locals else putil.exh.ExHandle(putil.tree.Tree)
+		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle(putil.tree.Tree)
 
 	def __str__(self):
 		u"""

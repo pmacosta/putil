@@ -13,7 +13,7 @@ def trace_tree(no_print=False):
 	""" Trace Tree class """
 	if not no_print:
 		print putil.misc.pcolor('Tracing Tree', 'blue')
-	putil.exh._set_exh_obj(putil.exh.ExHandle(putil.tree.Tree))
+	putil.exh.set_exh_obj(putil.exh.ExHandle(putil.tree.Tree))
 	tobj = putil.tree.Tree()
 	tobj.add_nodes([
 		{'name':'dummy.root.branch1', 'data':list()},
@@ -44,7 +44,7 @@ def trace_tree(no_print=False):
 	tobj.root_node	#pylint: disable=W0104
 	tobj.root_name	#pylint: disable=W0104
 
-	exobj = putil.exh._get_exh_obj()
+	exobj = putil.exh.get_exh_obj()
 	exobj.build_ex_tree(no_print=no_print)
 	if not no_print:
 		exobj.print_ex_tree()
