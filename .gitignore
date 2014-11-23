@@ -1,4 +1,5 @@
 # putil .gitignore file
+tags
 .coverage
 *.cache
 *.pid
