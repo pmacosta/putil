@@ -670,22 +670,23 @@ class ExHandle(object):	#pylint: disable=R0902
 			raise TypeError('Argument `extype` is of the wrong type')
 		if not isinstance(exmsg, str):
 			raise TypeError('Argument `exmsg` is of the wrong type')
-		func_name = self._get_callable_name()
-		self._ex_list.append({'name':self.get_ex_name(name), 'function':func_name, 'type':extype, 'msg':exmsg, 'checked':False})
+		ex_data = self.get_ex_data(name)
+		self._ex_list.append({'name':ex_data['ex_name'], 'function':ex_data['func_name'], 'type':extype, 'msg':exmsg, 'checked':False})
 		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
 
 	def get_exception_by_name(self, name):
 		""" Find exception object """
-		exname = self.get_ex_name(name)
+		exname = self.get_ex_data(name)['ex_name']
 		for obj in self._ex_list:
 			if obj['name'] == exname:
 				return obj
 		raise ValueError('Exception name {0} not found'.format(name))
 
-	def get_ex_name(self, name):	#pylint: disable=R0201
+	def get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
 		func_name = self._get_callable_name()
-		return '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name)
+		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name else '')
+		return {'func_name':func_name, 'ex_name':ex_name}
 
 	def get_sphinx_doc_for_member(self, member):
 		""" Returns Sphinx-compatible exception list """
