@@ -537,7 +537,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			call_type = 'attr' if any([hasattr(call_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
 			self._callable_db[call_full_name] = {'type':call_type, 'code':None if not hasattr(call_obj, 'func_code') else call_obj.func_code}
 			# Setter/getter/deleter object have no introspective way of finding out what class (if any) they belong to
-			# Need to compare code objects with class or module memebers to find out cross-link
+			# Need to compare code objects with class or module members to find out cross-link
 			if call_type == 'attr':
 				attr_dict = dict()
 				# Object may have property but be None if it does not have a getter, setter or deleter assigned to it
@@ -685,7 +685,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	def get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
 		func_name = self._get_callable_name()
-		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name else '')
+		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name is not None else '')
 		return {'func_name':func_name, 'ex_name':ex_name}
 
 	def get_sphinx_doc_for_member(self, member):
