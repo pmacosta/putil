@@ -81,7 +81,7 @@ def write(file_name, data, append=True):
 	_write_int(file_name, data, append)
 
 def _write_int(file_name, data, append=True):
-	_exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle(putil.pcsv.write)
+	_exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
 	_exh.add_exception(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
 	_exh.add_exception(name='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
 	_exh.add_exception(name='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
@@ -157,7 +157,7 @@ class CsvFile(object):
 	def __init__(self, file_name, dfilter=None):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
-		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle(putil.pcsv.CsvFile)
+		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
 		self._exh.add_exception(name='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
 		self._exh.add_exception(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
 		self._exh.add_exception(name='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')

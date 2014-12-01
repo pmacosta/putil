@@ -55,7 +55,7 @@ class Tree(object):	#pylint: disable=R0903
 		self._vertical = unichr(0x2502)
 		self._vertical_and_right = unichr(0x251C)
 		self._up_and_right = unichr(0x2514)
-		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle(putil.tree.Tree)
+		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
 
 	def __str__(self):
 		u"""

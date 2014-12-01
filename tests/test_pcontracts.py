@@ -290,7 +290,7 @@ def test_contract():	#pylint: disable=C0103,R0912
 	test_list.append(func1(5) == 5)
 	test_list.append(func2(10) == 10)
 	test_list.append(func3('hello', 'world', False) == ('hello', 'world'))
-	putil.exh.set_exh_obj(putil.exh.ExHandle(putil.pcontracts.contract))	# Any callable object will do
+	putil.exh.set_exh_obj(putil.exh.ExHandle())
 	@putil.pcontracts.contract(fname='str,file_name_valid')
 	def func4(fname, fnumber):	#pylint: disable=C0111
 		return fname, fnumber

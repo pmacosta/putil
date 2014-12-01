@@ -113,21 +113,15 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	 * ValueError (Hidden objects cannot be traced)
 	"""
-	def __init__(self, obj):
-		if (not inspect.isclass(obj)) and (not hasattr(obj, '__call__')):
-			raise TypeError('Argument `obj` is of the wrong type')
-		if obj.__name__.startswith('_'):
-			raise ValueError('Hidden objects cannot be traced')
-		self._trace_obj = obj
-		self._trace_obj_type = inspect.isclass(obj)
-		self._trace_obj_name = '{0}.{1}'.format(obj.__module__, obj.__name__)
+	def __init__(self):
 		self._callable_db = dict()
 		self._module_db = list()
+		self._trace_obj, self._trace_obj_type, self._trace_obj_name = None, None, None
 		self._trace_list, self._tobj, self._extable, self._module_functions_extable, self._cross_usage_extable, self._exoutput, self._clsattr = None, None, None, None, None, None, None
 		self._ex_list = list()
 
 	def __copy__(self):
-		cobj = ExHandle(obj=copy.copy(self._trace_obj))
+		cobj = ExHandle()
 		cobj._trace_obj_type = copy.copy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.copy(self._trace_obj_name)	#pylint: disable=W0212
 		cobj._callable_db = copy.copy(self._callable_db)	#pylint: disable=W0212
@@ -144,7 +138,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def __deepcopy__(self, memodict=None):
 		memodict = dict() if memodict is None else memodict
-		cobj = ExHandle(obj=copy.deepcopy(self._trace_obj))
+		cobj = ExHandle()
 		cobj._trace_obj_type = copy.deepcopy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.deepcopy(self._trace_obj_name, memodict)	#pylint: disable=W0212
 		cobj._callable_db = copy.deepcopy(self._callable_db)	#pylint: disable=W0212
@@ -621,8 +615,15 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Selects valid stack frame to process """
 		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
-	def build_ex_tree(self, no_print=True):	#pylint: disable=R0912,R0914,R0915
+	def build_ex_tree(self, obj, no_print=True):	#pylint: disable=R0912,R0914,R0915
 		""" Builds exception tree """
+		if (not inspect.isclass(obj)) and (not hasattr(obj, '__call__')):
+			raise TypeError('Argument `obj` is of the wrong type')
+		if obj.__name__.startswith('_'):
+			raise ValueError('Hidden objects cannot be traced')
+		self._trace_obj = obj
+		self._trace_obj_type = inspect.isclass(obj)
+		self._trace_obj_name = '{0}.{1}'.format(obj.__module__, obj.__name__)
 		# Collect exceptions in hierarchical call tree
 		self._build_ex_tree(no_print)
 		# Eliminate intermediate call nodes that have no exceptions associated with them
