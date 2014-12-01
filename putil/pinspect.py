@@ -30,17 +30,17 @@ def get_callable_path(frame_obj, func_obj):
 	return '' if ret[:2] == ['', ''] else '.'.join(filter(None, ret)), comp	#pylint: disable=W0141
 
 
-def is_module(obj):
+def is_object_module(obj):
 	""" Determines whether an object is a module or not """
-	return hasattr(obj, '__name__') and (obj.__name__ in sys.modules)
+	return isinstance(obj, types.ModuleType)
 
 
 def make_modules_obj_list(obj):
 	""" Creates a list of package modules """
-	sub_module_obj_list = [sub_module_obj for sub_module_obj in package_submodules(obj)]
-	for sub_module_obj in sub_module_obj_list:
-		sub_module_obj_list += make_modules_obj_list(sub_module_obj)
-	return list(set(sub_module_obj_list))
+	module_obj_list = package_modules(obj)
+	for module_obj in module_obj_list:
+		module_obj_list += make_modules_obj_list(module_obj)
+	return list(set(module_obj_list))
 
 
 def obj_type(obj, prop):
@@ -50,13 +50,17 @@ def obj_type(obj, prop):
 	return 'meth' if type(getattr(obj, prop)) == types.MethodType else 'attr'
 
 
-def package_submodules(module_obj):
+def package_modules(module_obj):
 	""" Generator of package sub-modules """
-	top_module_name = module_obj.__name__.split('.')[0]
-	for element_name in dir(module_obj):
-		element_obj = getattr(module_obj, element_name)
-		if (element_name[0] != '_') and hasattr(element_obj, '__name__') and (element_obj.__name__.split('.')[0] == top_module_name) and (element_obj.__name__ != top_module_name):
-			yield element_obj
+	try:
+		package_name = module_obj.__name__.split('.')[0]
+	except:
+		raise AttributeError('Argument `module_obj` does not have the attribute __name__')
+	package_obj = sys.modules.get(package_name, None)
+	if not package_obj:
+		raise RuntimeError('Package object `{0}` could not be found'.format(package_name))
+	return [module_obj for module_obj, module_name in [(getattr(package_obj, module_name), module_name) for module_name in dir(package_obj) if not module_name.startswith('_')] \
+		 if hasattr(module_obj, '__name__') and (module_obj.__name__.split('.')[0] == package_name) and (module_obj.__name__ != package_name)]
 
 
 def public_callables(obj):
@@ -66,5 +70,5 @@ def public_callables(obj):
 		# if (element_name == '__init__') or ((not (element_name.startswith('__') and element_name.endswith('__'))) and (not (element_name.startswith('_') and element_name.endswith('_')))):
 		if (element_name == '__init__') or ((not (element_name.startswith('__') and element_name.endswith('__'))) and (not (element_name.startswith('_') and element_name.endswith('_')))):
 			element_obj = getattr(obj, element_name)
-			if (hasattr(element_obj, '__call__') or isinstance(element_obj, property)) and (not inspect.isclass(element_obj)) and (not is_module(element_obj)):
+			if (hasattr(element_obj, '__call__') or isinstance(element_obj, property)) and (not inspect.isclass(element_obj)) and (not is_object_module(element_obj)):
 				yield element_name, element_obj, (element_obj if not isinstance(element_obj, property) else obj)
