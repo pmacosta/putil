@@ -79,45 +79,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Returns a string corresponding to the exception type """
 		return str(extype)[str(extype).rfind('.')+1:str(extype).rfind("'")]
 
-	def _tree_data(self):	#pylint: disable-msg=R0201
-		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		return [{'name':ex['function'], 'data':'{0} ({1})'.format(self._ex_type_str(ex['type']), ex['msg'])} for ex in self._ex_list]
-
-	def add_exception(self, name, extype, exmsg):	#pylint: disable=R0913,R0914
-		""" Add exception to handler
-
-		:param	name: Exception name. Has to be unique within the namespace, duplicates are eliminated
-		:type	name: string
-		:param	extype: Exception type. *Must* be derived from `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
-		:type	name: Exception type object (i.e. RuntimeError, TypeError, etc.)
-		:param	exmsg: Exception message
-		:type	exmsg: string
-
-		:raises:
-		 * TypeError (Argument `exmsg` is of the wrong type)
-
-		 * TypeError (Argument `extype` is of the wrong type)
-
-		 * TypeError (Argument `name` is of the wrong type)
-		"""
-		if not isinstance(name, str):
-			raise TypeError('Argument `name` is of the wrong type')
-		if not str(extype).startswith("<type 'exceptions."):
-			raise TypeError('Argument `extype` is of the wrong type')
-		if not isinstance(exmsg, str):
-			raise TypeError('Argument `exmsg` is of the wrong type')
-		ex_data = self.get_ex_data(name)
-		self._ex_list.append({'name':ex_data['ex_name'], 'function':ex_data['func_name'], 'type':extype, 'msg':exmsg, 'checked':False})
-		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
-
-	def get_exception_by_name(self, name):
-		""" Find exception object """
-		exname = self.get_ex_data(name)['ex_name']
-		for obj in self._ex_list:
-			if obj['name'] == exname:
-				return obj
-		raise ValueError('Exception name {0} not found'.format(name))
-
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
 		""" Substitute parameters in exception message """
 		if edata is not None:
@@ -131,6 +92,10 @@ class ExHandle(object):	#pylint: disable=R0902
 					raise RuntimeError('Field {0} not in exception message'.format(field['field']))
 				msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 		return msg
+
+	def _get_callable_db(self):
+		""" Returns database of callables """
+		return self._callable_db
 
 	def _get_callable_name(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
@@ -173,7 +138,6 @@ class ExHandle(object):	#pylint: disable=R0902
 			ret.append(fname)
 		return '.'.join(ret)
 
-
 	def _make_module_callables_list(self, obj, cls_name=''):	#pylint: disable=R0914
 		""" Creates a list of callable functions at and below an object hierarchy """
 		for call_name, call_obj, base_obj in putil.pinspect.public_callables(obj):
@@ -199,18 +163,54 @@ class ExHandle(object):	#pylint: disable=R0902
 							break
 				self._callable_db[call_full_name]['attr'] = attr_dict
 
+	def _tree_data(self):	#pylint: disable-msg=R0201
+		""" Returns a list of dictionaries suitable to be used with putil.tree module """
+		return [{'name':ex['function'], 'data':'{0} ({1})'.format(self._ex_type_str(ex['type']), ex['msg'])} for ex in self._ex_list]
 
 	def _valid_frame(self, fin, fna):	#pylint: disable-msg=R0201
 		""" Selects valid stack frame to process """
 		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exhdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
+	def add_exception(self, name, extype, exmsg):	#pylint: disable=R0913,R0914
+		""" Add exception to handler
+
+		:param	name: Exception name. Has to be unique within the namespace, duplicates are eliminated
+		:type	name: string
+		:param	extype: Exception type. *Must* be derived from `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
+		:type	name: Exception type object (i.e. RuntimeError, TypeError, etc.)
+		:param	exmsg: Exception message
+		:type	exmsg: string
+
+		:raises:
+		 * TypeError (Argument `exmsg` is of the wrong type)
+
+		 * TypeError (Argument `extype` is of the wrong type)
+
+		 * TypeError (Argument `name` is of the wrong type)
+		"""
+		if not isinstance(name, str):
+			raise TypeError('Argument `name` is of the wrong type')
+		if not str(extype).startswith("<type 'exceptions."):
+			raise TypeError('Argument `extype` is of the wrong type')
+		if not isinstance(exmsg, str):
+			raise TypeError('Argument `exmsg` is of the wrong type')
+		ex_data = self.get_ex_data(name)
+		self._ex_list.append({'name':ex_data['ex_name'], 'function':ex_data['func_name'], 'type':extype, 'msg':exmsg, 'checked':False})
+		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
+
+	def get_exception_by_name(self, name):
+		""" Find exception object """
+		exname = self.get_ex_data(name)['ex_name']
+		for obj in self._ex_list:
+			if obj['name'] == exname:
+				return obj
+		raise ValueError('Exception name {0} not found'.format(name))
 
 	def get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
 		func_name = self._get_callable_name()
 		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name is not None else '')
 		return {'func_name':func_name, 'ex_name':ex_name}
-
 
 	def raise_exception(self, name, **kargs):
 		""" Raise exception by name """
@@ -225,7 +225,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		else:
 			raise obj['type'], obj['type'](obj['msg']), tbobj
 
-
 	def raise_exception_if(self, name, condition, **kargs):
 		""" Raise exception by name if condition is true """
 		if (len(kargs) == 1) and ('edata' not in kargs):
@@ -235,10 +234,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		if condition:
 			self.raise_exception(name, **kargs)
 		self.get_exception_by_name(name)['checked'] = True
-
-	def _get_callable_db(self):
-		""" Returns database of callables """
-		return self._callable_db
 
 	# Managed attributes
 	callable_db = property(_get_callable_db, None, None, doc='Dictionary of callables')
