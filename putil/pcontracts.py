@@ -15,6 +15,7 @@ import contracts
 import decorator
 
 import putil.exh
+import putil.misc
 
 _CUSTOM_CONTRACTS = dict()
 
