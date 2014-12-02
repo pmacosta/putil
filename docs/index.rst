@@ -18,6 +18,7 @@ Contents:
 	exh
 	misc
 	pcsv
+	pinspect
 	plot
 	test
 	tree
