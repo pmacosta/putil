@@ -4,10 +4,17 @@ pcontracts module
 
 
 
+.. role:: python(code)
+	:language: python
+	:class: highlight-python
+
 This module is a thin wrapper around the `PyContracts <https://andreacensi.github.io/contracts/>`_ library that enables customization of the exception type raised and limited
 customization of the exception message. Additionally, custom contracts specified by :py:func:`putil.pcontracts.new_contract` and contract enforcement via
 :py:func:`putil.pcontracts.contract` register exceptions using the :py:mod:`putil.exh` module if an exception handler object is detected. This also means that the
 exceptions raised by these contracts can be auto-documented usign the :py:mod:`putil.exdoc` module
+
+The contract specification is identical to the way a contract is specified with the `PyContracts <https://andreacensi.github.io/contracts/>`_ library except that only the
+decorator way is currently supported and tested. By default :python:`raise RuntimeError('Argument has to be a string')` is raised.
 
 ***********
 Interpreter
