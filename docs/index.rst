@@ -19,6 +19,7 @@ Contents:
 	misc
 	pcsv
 	pinspect
+	pcontracts
 	plot
 	test
 	tree

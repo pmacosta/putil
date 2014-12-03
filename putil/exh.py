@@ -11,7 +11,6 @@ import copy
 import inspect
 import operator
 
-import putil.tree
 import putil.pinspect
 
 ###

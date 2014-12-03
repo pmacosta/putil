@@ -23,7 +23,9 @@ _CUSTOM_CONTRACTS = dict()
 # Functions
 ###
 def all_disabled():
-	""" Wrapper around contracts.all_disabled() function """
+	"""
+	Wrapper around PyContracts `all_disabled() <http://andreacensi.github.io/contracts/api/contracts.html#module-contracts.enabling>`_ function. From the PyContracts documentation: "Returns true if all contracts are disabled"
+	"""
 	return contracts.all_disabled()
 
 
@@ -46,12 +48,17 @@ def _create_argument_value_pairs(func, *args, **kwargs):
 
 
 def disable_all():
-	""" Wrapper around contracts.disable_all() function """
+	"""
+	Wrapper around PyContracts `disable_all() <http://andreacensi.github.io/contracts/api/contracts.html#module-contracts.enabling>`_ function. From the PyContracts documentation: "Disables all contract checks"
+	"""
 	contracts.disable_all()
 
 
 def enable_all():
-	""" Wrapper around contracts.enable_all() function """
+	"""
+	Wrapper around PyContracts `enable_all() <http://andreacensi.github.io/contracts/api/contracts.html#module-contracts.enabling>`_ function. From the PyContracts documentation: "Enables all contract checks. Can be overridden
+	by an environment variable"
+	"""
 	contracts.enable_all()
 
 
@@ -109,7 +116,29 @@ def _get_custom_contract(param_contract):
 
 
 def get_exdesc():
-	""" Get function attribute within function """
+	"""
+	Get contract exception message(s). If the custom contract is specified with only one exception the return value is the message associated with that exception; if the custom contract is specified with
+	several exceptions, the return value is a dictionary whose keys are the exception names and whose values are the exception messages. For example::
+
+		@putil.pcontracts.new_contract('Only one exception')
+		def custom_contract1(name):
+			msg = putil.pcontracts.get_exdesc()
+			if not name:
+				raise ValueError(msg)
+
+		@putil.pcontracts.new_contract(ex1='Empty name', ex2='Invalid name')
+		def custom_contract2(name):
+			msg = putil.pcontracts.get_exdesc()
+			if not name:
+				raise ValueError(msg['ex1'])
+			elif name.find('[') != -1:
+				raise ValueError(msg['ex2'])
+
+
+	In **custom_contract1** the variable `msg` contains the string ``'Only one exception'``, in **custom_contract2** the variable `msg` contains the dictionary ``{'ex1':'Empty name', 'ex2':'Invalid name'}``.
+
+	:rtype: string or dictionary
+	"""
 	sobj = inspect.stack()
 	# First frame is own function (get_exdesc), next frame is the calling function, of which its name is needed
 	fname = sobj[1][3]
@@ -196,7 +225,12 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 # Decorators
 ###
 def contract(**contract_args):	#pylint: disable=R0912
-	"""	Decorator constructor """
+	r"""
+	Wrapper around PyContracts `contract() <http://andreacensi.github.io/contracts/api_reference.html#module-contracts>`_ decorator. Currently only the decorator way of specifying a
+	contract is supported and tested. The exception ``RuntimeError('Argument `*[argument_name]*` is not valid')`` is raised when a contract is breached (\*[argument_name]\* is replaced
+	by the argument name the contract is attached to) unless the contract is custom and specified with the :py:meth:`putil.pcontracts.new_contract` decorator. In that case the
+	exception type and message are controlled by the custom contract specification.
+	"""
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):	#pylint: disable=R0912,R0914
 		""" Decorator """
@@ -235,7 +269,106 @@ def contract(**contract_args):	#pylint: disable=R0912
 
 
 def new_contract(*args, **kwargs):	#pylint: disable=R0912
-	"""	New contract decorator constructor """
+	r"""
+	Defines new (custom) contracts with custom exceptions. The decorator argument(s) is(are) the exception(s) that can be raised by the contract. The most general way to define an exception is using a 2-element tuple with the
+	following members:
+
+	 * **exception type** *(type)* -- Exception type, either a built-in exception or sub-classed from Exception. Default is ``RuntimeError``.
+
+	 * **excepton message** *(string)* -- Exception message. Default is ``'Argument `*[argument_name]*` is not valid')``, where the token `*[argument_name]*` is replaced by the argument name the contract is attached to.
+
+	The order of the tuple elements is not important, i.e. the following are valid exception specifications and define the same exception::
+
+		@putil.pcontracts.new_contract(ex1=(RuntimeError, 'Invalid name'))
+		def custom_contract1(arg):
+			pass
+
+		@putil.pcontracts.new_contract(ex1=('Invalid name', RuntimeError))
+		def custom_contract2(arg):
+			pass
+
+	The exception definition simplifies to just one of the exception definition tuple elements if the other exception definition tuple element takes its default value. For example, the same exception is defined in these two
+	contracts::
+
+		@putil.pcontracts.new_contract(ex1=ValueError)
+		def custom_contract3(arg):
+			pass
+
+		@putil.pcontracts.new_contract(ex1=(ValueError, 'Argument `*[argument_name]*` is not valid'))
+		def custom_contract4(arg):
+			pass
+
+	and these contracts also define the same exception (but different from that of the previous example)::
+
+		@putil.pcontracts.new_contract(ex1='Invalid name')
+		def custom_contract5(arg):
+			pass
+
+		@putil.pcontracts.new_contract(ex1=('Invalid name', RuntimeError))
+		def custom_contract6(arg):
+			pass
+
+	In fact the exception need not be specified by keyword if the contract only uses one exception. All of the following are valid 1-exception contract specifications::
+
+		@putil.pcontracts.new_contract((IOError, 'File could not be opened'))
+		def custom_contract7(arg):
+			pass
+
+		# Define contract that uses exception (RuntimeError, 'Invalid name')
+		@putil.pcontracts.new_contract('Invalid name')
+		def custom_contract8(arg):
+			pass
+
+		# Define contract that uses exception (TypeError, 'Argument `*[argument_name]*` is not valid')
+		@putil.pcontracts.new_contract(TypeError)
+		def custom_contract9(arg):
+			pass
+
+	No new contract decorator arguments are needed if a contract only needs a single exception and the default exception type and message suffice::
+
+		# Define contract that uses exception (RuntimeError, 'Argument `*[argument_name]*` is not valid')
+		@putil.pcontracts.new_contract()
+		def custom_contract10(arg):
+			pass
+
+	For code conciceness and correctness the exception message(s) should be retrieved via the :py:meth:`putil.pcontracts.get_exdesc` function.
+
+	A `PyContract new contract <http://andreacensi.github.io/contracts/new_contract.html#new-contract>`_ can return ``False`` or raise a ``ValueError`` exception to indicate a
+	contract breach, however a new contract specified via the :py:meth:`putil.pcontracts.new_contract` decorator *has* to raise a ``ValueError`` exception to indicate a contract
+	breach.
+
+	The exception message can have substitution "tokens" of the form '\*[token_name]\*'. If the token is '\*[argument_name]\*' it is substituted with the argument name the contract
+	is attached to. For example::
+
+		@putil.pcontracts.new_contract((TypeError, 'Argument `*[argument_name]*` has to be a string'))
+		def custom_contract11(city):
+			if not isinstance(city, str):
+				raise ValueError(putil.contracts.get_exdesc())
+
+		@putil.pcontracts.contract(city_name='custom_contract11')
+		def print_city_name(city_name):
+			print('City: {0}'.format(city_name))
+
+	The exception raised by ``print_city_name(5)`` is equivalent to::
+
+		raise TypeError('Argument `city` has to be a string')
+
+	Any other token is substituted with the argument *value*. For example::
+
+		@putil.pcontracts.new_contract((IOError, 'File `*[file_name]*` not found'))
+		def custom_contract12(fn):
+			if not os.path.exists(fn):
+				raise ValueError(putil.contracts.get_exdesc())
+
+		@putil.pcontracts.contract(file_name='custom_contract12')
+		def print_file_name(file_name):
+			print('File name to find: {0}'.format(file_name))
+
+	The exception raised by ``print_file_name('/dev/null/_not_a_file_')`` is equivalent to::
+
+		raise IOError('File `/dev/null/_not_a_file_` not found')
+
+	"""
 	def wrapper(func):	#pylint: disable=R0912,R0914
 		""" Decorator """
 		contract_name = func.__name__
