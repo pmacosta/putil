@@ -29,9 +29,10 @@ sys.path.insert(0, os.path.abspath('/home/pacosta/python/psf/src/'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+#   'sphinx.ext.viewcode',
     'sphinx.ext.autodoc',
-#    'sphinx.ext.viewcode',
     'sphinx.ext.mathjax',
+	'sphinxcontrib.inlinesyntaxhighlight'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

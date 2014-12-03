@@ -106,7 +106,7 @@ def _get_contract_exception_dict(contract_msg):
 
 
 def _get_custom_contract(param_contract):
-	""" Retuns True if the parameter contract is a custom contract, False otherwise """
+	""" Returns True if the parameter contract is a custom contract, False otherwise """
 	if not isinstance(param_contract, str):
 		return None
 	for custom_contract in _CUSTOM_CONTRACTS:
@@ -184,7 +184,7 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 	# Validate arguments and homogenize contract exceptions
 	if not isinstance(contract_name, str):
 		raise TypeError('Argument `contract_name` is of the wrong type')
-	# A contract exceptin can be a string (only one exception, default exception type) or a dictionary of exception definitions, if there is more than one or if the type if different than the default
+	# A contract exception can be a string (only one exception, default exception type) or a dictionary of exception definitions, if there is more than one or if the type if different than the default
 	if (not isinstance(contract_exceptions, list)) and (not isinstance(contract_exceptions, str)) and (not isinstance(contract_exceptions, dict)):
 		raise TypeError('Argument `contract_exceptions` is of the wrong type')
 	if isinstance(contract_exceptions, dict):
@@ -197,7 +197,7 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 	extype = type(ValueError)
 	if isinstance(contract_exceptions, list) and any([(not isinstance(item['name'], str)) or (not isinstance(item['msg'], str)) or (not isinstance(item.get('type', extype), extype)) for item in contract_exceptions]):
 		raise TypeError('Contract exception definition is of the wrong type')
-	# Homegenize exception definitions
+	# Homogenize exception definitions
 	if isinstance(contract_exceptions, list):
 		homogenized_exdict = dict([(exdict['name'], {'num':exnum, 'msg':exdict['msg'], 'type':exdict.get('type', RuntimeError), 'field':_get_replacement_token(exdict['msg'])}) for exnum, exdict in enumerate(contract_exceptions)])
 	else:
@@ -211,8 +211,8 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 		raise ValueError('Contract exception messages are not unique')
 	# Verify that a custom contract is not being redefined
 	if (contract_name in _CUSTOM_CONTRACTS) and (_CUSTOM_CONTRACTS[contract_name] != contract_exceptions):
-		raise RuntimeError('Attemp to redefine custom contract `{0}`'.format(contract_name))
-	# Verify that there are at most only two replacemente fields, and one of them should be argument_name
+		raise RuntimeError('Attempt to redefine custom contract `{0}`'.format(contract_name))
+	# Verify that there are at most only two replacement fields, and one of them should be argument_name
 	fields = [exdict['field'] for exdict in homogenized_exdict.values() if exdict['field'] != None]
 	if (len(fields) > 2) or ((len(fields) == 2) and (fields[0] != 'argument_name') and  (fields[1] != 'argument_name')):
 		raise ValueError('Multiple replacement fields to be substituted by argument value')
@@ -227,8 +227,8 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 def contract(**contract_args):	#pylint: disable=R0912
 	r"""
 	Wrapper around PyContracts `contract() <http://andreacensi.github.io/contracts/api_reference.html#module-contracts>`_ decorator. Currently only the decorator way of specifying a
-	contract is supported and tested. The exception ``RuntimeError('Argument `*[argument_name]*` is not valid')`` is raised when a contract is breached (\*[argument_name]\* is replaced
-	by the argument name the contract is attached to) unless the contract is custom and specified with the :py:meth:`putil.pcontracts.new_contract` decorator. In that case the
+	contract is supported and tested. The exception ``RuntimeError('Argument `*[argument_name]*` is not valid')`` is raised when a contract is breached (:code:`'*[argument_name]*'` is replaced
+	by the argument name the contract is attached to) unless the contract is custom and specified with the :py:func:`putil.pcontracts.new_contract` decorator. In this case the
 	exception type and message are controlled by the custom contract specification.
 	"""
 	@decorator.decorator
@@ -275,7 +275,7 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 
 	 * **exception type** *(type)* -- Exception type, either a built-in exception or sub-classed from Exception. Default is ``RuntimeError``.
 
-	 * **excepton message** *(string)* -- Exception message. Default is ``'Argument `*[argument_name]*` is not valid')``, where the token `*[argument_name]*` is replaced by the argument name the contract is attached to.
+	 * **exception message** *(string)* -- Exception message. Default is ``'Argument `*[argument_name]*` is not valid'``, where the token :code:`'*[argument_name]*'` is replaced by the argument name the contract is attached to.
 
 	The order of the tuple elements is not important, i.e. the following are valid exception specifications and define the same exception::
 
@@ -331,13 +331,13 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 		def custom_contract10(arg):
 			pass
 
-	For code conciceness and correctness the exception message(s) should be retrieved via the :py:meth:`putil.pcontracts.get_exdesc` function.
+	For code conciseness and correctness the exception message(s) should be retrieved via the :py:func:`putil.pcontracts.get_exdesc` function.
 
-	A `PyContract new contract <http://andreacensi.github.io/contracts/new_contract.html#new-contract>`_ can return ``False`` or raise a ``ValueError`` exception to indicate a
-	contract breach, however a new contract specified via the :py:meth:`putil.pcontracts.new_contract` decorator *has* to raise a ``ValueError`` exception to indicate a contract
+	A `PyContracts new contract <http://andreacensi.github.io/contracts/new_contract.html#new-contract>`_ can return :code:`False` or raise a :code:`ValueError` exception to indicate a
+	contract breach, however a new contract specified via the :py:func:`putil.pcontracts.new_contract` decorator *has* to raise a :code:`ValueError` exception to indicate a contract
 	breach.
 
-	The exception message can have substitution "tokens" of the form '\*[token_name]\*'. If the token is '\*[argument_name]\*' it is substituted with the argument name the contract
+	The exception message can have substitution "tokens" of the form :code:`'*[token_name]*'`. If the token is :code:`'*[argument_name]*'` it is substituted with the argument name the contract
 	is attached to. For example::
 
 		@putil.pcontracts.new_contract((TypeError, 'Argument `*[argument_name]*` has to be a string'))
@@ -349,11 +349,7 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 		def print_city_name(city_name):
 			print('City: {0}'.format(city_name))
 
-	The exception raised by ``print_city_name(5)`` is equivalent to::
-
-		raise TypeError('Argument `city` has to be a string')
-
-	Any other token is substituted with the argument *value*. For example::
+	The exception raised by ``print_city_name(5)`` is :code:`TypeError('Argument \`city\` has to be a string')`. Any other token is substituted with the argument *value*. For example::
 
 		@putil.pcontracts.new_contract((IOError, 'File `*[file_name]*` not found'))
 		def custom_contract12(fn):
@@ -364,9 +360,7 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 		def print_file_name(file_name):
 			print('File name to find: {0}'.format(file_name))
 
-	The exception raised by ``print_file_name('/dev/null/_not_a_file_')`` is equivalent to::
-
-		raise IOError('File `/dev/null/_not_a_file_` not found')
+	The exception raised by ``print_file_name('/dev/null/_not_a_file_')`` is :code:`IOError('File \`/dev/null/_not_a_file_\` not found')`.
 
 	"""
 	def wrapper(func):	#pylint: disable=R0912,R0914
@@ -377,7 +371,7 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 		func.exdesc = dict([(value['name'], '[START CONTRACT MSG: {0}]{1}[STOP CONTRACT MSG]'.format(contract_name, value['msg'])) for value in exdesc])
 		# Register custom contract
 		_register_custom_contracts(contract_name, exdesc)
-		# Apply PyContract decorator
+		# Apply PyContracts decorator
 		return contracts.new_contract(func)
 	return wrapper
 
@@ -392,9 +386,9 @@ def file_name(name):
 	# Check that argument is a string
 	if not isinstance(name, str):
 		raise ValueError(msg)
-	# If file exists, argment is a valid file name, otherwise test if file can be created
+	# If file exists, argument is a valid file name, otherwise test if file can be created
 	# User may not have permission to write file, but call to os.access should not fail
-	# if the file name is corect
+	# if the file name is correct
 	try:
 		if not os.path.exists(name):
 			os.access(name, os.W_OK)
