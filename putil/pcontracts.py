@@ -381,7 +381,14 @@ def new_contract(*args, **kwargs):	#pylint: disable=R0912
 ###
 @new_contract()
 def file_name(name):
-	""" Contract to validate a file name (i.e. file name does not have extraneous characters, etc.) """
+	r"""
+	Contract to validate that a file name is a legal name for a file (i.e. does not have extraneous characters, etc.)
+
+	:param	name: File name
+	:type	name: string
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:rtype: None
+	"""
 	msg = get_exdesc()
 	# Check that argument is a string
 	if not isinstance(name, str):
@@ -398,7 +405,17 @@ def file_name(name):
 
 @new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', file_not_found=(IOError, 'File `*[file_name]*` could not be found'))
 def file_name_exists(name):
-	""" Contract to validate that a file name is valid (i.e. file name does not have extraneous characters, etc.) and that the file exists """
+	r"""
+	Contract to validate that a file name is a legal name for a file (i.e. does not have extraneous characters, etc.) *and* that it exists
+
+	:param	name: File name
+	:type	name: string
+	:raises:
+	 * :code:`IOError ('File `*[file_name]*` could not be found')`. The token :code:`'*[file_name]*'` is replaced by the *value* of the argument the contract is attached to
+
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:rtype: None
+	"""
 	exdesc = get_exdesc()
 	msg = exdesc['argument_invalid']
 	# Check that argument is a string

@@ -1,3 +1,5 @@
+.. _exh-module:
+
 ##########
 exh module
 ##########

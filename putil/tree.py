@@ -25,13 +25,27 @@ exobj_tree = trace_ex_tree.trace_tree(no_print=True)
 ###
 @putil.pcontracts.new_contract()
 def node_name(name):
-	""" Hierarchical node name data type class """
+	r"""
+	NodeName pseudo-type validation
+
+	:param	name: Node name
+	:type	name: NodeName
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:rtype: None
+	"""
 	if (not isinstance(name, str)) or (isinstance(name, str) and ((' ' in name) or any([element.strip() == '' for element in name.strip().split('.')]))):
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 @putil.pcontracts.new_contract()
-def node_names(names):
-	""" Hierarchical node names data type class """
+def nodes_with_data(names):
+	r"""
+	NodeWithData pseudo-type validation
+
+	:param	names: Node names with associated node data
+	:type	names: NodeWithData
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:rtype: None
+	"""
 	msg = putil.pcontracts.get_exdesc()
 	names = names if isinstance(names, list) else [names]
 	for ndict in names:
@@ -205,23 +219,14 @@ class Tree(object):	#pylint: disable=R0903
 	def _split_node_name(self, name, root_name=None):	#pylint: disable=C0111,R0201
 		return [element.strip() for element in name.strip().split('.')][0 if not root_name else self._root_hierarchy_length:]
 
-	@putil.pcontracts.contract(nodes='node_names')
+	@putil.pcontracts.contract(nodes='nodes_with_data')
 	def add_nodes(self, nodes):
 		"""
 		Add nodes to tree
 
-		:param	nodes: Node(s) to add. Each dictionary must contain exactly two keys:
-
-		 * **name** (*NodeName*) Node name. See `NodeName`_ pseudo-type specification
-
-		 * **data** (*any*) node data.
-
-		 If there are several list items in **nodes** with the same node name the resulting node data is a list with items corresponding to the data of each entry in **nodes** with the same node name, in their order \
-		 of appearance, in addition to any existing node data if the node is already present in the tree.
-
-		 The node data should be an empty list to create a node without data, for example: `{'node':'a.b.c', 'data':list()}`
-
-		:type	nodes: dictionary or list of dictionaries
+		:param	nodes: Node(s) to add with associated data. If there are several list items in **nodes** with the same node name the resulting node data is a list with items corresponding to the data of each entry in \
+		**nodes** with the same node name, in their order of appearance, in addition to any existing node data if the node is already present in the tree.
+		:type	nodes: NodesWithData
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add_nodes')) ]]]
 
@@ -319,7 +324,7 @@ class Tree(object):	#pylint: disable=R0903
 	@putil.pcontracts.contract(source_node='node_name', dest_node='node_name')
 	def copy_subtree(self, source_node, dest_node):
 		"""
-		Copy a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-treeexist in the destination sub-tree
+		Copy a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-tree exist in the destination sub-tree
 
 		:param	source_name: Root node of the sub-tree to copy from. See `NodeName`_ pseudo-type specification
 		:type	source_name: NodeName

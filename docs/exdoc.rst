@@ -1,10 +1,12 @@
-###########
-tree module
-###########
+.. _exdoc-module:
+
+############
+exdoc module
+############
 
 
 
-This module can be used to build, handle, process and search `tries <http://wikipedia.org/wiki/Trie>`_
+This module can be used to automatically generate exception documentation with the help of `cog <http://nedbatchelder.com/code/cog/>`_
 
 ***********
 Interpreter
@@ -16,54 +18,15 @@ The module has been developed using Python 2.7, but it *should* also work with P
 External libraries
 ******************
 
-Standard Python library and other Putil library modules
+* Standard Python library
+  
+* Putil library modules
+
+* Cog (`<http://nedbatchelder.com/code/cog/>`_) for inserting exception documentation automatically in source files
 
 ***************************************
 Application programming interface (API)
 ***************************************
-
-Pseudo-types
-============
-
-NodeName
---------
-
-A tree node name is a *string* where hierarchy levels are denoted by a periods ("."). Node names cannot contain spaces, empty hierarchy levels, start with a period or end with a period.
-
-For this example tree::
-
-	root
-	├branch1
-	│├leaf1
-	│└leaf2
-	└branch2
-
-The node names are ``'root'``, ``'root.branch1'``, ``'root.branch1.leaf1'``, ``'root.branch1.leaf2'`` and ``'root.branch2'``.
-
-NodesWithData
--------------
-
-Dictionary or list of dictionaries. Each dictionary must contain exactly two keys:
-
-* **name** (*NodeName*) Node name. See `NodeName`_ pseudo-type specification
-
-* **data** (*any*) node data.
-
-The node data should be an empty list to create a node without data, for example: :code:`{'node':'a.b.c', 'data':list()}`
-
-Contracts
-=========
-
-.. autofunction:: putil.tree.node_name
-.. autofunction:: putil.tree.nodes_with_data
-
-Classes
-=======
-
-.. automodule:: putil.tree
-    :members: Tree
-    :undoc-members:
-    :show-inheritance:
 
 *******
 License

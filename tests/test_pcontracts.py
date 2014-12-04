@@ -123,7 +123,7 @@ def test_register_custom_contracts():
 	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}]}, ValueError, 'Contract exception messages are not unique'))
 	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'x', 'msg':'I am *[spartacus]*'}, {'name':'y', 'msg':'A move is *[spartacus]*',}]}, ValueError, 'Multiple replacement fields to be substituted by argument value'))
 	putil.pcontracts._register_custom_contracts(contract_name='test1', contract_exceptions=[{'name':'a', 'msg':'desc'}])
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test1', 'contract_exceptions':[{'name':'a', 'msg':'other desc'}]}, RuntimeError, 'Attemp to redefine custom contract `test1`'))
+	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test1', 'contract_exceptions':[{'name':'a', 'msg':'other desc'}]}, RuntimeError, 'Attempt to redefine custom contract `test1`'))
 	# Test homogenization of exception definitions
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract1', 'my description')

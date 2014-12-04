@@ -73,10 +73,10 @@ would result in the following filtered data set:
 |    3 |   5 |     50 |
 +------+-----+--------+
 
-Global variables
-================
+Contracts
+=========
 
-None
+.. autofunction:: putil.pcsv.csv_data_filter
 
 Functions
 =========

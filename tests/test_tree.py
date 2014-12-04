@@ -34,7 +34,7 @@ def test_node_name():
 
 def test_node_names():
 	""" Test for node_names custom PyContract contract """
-	@putil.pcontracts.contract(nodes='node_names')
+	@putil.pcontracts.contract(nodes='nodes_with_data')
 	def func2(nodes):
 		""" Test function """
 		return nodes

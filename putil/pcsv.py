@@ -24,7 +24,18 @@ exobj_funcs = trace_ex_pcsv.trace_functions(no_print=True)
 ###
 @putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_empty=(ValueError, 'Argument `*[argument_name]*` is empty'))
 def csv_data_filter(dfilter):
-	""" Data filter specification pseudo-type """
+	r"""
+	DataFilter pseudo-type validation
+
+	:param	dfilter: Data filter
+	:type	dfilter: DataFilter
+	:raises:
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	 *  :code:`ValueError ('Argument \`*[argument_name]*\` is empty')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
 	exdesc = putil.pcontracts.get_exdesc()
 	if dfilter == None:
 		return None
