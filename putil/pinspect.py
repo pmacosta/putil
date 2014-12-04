@@ -14,7 +14,7 @@ import inspect
 def get_callable_path(frame_obj, func_obj):
 	""" Get full path of callable """
 	comp = dict()
-	# Most of this code refactored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
+	# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
 	code = frame_obj.f_code
 	scontext = frame_obj.f_locals.get('self', None)
 	# Module name
@@ -120,5 +120,14 @@ def public_callables(module_obj):
 	public_callables_list = list()
 	for element_obj, element_name in [(getattr(module_obj, element_name), element_name) for element_name in dir(module_obj) if (element_name == '__init__') or (not is_magic_method(element_name))]:
 		if hasattr(element_obj, '__call__') or isinstance(element_obj, property):
-			public_callables_list.append((element_name, element_obj, (element_obj if not isinstance(element_obj, property) else module_obj)))
+			if element_name == '__init__':
+				element_full_name = '{0}.{1}.{2}'.format(module_obj.__module__, element_obj.im_class.__name__, element_name)
+			elif isinstance(element_obj, types.MethodType):
+				element_full_name = '{0}.{1}.{2}'.format(element_obj.__module__, element_obj.im_class.__name__, element_name)
+			elif isinstance(element_obj, property):
+				import pdb; pdb.set_trace()
+				element_full_name = '{0}.{1}'.format(element_obj.__name__, element_name)
+			else:
+				element_full_name = '{0}.{1}'.format(module_obj.__name__, element_name)
+			public_callables_list.append((element_name, element_obj, (element_obj if not isinstance(element_obj, property) else module_obj), element_full_name))
 	return public_callables_list

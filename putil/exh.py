@@ -139,8 +139,9 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _make_module_callables_list(self, obj, cls_name=''):	#pylint: disable=R0914
 		""" Creates a list of callable functions at and below an object hierarchy """
-		for call_name, call_obj, base_obj in putil.pinspect.public_callables(obj):
+		for call_name, call_obj, base_obj, call_full_name2 in putil.pinspect.public_callables(obj):
 			call_full_name = '{0}.{1}.{2}'.format((obj if call_name == '__init__' else base_obj).__module__, cls_name, call_name) if cls_name else '{0}.{1}'.format(base_obj.__module__, call_name)
+			print '{0}: A: {1} <-> B: {2}'.format(call_full_name == call_full_name2, call_full_name, call_full_name2)
 			call_type = 'attr' if any([hasattr(call_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
 			self._callable_db[call_full_name] = {'type':call_type, 'code':None if not hasattr(call_obj, 'func_code') else call_obj.func_code}
 			# Setter/getter/deleter object have no introspective way of finding out what class (if any) they belong to
