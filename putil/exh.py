@@ -9,7 +9,6 @@ Exception handling classes, methods, functions and constants
 import sys
 import copy
 import inspect
-import operator
 
 import putil.pinspect
 
@@ -54,6 +53,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._callable_db = dict()
 		self._module_db = list()
 		self._ex_list = list()
+		self._callable_obj = putil.pinspect.Callables()
 
 	def __copy__(self):
 		cobj = ExHandle()
@@ -106,62 +106,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
 			func_obj = fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))
 			fname, fdict = putil.pinspect.get_callable_path(fobj, func_obj)
-			ftype = 'attr' if any([hasattr(func_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
-			# Methods that return a function have an empty function object. Strategy in this case is to find out which enclosing module-level function or class method returns the function
-			# by looking at the line numbers at which each enclosing callable starts, and comparing it with the callable line number
-			if fname and (not func_obj):
-				try:
-					mod_obj = sys.modules[fdict['module']]
-					container_obj = getattr(mod_obj, fdict['class'] if fdict['class'] else fdict['module'])
-				except:
-					raise
-				#	raise RuntimeError('Could not get container object')
-				lines_dict = dict()
-				for element_name in dir(container_obj):
-					func_obj = getattr(container_obj, element_name)
-					if func_obj and getattr(func_obj, 'func_code', None):
-						lines_dict[element_name] = func_obj.func_code.co_firstlineno
-				sorted_lines_dict = sorted(lines_dict.items(), key=operator.itemgetter(1))
-				func_name = [member for member, line_no in sorted_lines_dict if line_no < fobj.f_lineno][-1]
-				fname = '.'.join(filter(None, [fdict['module'], fdict['class'], func_name, fdict['function']]))	#pylint: disable=W0141
-			# If callable is an attribute, "trace" module(s) where attributes are to find
-			if (fname not in self._callable_db) and (ftype == 'attr'):
-				self._make_module_callables_list(sys.modules[func_obj.__module__])
-			# Method in class
-			elif (fname not in self._callable_db) and hasattr(func_obj, 'im_class'):
-				cls_obj = func_obj.im_class
-				self._make_module_callables_list(cls_obj, cls_obj.__name__)
-			# Module-level function
-			elif fname not in self._callable_db:
-				self._callable_db[fname] = {'type':ftype, 'code':None if not hasattr(func_obj, 'func_code') else func_obj.func_code}
+			self._callable_obj.trace(sys.modules[fdict['module']])
+			self._callable_db = self._callable_obj.callables_db
 			ret.append(fname)
 		return '.'.join(ret)
-
-	def _make_module_callables_list(self, obj, cls_name=''):	#pylint: disable=R0914
-		""" Creates a list of callable functions at and below an object hierarchy """
-		for call_name, call_obj, base_obj, call_full_name2 in putil.pinspect.public_callables(obj):
-			call_full_name = '{0}.{1}.{2}'.format((obj if call_name == '__init__' else base_obj).__module__, cls_name, call_name) if cls_name else '{0}.{1}'.format(base_obj.__module__, call_name)
-			print '{0}: A: {1} <-> B: {2}'.format(call_full_name == call_full_name2, call_full_name, call_full_name2)
-			call_type = 'attr' if any([hasattr(call_obj, attr) for attr in ['fset', 'fget', 'fdel']]) else 'meth'
-			self._callable_db[call_full_name] = {'type':call_type, 'code':None if not hasattr(call_obj, 'func_code') else call_obj.func_code}
-			# Setter/getter/deleter object have no introspective way of finding out what class (if any) they belong to
-			# Need to compare code objects with class or module members to find out cross-link
-			if call_type == 'attr':
-				attr_dict = dict()
-				# Object may have property but be None if it does not have a getter, setter or deleter assigned to it
-				attr_tuple = [(attrn, getattr(call_obj, attrn)) for attrn in ['fset', 'fget', 'fdel'] if hasattr(call_obj, attrn) and getattr(call_obj, attrn)]
-				# Scan module objects if not done before
-				for modname in [attr_obj.__module__ for _, attr_obj in attr_tuple if attr_obj.__module__ not in self._module_db]:
-					self._module_db.append(modname)
-					self._make_module_callables_list(sys.modules[modname])
-				for attr, attr_obj in attr_tuple:
-					attr_module = attr_obj.__module__
-					# Compare code objects, only reliable way of finding out if function object is the same as class/module object
-					for mkey, mvalue in [(mcall, mvalue) for mcall, mvalue in self._callable_db.items() if mcall.startswith(attr_module+'.') and self._callable_db[mcall].get('code', None)]:
-						if mvalue['code'] == attr_obj.func_code:
-							attr_dict[attr] = mkey
-							break
-				self._callable_db[call_full_name]['attr'] = attr_dict
 
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
