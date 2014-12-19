@@ -106,13 +106,20 @@ def _replace_tabs(text):
 	return text.lstrip('\f').expandtabs()
 
 
-class Callables(object):	#pylint: disable=R0903
+class Callables(object):	#pylint: disable=R0903,R0902
 	""" Trace module to get callable names and objects """
 	def __init__(self):
 		self._modules = []
 		self._classes = []
 		self._prop_dict = {}
 		self._callables_db = {}
+		# Regular expressions to detect class definition, function definition and decorator-defined properties
+		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
+		self._func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
+		self._setter_prop_regex = re.compile(r'^(\s*)@(property|property\.setter)\s*$')
+		self._getter_prop_regex = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
+		self._deleter_prop_regex = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
+
 
 	def __repr__(self):
 		ret = 'Modules: {0}\n'.format(', '.join([mdl for mdl in self._modules]))
@@ -158,28 +165,21 @@ class Callables(object):	#pylint: disable=R0903
 		""" Find closures within module """
 		if inspect.ismodule(obj):
 			element_module = obj.__name__
-			# Regular expressions to detect class definition, function definition and decorator-defined properties
-			class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
-			module_file_name = '{0}.py'.format(os.path.splitext(obj.__file__)[0])
-			func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
-			setter_prop_regex = re.compile(r'^(\s*)@(property|property\.setter)\s*$')
-			getter_prop_regex = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
-			deleter_prop_regex = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
 			# Read module file
+			module_file_name = '{0}.py'.format(os.path.splitext(obj.__file__)[0])
 			with open(module_file_name, 'rb') as file_obj:
-				module_lines = file_obj.read()
-			module_lines = module_lines.split('\n')
+				module_lines = file_obj.read().split('\n')
 			# Initialize parser variables
 			indent_stack = [{'level':0, 'prefix':element_module, 'type':'module'}]
 			in_prop = False
 			prop_num = 0
 			attr_name = ''
-			for num, line in [(num+1, line) for num, line in enumerate(module_lines)]:
-				class_match = class_regexp.match(line)
-				func_match = func_regexp.match(line)
+			for num, line in enumerate(module_lines, start=1):
+				class_match = self._class_regexp.match(line)
+				func_match = self._func_regexp.match(line)
 				# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
-				is_prop_line = getter_prop_regex.match(line) or setter_prop_regex.match(line) or deleter_prop_regex.match(line)
-				attr_name = '({0})'.format('getter' if getter_prop_regex.match(line) else ('setter' if setter_prop_regex.match(line) else 'deleter')) if is_prop_line else attr_name
+				is_prop_line = self._getter_prop_regex.match(line) or self._setter_prop_regex.match(line) or self._deleter_prop_regex.match(line)
+				attr_name = '({0})'.format('getter' if self._getter_prop_regex.match(line) else ('setter' if self._setter_prop_regex.match(line) else 'deleter')) if is_prop_line else attr_name
 				in_prop = (is_prop_line != None) if not in_prop else in_prop
 				prop_num = num if is_prop_line else prop_num
 				element_num = num if not in_prop else prop_num
@@ -208,7 +208,7 @@ class Callables(object):	#pylint: disable=R0903
 			for attr in ['fset', 'fget', 'fdel']:
 				if hasattr(prop_obj, attr):
 					attr_obj = getattr(prop_obj, attr)
-					if attr_obj and hasattr(attr_obj, '__call__'):
+					if getattr(attr_obj, '__call__', None):
 						if attr_obj.__name__ == '<lambda>':
 							name = '{0}.{1}_lambda'.format(prop_name, attr)
 						else:
@@ -216,7 +216,7 @@ class Callables(object):	#pylint: disable=R0903
 								self.trace(sys.modules[attr_obj.__module__])
 							# Get to the object of the actual, undecorated function. Adjust for line number, because object function code always reports line where decorators start
 							num_decorators = 0
-							while hasattr(attr_obj, 'undecorated') and getattr(attr_obj, 'undecorated'):
+							while getattr(attr_obj, 'undecorated', None):
 								num_decorators += 1
 								attr_obj = getattr(attr_obj, 'undecorated')
 							attr_code_id = _get_code_id(attr_obj, num_decorators)
