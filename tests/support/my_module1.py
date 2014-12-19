@@ -3,6 +3,7 @@
 my_module1 module
 """
 
+import my_module2
 import putil.pcontracts
 
 def module_enclosing_func(offset):
@@ -12,19 +13,12 @@ def module_enclosing_func(offset):
 		return offset+value
 	return module_closure_func
 
-def setter_enclosing_func(offset):
-	""" Test function to see if property enclosures are detected """
-	def setter_closure_func(self, value):
-		""" Actual closure function, should be reported as: putil.tests.my_module.TraceClass.line.setter_enclosing_func.setter_closure_func """
-		self._value = offset+value
-	return setter_closure_func
-
 class TraceClass1(object):	#pylint: disable=R0903
 	""" First class to trace """
 	def __init__(self):
 		self._value = None
 
-	value1 = property(lambda self: self._value+10, setter_enclosing_func(5))
+	value1 = property(lambda self: self._value+10, my_module2.setter_enclosing_func(5))
 
 def prop_decorator(func):
 	""" Dummy property decorator """

@@ -7,8 +7,12 @@
 putil.pintrospect unit tests
 """
 
+import os
 import sys
+import mock
+import time
 import types
+import inspect
 
 import putil.test
 import putil.pinspect
@@ -70,3 +74,53 @@ def test_replace_tabs():
 	test_list.append(putil.pinspect._replace_tabs('\f   \t  \t def func()') == (' '*16)+' def func()')
 	assert test_list == [True]*len(test_list)
 
+def test_callables():
+	""" Test callables class """
+	def mock_get_code_id(obj):	#pylint: disable=W0612
+		""" Return unique identity tuple to individualize callable object """
+		if hasattr(obj, 'func_code'):
+			code_obj = getattr(obj, 'func_code')
+			return (code_obj.co_filename, time.time())	# Ensure that each method has a unique number and thus one that will not be found
+		return None
+
+	test_list = list()
+	obj = putil.pinspect.Callables()
+	test_list.append(obj.callables_db == dict())
+	test_list.append(putil.test.trigger_exception(obj.trace, {'obj':'not_an_object'}, TypeError, 'Argument `obj` is not valid'))
+	sys.path.append(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), 'support'))
+	import my_module1	#pylint: disable=F0401,W0612
+	obj.trace(sys.modules['my_module1'])
+	ref_list = list()
+	ref_list.append('Modules: my_module1, my_module2')
+	ref_list.append('Classes: my_module1.TraceClass1, my_module1.TraceClass2, my_module1.TraceClass3')
+	ref_list.append('my_module1.TraceClass1.__init__: meth (18)')
+	ref_list.append('my_module1.TraceClass1.value1: prop')
+	ref_list.append('   fset: my_module2.setter_enclosing_func.setter_closure_func')
+	ref_list.append('   fget: my_module1.TraceClass1.value1.fget_lambda')
+	ref_list.append('my_module1.TraceClass2.__init__: meth (29)')
+	ref_list.append('my_module1.TraceClass2._deleter_func2: meth (43)')
+	ref_list.append('my_module1.TraceClass2._getter_func2: meth (39)')
+	ref_list.append('my_module1.TraceClass2._setter_func2: meth (32)')
+	ref_list.append('my_module1.TraceClass2.value2: prop')
+	ref_list.append('   fset: my_module1.TraceClass2._setter_func2')
+	ref_list.append('   fdel: my_module1.TraceClass2._deleter_func2')
+	ref_list.append('   fget: my_module1.TraceClass2._getter_func2')
+	ref_list.append('my_module1.TraceClass3.__init__: meth (52)')
+	ref_list.append('my_module1.TraceClass3.value3: prop')
+	ref_list.append('   fset: my_module1.TraceClass3.value3(setter)')
+	ref_list.append('   fdel: my_module1.TraceClass3.value3(deleter)')
+	ref_list.append('   fget: my_module1.TraceClass3.value3(getter)')
+	ref_list.append('my_module1.TraceClass3.value3(deleter): meth (67)')
+	ref_list.append('my_module1.TraceClass3.value3(getter): meth (55)')
+	ref_list.append('my_module1.TraceClass3.value3(setter): meth (60)')
+	ref_list.append('my_module1.module_enclosing_func: func (9)')
+	ref_list.append('my_module1.module_enclosing_func.module_closure_func: func (11)')
+	ref_list.append('my_module1.prop_decorator: func (23)')
+	ref_list.append('my_module2.setter_enclosing_func: func (6)')
+	ref_list.append('my_module2.setter_enclosing_func.setter_closure_func: func (8)')
+	ref_text = '\n'.join(ref_list)
+	test_list.append(str(obj) == ref_text)
+	obj = putil.pinspect.Callables()
+	with mock.patch('putil.pinspect._get_code_id') as mock_get_code_id:
+		test_list.append(putil.test.trigger_exception(obj.trace, {'obj':sys.modules['my_module1']}, RuntimeError, 'Attribute `fset` of property `my_module1.TraceClass1.value1` not found in callable database'))
+	assert test_list == [True]*len(test_list)

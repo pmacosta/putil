@@ -12,11 +12,11 @@ import sys
 import types
 import inspect
 
-def _get_code_id(obj, lineno_offset=0):
+def _get_code_id(obj):
 	""" Return unique identity tuple to individualize callable object """
 	if hasattr(obj, 'func_code'):
 		code_obj = getattr(obj, 'func_code')
-		return (code_obj.co_filename, code_obj.co_firstlineno+lineno_offset)
+		return (code_obj.co_filename, code_obj.co_firstlineno)
 	return None
 
 
@@ -123,15 +123,15 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 
 	def __repr__(self):
-		ret = 'Modules: {0}\n'.format(', '.join([mdl for mdl in self._modules]))
-		ret += 'Classes: {0}\n'.format(', '.join([cls for cls in self._classes]))
+		ret = list()
+		ret.append('Modules: {0}'.format(', '.join([mdl for mdl in self._modules])))
+		ret.append('Classes: {0}'.format(', '.join([cls for cls in self._classes])))
 		for key in sorted(self._callables_db.keys()):
-			ret += '{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else '')
+			ret.append('{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else ''))
 			if self._callables_db[key]['type'] == 'prop':
 				for attr in self._callables_db[key]['attr']:
-					ret += '\n   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr])
-			ret += '\n'
-		return ret
+					ret.append('   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr]))
+		return '\n'.join(ret)
 
 	def _get_callables_db(self):
 		""" Getter for callables_db property """
@@ -219,10 +219,10 @@ class Callables(object):	#pylint: disable=R0903,R0902
 								if (self._callables_db[name]['type'] != 'prop') and (attr_code_id == self._callables_db[name]['code_id']):
 									break
 							else:
-								for name in sorted(self._callables_db.keys()):
-									print '{0}: {1}'.format(name, self._callables_db[name])
-								print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, _get_code_id(attr_obj))
-								raise RuntimeError('Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id))
+								# for name in sorted(self._callables_db.keys()):
+								# 	print '{0}: {1}'.format(name, self._callables_db[name])
+								# print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id)
+								raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr, prop_name))
 						attr_dict[attr] = name	#pylint: disable=W0631
 			self._callables_db[prop_name]['attr'] = attr_dict
 
