@@ -115,9 +115,10 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._callables_db = {}
 		# Regular expressions to detect class definition, function definition and decorator-defined properties
 		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
+		self._decorator_regex = re.compile(r'^(\s*)@(\w+)')
 		self._func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
-		self._setter_prop_regex = re.compile(r'^(\s*)@(property|property\.setter)\s*$')
-		self._getter_prop_regex = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
+		self._getter_prop_regex = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
+		self._setter_prop_regex = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
 		self._deleter_prop_regex = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
 
 
@@ -125,7 +126,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		ret = 'Modules: {0}\n'.format(', '.join([mdl for mdl in self._modules]))
 		ret += 'Classes: {0}\n'.format(', '.join([cls for cls in self._classes]))
 		for key in sorted(self._callables_db.keys()):
-			ret += '{0}: {1}'.format(key, self._callables_db[key]['type'])
+			ret += '{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else '')
 			if self._callables_db[key]['type'] == 'prop':
 				for attr in self._callables_db[key]['attr']:
 					ret += '\n   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr])
@@ -171,18 +172,15 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				module_lines = file_obj.read().split('\n')
 			# Initialize parser variables
 			indent_stack = [{'level':0, 'prefix':element_module, 'type':'module'}]
-			in_prop = False
-			prop_num = 0
+			decorator_num = None
 			attr_name = ''
 			for num, line in enumerate(module_lines, start=1):
 				class_match = self._class_regexp.match(line)
 				func_match = self._func_regexp.match(line)
 				# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
-				is_prop_line = self._getter_prop_regex.match(line) or self._setter_prop_regex.match(line) or self._deleter_prop_regex.match(line)
-				attr_name = '({0})'.format('getter' if self._getter_prop_regex.match(line) else ('setter' if self._setter_prop_regex.match(line) else 'deleter')) if is_prop_line else attr_name
-				in_prop = (is_prop_line != None) if not in_prop else in_prop
-				prop_num = num if is_prop_line else prop_num
-				element_num = num if not in_prop else prop_num
+				attr_name = attr_name if attr_name else '(getter)' if self._getter_prop_regex.match(line) else ('(setter)' if self._setter_prop_regex.match(line) else ('(deleter)' if self._deleter_prop_regex.match(line) else ''))
+				decorator_num = num if self._decorator_regex.match(line) and (decorator_num == None) else decorator_num
+				element_num = decorator_num if decorator_num else num
 				#
 				if class_match or func_match:
 					class_name = class_match.group(2) if class_match else None
@@ -193,12 +191,11 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 							indent_stack.pop()
 						element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
-						if func_name and (element_full_name not in self._callables_db) or ((element_full_name in self._callables_db) and in_prop):
+						if func_name and (element_full_name not in self._callables_db):
 							self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num)}
 						indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 					# Clear property variables
-					in_prop = False
-					prop_num = 0
+					decorator_num = None
 					attr_name = ''
 
 	def get_prop_components(self):
@@ -215,11 +212,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 							if attr_obj.__module__ not in self._modules:
 								self.trace(sys.modules[attr_obj.__module__])
 							# Get to the object of the actual, undecorated function. Adjust for line number, because object function code always reports line where decorators start
-							num_decorators = 0
 							while getattr(attr_obj, 'undecorated', None):
-								num_decorators += 1
 								attr_obj = getattr(attr_obj, 'undecorated')
-							attr_code_id = _get_code_id(attr_obj, num_decorators)
+							attr_code_id = _get_code_id(attr_obj)
 							for name in self._callables_db:
 								if (self._callables_db[name]['type'] != 'prop') and (attr_code_id == self._callables_db[name]['code_id']):
 									break
@@ -227,7 +222,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 								for name in sorted(self._callables_db.keys()):
 									print '{0}: {1}'.format(name, self._callables_db[name])
 								print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, _get_code_id(attr_obj))
-								raise RuntimeError('Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, _get_code_id(attr_obj)))
+								raise RuntimeError('Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id))
 						attr_dict[attr] = name	#pylint: disable=W0631
 			self._callables_db[prop_name]['attr'] = attr_dict
 

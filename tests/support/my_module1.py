@@ -1,24 +1,76 @@
-﻿""" my_module1 module """
+﻿# pylint: disable=W0212
+"""
+my_module1 module
+"""
 
-def enclosing_func(offset):
-	""" Test function to see if code detects enclosures """
-	def closure_func(value):
-		"""
-		Actual closure function, should be reported as:
-		putil.my_module.enclosing_func.closure_func
-		"""
+import putil.pcontracts
+
+def module_enclosing_func(offset):
+	""" Test function to see if module-level enclosures are detected """
+	def module_closure_func(value):
+		""" Actual closure function, should be reported as: putil.tests.my_module.module_enclosing_func.module_closure_func """
 		return offset+value
-	return closure_func
+	return module_closure_func
 
-class MyClass(object):	#pylint: disable=R0903
-	""" Test class """
+def setter_enclosing_func(offset):
+	""" Test function to see if property enclosures are detected """
+	def setter_closure_func(self, value):
+		""" Actual closure function, should be reported as: putil.tests.my_module.TraceClass.line.setter_enclosing_func.setter_closure_func """
+		self._value = offset+value
+	return setter_closure_func
+
+class TraceClass1(object):	#pylint: disable=R0903
+	""" First class to trace """
 	def __init__(self):
 		self._value = None
-	def _getter_func(self):
-		""" Simple getter method """
-		return self._value
-	def _setter_func(self, value):
-		""" Simple setter method """
-		self._value = value
-	value = property(_getter_func, _setter_func, None, doc='Value property')
 
+	value1 = property(lambda self: self._value+10, setter_enclosing_func(5))
+
+def prop_decorator(func):
+	""" Dummy property decorator """
+	return func
+
+class TraceClass2(object):	#pylint: disable=R0903
+	""" Second class to trace """
+	def __init__(self):
+		self._value = None
+
+	@putil.pcontracts.contract(value=int)
+	@prop_decorator
+	def _setter_func2(self, value):
+		""" Simple setter method """
+		print 'The value is {0}'.format(value)
+		self._value = value
+
+	def _getter_func2(self):
+		""" Simple setter method """
+		return self._value
+
+	def _deleter_func2(self):	#pylint: disable=R0201
+		""" Simple setter method """
+		print 'Cannot delete attribute'
+
+	value2 = property(_getter_func2, _setter_func2, _deleter_func2, doc='Value attribute')
+
+
+class TraceClass3(object):	#pylint: disable=R0903
+	""" Second class to trace """
+	def __init__(self):
+		self._value = None
+
+	@property
+	def value3(self):
+		""" Simple setter method """
+		return self._value
+
+	@value3.setter
+	@putil.pcontracts.contract(value=int)
+	def value3(self, value):
+		""" Simple setter method """
+		print 'The value is {0}'.format(value)
+		self._value = value
+
+	@value3.deleter
+	def value3(self):	#pylint: disable=R0201
+		""" Simple setter method """
+		print 'Cannot delete attribute'

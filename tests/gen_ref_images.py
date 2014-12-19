@@ -16,7 +16,7 @@ import putil.misc
 def unittest_series_images(mode=None, test_dir=None):	#pylint: disable=R0914
 	""" Images for Series() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = './ref_images/'
+	ref_dir = './support/ref_images/'
 	test_dir = './test_images' if test_dir is None else test_dir
 	marker_list = [False, True]
 	interp_list = ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
@@ -59,7 +59,7 @@ def unittest_series_images(mode=None, test_dir=None):	#pylint: disable=R0914
 def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915
 	""" Images for Panel() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = './ref_images/'
+	ref_dir = './support/ref_images/'
 	test_dir = './test_images' if test_dir is None else test_dir
 	axis_type_list = ['single', 'linear', 'log', 'filter']
 	series_in_axis = ['primary', 'secondary', 'both']
@@ -146,7 +146,7 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915
 	""" Images for Figure() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = './ref_images/'
+	ref_dir = './support/ref_images/'
 	test_dir = './test_images' if test_dir is None else test_dir
 	output_list = list()
 	ds1_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([1, 2, 3, 4]))
