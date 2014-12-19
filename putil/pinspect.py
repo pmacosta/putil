@@ -20,22 +20,6 @@ def _get_code_id(obj, lineno_offset=0):
 	return None
 
 
-def get_callable_path(frame_obj, func_obj):
-	""" Get full path of callable """
-	# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
-	code = frame_obj.f_code
-	scontext = frame_obj.f_locals.get('self', None)
-	# Module name
-	module = inspect.getmodule(code)
-	ret = [module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)]
-	# Class name
-	ret.append(scontext.__class__.__name__ if scontext else '')
-	# Function/method/attribute name
-	func_name = code.co_name
-	ret.append('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
-	return '.'.join(filter(None, ret)), ret[0]	#pylint: disable=W0141
-
-
 def is_magic_method(name):
 	"""
 	Determines if a method is a magic method or not (with a '__' prefix and suffix)
@@ -112,6 +96,7 @@ def loaded_package_modules(module_obj, _rarg=None):
 			modules_covered, modules_list = loaded_package_modules(module_obj, (root_dir, modules_covered, modules_list))
 	return (modules_covered, modules_list) if recursive else modules_list
 
+
 def _replace_tabs(text):
 	""" Section 2.1.8 Indentation of Python 2.7.9 documentation:
 	First, tabs are replaced (from left to right) by one to eight spaces such that the total number of characters up to and including the replacement is a multiple of eight (this is intended to be the same rule as used by Unix).
@@ -119,6 +104,7 @@ def _replace_tabs(text):
 	(for instance, they may reset the space count to zero)
 	"""
 	return text.lstrip('\f').expandtabs()
+
 
 class Callables(object):	#pylint: disable=R0903
 	""" Trace module to get callable names and objects """

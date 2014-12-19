@@ -94,7 +94,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_callable_db(self):
 		""" Returns database of callables """
-		return self._callable_db
+		return self._callable_obj.callables_db
 
 	def _get_callable_name(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
@@ -103,13 +103,27 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
-		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
-			func_obj = fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))
-			fname, fmodule = putil.pinspect.get_callable_path(fobj, func_obj)
-			self._callable_obj.trace(sys.modules[fmodule])
-			self._callable_db = self._callable_obj.callables_db
-			ret.append(fname)
+		for frame_obj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
+			func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
+			ret.append(self._get_callable_path(frame_obj, func_obj))
 		return '.'.join(ret)
+
+	def _get_callable_path(self, frame_obj, func_obj):
+		""" Get full path of callable """
+		# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
+		code = frame_obj.f_code
+		scontext = frame_obj.f_locals.get('self', None)
+		# Module name
+		module = inspect.getmodule(code)
+		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
+		self._callable_obj.trace(sys.modules[module_name])
+		ret = module_name
+		# Class name
+		ret += ('.'+scontext.__class__.__name__) if scontext else ''
+		# Function/method/attribute name
+		func_name = code.co_name
+		ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
+		return ret
 
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
