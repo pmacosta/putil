@@ -12,11 +12,11 @@ import sys
 import types
 import inspect
 
-def _get_code_id(obj):
-	""" Returnd unique identity tuple to individualize callable object """
+def _get_code_id(obj, lineno_offset=0):
+	""" Return unique identity tuple to individualize callable object """
 	if hasattr(obj, 'func_code'):
 		code_obj = getattr(obj, 'func_code')
-		return (code_obj.co_filename, code_obj.co_firstlineno)
+		return (code_obj.co_filename, code_obj.co_firstlineno+lineno_offset)
 	return None
 
 
@@ -119,7 +119,7 @@ def loaded_package_modules(module_obj, _rarg=None):
 def replace_tabs(text):
 	""" Section 2.1.8 Indentation of Python 2.7.9 documentation:
 	First, tabs are replaced (from left to right) by one to eight spaces such that the total number of characters up to and including the replacement is a multiple of eight (this is intended to be the same rule as used by Unix).
-	A formfeed character may be present at the start of the line; it will be ignored for the indentation calculations above. Formfeed characters occurring elsewhere in the leading whitespace have an undefined effect
+	A form feed character may be present at the start of the line; it will be ignored for the indentation calculations above. Form feed characters occurring elsewhere in the leading whitespace have an undefined effect
 	(for instance, they may reset the space count to zero)
 	"""
 	ret = ''
@@ -157,7 +157,7 @@ class Callables(object):	#pylint: disable=R0903
 		self._prop_dict = {}
 		element_module = obj.__name__ if inspect.ismodule(obj) else obj.__module__
 		element_class = obj.__name__ if inspect.isclass(obj) else None
-		if (element_module not in self._modules) or (element_class not in self._classes):
+		if (element_module not in self._modules) or (element_class and (element_class not in self._classes)):
 			self._modules += [element_module] if inspect.ismodule(obj) else []
 			self._classes += ['{0}.{1}'.format(element_module, element_class)] if inspect.isclass(obj) else []
 			self.get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
@@ -169,7 +169,8 @@ class Callables(object):	#pylint: disable=R0903
 				elif hasattr(element_obj, '__call__') or is_prop:
 					element_type = 'meth' if isinstance(element_obj, types.MethodType) else ('prop' if is_prop else 'func')
 					element_full_name = ('{0}.{1}.{2}'.format(element_module, element_class, element_name) if element_class else '{0}.{1}').format(element_module, element_name)
-					self._callables_db[element_full_name] = {'type':element_type, 'code_id':_get_code_id(element_obj)}
+					if element_full_name not in self._callables_db:
+						self._callables_db[element_full_name] = {'type':element_type, 'code_id':_get_code_id(element_obj)}
 					if is_prop:
 						self._prop_dict[element_full_name] = element_obj
 			self.get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
@@ -209,7 +210,7 @@ class Callables(object):	#pylint: disable=R0903
 					func_name = func_match.group(2) if func_match else None
 					if class_name or (func_name and (func_name == '__init__' or (not is_magic_method(func_name)))):
 						indent = len(replace_tabs(class_match.group(1) if class_match else func_match.group(1)))
-						# Remove all blocks ta the same level to find out the indentation "parent"
+						# Remove all blocks at the same level to find out the indentation "parent"
 						while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 							indent_stack.pop()
 						element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
@@ -234,12 +235,19 @@ class Callables(object):	#pylint: disable=R0903
 						else:
 							if attr_obj.__module__ not in self._modules:
 								self.trace(sys.modules[attr_obj.__module__])
+							# Get to the object of the actual, undecorated function. Adjust for line number, because object function code always reports line where decorators start
+							num_decorators = 0
+							while hasattr(attr_obj, 'undecorated') and getattr(attr_obj, 'undecorated'):
+								num_decorators += 1
+								attr_obj = getattr(attr_obj, 'undecorated')
+							attr_code_id = _get_code_id(attr_obj, num_decorators)
 							for name in self._callables_db:
-								if (self._callables_db[name]['type'] != 'prop') and (_get_code_id(attr_obj) == self._callables_db[name]['code_id']):
+								if (self._callables_db[name]['type'] != 'prop') and (attr_code_id == self._callables_db[name]['code_id']):
 									break
 							else:
 								for name in sorted(self._callables_db.keys()):
 									print '{0}: {1}'.format(name, self._callables_db[name])
+								print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, _get_code_id(attr_obj))
 								raise RuntimeError('Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, _get_code_id(attr_obj)))
 						attr_dict[attr] = name	#pylint: disable=W0631
 			self._callables_db[prop_name]['attr'] = attr_dict
