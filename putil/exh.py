@@ -105,8 +105,8 @@ class ExHandle(object):	#pylint: disable=R0902
 		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
 		for fobj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
 			func_obj = fobj.f_locals.get(func, fobj.f_globals.get(func, getattr(fobj.f_locals.get('self'), func, None) if 'self' in fobj.f_locals else None))
-			fname, fdict = putil.pinspect.get_callable_path(fobj, func_obj)
-			self._callable_obj.trace(sys.modules[fdict['module']])
+			fname, fmodule = putil.pinspect.get_callable_path(fobj, func_obj)
+			self._callable_obj.trace(sys.modules[fmodule])
 			self._callable_db = self._callable_obj.callables_db
 			ret.append(fname)
 		return '.'.join(ret)

@@ -22,22 +22,18 @@ def _get_code_id(obj, lineno_offset=0):
 
 def get_callable_path(frame_obj, func_obj):
 	""" Get full path of callable """
-	comp = dict()
 	# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
 	code = frame_obj.f_code
 	scontext = frame_obj.f_locals.get('self', None)
 	# Module name
 	module = inspect.getmodule(code)
-	comp['module'] = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
-	ret = [comp['module']]
+	ret = [module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)]
 	# Class name
-	comp['class'] = scontext.__class__.__name__ if scontext else ''
-	ret.append(comp['class'])
+	ret.append(scontext.__class__.__name__ if scontext else '')
 	# Function/method/attribute name
 	func_name = code.co_name
-	comp['function'] = '__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name)
-	ret.append(comp['function'])
-	return '' if ret[:2] == ['', ''] else '.'.join(filter(None, ret)), comp	#pylint: disable=W0141
+	ret.append('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
+	return '.'.join(filter(None, ret)), ret[0]	#pylint: disable=W0141
 
 
 def is_magic_method(name):
