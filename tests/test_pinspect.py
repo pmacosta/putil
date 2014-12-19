@@ -1,6 +1,7 @@
 ﻿# test_pinspect.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
+# pylint: disable=W0212
 
 """
 putil.pintrospect unit tests
@@ -56,5 +57,16 @@ def test_loaded_package_modules():
 	modules_obj_list = set([sys.modules['putil']]+[sys.modules['putil.{0}'.format(module_name)] for module_name in module_name_list])
 	test_list.append(set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list)
 	test_list.append(set(putil.pinspect.loaded_package_modules(sys.modules['putil.pinspect'])) == modules_obj_list)
+	assert test_list == [True]*len(test_list)
+
+def test_replace_tabs():
+	""" Test _replace_tabs() function """
+	test_list = list()
+	test_list.append(putil.pinspect._replace_tabs('    def func()') == '    def func()')
+	for snum in range(0, 8):
+		test_list.append(putil.pinspect._replace_tabs((' '*snum)+'\tdef func()') == (' '*8)+'def func()')
+	test_list.append(putil.pinspect._replace_tabs('   \t   def func()') == (' '*8)+'   def func()')
+	test_list.append(putil.pinspect._replace_tabs('   \t  \t def func()') == (' '*16)+' def func()')
+	test_list.append(putil.pinspect._replace_tabs('\f   \t  \t def func()') == (' '*16)+' def func()')
 	assert test_list == [True]*len(test_list)
 

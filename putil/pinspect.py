@@ -116,16 +116,13 @@ def loaded_package_modules(module_obj, _rarg=None):
 			modules_covered, modules_list = loaded_package_modules(module_obj, (root_dir, modules_covered, modules_list))
 	return (modules_covered, modules_list) if recursive else modules_list
 
-def replace_tabs(text):
+def _replace_tabs(text):
 	""" Section 2.1.8 Indentation of Python 2.7.9 documentation:
 	First, tabs are replaced (from left to right) by one to eight spaces such that the total number of characters up to and including the replacement is a multiple of eight (this is intended to be the same rule as used by Unix).
 	A form feed character may be present at the start of the line; it will be ignored for the indentation calculations above. Form feed characters occurring elsewhere in the leading whitespace have an undefined effect
 	(for instance, they may reset the space count to zero)
 	"""
-	ret = ''
-	for char in text.replace('\f', ''):
-		ret += (' '*(8-(len(ret) % 8))) if char == '\t' else char
-	return ret
+	return text.lstrip('\f').expandtabs()
 
 class Callables(object):	#pylint: disable=R0903
 	""" Trace module to get callable names and objects """
@@ -209,7 +206,7 @@ class Callables(object):	#pylint: disable=R0903
 					class_name = class_match.group(2) if class_match else None
 					func_name = func_match.group(2) if func_match else None
 					if class_name or (func_name and (func_name == '__init__' or (not is_magic_method(func_name)))):
-						indent = len(replace_tabs(class_match.group(1) if class_match else func_match.group(1)))
+						indent = len(_replace_tabs(class_match.group(1) if class_match else func_match.group(1)))
 						# Remove all blocks at the same level to find out the indentation "parent"
 						while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 							indent_stack.pop()
@@ -254,5 +251,3 @@ class Callables(object):	#pylint: disable=R0903
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Module(s) callables database')
-
-#x.trace(sys.modules['putil.pcsv'])
