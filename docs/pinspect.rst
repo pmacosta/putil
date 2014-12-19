@@ -22,16 +22,6 @@ External libraries
 Application programming interface (API)
 ***************************************
 
-Pseudo-types
-============
-
-None
-
-Global variables
-================
-
-None
-
 Functions
 =========
 
@@ -44,7 +34,8 @@ Functions
 Classes
 =======
 
-None
+.. autoclass:: putil.pinspect.Callables
+	:members: trace, callables_db
 
 *******
 License

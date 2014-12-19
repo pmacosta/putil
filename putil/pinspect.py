@@ -107,8 +107,17 @@ def _replace_tabs(text):
 
 
 class Callables(object):	#pylint: disable=R0903,R0902
-	""" Trace module to get callable names and objects """
-	def __init__(self):
+	"""
+	Generates list of module callables (functions and properties) and gets their attributes (type, file name, starting line number). Information from multiple modules can be stored in the callables database of the object by
+	repeatedly calling :py:meth:`putil.pinspect.Callables.trace()` with different module objects. A :py:class:`putil.pinspect.Callables()` object retains knowledge of which modules have been traced so repeated calls to
+	:py:meth:`putil.pinspect.Callables.trace()` with the *same* module object will *not* result in module re-traces (and the consequent performance hit).
+
+	:param obj: Module object
+	:type	obj: object
+	:rtype: :py:class:`putil.pinspect.Callables()` object
+	:raises: TypeError (Argument `obj` is not valid)
+	"""
+	def __init__(self, obj=None):
 		self._modules = []
 		self._classes = []
 		self._prop_dict = {}
@@ -120,6 +129,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._getter_prop_regex = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
 		self._setter_prop_regex = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
 		self._deleter_prop_regex = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
+		if obj:
+			self.trace(obj)
 
 
 	def __repr__(self):
@@ -138,21 +149,31 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		return self._callables_db
 
 	def trace(self, obj):
-		""" Generate a list of object callables """
-		if not (inspect.ismodule(obj) or inspect.isclass(obj)):
+		"""
+		Generates list of module callables (functions and properties) and gets their attributes (type, file name, starting line number).
+
+		:param obj: Module object
+		:type	obj: object
+		:raises: TypeError (Argument `obj` is not valid)
+		"""
+		if not inspect.ismodule(obj):
 			raise TypeError('Argument `obj` is not valid')
+		self._trace(obj)
+
+	def _trace(self, obj):
+		""" Generate a list of object callables (internal function, no argument validation)"""
 		self._prop_dict = {}
 		element_module = obj.__name__ if inspect.ismodule(obj) else obj.__module__
 		element_class = obj.__name__ if inspect.isclass(obj) else None
 		if (element_module not in self._modules) or (element_class and (element_class not in self._classes)):
 			self._modules += [element_module] if inspect.ismodule(obj) else []
 			self._classes += ['{0}.{1}'.format(element_module, element_class)] if inspect.isclass(obj) else []
-			self.get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
+			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
 			for element_name in [element_name for element_name in dir(obj) if (element_name == '__init__') or (not is_magic_method(element_name))]:
 				element_obj = getattr(obj, element_name)
 				is_prop = isinstance(element_obj, property)
 				if inspect.isclass(element_obj):
-					self.trace(element_obj)
+					self._trace(element_obj)
 				elif hasattr(element_obj, '__call__') or is_prop:
 					element_type = 'meth' if isinstance(element_obj, types.MethodType) else ('prop' if is_prop else 'func')
 					element_full_name = ('{0}.{1}.{2}'.format(element_module, element_class, element_name) if element_class else '{0}.{1}').format(element_module, element_name)
@@ -160,9 +181,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						self._callables_db[element_full_name] = {'type':element_type, 'code_id':_get_code_id(element_obj)}
 					if is_prop:
 						self._prop_dict[element_full_name] = element_obj
-			self.get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
+			self._get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
 
-	def get_closures(self, obj):	#pylint: disable=R0914,R0915
+	def _get_closures(self, obj):	#pylint: disable=R0914,R0915
 		""" Find closures within module """
 		if inspect.ismodule(obj):
 			element_module = obj.__name__
@@ -198,8 +219,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 					decorator_num = None
 					attr_name = ''
 
-	def get_prop_components(self):
-		""" Finds of getter, setter, deleter functions of a property """
+	def _get_prop_components(self):
+		""" Find getter, setter, deleter functions of a property """
 		for prop_name, prop_obj in self._prop_dict.items():
 			attr_dict = self._callables_db[prop_name].get('attr', {})
 			for attr in ['fset', 'fget', 'fdel']:
@@ -210,7 +231,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 							name = '{0}.{1}_lambda'.format(prop_name, attr)
 						else:
 							if attr_obj.__module__ not in self._modules:
-								self.trace(sys.modules[attr_obj.__module__])
+								self._trace(sys.modules[attr_obj.__module__])
 							# Get to the object of the actual, undecorated function. Adjust for line number, because object function code always reports line where decorators start
 							while getattr(attr_obj, 'undecorated', None):
 								attr_obj = getattr(attr_obj, 'undecorated')
@@ -228,3 +249,24 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Module(s) callables database')
+	"""
+	Returns callable database
+
+	:rtype: dictionary
+
+	The callable database has the following structure:
+
+	 * **full callable name** *(string)* -- Dictionary key. Elements in the callable path are separated by periods ('.'). For example, method `my_method` from class `MyClass` from module `my_module` appears as
+	   `my_module.MyClass.my_method`
+
+	 * **callable properties** *(dictionary)* -- Dictionary value. The elements of this dictionary are:
+
+	  * **type** *(string)* -- 'meth' for methods, 'func' for functions or 'prop' for properties
+
+	  * **code_id** *(tuple or None)* -- *None* if **type** is 'prop', otherwise a tuple with the following elements:
+
+	    * **file name** (*string*) -- the first element contains the file name where the callable can be found
+
+	    * **line number** (*integer*) -- the second element contains the line number in which the callable code starts (including decorators) within **file name**
+	"""
+

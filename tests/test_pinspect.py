@@ -120,7 +120,6 @@ def test_callables():
 	ref_list.append('my_module2.setter_enclosing_func.setter_closure_func: func (8)')
 	ref_text = '\n'.join(ref_list)
 	test_list.append(str(obj) == ref_text)
-	obj = putil.pinspect.Callables()
 	with mock.patch('putil.pinspect._get_code_id') as mock_get_code_id:
-		test_list.append(putil.test.trigger_exception(obj.trace, {'obj':sys.modules['my_module1']}, RuntimeError, 'Attribute `fset` of property `my_module1.TraceClass1.value1` not found in callable database'))
+		test_list.append(putil.test.trigger_exception(putil.pinspect.Callables, {'obj':sys.modules['my_module1']}, RuntimeError, 'Attribute `fset` of property `my_module1.TraceClass1.value1` not found in callable database'))
 	assert test_list == [True]*len(test_list)
