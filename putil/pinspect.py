@@ -14,10 +14,11 @@ import inspect
 
 def _get_code_id(obj):
 	""" Return unique identity tuple to individualize callable object """
+	ret = None
 	if hasattr(obj, 'func_code'):
 		code_obj = getattr(obj, 'func_code')
-		return (code_obj.co_filename, code_obj.co_firstlineno)
-	return None
+		ret = (code_obj.co_filename, code_obj.co_firstlineno)
+	return ret
 
 
 def is_magic_method(name):
@@ -156,9 +157,11 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		:type	obj: object
 		:raises: TypeError (Argument `obj` is not valid)
 		"""
-		if not inspect.ismodule(obj):
-			raise TypeError('Argument `obj` is not valid')
-		self._trace(obj)
+		obj_list = obj if not obj or isinstance(obj, list) else [obj]
+		for obj in obj_list:
+			if not inspect.ismodule(obj):
+				raise TypeError('Argument `obj` is not valid')
+			self._trace(obj)
 
 	def _trace(self, obj):
 		""" Generate a list of object callables (internal function, no argument validation)"""
@@ -213,7 +216,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 							indent_stack.pop()
 						element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
 						if func_name and (element_full_name not in self._callables_db):
-							self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num)}
+							self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None}
 						indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 					# Clear property variables
 					decorator_num = None
@@ -222,7 +225,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	def _get_prop_components(self):
 		""" Find getter, setter, deleter functions of a property """
 		for prop_name, prop_obj in self._prop_dict.items():
-			attr_dict = self._callables_db[prop_name].get('attr', {})
+			attr_dict = self._callables_db[prop_name].get('attr') if self._callables_db[prop_name].get('attr') else dict()
 			for attr in ['fset', 'fget', 'fdel']:
 				if hasattr(prop_obj, attr):
 					attr_obj = getattr(prop_obj, attr)
@@ -245,7 +248,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 								# print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id)
 								raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr, prop_name))
 						attr_dict[attr] = name	#pylint: disable=W0631
-			self._callables_db[prop_name]['attr'] = attr_dict
+			self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Module(s) callables database')
@@ -254,7 +257,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	:rtype: dictionary
 
-	The callable database has the following structure:
+	The callable database is a dictionary has the following structure:
 
 	 * **full callable name** *(string)* -- Dictionary key. Elements in the callable path are separated by periods ('.'). For example, method `my_method` from class `MyClass` from module `my_module` appears as
 	   `my_module.MyClass.my_method`
@@ -265,8 +268,17 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	  * **code_id** *(tuple or None)* -- *None* if **type** is 'prop', otherwise a tuple with the following elements:
 
-	    * **file name** (*string*) -- the first element contains the file name where the callable can be found
+	    * **file name** *(string)* -- the first element contains the file name where the callable can be found
 
-	    * **line number** (*integer*) -- the second element contains the line number in which the callable code starts (including decorators) within **file name**
+	    * **line number** *(integer)* -- the second element contains the line number in which the callable code starts (including decorators) within **file name**
+
+	  * **atr** *(dictionary or None)* -- *None* if **type** is 'meth' or 'func', otherwise a dictionary with the following elements:
+
+	   * **fget** *(string or None)* -- Name of the getter function or method associated with the property (if any)
+
+	   * **fset** *(string or None)* -- Name of the setter function or method associated with the property (if any)
+
+	   * **fdel** *(string or None)* -- Name of the deleter function or method associated with the property (if any)
+
 	"""
 
