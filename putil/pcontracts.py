@@ -245,7 +245,7 @@ def contract(**contract_args):	#pylint: disable=R0912
 					contracts_dicts += [{'num':_get_num_contracts(contracts_dicts, param_name), 'type':RuntimeError, 'msg':'Argument `*[argument_name]*` is not valid'.replace('*[argument_name]*', param_name)}]
 				for exdict in contracts_dicts:
 					exname = 'contract_{0}_{1}_{2}'.format(func.__name__, param_name, exdict['num'])
-					exhobj.add_exception(name=exname, extype=exdict['type'], exmsg=exdict['msg'].replace('*[argument_name]*', param_name))
+					exhobj.add_exception(exname=exname, extype=exdict['type'], exmsg=exdict['msg'].replace('*[argument_name]*', param_name))
 		# Argument validation
 		try:
 			return contracts.contract_decorator(func, **contract_args)(*args, **kwargs)
@@ -258,7 +258,7 @@ def contract(**contract_args):	#pylint: disable=R0912
 			exname = 'contract_{0}_{1}_{2}'.format(func.__name__, param_name, exdict['num'])
 			edata = {'field':exdict['field'], 'value':param_dict[param_name]} if (exdict['field'] and (exdict['field'] != 'argument_name')) else None
 			if exhobj:
-				exhobj.raise_exception_if(name=exname, condition=True, edata=edata)
+				exhobj.raise_exception_if(exname=exname, condition=True, edata=edata)
 			else:
 				# Pick "nice" variable names because the raise line is going to be shown in the exception traceback
 				exception_type = exdict['type']

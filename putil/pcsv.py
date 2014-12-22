@@ -93,11 +93,11 @@ def write(file_name, data, append=True):
 
 def _write_int(file_name, data, append=True):
 	_exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
-	_exh.add_exception(name='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
-	_exh.add_exception(name='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
-	_exh.add_exception(name='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
-	_exh.add_exception(name='file_could_not_be_created_runtime', extype=RuntimeError, exmsg='File *[file_name]* could not be created: *[reason]*')
-	_exh.raise_exception_if(name='data_is_empty', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
+	_exh.add_exception(exname='data_is_empty', extype=ValueError, exmsg='There is no data to save to file')
+	_exh.add_exception(exname='file_could_not_be_created_io', extype=IOError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.add_exception(exname='file_could_not_be_created_os', extype=OSError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.add_exception(exname='file_could_not_be_created_runtime', extype=RuntimeError, exmsg='File *[file_name]* could not be created: *[reason]*')
+	_exh.raise_exception_if(exname='data_is_empty', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
 	try:
 		putil.misc.make_dir(file_name)
 		file_handle = open(file_name, 'wb' if append is False else 'ab')
@@ -106,16 +106,16 @@ def _write_int(file_name, data, append=True):
 			csv_handle.writerow(row)
 		file_handle.close()
 	except IOError as eobj:
-		_exh.raise_exception_if(name='file_could_not_be_created_io', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':eobj.strerror}])
+		_exh.raise_exception_if(exname='file_could_not_be_created_io', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':eobj.strerror}])
 	except OSError as eobj:
-		_exh.raise_exception_if(name='file_could_not_be_created_os', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':eobj.strerror}])
+		_exh.raise_exception_if(exname='file_could_not_be_created_os', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':eobj.strerror}])
 	except:	#pylint: disable=W0702
 		_, exvalue, _ = sys.exc_info()
 		msg = '{0}'.format(exvalue)
-		_exh.raise_exception_if(name='file_could_not_be_created_runtime', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg}])
-	_exh.raise_exception_if(name='file_could_not_be_created_io', condition=False)
-	_exh.raise_exception_if(name='file_could_not_be_created_os', condition=False)
-	_exh.raise_exception_if(name='file_could_not_be_created_runtime', condition=False)
+		_exh.raise_exception_if(exname='file_could_not_be_created_runtime', condition=True, edata=[{'field':'file_name', 'value':file_name}, {'field':'reason', 'value':msg}])
+	_exh.raise_exception_if(exname='file_could_not_be_created_io', condition=False)
+	_exh.raise_exception_if(exname='file_could_not_be_created_os', condition=False)
+	_exh.raise_exception_if(exname='file_could_not_be_created_runtime', condition=False)
 
 
 def _number_failsafe(obj):
@@ -169,22 +169,22 @@ class CsvFile(object):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
 		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
-		self._exh.add_exception(name='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
-		self._exh.add_exception(name='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
-		self._exh.add_exception(name='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
+		self._exh.add_exception(exname='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
+		self._exh.add_exception(exname='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
+		self._exh.add_exception(exname='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
 		with open(file_name, 'rU') as file_handle:
 			self._raw_data = [row for row in csv.reader(file_handle)]
 		# Process header
-		self._exh.raise_exception_if(name='file_empty', condition=len(self._raw_data) == 0, edata={'field':'file_name', 'value':file_name})
+		self._exh.raise_exception_if(exname='file_empty', condition=len(self._raw_data) == 0, edata={'field':'file_name', 'value':file_name})
 		self._header = self._raw_data[0]
 		self._header_upper = [col.upper() for col in self.header]
-		self._exh.raise_exception_if(name='column_headers_not_unique', condition=len(set(self._header_upper)) != len(self._header_upper))
+		self._exh.raise_exception_if(exname='column_headers_not_unique', condition=len(set(self._header_upper)) != len(self._header_upper))
 		# Find start of data row
 		num = -1
 		for num, row in enumerate(self._raw_data[1:]):
 			if any([putil.misc.isnumber(_number_failsafe(col)) for col in row]):
 				break
-		self._exh.raise_exception_if(name='file_has_no_valid_data', condition=num == -1, edata={'field':'file_name', 'value':file_name})
+		self._exh.raise_exception_if(exname='file_has_no_valid_data', condition=num == -1, edata={'field':'file_name', 'value':file_name})
 		# Set up class properties
 		self._data = [[None if col.strip() == '' else _number_failsafe(col) for col in row] for row in self._raw_data[num+1:]]
 		self.reset_dfilter()
@@ -317,23 +317,23 @@ class CsvFile(object):
 
 		.. [[[end]]]
 		"""
-		self._exh.add_exception(name='write', extype=ValueError, exmsg='There is no data to save to file')
+		self._exh.add_exception(exname='write', extype=ValueError, exmsg='There is no data to save to file')
 		self._in_header(col)
 		data = self.data(col=col, filtered=filtered)
 		if headers:
 			col = [col] if isinstance(col, str) else col
 			header = self.header if col is None else [self.header[self._header_upper.index(element.upper())] for element in col]
-		self._exh.raise_exception_if(name='write', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
+		self._exh.raise_exception_if(exname='write', condition=(len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
 		data = [["''" if col is None else col for col in row] for row in data]
 		_write_int(file_name, [header]+data if headers else data, append=append)
 
 	def _in_header(self, col):
 		""" Validate column name(s) against the column names in the file header """
-		self._exh.add_exception(name='header_not_found', extype=ValueError, exmsg='Column *[column_name]* not found in header')
+		self._exh.add_exception(exname='header_not_found', extype=ValueError, exmsg='Column *[column_name]* not found in header')
 		if col is not None:
 			col_list = [col] if isinstance(col, str) else col
 			for col in col_list:
-				self._exh.raise_exception_if(name='header_not_found', condition=col.upper() not in self._header_upper, edata={'field':'column_name', 'value':col})
+				self._exh.raise_exception_if(exname='header_not_found', condition=col.upper() not in self._header_upper, edata={'field':'column_name', 'value':col})
 
 	def _core_data(self, data, col=None):
 		""" Extract columns from data """

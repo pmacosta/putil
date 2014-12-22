@@ -80,16 +80,15 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
 		""" Substitute parameters in exception message """
-		if edata is not None:
-			edata = edata if isinstance(edata, list) else [edata]
-			for field in edata:
-				if 'field' not in field:
-					raise ValueError('Key `field` not in field definition')
-				if 'value' not in field:
-					raise ValueError('Key `value` not in field definition')
-				if '*[{0}]*'.format(field['field']) not in msg:
-					raise RuntimeError('Field {0} not in exception message'.format(field['field']))
-				msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
+		edata = edata if isinstance(edata, list) else [edata]
+		for field in edata:
+			if 'field' not in field:
+				raise ValueError('Key `field` not in field definition')
+			if 'value' not in field:
+				raise ValueError('Key `value` not in field definition')
+			if '*[{0}]*'.format(field['field']) not in msg:
+				raise RuntimeError('Field {0} not in exception message'.format(field['field']))
+			msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 		return msg
 
 	def _get_callable_db(self):
@@ -125,21 +124,44 @@ class ExHandle(object):	#pylint: disable=R0902
 		ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
 		return ret
 
+	def _get_exception_by_name(self, name):
+		""" Find exception object """
+		exname = self._get_ex_data(name)['ex_name']
+		for obj in self._ex_list:
+			if obj['name'] == exname:
+				return obj
+		raise ValueError('Exception name {0} not found'.format(name))
+
+	def _get_ex_data(self, name=None):	#pylint: disable=R0201
+		""" Returns hierarchical function name """
+		func_name = self._get_callable_name()
+		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name is not None else '')
+		return {'func_name':func_name, 'ex_name':ex_name}
+
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
 		return [{'name':ex['function'], 'data':'{0} ({1})'.format(self._ex_type_str(ex['type']), ex['msg'])} for ex in self._ex_list]
+
+	def _raise_exception(self, eobj, edata=None):
+		""" Raise exception by name """
+		_, _, tbobj = sys.exc_info()
+		if edata:
+			raise eobj['type'], eobj['type'](self._format_msg(eobj['msg'], edata)), tbobj
+		else:
+			raise eobj['type'], eobj['type'](eobj['msg']), tbobj
 
 	def _valid_frame(self, fin, fna):	#pylint: disable-msg=R0201
 		""" Selects valid stack frame to process """
 		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exhdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
-	def add_exception(self, name, extype, exmsg):	#pylint: disable=R0913,R0914
-		""" Add exception to handler
+	def add_exception(self, exname, extype, exmsg):	#pylint: disable=R0913,R0914
+		"""
+		Adds exception to handler
 
-		:param	name: Exception name. Has to be unique within the namespace, duplicates are eliminated
-		:type	name: string
+		:param	exname: Exception name. Has to be unique within the namespace, duplicates are eliminated
+		:type	exname: string
 		:param	extype: Exception type. *Must* be derived from `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
-		:type	name: Exception type object (i.e. RuntimeError, TypeError, etc.)
+		:type	extype: Exception type object, i.e. RuntimeError, TypeError, etc.
 		:param	exmsg: Exception message
 		:type	exmsg: string
 
@@ -148,54 +170,33 @@ class ExHandle(object):	#pylint: disable=R0902
 
 		 * TypeError (Argument `extype` is of the wrong type)
 
-		 * TypeError (Argument `name` is of the wrong type)
+		 * TypeError (Argument `exname` is of the wrong type)
 		"""
-		if not isinstance(name, str):
-			raise TypeError('Argument `name` is of the wrong type')
+		if not isinstance(exname, str):
+			raise TypeError('Argument `exname` is not valid')
 		if not str(extype).startswith("<type 'exceptions."):
-			raise TypeError('Argument `extype` is of the wrong type')
+			raise TypeError('Argument `extype` is not valid')
 		if not isinstance(exmsg, str):
-			raise TypeError('Argument `exmsg` is of the wrong type')
-		ex_data = self.get_ex_data(name)
+			raise TypeError('Argument `exmsg` is not valid')
+		ex_data = self._get_ex_data(exname)
 		self._ex_list.append({'name':ex_data['ex_name'], 'function':ex_data['func_name'], 'type':extype, 'msg':exmsg, 'checked':False})
 		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
 
-	def get_exception_by_name(self, name):
-		""" Find exception object """
-		exname = self.get_ex_data(name)['ex_name']
-		for obj in self._ex_list:
-			if obj['name'] == exname:
-				return obj
-		raise ValueError('Exception name {0} not found'.format(name))
+	def raise_exception_if(self, exname, condition, edata=None):
+		"""
+		Conditionally raises exception
 
-	def get_ex_data(self, name=None):	#pylint: disable=R0201
-		""" Returns hierarchical function name """
-		func_name = self._get_callable_name()
-		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name is not None else '')
-		return {'func_name':func_name, 'ex_name':ex_name}
-
-	def raise_exception(self, name, **kargs):
-		""" Raise exception by name """
-		if (len(kargs) == 1) and ('edata' not in kargs):
-			raise RuntimeError('Illegal keyword argument passed to raise_exception')
-		if len(kargs) > 1:
-			raise RuntimeError('Illegal keyword argument{0} passed to raise_exception'.format('s' if len(kargs)-(1 if 'edata' in kargs else 0) > 1 else ''))
-		obj = self.get_exception_by_name(name)
-		_, _, tbobj = sys.exc_info()
-		if len(kargs):
-			raise obj['type'], obj['type'](self._format_msg(obj['msg'], kargs['edata'])), tbobj
-		else:
-			raise obj['type'], obj['type'](obj['msg']), tbobj
-
-	def raise_exception_if(self, name, condition, **kargs):
-		""" Raise exception by name if condition is true """
-		if (len(kargs) == 1) and ('edata' not in kargs):
-			raise RuntimeError('Illegal keyword argument passed to raise_exception')
-		if len(kargs) > 1:
-			raise RuntimeError('Illegal keyword argument{0} passed to raise_exception'.format('s' if len(kargs)-(1 if 'edata' in kargs else 0) > 1 else ''))
+		:param	exname: Exception name
+		:type	exname: string
+		:param condition: Value that determines whether the exception is raised *(True)* or not *(False)*.
+		:type  condition: boolean
+		:param edata: Replacement values for token fields in exception message (see :py:meth:`putil.exh.add_exception()`)
+		:type  edata: Dictionary or list of dictionaries
+		"""
+		eobj = self._get_exception_by_name(exname)
 		if condition:
-			self.raise_exception(name, **kargs)
-		self.get_exception_by_name(name)['checked'] = True
+			self._raise_exception(eobj, edata)
+		eobj['checked'] = True
 
 	# Managed attributes
 	callable_db = property(_get_callable_db, None, None, doc='Dictionary of callables')

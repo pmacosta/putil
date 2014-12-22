@@ -171,8 +171,8 @@ class Tree(object):	#pylint: disable=R0903
 		return self._db[name]['parent']
 
 	def _node_in_tree(self, name):	#pylint: disable=C0111
-		self._exh.add_exception(name='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
-		self._exh.raise_exception_if(name='node_not_in_tree', condition=name not in self._db, edata={'field':'node_name', 'value':name})
+		self._exh.add_exception(exname='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
+		self._exh.raise_exception_if(exname='node_not_in_tree', condition=name not in self._db, edata={'field':'node_name', 'value':name})
 		return True
 
 	def _prt(self, name, lparent, sep, pre1, pre2):	#pylint: disable=C0111,R0913,R0914
@@ -262,7 +262,7 @@ class Tree(object):	#pylint: disable=R0903
 			[5, 7]
 
 		"""
-		self._exh.add_exception(name='illegal_node_name', extype=ValueError, exmsg='Illegal node name: *[node_name]*')
+		self._exh.add_exception(exname='illegal_node_name', extype=ValueError, exmsg='Illegal node name: *[node_name]*')
 		nodes = nodes if isinstance(nodes, list) else [nodes]
 		# Create root node (if needed)
 		if not self.root_name:
@@ -274,7 +274,7 @@ class Tree(object):	#pylint: disable=R0903
 			name, data = node_dict['name'], node_dict['data']
 			if name not in self._db:
 				# Validate node name (root of new node same as tree root)
-				self._exh.raise_exception_if(name='illegal_node_name', condition=not name.startswith(self.root_name+'.'), edata={'field':'node_name', 'value':name})
+				self._exh.raise_exception_if(exname='illegal_node_name', condition=not name.startswith(self.root_name+'.'), edata={'field':'node_name', 'value':name})
 				self._create_intermediate_nodes(name)
 			self._db[name]['data'] += copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
@@ -370,9 +370,9 @@ class Tree(object):	#pylint: disable=R0903
 			  └subleaf2
 
 		"""
-		self._exh.add_exception(name='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
+		self._exh.add_exception(exname='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
 		self._node_in_tree(source_node)
-		self._exh.raise_exception_if(name='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
+		self._exh.raise_exception_if(exname='illegal_dest_node', condition=not dest_node.startswith(self.root_name+'.'))
 		for node in self._get_subtree(source_node):
 			self._db[node.replace(source_node, dest_node, 1)] = {'parent':self._db[node]['parent'].replace(source_node, dest_node, 1),
 														         'children':[child.replace(source_node, dest_node, 1) for child in self._db[node]['children']],
@@ -793,15 +793,15 @@ class Tree(object):	#pylint: disable=R0903
 			└branch2
 
 		"""
-		self._exh.add_exception(name='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
-		self._exh.add_exception(name='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
-		self._exh.add_exception(name='illegal_new_root_name', extype=RuntimeError, exmsg='Argument `new_name` is an illegal root node name')
+		self._exh.add_exception(exname='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
+		self._exh.add_exception(exname='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
+		self._exh.add_exception(exname='illegal_new_root_name', extype=RuntimeError, exmsg='Argument `new_name` is an illegal root node name')
 		self._node_in_tree(name)
-		self._exh.raise_exception_if(name='new_name_exists', condition=self.in_tree(new_name) and (name != self.root_name), edata={'field':'node_name', 'value':new_name})
-		self._exh.raise_exception_if(name='illegal_new_name', condition=(name.split('.')[:-1] != new_name.split('.')[:-1]) and (name != self.root_name))
+		self._exh.raise_exception_if(exname='new_name_exists', condition=self.in_tree(new_name) and (name != self.root_name), edata={'field':'node_name', 'value':new_name})
+		self._exh.raise_exception_if(exname='illegal_new_name', condition=(name.split('.')[:-1] != new_name.split('.')[:-1]) and (name != self.root_name))
 		old_hierarchy_length = len(name.split('.'))
 		new_hierarchy_length = len(new_name.split('.'))
-		self._exh.raise_exception_if(name='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
+		self._exh.raise_exception_if(exname='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
 		self._rename_node(name, new_name)
 
 	# Managed attributes
