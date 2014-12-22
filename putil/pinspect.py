@@ -136,8 +136,10 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		if obj:
 			self.trace(obj)
 
-
 	def __repr__(self):
+		return 'putil.pinspect.Callables([{0}])'.format(', '.join(["sys.modules['{0}']".format(module_name) for module_name in self._modules]))
+
+	def __str__(self):
 		ret = list()
 		ret.append('Modules: {0}'.format(', '.join(sorted([mdl for mdl in self._modules]))))
 		ret.append('Classes: {0}'.format(', '.join(sorted([cls for cls in self._classes]))))
