@@ -10,6 +10,7 @@ import sys
 import copy
 import inspect
 
+import putil.misc
 import putil.pinspect
 
 ###
@@ -150,6 +151,16 @@ class ExHandle(object):	#pylint: disable=R0902
 		else:
 			raise eobj['type'], eobj['type'](eobj['msg']), tbobj
 
+	def _validate_edata(self, edata):	#pylint: disable=R0201
+		""" Validate edata argument of raise_exception_if method """
+		if edata == None:
+			return True
+		if not (isinstance(edata, dict) or putil.misc.isiterable(edata)):
+			return False
+		for edict in edata:
+			if (not isinstance(edict, dict)) or (isinstance(edict, dict) and (('field' not in edict) or ('value' not in edict))):
+				return False
+
 	def _valid_frame(self, fin, fna):	#pylint: disable-msg=R0201
 		""" Selects valid stack frame to process """
 		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exhdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
@@ -164,7 +175,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		:type	extype: Exception type object, i.e. RuntimeError, TypeError, etc.
 		:param	exmsg: Exception message
 		:type	exmsg: string
-
 		:raises:
 		 * TypeError (Argument `exmsg` is of the wrong type)
 
@@ -190,9 +200,21 @@ class ExHandle(object):	#pylint: disable=R0902
 		:type	exname: string
 		:param condition: Value that determines whether the exception is raised *(True)* or not *(False)*.
 		:type  condition: boolean
-		:param edata: Replacement values for token fields in exception message (see :py:meth:`putil.exh.add_exception()`)
-		:type  edata: Dictionary or list of dictionaries
+		:param edata: Replacement values for token fields in exception message (see :py:meth:`putil.exh.add_exception`)
+		:type  edata: Dictionary or iterable of dictionaries
+		:raises:
+		 * TypeError (Argument `condition` is of the wrong type)
+
+		 * TypeError (Argument `exmsg` is of the wrong type)
+
+		 * TypeError (Argument `exname` is of the wrong type)
 		"""
+		if not isinstance(exname, str):
+			raise TypeError('Argument `exname` is not valid')
+		if not isinstance(condition, bool):
+			raise TypeError('Argument `condition` is not valid')
+		if not self._validate_edata(edata):
+			raise TypeError('Argument `exdata` is not valid')
 		eobj = self._get_exception_by_name(exname)
 		if condition:
 			self._raise_exception(eobj, edata)
