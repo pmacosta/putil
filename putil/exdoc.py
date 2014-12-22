@@ -75,7 +75,7 @@ class ExDoc(object):	#pylint: disable=R0902
 			# Select properties of traced class or module/level function
 			#for mkey, mval in self._callable_db.items():
 			#	print '{0}: {1}'.format(mkey, mval)
-			attr_list = [(mkey, mval['attr']) for mkey, mval in self._callable_db.items() if 'attr' in mval]
+			attr_list = [(mkey, mval['attr']) for mkey, mval in self._callable_db.items() if 'attr' in mval and mval['attr']]
 			for key, fattr_funcs in attr_list:
 				if not self.no_print:
 					print '   Detected attribute {0}'.format(key)

@@ -12,6 +12,9 @@ import sys
 import types
 import inspect
 
+import putil.misc
+
+
 def _get_code_id(obj):
 	""" Return unique identity tuple to individualize callable object """
 	ret = None
@@ -113,8 +116,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	repeatedly calling :py:meth:`putil.pinspect.Callables.trace()` with different module objects. A :py:class:`putil.pinspect.Callables()` object retains knowledge of which modules have been traced so repeated calls to
 	:py:meth:`putil.pinspect.Callables.trace()` with the *same* module object will *not* result in module re-traces (and the consequent performance hit).
 
-	:param obj: Module object
-	:type	obj: object
+	:param obj: Module object(s)
+	:type	obj: object or iterable of objects
 	:rtype: :py:class:`putil.pinspect.Callables()` object
 	:raises: TypeError (Argument `obj` is not valid)
 	"""
@@ -136,8 +139,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	def __repr__(self):
 		ret = list()
-		ret.append('Modules: {0}'.format(', '.join([mdl for mdl in self._modules])))
-		ret.append('Classes: {0}'.format(', '.join([cls for cls in self._classes])))
+		ret.append('Modules: {0}'.format(', '.join(sorted([mdl for mdl in self._modules]))))
+		ret.append('Classes: {0}'.format(', '.join(sorted([cls for cls in self._classes]))))
 		for key in sorted(self._callables_db.keys()):
 			ret.append('{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else ''))
 			if self._callables_db[key]['type'] == 'prop':
@@ -153,11 +156,14 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		"""
 		Generates list of module callables (functions and properties) and gets their attributes (type, file name, starting line number).
 
-		:param obj: Module object
-		:type	obj: object
+		:param obj: Module object(s)
+		:type	obj: object or iterable of objects
 		:raises: TypeError (Argument `obj` is not valid)
 		"""
 		obj_list = obj if not obj or isinstance(obj, list) else [obj]
+		if (obj == None) or (not (inspect.ismodule(obj) or putil.misc.isiterable(obj))):
+			raise TypeError('Argument `obj` is not valid')
+		obj_list = obj if putil.misc.isiterable(obj) else [obj]
 		for obj in obj_list:
 			if not inspect.ismodule(obj):
 				raise TypeError('Argument `obj` is not valid')
@@ -257,7 +263,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	:rtype: dictionary
 
-	The callable database is a dictionary has the following structure:
+	The callable database is a dictionary that has the following structure:
 
 	 * **full callable name** *(string)* -- Dictionary key. Elements in the callable path are separated by periods ('.'). For example, method `my_method` from class `MyClass` from module `my_module` appears as
 	   `my_module.MyClass.my_method`
@@ -272,7 +278,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	    * **line number** *(integer)* -- the second element contains the line number in which the callable code starts (including decorators) within **file name**
 
-	  * **atr** *(dictionary or None)* -- *None* if **type** is 'meth' or 'func', otherwise a dictionary with the following elements:
+	  * **attr** *(dictionary or None)* -- *None* if **type** is 'meth' or 'func', otherwise a dictionary with the following elements:
 
 	   * **fget** *(string or None)* -- Name of the getter function or method associated with the property (if any)
 

@@ -8,7 +8,6 @@ PyContracts custom contracts
 
 import os
 import re
-import sys
 import inspect
 import funcsigs
 import contracts
@@ -251,7 +250,7 @@ def contract(**contract_args):	#pylint: disable=R0912
 		try:
 			return contracts.contract_decorator(func, **contract_args)(*args, **kwargs)
 		except contracts.ContractNotRespected as eobj:
-			_, _, tbobj = sys.exc_info()
+			#_, _, tbobj = sys.exc_info()
 			# Extract which function parameter triggered exception
 			param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]	# re.search returns the string with quotes in it
 			# Raise exception
@@ -261,8 +260,10 @@ def contract(**contract_args):	#pylint: disable=R0912
 			if exhobj:
 				exhobj.raise_exception_if(name=exname, condition=True, edata=edata)
 			else:
-				msg = exdict['msg'].replace('*[{0}]*'.format(exdict['field']), param_name if exdict['field'] == 'argument_name' else '{0}'.format(param_dict[param_name]))	#pylint: disable=W0631
-				raise exdict['type'], exdict['type'](msg), tbobj
+				# Pick "nice" variable names because the raise line is going to be shown in the exception traceback
+				exception_type = exdict['type']
+				exception_message = exdict['msg'].replace('*[{0}]*'.format(exdict['field']), param_name if exdict['field'] == 'argument_name' else '{0}'.format(param_dict[param_name]))	#pylint: disable=W0631
+				raise exception_type(exception_message)
 		except:	# Re-raise exception if it was not due to invalid argument
 			raise
 	return wrapper
