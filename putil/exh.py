@@ -1,10 +1,7 @@
 ﻿# exh.py
 # Copyright (c) 2013-2014 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Exception handling classes, methods, functions and constants
-"""
+# pylint: disable=C0111
 
 import sys
 import copy
@@ -39,16 +36,7 @@ def del_exh_obj():
 ###
 class ExHandle(object):	#pylint: disable=R0902
 	"""
-	Manages exceptions and optionally automatically generates exception documentation in with `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ mark-up
-
-	:param	obj: Object to document exceptions for
-	:type	obj: Class object or module-level object
-	:rtype: :py:class:`putil.exh.ExHandle()` object
-
-	:raises:
-	 * TypeError (Argument `obj` is of the wrong type)
-
-	 * ValueError (Hidden objects cannot be traced)
+	Manages exceptions
 	"""
 	def __init__(self):
 		self._callable_db = dict()
@@ -157,23 +145,26 @@ class ExHandle(object):	#pylint: disable=R0902
 			return True
 		if not (isinstance(edata, dict) or putil.misc.isiterable(edata)):
 			return False
+		edata = [edata] if isinstance(edata, dict) else edata
 		for edict in edata:
 			if (not isinstance(edict, dict)) or (isinstance(edict, dict) and (('field' not in edict) or ('value' not in edict))):
 				return False
+		return True
 
 	def _valid_frame(self, fin, fna):	#pylint: disable-msg=R0201
 		""" Selects valid stack frame to process """
 		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exhdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
 	def add_exception(self, exname, extype, exmsg):	#pylint: disable=R0913,R0914
-		"""
+		r"""
 		Adds exception to handler
 
 		:param	exname: Exception name. Has to be unique within the namespace, duplicates are eliminated
 		:type	exname: string
 		:param	extype: Exception type. *Must* be derived from `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
 		:type	extype: Exception type object, i.e. RuntimeError, TypeError, etc.
-		:param	exmsg: Exception message
+		:param	exmsg: Exception message that can contain fields to be replaced when the exception is raised via :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with the characters '\*[' and ends with the \
+		 characters ']\*', the field name follows the same rules as variable names and is between these two sets of characters. For example, `*[file_name]*` defines the `file_name` field
 		:type	exmsg: string
 		:raises:
 		 * TypeError (Argument `exmsg` is of the wrong type)
@@ -200,10 +191,16 @@ class ExHandle(object):	#pylint: disable=R0902
 		:type	exname: string
 		:param condition: Value that determines whether the exception is raised *(True)* or not *(False)*.
 		:type  condition: boolean
-		:param edata: Replacement values for token fields in exception message (see :py:meth:`putil.exh.add_exception`)
+		:param edata: Replacement values for fields in the exception message (see :py:meth:`putil.exh.ExHandle.add_exception`). Each dictionary can have only these two keys:
+
+		 * **field** *(string)* -- Field name
+
+		 * **value** *(any)* -- Field value, to be converted into a string with the format string method
 		:type  edata: Dictionary or iterable of dictionaries
 		:raises:
 		 * TypeError (Argument `condition` is of the wrong type)
+
+		 * TypeError (Argument `edata` is of the wrong type)
 
 		 * TypeError (Argument `exmsg` is of the wrong type)
 
@@ -214,7 +211,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not isinstance(condition, bool):
 			raise TypeError('Argument `condition` is not valid')
 		if not self._validate_edata(edata):
-			raise TypeError('Argument `exdata` is not valid')
+			raise TypeError('Argument `edata` is not valid')
 		eobj = self._get_exception_by_name(exname)
 		if condition:
 			self._raise_exception(eobj, edata)

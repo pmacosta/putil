@@ -6,7 +6,7 @@ exh module
 
 
 
-This module can be used to manage exceptions and optionally automatically generate exception documentation with the help of `cog <http://nedbatchelder.com/code/cog/>`_
+This module can be used to manage exceptions, registering exceptions and then conditionally raising them if a given condition is true.
 
 ***********
 Interpreter
@@ -20,26 +20,9 @@ External libraries
 
 * Standard Python library and other Putil library modules
 
-* Cog (`<http://nedbatchelder.com/code/cog/>`_) for inserting exception documentation automatically in source files
-
 ***************************************
 Application programming interface (API)
 ***************************************
-
-Pseudo-types
-============
-
-None
-
-Global variables
-================
-
-None
-
-Functions
-=========
-
-None
 
 Classes
 =======
