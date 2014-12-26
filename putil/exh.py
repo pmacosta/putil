@@ -41,14 +41,14 @@ class ExHandle(object):	#pylint: disable=R0902
 	def __init__(self):
 		self._callable_db = dict()
 		self._module_db = list()
-		self._ex_list = list()
+		self._ex_dict = dict()
 		self._callable_obj = putil.pinspect.Callables()
 
 	def __copy__(self):
 		cobj = ExHandle()
 		cobj._callable_db = copy.copy(self._callable_db)	#pylint: disable=W0212
 		cobj._module_db = copy.copy(self._module_db)	#pylint: disable=W0212
-		cobj._ex_list = copy.copy(self._ex_list)	#pylint: disable=W0212
+		cobj._ex_dict = copy.copy(self._ex_dict)	#pylint: disable=W0212
 		return cobj
 
 	def __deepcopy__(self, memodict=None):
@@ -56,11 +56,12 @@ class ExHandle(object):	#pylint: disable=R0902
 		cobj = ExHandle()
 		cobj._callable_db = copy.deepcopy(self._callable_db)	#pylint: disable=W0212
 		cobj._module_db = copy.deepcopy(self._module_db)	#pylint: disable=W0212
-		cobj._ex_list = copy.deepcopy(self._ex_list, memodict)	#pylint: disable=W0212
+		cobj._ex_dict = copy.deepcopy(self._ex_dict, memodict)	#pylint: disable=W0212
 		return cobj
 
 	def __str__(self):
-		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}\nChecked.: {4}'.format(ex['name'], ex['function'], self._ex_type_str(ex['type']), ex['msg'], ex['checked']) for ex in self._ex_list]
+		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}\nChecked.: {4}'.format(self._ex_dict[key]['name'], self._ex_dict[key]['function'], self._ex_type_str(self._ex_dict[key]['type']), \
+																							self._ex_dict[key]['msg'], self._ex_dict[key]['checked']) for key in sorted(self._ex_dict.keys())]
 		return '\n\n'.join(ret)
 
 	def _ex_type_str(self, extype):	#pylint: disable-msg=R0201
@@ -116,10 +117,9 @@ class ExHandle(object):	#pylint: disable=R0902
 	def _get_exception_by_name(self, name):
 		""" Find exception object """
 		exname = self._get_ex_data(name)['ex_name']
-		for obj in self._ex_list:
-			if obj['name'] == exname:
-				return obj
-		raise ValueError('Exception name {0} not found'.format(name))
+		if exname not in self._ex_dict:
+			raise ValueError('Exception name {0} not found'.format(name))
+		return self._ex_dict[exname]
 
 	def _get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
@@ -129,7 +129,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		return [{'name':ex['function'], 'data':'{0} ({1})'.format(self._ex_type_str(ex['type']), ex['msg'])} for ex in self._ex_list]
+		return [{'name':self._ex_dict[key]['function'], 'data':'{0} ({1})'.format(self._ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 
 	def _raise_exception(self, eobj, edata=None):
 		""" Raise exception by name """
@@ -180,8 +180,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not isinstance(exmsg, str):
 			raise TypeError('Argument `exmsg` is not valid')
 		ex_data = self._get_ex_data(exname)
-		self._ex_list.append({'name':ex_data['ex_name'], 'function':ex_data['func_name'], 'type':extype, 'msg':exmsg, 'checked':False})
-		self._ex_list = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in self._ex_list)] # Remove duplicates
+		self._ex_dict[ex_data['ex_name']] = {'function':ex_data['func_name'], 'type':extype, 'msg':exmsg, 'checked':False}
 
 	def raise_exception_if(self, exname, condition, edata=None):
 		"""
