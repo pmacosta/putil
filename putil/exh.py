@@ -85,7 +85,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Returns database of callables """
 		return self._callable_obj.callables_db
 
-	def _get_callable_name(self):	#pylint: disable=R0201,R0914
+	def _get_callable_path(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
 		ret = list()
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
@@ -94,11 +94,11 @@ class ExHandle(object):	#pylint: disable=R0902
 		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
 		for frame_obj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
 			func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
-			ret.append(self._get_callable_path(frame_obj, func_obj))
+			ret.append(self._get_callable_full_name(frame_obj, func_obj))
 		return '.'.join(ret)
 
-	def _get_callable_path(self, frame_obj, func_obj):
-		""" Get full path of callable """
+	def _get_callable_full_name(self, frame_obj, func_obj):
+		""" Get full path [module, class (if applicable) and function name] of callable """
 		# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
 		code = frame_obj.f_code
 		scontext = frame_obj.f_locals.get('self', None)
@@ -123,7 +123,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
-		func_name = self._get_callable_name()
+		func_name = self._get_callable_path()
 		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name is not None else '')
 		return {'func_name':func_name, 'ex_name':ex_name}
 
