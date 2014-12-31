@@ -92,26 +92,48 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
-		for frame_obj, func in [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]:
+		frame_list = [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]
+		for frame_obj, func in frame_list[:-1]:
 			func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
 			ret.append(self._get_callable_full_name(frame_obj, func_obj))
+		frame_obj, func = frame_list[-1]
+		func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
+		while getattr(func_obj, '__unwrapped__', None):
+			func_obj = getattr(func_obj, '__unwrapped__')
+		callable_id = self._get_code_id(frame_obj, func_obj)
+		for name, value in self._callable_obj.callables_db.items():
+			if callable_id == value['code_id']:
+				break
+		else:
+			for name in sorted(self._callable_obj.callables_db.keys()):
+				print '{0}: {1}'.format(name, self._callable_obj.callables_db[name])
+			print 'Search callable_id: {0}'.format(callable_id)
+			print self._get_callable_full_name(frame_obj, func_obj)
+			raise RuntimeError('Callable not found in database')
+		ret.append(name)	#pylint: disable=W0631
 		return '.'.join(ret)
 
 	def _get_callable_full_name(self, frame_obj, func_obj):
 		""" Get full path [module, class (if applicable) and function name] of callable """
 		# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
-		code = frame_obj.f_code
-		scontext = frame_obj.f_locals.get('self', None)
 		# Module name
-		module = inspect.getmodule(code)
-		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
-		self._callable_obj.trace(sys.modules[module_name])
-		ret = module_name
+		ret = self._get_module_name(frame_obj, func_obj)
 		# Class name
+		scontext = frame_obj.f_locals.get('self', None)
 		ret += ('.'+scontext.__class__.__name__) if scontext else ''
 		# Function/method/attribute name
+		code = frame_obj.f_code
 		func_name = code.co_name
 		ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
+		return ret
+
+	def _get_code_id(self, frame_obj, func_obj):
+		""" Return unique identity tuple to individualize callable object  (from frame object) """
+		self._get_module_name(frame_obj, func_obj)	# Trace module if needed
+		ret = None
+		if hasattr(func_obj, 'f_code'):
+			code_obj = getattr(func_obj, 'f_code')
+			ret = (code_obj.co_filename, code_obj.co_firstlineno)
 		return ret
 
 	def _get_exception_by_name(self, name):
@@ -126,6 +148,16 @@ class ExHandle(object):	#pylint: disable=R0902
 		func_name = self._get_callable_path()
 		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name is not None else '')
 		return {'func_name':func_name, 'ex_name':ex_name}
+
+	def _get_module_name(self, frame_obj, func_obj):
+		""" Get module name and optionally trace it """
+		code = frame_obj.f_code
+		scontext = frame_obj.f_locals.get('self', None)
+		# Module name
+		module = inspect.getmodule(code)
+		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
+		self._callable_obj.trace(sys.modules[module_name])
+		return module_name
 
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """

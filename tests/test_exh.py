@@ -32,3 +32,31 @@ def test_add_exception_errors():
 	obj.add_exception(exname='exception name', extype=TypeError, exmsg='exception message for exception #2')
 	#test_list.append(obj._ex_list == {'name':'exception name', 'type':TypeError, 'msg':'exception message for exception #2', 'checked':False})
 	assert test_list == [True]*len(test_list)
+
+def test_add_exception_works():
+	""" Test add_exception() function works """
+	test_list = list()
+	exobj = putil.exh.ExHandle()
+	def func1():	#pylint: disable=C0111,W0612
+		exobj.add_exception('first_exception', TypeError, 'This is the first exception')
+		print "Hello"
+	def func2():	#pylint: disable=C0111,W0612
+		exobj.add_exception('second_exception', ValueError, 'This is the second exception')
+		exobj.add_exception('third_exception', IOError, 'This is the third exception')
+		print "World"
+	func1()
+	func2()
+	cdb = exobj._ex_dict
+	if not cdb:
+		assert False
+	for exname in cdb:
+		erec = cdb[exname]
+		if exname.endswith('test_exh.test_add_exception_works.func1.first_exception'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func1') and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func2.second_exception'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func2.third_exception'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception') and (erec['checked'] == False))
+		else:
+			test_list.append(False)
+	assert test_list == [True]*len(test_list)

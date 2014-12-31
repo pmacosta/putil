@@ -128,7 +128,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._callables_db = {}
 		# Regular expressions to detect class definition, function definition and decorator-defined properties
 		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
-		self._decorator_regex = re.compile(r'^(\s*)@(\w+)')
+		self._decorator_regex = re.compile(r'^(\s*)@(.+)')
 		self._func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
 		self._getter_prop_regex = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
 		self._setter_prop_regex = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
@@ -243,17 +243,17 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						else:
 							if attr_obj.__module__ not in self._modules:
 								self._trace(sys.modules[attr_obj.__module__])
-							# Get to the object of the actual, undecorated function. Adjust for line number, because object function code always reports line where decorators start
-							while getattr(attr_obj, 'undecorated', None):
-								attr_obj = getattr(attr_obj, 'undecorated')
+							# Get to the object of the actual, undecorated function
+							while getattr(attr_obj, '__wrapped__', None):
+								attr_obj = getattr(attr_obj, '__wrapped__')
 							attr_code_id = _get_code_id(attr_obj)
 							for name in self._callables_db:
 								if (self._callables_db[name]['type'] != 'prop') and (attr_code_id == self._callables_db[name]['code_id']):
 									break
 							else:
-								# for name in sorted(self._callables_db.keys()):
-								# 	print '{0}: {1}'.format(name, self._callables_db[name])
-								# print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id)
+								for name in sorted(self._callables_db.keys()):
+									print '{0}: {1}'.format(name, self._callables_db[name])
+								print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id)
 								raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr, prop_name))
 						attr_dict[attr] = name	#pylint: disable=W0631
 			self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
@@ -289,4 +289,3 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	   * **fdel** *(string or None)* -- Name of the deleter function or method associated with the property (if any)
 
 	"""
-
