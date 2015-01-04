@@ -92,14 +92,13 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
-		frame_list = [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]
-		for frame_obj, func in frame_list[:-1]:
-			func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
-			ret.append(self._get_callable_full_name(frame_obj, func_obj))
+		#frame_list = [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]
+		frame_list = [(fo, fn) for fo, fn, _ in reversed(list(fstack))]
+		ret = [self._get_callable_full_name(frame_obj, self._get_func_obj(frame_obj, func)) for frame_obj, func in frame_list[:-1]]
 		frame_obj, func = frame_list[-1]
-		func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
-		while getattr(func_obj, '__unwrapped__', None):
-			func_obj = getattr(func_obj, '__unwrapped__')
+		func_obj = self._get_func_obj(frame_obj, func)
+		while getattr(func_obj, '__wrapped__', None):
+			func_obj = getattr(func_obj, '__wrapped__')
 		callable_id = self._get_code_id(frame_obj, func_obj)
 		for name, value in self._callable_obj.callables_db.items():
 			if callable_id == value['code_id']:
@@ -109,6 +108,8 @@ class ExHandle(object):	#pylint: disable=R0902
 				print '{0}: {1}'.format(name, self._callable_obj.callables_db[name])
 			print 'Search callable_id: {0}'.format(callable_id)
 			print self._get_callable_full_name(frame_obj, func_obj)
+			import pdb
+			pdb.set_trace()
 			raise RuntimeError('Callable not found in database')
 		ret.append(name)	#pylint: disable=W0631
 		return '.'.join(ret)
@@ -131,8 +132,8 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Return unique identity tuple to individualize callable object  (from frame object) """
 		self._get_module_name(frame_obj, func_obj)	# Trace module if needed
 		ret = None
-		if hasattr(func_obj, 'f_code'):
-			code_obj = getattr(func_obj, 'f_code')
+		if hasattr(func_obj, 'f_code') or hasattr(func_obj, 'func_code'):
+			code_obj = getattr(func_obj, 'f_code', getattr(func_obj, 'func_code'))
 			ret = (code_obj.co_filename, code_obj.co_firstlineno)
 		return ret
 
@@ -158,6 +159,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
 		self._callable_obj.trace(sys.modules[module_name])
 		return module_name
+
+	def _get_func_obj(self, frame_obj, func):	#pylint: disable=R0201
+		""" Get function object """
+		return frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
 
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
