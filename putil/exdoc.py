@@ -38,7 +38,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		self._trace_obj = trace_obj
 		self._trace_obj_type = inspect.isclass(trace_obj)
 		self._trace_obj_name = '{0}.{1}'.format(trace_obj.__module__, trace_obj.__name__)
-		self._callable_db = self._exh_obj.callable_db
+		self._callables_db = self._exh_obj.callables_db
 		self.no_print = no_print
 		self._trace_list, self._tobj, self._extable, self._cross_usage_extable, self._exoutput = None, None, None, None, None
 
@@ -46,7 +46,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), trace_obj=copy.copy(self._trace_obj), no_print=self.no_print)
 		cobj._trace_obj_type = copy.copy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.copy(self._trace_obj_name)	#pylint: disable=W0212
-		cobj._callable_db = copy.copy(self._callable_db)	#pylint: disable=W0212
+		cobj._callables_db = copy.copy(self._callables_db)	#pylint: disable=W0212
 		cobj._trace_list = copy.copy(self._trace_list)	#pylint: disable=W0212
 		cobj._tobj = copy.copy(self._tobj)	#pylint: disable=W0212
 		cobj._extable = copy.copy(self._extable)	#pylint: disable=W0212
@@ -59,7 +59,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		cobj = ExDoc(exh_obj=copy.deepcopy(self._exh_obj), trace_obj=copy.deepcopy(self._trace_obj), no_print=self.no_print)
 		cobj._trace_obj_type = copy.deepcopy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.deepcopy(self._trace_obj_name, memodict)	#pylint: disable=W0212
-		cobj._callable_db = copy.deepcopy(self._callable_db)	#pylint: disable=W0212
+		cobj._callables_db = copy.deepcopy(self._callables_db)	#pylint: disable=W0212
 		cobj._trace_list = copy.deepcopy(self._trace_list, memodict)	#pylint: disable=W0212
 		cobj._tobj = copy.deepcopy(self._tobj, memodict)	#pylint: disable=W0212
 		cobj._extable = copy.deepcopy(self._extable, memodict)	#pylint: disable=W0212
@@ -73,9 +73,9 @@ class ExDoc(object):	#pylint: disable=R0902
 			if not self.no_print:
 				print putil.misc.pcolor('Aliasing attributes', 'blue')
 			# Select properties of traced class or module/level function
-			#for mkey, mval in self._callable_db.items():
+			#for mkey, mval in self._callables_db.items():
 			#	print '{0}: {1}'.format(mkey, mval)
-			attr_list = [(mkey, mval['attr']) for mkey, mval in self._callable_db.items() if 'attr' in mval and mval['attr']]
+			attr_list = [(mkey, mval['attr']) for mkey, mval in self._callables_db.items() if 'attr' in mval and mval['attr']]
 			for key, fattr_funcs in attr_list:
 				if not self.no_print:
 					print '   Detected attribute {0}'.format(key)
@@ -88,7 +88,7 @@ class ExDoc(object):	#pylint: disable=R0902
 						stop_char = len(mod_list[0]) if mod_list[0].endswith(fname) else start_char+len(fname)
 						name_to_replace = mod_list[0][start_char:stop_char] if mod_list[0].endswith(fname) else mod_list[0][start_char:stop_char]+'.'
 						self._tobj._rename_node(mod_list[0], mod_list[0].replace(name_to_replace, '{0}[{1}]{2}'.format(key, fkey, '' if mod_list[0].endswith(fname) else '.')))	#pylint: disable=W0212
-						self._callable_db['{0}[{1}]'.format(key, fkey)] = copy.deepcopy(self._callable_db[fname])
+						self._callables_db['{0}[{1}]'.format(key, fkey)] = copy.deepcopy(self._callables_db[fname])
 						mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
 			if attr_list:
 				self._collapse_ex_tree()
@@ -227,7 +227,7 @@ class ExDoc(object):	#pylint: disable=R0902
 					new_list.append(key1 if (key1 != key2) and (self._extable[key1]['flat_exceptions'] == self._extable[key2]['flat_exceptions']) else key2)
 				sorted_cross_names = sorted(list(set(new_list[:])))
 			self._extable[child]['cross_names'] = copy.deepcopy(sorted_cross_names)
-			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._callable_db[cross_name]['type'], cross_name) for cross_name in sorted_cross_names])
+			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._callables_db[cross_name]['type'], cross_name) for cross_name in sorted_cross_names])
 		if not self.no_print:
 			print putil.misc.pcolor('Removing cross-exception loops', 'blue')
 		# Expand entries pointed by 'Same as [...]' that only have a 'Same as [...]' as exception
@@ -249,7 +249,7 @@ class ExDoc(object):	#pylint: disable=R0902
 				if self._extable[key1]['flat_exceptions'] == self._extable[key2]['flat_exceptions']:
 					self._extable[key2]['native_exceptions'] = list()
 					self._extable[key2]['cross_names'] = [key1]
-					self._extable[key2]['cross_hierarchical_exceptions'] = ['Same as :py:{0}:`{1}`'.format(self._callable_db[key1]['type'], key1.replace('_set_', ''))]
+					self._extable[key2]['cross_hierarchical_exceptions'] = ['Same as :py:{0}:`{1}`'.format(self._callables_db[key1]['type'], key1.replace('_set_', ''))]
 					self._extable[key2]['cross_flat_exceptions'] = copy.deepcopy(self._extable[key1]['flat_exceptions'])
 					changed_entries.append(key2)
 
@@ -271,7 +271,7 @@ class ExDoc(object):	#pylint: disable=R0902
 					for num, callable_name in enumerate(callable_list[1:]):# The first element is the child name/1st level method/attribute/function
 						if callable_name in trace_obj_callable_list:
 							self._extable[child_name]['cross_names'].append(callable_name)
-							self._extable[child_name]['cross_hierarchical_exceptions'].append('Same as :py:{0}:`{1}`'.format(self._callable_db[callable_name]['type'], callable_name))
+							self._extable[child_name]['cross_hierarchical_exceptions'].append('Same as :py:{0}:`{1}`'.format(self._callables_db[callable_name]['type'], callable_name))
 							# Find out highest hierarchy node that contains cross-callable (because of collapse and flattenging, the ndoe might have several hierarchy levels after cross-callable)
 							del_node = None
 							for del_node in ['.'.join(callable_list[:num1+2]) for num1 in range(num, len(callable_list)-1)]:
@@ -368,13 +368,13 @@ class ExDoc(object):	#pylint: disable=R0902
 		obj_hierarchy_list = ['.'.join(obj_hierarchy[:num]) for num in range(len(obj_hierarchy), 0, -1)]
 		# Search callable dictionary from object names from the highest number of hierarchy levels to the lowest
 		for obj_hierarchy_name in obj_hierarchy_list:
-			if obj_hierarchy_name in self._callable_db:
+			if obj_hierarchy_name in self._callables_db:
 				return obj_hierarchy_name
 		raise RuntimeError('Call {0} could not be found in package callable dictionary'.format(obj_name))
 
 	def _get_obj_type(self, obj_name):
 		""" Return object type (method, attribute, etc.) """
-		return self._callable_db[self._get_obj_full_name(obj_name)]
+		return self._callables_db[self._get_obj_full_name(obj_name)]
 
 	def _print_ex_table(self, msg=''):
 		""" Prints exception table (for debugging purposes) """

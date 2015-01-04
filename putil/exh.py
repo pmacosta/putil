@@ -39,23 +39,17 @@ class ExHandle(object):	#pylint: disable=R0902
 	Manages exceptions
 	"""
 	def __init__(self):
-		self._callable_db = dict()
-		self._module_db = list()
 		self._ex_dict = dict()
-		self._callable_obj = putil.pinspect.Callables()
+		self._callables_obj = putil.pinspect.Callables()
 
 	def __copy__(self):
 		cobj = ExHandle()
-		cobj._callable_db = copy.copy(self._callable_db)	#pylint: disable=W0212
-		cobj._module_db = copy.copy(self._module_db)	#pylint: disable=W0212
 		cobj._ex_dict = copy.copy(self._ex_dict)	#pylint: disable=W0212
 		return cobj
 
 	def __deepcopy__(self, memodict=None):
 		memodict = dict() if memodict is None else memodict
 		cobj = ExHandle()
-		cobj._callable_db = copy.deepcopy(self._callable_db)	#pylint: disable=W0212
-		cobj._module_db = copy.deepcopy(self._module_db)	#pylint: disable=W0212
 		cobj._ex_dict = copy.deepcopy(self._ex_dict, memodict)	#pylint: disable=W0212
 		return cobj
 
@@ -81,9 +75,9 @@ class ExHandle(object):	#pylint: disable=R0902
 			msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 		return msg
 
-	def _get_callable_db(self):
+	def _get_callables_db(self):
 		""" Returns database of callables """
-		return self._callable_obj.callables_db
+		return self._callables_obj.callables_db
 
 	def _get_callable_path(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
@@ -91,50 +85,36 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
-		fstack = [(fo, fn, (fin, fc, fi) == ('<string>', None, None)) for fo, fin, _, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
-		#frame_list = [(fo, fn) for num, (fo, fn, flag) in reversed(list(enumerate(fstack))) if not (flag and num)]
-		frame_list = [(fo, fn) for fo, fn, _ in reversed(list(fstack))]
-		ret = [self._get_callable_full_name(frame_obj, self._get_func_obj(frame_obj, func)) for frame_obj, func in frame_list[:-1]]
-		frame_obj, func = frame_list[-1]
-		func_obj = self._get_func_obj(frame_obj, func)
-		while getattr(func_obj, '__wrapped__', None):
-			func_obj = getattr(func_obj, '__wrapped__')
-		callable_id = self._get_code_id(frame_obj, func_obj)
-		for name, value in self._callable_obj.callables_db.items():
-			if callable_id == value['code_id']:
-				break
-		else:
-			for name in sorted(self._callable_obj.callables_db.keys()):
-				print '{0}: {1}'.format(name, self._callable_obj.callables_db[name])
-			print 'Search callable_id: {0}'.format(callable_id)
-			print self._get_callable_full_name(frame_obj, func_obj)
-			import pdb
-			pdb.set_trace()
-			raise RuntimeError('Callable not found in database')
-		ret.append(name)	#pylint: disable=W0631
+		# Debug
+		fstack = [(fo, fin, ln, fn, fc, fi) for fo, fin, ln, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
+		ret = [self._get_callable_full_name(fo, fn) for (fo, fin, ln, fn, fc, fi) in fstack[::-1]]
 		return '.'.join(ret)
 
-	def _get_callable_full_name(self, frame_obj, func_obj):
+	def _get_callable_full_name(self, frame_obj, func):
 		""" Get full path [module, class (if applicable) and function name] of callable """
-		# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
-		# Module name
-		ret = self._get_module_name(frame_obj, func_obj)
-		# Class name
-		scontext = frame_obj.f_locals.get('self', None)
-		ret += ('.'+scontext.__class__.__name__) if scontext else ''
-		# Function/method/attribute name
-		code = frame_obj.f_code
-		func_name = code.co_name
-		ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
-		return ret
-
-	def _get_code_id(self, frame_obj, func_obj):
-		""" Return unique identity tuple to individualize callable object  (from frame object) """
-		self._get_module_name(frame_obj, func_obj)	# Trace module if needed
-		ret = None
-		if hasattr(func_obj, 'f_code') or hasattr(func_obj, 'func_code'):
-			code_obj = getattr(func_obj, 'f_code', getattr(func_obj, 'func_code'))
-			ret = (code_obj.co_filename, code_obj.co_firstlineno)
+		func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
+		if func_obj:
+			# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
+			# Module name
+			ret = self._get_module_name(frame_obj, func_obj)
+			# Class name
+			scontext = frame_obj.f_locals.get('self', None)
+			ret += ('.'+scontext.__class__.__name__) if scontext else ''
+			# Function/method/attribute name
+			code = frame_obj.f_code
+			func_name = code.co_name
+			ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
+		else:
+			# Function object could not be found, (possibly becauser it is an enclosed function), try to find it via code ID in the callables database
+			callable_id = (frame_obj.f_code.co_filename, frame_obj.f_code.co_firstlineno)
+			for name, value in self._callables_obj.callables_db.items():
+				if callable_id == value['code_id']:
+					break
+			else:
+				print '\nOffending frame:'
+				print putil.misc.strframe(frame_obj)
+				raise RuntimeError('Callable full name could not be obtained')
+			ret = name	#pylint: disable=W0631
 		return ret
 
 	def _get_exception_by_name(self, name):
@@ -157,12 +137,8 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Module name
 		module = inspect.getmodule(code)
 		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
-		self._callable_obj.trace(sys.modules[module_name])
+		self._callables_obj.trace(sys.modules[module_name])
 		return module_name
-
-	def _get_func_obj(self, frame_obj, func):	#pylint: disable=R0201
-		""" Get function object """
-		return frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
 
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
@@ -254,4 +230,4 @@ class ExHandle(object):	#pylint: disable=R0902
 		eobj['checked'] = True
 
 	# Managed attributes
-	callable_db = property(_get_callable_db, None, None, doc='Dictionary of callables')
+	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')
