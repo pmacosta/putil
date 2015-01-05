@@ -116,8 +116,8 @@ def test_raise_exception():
 			test_list.append(erec['function'].endswith('test_exh.test_raise_exception.func3') and (erec['type'] == IOError) and (erec['msg'] == 'This is an exception with a *[file_name]* field') and (erec['checked'] == True))
 	assert test_list == [True]*len(test_list)
 
-def test_tree_data():
-	""" Test _tree_data() property """
+def test_exceptions_db():
+	""" Test _exceptions_db() property """
 	# Functions definitions
 	def func4(exobj):	#pylint: disable=C0111,W0612
 		exobj.add_exception('my_exception1', RuntimeError, 'This is exception #1')
@@ -130,23 +130,23 @@ def test_tree_data():
 	# Actual tests
 	# Test that property cannot be deleted
 	with pytest.raises(AttributeError) as excinfo:
-		del exobj.tree_data
+		del exobj.exceptions_db
 	test_list = list()
 	test_list.append(excinfo.value.message == "can't delete attribute")
 	# Test contents
-	tdata_in = exobj.tree_data
+	tdata_in = exobj.exceptions_db
 	if (not tdata_in) or (len(tdata_in) != 3):
 		assert False
 	tdata_out = list()
 	for erec in tdata_in:
-		if erec['name'].endswith('test_exh.test_tree_data.func4'):
-			name = 'test_exh.test_tree_data.func4'
-		elif erec['name'].endswith('test_exh.test_tree_data.func5'):
-			name = 'test_exh.test_tree_data.func5'
+		if erec['name'].endswith('test_exh.test_exceptions_db.func4'):
+			name = 'test_exh.test_exceptions_db.func4'
+		elif erec['name'].endswith('test_exh.test_exceptions_db.func5'):
+			name = 'test_exh.test_exceptions_db.func5'
 		tdata_out.append({'name':name, 'data':erec['data']})
-	test_list.append(sorted(tdata_out) == sorted([{'name':'test_exh.test_tree_data.func4', 'data':'RuntimeError (This is exception #1)'},
-											      {'name':'test_exh.test_tree_data.func5', 'data':'ValueError (This is exception #2, *[result]*)'},
-		                                          {'name':'test_exh.test_tree_data.func5', 'data':'TypeError (This is exception #3)'}]))
+	test_list.append(sorted(tdata_out) == sorted([{'name':'test_exh.test_exceptions_db.func4', 'data':'RuntimeError (This is exception #1)'},
+											      {'name':'test_exh.test_exceptions_db.func5', 'data':'ValueError (This is exception #2, *[result]*)'},
+		                                          {'name':'test_exh.test_exceptions_db.func5', 'data':'TypeError (This is exception #3)'}]))
 	#
 	assert test_list == [True]*len(test_list)
 

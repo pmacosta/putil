@@ -136,7 +136,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._callables_obj.trace(sys.modules[module_name])
 		return module_name
 
-	def _tree_data(self):	#pylint: disable-msg=R0201
+	def _exceptions_db(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
 		return [{'name':self._ex_dict[key]['function'], 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 
@@ -227,5 +227,17 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')
+	"""
+	Callables database of the modules needed to be traced to uniquely identify the function where exceptions are added, as reported by :py:meth:`putil.pinspect.Callables.callables_db`
+	"""
 
-	tree_data = property(_tree_data, None, None, doc='Formatted exceptions')
+	exceptions_db = property(_exceptions_db, None, None, doc='Formatted exceptions')
+	"""
+	Exceptions database. A list of dictionaries that contain the following keys:
+
+	 * **name** *(string)* -- Exception name of the format [function name].[exception name], where [function name] is the full function name as it appears in the callable database (:py:meth:`putil.exh.ExHandle.callables_db`)
+	   and [exception name] is the name of the exception given when defined by :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
+
+	 * **data** *(string)* -- Text of the form '[exception type] ([exception message])' where [exception type] and [exception message] are the contents of the **extype** and **exmsg** arguments used in the
+	   :py:meth:`putil.exh.ExHandle.add_exception` call used to define the exception, respectively
+	"""
