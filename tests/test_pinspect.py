@@ -9,6 +9,7 @@ putil.pintrospect unit tests
 
 import os
 import sys
+import copy
 import mock
 import time
 import types
@@ -128,3 +129,30 @@ def test_callables():
 	with mock.patch('putil.pinspect._get_code_id') as mock_get_code_id:
 		test_list.append(putil.test.trigger_exception(putil.pinspect.Callables, {'obj':sys.modules['my_module1']}, RuntimeError, 'Attribute `fset` of property `my_module1.TraceClass1.value1` not found in callable database'))
 	assert test_list == [True]*len(test_list)
+
+def test_copy():
+	""" Test __copy__() magic method """
+	source_obj = putil.pinspect.Callables()
+	import my_module1	#pylint: disable=F0401,W0612
+	source_obj.trace(sys.modules['my_module1'])
+	dest_obj = copy.copy(source_obj)
+	test_list = list()
+	test_list.append((source_obj._modules == dest_obj._modules) and (id(source_obj._modules) != id(dest_obj._modules)))
+	test_list.append((source_obj._classes == dest_obj._classes) and (id(source_obj._classes) != id(dest_obj._classes)))
+	test_list.append((source_obj._prop_dict == dest_obj._prop_dict) and (id(source_obj._prop_dict) != id(dest_obj._prop_dict)))
+	test_list.append((source_obj._callables_db == dest_obj._callables_db) and (id(source_obj._callables_db) != id(dest_obj._callables_db)))
+	assert test_list == [True]*len(test_list)
+
+def test_eq():
+	""" Test __eq__() magic method """
+	obj1 = putil.pinspect.Callables()
+	obj2 = putil.pinspect.Callables()
+	obj3 = putil.pinspect.Callables()
+	import my_module1	#pylint: disable=F0401,W0612
+	import my_module2	#pylint: disable=F0401,W0612
+	obj1.trace(sys.modules['my_module1'])
+	obj2.trace(sys.modules['my_module2'])
+	obj2.trace(sys.modules['my_module1'])
+	obj3.trace(sys.modules['putil.test'])
+	assert (obj1 == obj2) and (obj1 != obj3)
+

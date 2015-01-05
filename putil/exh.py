@@ -31,6 +31,16 @@ def del_exh_obj():
 	delattr(mod_obj, '_EXH')
 
 
+def _ex_type_str(extype):	#pylint: disable-msg=R0201
+	""" Returns a string corresponding to the exception type """
+	return str(extype)[str(extype).rfind('.')+1:str(extype).rfind("'")]
+
+
+def _get_code_id(frame_obj):
+	""" Get callable ID from frame object, separated so that it can be mocked in testing """
+	return (frame_obj.f_code.co_filename, frame_obj.f_code.co_firstlineno)
+
+
 ###
 # Classes
 ###
@@ -44,32 +54,19 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def __copy__(self):
 		cobj = ExHandle()
-		cobj._ex_dict = copy.copy(self._ex_dict)	#pylint: disable=W0212
-		return cobj
-
-	def __deepcopy__(self, memodict=None):
-		memodict = dict() if memodict is None else memodict
-		cobj = ExHandle()
-		cobj._ex_dict = copy.deepcopy(self._ex_dict, memodict)	#pylint: disable=W0212
+		cobj._ex_dict = copy.deepcopy(self._ex_dict)	#pylint: disable=W0212
+		cobj._callables_obj = copy.copy(self._callables_obj)	#pylint: disable=W0212
 		return cobj
 
 	def __str__(self):
-		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}\nChecked.: {4}'.format(self._ex_dict[key]['name'], self._ex_dict[key]['function'], self._ex_type_str(self._ex_dict[key]['type']), \
+		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}\nChecked.: {4}'.format(key, self._ex_dict[key]['function'], _ex_type_str(self._ex_dict[key]['type']), \
 																							self._ex_dict[key]['msg'], self._ex_dict[key]['checked']) for key in sorted(self._ex_dict.keys())]
 		return '\n\n'.join(ret)
-
-	def _ex_type_str(self, extype):	#pylint: disable-msg=R0201
-		""" Returns a string corresponding to the exception type """
-		return str(extype)[str(extype).rfind('.')+1:str(extype).rfind("'")]
 
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
 		""" Substitute parameters in exception message """
 		edata = edata if isinstance(edata, list) else [edata]
 		for field in edata:
-			if 'field' not in field:
-				raise ValueError('Key `field` not in field definition')
-			if 'value' not in field:
-				raise ValueError('Key `value` not in field definition')
 			if '*[{0}]*'.format(field['field']) not in msg:
 				raise RuntimeError('Field {0} not in exception message'.format(field['field']))
 			msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
@@ -106,13 +103,12 @@ class ExHandle(object):	#pylint: disable=R0902
 			ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
 		else:
 			# Function object could not be found, (possibly becauser it is an enclosed function), try to find it via code ID in the callables database
-			callable_id = (frame_obj.f_code.co_filename, frame_obj.f_code.co_firstlineno)
+			code_id = _get_code_id(frame_obj)
 			for name, value in self._callables_obj.callables_db.items():
-				if callable_id == value['code_id']:
+				if code_id == value['code_id']:
 					break
 			else:
-				print '\nOffending frame:'
-				print putil.misc.strframe(frame_obj)
+				print '\nFunction name {0}\nCode ID: {1}'.format(func, code_id)
 				raise RuntimeError('Callable full name could not be obtained')
 			ret = name	#pylint: disable=W0631
 		return ret
@@ -142,7 +138,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _tree_data(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		return [{'name':self._ex_dict[key]['function'], 'data':'{0} ({1})'.format(self._ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
+		return [{'name':self._ex_dict[key]['function'], 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 
 	def _raise_exception(self, eobj, edata=None):
 		""" Raise exception by name """
@@ -160,7 +156,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			return False
 		edata = [edata] if isinstance(edata, dict) else edata
 		for edict in edata:
-			if (not isinstance(edict, dict)) or (isinstance(edict, dict) and (('field' not in edict) or ('value' not in edict))):
+			if (not isinstance(edict, dict)) or (isinstance(edict, dict) and (('field' not in edict) or ('field' in edict and (not isinstance(edict['field'], str))) or ('value' not in edict))):
 				return False
 		return True
 
@@ -231,3 +227,5 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')
+
+	tree_data = property(_tree_data, None, None, doc='Formatted exceptions')

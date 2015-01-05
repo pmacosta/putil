@@ -50,7 +50,7 @@ def trace_tree(no_print=False):
 	if not no_print:
 		exobj.print_ex_tree()
 		exobj.print_ex_table()
-	return copy.deepcopy(exobj)
+	return copy.copy(exobj)
 
 
 if __name__ == '__main__':

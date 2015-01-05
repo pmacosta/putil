@@ -97,7 +97,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _build_ex_tree(self):
 		""" Construct exception tree from trace """
-		tree_data = self._exh_obj._tree_data()	#pylint: disable=W0212
+		tree_data = self._exh_obj.tree_data	#pylint: disable=W0212
 		if not tree_data:
 			raise RuntimeError('No trace information')
 		self._tobj = putil.tree.Tree()

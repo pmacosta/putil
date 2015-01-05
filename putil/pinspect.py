@@ -9,6 +9,7 @@ Introspection helper functions
 import re
 import os
 import sys
+import copy
 import types
 import inspect
 
@@ -135,6 +136,18 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._deleter_prop_regex = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
 		if obj:
 			self.trace(obj)
+
+	def __copy__(self):
+		cobj = Callables()
+		cobj._modules = copy.deepcopy(self._modules)	#pylint: disable=W0212
+		cobj._classes = copy.deepcopy(self._classes)	#pylint: disable=W0212
+		cobj._prop_dict = copy.copy(self._prop_dict)	#pylint: disable=W0212
+		cobj._callables_db = copy.deepcopy(self._callables_db)	#pylint: disable=W0212
+		return cobj
+
+	def __eq__(self, other):
+		# _prop_dict is a class variable used to pass data between sub-functions in the trace operation, not material to determine if two objects are the same
+		return (sorted(self._modules) == sorted(other._modules)) and (sorted(self._classes) == sorted(other._classes)) and (self._callables_db == other._callables_db)	#pylint: disable=W0212
 
 	def __repr__(self):
 		return 'putil.pinspect.Callables({0})'.format('[{0}]'.format(', '.join(["sys.modules['{0}']".format(module_name) for module_name in self._modules])) if self._modules else '')
