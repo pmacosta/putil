@@ -123,21 +123,47 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_node_separator_works(self):	#pylint: disable=C0103,R0201
 		""" Check that the node separator feature works as expected """
 		test_list = list()
-		tobj = putil.tree.Tree('+')
-		tobj.add_nodes([
-			{'name':'root.node+branch1', 'data':list()},
-			{'name':'root.node+branch2', 'data':list()},
-			{'name':'root.node+branch1+leaf1', 'data':list()},
-			{'name':'root.node+branch1+leaf1+subleaf1', 'data':333},
-			{'name':'root.node+branch1+leaf2', 'data':'Hello world!'},
-			{'name':'root.node+branch1+leaf2+subleaf2', 'data':list()},
+		def create_tree():
+			""" Create test tree """
+			tobj = putil.tree.Tree('+')
+			tobj.add_nodes([
+				{'name':'root+branch1', 'data':5},
+				{'name':'root+branch1', 'data':7},
+				{'name':'root+branch2', 'data':list()},
+				{'name':'root+branch1+leaf1', 'data':list()},
+				{'name':'root+branch1+leaf1+subleaf1', 'data':333},
+				{'name':'root+branch1+leaf2', 'data':'Hello world!'},
+				{'name':'root+branch1+leaf2+subleaf2', 'data':list()},
+			])
+			return tobj
+		tobj = create_tree()
+		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
+		tobj.collapse_subtree('root+branch1')
+		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
+		tobj = create_tree()
+		tobj.copy_subtree('root+branch1', 'root+branch3')
+		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n├branch2\n└branch3 (*)\n ├leaf1\n │└subleaf1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8'))
+		tobj = create_tree()
+		tobj.delete_subtree(['root+branch1+leaf1', 'root+branch2'])
+		test_list.append(str(tobj) == u'root\n└branch1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8'))
+		tobj = create_tree()
+		tobj.add_nodes([{'name':'root+branch1+leaf1+subleaf2', 'data':list()},
+			{'name':'root+branch2+leaf1', 'data':'loren ipsum'},
+			{'name':'root+branch2+leaf1+another_subleaf1', 'data':list()},
+			{'name':'root+branch2+leaf1+another_subleaf2', 'data':list()}
 		])
-		test_list.append(str(tobj) == u'root.node\n├branch1\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
-		tobj.delete_subtree('root.node+branch2')
-		test_list.append(str(tobj) == u'root.node\n└branch1\n ├leaf1\n │└subleaf1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8'))
-		tobj.delete_subtree('root.node+branch1+leaf2')
-		tobj.collapse_subtree('root.node')
-		test_list.append(str(tobj) == u'root.node\n└branch1+leaf1+subleaf1 (*)'.encode('utf-8'))
+		tobj.flatten_subtree('root+branch1+leaf1')
+		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│├leaf1+subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
+		tobj.flatten_subtree('root+branch2+leaf1')
+		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│├leaf1+subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
+		tobj = create_tree()
+		test_list.append(sorted(tobj.get_subtree('root+branch1')) == sorted(['root+branch1', 'root+branch1+leaf1', 'root+branch1+leaf1+subleaf1', 'root+branch1+leaf2', 'root+branch1+leaf2+subleaf2']))
+		tobj = create_tree()
+		tobj.make_root('root+branch1')
+		test_list.append(str(tobj) == u'root+branch1 (*)\n├leaf1\n│└subleaf1 (*)\n└leaf2 (*)\n └subleaf2'.encode('utf-8'))
+		tobj = create_tree()
+		tobj.rename_node('root+branch1+leaf1', 'root+branch1+mapleleaf1')
+		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf2 (*)\n││└subleaf2\n│└mapleleaf1\n│ └subleaf1 (*)\n└branch2'.encode('utf-8'))
 		assert test_list == len(test_list)*[True]
 
 	def test_errors_for_single_node_function(self):	#pylint: disable=C0103,R0201

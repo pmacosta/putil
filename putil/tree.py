@@ -228,7 +228,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 			>>> import putil.tree
 			>>> tobj = putil.tree.Tree()
-			>>> tobj.add([
+			>>> tobj.add_nodes([
 			...		{'name':'root.branch1', 'data':5},
 			...		{'name':'root.branch1', 'data':7},
 			...		{'name':'root.branch2', 'data':list()},
@@ -397,7 +397,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			│└leaf2 (*)
 			│ └subleaf2
 			└branch2
-			>>> tobj.delete(['root.branch1.leaf1', 'root.branch2'])
+			>>> tobj.delete_subtree(['root.branch1.leaf1', 'root.branch2'])
 			>>> print str(tobj)
 			root
 			└branch1 (*)
@@ -423,11 +423,11 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
 
-			>>> tobj.add([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
-			...           {'name':'root.branch2.leaf1', 'data':'loren ipsum'},
-			...           {'name':'root.branch2.leaf1.another_subleaf1', 'data':list()},
-			...           {'name':'root.branch2.leaf1.another_subleaf2', 'data':list()}
-			...         ])
+			>>> tobj.add_nodes([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
+			...                 {'name':'root.branch2.leaf1', 'data':'loren ipsum'},
+			...                 {'name':'root.branch2.leaf1.another_subleaf1', 'data':list()},
+			...                 {'name':'root.branch2.leaf1.another_subleaf2', 'data':list()}
+			...                ])
 			>>> print str(tobj)
 			root
 			├branch1 (*)
@@ -441,6 +441,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			  ├another_subleaf1
 			  └another_subleaf2
 			>>> tobj.flatten_subtree('root.branch1.leaf1')
+			>>> print str(tobj)
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
@@ -452,6 +453,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			  ├another_subleaf1
 			  └another_subleaf2
 			>>> tobj.flatten_subtree('root.branch2.leaf1')
+			>>> print str(tobj)
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
