@@ -150,6 +150,7 @@ def get_exdesc():
 		raise RuntimeError('Function object could not be found for function `{0}`'.format(fname))
 	# Return function attribute created by new contract decorator
 	exdesc = getattr(fobj, 'exdesc')
+	del sobj, fname, sitem, fobj	#pylint: disable=W0631
 	return exdesc if len(exdesc) > 1 else exdesc[exdesc.keys()[0]]
 
 
@@ -237,17 +238,24 @@ def contract(**contract_args):	#pylint: disable=R0912
 		# Register exceptions if exception handler object exists
 		exhobj = putil.exh.get_exh_obj()	#pylint: disable=W0212
 		if exhobj:
-			for param_name, param_contract in [(param_name, param_contract) for (param_name, param_contract) in contract_args.items()]:	# param_name=param_value, as in num='str|float'
+			print [(param_name, param_contract) for (param_name, param_contract) in contract_args.items()]
+			for param_name, param_contract in [(param_name, param_contract) for (param_name, param_contract) in contract_args.items()]:	#pylint: disable=W0631
+				# param_name=param_value, as in num='str|float'
 				contracts_dicts = list()
 				if _get_custom_contract(param_contract): # Create dictionary of custom contracts
 					contracts_dicts += _CUSTOM_CONTRACTS[_get_custom_contract(param_contract)].values()
 				else: # Add regular PyContracts contracts
 					contracts_dicts += [{'num':_get_num_contracts(contracts_dicts, param_name), 'type':RuntimeError, 'msg':'Argument `*[argument_name]*` is not valid'.replace('*[argument_name]*', param_name)}]
+				print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+				print contracts_dicts
 				for exdict in contracts_dicts:
 					exname = 'contract_{0}_{1}_{2}'.format(func.__name__, param_name, exdict['num'])
+					print 'Adding {0}'.format(exdict)
 					exhobj.add_exception(exname=exname, extype=exdict['type'], exmsg=exdict['msg'].replace('*[argument_name]*', param_name))
+		print 'MOVING ON TO ARGUMENT VALIDATION'
 		# Argument validation
 		try:
+			print '------------------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
 			return contracts.contract_decorator(func, **contract_args)(*args, **kwargs)
 		except contracts.ContractNotRespected as eobj:
 			#_, _, tbobj = sys.exc_info()

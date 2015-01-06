@@ -164,14 +164,17 @@ class CsvFile(object):
 
 	.. [[[end]]]
 	"""
-	@putil.pcontracts.contract(file_name='file_name_exists', dfilter='csv_data_filter')
+	#@putil.pcontracts.contract(file_name='file_name_exists', dfilter='csv_data_filter')
+	@putil.pcontracts.contract(file_name=str, dfilter=dict)
 	def __init__(self, file_name, dfilter=None):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
 		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
+		print "__INIT__"
 		self._exh.add_exception(exname='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
 		self._exh.add_exception(exname='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
 		self._exh.add_exception(exname='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
+		print "________"
 		with open(file_name, 'rU') as file_handle:
 			self._raw_data = [row for row in csv.reader(file_handle)]
 		# Process header
@@ -223,12 +226,7 @@ class CsvFile(object):
 
 		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('add_dfilter')) ]]]
 
-		:raises:
-		 * RuntimeError (Argument `dfilter` is not valid)
-
-		 * ValueError (Argument `dfilter` is empty)
-
-		 * ValueError (Column *[column_name]* not found in header)
+		:raises: Same as :py:meth:`putil.pcsv.CsvFile.dfilter[fset]`
 
 		.. [[[end]]]
 		"""
@@ -305,15 +303,19 @@ class CsvFile(object):
 
 		 * RuntimeError (Argument `append` is not valid)
 
+		 * RuntimeError (Argument `col` is not valid)
+
 		 * RuntimeError (Argument `file_name` is not valid)
+
+		 * RuntimeError (Argument `filtered` is not valid)
 
 		 * RuntimeError (Argument `headers` is not valid)
 
 		 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
 
-		 * ValueError (There is no data to save to file)
+		 * ValueError (Column *[column_name]* not found in header)
 
-		 * Same as :py:meth:`putil.pcsv.CsvFile.data`
+		 * ValueError (There is no data to save to file)
 
 		.. [[[end]]]
 		"""

@@ -51,7 +51,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	def __init__(self):
 		self._ex_dict = dict()
 		self._callables_obj = putil.pinspect.Callables()
-		self._callables_separator = '/'
+		self._callables_separator = '|'
 
 	def __copy__(self):
 		cobj = ExHandle()
@@ -79,14 +79,20 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_callable_path(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
-		ret = list()
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 		# Debug
 		fstack = [(fo, fin, ln, fn, fc, fi) for fo, fin, ln, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
-		ret = [self._get_callable_full_name(fo, fn) for (fo, fin, ln, fn, fc, fi) in fstack[::-1]]
-		return self._callables_separator.join(ret)
+		for xxx in inspect.stack():
+			print putil.misc.strframe(xxx)
+		print "*******************"
+		for xxx in fstack:
+			print putil.misc.strframe(xxx)
+		ret = self._callables_separator.join([self._get_callable_full_name(fo, fn) for (fo, fin, ln, fn, fc, fi) in fstack[::-1]])
+		del fstack, fo, fin, ln, fn, fc, fi
+		#import pdb; pdb.set_trace()
+		return ret
 
 	def _get_callable_full_name(self, frame_obj, func):
 		""" Get full path [module, class (if applicable) and function name] of callable """
@@ -112,6 +118,8 @@ class ExHandle(object):	#pylint: disable=R0902
 				print '\nFunction name {0}\nCode ID: {1}'.format(func, code_id)
 				raise RuntimeError('Callable full name could not be obtained')
 			ret = name	#pylint: disable=W0631
+			del name, value, code_id
+		del frame_obj, func, func_obj, scontext, code, func_name
 		return ret
 
 	def _get_exception_by_name(self, name):
@@ -125,6 +133,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Returns hierarchical function name """
 		func_name = self._get_callable_path()
 		ex_name = '{0}{1}{2}'.format(func_name, self._callables_separator if func_name is not None else '', name if name is not None else '')
+		print ex_name
 		return {'func_name':func_name, 'ex_name':ex_name}
 
 	def _get_module_name(self, frame_obj, func_obj):
@@ -134,6 +143,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Module name
 		module = inspect.getmodule(code)
 		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
+		del module
 		self._callables_obj.trace(sys.modules[module_name])
 		return module_name
 
