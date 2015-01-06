@@ -303,7 +303,7 @@ def test_contract():	#pylint: disable=C0103,R0912
 	exdict = putil.exh.get_exh_obj()._ex_dict
 	pexlist = list()
 	for exkey, exitem in exdict.items():
-		pexlist.append({'name':exkey[exkey.rfind('.')+1:], 'type':exitem['type'], 'msg':exitem['msg']})
+		pexlist.append({'name':exkey[exkey.rfind(putil.exh.get_exh_obj()._callables_separator)+1:], 'type':exitem['type'], 'msg':exitem['msg']})
 	test_list.append(sorted(pexlist) == sorted([{'name':'contract_func5_flag_0', 'type':RuntimeError, 'msg':'Argument `flag` is not valid'}, \
 												{'name':'contract_func5_fudge_0', 'type':RuntimeError, 'msg':'Argument `fudge` is not valid'}, \
 												{'name':'contract_func5_num_0', 'type':RuntimeError, 'msg':'Illegal number: unity'}, \

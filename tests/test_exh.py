@@ -67,11 +67,11 @@ def test_add_exception_works():
 		assert False
 	for exname in cdb:
 		erec = cdb[exname]
-		if exname.endswith('test_exh.test_add_exception_works.func1.first_exception'):
+		if exname.endswith('test_exh.test_add_exception_works.func1/first_exception'):
 			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func1') and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception') and (erec['checked'] == False))
-		elif exname.endswith('test_exh.test_add_exception_works.func2.second_exception'):
+		elif exname.endswith('test_exh.test_add_exception_works.func2/second_exception'):
 			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception') and (erec['checked'] == False))
-		elif exname.endswith('test_exh.test_add_exception_works.func2.third_exception'):
+		elif exname.endswith('test_exh.test_add_exception_works.func2/third_exception'):
 			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception') and (erec['checked'] == False))
 		else:
 			test_list.append(False)
@@ -185,12 +185,12 @@ def test_str():
 	str_out = list()
 	for str_element in str_in:
 		str_list = str_element.split('\n')
-		if str_list[0].endswith('test_exh.test_str.func7.my_exception7'):
-			str_list[0] = 'Name....: test_exh.test_str.func7.my_exception7'
-		elif str_list[0].endswith('test_exh.test_str.func8.my_exception8'):
-			str_list[0] = 'Name....: test_exh.test_str.func8.my_exception8'
-		elif str_list[0].endswith('test_exh.test_str.func8.my_exception9'):
-			str_list[0] = 'Name....: test_exh.test_str.func8.my_exception9'
+		if str_list[0].endswith('test_exh.test_str.func7/my_exception7'):
+			str_list[0] = 'Name....: test_exh.test_str.func7/my_exception7'
+		elif str_list[0].endswith('test_exh.test_str.func8/my_exception8'):
+			str_list[0] = 'Name....: test_exh.test_str.func8/my_exception8'
+		elif str_list[0].endswith('test_exh.test_str.func8/my_exception9'):
+			str_list[0] = 'Name....: test_exh.test_str.func8/my_exception9'
 		if str_list[1].endswith('test_exh.test_str.func7'):
 			str_list[1] = 'Function: test_exh.test_str.func7'
 		elif str_list[1].endswith('test_exh.test_str.func8'):
@@ -198,9 +198,9 @@ def test_str():
 		str_out.append('\n'.join(str_list))
 	#
 	str_check = list()
-	str_check.append('Name....: test_exh.test_str.func7.my_exception7\nFunction: test_exh.test_str.func7\nType....: RuntimeError\nMessage.: This is exception #7\nChecked.: True')
-	str_check.append('Name....: test_exh.test_str.func8.my_exception8\nFunction: test_exh.test_str.func8\nType....: ValueError\nMessage.: This is exception #8, *[fname]*\nChecked.: False')
-	str_check.append('Name....: test_exh.test_str.func8.my_exception9\nFunction: test_exh.test_str.func8\nType....: TypeError\nMessage.: This is exception #9\nChecked.: False')
+	str_check.append('Name....: test_exh.test_str.func7/my_exception7\nFunction: test_exh.test_str.func7\nType....: RuntimeError\nMessage.: This is exception #7\nChecked.: True')
+	str_check.append('Name....: test_exh.test_str.func8/my_exception8\nFunction: test_exh.test_str.func8\nType....: ValueError\nMessage.: This is exception #8, *[fname]*\nChecked.: False')
+	str_check.append('Name....: test_exh.test_str.func8/my_exception9\nFunction: test_exh.test_str.func8\nType....: TypeError\nMessage.: This is exception #9\nChecked.: False')
 	assert sorted(str_out) == sorted(str_check)
 
 def test_copy():

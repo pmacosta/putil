@@ -17,31 +17,6 @@ import putil.tree
 ###
 # Tests for pseudo-types
 ###
-def test_node_name():
-	""" Test for node_name custom PyContract contract """
-	obj = putil.tree.Tree()
-	test_list = list()
-	test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':5}, RuntimeError, 'Argument `name` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a. b'}, RuntimeError, 'Argument `name` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a.b..c', 'var_name':'node'}, RuntimeError, 'Argument `node` is not valid'))
-	obj._validate_node_name('a.b.c.d')	#pylint: disable=W0212
-	assert test_list == len(test_list)*[True]
-
-
-def test_node_names():
-	""" Test for node_names custom PyContract contract """
-	obj = putil.tree.Tree()
-	test_list = list()
-	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':3}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':[{'name', 'hello'}, {'name':5, 'data':'a'}],}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':5, 'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a. b', 'data':None}}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a.b..c', 'data':1.0}}, RuntimeError, 'Argument `nodes` is not valid'))
-	obj._validate_nodes_with_data({'name':'a.b.c', 'data':'a'})
-	obj._validate_nodes_with_data([{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}])
-	assert test_list == len(test_list)*[True]
-
-
 ###
 # Tests for Tree
 ###
@@ -111,6 +86,29 @@ def default_trees():	#pylint: disable=R0914
 
 class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	""" Tests for CsvFile class """
+
+	def test_node_name(self):	#pylint: disable=C0103,R0201
+		""" Test for node_name custom PyContract contract """
+		obj = putil.tree.Tree()
+		test_list = list()
+		test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':5}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a. b'}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a.b..c', 'var_name':'node'}, RuntimeError, 'Argument `node` is not valid'))
+		obj._validate_node_name('a.b.c.d')	#pylint: disable=W0212
+		assert test_list == len(test_list)*[True]
+
+	def test_node_names(self):	#pylint: disable=C0103,R0201
+		""" Test for node_names custom PyContract contract """
+		obj = putil.tree.Tree()
+		test_list = list()
+		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':3}, RuntimeError, 'Argument `nodes` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':[{'name', 'hello'}, {'name':5, 'data':'a'}],}, RuntimeError, 'Argument `nodes` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':5, 'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a. b', 'data':None}}, RuntimeError, 'Argument `nodes` is not valid'))
+		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a.b..c', 'data':1.0}}, RuntimeError, 'Argument `nodes` is not valid'))
+		obj._validate_nodes_with_data({'name':'a.b.c', 'data':'a'})
+		obj._validate_nodes_with_data([{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}])
+		assert test_list == len(test_list)*[True]
 
 	def test_node_separator_errors(self):	#pylint: disable=C0103,R0201
 		""" Check that validation for node_separator argument works as expected """

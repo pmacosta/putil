@@ -51,6 +51,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	def __init__(self):
 		self._ex_dict = dict()
 		self._callables_obj = putil.pinspect.Callables()
+		self._callables_separator = '/'
 
 	def __copy__(self):
 		cobj = ExHandle()
@@ -85,7 +86,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Debug
 		fstack = [(fo, fin, ln, fn, fc, fi) for fo, fin, ln, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
 		ret = [self._get_callable_full_name(fo, fn) for (fo, fin, ln, fn, fc, fi) in fstack[::-1]]
-		return '.'.join(ret)
+		return self._callables_separator.join(ret)
 
 	def _get_callable_full_name(self, frame_obj, func):
 		""" Get full path [module, class (if applicable) and function name] of callable """
@@ -123,7 +124,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	def _get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
 		func_name = self._get_callable_path()
-		ex_name = '{0}{1}{2}'.format(func_name, '.' if func_name is not None else '', name if name is not None else '')
+		ex_name = '{0}{1}{2}'.format(func_name, self._callables_separator if func_name is not None else '', name if name is not None else '')
 		return {'func_name':func_name, 'ex_name':ex_name}
 
 	def _get_module_name(self, frame_obj, func_obj):
