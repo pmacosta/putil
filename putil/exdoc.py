@@ -124,7 +124,9 @@ class ExDoc(object):	#pylint: disable=R0902
 		tree_data = self._exh_obj.exceptions_db	#pylint: disable=W0212
 		if not tree_data:
 			raise RuntimeError('No trace information')
-		self._tobj = putil.tree.Tree()
+		self._tobj = putil.tree.Tree(self._exh_obj._callables_separator)
+		for node in tree_data:
+			print node
 		if not self.no_print:
 			print putil.misc.pcolor('Building tree', 'blue')
 		self._tobj.add_nodes(tree_data)
