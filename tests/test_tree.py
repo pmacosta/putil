@@ -2,7 +2,7 @@
 # test_tree.py	#pylint:disable=C0302
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
-
+#pylint: disable=W0212
 """
 putil.tree unit tests
 """
@@ -12,7 +12,6 @@ import pytest
 
 import putil.test
 import putil.tree
-import putil.pcontracts
 
 
 ###
@@ -20,32 +19,26 @@ import putil.pcontracts
 ###
 def test_node_name():
 	""" Test for node_name custom PyContract contract """
-	@putil.pcontracts.contract(node='node_name')
-	def func1(node):
-		""" Test function """
-		return node
+	obj = putil.tree.Tree()
 	test_list = list()
-	test_list.append(putil.test.trigger_exception(func1, {'node':5}, RuntimeError, 'Argument `node` is not valid'))
-	test_list.append(putil.test.trigger_exception(func1, {'node':'a. b'}, RuntimeError, 'Argument `node` is not valid'))
-	test_list.append(putil.test.trigger_exception(func1, {'node':'a.b..c'}, RuntimeError, 'Argument `node` is not valid'))
-	test_list.append(func1('a.b.c.d') == 'a.b.c.d')
+	test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':5}, RuntimeError, 'Argument `name` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a. b'}, RuntimeError, 'Argument `name` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a.b..c', 'var_name':'node'}, RuntimeError, 'Argument `node` is not valid'))
+	obj._validate_node_name('a.b.c.d')	#pylint: disable=W0212
 	assert test_list == len(test_list)*[True]
 
 
 def test_node_names():
 	""" Test for node_names custom PyContract contract """
-	@putil.pcontracts.contract(nodes='nodes_with_data')
-	def func2(nodes):
-		""" Test function """
-		return nodes
+	obj = putil.tree.Tree()
 	test_list = list()
-	test_list.append(putil.test.trigger_exception(func2, {'nodes':3}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(func2, {'nodes':[{'name', 'hello'}, {'name':5, 'data':'a'}],}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(func2, {'nodes':{'name':5, 'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(func2, {'nodes':{'name':'a. b', 'data':None}}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(putil.test.trigger_exception(func2, {'nodes':{'name':'a.b..c', 'data':1.0}}, RuntimeError, 'Argument `nodes` is not valid'))
-	test_list.append(cmp(func2({'name':'a.b.c', 'data':'a'}), {'name':'a.b.c', 'data':'a'}) == 0)
-	test_list.append(func2([{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}]) == [{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}])
+	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':3}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':[{'name', 'hello'}, {'name':5, 'data':'a'}],}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':5, 'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a. b', 'data':None}}, RuntimeError, 'Argument `nodes` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a.b..c', 'data':1.0}}, RuntimeError, 'Argument `nodes` is not valid'))
+	obj._validate_nodes_with_data({'name':'a.b.c', 'data':'a'})
+	obj._validate_nodes_with_data([{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}])
 	assert test_list == len(test_list)*[True]
 
 
@@ -118,6 +111,34 @@ def default_trees():	#pylint: disable=R0914
 
 class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	""" Tests for CsvFile class """
+
+	def test_node_separator_errors(self):	#pylint: disable=C0103,R0201
+		""" Check that validation for node_separator argument works as expected """
+		test_list = list()
+		test_list.append(putil.test.trigger_exception(putil.tree.Tree, {'node_separator':3}, RuntimeError, 'Argument `node_separator` is not valid'))
+		test_list.append(putil.test.trigger_exception(putil.tree.Tree, {'node_separator':'hello'}, RuntimeError, 'Argument `node_separator` is not valid'))
+		putil.tree.Tree('+')
+		assert test_list == len(test_list)*[True]
+
+	def test_node_separator_works(self):	#pylint: disable=C0103,R0201
+		""" Check that the node separator feature works as expected """
+		test_list = list()
+		tobj = putil.tree.Tree('+')
+		tobj.add_nodes([
+			{'name':'root.node+branch1', 'data':list()},
+			{'name':'root.node+branch2', 'data':list()},
+			{'name':'root.node+branch1+leaf1', 'data':list()},
+			{'name':'root.node+branch1+leaf1+subleaf1', 'data':333},
+			{'name':'root.node+branch1+leaf2', 'data':'Hello world!'},
+			{'name':'root.node+branch1+leaf2+subleaf2', 'data':list()},
+		])
+		test_list.append(str(tobj) == u'root.node\n├branch1\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
+		tobj.delete_subtree('root.node+branch2')
+		test_list.append(str(tobj) == u'root.node\n└branch1\n ├leaf1\n │└subleaf1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8'))
+		tobj.delete_subtree('root.node+branch1+leaf2')
+		tobj.collapse_subtree('root.node')
+		test_list.append(str(tobj) == u'root.node\n└branch1+leaf1+subleaf1 (*)'.encode('utf-8'))
+		assert test_list == len(test_list)*[True]
 
 	def test_errors_for_single_node_function(self):	#pylint: disable=C0103,R0201
 		""" Check that correct exceptions are raise for methods that have a single NodeName argument that has to be in the tree """

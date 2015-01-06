@@ -28,6 +28,14 @@ External libraries
 Application programming interface (API)
 ***************************************
 
+Classes
+=======
+
+.. automodule:: putil.exdoc
+    :members: ExDoc
+    :undoc-members:
+    :show-inheritance:
+
 *******
 License
 *******

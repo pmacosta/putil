@@ -28,7 +28,7 @@ Pseudo-types
 NodeName
 --------
 
-A tree node name is a *string* where hierarchy levels are denoted by a periods ("."). Node names cannot contain spaces, empty hierarchy levels, start with a period or end with a period.
+A tree node name is a *string* where hierarchy levels are denoted by node separator characters ("." by default). Node names cannot contain spaces, empty hierarchy levels, start or end with a node separator character.
 
 For this example tree::
 
@@ -50,12 +50,6 @@ Dictionary or list of dictionaries. Each dictionary must contain exactly two key
 * **data** (*any*) node data.
 
 The node data should be an empty list to create a node without data, for example: :code:`{'node':'a.b.c', 'data':list()}`
-
-Contracts
-=========
-
-.. autofunction:: putil.tree.node_name
-.. autofunction:: putil.tree.nodes_with_data
 
 Classes
 =======

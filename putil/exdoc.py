@@ -7,7 +7,6 @@ Exception auto-documentation
 """
 
 import copy
-import inspect
 
 import putil.misc
 import putil.tree
@@ -18,32 +17,27 @@ import putil.tree
 ###
 class ExDoc(object):	#pylint: disable=R0902
 	"""
-	Generates exception documentation in with `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ mark-up
+	Generates exception documentation with `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ mark-up
 
-	:param	obj: Object to document exceptions for
-	:type	obj: Class object or module-level object
-	:rtype: :py:class:`putil.exh.ExDoc()` object
+	:param	exh_obj: Exception handler containing exception information for the callable(s) to be documented
+	:type	exh_obj: :py:class:`putil.exh.ExHandle` object
+	:param	no_print: Print step-by-step processing information (False) or not (True) flag
+	:type	no_print: boolean
+	:rtype: :py:class:`putil.exdoc.ExDoc()` object
 
 	:raises:
-	 * TypeError (Argument `obj` is of the wrong type)
+	 * TypeError (Argument `trace_obj` is of the wrong type)
 
 	 * ValueError (Hidden objects cannot be traced)
 	"""
-	def __init__(self, exh_obj, trace_obj, no_print=False):
+	def __init__(self, exh_obj, no_print=False):
 		self._exh_obj = exh_obj
-		if (not inspect.isclass(trace_obj)) and (not hasattr(trace_obj, '__call__')):
-			raise TypeError('Argument `trace_obj` is of the wrong type')
-		if trace_obj.__name__.startswith('_'):
-			raise ValueError('Hidden objects cannot be traced')
-		self._trace_obj = trace_obj
-		self._trace_obj_type = inspect.isclass(trace_obj)
-		self._trace_obj_name = '{0}.{1}'.format(trace_obj.__module__, trace_obj.__name__)
 		self._callables_db = self._exh_obj.callables_db
 		self.no_print = no_print
-		self._trace_list, self._tobj, self._extable, self._cross_usage_extable, self._exoutput = None, None, None, None, None
+		self._trace_obj_type, self._trace_obj_name, self._trace_list, self._tobj, self._extable, self._cross_usage_extable, self._exoutput = None, None, None, None, None, None, None
 
 	def __copy__(self):
-		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), trace_obj=copy.copy(self._trace_obj), no_print=self.no_print)
+		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), no_print=self.no_print)
 		cobj._trace_obj_type = copy.copy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.copy(self._trace_obj_name)	#pylint: disable=W0212
 		cobj._callables_db = copy.copy(self._callables_db)	#pylint: disable=W0212
@@ -56,7 +50,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def __deepcopy__(self, memodict=None):
 		memodict = dict() if memodict is None else memodict
-		cobj = ExDoc(exh_obj=copy.deepcopy(self._exh_obj), trace_obj=copy.deepcopy(self._trace_obj), no_print=self.no_print)
+		cobj = ExDoc(exh_obj=copy.deepcopy(self._exh_obj), no_print=self.no_print)
 		cobj._trace_obj_type = copy.deepcopy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.deepcopy(self._trace_obj_name, memodict)	#pylint: disable=W0212
 		cobj._callables_db = copy.deepcopy(self._callables_db)	#pylint: disable=W0212
@@ -69,31 +63,61 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _alias_attributes(self):	#pylint: disable=R0912,R0914
 		""" Create attribute nodes in tree """
-		if inspect.isclass(self._trace_obj):
+		if not self.no_print:
+			print putil.misc.pcolor('Aliasing attributes', 'blue')
+		# Select properties of traced class or module/level function
+		#for mkey, mval in self._callables_db.items():
+		#	print '{0}: {1}'.format(mkey, mval)
+		attr_list = [(mkey, mval['attr']) for mkey, mval in self._callables_db.items() if 'attr' in mval and mval['attr']]
+		for key, fattr_funcs in attr_list:
 			if not self.no_print:
-				print putil.misc.pcolor('Aliasing attributes', 'blue')
-			# Select properties of traced class or module/level function
-			#for mkey, mval in self._callables_db.items():
-			#	print '{0}: {1}'.format(mkey, mval)
-			attr_list = [(mkey, mval['attr']) for mkey, mval in self._callables_db.items() if 'attr' in mval and mval['attr']]
-			for key, fattr_funcs in attr_list:
-				if not self.no_print:
-					print '   Detected attribute {0}'.format(key)
-					for func in sorted(fattr_funcs.values()):
-						print '      {0}'.format(func)
-				for fkey, fname in fattr_funcs.items():
+				print '   Detected attribute {0}'.format(key)
+				for func in sorted(fattr_funcs.values()):
+					print '      {0}'.format(func)
+			for fkey, fname in fattr_funcs.items():
+				mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
+				while mod_list:
+					start_char = mod_list[0].find(fname) if mod_list[0].endswith(fname) else mod_list[0].find(fname+'.')
+					stop_char = len(mod_list[0]) if mod_list[0].endswith(fname) else start_char+len(fname)
+					name_to_replace = mod_list[0][start_char:stop_char] if mod_list[0].endswith(fname) else mod_list[0][start_char:stop_char]+'.'
+					self._tobj._rename_node(mod_list[0], mod_list[0].replace(name_to_replace, '{0}[{1}]{2}'.format(key, fkey, '' if mod_list[0].endswith(fname) else '.')))	#pylint: disable=W0212
+					self._callables_db['{0}[{1}]'.format(key, fkey)] = copy.deepcopy(self._callables_db[fname])
 					mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
-					while mod_list:
-						start_char = mod_list[0].find(fname) if mod_list[0].endswith(fname) else mod_list[0].find(fname+'.')
-						stop_char = len(mod_list[0]) if mod_list[0].endswith(fname) else start_char+len(fname)
-						name_to_replace = mod_list[0][start_char:stop_char] if mod_list[0].endswith(fname) else mod_list[0][start_char:stop_char]+'.'
-						self._tobj._rename_node(mod_list[0], mod_list[0].replace(name_to_replace, '{0}[{1}]{2}'.format(key, fkey, '' if mod_list[0].endswith(fname) else '.')))	#pylint: disable=W0212
-						self._callables_db['{0}[{1}]'.format(key, fkey)] = copy.deepcopy(self._callables_db[fname])
-						mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
-			if attr_list:
-				self._collapse_ex_tree()
+		if attr_list:
+			self._collapse_ex_tree()
 		if not self.no_print:
 			print str(self._tobj)
+
+	def _autodetect_ex_tree_prefix(self):
+		""" Determine root trace object """
+		if not self.no_print:
+			print putil.misc.pcolor('Finding root trace object', 'blue')
+		root_name = self._tobj.root_name
+		while len(self._tobj.get_children(root_name)) == 1:
+			root_name = self._tobj.get_children(root_name)[0]
+		nodes_list = ['.'.join(root_name.split('.')[num:]) for num in range(len(root_name.split('.')))]
+		# Search first for functions
+		for node in nodes_list:
+			if node in self._exh_obj.callables_db:
+				self._trace_obj_type = False
+				break
+		else:
+			# Search second for classes. Cannot just append __init__ to root node because classes may not have an explicit __init__ function
+			mod_callables_db_keys = set([key[:key.rfind('.')] if key.rfind('.') != -1 else key for key in self._exh_obj.callables_db])
+			for node in nodes_list:
+				if node in mod_callables_db_keys:
+					self._trace_obj_type = True
+					break
+			else:
+				raise RuntimeError('Root trace object cold not be found')
+		self._trace_obj_name = node
+		if not self.no_print:
+			print '\tRoot node.: {0}'.format(root_name)
+			print '\tRoot trace: {0}'.format(node)
+		self._tobj.make_root(root_name)
+		if not self.no_print:
+			print str(self._tobj)
+		return root_name
 
 	def _build_ex_tree(self):
 		""" Construct exception tree from trace """
@@ -121,7 +145,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		""" Make class name of interest root node """
 		node = self._tobj.root_name
 		# Look for first occurance of trace object name in tree nodes
-		# self._otbj.nodes returns all nodes _sorted_ alphabetically
+		# self._tobj.nodes returns all nodes _sorted_ alphabetically
 		for node in self._tobj.nodes:
 			if self._trace_obj_name in node:
 				break
@@ -441,7 +465,9 @@ class ExDoc(object):	#pylint: disable=R0902
 		# Eliminate intermediate call nodes that have no exceptions associated with them
 		self._collapse_ex_tree()
 		# Make trace object class or module/level function root node of call tree
-		new_root_node = self._change_ex_tree_root_node()
+		#new_root_node = self._change_ex_tree_root_node()
+		# Auto-detect root trace object
+		new_root_node = self._autodetect_ex_tree_prefix()
 		# Eliminate prefix hierarchy that is an artifact of the tracing infrastructure
 		self._eliminate_ex_tree_prefix(new_root_node)
 		# Flatten hierarchy call on to trace class methods/properties or on to trace module-level function
