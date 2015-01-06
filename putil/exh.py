@@ -235,9 +235,9 @@ class ExHandle(object):	#pylint: disable=R0902
 	"""
 	Exceptions database. A list of dictionaries that contain the following keys:
 
-	 * **name** *(string)* -- Exception name of the format [function name].[exception name], where [function name] is the full function name as it appears in the callable database (:py:meth:`putil.exh.ExHandle.callables_db`)
-	   and [exception name] is the name of the exception given when defined by :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
+	 * **name** *(string)* -- Exception name of the format *function_name*. *exception_name*, where *function_name* is the full function name as it appears in the callable database (:py:meth:`putil.exh.ExHandle.callables_db`)
+	   and *exception_name* is the name of the exception given when defined by :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
 
-	 * **data** *(string)* -- Text of the form '[exception type] ([exception message])' where [exception type] and [exception message] are the contents of the **extype** and **exmsg** arguments used in the
-	   :py:meth:`putil.exh.ExHandle.add_exception` call used to define the exception, respectively
+	 * **data** *(string)* -- Text of the form '*exception_type* (*exception_message*)' where *exception_type* and *exception_message* are the exception type and exception message, respectively, given when the exception was
+	   defined by :py:meth:`putil.exh.ExHandle.add_exception` (**extype** and **exmsg** arguments)
 	"""
