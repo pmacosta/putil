@@ -13,6 +13,7 @@ import pytest
 
 import putil.exh
 import putil.test
+import putil.pcontracts
 
 def test_star_exh_obj():
 	""" Test [get|set|del]_exh_obj() function """
@@ -56,12 +57,16 @@ def test_add_exception_works():
 	def func1():	#pylint: disable=C0111,W0612
 		exobj.add_exception('first_exception', TypeError, 'This is the first exception')
 		print "Hello"
-	def func2():	#pylint: disable=C0111,W0612
+	def prop_decorator(func):	#pylint: disable=C0111,W0612
+		return func
+	@putil.pcontracts.contract(text=str)
+	@prop_decorator
+	def func2(text):	#pylint: disable=C0111,W0612
 		exobj.add_exception('second_exception', ValueError, 'This is the second exception')
 		exobj.add_exception('third_exception', IOError, 'This is the third exception')
-		print "World"
+		print text
 	func1()
-	func2()
+	func2("world")
 	cdb = exobj._ex_dict
 	if not cdb:
 		assert False

@@ -3,6 +3,7 @@
 my_module1 module
 """
 
+import putil.exh
 import my_module2
 import putil.pcontracts
 
@@ -33,6 +34,9 @@ class TraceClass2(object):	#pylint: disable=R0903
 	@prop_decorator
 	def _setter_func2(self, value):
 		""" Simple setter method """
+		exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
+		exobj.add_exception(exname='dummy_exception_1', extype=ValueError, exmsg='Dummy message 1')
+		exobj.add_exception(exname='dummy_exception_2', extype=ValueError, exmsg='Dummy message 2')
 		print 'The value is {0}'.format(value)
 		self._value = value
 
