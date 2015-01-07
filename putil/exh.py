@@ -41,6 +41,15 @@ def _get_code_id(frame_obj):
 	return (frame_obj.f_code.co_filename, frame_obj.f_code.co_firstlineno)
 
 
+def _is_decorator(fin, lin, fuc, fui):
+	""" Determine if frame components refer to a decorator """
+	return (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None)
+
+def _valid_frame(fin, fna):
+	""" Selects valid stack frame to process """
+	return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exhdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
+
+
 ###
 # Classes
 ###
@@ -83,15 +92,36 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 		# Debug
-		fstack = [(fo, fin, ln, fn, fc, fi) for fo, fin, ln, fn, fc, fi in inspect.stack() if self._valid_frame(fin, fn)]
-		for xxx in inspect.stack():
-			print putil.misc.strframe(xxx)
+		fstack = list()
+		siter = iter([obj for obj in inspect.stack()][::-1])
+		decorator_flag = False
+		skip_num = 0
+		for fob, fin, lin, fun, fuc, fui in siter:
+			if skip_num > 0:
+				skip_num = skip_num-1
+				continue
+			# Gobble up two frames if it is a decorator
+			if _is_decorator(fin, lin, fuc, fui) and (not decorator_flag):
+				fstack.append((fob, fin, lin, fun, fuc, fui))
+				skip_num = 1
+				decorator_flag = True
+				continue
+			elif _is_decorator(fin, lin, fuc, fui) and decorator_flag:
+				skip_num = 1
+				continue
+			decorator_flag = False
+			if _valid_frame(fin, fun):
+				fstack.append((fob, fin, lin, fun, fuc, fui))
+		#fstack = [(fo, fin, ln, fn, fc, fi) for fo, fin, ln, fn, fc, fi in inspect.stack() if _valid_frame(fin, fn)]
+		dlist = inspect.stack()
+		for obj in dlist[::-1]:
+			print putil.misc.strframe(obj)
 		print "*******************"
-		for xxx in fstack:
-			print putil.misc.strframe(xxx)
-		ret = self._callables_separator.join([self._get_callable_full_name(fo, fn) for (fo, fin, ln, fn, fc, fi) in fstack[::-1]])
-		del fstack, fo, fin, ln, fn, fc, fi
-		#import pdb; pdb.set_trace()
+		for obj in fstack:
+			print putil.misc.strframe(obj)
+			(fob, fin, lin, fun, fuc, fui) = obj
+			print self._get_callable_full_name(fob, fun)
+		ret = self._callables_separator.join([self._get_callable_full_name(fob, fun) for (fob, fin, lin, fun, fuc, fui) in fstack])
 		return ret
 
 	def _get_callable_full_name(self, frame_obj, func):
@@ -109,7 +139,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			func_name = code.co_name
 			ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
 		else:
-			# Function object could not be found, (possibly becauser it is an enclosed function), try to find it via code ID in the callables database
+			# Function object could not be found, (possibly because it is an enclosed function), try to find it via code ID in the callables database
 			code_id = _get_code_id(frame_obj)
 			for name, value in self._callables_obj.callables_db.items():
 				if code_id == value['code_id']:
@@ -118,8 +148,6 @@ class ExHandle(object):	#pylint: disable=R0902
 				print '\nFunction name {0}\nCode ID: {1}'.format(func, code_id)
 				raise RuntimeError('Callable full name could not be obtained')
 			ret = name	#pylint: disable=W0631
-			del name, value, code_id
-		del frame_obj, func, func_obj, scontext, code, func_name
 		return ret
 
 	def _get_exception_by_name(self, name):
@@ -143,7 +171,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Module name
 		module = inspect.getmodule(code)
 		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
-		del module
 		self._callables_obj.trace(sys.modules[module_name])
 		return module_name
 
@@ -170,10 +197,6 @@ class ExHandle(object):	#pylint: disable=R0902
 			if (not isinstance(edict, dict)) or (isinstance(edict, dict) and (('field' not in edict) or ('field' in edict and (not isinstance(edict['field'], str))) or ('value' not in edict))):
 				return False
 		return True
-
-	def _valid_frame(self, fin, fna):	#pylint: disable-msg=R0201
-		""" Selects valid stack frame to process """
-		return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exhdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
 	def add_exception(self, exname, extype, exmsg):	#pylint: disable=R0913,R0914
 		r"""

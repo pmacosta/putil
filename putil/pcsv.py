@@ -164,8 +164,7 @@ class CsvFile(object):
 
 	.. [[[end]]]
 	"""
-	#@putil.pcontracts.contract(file_name='file_name_exists', dfilter='csv_data_filter')
-	@putil.pcontracts.contract(file_name=str, dfilter=dict)
+	@putil.pcontracts.contract(file_name='file_name_exists', dfilter='csv_data_filter')
 	def __init__(self, file_name, dfilter=None):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
