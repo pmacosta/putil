@@ -169,6 +169,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		ex_name = '{0}{1}{2}'.format(func_name, self._callables_separator if func_name is not None else '', name if name is not None else '')
 		return {'func_name':func_name, 'ex_name':ex_name}
 
+	def _get_callables_separator(self):
+		""" Get callable separator character """
+		return self._callables_separator
+
 	def _get_module_name(self, frame_obj, func_obj):
 		""" Get module name and optionally trace it """
 		code = frame_obj.f_code
@@ -268,6 +272,11 @@ class ExHandle(object):	#pylint: disable=R0902
 	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')
 	"""
 	Callables database of the modules needed to be traced to uniquely identify the function where exceptions are added, as reported by :py:meth:`putil.pinspect.Callables.callables_db`
+	"""
+
+	callables_separator = property(_get_callables_separator, None, None, doc='Callable separator character')
+	"""
+	Callables separator character ('/')
 	"""
 
 	exceptions_db = property(_exceptions_db, None, None, doc='Formatted exceptions')

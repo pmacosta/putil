@@ -168,6 +168,19 @@ def test_callables_db():
 	#
 	assert test_list == [True]*len(test_list)
 
+def test_callables_separator():
+	""" Test callables_separator property """
+	exobj = putil.exh.ExHandle()
+	# Actual contents of what is returned should be checked in pinspect module
+	test_list = list()
+	test_list.append(exobj.callables_separator == '/')
+	# Test that property cannot be deleted
+	with pytest.raises(AttributeError) as excinfo:
+		del exobj.callables_separator
+	test_list.append(excinfo.value.message == "can't delete attribute")
+	#
+	assert test_list == [True]*len(test_list)
+
 def test_str():
 	""" Test str() function """
 	# Functions definition

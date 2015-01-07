@@ -124,9 +124,9 @@ class ExDoc(object):	#pylint: disable=R0902
 		tree_data = self._exh_obj.exceptions_db	#pylint: disable=W0212
 		if not tree_data:
 			raise RuntimeError('No trace information')
-		self._tobj = putil.tree.Tree(self._exh_obj._callables_separator)
-		for node in self._exh_obj._ex_dict:
-			print node
+		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
+		#for node in self._exh_obj._ex_dict:
+		#	print node
 		if not self.no_print:
 			print putil.misc.pcolor('Building tree', 'blue')
 		self._tobj.add_nodes(tree_data)
@@ -177,7 +177,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		children = self._tobj._get_children(self._tobj.root_name)	#pylint: disable=W0212
 		module_function = [self._tobj.root_name] if self._tobj._get_data(self._tobj.root_name) else list()	#pylint: disable=W0212
 		for child in children+module_function:
-			child_name = self._get_obj_full_name(child)
+			child_name = self._get_obj_full_name(child[len(self._tobj.root_name)+1:])
 			self._extable[child_name] = dict()
 			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(child))))	#pylint: disable=W0212
 			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
@@ -284,10 +284,10 @@ class ExDoc(object):	#pylint: disable=R0902
 		if not self.no_print:
 			print putil.misc.pcolor('Detecting cross-usage across sub-trees', 'blue')
 		# Generate trace class method/attribute or module-level class function callable list
-		trace_obj_callable_list = [self._get_obj_full_name(child) for child in sorted(self._tobj.get_children(self._tobj.root_name))]
+		trace_obj_callable_list = [self._get_obj_full_name(child[len(self._tobj.root_name)+1:]) for child in sorted(self._tobj.get_children(self._tobj.root_name))]
 		# Detect cross-usage
 		for child in sorted(self._tobj.get_children(self._tobj.root_name)):
-			child_name = self._get_obj_full_name(child)
+			child_name = self._get_obj_full_name(child[len(self._tobj.root_name)+1:])
 			grandchildren = self._tobj.get_children(child)
 			for grandchild in sorted(grandchildren):
 				sub_tree = sorted(self._tobj.get_subtree(grandchild), reverse=True)	#pylint: disable=W0212
