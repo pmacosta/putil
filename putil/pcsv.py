@@ -169,11 +169,9 @@ class CsvFile(object):
 		self._header, self._header_upper, self._data, self._fdata, self._dfilter, self._exh = None, None, None, None, None, None
 		# Register exceptions
 		self._exh = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
-		print "__INIT__"
 		self._exh.add_exception(exname='file_empty', extype=RuntimeError, exmsg='File *[file_name]* is empty')
 		self._exh.add_exception(exname='column_headers_not_unique', extype=RuntimeError, exmsg='Column headers are not unique')
 		self._exh.add_exception(exname='file_has_no_valid_data', extype=RuntimeError, exmsg='File *[file_name]* has no valid data')
-		print "________"
 		with open(file_name, 'rU') as file_handle:
 			self._raw_data = [row for row in csv.reader(file_handle)]
 		# Process header

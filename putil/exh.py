@@ -60,7 +60,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	def __init__(self):
 		self._ex_dict = dict()
 		self._callables_obj = putil.pinspect.Callables()
-		self._callables_separator = '|'
+		self._callables_separator = '/'
 
 	def __copy__(self):
 		cobj = ExHandle()
@@ -92,37 +92,43 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 		# Debug
-		fstack = list()
-		siter = iter([obj for obj in inspect.stack()][::-1])
+		ret = list()
 		decorator_flag = False
 		skip_num = 0
-		for fob, fin, lin, fun, fuc, fui in siter:
+		prev_name = name = ''
+		for fob, fin, lin, fun, fuc, fui in [obj for obj in inspect.stack()][::-1]:
+			# print putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
 			if skip_num > 0:
-				skip_num = skip_num-1
+				# print putil.misc.pcolor('Skipped', 'green')
+				skip_num -= 1
 				continue
 			# Gobble up two frames if it is a decorator
 			if _is_decorator(fin, lin, fuc, fui) and (not decorator_flag):
-				fstack.append((fob, fin, lin, fun, fuc, fui))
+				name = prev_name = self._get_callable_full_name(fob, fun)
+				# print putil.misc.pcolor('Decorator (frame used) -> {0}'.format(name), 'green')
+				ret.append(name)
 				skip_num = 1
 				decorator_flag = True
 				continue
 			elif _is_decorator(fin, lin, fuc, fui) and decorator_flag:
+				# print putil.misc.pcolor('Chained decorator', 'green')
 				skip_num = 1
 				continue
+			if fin.endswith('/putil/exh.py'):
+				# print putil.misc.pcolor('End of chain encountered', 'green')
+				break
+			elif _valid_frame(fin, fun):
+				name = self._get_callable_full_name(fob, fun)
+				if (decorator_flag and (name != prev_name)) or (not decorator_flag):
+					# print putil.misc.pcolor('Regular frame (frame used) -> {0}'.format(name), 'green')
+					ret.append(name)
+				# else:
+				#	print putil.misc.pcolor('Chained decorator (extra frame)', 'green')
+				prev_name = name
+			# else:
+			#	print putil.misc.pcolor('Invalid frame', 'green')
 			decorator_flag = False
-			if _valid_frame(fin, fun):
-				fstack.append((fob, fin, lin, fun, fuc, fui))
-		#fstack = [(fo, fin, ln, fn, fc, fi) for fo, fin, ln, fn, fc, fi in inspect.stack() if _valid_frame(fin, fn)]
-		dlist = inspect.stack()
-		for obj in dlist[::-1]:
-			print putil.misc.strframe(obj)
-		print "*******************"
-		for obj in fstack:
-			print putil.misc.strframe(obj)
-			(fob, fin, lin, fun, fuc, fui) = obj
-			print self._get_callable_full_name(fob, fun)
-		ret = self._callables_separator.join([self._get_callable_full_name(fob, fun) for (fob, fin, lin, fun, fuc, fui) in fstack])
-		return ret
+		return self._callables_separator.join(ret)
 
 	def _get_callable_full_name(self, frame_obj, func):
 		""" Get full path [module, class (if applicable) and function name] of callable """
@@ -161,7 +167,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Returns hierarchical function name """
 		func_name = self._get_callable_path()
 		ex_name = '{0}{1}{2}'.format(func_name, self._callables_separator if func_name is not None else '', name if name is not None else '')
-		print ex_name
 		return {'func_name':func_name, 'ex_name':ex_name}
 
 	def _get_module_name(self, frame_obj, func_obj):

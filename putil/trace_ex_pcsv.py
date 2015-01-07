@@ -26,7 +26,6 @@ def trace_csvfile(no_print=False):
 	putil.exh.set_exh_obj(putil.exh.ExHandle())
 	with putil.misc.TmpFile(write_file) as file_name:
 		obj = putil.pcsv.CsvFile(file_name, dfilter={'Result':20})
-	raise RuntimeError
 	obj.add_dfilter({'Result':20})
 	obj.dfilter = {'Result':20}
 	obj.data()
