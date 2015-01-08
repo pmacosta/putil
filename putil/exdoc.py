@@ -27,7 +27,11 @@ class ExDoc(object):	#pylint: disable=R0902
 	:rtype: :py:class:`putil.exdoc.ExDoc()` object
 
 	:raises:
-	 * TypeError (Argument `trace_obj` is of the wrong type)
+	 * TypeError (Argument `exh_obj` is of the wrong type)
+
+	 * TypeError (Argument `no_print` is of the wrong type)
+
+	 * ValueError (Object of argument `exh_obj` does not have any exception trace information)
 	"""
 	def __init__(self, exh_obj, no_print=False, _step=None):
 		if not isinstance(exh_obj, putil.exh.ExHandle):
@@ -91,8 +95,7 @@ class ExDoc(object):	#pylint: disable=R0902
 					mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
 		if attr_list:
 			self._collapse_ex_tree()
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 
 	def _autodetect_ex_tree_prefix(self):
 		""" Determine root trace object """
@@ -121,8 +124,7 @@ class ExDoc(object):	#pylint: disable=R0902
 			print '\tRoot node.: {0}'.format(root_name)
 			print '\tRoot trace: {0}'.format(node)
 		self._tobj.make_root(root_name)
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 		return root_name
 
 	def _build_ex_tree(self):
@@ -132,8 +134,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		if not self.no_print:
 			print putil.misc.pcolor('Building tree', 'blue')
 		self._tobj.add_nodes(tree_data)
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 
 	def _callable_list(self, node):
 		""" Returns list of callables from a exception call tree """
@@ -158,8 +159,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		if not self.no_print:
 			print putil.misc.pcolor('Making {0} root'.format(node), 'blue')
 		self._tobj.make_root(node)
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 		return node
 
 	def _collapse_ex_tree(self):
@@ -167,8 +167,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		if not self.no_print:
 			print putil.misc.pcolor('Collapsing tree', 'blue')
 		self._tobj.collapse_subtree(self._tobj.root_name)
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 
 	def _create_ex_table(self):	#pylint: disable=R0914
 		""" Creates exception table entry """
@@ -316,8 +315,7 @@ class ExDoc(object):	#pylint: disable=R0902
 			self._extable[child_name]['cross_names'] = sorted(list(set(self._extable[child_name]['cross_names'])))
 			self._extable[child_name]['cross_hierarchical_exceptions'] = sorted(list(set(self._extable[child_name]['cross_hierarchical_exceptions'])))
 
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 		if not self.no_print:
 			print putil.misc.pcolor('Condensing private callables', 'blue')
 		# Move all exceptions in private callable sub-tree to child
@@ -331,15 +329,13 @@ class ExDoc(object):	#pylint: disable=R0902
 						self._extable[child_name]['native_exceptions'] += self._tobj._get_data(subnode)	#pylint: disable=W0212
 					self._extable[child_name]['native_exceptions'] = sorted(list(set(self._extable[child_name]['native_exceptions'])))
 					self._tobj._delete_subtree(grandchild)	#pylint: disable=W0212
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 		# Generate flat cross-usage exceptions
 		for child in sorted(self._tobj._get_children(self._tobj.root_name)):	#pylint: disable=W0212
 			child_name = self._get_obj_full_name(child)
 			self._extable[child_name]['cross_flat_exceptions'] = \
 				sorted(list(set([exdesc for cross_name in self._extable[child_name]['cross_names'] for exdesc in self._extable[cross_name]['flat_exceptions']])))
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 
 	def _eliminate_ex_tree_prefix(self, node):
 		""" Remove prefix (usually main.__main__ or simmilar) from exception tree """
@@ -351,8 +347,7 @@ class ExDoc(object):	#pylint: disable=R0902
 			if not self.no_print:
 				print putil.misc.pcolor('Removing prefix {0}'.format(prefix), 'blue')
 			self._tobj.rename_node(self._tobj.root_name, new_root)
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 
 	def _expand_same_ex_list(self, data, module_function_ex, start=False, indent=''):
 		""" Create exception list where the 'Same as [...]' entries have been replaced for the exceptions in the method/attribute they point to """
@@ -388,8 +383,7 @@ class ExDoc(object):	#pylint: disable=R0902
 			for node in self._tobj.nodes:
 				if node.endswith('.{0}'.format(sub_tree)):
 					self._tobj.flatten_subtree(node)
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 
 	def _get_obj_full_name(self, obj_name):
 		""" Find name in package callable dictionary """
@@ -434,6 +428,11 @@ class ExDoc(object):	#pylint: disable=R0902
 			print '{0}None'.format(indent)
 		for member in self._extable[key][subkey]:
 			print '{0}{1}'.format(indent, member)
+
+	def _print_ex_tree(self):
+		""" Prints exception tree """
+		if not self.no_print:
+			print str(self._tobj)
 
 	def _process_exceptions(self, step):	#pylint: disable=R0912,R0914,R0915
 		""" Builds exception tree """
@@ -483,8 +482,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		for child in children:
 			if not self._tobj._get_data(child):	#pylint: disable=W0212
 				self._tobj._delete_subtree(child)	#pylint: disable=W0212
-		if not self.no_print:
-			print str(self._tobj)
+		self._print_ex_tree()
 
 	def _ptable(self, name):	#pylint: disable=C0111
 		data = self._tobj.get_data(name)
