@@ -1,7 +1,7 @@
 ﻿# test_pcsv.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
-#pylint:disable=C0302
+# pylint: disable=C0302
 
 """
 putil.pcsv unit tests

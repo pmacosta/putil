@@ -1,6 +1,7 @@
-﻿# test_misc.py	#pylint:disable=C0302
+﻿# test_misc.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
+# pylint: disable=C0302
 
 """
 putil.misc unit tests

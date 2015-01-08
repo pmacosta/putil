@@ -32,7 +32,6 @@ def trace_csvfile(no_print=False):
 	with tempfile.NamedTemporaryFile(delete=True) as fobj:
 		obj.write(file_name=fobj.name, col=None, filtered=False, headers=True, append=False)
 	exobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=no_print)
-	exobj.build_ex_tree()
 	if not no_print:
 		exobj.print_ex_tree()
 		exobj.print_ex_table()
@@ -46,7 +45,6 @@ def trace_functions(no_print=False):
 	with tempfile.NamedTemporaryFile(delete=True) as fobj:
 		putil.pcsv.write(file_name=fobj.name, data=[['Col1', 'Col2'], [1, 2], [3, 4]], append=False)
 	exobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=no_print)
-	exobj.build_ex_tree()
 	if not no_print:
 		exobj.print_ex_tree()
 		exobj.print_ex_table()

@@ -1,7 +1,7 @@
-﻿# test_exh.py	#pylint:disable=C0302
+﻿# test_exh.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=W0212
+# pylint: disable=C0302,W0212
 
 """
 putil.exh unit tests

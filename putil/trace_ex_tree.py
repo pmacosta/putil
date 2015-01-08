@@ -46,7 +46,6 @@ def trace_tree(no_print=False):
 	tobj.root_name	#pylint: disable=W0104
 
 	exobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=no_print)
-	exobj.build_ex_tree()
 	if not no_print:
 		exobj.print_ex_tree()
 		exobj.print_ex_table()

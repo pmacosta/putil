@@ -1,4 +1,4 @@
-﻿# test_check.py		pylint: disable=C0302
+﻿# test_check.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
 

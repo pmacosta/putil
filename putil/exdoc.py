@@ -8,6 +8,7 @@ Exception auto-documentation
 
 import copy
 
+import putil.exh
 import putil.misc
 import putil.tree
 
@@ -27,14 +28,19 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	:raises:
 	 * TypeError (Argument `trace_obj` is of the wrong type)
-
-	 * ValueError (Hidden objects cannot be traced)
 	"""
-	def __init__(self, exh_obj, no_print=False):
+	def __init__(self, exh_obj, no_print=False, _step=None):
+		if not isinstance(exh_obj, putil.exh.ExHandle):
+			raise TypeError('Argument `exh_obj` is not valid')
+		if not exh_obj.exceptions_db:
+			raise ValueError('Object of argument `exh_obj` does not have any exception trace information')
+		if not isinstance(no_print, bool):
+			raise TypeError('Argument `no_print` is not valid')
 		self._exh_obj = exh_obj
 		self._callables_db = self._exh_obj.callables_db
 		self.no_print = no_print
 		self._trace_obj_type, self._trace_obj_name, self._trace_list, self._tobj, self._extable, self._cross_usage_extable, self._exoutput = None, None, None, None, None, None, None
+		self._process_exceptions(_step)
 
 	def __copy__(self):
 		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), no_print=self.no_print)
@@ -95,7 +101,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		root_name = self._tobj.root_name
 		while len(self._tobj.get_children(root_name)) == 1:
 			root_name = self._tobj.get_children(root_name)[0]
-		nodes_list = ['.'.join(root_name.split('.')[num:]) for num in range(len(root_name.split('.')))]
+		nodes_list = [self._exh_obj.callables_separator.join(root_name.split(self._exh_obj.callables_separator)[num:]) for num in range(len(root_name.split(self._exh_obj.callables_separator)))]
 		# Search first for functions
 		for node in nodes_list:
 			if node in self._exh_obj.callables_db:
@@ -122,11 +128,7 @@ class ExDoc(object):	#pylint: disable=R0902
 	def _build_ex_tree(self):
 		""" Construct exception tree from trace """
 		tree_data = self._exh_obj.exceptions_db	#pylint: disable=W0212
-		if not tree_data:
-			raise RuntimeError('No trace information')
 		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
-		#for node in self._exh_obj._ex_dict:
-		#	print node
 		if not self.no_print:
 			print putil.misc.pcolor('Building tree', 'blue')
 		self._tobj.add_nodes(tree_data)
@@ -174,10 +176,11 @@ class ExDoc(object):	#pylint: disable=R0902
 			print putil.misc.pcolor('Creating exception table', 'blue')
 		self._extable = dict()
 		# Create flat exception table for each trace class method/property or module-level function
-		children = self._tobj._get_children(self._tobj.root_name)	#pylint: disable=W0212
+		children = self._tobj._get_children(self._tobj.root_name) #pylint: disable=W0212
 		module_function = [self._tobj.root_name] if self._tobj._get_data(self._tobj.root_name) else list()	#pylint: disable=W0212
+		name_offset = 0 if self._tobj.is_leaf(self._tobj.root_name) else len(self._tobj.root_name)+1
 		for child in children+module_function:
-			child_name = self._get_obj_full_name(child[len(self._tobj.root_name)+1:])
+			child_name = self._get_obj_full_name(child[name_offset:])
 			self._extable[child_name] = dict()
 			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(child))))	#pylint: disable=W0212
 			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
@@ -432,6 +435,46 @@ class ExDoc(object):	#pylint: disable=R0902
 		for member in self._extable[key][subkey]:
 			print '{0}{1}'.format(indent, member)
 
+	def _process_exceptions(self, step):	#pylint: disable=R0912,R0914,R0915
+		""" Builds exception tree """
+		step = step if step else 17
+		# Collect exceptions in hierarchical call tree
+		if step >= 0:
+			self._build_ex_tree()
+		# Eliminate intermediate call nodes that have no exceptions associated with them
+		if step >= 1:
+			self._collapse_ex_tree()
+		# Make trace object class or module/level function root node of call tree
+		#new_root_node = self._change_ex_tree_root_node()
+		# Auto-detect root trace object
+		if step >= 2:
+			new_root_node = self._autodetect_ex_tree_prefix()
+		# Eliminate prefix hierarchy that is an artifact of the tracing infrastructure
+		if step >= 3:
+			self._eliminate_ex_tree_prefix(new_root_node)
+		# Flatten hierarchy call on to trace class methods/properties or on to trace module-level function
+		if step >= 4:
+			self._flatten_ex_tree()
+		# Delete trace class methods/properties or trace module-level function that have/has no exceptions associated with them/it
+		if step >= 5:
+			self._prune_ex_tree()
+		# Add getter/setter/deleter exceptions to trace class properties (if needed)
+		if step >= 6:
+			self._alias_attributes()
+		# Create exception table
+		if step >= 7:
+			self._create_ex_table()
+		# Add exceptions of the form 'Same as [...]' to account for the fact that some trace class methods/attributes may use methods/properties/functions from the same package
+		if step >= 8:
+			self._detect_ex_tree_cross_usage()
+		# Remove exceptions of trace class methods/properties or trace module-level function that are in their 'Same as [...]' exception constructs
+		# Replace identical trace class methods/properties or trace module-level functions with 'Same as [...]' exception constructs
+		if step >= 9:
+			self._deduplicate_ex_table()
+		# Create Sphinx-formatted output
+		if step >= 10:
+			self._create_ex_table_output()
+
 	def _prune_ex_tree(self):
 		""" Prune tree (delete trace object methods/attributes that have no exceptions """
 		if not self.no_print:
@@ -459,34 +502,6 @@ class ExDoc(object):	#pylint: disable=R0902
 			bex = [exname for exname in data if 'Same as' not in exname]
 			sex = [exname for exname in data if 'Same as' in exname]
 			self._extable[key]['hier_exceptions'] = sorted(list(set(bex)))+sorted(list(set(sex)))
-
-	def build_ex_tree(self):	#pylint: disable=R0912,R0914,R0915
-		""" Builds exception tree """
-		# Collect exceptions in hierarchical call tree
-		self._build_ex_tree()
-		# Eliminate intermediate call nodes that have no exceptions associated with them
-		self._collapse_ex_tree()
-		# Make trace object class or module/level function root node of call tree
-		#new_root_node = self._change_ex_tree_root_node()
-		# Auto-detect root trace object
-		new_root_node = self._autodetect_ex_tree_prefix()
-		# Eliminate prefix hierarchy that is an artifact of the tracing infrastructure
-		self._eliminate_ex_tree_prefix(new_root_node)
-		# Flatten hierarchy call on to trace class methods/properties or on to trace module-level function
-		self._flatten_ex_tree()
-		# Delete trace class methods/properties or trace module-level function that have/has no exceptions associated with them/it
-		self._prune_ex_tree()
-		# Add getter/setter/deleter exceptions to trace class properties (if needed)
-		self._alias_attributes()
-		# Create exception table
-		self._create_ex_table()
-		# Add exceptions of the form 'Same as [...]' to account for the fact that some trace class methods/attributes may use methods/properties/functions from the same package
-		self._detect_ex_tree_cross_usage()
-		# Remove exceptions of trace class methods/properties or trace module-level function that are in their 'Same as [...]' exception constructs
-		# Replace identical trace class methods/properties or trace module-level functions with 'Same as [...]' exception constructs
-		self._deduplicate_ex_table()
-		# Create Sphinx-formatted output
-		self._create_ex_table_output()
 
 	def get_sphinx_doc_for_member(self, member):
 		""" Returns Sphinx-compatible exception list """
