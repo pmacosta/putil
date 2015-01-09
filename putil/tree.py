@@ -268,7 +268,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def collapse_subtree(self, name):
 		"""
-		Collapses hierarchy. Nodes that have a single child and no data are combined with their child as a single tree node
+		Nodes that have a single child and no data are combined with their child as a single tree node
 
 		:param	name: Root of the sub-tree to collapse. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -292,7 +292,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			│└leaf2 (*)
 			│ └subleaf2
 			└branch2
-			>>> tobj.collapse_subtree('branch1')
+			>>> tobj.collapse_subtree('root.branch1')
 			>>> print str(tobj)
 			root
 			├branch1 (*)
@@ -410,7 +410,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def flatten_subtree(self, name):
 		"""
-		Flatten sub-tree below a particular node if the node contains no data
+		Nodes that have children and no data are merged with each child
 
 		:param	name: Ending hierarchy node whose sub-trees are to be flattened. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
