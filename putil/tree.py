@@ -63,7 +63,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		"""
 		return '' if not self._db else self._prt(name=self.root_name, lparent=-1, sep='', pre1='', pre2='').encode('utf-8')
 
-	def _collapse_node(self, name):
+	def _collapse_subtree(self, name, recursive=True):
 		""" Collapse a sub-tree """
 		oname = name
 		children = self._db[name]['children']
@@ -74,14 +74,20 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			name = children[0]
 			children = self._db[name]['children']
 			data = self._db[name]['data']
+		#import pdb; pdb.set_trace()
 		parent = self._db[oname]['parent']
 		self._db[name]['parent'] = parent
-		self._db[parent]['children'].remove(oname)
-		self._db[parent]['children'] = sorted(self._db[parent]['children']+[name])
+		if parent:
+			self._db[parent]['children'].remove(oname)
+			self._db[parent]['children'] = sorted(self._db[parent]['children']+[name])
+		else:
+			self._root = name
+			self._root_hierarchy_length = len(self.root_name.split(self._node_separator))
 		for node in del_list:
 			self._del_node(node)
-		for name in copy.copy(children):
-			self._collapse_node(name)
+		if recursive:
+			for name in copy.copy(children):
+				self._collapse_subtree(name)
 
 	def _create_node(self, name, parent, children, data):
 		""" Create new tree node """
@@ -94,6 +100,16 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		for parent, child in [(child[:child.rfind(self._node_separator)], child) for child in node_tree if child not in self._db]:
 			self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
 			self._db[parent]['children'] = sorted(self._db[parent]['children']+[child])
+
+	def _delete_prefix(self, name):
+		lname = len(name)+1
+		self._root = self._root[lname:]
+		self._root_hierarchy_length = len(self.root_name.split(self._node_separator))
+		for key, value in self._db.items():
+			value['parent'] = value['parent'][lname:] if value['parent'] else value['parent']
+			value['children'] = [child[lname:] for child in value['children']]
+			del self._db[key]
+			self._db[key[lname:]] = value
 
 	def _delete_subtree(self, nodes):
 		""" Delete subtree private method (no argument validation and usage of getter/setter private methods for speed) """
@@ -172,6 +188,10 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			self._root = new_name
 			self._root_hierarchy_length = len(self.root_name.split(self._node_separator))
 
+	def _search_tree(self, name):
+		""" Search_tree for nodes that contain a specific hierarchy name """
+		return [node for node in self._db if ('{0}{1}{0}'.format(self._node_separator, name) in node) or ('{0}{1}'.format(self._node_separator, name) in node) or \
+		  ('{1}{0}'.format(self._node_separator, name) in node) or (name == node)]
 
 	def _set_children(self, name, children):
 		self._db[name]['children'] = sorted(list(set(children)))
@@ -266,12 +286,14 @@ class Tree(object):	#pylint: disable=R0903,R0902
 				self._create_intermediate_nodes(name)
 			self._db[name]['data'] += copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
-	def collapse_subtree(self, name):
+	def collapse_subtree(self, name, recursive=True):
 		"""
 		Nodes that have a single child and no data are combined with their child as a single tree node
 
 		:param	name: Root of the sub-tree to collapse. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
+		:param	recursive: Flag that indicates whether the collapse operation should be performed on the whole sub-tree (True) or whether it should stop upon reaching the first node
+		where the collapsing condition is not satisfied
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse_subtree')) ]]]
 
@@ -305,9 +327,10 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		it does have data associated with it, *'Hello world!'*
 		"""
 		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_recursive', extype=RuntimeError, exmsg='Argument `recursive` is not valid')
+		self._exh.raise_exception_if(exname='illegal_recursive', condition=not isinstance(recursive, bool))
 		self._node_in_tree(name)
-		for child in copy.copy(self._db[name]['children']):
-			self._collapse_node(child)
+		self._collapse_subtree(name, recursive)
 
 	def copy_subtree(self, source_node, dest_node):
 		"""
@@ -407,6 +430,47 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		"""
 		self._validate_node_name(nodes, 'nodes')
 		self._delete_subtree(nodes)
+
+	def delete_prefix(self, name):
+		self._validate_node_name(name)
+		""" Delete hierarchy levels from all nodes in the tree
+		:param	nodes: Prefix to delete. See `NodeName`_ pseudo-type specification
+		:type	nodes: NodeName
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete_prefix')) ]]]
+		.. [[[end]]]
+
+		For example:
+
+			>>> tobj.add_nodes([{'name':'hello/world/root', 'data':list()},
+			...                 {'name':'hello/world/root/anode', 'data':7},
+			...                 {'name':'hello/world/root/bnode', 'data':list()},
+			...                 {'name':'hello/world/root/cnode', 'data':list()},
+			...                 {'name':'hello/world/root/bnode/anode', 'data':['a', 'b'. 'c']},
+			...                 {'name':'hello/world/root/cnode/anode/leaf', 'data':True}
+			...                ])
+			>>> print str(tobj)
+			hello/world/root
+			├anode (*)
+			├bnode
+			│└anode (*)
+			└cnode
+			 └anode
+			  └leaf (*)
+			>>> tobj.delete_prefix('hello/world')
+			>>> print str(tobj)
+			root
+			├anode (*)
+			├bnode
+			│└anode (*)
+			└cnode
+			 └anode
+			  └leaf (*)
+		"""
+		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_prefix', extype=RuntimeError, exmsg='Argument `name` is not a valid prefix')
+		self._exh.raise_exception_if(exname='illegal_prefix', condition=(not self.root_name.startswith(name)) or (self.root_name == name))
+		self._delete_prefix(name)
 
 	def flatten_subtree(self, name):
 		"""
@@ -800,7 +864,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		"""
 		Search tree for all nodes of a specific name
 
-		:param	name: Name to search for
+		:param	name: Name to search for. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('search_tree')) ]]]
@@ -828,8 +892,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		"""
 		self._validate_node_name(name)
-		return [node for node in self._db if ('{0}{1}{0}'.format(self._node_separator, name) in node) or ('{0}{1}'.format(self._node_separator, name) in node) or \
-		  ('{1}{0}'.format(self._node_separator, name) in node) or (name == node)]
+		return self._search_tree(name)
 
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')

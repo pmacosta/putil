@@ -224,6 +224,17 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 
 	def test_collapse_works(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test that collapse method works """
+		def create_tree():
+			""" Create auxiliary tree for testing of recursive argument """
+			tobj = putil.tree.Tree('/')
+			tobj.add_nodes([{'name':'hello/world/root', 'data':list()},
+			                {'name':'hello/world/root/anode', 'data':7},
+			                {'name':'hello/world/root/bnode', 'data':list()},
+			                {'name':'hello/world/root/cnode', 'data':list()},
+        	                {'name':'hello/world/root/bnode/anode', 'data':list()},
+        	                {'name':'hello/world/root/cnode/anode/leaf', 'data':list()}
+        	               ])
+			return tobj
 		test_list = list()
 		t1obj = putil.tree.Tree()
 		t1obj.add_nodes([
@@ -234,26 +245,33 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 			{'name':'l0.l1.l2.l3b1.l4b1b1.l5b1b1b1.l6b1b1b1b2', 'data':list()},
 			{'name':'l0.l1.l2.l3b1.l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1', 'data':list()},
 		])
+		test_list.append(putil.test.trigger_exception(t1obj.collapse_subtree, {'name':t1obj.root_name, 'recursive':5}, RuntimeError, 'Argument `recursive` is not valid'))
 		# Original tree       Collapsed tree
-		# l0                  l0
-		# └l1 (*)             └l1 (*)
-		#  └l2                 └l2
-		#   ├l3b1               ├l3b1
-		#   │├l4b1b1            │├l4b1b1.l5b1b1b1
-		#   ││└l5b1b1b1         ││├l6b1b1b1b1
-		#   ││ ├l6b1b1b1b1      ││└l6b1b1b1b2
-		#   ││ └l6b1b1b1b2      │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1
-		#   │└l5b1b1            └l3b2.l4b2b1 (*)
-		#   │ └l5b1b1b2          └l5b2b1b1
+		# l0                  l0.l1 (*)
+		# └l1 (*)             └l2
+		#  └l2                 ├l3b1
+		#   ├l3b1              │├l4b1b1.l5b1b1b1
+		#   │├l4b1b1           ││├l6b1b1b1b1
+		#   ││└l5b1b1b1        ││└l6b1b1b1b2
+		#   ││ ├l6b1b1b1b1     │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1
+		#   ││ └l6b1b1b1b2     └l3b2.l4b2b1 (*)
+		#   │└l5b1b1            └l5b2b1b1
+		#   │ └l5b1b1b2
 		#   │  └l6b1b1b2b1
 		#   │   └l7b1b1b2b1b1
 		#   └l3b2
 		#    └l4b2b1 (*)
 		#     └l5b2b1b1
 		t1obj.collapse_subtree(t1obj.root_name)
-		test_list.append(str(t1obj) == u'l0\n└l1 (*)\n └l2\n  ├l3b1\n  │├l4b1b1.l5b1b1b1\n  ││├l6b1b1b1b1\n  ││└l6b1b1b1b2\n  │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n  └l3b2.l4b2b1 (*)\n   └l5b2b1b1'.encode('utf-8'))
+		test_list.append(str(t1obj) == u'l0.l1 (*)\n└l2\n ├l3b1\n │├l4b1b1.l5b1b1b1\n ││├l6b1b1b1b1\n ││└l6b1b1b1b2\n │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n └l3b2.l4b2b1 (*)\n  └l5b2b1b1'.encode('utf-8'))
 		test_list.append(t1obj.get_data('l0.l1') == ['hello'])
 		test_list.append(t1obj.get_data('l0.l1.l2.l3b2.l4b2b1') == [5])
+		tobj = create_tree()
+		tobj.collapse_subtree(tobj.root_name, False)
+		test_list.append(str(tobj) == u'hello/world/root\n├anode (*)\n├bnode\n│└anode\n└cnode\n └anode\n  └leaf'.encode('utf-8'))
+		tobj = create_tree()
+		tobj.collapse_subtree(tobj.root_name, True)
+		test_list.append(str(tobj) == u'hello/world/root\n├anode (*)\n├bnode/anode\n└cnode/anode/leaf'.encode('utf-8'))
 		assert test_list == len(test_list)*[True]
 
 	def test_copy_subtree_errors(self):	#pylint: disable=C0103,R0201
@@ -656,6 +674,8 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		               ])
 		test_list = list()
 		test_list.append(putil.test.trigger_exception(tobj.search_tree, {'name':5}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(putil.test.trigger_exception(tobj.search_tree, {'name':'a/ b'}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(putil.test.trigger_exception(tobj.search_tree, {'name':'a/b//c'}, RuntimeError, 'Argument `name` is not valid'))
 		test_list.append(sorted(tobj.search_tree('anode')) == sorted(['root/anode', 'root/bnode/anode', 'root/cnode/anode', 'root/cnode/anode/leaf']))
 		tobj = putil.tree.Tree('/')
 		tobj.add_nodes([{'name':'anode', 'data':list()}, {'name':'anode/some_node', 'data':list()}])
@@ -665,4 +685,21 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		test_list.append(sorted(tobj.search_tree('anode')) == sorted(['anode']))
 		assert test_list == len(test_list)*[True]
 
-
+	def test_delete_prefix(self):	#pylint: disable=R0201,W0621
+		""" Test search() method works """
+		tobj = putil.tree.Tree('/')
+		tobj.add_nodes([{'name':'hello/world/root', 'data':list()},
+				        {'name':'hello/world/root/anode', 'data':7},
+				        {'name':'hello/world/root/bnode', 'data':list()},
+				        {'name':'hello/world/root/cnode', 'data':list()},
+		                {'name':'hello/world/root/bnode/anode', 'data':list()},
+		                {'name':'hello/world/root/cnode/anode/leaf', 'data':list()}
+		               ])
+		test_list = list()
+		test_list.append(putil.test.trigger_exception(tobj.delete_prefix, {'name':5}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(putil.test.trigger_exception(tobj.delete_prefix, {'name':'hello/world/root'}, RuntimeError, 'Argument `name` is not a valid prefix'))
+		test_list.append(putil.test.trigger_exception(tobj.delete_prefix, {'name':'hello/world!!!!'}, RuntimeError, 'Argument `name` is not a valid prefix'))
+		tobj.collapse_subtree(tobj.root_name, recursive=False)
+		tobj.delete_prefix('hello/world')
+		test_list.append(str(tobj) == u'root\n├anode (*)\n├bnode\n│└anode\n└cnode\n └anode\n  └leaf'.encode('utf-8'))
+		assert test_list == len(test_list)*[True]
