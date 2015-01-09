@@ -293,7 +293,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Root of the sub-tree to collapse. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 		:param	recursive: Flag that indicates whether the collapse operation should be performed on the whole sub-tree (True) or whether it should stop upon reaching the first node
-		where the collapsing condition is not satisfied
+		 where the collapsing condition is not satisfied (False)
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse_subtree')) ]]]
 
