@@ -796,6 +796,41 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._exh.raise_exception_if(exname='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
 		self._rename_node(name, new_name)
 
+	def search_tree(self, name):
+		"""
+		Search tree for all nodes of a specific name
+
+		:param	name: Name to search for
+		:type	name: NodeName
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('search_tree')) ]]]
+		.. [[[end]]]
+
+		For example:
+
+			>>> tobj.add_nodes([{'name':'root', 'data':list()},
+			...                 {'name':'root/anode', 'data':7},
+			...                 {'name':'root/bnode', 'data':list()},
+			...                 {'name':'root/cnode', 'data':list()},
+			...                 {'name':'root/bnode/anode', 'data':['a', 'b'. 'c']},
+			...                 {'name':'root/cnode/anode/leaf', 'data':True}
+			...                ])
+			>>> print str(tobj)
+			root
+			├anode (*)
+			├bnode
+			│└anode (*)
+			└cnode
+			 └anode
+			  └leaf (*)
+			>>> tobj.search_tree('anode')
+			['root/anode', 'root/bnode/anode', 'root/cnode/anode', 'root/cnode/anode/leaf']
+
+		"""
+		self._validate_node_name(name)
+		return [node for node in self._db if ('{0}{1}{0}'.format(self._node_separator, name) in node) or ('{0}{1}'.format(self._node_separator, name) in node) or \
+		  ('{1}{0}'.format(self._node_separator, name) in node) or (name == node)]
+
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')
 	"""

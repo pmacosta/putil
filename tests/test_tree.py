@@ -644,4 +644,25 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		test_list.append(tree4._get_parent('root.branch1.leaf2.subleaf2') == 'leaf_zzz')	#pylint: disable=W0212
 		assert test_list == len(test_list)*[True]
 
+	def test_search_tree(self):	#pylint: disable=R0201,W0621
+		""" Test search() method works """
+		tobj = putil.tree.Tree('/')
+		tobj.add_nodes([{'name':'root', 'data':list()},
+				        {'name':'root/anode', 'data':list()},
+				        {'name':'root/bnode', 'data':list()},
+				        {'name':'root/cnode', 'data':list()},
+		                {'name':'root/bnode/anode', 'data':list()},
+		                {'name':'root/cnode/anode/leaf', 'data':list()}
+		               ])
+		test_list = list()
+		test_list.append(putil.test.trigger_exception(tobj.search_tree, {'name':5}, RuntimeError, 'Argument `name` is not valid'))
+		test_list.append(sorted(tobj.search_tree('anode')) == sorted(['root/anode', 'root/bnode/anode', 'root/cnode/anode', 'root/cnode/anode/leaf']))
+		tobj = putil.tree.Tree('/')
+		tobj.add_nodes([{'name':'anode', 'data':list()}, {'name':'anode/some_node', 'data':list()}])
+		test_list.append(sorted(tobj.search_tree('anode')) == sorted(['anode', 'anode/some_node']))
+		tobj = putil.tree.Tree('/')
+		tobj.add_nodes({'name':'anode', 'data':list()})
+		test_list.append(sorted(tobj.search_tree('anode')) == sorted(['anode']))
+		assert test_list == len(test_list)*[True]
+
 
