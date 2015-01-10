@@ -161,6 +161,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			if self._callables_db[key]['type'] == 'prop':
 				for attr in self._callables_db[key]['attr']:
 					ret.append('   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr]))
+			elif self._callables_db[key]['link']:
+				ret.append('   {0} of: {1}'.format(self._callables_db[key]['link']['action'], self._callables_db[key]['link']['prop']))
 		return '\n'.join(ret)
 
 	def _get_callables_db(self):
@@ -237,7 +239,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 							indent_stack.pop()
 						element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
 						if func_name and (element_full_name not in self._callables_db):
-							self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None}
+							self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':None}
 						indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 					# Clear property variables
 					decorator_num = None
@@ -268,6 +270,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 									print '{0}: {1}'.format(name, self._callables_db[name])
 								print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id)
 								raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr, prop_name))
+							self._callables_db[name]['link'] = {'prop':prop_name, 'action':attr}
 						attr_dict[attr] = name	#pylint: disable=W0631
 			self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
 
@@ -300,5 +303,11 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	   * **fset** *(string or None)* -- Name of the setter function or method associated with the property (if any)
 
 	   * **fdel** *(string or None)* -- Name of the deleter function or method associated with the property (if any)
+
+	  * **link** *(dictionary or None)* -- *None* if callable is not the getter, setter or deleter of a property, otherwise a dictionary with the following elements:
+
+	   * **prop** *(string)* -- Property the callable is associated with
+
+	   * **action** *(string)* -- Property action the callable performs, one of `['fget', 'fset', 'fdel']`
 
 	"""
