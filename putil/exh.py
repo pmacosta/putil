@@ -3,7 +3,6 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import re
 import sys
 import copy
 import inspect
@@ -64,7 +63,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._ex_dict = dict()
 		self._callables_obj = putil.pinspect.Callables()
 		self._callables_separator = '/'
-		self._reentrant = False
 
 	def __copy__(self):
 		cobj = ExHandle()
@@ -100,18 +98,12 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 
-		# Getting setter/getter/deleter function objects defined via decorators cause a re-trigger of add_exception, causing an infinite loop, _reentrant state variable avoids this
-		if self._reentrant:
-			return ''
 		ret = list()
 		decorator_flag = False
 		skip_num = 0
 		prev_name = name = ''
-		attr_regexp = re.compile(r'[\w|\W]+\((\w+)\)')
-		#fstack = tuple([obj for obj in inspect.stack()][::-1])
-		#print 'Stack length: {0}'.format(len(fstack))
 
-		self._reentrant = True
+		#fstack = tuple([obj for obj in inspect.stack()][::-1])
 		#for num, (fob, fin, lin, fun, fuc, fui) in enumerate(fstack):
 		for fob, fin, lin, fun, fuc, fui in [obj for obj in inspect.stack()][::-1]:
 			# print putil.misc.pcolor('{0:3d}/{1:3d}'.format(num, len(fstack)), 'yellow')+' '+putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
@@ -143,16 +135,18 @@ class ExHandle(object):	#pylint: disable=R0902
 				if (decorator_flag and (name != prev_name)) or (not decorator_flag):
 					# print putil.misc.pcolor('Regular frame (frame used) -> {0}'.format(name), 'green')
 					ret.append(name)
-				#else:
+				# else:
 					# print putil.misc.pcolor('Chained decorator (extra frame)', 'green')
 				prev_name = name
-			#else:
+			# else:
 				# print putil.misc.pcolor('Invalid frame', 'green')
 			decorator_flag = False
-		self._reentrant = False
 		# Delete next-to-last callable if the callable is a seter/getter/deleter of a property defined via decorators
-		if attr_regexp.match(ret[-1]):
-			del ret[-2]
+		#attr_regexp = re.compile(r'[\w|\W]+\((\w+)\)')
+		#if attr_regexp.match(ret[-1]):
+		#	ret[-1] = '{0}.{1}'.format(ret[-2], ret[-1])
+		#	del ret[-2]
+
 		# print self._callables_separator.join(ret)
 		return self._callables_separator.join(ret)
 

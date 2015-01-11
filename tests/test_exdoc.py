@@ -23,3 +23,21 @@ def test_exdoc_errors():
 	test_list.append(putil.test.trigger_exception(putil.exdoc.ExDoc, {'exh_obj':exobj, 'no_print':5}, TypeError, 'Argument `no_print` is not valid'))
 	putil.exdoc.ExDoc(exobj, True, -1)
 	assert test_list == [True]*len(test_list)
+
+def test_build_ex_tree():
+	""" Test _build_ex_tree() function """
+	import exdoc_support_module_1	# pylint: disable=W0612
+	exobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, _step=0)
+	putil.exh.del_exh_obj()
+	assert str(exobj._tobj) == \
+		u'test_exdoc.test_build_ex_tree\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.__init__ (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass._del_value3 (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass._get_value3 (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass._set_value1 (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass._set_value2 (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass._set_value3 (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.divide (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.multiply (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.temp(setter) (*)\n'.encode('utf-8') + \
+		u'└exdoc_support_module_2.module_enclosing_func.module_closure_func (*)'.encode('utf-8')

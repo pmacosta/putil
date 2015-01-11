@@ -11,8 +11,9 @@ import os
 import sys
 import copy
 import mock
-import time
 import types
+import random
+import string
 import inspect
 
 import putil.test
@@ -77,13 +78,9 @@ def test_replace_tabs():
 
 def test_callables():	# pylint: disable=R0915
 	""" Test callables class """
-	def mock_get_code_id(obj):	#pylint: disable=W0612
-		""" Return unique identity tuple to individualize callable object """
-		if hasattr(obj, 'func_code'):
-			code_obj = getattr(obj, 'func_code')
-			return (code_obj.co_filename, time.time())	# Ensure that each method has a unique number and thus one that will not be found
-		return None
-
+	def mock_get_code_id(obj):	#pylint: disable=W0612,W0613
+		""" Mock function to trigger exception related to callable not found in database """
+		return (''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)), random.random())
 	test_list = list()
 	obj = putil.pinspect.Callables()
 	test_list.append(obj.callables_db == dict())
@@ -91,44 +88,44 @@ def test_callables():	# pylint: disable=R0915
 	test_list.append(putil.test.trigger_exception(obj.trace, {'obj':None}, TypeError, 'Argument `obj` is not valid'))
 	test_list.append(putil.test.trigger_exception(obj.trace, {'obj':'not_an_object'}, TypeError, 'Argument `obj` is not valid'))
 	sys.path.append(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), 'support'))
-	import my_module1	#pylint: disable=F0401,W0612
-	obj.trace(sys.modules['my_module1'])
+	import pinspect_support_module_1	#pylint: disable=F0401,W0612
+	obj.trace(sys.modules['pinspect_support_module_1'])
 	ref_list = list()
-	ref_list.append('Modules: my_module1, my_module2')
-	ref_list.append('Classes: my_module1.TraceClass1, my_module1.TraceClass2, my_module1.TraceClass3')
-	ref_list.append('my_module1.TraceClass1.__init__: meth (19)')
-	ref_list.append('my_module1.TraceClass1.value1: prop')
-	ref_list.append('   fset: my_module2.setter_enclosing_func.setter_closure_func')
-	ref_list.append('   fget: my_module1.TraceClass1.value1.fget_lambda')
-	ref_list.append('my_module1.TraceClass2.__init__: meth (30)')
-	ref_list.append('my_module1.TraceClass2._deleter_func2: meth (47)')
-	ref_list.append('   fdel of: my_module1.TraceClass2.value2')
-	ref_list.append('my_module1.TraceClass2._getter_func2: meth (43)')
-	ref_list.append('   fget of: my_module1.TraceClass2.value2')
-	ref_list.append('my_module1.TraceClass2._setter_func2: meth (33)')
-	ref_list.append('   fset of: my_module1.TraceClass2.value2')
-	ref_list.append('my_module1.TraceClass2.value2: prop')
-	ref_list.append('   fset: my_module1.TraceClass2._setter_func2')
-	ref_list.append('   fdel: my_module1.TraceClass2._deleter_func2')
-	ref_list.append('   fget: my_module1.TraceClass2._getter_func2')
-	ref_list.append('my_module1.TraceClass3.__call__: meth (59)')
-	ref_list.append('my_module1.TraceClass3.__init__: meth (56)')
-	ref_list.append('my_module1.TraceClass3.value3: prop')
-	ref_list.append('   fset: my_module1.TraceClass3.value3(setter)')
-	ref_list.append('   fdel: my_module1.TraceClass3.value3(deleter)')
-	ref_list.append('   fget: my_module1.TraceClass3.value3(getter)')
-	ref_list.append('my_module1.TraceClass3.value3(deleter): meth (74)')
-	ref_list.append('   fdel of: my_module1.TraceClass3.value3')
-	ref_list.append('my_module1.TraceClass3.value3(getter): meth (62)')
-	ref_list.append('   fget of: my_module1.TraceClass3.value3')
-	ref_list.append('my_module1.TraceClass3.value3(setter): meth (67)')
-	ref_list.append('   fset of: my_module1.TraceClass3.value3')
-	ref_list.append('my_module1.module_enclosing_func: func (10)')
-	ref_list.append('my_module1.module_enclosing_func.module_closure_func: func (12)')
-	ref_list.append('my_module1.prop_decorator: func (24)')
-	ref_list.append('my_module2.setter_enclosing_func: func (6)')
-	ref_list.append('my_module2.setter_enclosing_func.setter_closure_func: func (8)')
-	ref_list.append('   fset of: my_module1.TraceClass1.value1')
+	ref_list.append('Modules: pinspect_support_module_1, pinspect_support_module_2')
+	ref_list.append('Classes: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators, pinspect_support_module_1.ClassWithPropertyDefinedViaFunction, pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__call__: meth (58)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__init__: meth (55)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp: prop')
+	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter)')
+	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter)')
+	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter): meth (72)')
+	ref_list.append('   fdel of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter): meth (61)')
+	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter): meth (66)')
+	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.__init__: meth (30)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func: meth (46)')
+	ref_list.append('   fdel of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func: meth (42)')
+	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func: meth (33)')
+	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state: prop')
+	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func')
+	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func')
+	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.__init__: meth (19)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar: prop')
+	ref_list.append('   fset: pinspect_support_module_2.setter_enclosing_func.setter_closure_func')
+	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar.fget_lambda')
+	ref_list.append('pinspect_support_module_1.dummy_decorator: func (24)')
+	ref_list.append('pinspect_support_module_1.module_enclosing_func: func (10)')
+	ref_list.append('pinspect_support_module_1.module_enclosing_func.module_closure_func: func (12)')
+	ref_list.append('pinspect_support_module_2.setter_enclosing_func: func (6)')
+	ref_list.append('pinspect_support_module_2.setter_enclosing_func.setter_closure_func: func (8)')
+	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar')
 	ref_text = '\n'.join(ref_list)
 	test_list.append(str(obj) == ref_text)
 	# Test that callables_db and reverse_callables_db are in sync
@@ -139,19 +136,22 @@ def test_callables():	# pylint: disable=R0915
 			if not congruence_flag:
 				break
 	test_list.append(congruence_flag)
-	test_list.append(repr(obj) == "putil.pinspect.Callables([sys.modules['my_module1'], sys.modules['my_module2']])")
-	test_list.append(str(putil.pinspect.Callables([sys.modules['my_module2'], sys.modules['my_module1']])) == ref_text)
-	test_list.append(repr(putil.pinspect.Callables([sys.modules['my_module2'], sys.modules['my_module1']])) == "putil.pinspect.Callables([sys.modules['my_module2'], sys.modules['my_module1']])")
+	# Test string and representation methods
+	test_list.append(repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2']])")
+	test_list.append(str(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == ref_text)
+	test_list.append(repr(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == \
+				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])")
 	test_list.append(repr(putil.pinspect.Callables()) == "putil.pinspect.Callables()")
-	with mock.patch('putil.pinspect._get_code_id') as mock_get_code_id:
-		test_list.append(putil.test.trigger_exception(putil.pinspect.Callables, {'obj':sys.modules['my_module1']}, RuntimeError, 'Attribute `fset` of property `my_module1.TraceClass1.value1` not found in callable database'))
+	# Test exception raised when callable is not found in database (mainly to cover potential edge cases not considered during development)
+	with mock.patch('putil.pinspect._get_code_id', side_effect=mock_get_code_id):
+		test_list.append(putil.test.trigger_exception(putil.pinspect.Callables, {'obj':sys.modules['pinspect_support_module_1']}, RuntimeError, r'Attribute `([\w|\W]+)` of property `([\w|\W]+)` not found in callable database'))
 	assert test_list == [True]*len(test_list)
 
 def test_copy():
 	""" Test __copy__() magic method """
 	source_obj = putil.pinspect.Callables()
-	import my_module1	#pylint: disable=F0401,W0612
-	source_obj.trace(sys.modules['my_module1'])
+	import pinspect_support_module_1	#pylint: disable=F0401,W0612
+	source_obj.trace(sys.modules['pinspect_support_module_1'])
 	dest_obj = copy.copy(source_obj)
 	test_list = list()
 	test_list.append((source_obj._modules == dest_obj._modules) and (id(source_obj._modules) != id(dest_obj._modules)))
@@ -165,10 +165,10 @@ def test_eq():
 	obj1 = putil.pinspect.Callables()
 	obj2 = putil.pinspect.Callables()
 	obj3 = putil.pinspect.Callables()
-	import my_module1	#pylint: disable=F0401,W0612
-	import my_module2	#pylint: disable=F0401,W0612
-	obj1.trace(sys.modules['my_module1'])
-	obj2.trace(sys.modules['my_module2'])
-	obj2.trace(sys.modules['my_module1'])
+	import pinspect_support_module_1	#pylint: disable=F0401,W0612
+	import pinspect_support_module_2	#pylint: disable=F0401,W0612
+	obj1.trace(sys.modules['pinspect_support_module_1'])
+	obj2.trace(sys.modules['pinspect_support_module_2'])
+	obj2.trace(sys.modules['pinspect_support_module_1'])
 	obj3.trace(sys.modules['putil.test'])
 	assert (obj1 == obj2) and (obj1 != obj3)
