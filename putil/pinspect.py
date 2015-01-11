@@ -127,6 +127,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._classes = []
 		self._prop_dict = {}
 		self._callables_db = {}
+		self._reverse_callables_db = {}
 		# Regular expressions to detect class definition, function definition and decorator-defined properties
 		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
 		self._decorator_regex = re.compile(r'^(\s*)@(.+)')
@@ -143,11 +144,12 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		cobj._classes = copy.deepcopy(self._classes)	#pylint: disable=W0212
 		cobj._prop_dict = copy.copy(self._prop_dict)	#pylint: disable=W0212
 		cobj._callables_db = copy.deepcopy(self._callables_db)	#pylint: disable=W0212
+		cobj._reverse_callables_db = copy.deepcopy(self._reverse_callables_db)	#pylint: disable=W0212
 		return cobj
 
 	def __eq__(self, other):
 		# _prop_dict is a class variable used to pass data between sub-functions in the trace operation, not material to determine if two objects are the same
-		return (sorted(self._modules) == sorted(other._modules)) and (sorted(self._classes) == sorted(other._classes)) and (self._callables_db == other._callables_db)	#pylint: disable=W0212
+		return (sorted(self._modules) == sorted(other._modules)) and (sorted(self._classes) == sorted(other._classes)) and (self._callables_db == other._callables_db) and (self._reverse_callables_db == other._reverse_callables_db)	#pylint: disable=W0212
 
 	def __repr__(self):
 		return 'putil.pinspect.Callables({0})'.format('[{0}]'.format(', '.join(["sys.modules['{0}']".format(module_name) for module_name in self._modules])) if self._modules else '')
@@ -161,13 +163,17 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			if self._callables_db[key]['type'] == 'prop':
 				for attr in self._callables_db[key]['attr']:
 					ret.append('   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr]))
-			elif self._callables_db[key]['link']:
+			elif self._callables_db[key].get('link', None):
 				ret.append('   {0} of: {1}'.format(self._callables_db[key]['link']['action'], self._callables_db[key]['link']['prop']))
 		return '\n'.join(ret)
 
 	def _get_callables_db(self):
 		""" Getter for callables_db property """
 		return self._callables_db
+
+	def _get_reverse_callables_db(self):
+		""" Getter for reverse_callables_db property """
+		return self._reverse_callables_db
 
 	def trace(self, obj):
 		"""
@@ -195,16 +201,22 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			self._modules += [element_module] if inspect.ismodule(obj) else []
 			self._classes += ['{0}.{1}'.format(element_module, element_class)] if inspect.isclass(obj) else []
 			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
-			for element_name in [element_name for element_name in dir(obj) if (element_name == '__init__') or (not is_magic_method(element_name))]:
+			for element_name in [element_name for element_name in dir(obj) if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name))]:
 				element_obj = getattr(obj, element_name)
+				while getattr(element_obj, '__wrapped__', None):
+					element_obj = getattr(element_obj, '__wrapped__')
 				is_prop = isinstance(element_obj, property)
 				if inspect.isclass(element_obj):
 					self._trace(element_obj)
-				elif hasattr(element_obj, '__call__') or is_prop:
+				elif (hasattr(element_obj, '__call__') or is_prop) and (str(type(element_obj))[7:-2] not in ['wrapper_descriptor'] and \
+															(type(element_obj) not in [types.InstanceType, types.BuiltinFunctionType, types.BuiltinMethodType])):
 					element_type = 'meth' if isinstance(element_obj, types.MethodType) else ('prop' if is_prop else 'func')
 					element_full_name = ('{0}.{1}.{2}'.format(element_module, element_class, element_name) if element_class else '{0}.{1}').format(element_module, element_name)
 					if element_full_name not in self._callables_db:
-						self._callables_db[element_full_name] = {'type':element_type, 'code_id':_get_code_id(element_obj)}
+						code_id = None if is_prop else _get_code_id(element_obj)
+						self._callables_db[element_full_name] = {'type':element_type, 'code_id':code_id}
+						if code_id:
+							self._reverse_callables_db[code_id] = element_full_name
 					if is_prop:
 						self._prop_dict[element_full_name] = element_obj
 			self._get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
@@ -240,6 +252,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
 						if func_name and (element_full_name not in self._callables_db):
 							self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':None}
+							self._reverse_callables_db[(module_file_name, element_num)] = element_full_name
 						indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 					# Clear property variables
 					decorator_num = None
@@ -310,4 +323,18 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	   * **action** *(string)* -- Property action the callable performs, one of `['fget', 'fset', 'fdel']`
 
+	"""
+	reverse_callables_db = property(_get_reverse_callables_db, None, None, doc='Reverse module(s) callables database')
+	"""
+	Returns reverse callable database
+
+	:rtype: dictionary
+
+	The reverse callable database is a dictionary that has the following structure:
+
+	 * **callable id** *(tuple)* -- Dictionary key. 2-element tuple of the format ([file name], [line number]) wehere [file name] is the file name where the callable is defined and [line number] is the line number within
+	   [file name] where the callable definition starts
+
+	 * **full callable name** *(string)* -- Dictionary value. Elements in the callable path are separated by periods ('.'). For example, method `my_method` from class `MyClass` from module `my_module` appears as
+	   `my_module.MyClass.my_method`
 	"""

@@ -75,7 +75,7 @@ def test_replace_tabs():
 	test_list.append(putil.pinspect._replace_tabs('\f   \t  \t def func()') == (' '*16)+' def func()')
 	assert test_list == [True]*len(test_list)
 
-def test_callables():
+def test_callables():	# pylint: disable=R0915
 	""" Test callables class """
 	def mock_get_code_id(obj):	#pylint: disable=W0612
 		""" Return unique identity tuple to individualize callable object """
@@ -87,6 +87,7 @@ def test_callables():
 	test_list = list()
 	obj = putil.pinspect.Callables()
 	test_list.append(obj.callables_db == dict())
+	test_list.append(obj.reverse_callables_db == dict())
 	test_list.append(putil.test.trigger_exception(obj.trace, {'obj':None}, TypeError, 'Argument `obj` is not valid'))
 	test_list.append(putil.test.trigger_exception(obj.trace, {'obj':'not_an_object'}, TypeError, 'Argument `obj` is not valid'))
 	sys.path.append(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), 'support'))
@@ -110,16 +111,17 @@ def test_callables():
 	ref_list.append('   fset: my_module1.TraceClass2._setter_func2')
 	ref_list.append('   fdel: my_module1.TraceClass2._deleter_func2')
 	ref_list.append('   fget: my_module1.TraceClass2._getter_func2')
+	ref_list.append('my_module1.TraceClass3.__call__: meth (59)')
 	ref_list.append('my_module1.TraceClass3.__init__: meth (56)')
 	ref_list.append('my_module1.TraceClass3.value3: prop')
 	ref_list.append('   fset: my_module1.TraceClass3.value3(setter)')
 	ref_list.append('   fdel: my_module1.TraceClass3.value3(deleter)')
 	ref_list.append('   fget: my_module1.TraceClass3.value3(getter)')
-	ref_list.append('my_module1.TraceClass3.value3(deleter): meth (71)')
+	ref_list.append('my_module1.TraceClass3.value3(deleter): meth (74)')
 	ref_list.append('   fdel of: my_module1.TraceClass3.value3')
-	ref_list.append('my_module1.TraceClass3.value3(getter): meth (59)')
+	ref_list.append('my_module1.TraceClass3.value3(getter): meth (62)')
 	ref_list.append('   fget of: my_module1.TraceClass3.value3')
-	ref_list.append('my_module1.TraceClass3.value3(setter): meth (64)')
+	ref_list.append('my_module1.TraceClass3.value3(setter): meth (67)')
 	ref_list.append('   fset of: my_module1.TraceClass3.value3')
 	ref_list.append('my_module1.module_enclosing_func: func (10)')
 	ref_list.append('my_module1.module_enclosing_func.module_closure_func: func (12)')
@@ -129,6 +131,14 @@ def test_callables():
 	ref_list.append('   fset of: my_module1.TraceClass1.value1')
 	ref_text = '\n'.join(ref_list)
 	test_list.append(str(obj) == ref_text)
+	# Test that callables_db and reverse_callables_db are in sync
+	congruence_flag = True
+	for key, value in obj.callables_db.items():
+		if value['code_id']:
+			congruence_flag = obj.reverse_callables_db[value['code_id']] == key
+			if not congruence_flag:
+				break
+	test_list.append(congruence_flag)
 	test_list.append(repr(obj) == "putil.pinspect.Callables([sys.modules['my_module1'], sys.modules['my_module2']])")
 	test_list.append(str(putil.pinspect.Callables([sys.modules['my_module2'], sys.modules['my_module1']])) == ref_text)
 	test_list.append(repr(putil.pinspect.Callables([sys.modules['my_module2'], sys.modules['my_module1']])) == "putil.pinspect.Callables([sys.modules['my_module2'], sys.modules['my_module1']])")

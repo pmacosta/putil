@@ -6,6 +6,7 @@
 Helper methods for unit testing
 """
 
+import re
 import sys
 import pytest
 import contracts
@@ -215,9 +216,12 @@ def trigger_exception(obj, args, extype, exmsg):
 	""" Triggers exception withing the Py.test environment and records value """
 	with pytest.raises(extype) as excinfo:
 		obj(**args)	#pylint: disable=W0142
-	if excinfo.value.message != exmsg:
-		print excinfo.value.message
-	return excinfo.value.message == exmsg
+	if excinfo.value.message == exmsg:
+		return True
+	regexp = re.compile(exmsg)
+	if regexp.match(excinfo.value.message):
+		return True
+	print excinfo.value.message
 
 
 def trigger_pcontract_exception(obj, args, exmsg):

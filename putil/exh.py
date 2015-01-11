@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+import re
 import sys
 import copy
 import inspect
@@ -45,9 +46,11 @@ def _is_decorator(fin, lin, fuc, fui):
 	""" Determine if frame components refer to a decorator """
 	return (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None)
 
+
 def _valid_frame(fin, fna):
 	""" Selects valid stack frame to process """
-	return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or (fna in ['<module>', '<lambda>', 'contracts_checker']))
+	return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or\
+			 (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
 
 ###
@@ -61,6 +64,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._ex_dict = dict()
 		self._callables_obj = putil.pinspect.Callables()
 		self._callables_separator = '/'
+		self._reentrant = False
 
 	def __copy__(self):
 		cobj = ExHandle()
@@ -72,6 +76,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}\nChecked.: {4}'.format(key, self._ex_dict[key]['function'], _ex_type_str(self._ex_dict[key]['type']), \
 																							self._ex_dict[key]['msg'], self._ex_dict[key]['checked']) for key in sorted(self._ex_dict.keys())]
 		return '\n\n'.join(ret)
+
+	def _exceptions_db(self):	#pylint: disable-msg=R0201
+		""" Returns a list of dictionaries suitable to be used with putil.tree module """
+		return [{'name':self._ex_dict[key]['function'], 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
 		""" Substitute parameters in exception message """
@@ -91,20 +99,32 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
-		# Debug
+
+		# Getting setter/getter/deleter function objects defined via decorators cause a re-trigger of add_exception, causing an infinite loop, _reentrant state variable avoids this
+		if self._reentrant:
+			return ''
 		ret = list()
 		decorator_flag = False
 		skip_num = 0
 		prev_name = name = ''
+		attr_regexp = re.compile(r'[\w|\W]+\((\w+)\)')
+		#fstack = tuple([obj for obj in inspect.stack()][::-1])
+		#print 'Stack length: {0}'.format(len(fstack))
+
+		self._reentrant = True
+		#for num, (fob, fin, lin, fun, fuc, fui) in enumerate(fstack):
 		for fob, fin, lin, fun, fuc, fui in [obj for obj in inspect.stack()][::-1]:
-			# print putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
+			# print putil.misc.pcolor('{0:3d}/{1:3d}'.format(num, len(fstack)), 'yellow')+' '+putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
+			#if num == 37:
+			#	import pdb; pdb.set_trace()
 			if skip_num > 0:
 				# print putil.misc.pcolor('Skipped', 'green')
 				skip_num -= 1
 				continue
 			# Gobble up two frames if it is a decorator
 			if _is_decorator(fin, lin, fuc, fui) and (not decorator_flag):
-				name = prev_name = self._get_callable_full_name(fob, fun)
+				#name = prev_name = self._get_callable_full_name(fob, fun)
+				name = prev_name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
 				# print putil.misc.pcolor('Decorator (frame used) -> {0}'.format(name), 'green')
 				ret.append(name)
 				skip_num = 1
@@ -118,43 +138,43 @@ class ExHandle(object):	#pylint: disable=R0902
 				# print putil.misc.pcolor('End of chain encountered', 'green')
 				break
 			elif _valid_frame(fin, fun):
-				name = self._get_callable_full_name(fob, fun)
+				#name = self._get_callable_full_name(fob, fun)
+				name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
 				if (decorator_flag and (name != prev_name)) or (not decorator_flag):
 					# print putil.misc.pcolor('Regular frame (frame used) -> {0}'.format(name), 'green')
 					ret.append(name)
-				# else:
-				#	print putil.misc.pcolor('Chained decorator (extra frame)', 'green')
+				#else:
+					# print putil.misc.pcolor('Chained decorator (extra frame)', 'green')
 				prev_name = name
-			# else:
-			#	print putil.misc.pcolor('Invalid frame', 'green')
+			#else:
+				# print putil.misc.pcolor('Invalid frame', 'green')
 			decorator_flag = False
+		self._reentrant = False
+		# Delete next-to-last callable if the callable is a seter/getter/deleter of a property defined via decorators
+		if attr_regexp.match(ret[-1]):
+			del ret[-2]
+		# print self._callables_separator.join(ret)
 		return self._callables_separator.join(ret)
 
-	def _get_callable_full_name(self, frame_obj, func):
+	def _get_callable_full_name(self, fob, fin, lin, fun, fuc, fui):	#pylint: disable=R0913,W0613
 		""" Get full path [module, class (if applicable) and function name] of callable """
-		func_obj = frame_obj.f_locals.get(func, frame_obj.f_globals.get(func, getattr(frame_obj.f_locals.get('self'), func, None) if 'self' in frame_obj.f_locals else None))
-		if func_obj:
-			# Most of this code re-factored from pycallgraph/tracer.py of the Python Call Graph project (https://github.com/gak/pycallgraph/#python-call-graph)
-			# Module name
-			ret = self._get_module_name(frame_obj, func_obj)
-			# Class name
-			scontext = frame_obj.f_locals.get('self', None)
-			ret += ('.'+scontext.__class__.__name__) if scontext else ''
-			# Function/method/attribute name
-			code = frame_obj.f_code
-			func_name = code.co_name
-			ret += '.'+('__main__' if func_name == '?' else (func_obj.__name__ if func_name == '' else func_name))
+		func_obj = None
+		if fin != '<string>':
+			code_id = _get_code_id(fob)
 		else:
-			# Function object could not be found, (possibly because it is an enclosed function), try to find it via code ID in the callables database
-			code_id = _get_code_id(frame_obj)
-			for name, value in self._callables_obj.callables_db.items():
-				if code_id == value['code_id']:
-					break
-			else:
-				print '\nFunction name {0}\nCode ID: {1}'.format(func, code_id)
-				raise RuntimeError('Callable full name could not be obtained')
-			ret = name	#pylint: disable=W0631
-		return ret
+			#func_obj = self._get_func_obj(fob, fun)
+			func_obj = fob.f_globals[fun]
+			while getattr(func_obj, '__wrapped__', None):
+				func_obj = getattr(func_obj, '__wrapped__')
+			code_id = putil.pinspect._get_code_id(func_obj)	# pylint: disable=W0212
+		self._get_module_name(fob, func_obj)
+		if code_id not in self._callables_obj.reverse_callables_db:
+			raise RuntimeError('Callable with call ID {0} not found in reverse callables database'.format(code_id))
+		return self._callables_obj.reverse_callables_db[code_id]
+
+	def _get_callables_separator(self):
+		""" Get callable separator character """
+		return self._callables_separator
 
 	def _get_exception_by_name(self, name):
 		""" Find exception object """
@@ -169,9 +189,11 @@ class ExHandle(object):	#pylint: disable=R0902
 		ex_name = '{0}{1}{2}'.format(func_name, self._callables_separator if func_name is not None else '', name if name is not None else '')
 		return {'func_name':func_name, 'ex_name':ex_name}
 
-	def _get_callables_separator(self):
-		""" Get callable separator character """
-		return self._callables_separator
+	# def _get_func_obj(self, fobj, fun):	# pylint:disable=R0201
+	# 	""" Get function object from frame object """
+	# 	#if fobj.f_locals.get(fun, fobj.f_globals.get(fun, None)):
+	# 	return fobj.f_locals.get(fun, fobj.f_globals.get(fun, None))
+	# 	#return getattr(fobj.f_locals['self'], fun) if (('self' in fobj.f_locals) and (fun in dir(fobj.f_locals['self']))) else None
 
 	def _get_module_name(self, frame_obj, func_obj):
 		""" Get module name and optionally trace it """
@@ -182,10 +204,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
 		self._callables_obj.trace(sys.modules[module_name])
 		return module_name
-
-	def _exceptions_db(self):	#pylint: disable-msg=R0201
-		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		return [{'name':self._ex_dict[key]['function'], 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 
 	def _raise_exception(self, eobj, edata=None):
 		""" Raise exception by name """

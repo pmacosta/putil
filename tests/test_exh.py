@@ -47,10 +47,12 @@ def test_add_exception_errors():
 	obj.add_exception(exname='exception name', extype=TypeError, exmsg='exception message for exception #2')
 	# Test case where callable is not found in callable database
 	with mock.patch('putil.exh._get_code_id') as mock_get_code_id:
-		test_list.append(putil.test.trigger_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, 'Callable full name could not be obtained'))
+		#test_list.append(putil.test.trigger_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, 'Callable full name could not be obtained'))
+		test_list.append(putil.test.trigger_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, \
+												r'Callable with call ID ([\w|\W]+) not found in reverse callables database'))
 	assert test_list == [True]*len(test_list)
 
-def test_add_exception_works():
+def test_add_exception_works():	# pylint: disable=R0912
 	""" Test add_exception() function works """
 	test_list = list()
 	exobj = putil.exh.ExHandle()
@@ -65,9 +67,30 @@ def test_add_exception_works():
 		exobj.add_exception('second_exception', ValueError, 'This is the second exception')
 		exobj.add_exception('third_exception', IOError, 'This is the third exception')
 		print text
+	class Class1(object):	#pylint: disable=C0111,R0903
+		def __init__(self, exobj):
+			self._value = None
+			self._exobj = exobj
+		@property
+		def value3(self):	#pylint: disable=C0111
+			self._exobj.add_exception('getter_exception', TypeError, 'Get function exception')
+			return self._value
+		@value3.setter
+		@putil.pcontracts.contract(value=int)
+		def value3(self, value):	#pylint: disable=C0111
+			self._exobj.add_exception('setter_exception', TypeError, 'Set function exception')
+			self._value = value
+		@value3.deleter
+		def value3(self):	#pylint: disable=C0111,R0201
+			self._exobj.add_exception('deleter_exception', TypeError, 'Delete function exception')
+			print 'Cannot delete attribute'
+	dobj = Class1(exobj)	#pylint: disable=W0612
+	dobj.value3 = 5
+	print dobj.value3
+	del dobj.value3
+	cdb = exobj._ex_dict
 	func1()
 	func2("world")
-	cdb = exobj._ex_dict
 	if not cdb:
 		assert False
 	for exname in cdb:
@@ -78,6 +101,12 @@ def test_add_exception_works():
 			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception') and (erec['checked'] == False))
 		elif exname.endswith('test_exh.test_add_exception_works.func2/third_exception'):
 			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.Class1.value3(setter)/setter_exception'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(setter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.Class1.value3(getter)/getter_exception'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(getter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.Class1.value3(deleter)/deleter_exception'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception') and (erec['checked'] == False))
 		else:
 			test_list.append(False)
 	assert test_list == [True]*len(test_list)
