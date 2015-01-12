@@ -12,7 +12,6 @@ import putil.exh
 import putil.misc
 import putil.tree
 
-
 ###
 # Classes
 ###
@@ -97,43 +96,34 @@ class ExDoc(object):	#pylint: disable=R0902
 			self._collapse_ex_tree()
 		self._print_ex_tree()
 
-	def _autodetect_ex_tree_prefix(self):
-		""" Determine root trace object """
-		if not self.no_print:
-			print putil.misc.pcolor('Finding root trace object', 'blue')
-		root_name = self._tobj.root_name
-		while len(self._tobj.get_children(root_name)) == 1:
-			root_name = self._tobj.get_children(root_name)[0]
-		nodes_list = [self._exh_obj.callables_separator.join(root_name.split(self._exh_obj.callables_separator)[num:]) for num in range(len(root_name.split(self._exh_obj.callables_separator)))]
-		# Search first for functions
-		for node in nodes_list:
-			if node in self._exh_obj.callables_db:
-				self._trace_obj_type = False
-				break
-		else:
-			# Search second for classes. Cannot just append __init__ to root node because classes may not have an explicit __init__ function
-			mod_callables_db_keys = set([key[:key.rfind('.')] if key.rfind('.') != -1 else key for key in self._exh_obj.callables_db])
-			for node in nodes_list:
-				if node in mod_callables_db_keys:
-					self._trace_obj_type = True
-					break
-			else:
-				raise RuntimeError('Root trace object cold not be found')
-		self._trace_obj_name = node
-		if not self.no_print:
-			print '\tRoot node.: {0}'.format(root_name)
-			print '\tRoot trace: {0}'.format(node)
-		self._tobj.make_root(root_name)
-		self._print_ex_tree()
-		return root_name
-
 	def _build_ex_tree(self):
 		""" Construct exception tree from trace """
-		tree_data = self._exh_obj.exceptions_db	#pylint: disable=W0212
-		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
 		if not self.no_print:
 			print putil.misc.pcolor('Building tree', 'blue')
-		self._tobj.add_nodes(tree_data)
+		# Load exception data into tree structure
+		# This cannot be subsumed in self._tobj.add_nodes() because otherwise the putil.tree.Tree.__init__ call to construct the self._obj would also
+		# put its exceptions into the exception database
+		data = self._exh_obj.exceptions_db
+		# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
+		for ditem in data:
+			ret = list()
+			for token in ditem['name'].split(self._exh_obj.callables_separator):
+				if self._exh_obj.callables_db[token]['link']:
+					ret.append('{0}[{1}]'.format(self._exh_obj.callables_db[token]['link']['prop'], self._exh_obj.callables_db[token]['link']['action']))
+				else:
+					ret.append(token)
+			ditem['name'] = self._exh_obj.callables_separator.join(ret)
+		#
+		# Remove before first multi-branch tree split
+		name_list = sorted([ditem['name'] for ditem in data])
+		prefix_length = len(self._exh_obj.callables_separator.join(name_list[0].split(self._exh_obj.callables_separator)[:-1]))+1
+		hierarchy_split = name_list[0][prefix_length:].count('.')
+		for ditem in data:
+			ditem['name'] = ditem['name'][prefix_length:]
+			ditem['name'] = '{0}{1}{2}'.format('.'.join(ditem['name'].split('.')[:hierarchy_split]), self._exh_obj.callables_separator, '.'.join(ditem['name'].split('.')[hierarchy_split:]))
+		#
+		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
+		self._tobj.add_nodes(data)
 		self._print_ex_tree()
 
 	def _callable_list(self, node):
@@ -145,22 +135,6 @@ class ExDoc(object):	#pylint: disable=R0902
 			ret.append(callable_name)
 			name = name[len(callable_name)+(1 if len(callable_name) < len(name) else 0):]
 		return ret
-
-	def _change_ex_tree_root_node(self):
-		""" Make class name of interest root node """
-		node = self._tobj.root_name
-		# Look for first occurance of trace object name in tree nodes
-		# self._tobj.nodes returns all nodes _sorted_ alphabetically
-		for node in self._tobj.nodes:
-			if self._trace_obj_name in node:
-				break
-		else:
-			raise RuntimeError('Class {0} not in tree'.format(self._trace_obj_name))
-		if not self.no_print:
-			print putil.misc.pcolor('Making {0} root'.format(node), 'blue')
-		self._tobj.make_root(node)
-		self._print_ex_tree()
-		return node
 
 	def _collapse_ex_tree(self):
 		""" Eliminates nodes without exception data """
@@ -337,18 +311,6 @@ class ExDoc(object):	#pylint: disable=R0902
 				sorted(list(set([exdesc for cross_name in self._extable[child_name]['cross_names'] for exdesc in self._extable[cross_name]['flat_exceptions']])))
 		self._print_ex_tree()
 
-	def _eliminate_ex_tree_prefix(self, node):
-		""" Remove prefix (usually main.__main__ or simmilar) from exception tree """
-		# Find start of trace object name in root name and delete what comes before that
-		index = node.find(self._trace_obj_name)
-		if index != 0:
-			prefix = node[:index-1]
-			new_root = node[index:]
-			if not self.no_print:
-				print putil.misc.pcolor('Removing prefix {0}'.format(prefix), 'blue')
-			self._tobj.rename_node(self._tobj.root_name, new_root)
-		self._print_ex_tree()
-
 	def _expand_same_ex_list(self, data, module_function_ex, start=False, indent=''):
 		""" Create exception list where the 'Same as [...]' entries have been replaced for the exceptions in the method/attribute they point to """
 		#REMOVE print indent+'Got data {0}'.format(data)
@@ -370,12 +332,11 @@ class ExDoc(object):	#pylint: disable=R0902
 		#REMOVE print indent+'Returning...'
 		return ret
 
-
 	def _flatten_ex_tree(self):
 		""" Flatten exception tree around class name hierarchy nodes """
 		if not self.no_print:
 			print putil.misc.pcolor('Flattening hierarchy', 'blue')
-		obj_hierarchy = self._trace_obj_name.split('.')
+		obj_hierarchy = self._tobj.root_name.split('.')
 		sub_trees = ['.'.join(obj_hierarchy[:num]) for num in range(len(obj_hierarchy), 0, -1)]	# List of hiearchical nodes from leaf to root of trace object name, i.e. ['a.b.c', 'a.b', 'a']
 		for sub_tree in sub_trees:
 			if not self.no_print:
@@ -436,42 +397,34 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _process_exceptions(self, step):	#pylint: disable=R0912,R0914,R0915
 		""" Builds exception tree """
-		step = step if step else 17
+		step = step if step != None else 18
 		# Collect exceptions in hierarchical call tree
 		if step >= 0:
 			self._build_ex_tree()
 		# Eliminate intermediate call nodes that have no exceptions associated with them
 		if step >= 1:
 			self._collapse_ex_tree()
-		# Make trace object class or module/level function root node of call tree
-		#new_root_node = self._change_ex_tree_root_node()
-		# Auto-detect root trace object
-		if step >= 2:
-			new_root_node = self._autodetect_ex_tree_prefix()
-		# Eliminate prefix hierarchy that is an artifact of the tracing infrastructure
-		if step >= 3:
-			self._eliminate_ex_tree_prefix(new_root_node)
 		# Flatten hierarchy call on to trace class methods/properties or on to trace module-level function
-		if step >= 4:
+		if step >= 2:
 			self._flatten_ex_tree()
-		# Delete trace class methods/properties or trace module-level function that have/has no exceptions associated with them/it
-		if step >= 5:
-			self._prune_ex_tree()
-		# Add getter/setter/deleter exceptions to trace class properties (if needed)
-		if step >= 6:
-			self._alias_attributes()
+		# # Delete trace class methods/properties or trace module-level function that have/has no exceptions associated with them/it
+		# if step >= 3:
+		# 	self._prune_ex_tree()
+		# # Add getter/setter/deleter exceptions to trace class properties (if needed)
+		# if step >= 4:
+		# 	self._alias_attributes()
 		# Create exception table
-		if step >= 7:
+		if step >= 5:
 			self._create_ex_table()
 		# Add exceptions of the form 'Same as [...]' to account for the fact that some trace class methods/attributes may use methods/properties/functions from the same package
-		if step >= 8:
+		if step >= 6:
 			self._detect_ex_tree_cross_usage()
 		# Remove exceptions of trace class methods/properties or trace module-level function that are in their 'Same as [...]' exception constructs
 		# Replace identical trace class methods/properties or trace module-level functions with 'Same as [...]' exception constructs
-		if step >= 9:
+		if step >= 7:
 			self._deduplicate_ex_table()
 		# Create Sphinx-formatted output
-		if step >= 10:
+		if step >= 8:
 			self._create_ex_table_output()
 
 	def _prune_ex_tree(self):

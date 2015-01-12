@@ -7,6 +7,38 @@ import putil.exh
 import exdoc_support_module_2
 import putil.pcontracts
 
+
+###
+# Module functions
+###
+def _validate_arguments():
+	""" Internal argument validation, have exceptions defined after a chain of function calls """
+	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
+	exobj.add_exception(exname='illegal_argument', extype=TypeError, exmsg='Argument is not valid')
+
+def _write():
+	""" Internal pass-through function """
+	_validate_arguments()
+
+def write():
+	""" Module level function #1 """
+	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
+	exobj.add_exception(exname='illegal_write_call', extype=TypeError, exmsg='Cannot call write')
+	_write()
+
+def read():
+	""" Module level function #2 """
+	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
+	exobj.add_exception(exname='illegal_read_call', extype=TypeError, exmsg='Cannot call read')
+
+def probe():
+	""" Module level function #3 """
+	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
+	exobj.add_exception(exname='illegal_probe_call', extype=TypeError, exmsg='Cannot call probe')
+
+###
+# Classes
+###
 def dummy_decorator(func):
 	""" Dummy property decorator """
 	return func
@@ -86,19 +118,3 @@ class ExceptionAutoDocClass(object):	#pylint: disable=R0902,R0903
 
 	value3 = property(_get_value3, _set_value3, _del_value3)
 
-putil.exh.set_exh_obj(putil.exh.ExHandle())
-OBJ = ExceptionAutoDocClass(10)
-OBJ.add(5)
-OBJ.subtract(3)
-OBJ.divide(5.2)
-OBJ.multiply(5.2)
-OBJ.value1 = 11
-print OBJ.value1
-OBJ.value2 = 33
-print OBJ.value2
-OBJ.value3 = 77
-print OBJ.value3
-del OBJ.value3
-OBJ.temp = 10
-print OBJ.temp
-del OBJ.temp
