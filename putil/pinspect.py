@@ -214,7 +214,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 					element_full_name = ('{0}.{1}.{2}'.format(element_module, element_class, element_name) if element_class else '{0}.{1}').format(element_module, element_name)
 					if element_full_name not in self._callables_db:
 						code_id = None if is_prop else _get_code_id(element_obj)
-						self._callables_db[element_full_name] = {'type':element_type, 'code_id':code_id}
+						self._callables_db[element_full_name] = {'type':element_type, 'code_id':code_id, 'attr':None, 'link':None}
 						if code_id:
 							self._reverse_callables_db[code_id] = element_full_name
 					if is_prop:
