@@ -30,20 +30,20 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	 * TypeError (Argument `no_print` is of the wrong type)
 
-	 * TypeError (Argument `module_name` is of the wrong type)
+	 * TypeError (Argument `trace_name` is of the wrong type)
 
 	 * ValueError (Object of argument `exh_obj` does not have any exception trace information)
 	"""
-	def __init__(self, exh_obj, no_print=False, module_name=None, _step=None):
+	def __init__(self, exh_obj, no_print=False, trace_name=None, _step=None):
 		if not isinstance(exh_obj, putil.exh.ExHandle):
 			raise TypeError('Argument `exh_obj` is not valid')
 		if not exh_obj.exceptions_db:
 			raise ValueError('Object of argument `exh_obj` does not have any exception trace information')
 		if not isinstance(no_print, bool):
 			raise TypeError('Argument `no_print` is not valid')
-		if not isinstance(module_name, str):
-			raise TypeError('Argument `module_name` is not valid')
-		self._trace_name = module_name
+		if not isinstance(trace_name, str):
+			raise TypeError('Argument `trace_name` is not valid')
+		self._trace_name = trace_name
 		self._exh_obj = exh_obj
 		self._callables_db = self._exh_obj.callables_db
 		self.no_print = no_print
@@ -103,32 +103,26 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _build_ex_tree(self):
 		""" Construct exception tree from trace """
-		if not self.no_print:
-			print putil.misc.pcolor('Building tree', 'blue')
+		self._cprint('Building tree', 'blue')
 		# Load exception data into tree structure
+		cdb = self._exh_obj.callables_db
+		sep = self._exh_obj.callables_separator
 		data = self._exh_obj.exceptions_db
-		# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
+		func_list, unique_data = list(), list()
 		for ditem in data:
-			ret = list()
-			for token in ditem['name'].split(self._exh_obj.callables_separator):
-				if self._exh_obj.callables_db[token]['link']:
-					ret.append('{0}[{1}]'.format(self._exh_obj.callables_db[token]['link']['prop'], self._exh_obj.callables_db[token]['link']['action']))
-				else:
-					ret.append(token)
-			ditem['name'] = self._exh_obj.callables_separator.join(ret)
-		# Remove prefix (cannot be done previous step because technically the setter/getter/deleter of propety can be in a different module)
-		func_list = list()
-		raw_data, data = data, list()
-		for ditem in raw_data:
+			# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
+			ditem['name'] = sep.join(['{0}[{1}]'.format(cdb[token]['link']['prop'], cdb[token]['link']['action']) if cdb[token]['link'] else token for token in ditem['name'].split(sep)])
+			# Remove prefix (cannot be done previous step because technically the setter/getter/deleter of propety can be in a different module) and only handle unique exceptions
 			if ditem['name'].find(self._trace_name) != -1:
 				ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
 				if ditem['name'] not in func_list:
 					func_list.append(ditem['name'])
+					# Make trace name root node
 					ditem['name'] = '{0}/{1}'.format(ditem['name'][:len(self._trace_name):], ditem['name'][len(self._trace_name)+1:])
-					data.append(ditem)
+					unique_data.append(ditem)
 		# Actually build tree
 		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
-		self._tobj.add_nodes(data)
+		self._tobj.add_nodes(unique_data)
 		self._print_ex_tree()
 
 	def _callable_list(self, node):
@@ -147,6 +141,11 @@ class ExDoc(object):	#pylint: disable=R0902
 			print putil.misc.pcolor('Collapsing tree', 'blue')
 		self._tobj.collapse_subtree(self._tobj.root_name)
 		self._print_ex_tree()
+
+	def _cprint(self, text, color=None):
+		""" Conditionally print text depending on no_print state """
+		if not self.no_print:
+			print putil.misc.pcolor(text, 'white' if not color else color)
 
 	def _create_ex_table(self):	#pylint: disable=R0914
 		""" Creates exception table entry """

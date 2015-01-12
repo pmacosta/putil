@@ -69,10 +69,10 @@ def test_exdoc_errors():
 		exobj.add_exception('first_exception', TypeError, 'This is the first exception')
 	func1()
 	obj = putil.exdoc.ExDoc
-	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':5, 'no_print':False, 'module_name':'hello'}, TypeError, 'Argument `exh_obj` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':putil.exh.ExHandle(), 'no_print':False, 'module_name':'hello'}, ValueError, 'Object of argument `exh_obj` does not have any exception trace information'))
-	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':exobj, 'no_print':5, 'module_name':'hello'}, TypeError, 'Argument `no_print` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':exobj, 'no_print':False, 'module_name':5}, TypeError, 'Argument `module_name` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':5, 'no_print':False, 'trace_name':'hello'}, TypeError, 'Argument `exh_obj` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':putil.exh.ExHandle(), 'no_print':False, 'trace_name':'hello'}, ValueError, 'Object of argument `exh_obj` does not have any exception trace information'))
+	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':exobj, 'no_print':5, 'trace_name':'hello'}, TypeError, 'Argument `no_print` is not valid'))
+	test_list.append(putil.test.trigger_exception(obj, {'exh_obj':exobj, 'no_print':False, 'trace_name':5}, TypeError, 'Argument `trace_name` is not valid'))
 	putil.exdoc.ExDoc(exobj, True, 'hello', -1)
 	assert test_list == [True]*len(test_list)
 
@@ -80,7 +80,7 @@ def test_build_ex_tree():
 	""" Test _build_ex_tree() function """
 	test_list = list()
 	trace_class()
-	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, module_name='exdoc_support_module_1.ExceptionAutoDocClass', _step=0)
+	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, trace_name='exdoc_support_module_1.ExceptionAutoDocClass', _step=0)
 	putil.exh.del_exh_obj()
 	test_list.append(str(exdocobj._tobj) == \
 		u'exdoc_support_module_1.ExceptionAutoDocClass\n'.encode('utf-8') + \
@@ -95,7 +95,7 @@ def test_build_ex_tree():
 		u'├value3[fget] (*)\n'.encode('utf-8') + \
 		u'└value3[fset] (*)'.encode('utf-8'))
 	trace_module_functions()
-	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, module_name='exdoc_support_module_1', _step=0)
+	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, trace_name='exdoc_support_module_1', _step=0)
 	putil.exh.del_exh_obj()
 	test_list.append(str(exdocobj._tobj) == \
 		u'exdoc_support_module_1\n'.encode('utf-8') + \
