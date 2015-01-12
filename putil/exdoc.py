@@ -30,15 +30,20 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	 * TypeError (Argument `no_print` is of the wrong type)
 
+	 * TypeError (Argument `module_name` is of the wrong type)
+
 	 * ValueError (Object of argument `exh_obj` does not have any exception trace information)
 	"""
-	def __init__(self, exh_obj, no_print=False, _step=None):
+	def __init__(self, exh_obj, no_print=False, module_name=None, _step=None):
 		if not isinstance(exh_obj, putil.exh.ExHandle):
 			raise TypeError('Argument `exh_obj` is not valid')
 		if not exh_obj.exceptions_db:
 			raise ValueError('Object of argument `exh_obj` does not have any exception trace information')
 		if not isinstance(no_print, bool):
 			raise TypeError('Argument `no_print` is not valid')
+		if not isinstance(module_name, str):
+			raise TypeError('Argument `module_name` is not valid')
+		self._trace_name = module_name
 		self._exh_obj = exh_obj
 		self._callables_db = self._exh_obj.callables_db
 		self.no_print = no_print
@@ -101,8 +106,6 @@ class ExDoc(object):	#pylint: disable=R0902
 		if not self.no_print:
 			print putil.misc.pcolor('Building tree', 'blue')
 		# Load exception data into tree structure
-		# This cannot be subsumed in self._tobj.add_nodes() because otherwise the putil.tree.Tree.__init__ call to construct the self._obj would also
-		# put its exceptions into the exception database
 		data = self._exh_obj.exceptions_db
 		# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
 		for ditem in data:
@@ -113,15 +116,17 @@ class ExDoc(object):	#pylint: disable=R0902
 				else:
 					ret.append(token)
 			ditem['name'] = self._exh_obj.callables_separator.join(ret)
-		#
-		# Remove before first multi-branch tree split
-		name_list = sorted([ditem['name'] for ditem in data])
-		prefix_length = len(self._exh_obj.callables_separator.join(name_list[0].split(self._exh_obj.callables_separator)[:-1]))+1
-		hierarchy_split = name_list[0][prefix_length:].count('.')
-		for ditem in data:
-			ditem['name'] = ditem['name'][prefix_length:]
-			ditem['name'] = '{0}{1}{2}'.format('.'.join(ditem['name'].split('.')[:hierarchy_split]), self._exh_obj.callables_separator, '.'.join(ditem['name'].split('.')[hierarchy_split:]))
-		#
+		# Remove prefix (cannot be done previous step because technically the setter/getter/deleter of propety can be in a different module)
+		func_list = list()
+		raw_data, data = data, list()
+		for ditem in raw_data:
+			if ditem['name'].find(self._trace_name) != -1:
+				ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
+				if ditem['name'] not in func_list:
+					func_list.append(ditem['name'])
+					ditem['name'] = '{0}/{1}'.format(ditem['name'][:len(self._trace_name):], ditem['name'][len(self._trace_name)+1:])
+					data.append(ditem)
+		# Actually build tree
 		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
 		self._tobj.add_nodes(data)
 		self._print_ex_tree()
