@@ -7,12 +7,42 @@ import putil.exh
 import pinspect_support_module_2
 import putil.pcontracts
 
+
 def module_enclosing_func(offset):
 	""" Test function to see if module-level enclosures are detected """
 	def module_closure_func(value):
 		""" Actual closure function """
 		return offset+value
 	return module_closure_func
+
+
+def class_enclosing_func():
+	""" Test function to see if classes within enclosures are detected """
+	class ClosureClass(object):
+		""" Actual closure class """
+		def __init__(self):
+			""" Constructor method """
+			self.obj = None
+
+		def get_obj(self):
+			""" Getter method """
+			return self.obj
+
+		def set_obj(self, obj):
+			""" Setter method """
+			self.obj = obj
+
+		def sub_enclosure_method(self):
+			""" Test method to see if class of classes are detected """
+			class SubClosureClass(object):	# pylint: disable=R0903
+				""" Actual sub-closure class """
+				def __init__(self):
+					""" Constructor method """
+					self.subobj = None
+
+			return SubClosureClass
+
+	return ClosureClass
 
 class ClassWithPropertyDefinedViaLambdaAndEnclosure(object):	#pylint: disable=R0903
 	""" Class that used an inline function (lambda) to define one of the property functions and an enclosed function to define another """
@@ -21,9 +51,11 @@ class ClassWithPropertyDefinedViaLambdaAndEnclosure(object):	#pylint: disable=R0
 
 	clsvar = property(lambda self: self._clsvar+10, pinspect_support_module_2.setter_enclosing_func(5), doc='Class variable property')
 
+
 def dummy_decorator(func):
 	""" Dummy property decorator, to test if chained decorators are handled correctly """
 	return func
+
 
 class ClassWithPropertyDefinedViaFunction(object):	#pylint: disable=R0903
 	""" Class to test if properties defined via property function are handled correctly """

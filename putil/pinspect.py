@@ -123,8 +123,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	:raises: TypeError (Argument `obj` is not valid)
 	"""
 	def __init__(self, obj=None):
-		self._modules = []
-		self._classes = []
+		self._module_names = []
+		self._class_names = []
+		self._class_objs = []
 		self._prop_dict = {}
 		self._callables_db = {}
 		self._reverse_callables_db = {}
@@ -140,8 +141,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	def __copy__(self):
 		cobj = Callables()
-		cobj._modules = copy.deepcopy(self._modules)	#pylint: disable=W0212
-		cobj._classes = copy.deepcopy(self._classes)	#pylint: disable=W0212
+		cobj._module_names = copy.deepcopy(self._module_names)	#pylint: disable=W0212
+		cobj._class_names = copy.deepcopy(self._class_names)	#pylint: disable=W0212
+		cobj._class_objs = copy.deepcopy(self._class_objs)	#pylint: disable=W0212
 		cobj._prop_dict = copy.copy(self._prop_dict)	#pylint: disable=W0212
 		cobj._callables_db = copy.deepcopy(self._callables_db)	#pylint: disable=W0212
 		cobj._reverse_callables_db = copy.deepcopy(self._reverse_callables_db)	#pylint: disable=W0212
@@ -149,15 +151,15 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	def __eq__(self, other):
 		# _prop_dict is a class variable used to pass data between sub-functions in the trace operation, not material to determine if two objects are the same
-		return (sorted(self._modules) == sorted(other._modules)) and (sorted(self._classes) == sorted(other._classes)) and (self._callables_db == other._callables_db) and (self._reverse_callables_db == other._reverse_callables_db)	#pylint: disable=W0212
+		return all([sorted(getattr(self, attr)) == sorted(getattr(other, attr)) for attr in ['_module_names', '_class_names', '_class_objs', '_callables_db', '_reverse_callables_db']])
 
 	def __repr__(self):
-		return 'putil.pinspect.Callables({0})'.format('[{0}]'.format(', '.join(["sys.modules['{0}']".format(module_name) for module_name in self._modules])) if self._modules else '')
+		return 'putil.pinspect.Callables({0})'.format('[{0}]'.format(', '.join(["sys.modules['{0}']".format(module_name) for module_name in self._module_names])) if self._module_names else '')
 
 	def __str__(self):
 		ret = list()
-		ret.append('Modules: {0}'.format(', '.join(sorted([mdl for mdl in self._modules]))))
-		ret.append('Classes: {0}'.format(', '.join(sorted([cls for cls in self._classes]))))
+		ret.append('Modules: {0}'.format(', '.join(sorted([mdl for mdl in self._module_names]))))
+		ret.append('Classes: {0}'.format(', '.join(sorted([cls for cls in self._class_names]))))
 		for key in sorted(self._callables_db.keys()):
 			ret.append('{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else ''))
 			if self._callables_db[key]['type'] == 'prop':
@@ -197,9 +199,10 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._prop_dict = {}
 		element_module = obj.__name__ if inspect.ismodule(obj) else obj.__module__
 		element_class = obj.__name__ if inspect.isclass(obj) else None
-		if (element_module not in self._modules) or (element_class and (element_class not in self._classes)):
-			self._modules += [element_module] if inspect.ismodule(obj) else []
-			self._classes += ['{0}.{1}'.format(element_module, element_class)] if inspect.isclass(obj) else []
+		if (element_module not in self._module_names) or (element_class and (id(obj) not in self._class_objs)):
+			self._module_names += [element_module] if inspect.ismodule(obj) else []
+			self._class_objs += [id(obj)] if inspect.isclass(obj) else []
+			self._class_names += ['{0}.{1}'.format(element_module, element_class)] if (inspect.isclass(obj) and ('{0}.{1}'.format(element_module, element_class) not in self._class_names)) else []
 			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
 			for element_name in [element_name for element_name in dir(obj) if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name))]:
 				element_obj = getattr(obj, element_name)
@@ -244,16 +247,18 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				if class_match or func_match:
 					class_name = class_match.group(2) if class_match else None
 					func_name = func_match.group(2) if func_match else None
-					if class_name or (func_name and (func_name == '__init__' or (not is_magic_method(func_name)))):
-						indent = len(_replace_tabs(class_match.group(1) if class_match else func_match.group(1)))
-						# Remove all blocks at the same level to find out the indentation "parent"
-						while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
-							indent_stack.pop()
-						element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
-						if func_name and (element_full_name not in self._callables_db):
-							self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':None}
-							self._reverse_callables_db[(module_file_name, element_num)] = element_full_name
-						indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
+					indent = len(_replace_tabs(class_match.group(1) if class_match else func_match.group(1)))
+					# Remove all blocks at the same level to find out the indentation "parent"
+					while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
+						indent_stack.pop()
+					if class_match:
+						class_full_name = '{0}.{1}'.format(indent_stack[-1]['prefix'], class_name)
+						self._class_names += [class_full_name] if class_full_name not in self._class_names else []
+					element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
+					if func_name and (element_full_name not in self._callables_db):
+						self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':None}
+						self._reverse_callables_db[(module_file_name, element_num)] = element_full_name
+					indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 					# Clear property variables
 					decorator_num = None
 					attr_name = ''
@@ -269,7 +274,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						if attr_obj.__name__ == '<lambda>':
 							name = '{0}.{1}_lambda'.format(prop_name, attr)
 						else:
-							if attr_obj.__module__ not in self._modules:
+							if attr_obj.__module__ not in self._module_names:
 								self._trace(sys.modules[attr_obj.__module__])
 							# Get to the object of the actual, undecorated function
 							while getattr(attr_obj, '__wrapped__', None):
