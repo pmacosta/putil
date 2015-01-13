@@ -202,6 +202,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		if (element_module not in self._module_names) or (element_class and (id(obj) not in self._class_objs)):
 			self._module_names += [element_module] if inspect.ismodule(obj) else []
 			self._class_objs += [id(obj)] if inspect.isclass(obj) else []
+			# Classes already traced looking for enclosures need to be traced again because the tracing module does not detect properties
 			self._class_names += ['{0}.{1}'.format(element_module, element_class)] if (inspect.isclass(obj) and ('{0}.{1}'.format(element_module, element_class) not in self._class_names)) else []
 			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
 			for element_name in [element_name for element_name in dir(obj) if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name))]:

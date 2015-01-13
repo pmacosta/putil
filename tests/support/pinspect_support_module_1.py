@@ -57,6 +57,14 @@ def dummy_decorator(func):
 	return func
 
 
+def property_generator():
+	""" Function to test if properties done via enclosed functions are properly detected """
+	def fget(self):
+		""" Actual getter function """
+		return self._value
+	return property(fget)
+
+
 class ClassWithPropertyDefinedViaFunction(object):	#pylint: disable=R0903
 	""" Class to test if properties defined via property function are handled correctly """
 	def __init__(self):
@@ -105,3 +113,5 @@ class ClassWithPropertyDefinedViaDecorators(object):	#pylint: disable=R0903
 	def temp(self):	#pylint: disable=R0201
 		""" Deleter method defined with decorator """
 		print 'Cannot delete attribute'
+
+	encprop = property_generator()
