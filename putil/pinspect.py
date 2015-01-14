@@ -153,12 +153,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	:raises: TypeError (Argument `obj` is not valid)
 	"""
 	def __init__(self, obj=None):
-		self._module_names = []
-		self._class_names = []
-		self._class_objs = []
-		self._prop_dict = {}
-		self._callables_db = {}
-		self._reverse_callables_db = {}
+		self._module_names, self._class_names, self._class_objs, self._prop_dict, self._callables_db, self._reverse_callables_db = [], [], [], {}, {}, {}
 		if obj:
 			self.trace(obj)
 
