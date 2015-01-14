@@ -25,6 +25,32 @@ def _get_code_id(obj):
 	return ret
 
 
+def _line_matches(lines):	# pylint: disable=R0914
+	""" Generator to yield results of all regex matches """
+	# Regular expressions to detect class definition, function definition and decorator-defined properties
+	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
+	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
+	getter_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
+	setter_prop_regexp = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
+	deleter_prop_regexp = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
+	decorator_regexp = re.compile(r'^(\s*)@(.+)')
+	for num, line in enumerate(lines, start=1):
+		class_match = class_regexp.match(line)
+		class_indent, class_name = class_match.groups() if class_match else (None, None)
+		func_match = func_regexp.match(line)
+		func_indent, func_name = func_match.groups() if func_match else (None, None)
+		getter_match = getter_prop_regexp.match(line)
+		setter_match = setter_prop_regexp.match(line)
+		deleter_match = deleter_prop_regexp.match(line)
+		decorator_match = decorator_regexp.match(line)
+		yield num, class_match, class_indent, class_name, func_match, func_indent, func_name, getter_match, setter_match, deleter_match, decorator_match
+
+
+def _valid_type(obj):
+	""" Return True if object type is to be added to callables database """
+	return (str(type(obj))[7:-2] not in ['wrapper_descriptor']) and (type(obj) not in [types.InstanceType, types.BuiltinFunctionType, types.BuiltinMethodType])
+
+
 def is_magic_method(name):
 	"""
 	Determines if a method is a magic method or not (with a '__' prefix and suffix)
@@ -129,13 +155,6 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._prop_dict = {}
 		self._callables_db = {}
 		self._reverse_callables_db = {}
-		# Regular expressions to detect class definition, function definition and decorator-defined properties
-		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
-		self._decorator_regex = re.compile(r'^(\s*)@(.+)')
-		self._func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
-		self._getter_prop_regex = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
-		self._setter_prop_regex = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
-		self._deleter_prop_regex = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
 		if obj:
 			self.trace(obj)
 
@@ -194,61 +213,23 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				raise TypeError('Argument `obj` is not valid')
 			self._trace(obj)
 
-	def _trace(self, obj):
-		""" Generate a list of object callables (internal function, no argument validation)"""
-		self._prop_dict = {}
-		element_module = obj.__name__ if inspect.ismodule(obj) else obj.__module__
-		element_class = obj.__name__ if inspect.isclass(obj) else None
-		if (element_module not in self._module_names) or (element_class and (id(obj) not in self._class_objs)):
-			self._module_names += [element_module] if inspect.ismodule(obj) else []
-			self._class_objs += [id(obj)] if inspect.isclass(obj) else []
-			# Classes already traced looking for enclosures need to be traced again because the tracing module does not detect properties
-			self._class_names += ['{0}.{1}'.format(element_module, element_class)] if (inspect.isclass(obj) and ('{0}.{1}'.format(element_module, element_class) not in self._class_names)) else []
-			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
-			for element_name in [element_name for element_name in dir(obj) if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name))]:
-				element_obj = getattr(obj, element_name)
-				while getattr(element_obj, '__wrapped__', None):
-					element_obj = getattr(element_obj, '__wrapped__')
-				is_prop = isinstance(element_obj, property)
-				if inspect.isclass(element_obj):
-					self._trace(element_obj)
-				elif (hasattr(element_obj, '__call__') or is_prop) and (str(type(element_obj))[7:-2] not in ['wrapper_descriptor'] and \
-															(type(element_obj) not in [types.InstanceType, types.BuiltinFunctionType, types.BuiltinMethodType])):
-					element_type = 'meth' if isinstance(element_obj, types.MethodType) else ('prop' if is_prop else 'func')
-					element_full_name = ('{0}.{1}.{2}'.format(element_module, element_class, element_name) if element_class else '{0}.{1}').format(element_module, element_name)
-					if element_full_name not in self._callables_db:
-						code_id = None if is_prop else _get_code_id(element_obj)
-						self._callables_db[element_full_name] = {'type':element_type, 'code_id':code_id, 'attr':None, 'link':None}
-						if code_id:
-							self._reverse_callables_db[code_id] = element_full_name
-					if is_prop:
-						self._prop_dict[element_full_name] = element_obj
-			self._get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
-
 	def _get_closures(self, obj):	#pylint: disable=R0914,R0915
-		""" Find closures within module """
+		""" Find closures within module. Implement a mini-parser, finding @, def or class starts of line while keeping track of indentation levels """
 		if inspect.ismodule(obj):
-			element_module = obj.__name__
 			# Read module file
+			element_module = obj.__name__
 			module_file_name = '{0}.py'.format(os.path.splitext(obj.__file__)[0])
 			with open(module_file_name, 'rb') as file_obj:
 				module_lines = file_obj.read().split('\n')
-			# Initialize parser variables
-			indent_stack = [{'level':0, 'prefix':element_module, 'type':'module'}]
-			decorator_num = None
-			attr_name = ''
-			for num, line in enumerate(module_lines, start=1):
-				class_match = self._class_regexp.match(line)
-				func_match = self._func_regexp.match(line)
+			# Initialize mini-parser variables
+			indent_stack, decorator_num, attr_name = [{'level':0, 'prefix':element_module, 'type':'module'}], None, ''
+			for num, class_match, class_indent, class_name, func_match, func_indent, func_name, getter_match, setter_match, deleter_match, decorator_match in _line_matches(module_lines):
 				# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
-				attr_name = attr_name if attr_name else '(getter)' if self._getter_prop_regex.match(line) else ('(setter)' if self._setter_prop_regex.match(line) else ('(deleter)' if self._deleter_prop_regex.match(line) else ''))
-				decorator_num = num if self._decorator_regex.match(line) and (decorator_num == None) else decorator_num
+				attr_name = attr_name if attr_name else '(getter)' if getter_match else ('(setter)' if setter_match else ('(deleter)' if deleter_match else ''))
+				decorator_num = num if decorator_match and (decorator_num == None) else decorator_num
 				element_num = decorator_num if decorator_num else num
-				#
 				if class_match or func_match:
-					class_name = class_match.group(2) if class_match else None
-					func_name = func_match.group(2) if func_match else None
-					indent = len(_replace_tabs(class_match.group(1) if class_match else func_match.group(1)))
+					indent = len(_replace_tabs(class_indent if class_match else func_indent))
 					# Remove all blocks at the same level to find out the indentation "parent"
 					while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 						indent_stack.pop()
@@ -292,6 +273,37 @@ class Callables(object):	#pylint: disable=R0903,R0902
 							self._callables_db[name]['link'] = {'prop':prop_name, 'action':attr}
 						attr_dict[attr] = name	#pylint: disable=W0631
 			self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
+
+	def _trace(self, obj):
+		""" Generate a list of object callables (internal function, no argument validation)"""
+		self._prop_dict = {}
+		element_module = obj.__name__ if inspect.ismodule(obj) else obj.__module__
+		element_class = obj.__name__ if inspect.isclass(obj) else None
+		if (element_module not in self._module_names) or (element_class and (id(obj) not in self._class_objs)):
+			self._module_names += [element_module] if inspect.ismodule(obj) else []
+			self._class_objs += [id(obj)] if inspect.isclass(obj) else []
+			# Classes already traced looking for enclosures need to be traced again because properties are not detected
+			# (they could be defined as return values of a function, which would take effort to detect reliably via file parsing)
+			self._class_names += ['{0}.{1}'.format(element_module, element_class)] if (inspect.isclass(obj) and ('{0}.{1}'.format(element_module, element_class) not in self._class_names)) else []
+			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
+			for element_name in [element_name for element_name in dir(obj) if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name))]:
+				element_obj = getattr(obj, element_name)
+				while getattr(element_obj, '__wrapped__', None):	# Unwrap all decorators
+					element_obj = getattr(element_obj, '__wrapped__')
+				is_prop = isinstance(element_obj, property)
+				if inspect.isclass(element_obj):
+					self._trace(element_obj)
+				elif (hasattr(element_obj, '__call__') or is_prop) and _valid_type(element_obj):
+					element_type = 'meth' if isinstance(element_obj, types.MethodType) else ('prop' if is_prop else 'func')
+					element_full_name = ('{0}.{1}.{2}'.format(element_module, element_class, element_name) if element_class else '{0}.{1}').format(element_module, element_name)
+					if element_full_name not in self._callables_db:
+						code_id = None if is_prop else _get_code_id(element_obj)
+						self._callables_db[element_full_name] = {'type':element_type, 'code_id':code_id, 'attr':None, 'link':None}
+						if not is_prop:
+							self._reverse_callables_db[code_id] = element_full_name
+					if is_prop:
+						self._prop_dict[element_full_name] = element_obj
+			self._get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Module(s) callables database')
