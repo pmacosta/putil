@@ -18,11 +18,8 @@ import putil.misc
 
 def _get_code_id(obj):
 	""" Return unique identity tuple to individualize callable object """
-	ret = None
 	if hasattr(obj, 'func_code'):
-		code_obj = getattr(obj, 'func_code')
-		ret = (code_obj.co_filename, code_obj.co_firstlineno)
-	return ret
+		return (obj.func_code.co_filename, obj.func_code.co_firstlineno)
 
 
 def _line_matches(lines):	# pylint: disable=R0914
@@ -44,6 +41,13 @@ def _line_matches(lines):	# pylint: disable=R0914
 		deleter_match = deleter_prop_regexp.match(line)
 		decorator_match = decorator_regexp.match(line)
 		yield num, class_match, class_indent, class_name, func_match, func_indent, func_name, getter_match, setter_match, deleter_match, decorator_match
+
+
+def _private_props(obj):
+	""" Generator to yield private properties of object """
+	for obj_name in dir(obj):
+		if (len(obj_name) > 1) and (obj_name[0] == '_') and (obj_name[1] != '_') and (not callable(getattr(obj, obj_name))):
+			yield obj_name
 
 
 def _valid_type(obj):
@@ -160,12 +164,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	def __copy__(self):
 		cobj = Callables()
-		cobj._module_names = copy.deepcopy(self._module_names)	#pylint: disable=W0212
-		cobj._class_names = copy.deepcopy(self._class_names)	#pylint: disable=W0212
-		cobj._class_objs = copy.deepcopy(self._class_objs)	#pylint: disable=W0212
-		cobj._prop_dict = copy.copy(self._prop_dict)	#pylint: disable=W0212
-		cobj._callables_db = copy.deepcopy(self._callables_db)	#pylint: disable=W0212
-		cobj._reverse_callables_db = copy.deepcopy(self._reverse_callables_db)	#pylint: disable=W0212
+		for prop_name in _private_props(self):
+			setattr(cobj, prop_name, copy.deepcopy(getattr(self, prop_name)))
 		return cobj
 
 	def __eq__(self, other):
