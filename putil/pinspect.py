@@ -147,7 +147,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	:raises: TypeError (Argument `obj` is not valid)
 	"""
 	def __init__(self, obj=None):
-		self._module_names, self._class_names, self._class_objs, self._prop_dict, self._callables_db, self._reverse_callables_db = set(), set(), set(), {}, {}, {}
+		self._module_names, self._class_names, self._prop_dict, self._callables_db, self._reverse_callables_db = set(), set(), {}, {}, {}
 		if obj:
 			self.trace(obj)
 
@@ -246,32 +246,21 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		""" Generate a list of object callables (internal function, no argument validation)"""
 		self._prop_dict = {}
 		element_module, element_class = obj.__name__ if inspect.ismodule(obj) else obj.__module__, obj.__name__ if inspect.isclass(obj) else None
-		if (element_module not in self._module_names) or (element_class and (id(obj) not in self._class_objs)):
+		if (element_module not in self._module_names) or element_class:
 			if inspect.ismodule(obj):
 				self._module_names.add(element_module)
 				self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
 			# Classes already traced looking for enclosures need to be traced again because properties are not detected
 			# (they could be defined as return values of a function, which would take effort to detect reliably via file parsing)
-			if inspect.isclass(obj):
-				self._class_names.add('{0}.{1}'.format(element_module, element_class))
-				self._class_objs.add(id(obj))
-			for element_name in [element_name for element_name in dir(obj) if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name))]:
-				element_obj = getattr(obj, element_name)
-				while getattr(element_obj, '__wrapped__', None):	# Unwrap all decorators
-					element_obj = getattr(element_obj, '__wrapped__')
-				is_prop = isinstance(element_obj, property)
-				if inspect.isclass(element_obj):
-					self._trace(element_obj)
-				elif (hasattr(element_obj, '__call__') or is_prop) and _valid_type(element_obj):
-					element_type = 'meth' if isinstance(element_obj, types.MethodType) else ('prop' if is_prop else 'func')
-					element_full_name = ('{0}.{1}.{2}'.format(element_module, element_class, element_name) if element_class else '{0}.{1}').format(element_module, element_name)
-					if element_full_name not in self._callables_db:
-						code_id = None if is_prop else _get_code_id(element_obj)
-						self._callables_db[element_full_name] = {'type':element_type, 'code_id':code_id, 'attr':None, 'link':None}
-						if not is_prop:
-							self._reverse_callables_db[code_id] = element_full_name
-					if is_prop:
-						self._prop_dict[element_full_name] = element_obj
+			for element_name, element_obj in inspect.getmembers(obj):
+				if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name)):
+					if inspect.isclass(element_obj):
+						self._trace(element_obj)
+					elif isinstance(element_obj, property):
+						element_full_name = '.'.join([element_module, element_class, element_name])
+						if element_full_name not in self._callables_db:
+							self._callables_db[element_full_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':None}
+							self._prop_dict[element_full_name] = element_obj
 			self._get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
 
 	def trace(self, obj):

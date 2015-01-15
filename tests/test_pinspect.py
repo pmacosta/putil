@@ -168,12 +168,6 @@ def test_copy():
 	test_list = list()
 	test_list.append((source_obj._module_names == dest_obj._module_names) and (id(source_obj._module_names) != id(dest_obj._module_names)))
 	test_list.append((source_obj._class_names == dest_obj._class_names) and (id(source_obj._class_names) != id(dest_obj._class_names)))
-	print
-	print source_obj._class_objs
-	print dest_obj._class_objs
-	print id(source_obj._class_objs)
-	print id(dest_obj._class_objs)
-	test_list.append((source_obj._class_objs == dest_obj._class_objs) and (id(source_obj._class_objs) != id(dest_obj._class_objs)))
 	test_list.append((source_obj._prop_dict == dest_obj._prop_dict) and (id(source_obj._prop_dict) != id(dest_obj._prop_dict)))
 	test_list.append((source_obj._callables_db == dest_obj._callables_db) and (id(source_obj._callables_db) != id(dest_obj._callables_db)))
 	assert test_list == [True]*len(test_list)
