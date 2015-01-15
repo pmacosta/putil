@@ -39,8 +39,8 @@ def class_enclosing_func():
 				def __init__(self):
 					""" Constructor method """
 					self.subobj = None
-
 			return SubClosureClass
+		obj = property(get_obj, set_obj)
 
 	return ClosureClass
 

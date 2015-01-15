@@ -22,26 +22,10 @@ def _get_code_id(obj):
 		return (obj.func_code.co_filename, obj.func_code.co_firstlineno)
 
 
-def _line_matches(lines):	# pylint: disable=R0914
-	""" Generator to yield results of all regex matches """
-	# Regular expressions to detect class definition, function definition and decorator-defined properties
-	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
-	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
-	getter_prop_regexp, setter_prop_regexp, deleter_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$'), re.compile(r'^(\s*)@(\w+)\.setter\s*$'), re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
-	decorator_regexp = re.compile(r'^(\s*)@(.+)')
-	for num, line in enumerate(lines, start=1):
-		class_match = class_regexp.match(line)
-		class_indent, class_name = class_match.groups() if class_match else (None, None)
-		func_match = func_regexp.match(line)
-		func_indent, func_name = func_match.groups() if func_match else (None, None)
-		getter_match, setter_match, deleter_match = getter_prop_regexp.match(line), setter_prop_regexp.match(line), deleter_prop_regexp.match(line)
-		decorator_match = decorator_regexp.match(line)
-		yield num, class_match, class_indent, class_name, func_match, func_indent, func_name, getter_match, setter_match, deleter_match, decorator_match
-
-
 def _private_props(obj):
 	""" Generator to yield private properties of object """
-	for obj_name in [obj_name for obj_name in dir(obj) if (len(obj_name) > 1) and (obj_name[0] == '_') and (obj_name[1] != '_') and (not callable(getattr(obj, obj_name)))]:
+	private_prop_regexp = re.compile('_[^_]+')
+	for obj_name in [obj_name for obj_name in dir(obj) if private_prop_regexp.match(obj_name) and (not callable(getattr(obj, obj_name))) and ('regexp' not in obj_name)]:
 		yield obj_name
 
 
@@ -143,6 +127,13 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	"""
 	def __init__(self, obj=None):
 		self._module_names, self._class_names, self._callables_db, self._reverse_callables_db = set(), set(), {}, {}
+		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
+		self._func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
+		self._getter_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
+		self._setter_prop_regexp = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
+		self._deleter_prop_regexp = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
+		self._decorator_regexp = re.compile(r'^(\s*)@(.+)')
+		self._whitespace_regexp = re.compile(r'^(\s*)(\w*)')
 		if obj:
 			self.trace(obj)
 
@@ -183,8 +174,14 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		with open(module_file_name, 'rb') as file_obj:
 			module_lines = file_obj.read().split('\n')
 		# Initialize mini-parser variables
-		indent_stack, decorator_num, attr_name = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], None, ''
-		for num, class_match, class_indent, class_name, func_match, func_indent, func_name, getter_match, setter_match, deleter_match, decorator_match in _line_matches(module_lines):
+		indent_stack, decorator_num, attr_name, closure_class, closure_code, closure_class_indent, class_eval_line = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], None, '', False, [], -1, ''
+		for num, line in enumerate(module_lines, start=1):
+			class_match = self._class_regexp.match(line)
+			class_indent, class_name = class_match.groups() if class_match else (None, None)
+			func_match = self._func_regexp.match(line)
+			func_indent, func_name = func_match.groups() if func_match else (None, None)
+			getter_match, setter_match, deleter_match = self._getter_prop_regexp.match(line), self._setter_prop_regexp.match(line), self._deleter_prop_regexp.match(line)
+			decorator_match = self._decorator_regexp.match(line)
 			# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
 			attr_name = attr_name if attr_name else '(getter)' if getter_match else ('(setter)' if setter_match else ('(deleter)' if deleter_match else ''))
 			decorator_num = num if decorator_match and (decorator_num == None) else decorator_num
@@ -195,7 +192,11 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 					indent_stack.pop()
 				if class_match:
+					closure_class = indent_stack[-1]['type'] != 'module'
 					self._class_names.add('{0}.{1}'.format(indent_stack[-1]['prefix'], class_name))
+					if closure_class:
+						closure_class_indent = indent
+						class_eval_line = 'tvar = {0}'.format(class_name)
 				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
 				if func_name and (element_full_name not in self._callables_db):
 					self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':None}
@@ -203,6 +204,19 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 				# Reset property variables
 				decorator_num, attr_name = None, ''
+			if closure_class:
+				line = _replace_tabs(line)
+				start_space, content = self._whitespace_regexp.match(line).groups()
+				if closure_code and content and (len(start_space) <= closure_class_indent):
+					closure_code.append(class_eval_line)
+					closure_code = '\n'.join(closure_code)
+					print '-------------------------------------------'
+					print closure_code
+					print '-------------------------------------------'
+					closure_class, closure_code, closure_class_indent, class_eval_line = False, [], -1, ''
+				else:
+					closure_code.append(line[closure_class_indent:])
+
 
 	def _get_prop_components(self, prop_name, prop_obj):
 		""" Find getter, setter, deleter functions of a property """
