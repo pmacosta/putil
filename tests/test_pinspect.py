@@ -152,7 +152,7 @@ def test_callables():	# pylint: disable=R0915
 	test_list.append(repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2']])")
 	test_list.append(str(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == ref_text)
 	test_list.append(repr(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == \
-				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])")
+				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2']])")
 	test_list.append(repr(putil.pinspect.Callables()) == "putil.pinspect.Callables()")
 	# Test exception raised when callable is not found in database (mainly to cover potential edge cases not considered during development)
 	with mock.patch('putil.pinspect._get_code_id', side_effect=mock_get_code_id):
