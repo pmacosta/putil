@@ -139,6 +139,14 @@ def test_callables():	# pylint: disable=R0915
 	ref_list.append('pinspect_support_module_2.setter_enclosing_func.setter_closure_func: func (8)')
 	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar')
 	ref_text = '\n'.join(ref_list)
+	print
+	print '------------------'
+	for xxx, yyy in zip(str(obj).split('\n'), ref_list):
+		if xxx != yyy:
+			print xxx
+			print yyy
+			break
+	print '------------------'
 	test_list.append(str(obj) == ref_text)
 	# Test that callables_db and reverse_callables_db are in sync
 	congruence_flag = True
@@ -168,8 +176,8 @@ def test_copy():
 	test_list = list()
 	test_list.append((source_obj._module_names == dest_obj._module_names) and (id(source_obj._module_names) != id(dest_obj._module_names)))
 	test_list.append((source_obj._class_names == dest_obj._class_names) and (id(source_obj._class_names) != id(dest_obj._class_names)))
-	test_list.append((source_obj._prop_dict == dest_obj._prop_dict) and (id(source_obj._prop_dict) != id(dest_obj._prop_dict)))
 	test_list.append((source_obj._callables_db == dest_obj._callables_db) and (id(source_obj._callables_db) != id(dest_obj._callables_db)))
+	test_list.append((source_obj._reverse_callables_db == dest_obj._reverse_callables_db) and (id(source_obj._reverse_callables_db) != id(dest_obj._reverse_callables_db)))
 	assert test_list == [True]*len(test_list)
 
 def test_eq():

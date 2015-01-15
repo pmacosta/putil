@@ -45,11 +45,6 @@ def _private_props(obj):
 		yield obj_name
 
 
-def _valid_type(obj):
-	""" Return True if object type is to be added to callables database """
-	return (str(type(obj))[7:-2] not in ['wrapper_descriptor']) and (type(obj) not in [types.InstanceType, types.BuiltinFunctionType, types.BuiltinMethodType])
-
-
 def is_magic_method(name):
 	"""
 	Determines if a method is a magic method or not (with a '__' prefix and suffix)
@@ -147,7 +142,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	:raises: TypeError (Argument `obj` is not valid)
 	"""
 	def __init__(self, obj=None):
-		self._module_names, self._class_names, self._prop_dict, self._callables_db, self._reverse_callables_db = set(), set(), {}, {}, {}
+		self._module_names, self._class_names, self._callables_db, self._reverse_callables_db = set(), set(), {}, {}
 		if obj:
 			self.trace(obj)
 
@@ -181,10 +176,6 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		""" Getter for callables_db property """
 		return self._callables_db
 
-	def _get_reverse_callables_db(self):
-		""" Getter for reverse_callables_db property """
-		return self._reverse_callables_db
-
 	def _get_closures(self, obj):	#pylint: disable=R0914,R0915
 		""" Find closures within module. Implement a mini-parser, finding "@", "def" or "class" start of lines while keeping track of indentation levels """
 		# Read module file
@@ -213,55 +204,48 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				# Reset property variables
 				decorator_num, attr_name = None, ''
 
-	def _get_prop_components(self):
+	def _get_prop_components(self, prop_name, prop_obj):
 		""" Find getter, setter, deleter functions of a property """
-		for prop_name, prop_obj in self._prop_dict.items():
-			attr_dict = self._callables_db[prop_name].get('attr') if self._callables_db[prop_name].get('attr') else dict()
-			for attr in ['fset', 'fget', 'fdel']:
-				if hasattr(prop_obj, attr):
-					attr_obj = getattr(prop_obj, attr)
-					if getattr(attr_obj, '__call__', None):
-						if attr_obj.__name__ == '<lambda>':
-							name = '{0}.{1}_lambda'.format(prop_name, attr)
-						else:
-							if attr_obj.__module__ not in self._module_names:
-								self._trace(sys.modules[attr_obj.__module__])
-							# Get to the object of the actual, undecorated function
-							while getattr(attr_obj, '__wrapped__', None):
-								attr_obj = getattr(attr_obj, '__wrapped__')
-							attr_code_id = _get_code_id(attr_obj)
-							for name in self._callables_db:
-								if (self._callables_db[name]['type'] != 'prop') and (attr_code_id == self._callables_db[name]['code_id']):
-									break
-							else:
-								for name in sorted(self._callables_db.keys()):
-									print '{0}: {1}'.format(name, self._callables_db[name])
-								print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr, prop_name, attr_code_id)
-								raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr, prop_name))
-							self._callables_db[name]['link'] = {'prop':prop_name, 'action':attr}
-						attr_dict[attr] = name	#pylint: disable=W0631
-			self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
+		attr_dict = {}
+		for attr_name, attr_obj in [(attr_name, getattr(prop_obj, attr_name)) for attr_name in ['fdel', 'fget', 'fset'] if hasattr(prop_obj, attr_name) and getattr(getattr(prop_obj, attr_name), '__call__', None)]:
+			if attr_obj.__name__ == '<lambda>':
+				func_name = '{0}.{1}_lambda'.format(prop_name, attr_name)
+			else:
+				if attr_obj.__module__ not in self._module_names:
+					self._trace_module(sys.modules[attr_obj.__module__])
+				# Get to the object of the actual, undecorated function
+				while getattr(attr_obj, '__wrapped__', None):
+					attr_obj = getattr(attr_obj, '__wrapped__')
+				attr_code_id = _get_code_id(attr_obj)
+				if attr_code_id not in self._reverse_callables_db:
+					for name in sorted(self._callables_db.keys()):
+						print '{0}: {1}'.format(name, self._callables_db[name])
+					print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr_name, prop_name, attr_code_id)
+					raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr_name, prop_name))
+				func_name = self._reverse_callables_db[attr_code_id]
+				self._callables_db[func_name]['link'] = {'prop':prop_name, 'action':attr_name}
+			attr_dict[attr_name] = func_name	#pylint: disable=W0631
+		self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
 
-	def _trace(self, obj):
+	def _get_reverse_callables_db(self):
+		""" Getter for reverse_callables_db property """
+		return self._reverse_callables_db
+
+	def _trace_class(self, obj):
+		""" Trace class properties, methods have already been added to database by mini-parser """
+		class_name = '.'.join([obj.__module__, obj.__name__])
+		self._class_names.add(class_name)	# Classes are only traced once because modules are only traced once, no need to check if they are already traced
+		for prop_name, prop_obj in [('.'.join([class_name, prop_name]), prop_obj) for prop_name, prop_obj in inspect.getmembers(obj) if isinstance(prop_obj, property)]:
+			self._callables_db[prop_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':None}
+			self._get_prop_components(prop_name, prop_obj)	# Find out which callables re the setter/getter/deleter of properties
+
+	def _trace_module(self, obj):
 		""" Generate a list of object callables (internal function, no argument validation)"""
-		self._prop_dict = {}
-		element_module, element_class = obj.__name__ if inspect.ismodule(obj) else obj.__module__, obj.__name__ if inspect.isclass(obj) else None
-		if (element_module not in self._module_names) or element_class:
-			if inspect.ismodule(obj):
-				self._module_names.add(element_module)
-				self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
-			# Classes already traced looking for enclosures need to be traced again because properties are not detected
-			# (they could be defined as return values of a function, which would take effort to detect reliably via file parsing)
-			for element_name, element_obj in inspect.getmembers(obj):
-				if (element_name in ['__init__', '__call__']) or (not is_magic_method(element_name)):
-					if inspect.isclass(element_obj):
-						self._trace(element_obj)
-					elif isinstance(element_obj, property):
-						element_full_name = '.'.join([element_module, element_class, element_name])
-						if element_full_name not in self._callables_db:
-							self._callables_db[element_full_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':None}
-							self._prop_dict[element_full_name] = element_obj
-			self._get_prop_components()	# Find out which callables re the setter/getter/deleter of properties
+		if obj.__name__ not in self._module_names:
+			self._module_names.add(obj.__name__)
+			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
+			for class_obj in [class_obj for _, class_obj in inspect.getmembers(obj) if inspect.isclass(class_obj)]:
+				self._trace_class(class_obj)
 
 	def trace(self, obj):
 		"""
@@ -276,7 +260,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		for obj in obj if putil.misc.isiterable(obj) else [obj]:
 			if not inspect.ismodule(obj):
 				raise TypeError('Argument `obj` is not valid')
-			self._trace(obj)
+			self._trace_module(obj)
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Module(s) callables database')
