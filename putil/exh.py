@@ -107,8 +107,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		#for num, (fob, fin, lin, fun, fuc, fui) in enumerate(fstack):
 		for fob, fin, lin, fun, fuc, fui in [obj for obj in inspect.stack()][::-1]:
 			# print putil.misc.pcolor('{0:3d}/{1:3d}'.format(num, len(fstack)), 'yellow')+' '+putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
-			#if num == 37:
-			#	import pdb; pdb.set_trace()
 			if skip_num > 0:
 				# print putil.misc.pcolor('Skipped', 'green')
 				skip_num -= 1
@@ -141,12 +139,6 @@ class ExHandle(object):	#pylint: disable=R0902
 			# else:
 				# print putil.misc.pcolor('Invalid frame', 'green')
 			decorator_flag = False
-		# Delete next-to-last callable if the callable is a seter/getter/deleter of a property defined via decorators
-		#attr_regexp = re.compile(r'[\w|\W]+\((\w+)\)')
-		#if attr_regexp.match(ret[-1]):
-		#	ret[-1] = '{0}.{1}'.format(ret[-2], ret[-1])
-		#	del ret[-2]
-
 		# print self._callables_separator.join(ret)
 		return self._callables_separator.join(ret)
 

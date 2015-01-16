@@ -75,7 +75,6 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			name = children[0]
 			children = self._db[name]['children']
 			data = self._db[name]['data']
-		#import pdb; pdb.set_trace()
 		parent = self._db[oname]['parent']
 		self._db[name]['parent'] = parent
 		if parent:
