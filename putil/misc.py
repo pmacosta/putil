@@ -12,9 +12,19 @@ import numpy
 import inspect
 import textwrap
 import tempfile
+import contextlib
 
 import putil.eng
 import putil.check
+
+@contextlib.contextmanager
+def ignored(*exceptions):
+	""" Context manager to execute commands and selectively ignore exceptions """
+	try:
+		yield
+	except exceptions:
+		pass
+
 
 def pcolor(text, color, tab=0):
 	"""
