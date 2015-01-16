@@ -13,6 +13,7 @@ import numpy
 import inspect
 import funcsigs
 import decorator
+import itertools
 
 import putil.misc
 
@@ -306,7 +307,7 @@ class OneOf(object):	#pylint: disable=R0903
 		self.case_sensitive = case_sensitive if str in self.types else None
 
 	def __contains__(self, test_obj):
-		for sub_type, sub_choice in zip(self.types, self.choices):
+		for sub_type, sub_choice in itertools.izip(self.types, self.choices):
 			# Compare pseudo-types
 			if (sub_type in self.pseudo_types) and get_includes(sub_choice, test_obj):
 				return True
@@ -325,7 +326,7 @@ class OneOf(object):	#pylint: disable=R0903
 
 	def istype(self, test_obj):
 		"""	Checks to see if object is of the same class type """
-		for sub_type, sub_choice in zip(self.types, self.choices):
+		for sub_type, sub_choice in itertools.izip(self.types, self.choices):
 			if ((sub_type in self.pseudo_types) and get_istype(sub_choice, test_obj)) or ((sub_type not in self.pseudo_types) and (sub_type == type(test_obj))):
 				return True
 		return False
@@ -347,7 +348,7 @@ register_new_type(OneOf, 'one of many options')
 class NumberRange(object):	#pylint: disable=R0903
 	"""	Class for numeric arguments that can only take values in a certain range """
 	def __init__(self, minimum=None, maximum=None):
-		for value, name in zip([minimum, maximum], ['minimum', 'maximum']):
+		for value, name in itertools.izip([minimum, maximum], ['minimum', 'maximum']):
 			if (value is not None) and (not putil.misc.isreal(value)):
 				raise TypeError('Argument `{0}` is of the wrong type'.format(name))
 		if (minimum is None) and (maximum is None):
@@ -519,7 +520,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 
 	def includes(self, test_obj):	#pylint: disable=R0201
 		""" Test that an object belongs to the pseudo-type """
-		for sub_type, sub_inst in zip(self.types, self.instances):
+		for sub_type, sub_inst in itertools.izip(self.types, self.instances):
 			if ((sub_type in self.pseudo_types) and get_includes(sub_inst, test_obj)) or ((sub_type not in self.pseudo_types) and isinstance(test_obj, sub_type)):
 				return True
 		return False
@@ -535,7 +536,7 @@ class PolymorphicType(object):	#pylint: disable=R0903
 		""" Returns a suitable exception message """
 		exp_dict = {'type':None, 'msg':''}
 		if Any not in self.types:
-			exp_dict_list = [get_exception(sub_inst, **({'param_name':param_name} if sub_type != File else {'param':param})) for sub_type, sub_inst in zip(self.types, self.instances) if \
+			exp_dict_list = [get_exception(sub_inst, **({'param_name':param_name} if sub_type != File else {'param':param})) for sub_type, sub_inst in itertools.izip(self.types, self.instances) if \
 					(sub_type in self.pseudo_types) and (get_istype(sub_inst, test_obj)) and (not get_includes(sub_inst, test_obj))]
 			if exp_dict_list:
 				# Check if all exceptions are of the same type, in which case raise an exception of that type, otherwise raise RuntimeError
@@ -627,7 +628,7 @@ def type_match_fixed_length_iterable(test_obj, ref_obj):	#pylint: disable=C0103
 	if (not isinstance(test_obj, type(ref_obj))) or ((isinstance(test_obj, type(ref_obj))) and (len(test_obj) != len(ref_obj))):
 		return False
 	# Check that each element is of the right type
-	for test_subobj, ref_subobj in zip(test_obj, ref_obj):
+	for test_subobj, ref_subobj in itertools.izip(test_obj, ref_obj):
 		if not type_match(test_subobj, ref_subobj):
 			return False
 	return True
@@ -650,7 +651,7 @@ def check_argument_internal(param_name, param_spec, func, exhobj, *args, **kwarg
 	pseudo_types = _get_pseudo_types(False)['type']
 	param = create_argument_dictionary(func, *args, **kwargs).get(param_name)
 	if (param is not None) and (type(param_spec) in pseudo_types):
-		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in zip(param_spec.types, param_spec.instances) if \
+		sub_param_spec = [param_spec] if type(param_spec) != PolymorphicType else [sub_inst for sub_type, sub_inst in itertools.izip(param_spec.types, param_spec.instances) if \
 			(sub_type in pseudo_types) and (get_istype(sub_inst, param)) and (Any not in param_spec.types)]
 		if sub_param_spec:	# Eliminate PolymorphicType definitions that do not have any pseudo-type
 			# Find out parameter expected by exception() method
@@ -661,9 +662,9 @@ def check_argument_internal(param_name, param_spec, func, exhobj, *args, **kwarg
 					fiter = iter(exparam.items())
 					exparam_name = next(fiter)[0]
 					exparam_dict_list.append({'param':param} if exparam_name == 'param' else {'param_name':param_name})
-			ex_dict_list = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
+			ex_dict_list = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in itertools.izip(sub_param_spec, exparam_dict_list) if not get_includes(param_spec, param)]	#pylint: disable=W0142
 			if exhobj:
-				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in zip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
+				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in itertools.izip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = 'check_argument_internal_{0}{1}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
 					exhobj.add_exception(name=ex_name, extype=ex['type'], exmsg=ex['msg'])

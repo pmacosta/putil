@@ -188,7 +188,7 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 		raise TypeError('Argument `contract_exceptions` is of the wrong type')
 	if isinstance(contract_exceptions, dict):
 		contract_exceptions = [contract_exceptions]
-	if isinstance(contract_exceptions, list) and any([not isinstance(key, str) for item in contract_exceptions for key in item.keys()]):
+	if isinstance(contract_exceptions, list) and any([not isinstance(key, str) for item in contract_exceptions for key in item.iterkeys()]):
 		raise TypeError('Contract exception definition is of the wrong type')
 	# Validate individual exception definitions
 	if isinstance(contract_exceptions, list) and any([not ((set(item.keys()) == set(['name', 'msg'])) or (set(item.keys()) == set(['name', 'msg', 'type']))) for item in contract_exceptions]):

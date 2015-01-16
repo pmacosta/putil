@@ -4,6 +4,7 @@
 
 import csv
 import sys
+import itertools
 
 import putil.exh
 import putil.misc
@@ -43,7 +44,7 @@ def csv_data_filter(dfilter):
 		raise ValueError(exdesc['argument_invalid'])
 	if not len(dfilter):
 		raise ValueError(exdesc['argument_empty'])
-	if any([not isinstance(col_name, str) for col_name in dfilter.keys()]):
+	if any([not isinstance(col_name, str) for col_name in dfilter.iterkeys()]):
 		raise ValueError(exdesc['argument_invalid'])
 	for col_name in dfilter:
 		if (not isinstance(dfilter[col_name], list)) and (not putil.misc.isnumber(dfilter[col_name])) and (not isinstance(dfilter[col_name], str)):
@@ -210,7 +211,7 @@ class CsvFile(object):
 			self._validate_dfilter(dfilter)
 			col_nums = [self._header_upper.index(key.upper()) for key in dfilter]
 			col_values = [[element] if not putil.misc.isiterable(element) else [value for value in element] for element in dfilter.values()]
-			self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in zip(col_nums, col_values)])]
+			self._fdata = [row for row in self._data if all([row[col_num] in col_value for col_num, col_value in itertools.izip(col_nums, col_values)])]
 			self._dfilter = dfilter
 
 	@putil.pcontracts.contract(dfilter='csv_data_filter')

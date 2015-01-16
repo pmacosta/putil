@@ -79,7 +79,7 @@ def get_package_name(module_obj):
 	obj_name_tokens = name.split('.')
 	if len(obj_name_tokens) == 1:
 		return name
-	for module_name in ['.'.join(obj_name_tokens[:num+1]) for num in range(len(obj_name_tokens)-1)]:
+	for module_name in ['.'.join(obj_name_tokens[:num+1]) for num in xrange(len(obj_name_tokens)-1)]:
 		if module_name in sys.modules:
 			return module_name
 	raise RuntimeError('Loaded package root could not be found')

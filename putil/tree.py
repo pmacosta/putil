@@ -6,6 +6,7 @@
 
 
 import copy
+import itertools
 
 import putil.exh
 
@@ -96,7 +97,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	def _create_intermediate_nodes(self, name):
 		""" Create intermediate nodes if hierarchy does not exist """
 		hierarchy = self._split_node_name(name, self.root_name)
-		node_tree = [self.root_name+self._node_separator+(self._node_separator.join(hierarchy[:num+1])) for num in range(len(hierarchy))]
+		node_tree = [self.root_name+self._node_separator+(self._node_separator.join(hierarchy[:num+1])) for num in xrange(len(hierarchy))]
 		for parent, child in [(child[:child.rfind(self._node_separator)], child) for child in node_tree if child not in self._db]:
 			self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
 			self._db[parent]['children'] = sorted(self._db[parent]['children']+[child])
@@ -169,7 +170,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		plist2 = ncmu*[self._vertical]+[' ']
 		slist = (ncmu+1)*[sep+pre2]
 		dmark = ' (*)' if self._db[name]['data'] else ''
-		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, nname, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in zip(children, plist1, plist2, slist)])
+		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, nname, dmark)]+[self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2) for child, p1, p2, schar in itertools.izip(children, plist1, plist2, slist)])
 
 	def _rename_node(self, name, new_name):
 		""" Rename node private method (no argument validation and usage of getter/setter private methods for speed) """
