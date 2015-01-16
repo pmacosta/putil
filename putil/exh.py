@@ -60,7 +60,8 @@ class ExHandle(object):	#pylint: disable=R0902
 	Manages exceptions
 	"""
 	def __init__(self):
-		self._ex_dict = dict()
+		self._cache = {}
+		self._ex_dict = {}
 		self._callables_obj = putil.pinspect.Callables()
 		self._callables_separator = '/'
 
@@ -94,10 +95,16 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_callable_path(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
+		stack = inspect.stack()
+		for fnum, cache_frame in enumerate(stack):
+			if _valid_frame(cache_frame[1], cache_frame[3]):
+				break
+		cache_key = id(cache_frame[0])	#pylint: disable=W0631
+		if cache_key in self._cache:
+			return self._cache[cache_key]
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
-
 		ret = list()
 		decorator_flag = False
 		skip_num = 0
@@ -105,7 +112,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 		#fstack = tuple([obj for obj in inspect.stack()][::-1])
 		#for num, (fob, fin, lin, fun, fuc, fui) in enumerate(fstack):
-		for fob, fin, lin, fun, fuc, fui in [obj for obj in inspect.stack()][::-1]:
+		for fob, fin, lin, fun, fuc, fui in reversed(stack[fnum:]):	#pylint: disable=W0631
 			# print putil.misc.pcolor('{0:3d}/{1:3d}'.format(num, len(fstack)), 'yellow')+' '+putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
 			if skip_num > 0:
 				# print putil.misc.pcolor('Skipped', 'green')
@@ -124,9 +131,6 @@ class ExHandle(object):	#pylint: disable=R0902
 				# print putil.misc.pcolor('Chained decorator', 'green')
 				skip_num = 1
 				continue
-			if fin.endswith('/putil/exh.py'):
-				# print putil.misc.pcolor('End of chain encountered', 'green')
-				break
 			elif _valid_frame(fin, fun):
 				#name = self._get_callable_full_name(fob, fun)
 				name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
@@ -140,7 +144,11 @@ class ExHandle(object):	#pylint: disable=R0902
 				# print putil.misc.pcolor('Invalid frame', 'green')
 			decorator_flag = False
 		# print self._callables_separator.join(ret)
-		return self._callables_separator.join(ret)
+		ret = self._callables_separator.join(ret)
+		if len(self._cache) > 10:
+			self._cache.clear()
+		self._cache[cache_key] = ret
+		return ret
 
 	def _get_callable_full_name(self, fob, fin, lin, fun, fuc, fui):	#pylint: disable=R0913,W0613
 		""" Get full path [module, class (if applicable) and function name] of callable """
@@ -172,14 +180,8 @@ class ExHandle(object):	#pylint: disable=R0902
 	def _get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
 		func_name = self._get_callable_path()
-		ex_name = '{0}{1}{2}'.format(func_name, self._callables_separator if func_name is not None else '', name if name is not None else '')
+		ex_name = ''.join([func_name, self._callables_separator if func_name is not None else '', name if name is not None else ''])
 		return {'func_name':func_name, 'ex_name':ex_name}
-
-	# def _get_func_obj(self, fobj, fun):	# pylint:disable=R0201
-	# 	""" Get function object from frame object """
-	# 	#if fobj.f_locals.get(fun, fobj.f_globals.get(fun, None)):
-	# 	return fobj.f_locals.get(fun, fobj.f_globals.get(fun, None))
-	# 	#return getattr(fobj.f_locals['self'], fun) if (('self' in fobj.f_locals) and (fun in dir(fobj.f_locals['self']))) else None
 
 	def _get_module_name(self, frame_obj, func_obj):
 		""" Get module name and optionally trace it """

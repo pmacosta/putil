@@ -52,7 +52,7 @@ def test_add_exception_errors():
 												r'Callable with call ID ([\w|\W]+) not found in reverse callables database'))
 	assert test_list == [True]*len(test_list)
 
-def test_add_exception_works():	# pylint: disable=R0912
+def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 	""" Test add_exception() function works """
 	test_list = list()
 	exobj = putil.exh.ExHandle()
@@ -84,6 +84,22 @@ def test_add_exception_works():	# pylint: disable=R0912
 		def value3(self):	#pylint: disable=C0111,R0201
 			self._exobj.add_exception('deleter_exception', TypeError, 'Delete function exception')
 			print 'Cannot delete attribute'
+	def func7():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_7', TypeError, 'Total exception #7')
+	def func8():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_8', TypeError, 'Total exception #8')
+	def func9():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_9', TypeError, 'Total exception #9')
+	def func10():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_10', TypeError, 'Total exception #10')
+	def func11():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_11', TypeError, 'Total exception #11')
+	def func12():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_12', TypeError, 'Total exception #12')
+	def func13():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_13', TypeError, 'Total exception #13')
+	def func14():	#pylint: disable=C0111,W0612
+		exobj.add_exception('total_exception_14', TypeError, 'Total exception #14')
 	dobj = Class1(exobj)	#pylint: disable=W0612
 	dobj.value3 = 5
 	print dobj.value3
@@ -91,6 +107,14 @@ def test_add_exception_works():	# pylint: disable=R0912
 	cdb = exobj._ex_dict
 	func1()
 	func2("world")
+	func7()
+	func8()
+	func9()
+	func10()
+	func11()
+	func12()
+	func13()
+	func14()
 	if not cdb:
 		assert False
 	for exname in cdb:
@@ -107,6 +131,22 @@ def test_add_exception_works():	# pylint: disable=R0912
 			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(getter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception') and (erec['checked'] == False))
 		elif exname.endswith('test_exh.test_add_exception_works.Class1.value3(deleter)/deleter_exception'):
 			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func7/total_exception_7'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func7') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func8/total_exception_8'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func8') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func9/total_exception_9'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func9') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func10/total_exception_10'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func10') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func11/total_exception_11'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func11') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func12/total_exception_12'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func12') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func13/total_exception_13'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func13') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13') and (erec['checked'] == False))
+		elif exname.endswith('test_exh.test_add_exception_works.func14/total_exception_14'):
+			test_list.append(erec['function'].endswith('test_exh.test_add_exception_works.func14') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14') and (erec['checked'] == False))
 		else:
 			test_list.append(False)
 	assert test_list == [True]*len(test_list)
