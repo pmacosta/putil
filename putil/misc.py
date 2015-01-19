@@ -12,14 +12,24 @@ import numpy
 import inspect
 import textwrap
 import tempfile
-import contextlib
+import decorator
 
 import putil.eng
 import putil.check
 
-@contextlib.contextmanager
+@decorator.contextmanager
 def ignored(*exceptions):
-	""" Context manager to execute commands and selectively ignore exceptions """
+	"""
+	Context manager to execute commands and selectively ignore exceptions (from "Transforming Code into Beautiful, Idiomatic Python" talk at PyCon US 2013 by Raymond Hettinger)
+
+	:param	exceptions: Exception types to ignore
+	:type	exceptions: Exception object, i.e. RuntimeError, IOError, etc.
+
+	For example::
+
+		with ignored(OSError):
+			os.remove('somefile.tmp')
+	"""
 	try:
 		yield
 	except exceptions:
@@ -28,19 +38,35 @@ def ignored(*exceptions):
 
 def pcolor(text, color, tab=0):
 	"""
-	Print to terminal in a limited amount of colors
+	Returns a string that once printed is colorized
+
+	:param	text: Text to colorize
+	:type	text: string
+	:param	color: Color to use, one of `['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'none'] (case insensitive)`
+	:type	color: string
+	:param	tab: Number of spaces to preprend **text** with
+	:type	tab: integer
+	:rtype:	string
+	:raises:
+	 * TypeError (Argument `color` is not valid)
+
+	 * TypeError (Argument `tab` is not valid)
+
+	 * TypeError (Argument `text` is not valid)
+
+	 * ValueError (Unknown color *[color]*)
 	"""
 	esc_dict = {'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35, 'cyan':36, 'white':37, 'none':-1}
-	if isinstance(text, str) is False:
-		raise TypeError('text has to be a string in pcolor function')
-	if isinstance(color, str) is False:
-		raise TypeError('color has to be a string in pcolor function')
-	if isinstance(tab, int) is False:
-		raise TypeError('tab has to be an intenger in pcolor function')
+	if not isinstance(text, str):
+		raise TypeError('Argument `text` is not valid')
+	if not isinstance(color, str):
+		raise TypeError('Argument `color` is not valid')
+	if not isinstance(tab, int):
+		raise TypeError('Argument `tab` is not valid')
 	color = color.lower()
-	if color not in esc_dict.keys():
-		raise RuntimeError('Color "'+color+'" not supported by pcolor function')
-	return '\033['+str(esc_dict[color])+'m'+' '*tab+text+'\033[0m' if esc_dict[color] != -1 else (' '*tab)+text
+	if color not in esc_dict:
+		raise ValueError('Unknown color {0}'.format(color))
+	return '\033[{0}m{1}{2}\033[0m'.format(esc_dict[color], ' '*tab, text) if esc_dict[color] != -1 else '{0}{1}'.format(' '*tab, text)
 
 def binary_string_to_octal_string(text):	#pylint: disable=C0103
 	"""
