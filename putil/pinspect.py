@@ -16,10 +16,12 @@ import inspect
 import putil.misc
 
 
-def _get_code_id(obj):
+def _get_code_id(obj, file_name=None, offset=0):
 	""" Return unique identity tuple to individualize callable object """
-	if hasattr(obj, 'func_code'):
+	if hasattr(obj, 'func_code') and (obj.func_code.co_filename != '<string>'):
 		return (obj.func_code.co_filename, obj.func_code.co_firstlineno)
+	elif file_name:
+		return (file_name, obj.func_code.co_firstlineno+offset)
 
 
 def _private_props(obj):
@@ -126,7 +128,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	:raises: TypeError (Argument `obj` is not valid)
 	"""
 	def __init__(self, obj=None):
-		self._module_names, self._class_names, self._callables_db, self._reverse_callables_db = set(), set(), {}, {}
+		self._module_names, self._class_names, self._callables_db, self._reverse_callables_db, self._closure_class_obj_list = set(), set(), {}, {}, []
 		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
 		self._func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
 		self._getter_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
@@ -134,6 +136,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		self._deleter_prop_regexp = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
 		self._decorator_regexp = re.compile(r'^(\s*)@(.+)')
 		self._whitespace_regexp = re.compile(r'^(\s*)(\w*)')
+		self._namespece_regexp = re.compile(r"name '(\w+)' is not defined")
+		self._import_regexp = re.compile(r'^(\s*)import\s+')
+		self._from_regexp = re.compile(r'^(\s*)from\s+')
 		if obj:
 			self.trace(obj)
 
@@ -152,29 +157,34 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	def __str__(self):
 		ret = list()
-		ret.append('Modules: {0}'.format(', '.join(sorted(self._module_names))))
-		ret.append('Classes: {0}'.format(', '.join(sorted(self._class_names))))
+		ret.append('Modules:')
+		for module_name in sorted(self._module_names):
+			ret.append('   {0}'.format(module_name))
+		ret.append('Classes:')
+		for class_name in sorted(self._class_names):
+			ret.append('   {0}'.format(class_name))
 		for key in sorted(self._callables_db.keys()):
 			ret.append('{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else ''))
 			if self._callables_db[key]['type'] == 'prop':
 				for attr in self._callables_db[key]['attr']:
 					ret.append('   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr]))
 			elif self._callables_db[key].get('link', None):
-				ret.append('   {0} of: {1}'.format(self._callables_db[key]['link']['action'], self._callables_db[key]['link']['prop']))
+				for link_dict in self._callables_db[key]['link']:
+					ret.append('   {0} of: {1}'.format(link_dict['action'], link_dict['prop']))
 		return '\n'.join(ret)
 
 	def _get_callables_db(self):
 		""" Getter for callables_db property """
 		return self._callables_db
 
-	def _get_closures(self, obj):	#pylint: disable=R0914,R0915
+	def _get_closures(self, obj):	#pylint: disable=R0912,R0914,R0915
 		""" Find closures within module. Implement a mini-parser, finding "@", "def" or "class" start of lines while keeping track of indentation levels """
 		# Read module file
 		module_file_name = '{0}.py'.format(os.path.splitext(obj.__file__)[0])
 		with open(module_file_name, 'rb') as file_obj:
 			module_lines = file_obj.read().split('\n')
 		# Initialize mini-parser variables
-		indent_stack, decorator_num, attr_name, closure_class, closure_code, closure_class_indent, class_eval_line = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], None, '', False, [], -1, ''
+		indent_stack, decorator_num, attr_name, closure_class, import_stack, closure_class_list = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], None, '', False, [{'level':0, 'type':'module', 'line':None}], []
 		for num, line in enumerate(module_lines, start=1):
 			class_match = self._class_regexp.match(line)
 			class_indent, class_name = class_match.groups() if class_match else (None, None)
@@ -182,10 +192,17 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			func_indent, func_name = func_match.groups() if func_match else (None, None)
 			getter_match, setter_match, deleter_match = self._getter_prop_regexp.match(line), self._setter_prop_regexp.match(line), self._deleter_prop_regexp.match(line)
 			decorator_match = self._decorator_regexp.match(line)
+			import_match = self._import_regexp.match(line)
+			from_match = self._from_regexp.match(line)
 			# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
 			attr_name = attr_name if attr_name else '(getter)' if getter_match else ('(setter)' if setter_match else ('(deleter)' if deleter_match else ''))
 			decorator_num = num if decorator_match and (decorator_num == None) else decorator_num
 			element_num = decorator_num if decorator_num else num
+			if import_match or from_match:
+				namspace_indent = len(_replace_tabs(import_match.group(1) if import_match else from_match.group(1)))
+				while (namspace_indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
+					import_stack.pop()
+				import_stack.append({'level':namspace_indent, 'line':line.lstrip(), 'type':'not module'})
 			if class_match or func_match:
 				indent = len(_replace_tabs(class_indent if class_match else func_indent))
 				# Remove all blocks at the same level to find out the indentation "parent"
@@ -195,11 +212,11 @@ class Callables(object):	#pylint: disable=R0903,R0902
 					closure_class = indent_stack[-1]['type'] != 'module'
 					self._class_names.add('{0}.{1}'.format(indent_stack[-1]['prefix'], class_name))
 					if closure_class:
-						closure_class_indent = indent
-						class_eval_line = 'tvar = {0}'.format(class_name)
+						closure_class_list.append({'file':module_file_name, 'name':'{0}.{1}'.format(indent_stack[-1]['prefix'], class_name), 'code':[], 'namespace':[import_dict['line'] for import_dict in import_stack[1:]],
+								                   'indent':indent, 'eval':'tvar = {0}'.format(class_name), 'lineno':num})
 				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
 				if func_name and (element_full_name not in self._callables_db):
-					self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':None}
+					self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':[]}
 					self._reverse_callables_db[(module_file_name, element_num)] = element_full_name
 				indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 				# Reset property variables
@@ -207,37 +224,37 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			if closure_class:
 				line = _replace_tabs(line)
 				start_space, content = self._whitespace_regexp.match(line).groups()
-				if closure_code and content and (len(start_space) <= closure_class_indent):
-					closure_code.append(class_eval_line)
-					closure_code = '\n'.join(closure_code)
-					print '-------------------------------------------'
-					print closure_code
-					print '-------------------------------------------'
-					closure_class, closure_code, closure_class_indent, class_eval_line = False, [], -1, ''
-				else:
-					closure_code.append(line[closure_class_indent:])
+				for class_dict in closure_class_list:
+					if class_dict['code'] and content and ((len(start_space) <= class_dict['indent']) or (start_space == 0)):
+						class_dict['code'].append(class_dict['eval'])
+						self._closure_class_obj_list.append({'code':'\n'.join(class_dict['namespace']+class_dict['code']), 'file':class_dict['file'], 'name':class_dict['name'], 'lineno':class_dict['lineno']-len(class_dict['namespace'])})
+						closure_class_list.pop()
+						closure_class = bool(closure_class_list)
+					else:
+						class_dict['code'].append(line[class_dict['indent']:])
 
-
-	def _get_prop_components(self, prop_name, prop_obj):
+	def _get_prop_components(self, prop_name, prop_obj, closure_file_name=None, closure_offset=0):
 		""" Find getter, setter, deleter functions of a property """
 		attr_dict = {}
 		for attr_name, attr_obj in [(attr_name, getattr(prop_obj, attr_name)) for attr_name in ['fdel', 'fget', 'fset'] if hasattr(prop_obj, attr_name) and getattr(getattr(prop_obj, attr_name), '__call__', None)]:
 			if attr_obj.__name__ == '<lambda>':
 				func_name = '{0}.{1}_lambda'.format(prop_name, attr_name)
 			else:
-				if attr_obj.__module__ not in self._module_names:
+				if attr_obj.__module__  and (attr_obj.__module__ not in self._module_names):
 					self._trace_module(sys.modules[attr_obj.__module__])
 				# Get to the object of the actual, undecorated function
 				while getattr(attr_obj, '__wrapped__', None):
 					attr_obj = getattr(attr_obj, '__wrapped__')
-				attr_code_id = _get_code_id(attr_obj)
+				attr_code_id = _get_code_id(attr_obj, closure_file_name, closure_offset)
 				if attr_code_id not in self._reverse_callables_db:
-					for name in sorted(self._callables_db.keys()):
-						print '{0}: {1}'.format(name, self._callables_db[name])
-					print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr_name, prop_name, attr_code_id)
+					#for name in sorted(self._callables_db.keys()):
+					#	print '{0}: {1}'.format(name, self._callables_db[name])
+					#print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr_name, prop_name, attr_code_id)
 					raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr_name, prop_name))
 				func_name = self._reverse_callables_db[attr_code_id]
-				self._callables_db[func_name]['link'] = {'prop':prop_name, 'action':attr_name}
+				prop_dict = {'prop':prop_name, 'action':attr_name}
+				if prop_dict not in self._callables_db[func_name]['link']:
+					self._callables_db[func_name]['link'].append(prop_dict)
 			attr_dict[attr_name] = func_name	#pylint: disable=W0631
 		self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
 
@@ -245,13 +262,13 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		""" Getter for reverse_callables_db property """
 		return self._reverse_callables_db
 
-	def _trace_class(self, obj):
+	def _trace_class(self, obj, closure_file_name=None, closure_name=None, closure_offset=0):
 		""" Trace class properties, methods have already been added to database by mini-parser """
-		class_name = '.'.join([obj.__module__, obj.__name__])
+		class_name = closure_name if closure_name else '.'.join([obj.__module__, obj.__name__])
 		self._class_names.add(class_name)	# Classes are only traced once because modules are only traced once, no need to check if they are already traced
 		for prop_name, prop_obj in [('.'.join([class_name, prop_name]), prop_obj) for prop_name, prop_obj in inspect.getmembers(obj) if isinstance(prop_obj, property)]:
-			self._callables_db[prop_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':None}
-			self._get_prop_components(prop_name, prop_obj)	# Find out which callables re the setter/getter/deleter of properties
+			self._callables_db[prop_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':[]}
+			self._get_prop_components(prop_name, prop_obj, closure_file_name, closure_offset)	# Find out which callables re the setter/getter/deleter of properties
 
 	def _trace_module(self, obj):
 		""" Generate a list of object callables (internal function, no argument validation)"""
@@ -260,6 +277,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
 			for class_obj in [class_obj for _, class_obj in inspect.getmembers(obj) if inspect.isclass(class_obj)]:
 				self._trace_class(class_obj)
+			for class_obj in self._closure_class_obj_list:
+				exec class_obj['code'] in locals()	#pylint: disable=W0122
+				self._trace_class(tvar, class_obj['file'], class_obj['name'], class_obj['lineno']-1)	#pylint: disable=E0602
 
 	def trace(self, obj):
 		"""

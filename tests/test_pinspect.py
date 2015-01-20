@@ -78,7 +78,7 @@ def test_replace_tabs():
 
 def test_callables():	# pylint: disable=R0915
 	""" Test callables class """
-	def mock_get_code_id(obj):	#pylint: disable=W0612,W0613
+	def mock_get_code_id(obj, file_name=None, offset=0):	#pylint: disable=W0612,W0613
 		""" Mock function to trigger exception related to callable not found in database """
 		return (''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)), random.random())
 	test_list = list()
@@ -91,62 +91,94 @@ def test_callables():	# pylint: disable=R0915
 	import pinspect_support_module_1	#pylint: disable=F0401,W0612
 	obj.trace(sys.modules['pinspect_support_module_1'])
 	ref_list = list()
-	ref_list.append('Modules: pinspect_support_module_1, pinspect_support_module_2')
-	ref_list.append('Classes: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators, pinspect_support_module_1.ClassWithPropertyDefinedViaFunction, pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure' \
-				 ', pinspect_support_module_1.class_enclosing_func.ClosureClass, pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method.SubClosureClass')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__call__: meth (98)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__init__: meth (95)')
+	ref_list.append('Modules:')
+	ref_list.append('   pinspect_support_module_1')
+	ref_list.append('   pinspect_support_module_2')
+	ref_list.append('   pinspect_support_module_3')
+	ref_list.append('Classes:')
+	ref_list.append('   pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators')
+	ref_list.append('   pinspect_support_module_1.ClassWithPropertyDefinedViaFunction')
+	ref_list.append('   pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure')
+	ref_list.append('   pinspect_support_module_1.class_enclosing_func.ClosureClass')
+	ref_list.append('   pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method.SubClosureClass')
+	ref_list.append('   pinspect_support_module_2.SimpleClass')
+	ref_list.append('   pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__call__: meth (100)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__init__: meth (97)')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.encprop: prop')
 	ref_list.append('   fget: pinspect_support_module_1.property_generator.fget')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp: prop')
 	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter)')
 	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter)')
 	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter): meth (112)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter): meth (114)')
 	ref_list.append('   fdel of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter): meth (101)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter): meth (103)')
 	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter): meth (106)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter): meth (108)')
 	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.__init__: meth (70)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func: meth (86)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.__init__: meth (72)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func: meth (88)')
 	ref_list.append('   fdel of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func: meth (82)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func: meth (84)')
 	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func: meth (73)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func: meth (75)')
 	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state: prop')
 	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func')
 	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func')
 	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.__init__: meth (49)')
+	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.__init__: meth (51)')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar: prop')
 	ref_list.append('   fset: pinspect_support_module_2.setter_enclosing_func.setter_closure_func')
 	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar.fget_lambda')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func: func (19)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.__init__: meth (23)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.get_obj: meth (27)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj: meth (31)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method: meth (35)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method.SubClosureClass.__init__: meth (39)')
-	ref_list.append('pinspect_support_module_1.dummy_decorator: func (55)')
+	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.__init__: meth (24)')
+	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.get_obj: meth (28)')
+	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.obj: prop')
+	ref_list.append('   fset: pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj')
+	ref_list.append('   fdel: pinspect_support_module_3.deleter')
+	ref_list.append('   fget: pinspect_support_module_2.getter_func_for_closure_class')
+	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj: meth (32)')
+	ref_list.append('   fset of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
+	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method: meth (36)')
+	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method.SubClosureClass.__init__: meth (40)')
+	ref_list.append('pinspect_support_module_1.dummy_decorator: func (57)')
 	ref_list.append('pinspect_support_module_1.module_enclosing_func: func (11)')
 	ref_list.append('pinspect_support_module_1.module_enclosing_func.module_closure_func: func (13)')
-	ref_list.append('pinspect_support_module_1.property_generator: func (60)')
-	ref_list.append('pinspect_support_module_1.property_generator.fget: func (62)')
+	ref_list.append('pinspect_support_module_1.property_generator: func (62)')
+	ref_list.append('pinspect_support_module_1.property_generator.fget: func (64)')
 	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.encprop')
+	ref_list.append('   fget of: pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass.encprop')
+	ref_list.append('pinspect_support_module_2.SimpleClass.__init__: meth (15)')
+	ref_list.append('pinspect_support_module_2.SimpleClass.get_mobj: meth (19)')
+	ref_list.append('   fget of: pinspect_support_module_2.SimpleClass.mobj')
+	ref_list.append('pinspect_support_module_2.SimpleClass.mobj: prop')
+	ref_list.append('   fset: pinspect_support_module_2.SimpleClass.set_mobj')
+	ref_list.append('   fget: pinspect_support_module_2.SimpleClass.get_mobj')
+	ref_list.append('pinspect_support_module_2.SimpleClass.set_mobj: meth (23)')
+	ref_list.append('   fset of: pinspect_support_module_2.SimpleClass.mobj')
+	ref_list.append('pinspect_support_module_2.getter_func_for_closure_class: func (29)')
+	ref_list.append('   fget of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
 	ref_list.append('pinspect_support_module_2.setter_enclosing_func: func (6)')
 	ref_list.append('pinspect_support_module_2.setter_enclosing_func.setter_closure_func: func (8)')
 	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar')
+	ref_list.append('pinspect_support_module_3.another_class_enclosing_func: func (10)')
+	ref_list.append('pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass.__init__: meth (15)')
+	ref_list.append('pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass.encprop: prop')
+	ref_list.append('   fget: pinspect_support_module_1.property_generator.fget')
+	ref_list.append('pinspect_support_module_3.deleter: func (6)')
+	ref_list.append('   fdel of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
 	ref_text = '\n'.join(ref_list)
-	print
-	print '------------------'
-	for xxx, yyy in zip(str(obj).split('\n'), ref_list):
-		if xxx != yyy:
-			print xxx
-			print yyy
-			break
-	print '------------------'
+	if str(obj) != ref_text:
+		print str(obj)
+		print '---[Differing lines]---'
+		for actual_line, ref_line in zip(str(obj).split('\n'), ref_list):
+			if actual_line != ref_line:
+				print 'Actual line...: {0}'.format(actual_line)
+				print 'Reference line: {0}'.format(ref_line)
+				break
+		print '-----------------------'
 	test_list.append(str(obj) == ref_text)
 	# Test that callables_db and reverse_callables_db are in sync
 	congruence_flag = True
@@ -157,14 +189,14 @@ def test_callables():	# pylint: disable=R0915
 				break
 	test_list.append(congruence_flag)
 	# Test string and representation methods
-	test_list.append(repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2']])")
+	test_list.append(repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3']])")
 	test_list.append(str(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == ref_text)
 	test_list.append(repr(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == \
-				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2']])")
+				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3']])")
 	test_list.append(repr(putil.pinspect.Callables()) == "putil.pinspect.Callables()")
 	# Test exception raised when callable is not found in database (mainly to cover potential edge cases not considered during development)
 	with mock.patch('putil.pinspect._get_code_id', side_effect=mock_get_code_id):
-		test_list.append(putil.test.trigger_exception(putil.pinspect.Callables, {'obj':sys.modules['pinspect_support_module_1']}, RuntimeError, r'Attribute `([\w|\W]+)` of property `([\w|\W]+)` not found in callable database'))
+		test_list.append(putil.test.trigger_exception(putil.pinspect.Callables, {'obj':sys.modules['pinspect_support_module_2']}, RuntimeError, r'Attribute `([\w|\W]+)` of property `([\w|\W]+)` not found in callable database'))
 	assert test_list == [True]*len(test_list)
 
 def test_copy():

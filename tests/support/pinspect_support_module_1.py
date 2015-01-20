@@ -18,6 +18,7 @@ def module_enclosing_func(offset):
 
 def class_enclosing_func():
 	""" Test function to see if classes within enclosures are detected """
+	import pinspect_support_module_3
 	class ClosureClass(object):
 		""" Actual closure class """
 		def __init__(self):
@@ -40,7 +41,8 @@ def class_enclosing_func():
 					""" Constructor method """
 					self.subobj = None
 			return SubClosureClass
-		obj = property(get_obj, set_obj)
+
+		obj = property(pinspect_support_module_2.getter_func_for_closure_class, set_obj, pinspect_support_module_3.deleter)
 
 	return ClosureClass
 
