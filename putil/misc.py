@@ -70,7 +70,12 @@ def pcolor(text, color, tab=0):
 
 def binary_string_to_octal_string(text):	#pylint: disable=C0103
 	"""
-	Prints binary string in octal representation replacing typical codes with their escape sequences
+	Prints binary string in octal representation replacing typical codes with their escape sequences.
+
+	:param	text: Text to convert
+	:type	text: string
+	:rtype: string
+
 	"""
 	octal_alphabet = [chr(num) if (num >= 32) and (num <= 126) else '\\'+str(oct(num)).lstrip('0') for num in xrange(0, 256)]
 	octal_alphabet[0] = '\\0'	# Null character
