@@ -23,6 +23,27 @@ def _get_code_id(obj, file_name=None, offset=0):
 	elif file_name:
 		return (file_name, obj.func_code.co_firstlineno+offset)
 
+def _line_parser(lines):	#pylint: disable=R0914
+	""" Perform all matches on source file line """
+	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
+	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
+	get_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
+	set_prop_regexp = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
+	del_prop_regexp = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
+	decorator_regexp = re.compile(r'^(\s*)@(.+)')
+	import_regexp = re.compile(r'^(\s*)import\s+')
+	from_regexp = re.compile(r'^(\s*)from\s+')
+	for line_num, line in enumerate(lines, start=1):
+		class_match = class_regexp.match(line)
+		class_indent, class_name = class_match.groups() if class_match else (None, None)
+		func_match = func_regexp.match(line)
+		func_indent, func_name = func_match.groups() if func_match else (None, None)
+		get_match, set_match, del_match = get_prop_regexp.match(line), set_prop_regexp.match(line), del_prop_regexp.match(line)
+		decorator_match = decorator_regexp.match(line)
+		import_match, from_match = import_regexp.match(line), from_regexp.match(line)
+		namespace_indent, namespace_match = import_match.group(1) if import_match else (from_match.group(1) if from_match else None), import_match or from_match
+		line_match = class_match or func_match or namespace_match
+		yield line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match
 
 def _private_props(obj):
 	""" Generator to yield private properties of object """
@@ -113,7 +134,7 @@ def _replace_tabs(text):
 	A form feed character may be present at the start of the line; it will be ignored for the indentation calculations above. Form feed characters occurring elsewhere in the leading whitespace have an undefined effect
 	(for instance, they may reset the space count to zero)
 	"""
-	return text.lstrip('\f').expandtabs()
+	return -1 if text == None else text.lstrip('\f').expandtabs()
 
 
 class Callables(object):	#pylint: disable=R0903,R0902
@@ -129,16 +150,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	"""
 	def __init__(self, obj=None):
 		self._module_names, self._class_names, self._callables_db, self._reverse_callables_db, self._closure_class_obj_list = set(), set(), {}, {}, []
-		self._class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
-		self._func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
-		self._getter_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
-		self._setter_prop_regexp = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
-		self._deleter_prop_regexp = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
-		self._decorator_regexp = re.compile(r'^(\s*)@(.+)')
 		self._whitespace_regexp = re.compile(r'^(\s*)(\w*)')
 		self._namespece_regexp = re.compile(r"name '(\w+)' is not defined")
-		self._import_regexp = re.compile(r'^(\s*)import\s+')
-		self._from_regexp = re.compile(r'^(\s*)from\s+')
 		if obj:
 			self.trace(obj)
 
@@ -178,42 +191,40 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		return self._callables_db
 
 	def _get_closures(self, obj):	#pylint: disable=R0912,R0914,R0915
-		""" Find closures within module. Implement a mini-parser, finding "@", "def" or "class" start of lines while keeping track of indentation levels """
+		"""
+		Find closures within module.
+		Implement a mini-parser, finding "@", "def" or "class" start of lines while keeping track of indentation levels
+		Have to keep track of imports because technically class properties can be functions from other modules. Closure classes code is executed with recorded imports at top, a class object is created and then traced as "usual"
+		"""
 		# Read module file
 		module_file_name = '{0}.py'.format(os.path.splitext(obj.__file__)[0])
 		with open(module_file_name, 'rb') as file_obj:
 			module_lines = file_obj.read().split('\n')
 		# Initialize mini-parser variables
-		indent_stack, decorator_num, attr_name, closure_class, import_stack, closure_class_list = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], None, '', False, [{'level':0, 'type':'module', 'line':None}], []
-		for num, line in enumerate(module_lines, start=1):
-			class_match = self._class_regexp.match(line)
-			class_indent, class_name = class_match.groups() if class_match else (None, None)
-			func_match = self._func_regexp.match(line)
-			func_indent, func_name = func_match.groups() if func_match else (None, None)
-			getter_match, setter_match, deleter_match = self._getter_prop_regexp.match(line), self._setter_prop_regexp.match(line), self._deleter_prop_regexp.match(line)
-			decorator_match = self._decorator_regexp.match(line)
-			import_match = self._import_regexp.match(line)
-			from_match = self._from_regexp.match(line)
+		indent_stack, import_stack, decorator_num, attr_name, closure_class, closure_class_list = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], [{'level':0, 'type':'module', 'line':None}], None, '', False, []
+		for line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match in _line_parser(module_lines):
 			# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
-			attr_name = attr_name if attr_name else '(getter)' if getter_match else ('(setter)' if setter_match else ('(deleter)' if deleter_match else ''))
-			decorator_num = num if decorator_match and (decorator_num == None) else decorator_num
-			element_num = decorator_num if decorator_num else num
-			if import_match or from_match:
-				namspace_indent = len(_replace_tabs(import_match.group(1) if import_match else from_match.group(1)))
-				while (namspace_indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
+			attr_name = attr_name if attr_name else '(getter)' if get_match else ('(setter)' if set_match else ('(deleter)' if del_match else ''))
+			decorator_num = line_num if decorator_match and (decorator_num == None) else decorator_num
+			element_num = decorator_num if decorator_num else line_num
+			indent = len(_replace_tabs(class_indent if class_match else (func_indent if func_match else namespace_indent))) if line_match else -1
+			if namespace_match:
+				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
 					import_stack.pop()
-				import_stack.append({'level':namspace_indent, 'line':line.lstrip(), 'type':'not module'})
-			if class_match or func_match:
-				indent = len(_replace_tabs(class_indent if class_match else func_indent))
+				import_stack.append({'level':indent, 'line':line.lstrip(), 'type':'not module'})
+				continue
+			elif class_match or func_match:
 				# Remove all blocks at the same level to find out the indentation "parent"
 				while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 					indent_stack.pop()
 				if class_match:
 					closure_class = indent_stack[-1]['type'] != 'module'
-					self._class_names.add('{0}.{1}'.format(indent_stack[-1]['prefix'], class_name))
+					full_class_name = '{0}.{1}'.format(indent_stack[-1]['prefix'], class_name)
+					self._class_names.add(full_class_name)
 					if closure_class:
-						closure_class_list.append({'file':module_file_name, 'name':'{0}.{1}'.format(indent_stack[-1]['prefix'], class_name), 'code':[], 'namespace':[import_dict['line'] for import_dict in import_stack[1:]],
-								                   'indent':indent, 'eval':'tvar = {0}'.format(class_name), 'lineno':num})
+						namespace_code = [import_dict['line'] for import_dict in import_stack[1:]]
+						eval_line = 'tvar = {0}'.format(class_name)
+						closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
 				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
 				if func_name and (element_full_name not in self._callables_db):
 					self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':[]}
@@ -225,12 +236,14 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				line = _replace_tabs(line)
 				start_space, content = self._whitespace_regexp.match(line).groups()
 				for class_dict in closure_class_list:
-					if class_dict['code'] and content and ((len(start_space) <= class_dict['indent']) or (start_space == 0)):
+					start_space_length = len(start_space)
+					if class_dict['code'] and content and ((start_space_length <= class_dict['indent']) or (start_space_length == 0)):
 						class_dict['code'].append(class_dict['eval'])
 						self._closure_class_obj_list.append({'code':'\n'.join(class_dict['namespace']+class_dict['code']), 'file':class_dict['file'], 'name':class_dict['name'], 'lineno':class_dict['lineno']-len(class_dict['namespace'])})
 						closure_class_list.pop()
 						closure_class = bool(closure_class_list)
 					else:
+						# Remove base indentation from lines, as the code is going to be executed via exec, which would give an error if there is extra whitespace at the beginning of all lines
 						class_dict['code'].append(line[class_dict['indent']:])
 
 	def _get_prop_components(self, prop_name, prop_obj, closure_file_name=None, closure_offset=0):
@@ -274,9 +287,12 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		""" Generate a list of object callables (internal function, no argument validation)"""
 		if obj.__name__ not in self._module_names:
 			self._module_names.add(obj.__name__)
-			self._get_closures(obj)	# Find closures, need to be done before class tracing because some class properties might use closures
+			# Closures need to be recorded before class tracing because some class properties might use closures
+			self._get_closures(obj)
+			# "Standard" (non closure) class tracing
 			for class_obj in [class_obj for _, class_obj in inspect.getmembers(obj) if inspect.isclass(class_obj)]:
 				self._trace_class(class_obj)
+			# Closure class tracing, exec creates tvar variable which contains an unbound object of the closure class
 			for class_obj in self._closure_class_obj_list:
 				exec class_obj['code'] in locals()	#pylint: disable=W0122
 				self._trace_class(tvar, class_obj['file'], class_obj['name'], class_obj['lineno']-1)	#pylint: disable=E0602
