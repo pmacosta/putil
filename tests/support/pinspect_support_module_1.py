@@ -46,6 +46,7 @@ def class_enclosing_func():
 
 	return ClosureClass
 
+
 class ClassWithPropertyDefinedViaLambdaAndEnclosure(object):	#pylint: disable=R0903
 	""" Class that used an inline function (lambda) to define one of the property functions and an enclosed function to define another """
 	def __init__(self):
@@ -59,7 +60,7 @@ def dummy_decorator(func):
 	return func
 
 
-def property_generator():
+def simple_property_generator():
 	""" Function to test if properties done via enclosed functions are properly detected """
 	def fget(self):
 		""" Actual getter function """
@@ -92,6 +93,9 @@ class ClassWithPropertyDefinedViaFunction(object):	#pylint: disable=R0903
 	state = property(_getter_func, _setter_func, _deleter_func, doc='State attribute')
 
 
+import math
+
+
 class ClassWithPropertyDefinedViaDecorators(object):	#pylint: disable=R0903
 	""" Class to test if properties defined via decorator functions are handled correctly """
 	def __init__(self):
@@ -103,7 +107,7 @@ class ClassWithPropertyDefinedViaDecorators(object):	#pylint: disable=R0903
 	@property
 	def temp(self):
 		""" Getter method defined with decorator """
-		return self._value
+		return math.sqrt(self._value)
 
 	@temp.setter
 	@putil.pcontracts.contract(value=int)
@@ -116,4 +120,21 @@ class ClassWithPropertyDefinedViaDecorators(object):	#pylint: disable=R0903
 		""" Deleter method defined with decorator """
 		print 'Cannot delete attribute'
 
-	encprop = property_generator()
+	encprop = simple_property_generator()
+
+
+import pinspect_support_module_4
+
+
+def class_namespace_test_enclosing_func():	#pylint: disable=C0103
+	""" Test namespace support for enclosed class properties """
+	class NamespaceTestClosureClass(object):	#pylint: disable=R0903
+		""" Actual class """
+		def __init__(self, value):
+			self._value = value
+
+		nameprop = pinspect_support_module_4.another_property_action_enclosing_function()
+
+	return NamespaceTestClosureClass
+
+

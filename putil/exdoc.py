@@ -111,7 +111,16 @@ class ExDoc(object):	#pylint: disable=R0902
 		func_list, unique_data = list(), list()
 		for ditem in data:
 			# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
-			ditem['name'] = sep.join(['{0}[{1}]'.format(cdb[token]['link'][0]['prop'], cdb[token]['link'][0]['action']) if cdb[token]['link'] else token for token in ditem['name'].split(sep)])
+			#ditem['name'] = sep.join(['{0}[{1}]'.format(cdb[token]['link'][0]['prop'], cdb[token]['link'][0]['action']) if cdb[token]['link'] else token for token in ditem['name'].split(sep)])
+			new_name_list = []
+			for token in ditem['name'].split(sep):
+				if cdb[token]['link'] and (len(cdb[token]['link']) > 1):
+					raise RuntimeError('Functions performing actions for multiple properties not supported')
+				elif cdb[token]['link']:
+					new_name_list.append('{0}[{1}]'.format(cdb[token]['link'][0]['prop'], cdb[token]['link'][0]['action']))
+				else:
+					new_name_list.append(token)
+			ditem['name'] = sep.join(new_name_list)
 			# Remove prefix (cannot be done previous step because technically the setter/getter/deleter of propety can be in a different module) and only handle unique exceptions
 			if ditem['name'].find(self._trace_name) != -1:
 				ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
