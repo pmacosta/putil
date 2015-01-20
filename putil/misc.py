@@ -69,12 +69,32 @@ def pcolor(text, color, tab=0):
 	return '\033[{0}m{1}{2}\033[0m'.format(esc_dict[color], ' '*tab, text) if esc_dict[color] != -1 else '{0}{1}'.format(' '*tab, text)
 
 def binary_string_to_octal_string(text):	#pylint: disable=C0103
-	"""
-	Prints binary string in octal representation replacing typical codes with their escape sequences.
+	r"""
+	Prints binary string in octal representation aliasing typical codes to their escape sequences.
 
 	:param	text: Text to convert
 	:type	text: string
 	:rtype: string
+
+	+------+-------+-----------------+
+	| Code | Alias |   Description   |
+	+======+=======+=================+
+	|    0 |   \\0 | Null character  |
+	+------+-------+-----------------+
+	|    7 |   \\a | Bell / alarm    |
+	+------+-------+-----------------+
+	|    8 |   \\b | Backspace       |
+	+------+-------+-----------------+
+	|    9 |   \\t | Horizontal tab  |
+	+------+-------+-----------------+
+	|   10 |   \\n | Line feed       |
+	+------+-------+-----------------+
+	|   11 |   \\v | Vertical tab    |
+	+------+-------+-----------------+
+	|   12 |   \\f | Form feed       |
+	+------+-------+-----------------+
+	|   13 |   \\r | Carriage return |
+	+------+-------+-----------------+
 
 	"""
 	octal_alphabet = [chr(num) if (num >= 32) and (num <= 126) else '\\'+str(oct(num)).lstrip('0') for num in xrange(0, 256)]
@@ -91,44 +111,63 @@ def binary_string_to_octal_string(text):	#pylint: disable=C0103
 def char_to_decimal(text):
 	"""
 	Converts a string to its decimal ASCII representation, with spaces between characters
+
+	:param	text: Text to convert
+	:type	text: string
+	:rtype: string
 	"""
 	return ' '.join([str(ord(char)) for char in text])
 
-def isnumber(num):
+def isnumber(arg):
 	"""
-	Checks if the argument is a number: complex, float or integer
-	"""
-	return (num is not None) and (not isinstance(num, bool)) and (isinstance(num, int) or isinstance(num, float) or isinstance(num, complex))
+	Checks if argument is a number: complex, float or integer
 
-def isreal(num):
+	:param	arg: Argument to check
+	:type	arg: any
+	:rtype: boolean
 	"""
-	Checks if the argument is a real number: float or integer
-	"""
-	return (num is not None) and (not isinstance(num, bool)) and (isinstance(num, int) or isinstance(num, float))
+	return (arg is not None) and (not isinstance(arg, bool)) and (isinstance(arg, int) or isinstance(arg, float) or isinstance(arg, complex))
 
-def per(numa, numb, prec=10):
+def isreal(arg):
 	"""
-	Calculates percentage difference between two numbers
+	Checks if argument is a real number: float or integer
+
+	:param	arg: Argument to check
+	:type	arg: any
+	:rtype: boolean
 	"""
-	numa_type = 1 if isreal(numa) is True else (2 if (isinstance(numa, numpy.ndarray) is True) or (isinstance(numa, list) is True) else 0)	#pylint: disable=E1101
-	numb_type = 1 if isreal(numb) is True else (2 if (isinstance(numb, numpy.ndarray) is True) or (isinstance(numb, list) is True) else 0)	#pylint: disable=E1101
-	if numa_type != numb_type:
-		raise TypeError('Arguments are not of the same type in function per')
-	if numa_type == 1:
-		numa = round(numa, prec)
-		numb = round(numa, prec)
-		num_max = max(numa, numb)
-		num_min = min(numa, numb)
+	return (arg is not None) and (not isinstance(arg, bool)) and (isinstance(arg, int) or isinstance(arg, float))
+
+def per(arga, argb, prec=10):
+	"""
+	Calculates percentage difference between two numbers or the element-wise percentage difference between two Numpy vectors
+
+	:param	arga: First number or Numpy vector
+	:type	arga: float, integer or Numpy vector of floats or integers
+	:param	argb: Second number or Numpy vector
+	:type	argb: float, integer or Numpy vector of floats or integers
+	:rtype: Float, integer or Numpy vector, depending on the type of **arga** (which is the same as **argb**)
+	:raises: TypeError (Arguments are not of the same type)
+	"""
+	arga_type = 1 if isreal(arga) is True else (2 if (isinstance(arga, numpy.ndarray) is True) or (isinstance(arga, list) is True) else 0)	#pylint: disable=E1101
+	argb_type = 1 if isreal(argb) is True else (2 if (isinstance(argb, numpy.ndarray) is True) or (isinstance(argb, list) is True) else 0)	#pylint: disable=E1101
+	if arga_type != argb_type:
+		raise TypeError('Arguments are not of the same type')
+	if arga_type == 1:
+		arga = round(arga, prec)
+		argb = round(arga, prec)
+		num_max = max(arga, argb)
+		num_min = min(arga, argb)
 		num_min = num_min if num_min != 0 else 1e-20
-		return 0 if numa == numb else (num_max/num_min)-1
+		return 0 if arga == argb else (num_max/num_min)-1
 	else:
-		numa = numpy.round(numa, prec)
-		numb = numpy.round(numb, prec)
-		num_max = numpy.maximum(numa, numb)	#pylint: disable=E1101
-		num_min = numpy.minimum(numa, numb)	#pylint: disable=E1101
+		arga = numpy.round(arga, prec)
+		argb = numpy.round(argb, prec)
+		num_max = numpy.maximum(arga, argb)	#pylint: disable=E1101
+		num_min = numpy.minimum(arga, argb)	#pylint: disable=E1101
 		delta_vector = 1e-20*numpy.ones(len(num_max))	#pylint: disable=E1101
 		num_min = numpy.where(num_min != 0, num_min, delta_vector)	#pylint: disable=E1101
-		return numpy.where(numa == numb, 0, (num_max/num_min)-1)	#pylint: disable=E1101
+		return numpy.where(arga == argb, 0, (num_max/num_min)-1)	#pylint: disable=E1101
 
 def get_method_obj(req_class_obj, method_name):
 	"""
