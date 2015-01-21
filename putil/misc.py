@@ -13,6 +13,7 @@ import inspect
 import textwrap
 import tempfile
 import decorator
+import fractions
 
 import putil.eng
 import putil.check
@@ -158,7 +159,7 @@ def isreal(arg):
 def per(arga, argb, prec=10):
 	"""
 	Calculates percentage difference between two numbers or the element-wise percentage difference between two list of numbers or Numpy vectors.
-	If any of the arguments is zero the value returned is 1E-20
+	If any of the numbers in the arguments **arga** or **argb** is zero the value returned is 1E+20
 
 	:param	arga: First number, list of numbers or Numpy vector
 	:type	arga: float, integer, list of floats or integers, or Numpy vector of floats or integers
@@ -206,7 +207,12 @@ def per(arga, argb, prec=10):
 
 class Bundle(object):	#pylint: disable=R0903
 	"""
-	Bundle a collection of variables into one object. For example:
+	Bundle a collection of variables into one object.
+
+	:param	elements: Variable(s) value(s)
+	:type	elements: any
+
+	For example:
 
 		>>> obj = putil.misc.Bundle(var1=10)
 		>>> obj.var2 = 20
@@ -220,8 +226,8 @@ class Bundle(object):	#pylint: disable=R0903
 		var2 = 20
 
 	"""
-	def __init__(self, **kwds):
-		self.__dict__.update(kwds)
+	def __init__(self, **elements):
+		self.__dict__.update(elements)
 
 	def __len__(self):
 		return len(self.__dict__)
@@ -236,6 +242,9 @@ class Bundle(object):	#pylint: disable=R0903
 def make_dir(file_name):
 	"""
 	Creates the directory of a fully qualified file name if it does not exists
+
+	:param	file_name: Fully qualified file name
+	:type	file_name: string
 	"""
 	file_path, file_name = os.path.split(file_name)
 	if os.path.exists(file_path) is False:
@@ -244,39 +253,111 @@ def make_dir(file_name):
 
 def normalize(value, series, offset=0):
 	"""
-	Scale a series to the [0, 1] interval
+	Scale a value to the range defined by a series
+
+	:param	value: Value to normalize
+	:type	value: number
+	:param	series: Series that defines the normalization range
+	:type	series: list of numbers
+	:param	offset: Normalization offset, i.e. the returned value will be in the range [**offset**, 1.0]
+	:type	offset: number
+	:rtype: number
+	:raises:
+	 * ValueError (Argument `offset` has to be in the [0.0, 1.0] range)
+
+	 * ValueError (Argument `value` has to be within the bounds of the argument `series`)
 	"""
 	if (offset < 0) or (offset > 1):
 		raise ValueError('Argument `offset` has to be in the [0.0, 1.0] range')
 	if (value < min(series)) or (value > max(series)):
-		raise ValueError('Argument `value` has to be within the bounds of the argument `series`')
+		raise ValueError('Argument `value` has to be within the bounds of argument `series`')
 	return offset+(((value-float(min(series)))/(float(max(series))-float(min(series))))*(1.0-offset))
 
-def gcd(vector, precision=None):
+
+def gcd(vector):
 	"""
-	Calculates the greatest common divisor of an integer vector
+	Calculates the greatest common divisor of a list of numbers or a Numpy vector of numbers. The computations are carried out with a precision of 1E-12 if the objects are not
+	`fractions <https://docs.python.org/2/library/fractions.html>`_. When possible it is best to use the `fractions <https://docs.python.org/2/library/fractions.html>`_ data type defined with the **numerator** and
+	**denominator** arguments when computing the GCD of floating numbers (see example).
+
+	:param	vector: Vector of numbers
+	:type	vector: list of numbers or Numpy vector of numbers
+
+	For example:
+
+		>>> putil.misc.gcd([20, 12, 16])
+		4
+		>>> putil.misc.gcd([5/3.0, 2/3.0, 10/3])
+		0.3333333333333333
+		>>> putil.misc.gcd([fractions.Fraction(5/3.0), fractions.Fraction(2/3.0), fractions.Fraction(10/3.0)])
+		Fraction(1, 3)
+		>>> putil.misc.gcd([fractions.Fraction(5, 3), fractions.Fraction(2, 3), fractions.Fraction(10, 3)])
+		Fraction(1, 3)
+
 	"""
 	if len(vector) == 0:
 		return None
 	elif len(vector) == 1:
 		return vector[0]
 	elif len(vector) == 2:
-		return pgcd(vector[0], vector[1]) if precision is None else smart_round(pgcd(vector[0], vector[1]), precision)
+		return pgcd(vector[0], vector[1])
 	else:
 		current_gcd = pgcd(vector[0], vector[1])
 		for element in vector[2:]:
-			current_gcd = pgcd(current_gcd, element) if precision is None else smart_round(pgcd(current_gcd, element), precision)
+			current_gcd = pgcd(current_gcd, element)
 		return current_gcd
 
-def pgcd(num_a, num_b):
-	"""Calculate the Greatest Common Divisor of a and b """
-	while num_b:
-		num_a, num_b = num_b, round(num_a % num_b, 10)
-	return num_a
+
+def pgcd(numa, numb):
+	"""
+	Calculate the greatest common divisor (GCD) of two numbers
+
+	:param	numa: First number
+	:type	numa: numbers
+	:param	numb: Second number
+	:type	numb: numbers
+	:rtype: number
+
+	For example:
+
+		>>> putil.misc.pgcd(10, 15)
+		5
+		>>> putil.misc.pgcd(0.05, 0.02)
+		0.01
+		>>> putil.misc.pgcd(5/3.0, 2/3.0)
+		0.3333333333333333
+		>>> putil.misc.pgcd(fractions.Fraction(5/3.0), fractions.Fraction(2/3.0))
+		Fraction(1, 3)
+		>>> putil.misc.pgcd(fractions.Fraction(5, 3), fractions.Fraction(2, 3))
+		Fraction(1, 3)
+
+	"""
+	int_args = isinstance(numa, int) and isinstance(numb, int)
+	fraction_args = isinstance(numa, fractions.Fraction) and isinstance(numb, fractions.Fraction)
+	if (not int_args) and (not fraction_args):
+		numa, numb = fractions.Fraction(numa).limit_denominator(), fractions.Fraction(numb).limit_denominator()
+	while numb:
+		numa, numb = numb, (numa % numb if int_args else (numa % numb).limit_denominator())
+	return int(numa) if int_args else (numa if fraction_args else float(numa))
+
 
 def isalpha(text):
 	"""
-	Returns True if the text has at least one alphabetic character
+	Test if the string represents a number
+
+	:param	text: String to test
+	:type	text: string
+	:rtype: boolean
+
+	For example:
+
+		>>> putil.misc.isalpha('1.5')
+		True
+		>>> putil.misc.isalpha('1E-20')
+		True
+		>>> putil.misc.isalpha('1EA-20')
+		False
+
 	"""
 	try:
 		float(text)
@@ -284,11 +365,17 @@ def isalpha(text):
 	except ValueError:
 		return False
 
-def ishex(char):
+
+def ishex(obj):
 	"""
-	Returns True if character is a valid hexadecimal digit
+	Tests whether argument is a valid hexadecimal digit string
+
+	:param  obj: Test object
+	:type	obj: any
+	:rtype: boolean
 	"""
-	return True if (isinstance(char, str) is True) and (len(char) == 1) and (char.upper() in '0123456789ABCDEF') else False
+	return True if (isinstance(obj, str) is True) and (len(obj) == 1) and (obj.upper() in '0123456789ABCDEF') else False
+
 
 def smart_round(num, ndigits):
 	"""
@@ -513,6 +600,3 @@ def flatten_list(lobj):
 def isexception(obj):
 	""" Tests whether an object is an exception object """
 	return False if not inspect.isclass(obj) else issubclass(obj, Exception)
-
-
-

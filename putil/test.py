@@ -227,6 +227,13 @@ def trigger_exception(obj, args, extype, exmsg):
 	return False
 
 
+def assert_exception(obj, args, extype, exmsg):
+	""" Triggers exception withing the Py.test environment and records value """
+	with pytest.raises(extype) as excinfo:
+		obj(**args)	#pylint: disable=W0142
+	assert '{0} ({1})'.format(exception_type_str(excinfo.type), excinfo.value.message) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
+
+
 def trigger_pcontract_exception(obj, args, exmsg):
 	""" Triggers exception withing the Py.test environment and records value """
 	with pytest.raises(contracts.ContractNotRespected) as excinfo:

@@ -13,6 +13,7 @@ import numpy
 import pytest
 import struct
 import tempfile
+import fractions
 
 import putil.misc
 import putil.test
@@ -32,10 +33,10 @@ def test_ignored():
 
 def test_pcolor():
 	""" Test pcolor() function """
-	assert putil.test.trigger_exception(putil.misc.pcolor, {'text':5, 'color':'red', 'tab':0}, TypeError, 'Argument `text` is not valid')
-	assert putil.test.trigger_exception(putil.misc.pcolor, {'text':'hello', 'color':5, 'tab':0}, TypeError, 'Argument `color` is not valid')
-	assert putil.test.trigger_exception(putil.misc.pcolor, {'text':'hello', 'color':'red', 'tab':5.1}, TypeError, 'Argument `tab` is not valid')
-	assert putil.test.trigger_exception(putil.misc.pcolor, {'text':'hello', 'color':'hello', 'tab':5}, ValueError, 'Unknown color hello')
+	putil.test.assert_exception(putil.misc.pcolor, {'text':5, 'color':'red', 'tab':0}, TypeError, 'Argument `text` is not valid')
+	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':5, 'tab':0}, TypeError, 'Argument `color` is not valid')
+	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':'red', 'tab':5.1}, TypeError, 'Argument `tab` is not valid')
+	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':'hello', 'tab':5}, ValueError, 'Unknown color hello')
 	assert putil.misc.pcolor('Text', 'none', 5) == '     Text'
 	assert putil.misc.pcolor('Text', 'blue', 2) == '\033[34m  Text\033[0m'
 	# These statements should not raise any exception
@@ -71,10 +72,10 @@ def test_isreal():	#pylint: disable=C0103
 
 def test_prec():	#pylint: disable=C0103
 	""" Test prec() function """
-	assert putil.test.trigger_exception(putil.misc.per, {'arga':5, 'argb':7, 'prec':'Hello'}, TypeError, 'Argument `prec` is not valid')
-	assert putil.test.trigger_exception(putil.misc.per, {'arga':'Hello', 'argb':7, 'prec':1}, TypeError, 'Argument `arga` is not valid')
-	assert putil.test.trigger_exception(putil.misc.per, {'arga':5, 'argb':'Hello', 'prec':1}, TypeError, 'Argument `argb` is not valid')
-	assert putil.test.trigger_exception(putil.misc.per, {'arga':5, 'argb':[5, 7], 'prec':1}, TypeError, 'Arguments are not of the same type')
+	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':7, 'prec':'Hello'}, TypeError, 'Argument `prec` is not valid')
+	putil.test.assert_exception(putil.misc.per, {'arga':'Hello', 'argb':7, 'prec':1}, TypeError, 'Argument `arga` is not valid')
+	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':'Hello', 'prec':1}, TypeError, 'Argument `argb` is not valid')
+	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':[5, 7], 'prec':1}, TypeError, 'Arguments are not of the same type')
 	assert putil.misc.per(3, 2, 1) == 0.5
 	assert putil.misc.per(3.1, 3.1, 1) == 0
 	assert all([test == ref for test, ref in zip(putil.misc.per([3, 1.1, 5], [2, 1.1, 2], 1), [0.5, 0, 1.5])])
@@ -84,19 +85,12 @@ def test_prec():	#pylint: disable=C0103
 	assert all([test == ref for test, ref in zip(putil.misc.per(numpy.array([3, 1.1, 5]), numpy.array([2, 0, 2]), 1), [0.5, 1e20, 1.5])])
 
 
-def test_pgcd():
-	""" Test if the custom greatest common divisor function works """
-	assert putil.misc.pgcd(48, 18) == 6
-	assert putil.misc.pgcd(2.7, 107.3) == 0.1
-	assert putil.misc.pgcd(3, 4) == 1
-	assert putil.misc.pgcd(0.05, 0.02) == 0.01
-
-
 def test_isexception():
 	""" Test isexception() function """
 	assert putil.misc.isexception(str) == False
 	assert putil.misc.isexception(3) == False
 	assert putil.misc.isexception(RuntimeError) == True
+
 
 def test_bundle():
 	""" Test Bundle class """
@@ -120,6 +114,7 @@ def test_bundle():
 	assert str(obj) == 'var3 = 30\nvar4 = 40\nvar5 = 50'
 	assert repr(obj) == 'Bundle(var3=30, var4=40, var5=50)'
 
+
 def test_make_dir(capsys):
 	""" Test make_dir() function """
 	def mock_os_makedir(file_path):	#pylint: disable=C0111
@@ -132,3 +127,44 @@ def test_make_dir(capsys):
 		stdout, _ = capsys.readouterr()
 		assert stdout == ''
 
+
+def test_normalize():
+	""" Test normalize() function """
+	putil.test.assert_exception(putil.misc.normalize, {'value':5, 'series':[2, 5], 'offset':10}, ValueError, 'Argument `offset` has to be in the [0.0, 1.0] range')
+	putil.test.assert_exception(putil.misc.normalize, {'value':0, 'series':[2, 5], 'offset':0}, ValueError, 'Argument `value` has to be within the bounds of argument `series`')
+	assert putil.misc.normalize(15, [10, 20]) == 0.5
+	assert putil.misc.normalize(15, [10, 20], 0.5) == 0.75
+
+
+def test_gcd():
+	""" Test gcd() function """
+	assert putil.misc.gcd([]) == None
+	assert putil.misc.gcd([7]) == 7
+	assert putil.misc.gcd([48, 18]) == 6
+	assert putil.misc.gcd([20, 12, 16]) == 4
+	assert putil.misc.gcd([0.05, 0.02, 0.1]) == 0.01
+	assert putil.misc.gcd([fractions.Fraction(5, 3), fractions.Fraction(2, 3), fractions.Fraction(10, 3)]) == fractions.Fraction(1, 3)
+
+
+def test_pgcd():
+	""" Test pgcd() function """
+	assert putil.misc.pgcd(48, 18) == 6
+	assert putil.misc.pgcd(2.7, 107.3) == 0.1
+	assert putil.misc.pgcd(3, 4) == 1
+	assert putil.misc.pgcd(0.05, 0.02) == 0.01
+	assert putil.misc.pgcd(5, 2) == 1
+	assert putil.misc.pgcd(fractions.Fraction(5, 3), fractions.Fraction(2, 3)) == fractions.Fraction(1, 3)
+
+
+def test_isalpha():
+	""" Test isalpha() function """
+	assert putil.misc.isalpha('1.5') == True
+	assert putil.misc.isalpha('1E-20') == True
+	assert putil.misc.isalpha('1EA-20') == False
+
+
+def test_ishex():
+	""" Test ishex() function """
+	assert putil.misc.ishex(5) == False
+	assert putil.misc.ishex('45') == False
+	assert putil.misc.ishex('F') == True
