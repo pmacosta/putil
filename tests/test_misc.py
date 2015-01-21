@@ -168,3 +168,17 @@ def test_ishex():
 	assert putil.misc.ishex(5) == False
 	assert putil.misc.ishex('45') == False
 	assert putil.misc.ishex('F') == True
+
+
+def test_smart_round():
+	""" Test smart_round() function """
+	assert putil.misc.smart_round(None) == None
+	assert putil.misc.smart_round(1.3333, 2) == 1.33
+	assert (putil.misc.smart_round(numpy.array([1.3333, 2.666666]), 2) == numpy.array([1.33, 2.67])).all()
+
+def test_isiterable():
+	""" Test isiterable() function """
+	assert putil.misc.isiterable([1, 2, 3]) == True
+	assert putil.misc.isiterable({'a':5}) == True
+	assert putil.misc.isiterable(set([1, 2, 3])) == True
+	assert putil.misc.isiterable(3) == False

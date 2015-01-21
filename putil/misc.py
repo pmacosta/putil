@@ -377,28 +377,31 @@ def ishex(obj):
 	return True if (isinstance(obj, str) is True) and (len(obj) == 1) and (obj.upper() in '0123456789ABCDEF') else False
 
 
-def smart_round(num, ndigits):
+def smart_round(arg, decimals=0):
 	"""
 	Rounds a floating point number or Numpy vector
+
+	:param	arg: Input data
+	:type	arg: number, Numpy vector of numbers or None
+	:param	decimals: Number of decimal places to round to. For Numpy vectors if decimals is negative, it specifies the number of positions to the left of the decimal point
+	:param	decimals: integer
+	:rtype: number, Numpy vector of numbers or None depending on type of **arg**
 	"""
-	if num is None:
-		return num
-	elif isinstance(num, numpy.ndarray):
-		num = num.astype(float)
-		sign = numpy.sign(num)	# sign() is zero where element is zero, will zero out results
-		num = numpy.where(num == 0, 1.0, num)	# Replace zero elements with a dummy value that will not produce an error with log10(), the values will be zero out in the result when multiplied by sign
-		exp = (numpy.log10(numpy.abs(num)).astype(int)).astype(float)
-		return sign*numpy.round(numpy.abs(num)*(10**-exp), ndigits)*(10**exp)
+	if arg is None:
+		return arg
+	elif isinstance(arg, numpy.ndarray):
+		return numpy.around(arg, decimals)
 	else:
-		if num == 0:
-			return num
-		else:
-			index = str(num).find('.')
-			return round(num, ndigits-(0 if index == -1 else index)+(1 if num < 0.0 else 0)+1)
+		return round(arg, decimals)
+
 
 def isiterable(obj):
 	"""
 	Tests whether an objects is an iterable
+
+	:param	obj: Test object
+	:type	obj: any
+	:rtype: boolean
 	"""
 	try:
 		iter(obj)
@@ -406,6 +409,7 @@ def isiterable(obj):
 		return False
 	else:
 		return True
+
 
 def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=None):	#pylint: disable=R0913
 	"""
@@ -426,10 +430,9 @@ def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, man
 	# Add indent for lines after first one, cannot use subsequent_indent of textwrap.wrap() method as this function counts the indent as part of the line
 	return '\n'.join([((indent+2)*' ')+line if num > 0 else line for num, line in enumerate(textwrap.wrap(uret, width=width))])
 
+
 def _oprint(element, eng, mant):
-	"""
-	Print a straigth number or one with engineering notation
-	"""
+	""" Print a straigth number or one with engineering notation """
 	return element if not eng else putil.eng.peng(element, mant, True)
 
 def elapsed_time_string(start_time, stop_time):
