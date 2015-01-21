@@ -101,7 +101,7 @@ def binary_string_to_octal_string(text):	#pylint: disable=C0103
 
 		>>> num = range(1, 15)
 		>>> putil.misc.binary_string_to_octal_string(''.join([struct.pack('h', num) for num in nums]))
-		... '\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
+		'\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
 
 	"""
 	octal_alphabet = [chr(num) if (num >= 32) and (num <= 126) else '\\'+str(oct(num)).lstrip('0') for num in xrange(0, 256)]
@@ -115,6 +115,7 @@ def binary_string_to_octal_string(text):	#pylint: disable=C0103
 	octal_alphabet[13] = '\\r'	# Carriage return
 	return ''.join([octal_alphabet[ord(char)] for char in text])
 
+
 def char_to_decimal(text):
 	"""
 	Converts a string to its decimal ASCII representation, with spaces between characters
@@ -122,8 +123,15 @@ def char_to_decimal(text):
 	:param	text: Text to convert
 	:type	text: string
 	:rtype: string
+
+	For example:
+
+		>>> putil.misc.char_to_decimal('Hello world!')
+		'72 101 108 108 111 32 119 111 114 108 100 33'
+
 	"""
 	return ' '.join([str(ord(char)) for char in text])
+
 
 def isnumber(arg):
 	"""
@@ -135,6 +143,7 @@ def isnumber(arg):
 	"""
 	return (arg is not None) and (not isinstance(arg, bool)) and (isinstance(arg, int) or isinstance(arg, float) or isinstance(arg, complex))
 
+
 def isreal(arg):
 	"""
 	Checks if argument is a real number: float or integer
@@ -145,51 +154,55 @@ def isreal(arg):
 	"""
 	return (arg is not None) and (not isinstance(arg, bool)) and (isinstance(arg, int) or isinstance(arg, float))
 
+
 def per(arga, argb, prec=10):
 	"""
-	Calculates percentage difference between two numbers or the element-wise percentage difference between two Numpy vectors
+	Calculates percentage difference between two numbers or the element-wise percentage difference between two list of numbers or Numpy vectors.
+	If any of the arguments is zero the value returned is 1E-20
 
-	:param	arga: First number or Numpy vector
-	:type	arga: float, integer or Numpy vector of floats or integers
-	:param	argb: Second number or Numpy vector
-	:type	argb: float, integer or Numpy vector of floats or integers
-	:rtype: Float, integer or Numpy vector, depending on the type of **arga** (which is the same as **argb**)
-	:raises: TypeError (Arguments are not of the same type)
+	:param	arga: First number, list of numbers or Numpy vector
+	:type	arga: float, integer, list of floats or integers, or Numpy vector of floats or integers
+	:param	argb: Second numbe, list of numbers or or Numpy vector
+	:type	argb: float, integer, list of floats or integers, or Numpy vector of floats or integers
+	:param	prec: Number of digits after the decimal point to which the result is rounded to
+	:type	prec: integer
+	:rtype: Float, list of floats or Numpy vector, depending on the type of **arga** (which is the same as **argb**)
+	:raises:
+	 * TypError (Argument `arga` is not valid)
+
+	 * TypError (Argument `argb` is not valid)
+
+	 * TypError (Argument `prec` is not valid)
+
+	 * TypeError (Arguments are not of the same type)
 	"""
+	if not isinstance(prec, int):
+		raise TypeError('Argument `prec` is not valid')
 	arga_type = 1 if isreal(arga) is True else (2 if (isinstance(arga, numpy.ndarray) is True) or (isinstance(arga, list) is True) else 0)	#pylint: disable=E1101
 	argb_type = 1 if isreal(argb) is True else (2 if (isinstance(argb, numpy.ndarray) is True) or (isinstance(argb, list) is True) else 0)	#pylint: disable=E1101
+	if not arga_type:
+		raise TypeError('Argument `arga` is not valid')
+	if not argb_type:
+		raise TypeError('Argument `argb` is not valid')
 	if arga_type != argb_type:
 		raise TypeError('Arguments are not of the same type')
 	if arga_type == 1:
-		arga = round(arga, prec)
-		argb = round(arga, prec)
+		arga = float(arga)
+		argb = float(argb)
 		num_max = max(arga, argb)
 		num_min = min(arga, argb)
-		num_min = num_min if num_min != 0 else 1e-20
-		return 0 if arga == argb else (num_max/num_min)-1
+		return 0 if arga == argb else (1e20 if (not num_min) else round((num_max/num_min)-1, prec))
 	else:
-		arga = numpy.round(arga, prec)
-		argb = numpy.round(argb, prec)
+		arga = numpy.array(arga)
+		argb = numpy.array(argb)
 		num_max = numpy.maximum(arga, argb)	#pylint: disable=E1101
 		num_min = numpy.minimum(arga, argb)	#pylint: disable=E1101
-		delta_vector = 1e-20*numpy.ones(len(num_max))	#pylint: disable=E1101
-		num_min = numpy.where(num_min != 0, num_min, delta_vector)	#pylint: disable=E1101
-		return numpy.where(arga == argb, 0, (num_max/num_min)-1)	#pylint: disable=E1101
+		# Numpy where() function seems to evaluate both arguments after the condition, which prints an error to the console if any element in num_min is zero
+		lim_num = 1e+20*numpy.ones(len(num_max))	#pylint: disable=E1101
+		safe_indexes = numpy.where(num_min != 0)
+		lim_num[safe_indexes] = (num_max[safe_indexes]/num_min[safe_indexes])-1	#pylint: disable=E1101
+		return numpy.round(numpy.where(arga == argb, 0, lim_num), prec)	#pylint: disable=E1101
 
-def get_method_obj(req_class_obj, method_name):
-	"""
-	Returns method executable object from a given class
-	"""
-	class_methods = inspect.getmembers(req_class_obj, predicate=inspect.ismethod)
-	method_obj = None
-	method_found = False
-	for (name, method_obj) in class_methods:
-		if name == method_name:
-			method_found = True
-			break
-	if method_found is False:
-		raise RuntimeError('method not found in class')
-	return method_obj
 
 class Bundle(object):	#pylint: disable=R0903
 	"""

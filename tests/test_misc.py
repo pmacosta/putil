@@ -8,6 +8,7 @@ putil.misc unit tests
 """
 
 import os
+import numpy
 import struct
 import tempfile
 
@@ -35,6 +36,7 @@ def test_pcolor():
 	test_list.append(putil.test.trigger_exception(putil.misc.pcolor, {'text':5, 'color':'red', 'tab':0}, TypeError, 'Argument `text` is not valid'))
 	test_list.append(putil.test.trigger_exception(putil.misc.pcolor, {'text':'hello', 'color':5, 'tab':0}, TypeError, 'Argument `color` is not valid'))
 	test_list.append(putil.test.trigger_exception(putil.misc.pcolor, {'text':'hello', 'color':'red', 'tab':5.1}, TypeError, 'Argument `tab` is not valid'))
+	test_list.append(putil.test.trigger_exception(putil.misc.pcolor, {'text':'hello', 'color':'hello', 'tab':5}, ValueError, 'Unknown color hello'))
 	test_list.append(putil.misc.pcolor('Text', 'none', 5) == '     Text')
 	test_list.append(putil.misc.pcolor('Text', 'blue', 2) == '\033[34m  Text\033[0m')
 	# These statements should not raise any exception
@@ -46,6 +48,48 @@ def test_pcolor():
 def test_binary_string_to_octal_string():	#pylint: disable=C0103
 	""" Test binary_string_to_octal_string() function """
 	assert putil.misc.binary_string_to_octal_string(''.join([struct.pack('h', num) for num in range(1, 15)])) == '\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
+
+
+def test_char_string_to_decimal_string():	#pylint: disable=C0103
+	""" Test char_string_to_decimal_string() function """
+	assert putil.misc.char_to_decimal('Hello world!') == '72 101 108 108 111 32 119 111 114 108 100 33'
+
+
+def test_isnumber():	#pylint: disable=C0103
+	""" Test isnumber() function """
+	test_list = list()
+	test_list.append(putil.misc.isnumber(5) == True)
+	test_list.append(putil.misc.isnumber(1.5) == True)
+	test_list.append(putil.misc.isnumber(complex(3.2, 9.5)) == True)
+	test_list.append(putil.misc.isnumber(True) == False)
+	assert test_list == len(test_list)*[True]
+
+
+def test_isreal():	#pylint: disable=C0103
+	""" Test isreal() function """
+	test_list = list()
+	test_list.append(putil.misc.isreal(5) == True)
+	test_list.append(putil.misc.isreal(1.5) == True)
+	test_list.append(putil.misc.isreal(complex(3.2, 9.5)) == False)
+	test_list.append(putil.misc.isreal(True) == False)
+	assert test_list == len(test_list)*[True]
+
+
+def test_prec():	#pylint: disable=C0103
+	""" Test prec() function """
+	test_list = list()
+	test_list.append(putil.test.trigger_exception(putil.misc.per, {'arga':5, 'argb':7, 'prec':'Hello'}, TypeError, 'Argument `prec` is not valid'))
+	test_list.append(putil.test.trigger_exception(putil.misc.per, {'arga':'Hello', 'argb':7, 'prec':1}, TypeError, 'Argument `arga` is not valid'))
+	test_list.append(putil.test.trigger_exception(putil.misc.per, {'arga':5, 'argb':'Hello', 'prec':1}, TypeError, 'Argument `argb` is not valid'))
+	test_list.append(putil.test.trigger_exception(putil.misc.per, {'arga':5, 'argb':[5, 7], 'prec':1}, TypeError, 'Arguments are not of the same type'))
+	test_list.append(putil.misc.per(3, 2, 1) == 0.5)
+	test_list.append(putil.misc.per(3.1, 3.1, 1) == 0)
+	test_list.append(all([test == ref for test, ref in zip(putil.misc.per([3, 1.1, 5], [2, 1.1, 2], 1), [0.5, 0, 1.5])]))
+	test_list.append(all([test == ref for test, ref in zip(putil.misc.per(numpy.array([3, 1.1, 5]), numpy.array([2, 1.1, 2]), 1), [0.5, 0, 1.5])]))
+	test_list.append(putil.misc.per(4, 3, 3) == 0.333)
+	test_list.append(putil.misc.per(4, 0, 3) == 1e20)
+	test_list.append(all([test == ref for test, ref in zip(putil.misc.per(numpy.array([3, 1.1, 5]), numpy.array([2, 0, 2]), 1), [0.5, 1e20, 1.5])]))
+	assert test_list == len(test_list)*[True]
 
 
 def test_pgcd():
