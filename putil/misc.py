@@ -68,9 +68,10 @@ def pcolor(text, color, tab=0):
 		raise ValueError('Unknown color {0}'.format(color))
 	return '\033[{0}m{1}{2}\033[0m'.format(esc_dict[color], ' '*tab, text) if esc_dict[color] != -1 else '{0}{1}'.format(' '*tab, text)
 
+
 def binary_string_to_octal_string(text):	#pylint: disable=C0103
 	r"""
-	Prints binary string in octal representation aliasing typical codes to their escape sequences.
+	Prints binary-packed string in octal representation aliasing typical codes to their escape sequences.
 
 	:param	text: Text to convert
 	:type	text: string
@@ -95,6 +96,12 @@ def binary_string_to_octal_string(text):	#pylint: disable=C0103
 	+------+-------+-----------------+
 	|   13 |   \\r | Carriage return |
 	+------+-------+-----------------+
+
+	For example:
+
+		>>> num = range(1, 15)
+		>>> putil.misc.binary_string_to_octal_string(''.join([struct.pack('h', num) for num in nums]))
+		... '\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
 
 	"""
 	octal_alphabet = [chr(num) if (num >= 32) and (num <= 126) else '\\'+str(oct(num)).lstrip('0') for num in xrange(0, 256)]

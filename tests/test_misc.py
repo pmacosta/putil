@@ -8,6 +8,7 @@ putil.misc unit tests
 """
 
 import os
+import struct
 import tempfile
 
 import putil.misc
@@ -40,6 +41,11 @@ def test_pcolor():
 	putil.misc.pcolor('Text', 'RED')
 	putil.misc.pcolor('Text', 'NoNe')
 	assert test_list == [True]*len(test_list)
+
+
+def test_binary_string_to_octal_string():	#pylint: disable=C0103
+	""" Test binary_string_to_octal_string() function """
+	assert putil.misc.binary_string_to_octal_string(''.join([struct.pack('h', num) for num in range(1, 15)])) == '\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
 
 
 def test_pgcd():
