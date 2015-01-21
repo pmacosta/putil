@@ -206,30 +206,32 @@ def per(arga, argb, prec=10):
 
 class Bundle(object):	#pylint: disable=R0903
 	"""
-	Bundle a collection of variables in one object
+	Bundle a collection of variables into one object. For example:
+
+		>>> obj = putil.misc.Bundle(var1=10)
+		>>> obj.var2 = 20
+		>>> print str(obj)
+		var1 = 10
+		var2 = 20
+		>>> obj.var2
+		20
+		>>> del obj.var1
+		>>> print str(obj)
+		var2 = 20
+
 	"""
 	def __init__(self, **kwds):
 		self.__dict__.update(kwds)
 
-	def __getitem__(self, elem):
-		return self.__dict__[elem]
-
-	def __setitem__(self, elem, value):
-		self.__dict__[elem] = value
-
-	def __delitem__(self, elem):
-		self.__dict__.pop(elem)
-
 	def __len__(self):
 		return len(self.__dict__)
 
-def b2s(var):
-	"""
-	Translates 1s and 0s to True's and False's
-	"""
-	if isinstance(var, bool) is False:
-		raise TypeError('argument has to be boolean in function b2s')
-	return 'True' if var is True else 'False'
+	def __repr__(self):
+		return 'Bundle({0})'.format(', '.join(['{0}={1}'.format(key, self.__dict__[key]) for key in sorted(self.__dict__.iterkeys())]))
+
+	def __str__(self):
+		return '\n'.join(['{0} = {1}'.format(key, self.__dict__[key]) for key in sorted(self.__dict__.iterkeys())])
+
 
 def make_dir(file_name):
 	"""
@@ -238,6 +240,7 @@ def make_dir(file_name):
 	file_path, file_name = os.path.split(file_name)
 	if os.path.exists(file_path) is False:
 		os.makedirs(file_path)
+
 
 def normalize(value, series, offset=0):
 	"""

@@ -221,7 +221,10 @@ def trigger_exception(obj, args, extype, exmsg):
 	regexp = re.compile(exmsg)
 	if regexp.match(excinfo.value.message):
 		return True
-	print excinfo.value.message
+	print
+	print 'Reference message: {0}'.format(exmsg)
+	print 'Actual message...: {0}'.format(excinfo.value.message)
+	return False
 
 
 def trigger_pcontract_exception(obj, args, exmsg):
