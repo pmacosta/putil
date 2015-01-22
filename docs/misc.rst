@@ -52,8 +52,8 @@ String
 .. autofunction:: putil.misc.binary_string_to_octal_string
 .. autofunction:: putil.misc.char_to_decimal
 .. autofunction:: putil.misc.elapsed_time_string
-.. autofunction:: putil.misc.numpy_pretty_print
 .. autofunction:: putil.misc.pcolor
+.. autofunction:: putil.misc.pprint_vector
 .. autofunction:: putil.misc.quote_str
 .. autofunction:: putil.misc.split_every
 .. autofunction:: putil.misc.strtype

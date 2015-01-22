@@ -181,30 +181,33 @@ def test_isiterable():
 	assert putil.misc.isiterable(3) == False
 
 
-def test_numpy_pretty_print():
-	""" Test numpy_pretty_print() function """
-	assert putil.misc.numpy_pretty_print(None) == 'None'
-	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8]) == '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
-	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], indent=20) == '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
-	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], limit=True) == '[ 1, 2, 3, ..., 6, 7, 8 ]'
-	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], limit=True, indent=20) == '[ 1, 2, 3, ..., 6, 7, 8 ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True) == '[    1.000m,   20.000u,  300.000M,    4.000p,    5.250k,   -6.000n,  700.000 ,  800.000m ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, indent=20) == '[    1.000m,   20.000u,  300.000M,    4.000p,    5.250k,   -6.000n,  700.000 ,  800.000m ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True) == '[    1.000m,   20.000u,  300.000M, ...,   -6.000n,  700.000 ,  800.000m ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True, indent=20) == '[    1.000m,   20.000u,  300.000M, ...,   -6.000n,  700.000 ,  800.000m ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M,    4.0p,    5.3k,   -6.0n,  700.0 ,  800.0m ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, mant=1, indent=20) == '[    1.0m,   20.0u,  300.0M,    4.0p,    5.3k,   -6.0n,  700.0 ,  800.0m ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, indent=20, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
-	print
-	print putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], width=10)
-	#assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], width=8) == '[ 1, 2,\n  3, 4,\n  5, 6,\n  7, 8 ]'
-	print putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], width=30, eng=True, mant=1)
-	print '         1         2         3'
-	print '123456789012345678901234567890'
-	print putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=25, eng=True, mant=1)
-	print putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=20, eng=True, mant=0)
-	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], width=30, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M,\n     4.0p,    5.3k,   -6.0n,\n   700.0 ,  800.0m ]'
+def test_pprint_vector():
+	""" Test pprint_vector() function """
+	assert putil.misc.pprint_vector(None) == 'None'
+	assert putil.misc.pprint_vector([1, 2, 3, 4, 5, 6, 7, 8]) == '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
+	assert putil.misc.pprint_vector([1, 2, 3, 4, 5, 6, 7, 8], indent=20) == '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
+	assert putil.misc.pprint_vector([1, 2, 3, 4, 5, 6, 7, 8], limit=True) == '[ 1, 2, 3, ..., 6, 7, 8 ]'
+	assert putil.misc.pprint_vector([1, 2, 3, 4, 5, 6, 7, 8], limit=True, indent=20) == '[ 1, 2, 3, ..., 6, 7, 8 ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True) == '[    1.000m,   20.000u,  300.000M,    4.000p,    5.250k,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, indent=20) == '[    1.000m,   20.000u,  300.000M,    4.000p,    5.250k,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True) == '[    1.000m,   20.000u,  300.000M, ...,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True, indent=20) == '[    1.000m,   20.000u,  300.000M, ...,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M,    4.0p,    5.3k,   -6.0n,  700.0 ,  800.0m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, mant=1, indent=20) == '[    1.0m,   20.0u,  300.0M,    4.0p,    5.3k,   -6.0n,  700.0 ,  800.0m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, indent=20, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
+	assert putil.misc.pprint_vector([1, 2, 3, 4, 5, 6, 7, 8], width=8) == '[ 1, 2,\n  3, 4,\n  5, 6,\n  7, 8 ]'
+	assert putil.misc.pprint_vector([1, 2, 3, 4, 5, 6, 7, 8], width=10) == '[ 1, 2, 3,\n  4, 5, 6,\n  7, 8 ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=20, eng=True, mant=0) == '[    1m,   20u,\n   300M,    4p,\n     5k,   -6n,\n   700 ,    8 ,\n     9  ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], width=30, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M,\n     4.0p,    5.3k,   -6.0n,\n   700.0 ,  800.0m ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=20, eng=True, mant=0, limit=True) == '[    1m,\n    20u,\n   300M,\n   ...\n   700 ,\n     8 ,\n     9  ]'
+	assert putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=30, eng=True, mant=1, limit=True) == '[    1.0m,   20.0u,  300.0M,\n             ...\n   700.0 ,    8.0 ,    9.0  ]'
+	header = 'Vector: '
+	assert header+putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=30, eng=True, mant=1, limit=True, indent=len(header)) == \
+		'Vector: [    1.0m,   20.0u,  300.0M,\n                     ...\n           700.0 ,    8.0 ,    9.0  ]'
+	assert header+putil.misc.pprint_vector([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], width=30, eng=True, mant=1, indent=len(header)) == \
+		'Vector: [    1.0m,   20.0u,  300.0M,\n             4.0p,    5.3k,   -6.0n,\n           700.0 ,  800.0m ]'
+	putil.test.assert_exception(putil.misc.pprint_vector, {'vector':[1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], 'width':5, 'eng':True, 'mant':1, 'limit':True}, ValueError, 'Argument `width` is too small')
 
 
 def test_split_every():

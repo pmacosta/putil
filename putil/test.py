@@ -227,8 +227,13 @@ def trigger_exception(obj, args, extype, exmsg):
 
 def assert_exception(obj, args, extype, exmsg):
 	""" Triggers exception withing the Py.test environment and records value """
-	with pytest.raises(extype) as excinfo:
-		obj(**args)	#pylint: disable=W0142
+	try:
+		with pytest.raises(extype) as excinfo:
+			obj(**args)	#pylint: disable=W0142
+	except Exception as eobj:	#pylint: disable=W0703
+		if eobj.message == 'DID NOT RAISE':
+			raise
+		assert '{0} ({1})'.format(repr(eobj)[:repr(eobj).find('(')], eobj.message) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
 	assert '{0} ({1})'.format(exception_type_str(excinfo.type), excinfo.value.message) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
 
 
