@@ -55,6 +55,7 @@ String
 .. autofunction:: putil.misc.numpy_pretty_print
 .. autofunction:: putil.misc.pcolor
 .. autofunction:: putil.misc.quote_str
+.. autofunction:: putil.misc.split_every
 .. autofunction:: putil.misc.strtype
 .. autofunction:: putil.misc.strtype_item
 .. autofunction:: putil.misc.strframe

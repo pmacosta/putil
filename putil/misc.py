@@ -409,13 +409,14 @@ def isiterable(obj):
 		return True
 
 
-def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=3):	#pylint: disable=R0913
+def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=3):	#pylint: disable=R0913,R0914
 	"""
 	Formats Numpy vectors for printing. If **vector** is *None* the string 'None' is returned
 
 	:param	vector: Vector to pretty print or *None*
 	:type	vector: Numpy vector
-	:param	limit: Flag that indicates if at most 6 vector elements should be printed (all 6 if vector length is equal or less than6, first and last 3 if it is not) (*True*), or if the entire vector should be printed (*False*)
+	:param	limit: Flag that indicates if at most 6 vector elements should be printed (all vector elements if its length is equal or less than 6, first and last 3 vector elements if it is not) (*True*), or if the entire vector\
+	 should be printed (*False*)
 	:type	limit: boolean
 	:param	width: Number of characters per line available to print vector. If *None* the vector is printed in one line
 	:type	width: integer or None
@@ -433,15 +434,35 @@ def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, man
 
 	if vector is None:
 		return 'None'
-	token = '{0:.'+str(mant)+'f}' if eng else '{0}'
 	if (not limit) or (limit and (len(vector) < 7)):
-		uret = '[ '+(', '.join([token.format(_oprint(element)) for element in vector]))+' ]'
+		uret = '[ '+(', '.join(['{0}'.format(_oprint(element)) for element in vector]))+' ]'
 	else:
-		uret = '[ {0} {1} {2} ... {3} {4} {5} ]'.format(_oprint(vector[0]), _oprint(vector[1]), _oprint(vector[2]), _oprint(vector[-3]), _oprint(vector[-2]), _oprint(vector[-1]))
-	if width is None:
+		uret = '[ {0}, {1}, {2}, ..., {3}, {4}, {5} ]'.format(_oprint(vector[0]), _oprint(vector[1]), _oprint(vector[2]), _oprint(vector[-3]), _oprint(vector[-2]), _oprint(vector[-1]))
+	if (width is None) or (len(uret) < width):
 		return uret
 	# Add indent for lines after first one, cannot use subsequent_indent of textwrap.wrap() method as this function counts the indent as part of the line
-	return '\n'.join([((indent+2)*' ')+line if num > 0 else line for num, line in enumerate(textwrap.wrap(uret, width=width))])
+	wobj = textwrap.TextWrapper(initial_indent='[ ', width=width, subsequent_indent=(indent+2)*' ')
+	# Use output of wrap() if numbers cannot be aligned at comma (variable width)
+	if not eng:
+		return '\n'.join(wobj.wrap(uret[2:]))
+	wrapped_lines_list = wobj.wrap(uret[2:])
+	first_line = wrapped_lines_list[0]
+	elements_per_row = first_line.count(',')
+	if elements_per_row == 0:
+		raise ValueError('Argument `width` is too small')
+	if limit:
+		pass
+	else:
+		remainder_list = split_every(uret[len(first_line):], ',', elements_per_row, lstrip=True)
+		first_comma_index = first_line.find(',')
+		actual_width = len(first_line)-2
+		new_wrapped_lines_list = [first_line]
+		for line in remainder_list[:-1]:
+			new_wrapped_lines_list.append('{0},'.format(line).rjust(actual_width))
+		# Align last line on fist comma (if it exists) or on length of field if not
+		marker = len(remainder_list[-1])-2	if remainder_list[-1].find(',') == -1 else remainder_list[-1].find(',')
+		new_wrapped_lines_list.append('{0}{1}'.format((first_comma_index-marker-2)*' ', remainder_list[-1]))
+		return '\n'.join([((indent+2)*' ')+line if num > 0 else line for num, line in enumerate(new_wrapped_lines_list)])
 
 
 def elapsed_time_string(start_time, stop_time):
@@ -613,3 +634,25 @@ def flatten_list(lobj):
 def isexception(obj):
 	""" Tests whether an object is an exception object """
 	return False if not inspect.isclass(obj) else issubclass(obj, Exception)
+
+
+def split_every(text, sep, count, lstrip=False, rstrip=False):
+	"""
+	Returns a list of the words in the string, using a count of a separator as the delimiter
+
+	:param	text: String to split
+	:type	text: string
+	:param	sep: Separator
+	:type	sep: string
+	:param	count: Number of separators to use as delimiter
+	:type	count: integer
+	:param	lstrip: Flag that indicates whether whitespace should be removed from the beginning of each list item (*True*) or not (*False*)
+	:type	lstrip: boolean
+	:param	rstrip: Flag that indicates whether whitespace should be removed from the end of each list item (*True*) or not (*False*)
+	:type	rstrip: boolean
+	:rtype: list
+	"""
+	tlist = text.split(sep)
+	lines = [sep.join(tlist[num:min(num+count, len(tlist))]) for num in range(0, len(tlist), count)]
+	return [line.rstrip() if (rstrip and not lstrip) else (line.lstrip() if (lstrip and not rstrip) else (line.strip() if lstrip and rstrip else line)) for line in lines]
+

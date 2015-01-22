@@ -1,11 +1,7 @@
 ﻿# test_misc.py
 # Copyright (c) 2014 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0302
-
-"""
-putil.misc unit tests
-"""
+# pylint: disable=C0302,C0111
 
 import os
 import mock
@@ -17,6 +13,7 @@ import fractions
 
 import putil.misc
 import putil.test
+
 
 def test_ignored():
 	""" Test ignored context manager """
@@ -182,3 +179,42 @@ def test_isiterable():
 	assert putil.misc.isiterable({'a':5}) == True
 	assert putil.misc.isiterable(set([1, 2, 3])) == True
 	assert putil.misc.isiterable(3) == False
+
+
+def test_numpy_pretty_print():
+	""" Test numpy_pretty_print() function """
+	assert putil.misc.numpy_pretty_print(None) == 'None'
+	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8]) == '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
+	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], indent=20) == '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
+	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], limit=True) == '[ 1, 2, 3, ..., 6, 7, 8 ]'
+	assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], limit=True, indent=20) == '[ 1, 2, 3, ..., 6, 7, 8 ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True) == '[    1.000m,   20.000u,  300.000M,    4.000p,    5.250k,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, indent=20) == '[    1.000m,   20.000u,  300.000M,    4.000p,    5.250k,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True) == '[    1.000m,   20.000u,  300.000M, ...,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True, indent=20) == '[    1.000m,   20.000u,  300.000M, ...,   -6.000n,  700.000 ,  800.000m ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M,    4.0p,    5.3k,   -6.0n,  700.0 ,  800.0m ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], eng=True, mant=1, indent=20) == '[    1.0m,   20.0u,  300.0M,    4.0p,    5.3k,   -6.0n,  700.0 ,  800.0m ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], limit=True, indent=20, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
+	print
+	print putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], width=10)
+	#assert putil.misc.numpy_pretty_print([1, 2, 3, 4, 5, 6, 7, 8], width=8) == '[ 1, 2,\n  3, 4,\n  5, 6,\n  7, 8 ]'
+	print putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], width=30, eng=True, mant=1)
+	print '         1         2         3'
+	print '123456789012345678901234567890'
+	print putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=25, eng=True, mant=1)
+	print putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9], width=20, eng=True, mant=0)
+	assert putil.misc.numpy_pretty_print([1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8], width=30, eng=True, mant=1) == '[    1.0m,   20.0u,  300.0M,\n     4.0p,    5.3k,   -6.0n,\n   700.0 ,  800.0m ]'
+
+
+def test_split_every():
+	""" Test split_every() function """
+	assert putil.misc.split_every('a, b, c, d', ',', 1) == ['a', ' b', ' c', ' d']
+	assert putil.misc.split_every('a , b , c , d ', ',', 1) == ['a ', ' b ', ' c ', ' d ']
+	assert putil.misc.split_every('a , b , c , d ', ',', 1, lstrip=True) == ['a ', 'b ', 'c ', 'd ']
+	assert putil.misc.split_every('a , b , c , d ', ',', 1, rstrip=True) == ['a', ' b', ' c', ' d']
+	assert putil.misc.split_every('a , b , c , d ', ',', 1, lstrip=True, rstrip=True) == ['a', 'b', 'c', 'd']
+	assert putil.misc.split_every('a, b, c, d', ',', 2) == ['a, b', ' c, d']
+	assert putil.misc.split_every('a, b, c, d', ',', 3) == ['a, b, c', ' d']
+	assert putil.misc.split_every('a, b, c, d', ',', 4) == ['a, b, c, d']
+	assert putil.misc.split_every('a, b, c, d', ',', 5) == ['a, b, c, d']
