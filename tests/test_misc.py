@@ -8,6 +8,7 @@ import mock
 import numpy
 import pytest
 import struct
+import datetime
 import tempfile
 import fractions
 
@@ -221,3 +222,51 @@ def test_split_every():
 	assert putil.misc.split_every('a, b, c, d', ',', 3) == ['a, b, c', ' d']
 	assert putil.misc.split_every('a, b, c, d', ',', 4) == ['a, b, c, d']
 	assert putil.misc.split_every('a, b, c, d', ',', 5) == ['a, b, c, d']
+
+
+def test_ellapsed_time_string():
+	""" Test ellapsed_time_string() function """
+	assert putil.misc.elapsed_time_string(datetime.datetime(2015, 1, 1), datetime.datetime(2015, 1, 1)) == 'None'
+	putil.test.assert_exception(putil.misc.elapsed_time_string, {'start_time':datetime.datetime(2015, 2, 1), 'stop_time':datetime.datetime(2015, 1, 1)}, RuntimeError, 'Invalid time delta specification')
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1), datetime.datetime(2015, 1, 1)) == '1 year'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1), datetime.datetime(2016, 1, 1)) == '2 years'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1), datetime.datetime(2014, 1, 31)) == '1 month'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1), datetime.datetime(2014, 3, 2)) == '2 months'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 10), datetime.datetime(2014, 1, 1, 11)) == '1 hour'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 10), datetime.datetime(2014, 1, 1, 12)) == '2 hours'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10), datetime.datetime(2014, 1, 1, 1, 11)) == '1 minute'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10), datetime.datetime(2014, 1, 1, 1, 12)) == '2 minutes'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2014, 1, 1, 1, 10, 2)) == '1 second'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2014, 1, 1, 1, 10, 3)) == '2 seconds'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2015, 1, 1, 1, 10, 2)) == '1 year and 1 second'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2015, 1, 1, 1, 10, 3)) == '1 year and 2 seconds'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2015, 1, 2, 1, 10, 3)) == '1 year, 1 day and 2 seconds'
+	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2015, 1, 3, 1, 10, 3)) == '1 year, 2 days and 2 seconds'
+
+def test_tmp_file():
+	""" Test TmpFile context manager """
+	def write_data(file_handle):	#pylint: disable=C0111
+		file_handle.write('Hello world!')
+	# Test argument validation
+	with pytest.raises(TypeError) as excinfo:
+		with putil.misc.TmpFile(5) as file_name:
+			pass
+	assert excinfo.value.message == 'Argument `fpointer` is not valid'
+	# Test behavior when no function pointer is given
+	with putil.misc.TmpFile() as file_name:
+		assert isinstance(file_name, str) and (len(file_name) > 0)
+		assert os.path.exists(file_name)
+	assert not os.path.exists(file_name)
+	# Test that exceptions within the with statement are re-raised
+	with pytest.raises(OSError) as excinfo:
+		with putil.misc.TmpFile(write_data) as file_name:
+			raise OSError('No data')
+	assert excinfo.value.message == 'No data'
+	assert not os.path.exists(file_name)
+	# Test behaviour under "normal" circumstances
+	with putil.misc.TmpFile(write_data) as file_name:
+		with open(file_name, 'r') as fobj:
+			line = fobj.readlines()
+		assert line == ['Hello world!']
+		assert os.path.exists(file_name)
+	assert not os.path.exists(file_name)

@@ -6,6 +6,7 @@
 import os
 import sys
 import numpy
+import types
 import inspect
 import textwrap
 import tempfile
@@ -13,7 +14,6 @@ import decorator
 import fractions
 
 import putil.eng
-import putil.check
 
 
 @decorator.contextmanager
@@ -493,18 +493,18 @@ def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):
 
 def elapsed_time_string(start_time, stop_time):
 	""" Returns a formatted string with the ellapsed time between two time points. The string includes years (365 days), months (30 days), days (24 hours), hours (60 minutes), minutes (60 seconds) and seconds.
-	If **start_time** is greater than the **stop_time**, the string returned is 'Invalid time delta specification'. If **start_time** and **stop_time** are equal, the string returned
-	is 'None'. Otherwise, the string returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s], [MM minute[s] [and SS second[s]]]]]]. Any piece (year[s], month[s], etc.) is omitted if the number of the
-	token is null/zero.
+	If **start_time** and **stop_time** are equal, the string returned is 'None'; otherwise, the string returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s], [MM minute[s] [and SS second[s]]]]]].
+	Any piece (year[s], month[s], etc.) is omitted if the number of the token is null/zero.
 
 	:param	start_time:	Starting time point
 	:type	start_time:	`datetime <https://docs.python.org/2/library/datetime.html#datetime-objects>`_ object
 	:param	stop_time:	Ending time point
 	:type	stop_time:	`datetime`_ object
 	:rtype:				string
+	:raises: RuntimeError (Invalid time delta specification)
 	"""
 	if start_time > stop_time:
-		return 'Invalid time delta specification'
+		raise RuntimeError('Invalid time delta specification')
 	delta_time = stop_time-start_time
 	tot_seconds = int(delta_time.total_seconds())
 	years, remainder = divmod(tot_seconds, 365*24*60*60)
@@ -522,34 +522,37 @@ def elapsed_time_string(start_time, stop_time):
 	else:
 		return (', '.join(ret_list[0:-1]))+' and '+ret_list[-1]
 
+
 ###
 # Context manager to create temporary files and delete them after it has been read
 ###
 class TmpFile(object):	#pylint: disable=R0903
 	"""
-	Context manager for temporary files
+	Context manager for temporary files. A
 
-	:param	fpointer: Pointer to a function that writes data to file
+	:param	fpointer: Pointer to a function that writes data to file or *None*. If the argument is not *None* the function pointed to receives exactly one argument, a file-like object as created by the\
+	`tempfile.NamedTemporaryFile <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_ function.
 	:type	fpointer: function pointer
 	:returns:	File name of temporary file
 	:rtype:		string
-	:raises:	TypeError (Argument `fpointer` is of the wrong type)
+	:raises:	TypeError (Argument `fpointer` is not valid)
 	"""
 	def __init__(self, fpointer=None):
-		putil.check.check_arguments({'fpointer':putil.check.PolymorphicType([None, putil.check.Function()])})
-		self.file_name = None
-		self.fpointer = fpointer
+		if fpointer and (not isinstance(fpointer, types.FunctionType)) and (not isinstance(fpointer, types.LambdaType)):
+			raise TypeError('Argument `fpointer` is not valid')
+		self._file_name = None
+		self._fpointer = fpointer
 
 	def __enter__(self):
 		with tempfile.NamedTemporaryFile(delete=False) as fobj:
-			if self.fpointer is not None:
-				self.fpointer(fobj)
-			self.file_name = fobj.name
-		return self.file_name
+			self._file_name = fobj.name
+			if self._fpointer:
+				self._fpointer(fobj)
+		return self._file_name
 
 	def __exit__(self, exc_type, exc_value, exc_tb):
 		with ignored(OSError):
-			os.remove(self.file_name)
+			os.remove(self._file_name)
 		if exc_type is not None:
 			return False
 
@@ -558,7 +561,7 @@ def strframe(obj, extended=False):
 	"""
 	Pretty prints a stack frame
 
-	:param	obj: Frame record, typically an item of a list produced by ``inspect.stack()``
+	:param	obj: Frame record, typically an item of the list produced by ``inspect.stack()``
 	:type	obj: frame record
 	:rtype:		string
 	"""
