@@ -411,10 +411,10 @@ def isiterable(obj):
 
 def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):	#pylint: disable=R0913,R0914
 	"""
-	Formats Numpy vectors for printing. If **vector** is *None* the string 'None' is returned
+	Formats a list of numers (vector) or a Numpy vector for printing. If **vector** is *None* the string 'None' is returned
 
 	:param	vector: Vector to pretty print or *None*
-	:type	vector: Numpy vector
+	:type	vector: list of numbers, Numpy vector or *None*
 	:param	limit: Flag that indicates if at most 6 vector elements should be printed (all vector elements if its length is equal or less than 6, first and last 3 vector elements if it is not) (*True*), or if the entire vector\
 	 should be printed (*False*)
 	:type	limit: boolean
@@ -427,6 +427,24 @@ def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):
 	:param	mant: Number of mantissa digits (only applicable if **eng** is *True*)
 	:type	mant: integer
 	:rtype: string
+
+	For example:
+
+		>>> header = 'Vector: '
+		>>> data = [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9]
+		>>> print header+putil.misc.pprint_vector(data, width=30, eng=True, mant=1, limit=True, indent=len(header))
+		Vector: [    1.0m,   20.0u,  300.0M,
+		                     ...
+		           700.0 ,    8.0 ,    9.0  ]
+		>>> print header+putil.misc.pprint_vector(data, width=30, eng=True, mant=0, indent=len(header))
+		Vector: [    1m,   20u,  300M,    4p,
+		             5k,   -6n,  700 ,    8 ,
+		             9  ]
+		>>> print putil.misc.pprint_vector(data, eng=True, mant=0)
+		[    1m,   20u,  300M,    4p,    5k,   -6n,  700 ,    8 ,    9  ]
+		>>> print putil.misc.pprint_vector(data, limit=True)
+		[ 0.001, 2e-05, 300000000.0, ..., 700, 8, 9 ]
+
 	"""
 	def _str(element):
 		""" Print a straight number or one with engineering notation """
