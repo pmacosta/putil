@@ -272,24 +272,22 @@ class TestBasicSource(object):	#pylint: disable=W0232
 
 	def test_str(self):	#pylint: disable=C0103,R0201
 		""" Test that str behaves correctly """
-		test_list = list()
 		# Full set
 		obj = str(putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=-10, indep_max=20.0))
-		ref = 'Independent variable minimum: -10\nIndependent variable maximum: 20.0\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 10.0, 20.0, 30.0 ]'
-		test_list.append(obj == ref)
+		ref = 'Independent variable minimum: -10\nIndependent variable maximum: 20.0\nIndependent variable: [ 1, 2, 3 ]\nDependent variable: [ 10, 20, 30 ]'
+		assert obj == ref
 		# indep_min not set
 		obj = str(putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_max=20.0))
-		ref = 'Independent variable minimum: -inf\nIndependent variable maximum: 20.0\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 10.0, 20.0, 30.0 ]'
-		test_list.append(obj == ref)
+		ref = 'Independent variable minimum: -inf\nIndependent variable maximum: 20.0\nIndependent variable: [ 1, 2, 3 ]\nDependent variable: [ 10, 20, 30 ]'
+		assert obj == ref
 		# indep_max not set
 		obj = str(putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=-10))
-		ref = 'Independent variable minimum: -10\nIndependent variable maximum: +inf\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 10.0, 20.0, 30.0 ]'
-		test_list.append(obj == ref)
+		ref = 'Independent variable minimum: -10\nIndependent variable maximum: +inf\nIndependent variable: [ 1, 2, 3 ]\nDependent variable: [ 10, 20, 30 ]'
+		assert obj == ref
 		# indep_min and indep_max not set
 		obj = str(putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30])))
-		ref = 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 10.0, 20.0, 30.0 ]'
-		test_list.append(obj == ref)
-		assert test_list == 4*[True]
+		ref = 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: [ 1, 2, 3 ]\nDependent variable: [ 10, 20, 30 ]'
+		assert obj == ref
 
 	def test_cannot_delete_attributes(self):	#pylint: disable=C0103,R0201
 		""" Test that del method raises an exception on all class attributes """
@@ -541,51 +539,49 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			return [numpy.array([1, 3]), numpy.array([1, 2, 3])]
 		def fproc13(indep_var, dep_var, par1):	#pylint: disable=C0111,W0613
 			raise RuntimeError('Test exception message')
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# These assignments should raise an exception
 			with pytest.raises(TypeError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1)
-			test_list.append(excinfo.value.message == 'Argument `fproc` (function fproc1) return value is of the wrong type')
+			assert excinfo.value.message == 'Argument `fproc` (function fproc1) return value is of the wrong type'
 			with pytest.raises(RuntimeError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc2)
-			test_list.append(excinfo.value.message == 'Argument `fproc` (function fproc2) returned an illegal number of values')
+			assert excinfo.value.message == 'Argument `fproc` (function fproc2) returned an illegal number of values'
 			with pytest.raises(TypeError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc4)
-			test_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
+			assert excinfo.value.message == 'Processed independent variable is of the wrong type'
 			with pytest.raises(TypeError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc5)
-			test_list.append(excinfo.value.message == 'Processed independent variable is of the wrong type')
+			assert excinfo.value.message == 'Processed independent variable is of the wrong type'
 			with pytest.raises(TypeError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc6)
-			test_list.append(excinfo.value.message == 'Processed dependent variable is of the wrong type')
+			assert excinfo.value.message == 'Processed dependent variable is of the wrong type'
 			with pytest.raises(ValueError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc8)
-			test_list.append(excinfo.value.message == 'Processed independent variable is empty')
+			assert excinfo.value.message == 'Processed independent variable is empty'
 			with pytest.raises(ValueError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc9)
-			test_list.append(excinfo.value.message == 'Processed dependent variable is empty')
+			assert excinfo.value.message == 'Processed dependent variable is empty'
 			with pytest.raises(ValueError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc10)
-			test_list.append(excinfo.value.message == 'Processed independent variable is empty')
+			assert excinfo.value.message == 'Processed independent variable is empty'
 			with pytest.raises(ValueError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc11)
-			test_list.append(excinfo.value.message == 'Processed dependent variable is empty')
+			assert excinfo.value.message == 'Processed dependent variable is empty'
 			with pytest.raises(ValueError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc12)
-			test_list.append(excinfo.value.message == 'Processed independent and dependent variables are of different length')
+			assert excinfo.value.message == 'Processed independent and dependent variables are of different length'
 			with pytest.raises(RuntimeError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
 			msg = 'Processing function fproc13 raised an exception when called with the following arguments:\n'
-			msg += 'indep_var: [ 1.0, 2.0, 3.0 ]\n'
-			msg += 'dep_var: [ 1.0, 2.0, 3.0 ]\n'
+			msg += 'indep_var: [ 1, 2, 3 ]\n'
+			msg += 'dep_var: [ 1, 2, 3 ]\n'
 			msg += 'par1: 13\n'
 			msg += 'Exception error: Test exception message'
-			test_list.append(excinfo.value.message == msg)
+			assert excinfo.value.message == msg
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc3)
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc7)
-		assert test_list == [True]*11
 
 	def test_fproc_eargs_wrong_type(self):	#pylint: disable=R0201
 		""" Test if object behaves correctly when fprog_eargs is of the wrong type """
@@ -634,34 +630,32 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			return indep_var*1e-3, dep_var+1
 		def fproc2(indep_var, dep_var, par1, par2):	#pylint: disable=C0111,W0613
 			return indep_var+par1, dep_var-par2
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# dfilter
 			obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3'))
 			ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
-			ref += 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: [ 1.0, 2.0, 3.0 ]\nDependent variable: [ 2.0, 4.0, 1.0 ]'
-			test_list.append(obj == ref)
+			ref += 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: [ 1, 2, 3 ]\nDependent variable: [ 2, 4, 1 ]'
+			assert obj == ref
 			# fproc
 			obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=2e-3, indep_max=200, fproc=fproc1))
 			ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc1\nProcessing function extra arguments: None\n'.format(file_name)
-			ref += 'Independent variable minimum: 0.002\nIndependent variable maximum: 200\nIndependent variable: [ 0.002, 0.003 ]\nDependent variable: [ 5.0, 2.0 ]'
-			test_list.append(obj == ref)
+			ref += 'Independent variable minimum: 0.002\nIndependent variable maximum: 200\nIndependent variable: [ 0.002, 0.003 ]\nDependent variable: [ 5, 2 ]'
+			assert obj == ref
 			# fproc_eargs
 			obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, indep_max=200, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
 			ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
-			ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
-			test_list.append(obj == ref)
+			ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4, 5, 6 ]\nDependent variable: [ -2, 0, -3 ]'
+			assert obj == ref
 			# indep_min set
 			obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
 			ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
-			ref += 'Independent variable minimum: -2\nIndependent variable maximum: +inf\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
-			test_list.append(obj == ref)
+			ref += 'Independent variable minimum: -2\nIndependent variable maximum: +inf\nIndependent variable: [ 4, 5, 6 ]\nDependent variable: [ -2, 0, -3 ]'
+			assert obj == ref
 			# indep_max set
 			obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3', indep_min=-2, indep_max=200, fproc=fproc2, fproc_eargs={'par1':3, 'par2':4}))
 			ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: fproc2\nProcessing function extra arguments: \n   par1: 3\n   par2: 4\n'.format(file_name)
-			ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4.0, 5.0, 6.0 ]\nDependent variable: [ -2.0, 0.0, -3.0 ]'
-			test_list.append(obj == ref)
-		assert test_list == 5*[True]
+			ref += 'Independent variable minimum: -2\nIndependent variable maximum: 200\nIndependent variable: [ 4, 5, 6 ]\nDependent variable: [ -2, 0, -3 ]'
+			assert obj == ref
 
 	def test_complete(self):	#pylint: disable=R0201
 		""" Test that _complete() method behaves correctly """
@@ -926,15 +920,14 @@ class TestSeries(object):	#pylint: disable=W0232
 
 	def test_str(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
-		test_list = list()
 		marker_list = [{'value':None, 'string':'None'}, {'value':'o', 'string':'o'}, {'value':matplotlib.path.Path([(0, 0), (1, 1)]), 'string':'matplotlib.path.Path object'}, {'value':[(0, 0), (1, 1)], 'string':'[(0, 0), (1, 1)]'},
 				 {'value':r'$a_{b}$', 'string':r'$a_{b}$'}]
 		for marker_dict in marker_list:
 			obj = putil.plot.Series(data_source=default_source, label='test', marker=marker_dict['value'])
 			ret = ''
 			ret += 'Data source: putil.plot.BasicSource class object\n'
-			ret += 'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
-			ret += 'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+			ret += 'Independent variable: [ 5, 6, 7, 8 ]\n'
+			ret += 'Dependent variable: [ 0, -10, 5, 4 ]\n'
 			ret += 'Label: test\n'
 			ret += 'Color: k\n'
 			ret += 'Marker: {0}\n'.format(marker_dict['string'])
@@ -947,8 +940,7 @@ class TestSeries(object):	#pylint: disable=W0232
 				print
 				print 'Comparison:'
 				print ret
-			test_list.append(str(obj) == ret)
-		assert test_list == 5*[True]
+			assert str(obj) == ret
 
 	def test_cannot_delete_attributes(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
@@ -1119,147 +1111,144 @@ class TestPanel(object):	#pylint: disable=W0232
 
 	def test_intelligent_ticks(self):	#pylint: disable=C0103,R0201,W0621,R0915
 		""" Test that intelligent_tick methods works for all scenarios """
-		test_list = list()
 		# 0
 		# Tight = True
 		# One sample
 		vector = numpy.array([35e-6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([31.5, 35, 38.5], ['31.5', '35.0', '38.5'], 31.5, 38.5, 1e-6, 'u'))
+		assert obj == ([31.5, 35, 38.5], ['31.5', '35.0', '38.5'], 31.5, 38.5, 1e-6, 'u')
 		print obj
 		# 1
 		# Scaling with more data samples after 1.0
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6], ['0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6'], 0.8, 1.6, 1, ' '))
+		assert obj == ([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6], ['0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6'], 0.8, 1.6, 1, ' ')
 		print obj
 		# 2
 		# Regular, should not have any scaling
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1, ' '))
+		assert obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1, ' ')
 		print obj
 		# 3
 		# Regular, should not have any scaling
 		vector = numpy.array([10, 20, 30, 40, 50, 60, 70])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([10, 20, 30, 40, 50, 60, 70], ['10', '20', '30', '40', '50', '60', '70'], 10, 70, 1, ' '))
+		assert obj == ([10, 20, 30, 40, 50, 60, 70], ['10', '20', '30', '40', '50', '60', '70'], 10, 70, 1, ' ')
 		print obj
 		# 4
 		# Scaling
 		vector = numpy.array([1000, 2000, 3000, 4000, 5000, 6000, 7000])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1e3, 'k'))
+		assert obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1e3, 'k')
 		print obj
 		# 5
 		# Scaling
 		vector = numpy.array([200e6, 300e6, 400e6, 500e6, 600e6, 700e6, 800e6, 900e6, 1000e6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([200, 300, 400, 500, 600, 700, 800, 900, 1000], ['200', '300', '400', '500', '600', '700', '800', '900', '1k'], 200, 1000, 1e6, 'M'))
+		assert obj == ([200, 300, 400, 500, 600, 700, 800, 900, 1000], ['200', '300', '400', '500', '600', '700', '800', '900', '1k'], 200, 1000, 1e6, 'M')
 		print obj
 		# 6
 		# No tick marks to place all data points on grid, space uniformely
 		vector = numpy.array([105, 107.7, 215, 400.2, 600, 700, 800, 810, 820, 830, 840, 850, 900, 905])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([105.0, 193.88888889, 282.77777778, 371.66666667, 460.55555556, 549.44444444, 638.33333333, 727.22222222, 816.11111111, 905.0],
-						   ['105', '194', '283', '372', '461', '549', '638', '727', '816', '905'], 105, 905, 1, ' '))
+		assert obj == ([105.0, 193.8888888889, 282.7777777778, 371.6666666667, 460.5555555556, 549.4444444444, 638.3333333333, 727.2222222222, 816.1111111111, 905.0],
+						   ['105', '194', '283', '372', '461', '549', '638', '727', '816', '905'], 105, 905, 1, ' ')
 		print obj
 		# 7
 		# Ticks marks where some data points can be on grid
 		vector = numpy.array([10, 20, 30, 40, 41, 50, 60, 62, 70, 75.5, 80])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([10, 20, 30, 40, 50, 60, 70, 80], ['10', '20', '30', '40', '50', '60', '70', '80'], 10, 80, 1, ' '))
+		assert obj == ([10, 20, 30, 40, 50, 60, 70, 80], ['10', '20', '30', '40', '50', '60', '70', '80'], 10, 80, 1, ' ')
 		print obj
 		# 8
 		# Tight = False
 		# One sample
 		vector = numpy.array([1e-9])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
-		test_list.append(obj == ([0.9, 1, 1.1], ['0.9', '1.0', '1.1'], 0.9, 1.1, 1e-9, 'n'))
+		assert obj == ([0.9, 1, 1.1], ['0.9', '1.0', '1.1'], 0.9, 1.1, 1e-9, 'n')
 		print obj
 		# 9
 		# Scaling with more data samples after 1.0
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
-		test_list.append(obj == ([0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7'], 0.7, 1.7, 1, ' '))
+		assert obj == ([0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7'], 0.7, 1.7, 1, ' ')
 		print obj
 		# 10
 		# Scaling with more data samples before 1.0
 		vector = numpy.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
-		test_list.append(obj == ([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2], ['0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0', '1.1', '1.2'], 0.2, 1.2, 1, ' '))
+		assert obj == ([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2], ['0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0', '1.1', '1.2'], 0.2, 1.2, 1, ' ')
 		print obj
 		# 11
 		# Regular, with some overshoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 7.5, tight=False)	#pylint: disable=W0212
-		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
+		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
 		print obj
 		# 12
 		# Regular, with some undershoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, 0.1, max(vector), tight=False)	#pylint: disable=W0212
-		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
+		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
 		print obj
 		# 13
 		# Regular, with large overshoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 20, tight=False)	#pylint: disable=W0212
-		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
+		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
 		print obj
 		# 14
 		# Regular, with large undershoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, -10, max(vector), tight=False)	#pylint: disable=W0212
-		test_list.append(obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' '))
+		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
 		print obj
 		# 15
 		# Scaling, minimum as reference
 		vector = 1e9+(numpy.array([10, 20, 30, 40, 50, 60, 70, 80])*1e3)
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1.00001, 1.00002, 1.00003, 1.00004, 1.00005, 1.00006, 1.00007, 1.00008], ['1.00001', '1.00002', '1.00003', '1.00004', '1.00005', '1.00006', '1.00007', '1.00008'], 1.00001, 1.00008, 1e9, 'G'))
+		assert obj == ([1.00001, 1.00002, 1.00003, 1.00004, 1.00005, 1.00006, 1.00007, 1.00008], ['1.00001', '1.00002', '1.00003', '1.00004', '1.00005', '1.00006', '1.00007', '1.00008'], 1.00001, 1.00008, 1e9, 'G')
 		print obj
 		# 16
 		# Scaling, delta as reference
 		vector = numpy.array([10.1e6, 20e6, 30e6, 40e6, 50e6, 60e6, 70e6, 80e6, 90e6, 100e6, 20.22e9])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([10.1, 2255.6444444, 4501.1888889, 6746.7333333, 8992.2777778, 11237.822222, 13483.366667, 15728.911111, 17974.455556, 20220.0], \
-						   ['10.1', '2.3k', '4.5k', '6.7k', '9.0k', '11.2k', '13.5k', '15.7k', '18.0k', '20.2k'], 10.1, 20220.0, 1e6, 'M'))
+		assert obj == ([10.1, 2255.6444444444, 4501.1888888889, 6746.7333333333, 8992.2777777778, 11237.8222222222, 13483.3666666667, 15728.9111111111, 17974.4555555556, 20220.0], \
+						   ['10.1', '2.3k', '4.5k', '6.7k', '9.0k', '11.2k', '13.5k', '15.7k', '18.0k', '20.2k'], 10.1, 20220.0, 1e6, 'M')
 		print obj
 		# 17
 		# Scaling, maximum as reference
 		vector = (numpy.array([0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5])*1e12)
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
-		test_list.append(obj == ([0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5'], 0.7, 1.5, 1e12, 'T'))
+		assert obj == ([0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5'], 0.7, 1.5, 1e12, 'T')
 		print obj
 		# 18
 		# Log axis
 		# Tight False
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True, log_axis=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
+		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
 		# 19
 		# Tight True
 		# Left side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, 500, max(vector), tight=False, log_axis=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
+		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
 		print obj
 		# 20
 		# Right side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
+		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
 		print obj
 		# 21
 		# Both
 		# Right side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, 500, 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
-		test_list.append(obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k'))
+		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
 		print obj
-		#
-		assert test_list == [True]*22
 
 	def test_series(self):	#pylint: disable=C0103,R0201,W0621,R0914,R0915
 		""" Test that the panel dependent axis are correctly set """
@@ -1412,7 +1401,6 @@ class TestPanel(object):	#pylint: disable=W0232
 
 	def test_str(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
-		test_list = list()
 		obj = putil.plot.Panel(series=None)
 		ret = 'Series: None\n'
 		ret += 'Primary axis label: not specified\n'
@@ -1424,12 +1412,12 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Legend properties:\n'
 		ret += '   pos: BEST\n'
 		ret += '   cols: 1'
-		test_list.append(str(obj) == ret)
+		assert str(obj) == ret
 		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts', show_indep_axis=True)
 		ret = 'Series 0:\n'
 		ret += '   Data source: putil.plot.BasicSource class object\n'
-		ret += '   Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
-		ret += '   Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+		ret += '   Independent variable: [ 5, 6, 7, 8 ]\n'
+		ret += '   Dependent variable: [ 0, -10, 5, 4 ]\n'
 		ret += '   Label: test series\n'
 		ret += '   Color: k\n'
 		ret += '   Marker: o\n'
@@ -1445,8 +1433,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Legend properties:\n'
 		ret += '   pos: BEST\n'
 		ret += '   cols: 1'
-		test_list.append(str(obj) == ret)
-		assert test_list == 2*[True]
+		assert str(obj) == ret
 
 	def test_cannot_delete_attributes(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
@@ -1658,7 +1645,6 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 
 	def test_str(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
-		test_list = list()
 		obj = putil.plot.Figure(panels=None)
 		ret = 'Panels: None\n'
 		ret += 'Independent variable label: not specified\n'
@@ -1667,13 +1653,13 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += 'Title: not specified\n'
 		ret += 'Figure width: None\n'
 		ret += 'Figure height: None\n'
-		test_list.append(str(obj) == ret)
+		assert str(obj) == ret
 		obj = putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph')
 		ret = 'Panel 0:\n'
 		ret += '   Series 0:\n'
 		ret += '      Data source: putil.plot.BasicSource class object\n'
-		ret += '      Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
-		ret += '      Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+		ret += '      Independent variable: [ 5, 6, 7, 8 ]\n'
+		ret += '      Dependent variable: [ 0, -10, 5, 4 ]\n'
 		ret += '      Label: test series\n'
 		ret += '      Color: k\n'
 		ret += '      Marker: o\n'
@@ -1695,8 +1681,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += 'Title: My graph\n'
 		ret += 'Figure width: 6.08\n'
 		ret += 'Figure height: 4.99\n'
-		test_list.append(str(obj) == ret)
-		assert test_list == 2*[True]
+		assert str(obj) == ret
 
 	def test_cannot_delete_attributes(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
