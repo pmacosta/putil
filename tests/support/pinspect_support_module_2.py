@@ -1,7 +1,8 @@
-﻿# pylint: disable=W0212
-"""
-putil.pinspect testing support module #2
-"""
+﻿# pinspect_support_module_2.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,W0212
+
 
 def setter_enclosing_func(offset):
 	""" Test function to see if property enclosures are detected """
@@ -9,6 +10,7 @@ def setter_enclosing_func(offset):
 		""" Actual closure function """
 		self._clsvar = offset+num
 	return setter_closure_func
+
 
 class SimpleClass(object):
 	""" Simple class with property for mocking purposes """
@@ -25,6 +27,7 @@ class SimpleClass(object):
 		self.mobj = mobj
 
 	mobj = property(get_mobj, set_mobj)
+
 
 def getter_func_for_closure_class(self):
 	""" Getter function to test if enclosed class detection works with property action functions in different files """

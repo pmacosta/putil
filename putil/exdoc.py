@@ -1,16 +1,14 @@
 ﻿# exdoc.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Exception auto-documentation
-"""
+# pylint: disable=C0111
 
 import copy
 
 import putil.exh
 import putil.misc
 import putil.tree
+
 
 ###
 # Classes

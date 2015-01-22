@@ -1,14 +1,12 @@
 # logging.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Logging-related utility classes, methods, functions and constants
-"""
+# pylint: disable=C0111
 
 import os
 import sys
 import logging
+
 
 # StackOverflow question: http://stackoverflow.com/questions/3311255/how-to-get-file-the-python-logging-module-is-currently-logging-to
 def _find_logger_basefilename(logger):

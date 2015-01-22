@@ -1,7 +1,8 @@
-﻿# pylint: disable=W0212
-"""
-exdoc_support_module_2 module
-"""
+﻿# pinspect_support_module_2.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,W0212
+
 
 def module_enclosing_func(offset):
 	""" Test function to see if module-level enclosures are detected """

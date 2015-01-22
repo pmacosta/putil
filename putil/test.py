@@ -1,10 +1,7 @@
 ﻿# test.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Helper methods for unit testing
-"""
+# pylint: disable=C0111
 
 import re
 import sys
@@ -13,6 +10,7 @@ import contracts
 
 import putil.check
 import putil.misc
+
 
 def evaluate_command_value_series(cmd_pairs, cobj=None):
 	""" Evaluates results of a series of command/value/result cases """

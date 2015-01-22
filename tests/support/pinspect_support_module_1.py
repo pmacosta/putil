@@ -1,7 +1,7 @@
-﻿# pylint: disable=W0212
-"""
-putil.pinspect testing support module #1
-"""
+﻿# pinspect_support_module_1.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,W0212
 
 import putil.exh
 import pinspect_support_module_2

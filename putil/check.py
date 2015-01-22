@@ -1,11 +1,7 @@
-﻿# pylint: disable=W0212
-# check.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+﻿# check.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Decorators for API argument checks
-"""
+# pylint: disable=W0212,C0111
 
 import os
 import sys

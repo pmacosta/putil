@@ -1,10 +1,7 @@
 ﻿# misc.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Miscellaneous utility classes, methods, functions and constants
-"""
+# pylint: disable=C0111
 
 import os
 import sys
@@ -17,6 +14,7 @@ import fractions
 
 import putil.eng
 import putil.check
+
 
 @decorator.contextmanager
 def ignored(*exceptions):
@@ -411,29 +409,40 @@ def isiterable(obj):
 		return True
 
 
-def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=None):	#pylint: disable=R0913
+def numpy_pretty_print(vector, limit=False, width=None, indent=0, eng=False, mant=3):	#pylint: disable=R0913
 	"""
-	Formats Numpy vectors for printing
+	Formats Numpy vectors for printing. If **vector** is *None* the string 'None' is returned
+
+	:param	vector: Vector to pretty print or *None*
+	:type	vector: Numpy vector
+	:param	limit: Flag that indicates if at most 6 vector elements should be printed (all 6 if vector length is equal or less than6, first and last 3 if it is not) (*True*), or if the entire vector should be printed (*False*)
+	:type	limit: boolean
+	:param	width: Number of characters per line available to print vector. If *None* the vector is printed in one line
+	:type	width: integer or None
+	:param	indent: Flag that indicates whether all subsequent lines after the first one are to be indented (*True*) or not (*False*). Only relevant is **width** is not *None*
+	:type	indent: boolean
+	:param	eng: Flag that indicates whether engineering notation should be used to print vector contents (*True*) or not (*False*)
+	:type	eng: boolean
+	:param	mant: Number of mantissa digits (only applicable if **eng** is *True*)
+	:type	mant: integer
+	:rtype: string
 	"""
+	def _oprint(element):
+		""" Print a straight number or one with engineering notation """
+		return element if not eng else putil.eng.peng(element, mant, True)
+
 	if vector is None:
 		return 'None'
-	mant = 3 if eng and (mant is None) else mant
-	token = '{0:.'+str(mant)+'f}' if (mant is not None) and (not eng) else '{0}'
+	token = '{0:.'+str(mant)+'f}' if eng else '{0}'
 	if (not limit) or (limit and (len(vector) < 7)):
-		uret = '[ '+(', '.join([token.format(_oprint(element, eng, mant)) for element in vector]))+' ]'
+		uret = '[ '+(', '.join([token.format(_oprint(element)) for element in vector]))+' ]'
 	else:
-		fstring = '[ '+(' '.join([token.replace('0:', str(num)+':') for num in range(3)]))+' ... '+(' '.join([token.replace('0:', str(num)+':') for num in range(3, 6)]))+' ]' \
-			if (mant is not None) and (not eng) else '[ {0} {1} {2} ... {3} {4} {5} ]'
-		uret = fstring.format(_oprint(vector[0], eng, mant), _oprint(vector[1], eng, mant), _oprint(vector[2], eng, mant), _oprint(vector[-3], eng, mant), _oprint(vector[-2], eng, mant), _oprint(vector[-1], eng, mant))
+		uret = '[ {0} {1} {2} ... {3} {4} {5} ]'.format(_oprint(vector[0]), _oprint(vector[1]), _oprint(vector[2]), _oprint(vector[-3]), _oprint(vector[-2]), _oprint(vector[-1]))
 	if width is None:
 		return uret
 	# Add indent for lines after first one, cannot use subsequent_indent of textwrap.wrap() method as this function counts the indent as part of the line
 	return '\n'.join([((indent+2)*' ')+line if num > 0 else line for num, line in enumerate(textwrap.wrap(uret, width=width))])
 
-
-def _oprint(element, eng, mant):
-	""" Print a straigth number or one with engineering notation """
-	return element if not eng else putil.eng.peng(element, mant, True)
 
 def elapsed_time_string(start_time, stop_time):
 	""" Returns a formatted string with the ellapsed time between two time points. The string includes years (365 days), months (30 days), days (24 hours), hours (60 minutes), minutes (60 seconds) and seconds.
@@ -473,7 +482,7 @@ class TmpFile(object):	#pylint: disable=R0903
 	"""
 	Context manager for temporary files
 
-	:param	fpointer: Function pointer to a function that writes data to file
+	:param	fpointer: Pointer to a function that writes data to file
 	:type	fpointer: function pointer
 	:returns:	File name of temporary file
 	:rtype:		string
@@ -492,7 +501,8 @@ class TmpFile(object):	#pylint: disable=R0903
 		return self.file_name
 
 	def __exit__(self, exc_type, exc_value, exc_tb):
-		os.remove(self.file_name)
+		with ignored(OSError):
+			os.remove(self.file_name)
 		if exc_type is not None:
 			return False
 
@@ -584,7 +594,7 @@ def strtype_item(type_obj):
 
 
 def strtype(type_obj):
-	""" Generates a string of a type definition (int, str, etc.) or type definition list otherwise returns the sting or list of the object(s) via the str() function """
+	""" Generates a string of a type definition (int, str, etc.) or type definition list otherwise returns the string or list of the object(s) via the str() function """
 	if (not isiterable(type_obj)) or (type(type_obj) not in [dict, list, set, tuple]):
 		return strtype_item(type_obj)
 	if isinstance(type_obj, dict):

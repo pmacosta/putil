@@ -1,7 +1,7 @@
-# trace_ex_tree		pylint: disable=C0111
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# trace_ex_tree
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=W0212
+# pylint: disable=W0212,C0111
 
 import copy
 
@@ -9,6 +9,7 @@ import putil.exh
 import putil.misc
 import putil.tree
 import putil.exdoc
+
 
 def trace_tree(no_print=False):
 	""" Trace Tree class """

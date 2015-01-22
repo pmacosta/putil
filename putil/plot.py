@@ -1,7 +1,7 @@
-# pylint: disable=C0111,C0302
 # plot.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
+# pylint: disable=C0111,C0302
 
 import os
 import math
@@ -18,6 +18,7 @@ import putil.pcsv
 import putil.eng
 import putil.misc
 import putil.check
+
 
 PRECISION = 10
 """

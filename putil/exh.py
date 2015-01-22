@@ -1,5 +1,5 @@
 ﻿# exh.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111
 
@@ -9,6 +9,7 @@ import inspect
 
 import putil.misc
 import putil.pinspect
+
 
 ###
 # Functions

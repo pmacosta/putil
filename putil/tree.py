@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=W0212,C0111
 # tree.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
+# pylint: disable=W0212,C0111
 
 import copy
 import itertools
 
 import putil.exh
+
 
 # Exception tracing initialization code
 """

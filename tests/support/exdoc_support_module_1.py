@@ -1,7 +1,7 @@
-﻿# pylint: disable=W0212
-"""
-exdoc_support_module_1 module
-"""
+﻿# exdoc_support_module_1.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111
 
 import putil.exh
 import exdoc_support_module_2
@@ -16,9 +16,11 @@ def _validate_arguments():
 	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
 	exobj.add_exception(exname='illegal_argument', extype=TypeError, exmsg='Argument is not valid')
 
+
 def _write():
 	""" Internal pass-through function """
 	_validate_arguments()
+
 
 def write():
 	""" Module level function #1 """
@@ -26,15 +28,18 @@ def write():
 	exobj.add_exception(exname='illegal_write_call', extype=TypeError, exmsg='Cannot call write')
 	_write()
 
+
 def read():
 	""" Module level function #2 """
 	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
 	exobj.add_exception(exname='illegal_read_call', extype=TypeError, exmsg='Cannot call read')
 
+
 def probe():
 	""" Module level function #3 """
 	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
 	exobj.add_exception(exname='illegal_probe_call', extype=TypeError, exmsg='Cannot call probe')
+
 
 ###
 # Classes
@@ -42,6 +47,7 @@ def probe():
 def dummy_decorator(func):
 	""" Dummy property decorator """
 	return func
+
 
 class ExceptionAutoDocClass(object):	#pylint: disable=R0902,R0903
 	""" Class to automatically generate exception documentation for """
@@ -114,7 +120,6 @@ class ExceptionAutoDocClass(object):	#pylint: disable=R0902,R0903
 
 	value1 = property(exdoc_support_module_2.module_enclosing_func(10), _set_value1)
 
-	value2 = property(lambda self: self._value2+10, _set_value2)
+	value2 = property(lambda self: self._value2+10, _set_value2)	#pylint: disable=W0212
 
 	value3 = property(_get_value3, _set_value3, _del_value3)
-

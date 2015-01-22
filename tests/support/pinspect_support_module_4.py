@@ -1,7 +1,8 @@
-﻿# pylint: disable=W0212
-"""
-putil.pinspect testing support module #4
-"""
+﻿# pinspect_support_module_4.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,W0212
+
 
 def another_property_action_enclosing_function():	#pylint: disable=C0103
 	""" Generator function to test namespace support for enclosed class properties """

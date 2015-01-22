@@ -1,12 +1,10 @@
 # eng.py
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-Engineering-relatd classes, methods, functions and constants
-"""
+# pylint: disable=C0111
 
 import math
+
 
 _UNIT_LIST = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
 

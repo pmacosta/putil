@@ -1,5 +1,5 @@
 # trace_ex_pcsv
-# Copyright (c) 2013-2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=W0212,C0111
 
@@ -9,11 +9,12 @@ import pytest
 import putil.exh
 import putil.exdoc
 
+
 def trace_csvfile(no_print=False):
 	""" Trace CsvFile class """
 	putil.exh.set_exh_obj(putil.exh.ExHandle())
 	pytest.main('-s -vv -x -k TestCsvFile ../tests/test_pcsv.py')
-	exobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), module_name='putil.pcsv.CsvFile', no_print=no_print)
+	exobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=no_print)
 	if not no_print:
 		exobj.print_ex_tree()
 		exobj.print_ex_table()
