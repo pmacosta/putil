@@ -274,11 +274,28 @@ def test_tmp_file():
 
 def test_strframe():
 	""" Test strframe() function """
+	def check_basic_frame(lines):
+		assert lines[0].startswith('\x1b[33mFrame object ID: 0x')
+		assert lines[1] == 'File name......: /home/pacosta/python/putil/tests/test_misc.py'
+		assert lines[2].startswith('Line number....: ')
+		assert lines[3] == 'Function name..: test_strframe'
+		assert lines[4] == r"Context........: ['\tfobj = inspect.stack()[0]\n']"
+		assert lines[5] == 'Index..........: 0'
 	fobj = inspect.stack()[0]
 	lines = putil.misc.strframe(fobj).split('\n')
-	assert lines[0].startswith('\x1b[33mFrame object ID: 0x')
-	assert lines[1] == 'File name......: /home/pacosta/python/putil/tests/test_misc.py'
-	assert lines[2].startswith('Line number....: ')
-	assert lines[3] == 'Function name..: test_strframe'
-	assert lines[4] == r"Context........: ['\tfobj = inspect.stack()[0]\n']"
-	assert lines[5] == 'Index..........: 0'
+	check_basic_frame(lines)
+	assert len(lines) == 6
+	lines = [line for num, line in enumerate(putil.misc.strframe(fobj, extended=True).split('\n')) if (num < 6) or line.startswith('f_')]
+	check_basic_frame(lines)
+	assert lines[6].startswith('f_back ID......: 0x')
+	assert lines[7].startswith('f_builtins.....: {')
+	assert lines[8].startswith('f_code.........: <code object test_strframe at 0x')
+	assert lines[9].startswith('f_globals......: {')
+	assert lines[10] == 'f_lasti........: 356'
+	assert lines[11] == 'f_lineno.......: 288'
+	assert lines[12].startswith('f_locals.......: {')
+	assert lines[13] == 'f_restricted...: False'
+	assert lines[14] == 'f_trace........: None'
+	assert len(lines) == 15
+
+
