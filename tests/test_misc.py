@@ -4,6 +4,7 @@
 # pylint: disable=C0302,C0111
 
 import os
+import sys
 import mock
 import numpy
 import pytest
@@ -14,6 +15,7 @@ import tempfile
 import fractions
 
 import putil.misc
+import putil.pcsv
 import putil.test
 
 
@@ -292,10 +294,49 @@ def test_strframe():
 	assert lines[8].startswith('f_code.........: <code object test_strframe at 0x')
 	assert lines[9].startswith('f_globals......: {')
 	assert lines[10] == 'f_lasti........: 356'
-	assert lines[11] == 'f_lineno.......: 288'
+	assert lines[11].startswith('f_lineno.......: ')
 	assert lines[12].startswith('f_locals.......: {')
 	assert lines[13] == 'f_restricted...: False'
 	assert lines[14] == 'f_trace........: None'
 	assert len(lines) == 15
 
 
+def test_quote_str():
+	""" Test quote_str() function """
+	assert putil.misc.quote_str(5) == 5
+	assert putil.misc.quote_str('Hello!') == '"Hello!"'
+	assert putil.misc.quote_str('He said "hello!"') == "'He said \"hello!\"'"
+
+
+def test_strtype_item():
+	""" Test strtype_item() function """
+	assert putil.misc.strtype_item(str) == 'str'
+	assert putil.misc.strtype_item('hello') == '"hello"'
+	assert putil.misc.strtype_item(5) == '5'
+	assert putil.misc.strtype_item(putil.pcsv.CsvFile) == 'putil.pcsv.CsvFile'
+
+
+def test_strtype():
+	""" Test strtype() function """
+	assert putil.misc.strtype(str) == 'str'
+	assert putil.misc.strtype('hello') == '"hello"'
+	assert putil.misc.strtype(5) == '5'
+	assert putil.misc.strtype(putil.pcsv.CsvFile) == 'putil.pcsv.CsvFile'
+	assert putil.misc.strtype([str, 5, putil.pcsv.CsvFile]) == '[str, 5, putil.pcsv.CsvFile]'
+	assert putil.misc.strtype(set([str, 5, putil.pcsv.CsvFile])) == 'set(5, str, putil.pcsv.CsvFile)'
+	assert putil.misc.strtype((str, 5, putil.pcsv.CsvFile)) == '(str, 5, putil.pcsv.CsvFile)'
+	assert putil.misc.strtype({'file':str, 'name':'some_file.txt', 'line':5, 'class':putil.pcsv.CsvFile}) == '{"class":putil.pcsv.CsvFile, "file":str, "line":5, "name":"some_file.txt"}'
+
+
+def test_flatten_list():
+	""" Test flatten_list() function """
+	assert putil.misc.flatten_list([1, 2, 3]) == [1, 2, 3]
+	assert putil.misc.flatten_list([1, [2, 3, 4], 5]) == [1, 2, 3, 4, 5]
+	assert putil.misc.flatten_list([1, [2, 3, [4, 5, 6]], 7]) == [1, 2, 3, 4, 5, 6, 7]
+	assert putil.misc.flatten_list([1, [2, 3, [4, [5, 6, 7], 8, 9]], [10, 11], 12]) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+def test_delete_module():
+	""" Test delete_module() function """
+	putil.test.assert_exception(putil.misc.delete_module, {'modname':'not_a_module'}, ValueError, 'Module not_a_module is not imported')
+	putil.misc.delete_module('putil.pcsv')
+	assert 'putil.pcsv' not in sys.modules
