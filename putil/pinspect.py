@@ -140,6 +140,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	repeatedly calling :py:meth:`putil.pinspect.Callables.trace()` with different module objects. A :py:class:`putil.pinspect.Callables()` object retains knowledge of which modules have been traced so repeated calls to
 	:py:meth:`putil.pinspect.Callables.trace()` with the *same* module object will *not* result in module re-traces (and the consequent performance hit).
 
+	Enclosed functions and classes are supported. Class property action functions (getter, setter, deleter) in a different module than the one in which the class is defined are also supported both in module classes as well
+	as in enclosed classes. For the latter only property action functions for which the module in which they are defined is imported via ``import`` or ``from [module name] import [...]`` are supported.
+
 	:param obj: Module object(s)
 	:type	obj: object or iterable of objects
 	:rtype: :py:class:`putil.pinspect.Callables()` object
