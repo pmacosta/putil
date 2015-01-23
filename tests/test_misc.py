@@ -8,6 +8,7 @@ import mock
 import numpy
 import pytest
 import struct
+import inspect
 import datetime
 import tempfile
 import fractions
@@ -270,3 +271,14 @@ def test_tmp_file():
 		assert line == ['Hello world!']
 		assert os.path.exists(file_name)
 	assert not os.path.exists(file_name)
+
+def test_strframe():
+	""" Test strframe() function """
+	fobj = inspect.stack()[0]
+	lines = putil.misc.strframe(fobj).split('\n')
+	assert lines[0].startswith('\x1b[33mFrame object ID: 0x')
+	assert lines[1] == 'File name......: /home/pacosta/python/putil/tests/test_misc.py'
+	assert lines[2].startswith('Line number....: ')
+	assert lines[3] == 'Function name..: test_strframe'
+	assert lines[4] == r"Context........: ['\tfobj = inspect.stack()[0]\n']"
+	assert lines[5] == 'Index..........: 0'
