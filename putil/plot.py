@@ -186,8 +186,8 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 		ret = ''
 		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)	#pylint: disable=W0212
 		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)	#pylint: disable=W0212
-		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
-		ret += 'Dependent variable: {0}'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
+		ret += 'Independent variable: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
+		ret += 'Dependent variable: {0}'.format(putil.misc.pprint_vector(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
 		return ret
 
 	def _complete(self):
@@ -491,8 +491,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 				ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
 			except Exception as error_msg:
 				msg = 'Processing function {0} raised an exception when called with the following arguments:\n'.format(self.fproc.__name__)
-				msg += 'indep_var: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, limit=10))
-				msg += 'dep_var: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, limit=10))
+				msg += 'indep_var: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, limit=10))
+				msg += 'dep_var: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, limit=10))
 				if self.fproc_eargs is not None:
 					for key, value in self.fproc_eargs.items():
 						msg += '{0}: {1}\n'.format(key, value)
@@ -542,8 +542,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 				ret += '   {0}: {1}\n'.format(key, value)
 		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)	#pylint: disable=W0212
 		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)	#pylint: disable=W0212
-		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
-		ret += 'Dependent variable: {0}'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
+		ret += 'Independent variable: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
+		ret += 'Dependent variable: {0}'.format(putil.misc.pprint_vector(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
 		return ret
 
 	def _complete(self):
@@ -891,8 +891,8 @@ class Series(object):	#pylint: disable=R0902,R0903
 		""" Print series object information """
 		ret = ''
 		ret += 'Data source: {0}{1} class object\n'.format(None if self.data_source is None else self.data_source.__module__, '' if self.data_source is None else '.'+self.data_source.__class__.__name__)
-		ret += 'Independent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.indep_var, width=50))
-		ret += 'Dependent variable: {0}\n'.format(putil.misc.numpy_pretty_print(self.dep_var, width=50))
+		ret += 'Independent variable: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, width=50))
+		ret += 'Dependent variable: {0}\n'.format(putil.misc.pprint_vector(self.dep_var, width=50))
 		ret += 'Label: {0}\n'.format(self.label)
 		ret += 'Color: {0}\n'.format(self.color)
 		ret += 'Marker: {0}\n'.format(self._print_marker())
