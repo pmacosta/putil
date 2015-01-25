@@ -113,3 +113,15 @@ def test_build_ex_tree():
 	trace_error_class()
 	exobj = putil.exh.get_exh_obj()
 	putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj, 'trace_name':'exdoc_support_module_3', 'no_print':True, '_step':0}, RuntimeError, 'Functions performing actions for multiple properties not supported')
+
+def test_collapse_ex_tree():
+	""" Test _collapse_ex_tree() function """
+	trace_module_functions()
+	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, trace_name='exdoc_support_module_1', _step=1)
+	putil.exh.del_exh_obj()
+	assert str(exdocobj._tobj) == \
+		u'exdoc_support_module_1\n'.encode('utf-8') + \
+		u'├probe (*)\n'.encode('utf-8') + \
+		u'├read (*)\n'.encode('utf-8') + \
+		u'└write (*)\n'.encode('utf-8') + \
+		u' └exdoc_support_module_1._write/exdoc_support_module_1._validate_arguments (*)'.encode('utf-8')

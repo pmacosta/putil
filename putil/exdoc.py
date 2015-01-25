@@ -73,32 +73,6 @@ class ExDoc(object):	#pylint: disable=R0902
 		cobj._exoutput = copy.deepcopy(self._exoutput, memodict)	#pylint: disable=W0212
 		return cobj
 
-	def _alias_attributes(self):	#pylint: disable=R0912,R0914
-		""" Create attribute nodes in tree """
-		if not self.no_print:
-			print putil.misc.pcolor('Aliasing attributes', 'blue')
-		# Select properties of traced class or module/level function
-		#for mkey, mval in self._callables_db.items():
-		#	print '{0}: {1}'.format(mkey, mval)
-		attr_list = [(mkey, mval['attr']) for mkey, mval in self._callables_db.items() if 'attr' in mval and mval['attr']]
-		for key, fattr_funcs in attr_list:
-			if not self.no_print:
-				print '   Detected attribute {0}'.format(key)
-				for func in sorted(fattr_funcs.values()):
-					print '      {0}'.format(func)
-			for fkey, fname in fattr_funcs.items():
-				mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
-				while mod_list:
-					start_char = mod_list[0].find(fname) if mod_list[0].endswith(fname) else mod_list[0].find(fname+'.')
-					stop_char = len(mod_list[0]) if mod_list[0].endswith(fname) else start_char+len(fname)
-					name_to_replace = mod_list[0][start_char:stop_char] if mod_list[0].endswith(fname) else mod_list[0][start_char:stop_char]+'.'
-					self._tobj._rename_node(mod_list[0], mod_list[0].replace(name_to_replace, '{0}[{1}]{2}'.format(key, fkey, '' if mod_list[0].endswith(fname) else '.')))	#pylint: disable=W0212
-					self._callables_db['{0}[{1}]'.format(key, fkey)] = copy.deepcopy(self._callables_db[fname])
-					mod_list = sorted([node for node in self._tobj.nodes if node.endswith(fname) or (node.find(fname+'.') != -1)])
-		if attr_list:
-			self._collapse_ex_tree()
-		self._print_ex_tree()
-
 	def _build_ex_tree(self):
 		""" Construct exception tree from trace """
 		self._cprint('Building tree', 'blue')
@@ -119,7 +93,7 @@ class ExDoc(object):	#pylint: disable=R0902
 				else:
 					new_name_list.append(token)
 			ditem['name'] = sep.join(new_name_list)
-			# Remove prefix (cannot be done previous step because technically the setter/getter/deleter of propety can be in a different module) and only handle unique exceptions
+			# Remove prefix (cannot be done in previous step because technically the setter/getter/deleter of propeties can be in a different module) and only handle unique exceptions
 			if ditem['name'].find(self._trace_name) != -1:
 				ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
 				if ditem['name'] not in func_list:
@@ -159,28 +133,16 @@ class ExDoc(object):	#pylint: disable=R0902
 		if not self.no_print:
 			print putil.misc.pcolor('Creating exception table', 'blue')
 		self._extable = dict()
-		# Create flat exception table for each trace class method/property or module-level function
-		children = self._tobj._get_children(self._tobj.root_name) #pylint: disable=W0212
-		module_function = [self._tobj.root_name] if self._tobj._get_data(self._tobj.root_name) else list()	#pylint: disable=W0212
-		name_offset = 0 if self._tobj.is_leaf(self._tobj.root_name) else len(self._tobj.root_name)+1
-		for child in children+module_function:
-			child_name = self._get_obj_full_name(child[name_offset:])
-			self._extable[child_name] = dict()
-			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(child))))	#pylint: disable=W0212
-			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
-			self._extable[child_name]['cross_hierarchical_exceptions'] = list()
-			self._extable[child_name]['cross_flat_exceptions'] = list()
-			self._extable[child_name]['cross_names'] = list()
-		# Create entries for package callables outside the namespace of trace class or module-level function
-		pkg_call_list = [(grandchild, grandchild.replace(child+'.', '', 1)) for child in children for grandchild in self._tobj._get_children(child) if not grandchild.replace(child+'.', '', 1).startswith(self._tobj.root_name)]	#pylint: disable=W0212
-		for child, child_call_name in pkg_call_list:
-			child_name = self._get_obj_full_name(child_call_name)
-			self._extable[child_name] = dict()
-			self._extable[child_name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(child))))	#pylint: disable=W0212
-			self._extable[child_name]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(child) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
-			self._extable[child_name]['cross_hierarchical_exceptions'] = list()
-			self._extable[child_name]['cross_flat_exceptions'] = list()
-			self._extable[child_name]['cross_names'] = list()
+		# Build exception table by searching all nodes in tree for those who have exception(s) attached to them
+		for node in [node for node in self._tobj.nodes if self._tobj._get_data(node)]:	#pylint: disable=W0212
+			# The last callable in the node hierarchy is the one that generated the exception
+			for token in [token for token in node.split(self._exh_obj.tokens_separator)[-1] if token not in self._extable]:
+				self._extable[token] = dict()
+				self._extable[token]['native_exceptions'] = sorted(list(set(self._tobj._get_data(token))))	#pylint: disable=W0212
+				self._extable[token]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(token) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
+				self._extable[token]['cross_hierarchical_exceptions'] = list()
+				self._extable[token]['cross_flat_exceptions'] = list()
+				self._extable[token]['cross_names'] = list()
 
 	def _create_ex_table_output(self):	#pylint: disable=R0912
 		""" Create final exception table output """
@@ -416,8 +378,8 @@ class ExDoc(object):	#pylint: disable=R0902
 		if step >= 1:
 			self._collapse_ex_tree()
 		# Flatten hierarchy call on to trace class methods/properties or on to trace module-level function
-		if step >= 2:
-			self._flatten_ex_tree()
+		#if step >= 2:
+		#	self._flatten_ex_tree()
 		# # Delete trace class methods/properties or trace module-level function that have/has no exceptions associated with them/it
 		# if step >= 3:
 		# 	self._prune_ex_tree()
