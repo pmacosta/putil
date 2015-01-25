@@ -432,8 +432,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._delete_subtree(nodes)
 
 	def delete_prefix(self, name):
-		self._validate_node_name(name)
-		""" Delete hierarchy levels from all nodes in the tree
+		"""
+		Delete hierarchy levels from all nodes in the tree
+
 		:param	nodes: Prefix to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName
 
