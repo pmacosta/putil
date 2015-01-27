@@ -49,7 +49,7 @@ Dictionary or list of dictionaries. Each dictionary must contain exactly two key
 
 * **data** (*any*) node data.
 
-The node data should be an empty list to create a node without data, for example: :code:`{'node':'a.b.c', 'data':list()}`
+The node data should be an empty list to create a node without data, for example: :code:`{'name':'a.b.c', 'data':list()}`
 
 Classes
 =======

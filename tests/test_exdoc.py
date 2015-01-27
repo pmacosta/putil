@@ -91,6 +91,9 @@ def test_build_ex_tree():
 	assert str(exdocobj._tobj) == \
 		u'exdoc_support_module_1.ExceptionAutoDocClass\n'.encode('utf-8') + \
 		u'├__init__ (*)\n'.encode('utf-8') + \
+		u'│├putil.tree.Tree.__init__ (*)\n'.encode('utf-8') + \
+		u'│└putil.tree.Tree.add_nodes (*)\n'.encode('utf-8') + \
+		u'│ └putil.tree.Tree._validate_nodes_with_data (*)\n'.encode('utf-8') + \
 		u'├divide (*)\n'.encode('utf-8') + \
 		u'├multiply (*)\n'.encode('utf-8') + \
 		u'├temp[fset] (*)\n'.encode('utf-8') + \
@@ -114,14 +117,23 @@ def test_build_ex_tree():
 	exobj = putil.exh.get_exh_obj()
 	putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj, 'trace_name':'exdoc_support_module_3', 'no_print':True, '_step':0}, RuntimeError, 'Functions performing actions for multiple properties not supported')
 
-def test_collapse_ex_tree():
-	""" Test _collapse_ex_tree() function """
+def test_create_ex_table():
+	""" Test _create_ex_table() function """
 	trace_module_functions()
-	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, trace_name='exdoc_support_module_1', _step=1)
+	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=False, trace_name='exdoc_support_module_1', _step=1)
+	empty_entry = {'native_exceptions':[], 'flat_exceptions':[], 'cross_hierarchical_exceptions':[], 'cross_flat_exceptions':[], 'cross_names':[]}
+	ref_table = dict()
+	ref_table['probe'] = empty_entry
+	ref_table['probe']['native_exceptions'] = ref_table['probe']['flat_exceptions'] = ['TypeError (Cannot call probe)']
+	ref_table['read'] = empty_entry
+	ref_table['read']['native_exceptions'] = ref_table['read']['flat_exceptions'] = ['TypeError (Cannot call read)']
+	ref_table['write'] = empty_entry
+	ref_table['write']['native_exceptions'] = ['TypeError (Cannot call write)']
+	ref_table['write']['flat_exceptions'] = sorted(['TypeError (Cannot call write)', 'TypeError (Argument is not valid)'])
+	ref_table['exdoc_support_module_1._validate_arguments'] = empty_entry
+	ref_table['exdoc_support_module_1._validate_arguments']['native_exceptions'] = ['TypeError (Argument is not valid)']
+	ref_table['exdoc_support_module_1._validate_arguments']['flat_exceptions'] = ['TypeError (Argument is not valid)']
 	putil.exh.del_exh_obj()
-	assert str(exdocobj._tobj) == \
-		u'exdoc_support_module_1\n'.encode('utf-8') + \
-		u'├probe (*)\n'.encode('utf-8') + \
-		u'├read (*)\n'.encode('utf-8') + \
-		u'└write (*)\n'.encode('utf-8') + \
-		u' └exdoc_support_module_1._write/exdoc_support_module_1._validate_arguments (*)'.encode('utf-8')
+	print exdocobj._extable
+	assert exdocobj._extable == ref_table
+

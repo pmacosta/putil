@@ -136,13 +136,14 @@ class ExDoc(object):	#pylint: disable=R0902
 		# Build exception table by searching all nodes in tree for those who have exception(s) attached to them
 		for node in [node for node in self._tobj.nodes if self._tobj._get_data(node)]:	#pylint: disable=W0212
 			# The last callable in the node hierarchy is the one that generated the exception
-			for token in [token for token in node.split(self._exh_obj.tokens_separator)[-1] if token not in self._extable]:
-				self._extable[token] = dict()
-				self._extable[token]['native_exceptions'] = sorted(list(set(self._tobj._get_data(token))))	#pylint: disable=W0212
-				self._extable[token]['flat_exceptions'] = sorted(list(set([exdesc for name in self._tobj._get_subtree(token) for exdesc in self._tobj._get_data(name)])))	#pylint: disable=W0212
-				self._extable[token]['cross_hierarchical_exceptions'] = list()
-				self._extable[token]['cross_flat_exceptions'] = list()
-				self._extable[token]['cross_names'] = list()
+			name = node.split(self._exh_obj.callables_separator)[-1]
+			if name not in self._extable:
+				self._extable[name] = dict()
+				self._extable[name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(node))))	#pylint: disable=W0212
+				self._extable[name]['flat_exceptions'] = sorted(list(set([exdesc for subnode in self._tobj._get_subtree(node) for exdesc in self._tobj._get_data(subnode)])))	#pylint: disable=W0212
+				self._extable[name]['cross_hierarchical_exceptions'] = list()
+				self._extable[name]['cross_flat_exceptions'] = list()
+				self._extable[name]['cross_names'] = list()
 
 	def _create_ex_table_output(self):	#pylint: disable=R0912
 		""" Create final exception table output """
@@ -375,8 +376,8 @@ class ExDoc(object):	#pylint: disable=R0902
 		if step >= 0:
 			self._build_ex_tree()
 		# Eliminate intermediate call nodes that have no exceptions associated with them
-		if step >= 1:
-			self._collapse_ex_tree()
+		#if step >= 1:
+		#	self._collapse_ex_tree()
 		# Flatten hierarchy call on to trace class methods/properties or on to trace module-level function
 		#if step >= 2:
 		#	self._flatten_ex_tree()
@@ -387,7 +388,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		# if step >= 4:
 		# 	self._alias_attributes()
 		# Create exception table
-		if step >= 5:
+		if step >= 1:
 			self._create_ex_table()
 		# Add exceptions of the form 'Same as [...]' to account for the fact that some trace class methods/attributes may use methods/properties/functions from the same package
 		if step >= 6:

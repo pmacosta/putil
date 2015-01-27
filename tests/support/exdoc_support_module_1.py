@@ -4,8 +4,9 @@
 # pylint: disable=C0111
 
 import putil.exh
-import exdoc_support_module_2
+import putil.tree
 import putil.pcontracts
+import exdoc_support_module_2
 
 
 ###
@@ -55,6 +56,8 @@ class ExceptionAutoDocClass(object):	#pylint: disable=R0902,R0903
 	@dummy_decorator
 	def __init__(self, value1=0, value2=0, value3=0, value4=0):
 		self._exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
+		tobj = putil.tree.Tree('.')
+		tobj.add_nodes({'name':'a.b.c', 'data':list()})
 		self._value1 = value1
 		self._value2 = value2
 		self._value3 = value3
