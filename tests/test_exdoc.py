@@ -8,6 +8,7 @@ putil.exdoc unit tests
 """
 
 import sys
+import copy
 
 import putil.exh
 import putil.test
@@ -119,21 +120,52 @@ def test_build_ex_tree():
 
 def test_create_ex_table():
 	""" Test _create_ex_table() function """
+	empty_entry = {'native_exceptions':[], 'flat_exceptions':[], 'cross_hierarchical_exceptions':[], 'cross_flat_exceptions':[], 'cross_names':[]}
+	trace_class()
+	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, trace_name='exdoc_support_module_1.ExceptionAutoDocClass', _step=1)
+	putil.exh.del_exh_obj()
+	ref_table = dict()
+	ref_table['__init__'] = copy.deepcopy(empty_entry)
+	ref_table['__init__']['native_exceptions'] = sorted(['RuntimeError (Argument `value1` is not valid)', 'RuntimeError (Argument `value2` is not valid)',
+													     'RuntimeError (Argument `value3` is not valid)', 'RuntimeError (Argument `value4` is not valid)'])
+	ref_table['__init__']['flat_exceptions'] = sorted(copy.deepcopy(ref_table['__init__']['native_exceptions'])+\
+		['RuntimeError (Argument `node_separator` is not valid)', 'RuntimeError (Argument `nodes` is not valid)', 'ValueError (Illegal node name: *[node_name]*)'])
+	ref_table['divide'] = copy.deepcopy(empty_entry)
+	ref_table['divide']['native_exceptions'] = ref_table['divide']['flat_exceptions'] = ['RuntimeError (Argument `divisor` is not valid)']
+	ref_table['multiply'] = copy.deepcopy(empty_entry)
+	ref_table['multiply']['native_exceptions'] = ref_table['multiply']['flat_exceptions'] = ['ValueError (Overflow)']
+	ref_table['temp[fset]'] = copy.deepcopy(empty_entry)
+	ref_table['temp[fset]']['native_exceptions'] = ref_table['temp[fset]']['flat_exceptions'] = ['RuntimeError (Argument `value` is not valid)']
+	ref_table['value1[fget]'] = copy.deepcopy(empty_entry)
+	ref_table['value1[fget]']['native_exceptions'] = ref_table['value1[fget]']['flat_exceptions'] = ['TypeError (Argument `value` is not valid)']
+	ref_table['value1[fset]'] = copy.deepcopy(empty_entry)
+	ref_table['value1[fset]']['native_exceptions'] = ref_table['value1[fset]']['flat_exceptions'] = ['TypeError (Argument `value1` is not valid)']
+	ref_table['value2[fset]'] = copy.deepcopy(empty_entry)
+	ref_table['value2[fset]']['native_exceptions'] = ref_table['value2[fset]']['flat_exceptions'] = ['TypeError (Argument `value2` is not valid)']
+	ref_table['value3[fdel]'] = copy.deepcopy(empty_entry)
+	ref_table['value3[fdel]']['native_exceptions'] = ref_table['value3[fdel]']['flat_exceptions'] = ['TypeError (Cannot delete value3)']
+	ref_table['value3[fget]'] = copy.deepcopy(empty_entry)
+	ref_table['value3[fget]']['native_exceptions'] = ref_table['value3[fget]']['flat_exceptions'] = ['TypeError (Cannot get value3)']
+	ref_table['value3[fset]'] = copy.deepcopy(empty_entry)
+	ref_table['value3[fset]']['native_exceptions'] = ref_table['value3[fset]']['flat_exceptions'] = ['TypeError (Argument `value3` is not valid)']
+	ref_table['putil.tree.Tree.__init__'] = copy.deepcopy(empty_entry)
+	ref_table['putil.tree.Tree.__init__']['native_exceptions'] = ref_table['putil.tree.Tree.__init__']['flat_exceptions'] = ['RuntimeError (Argument `node_separator` is not valid)']
+	ref_table['putil.tree.Tree.add_nodes'] = copy.deepcopy(empty_entry)
+	ref_table['putil.tree.Tree.add_nodes']['native_exceptions'] = ['ValueError (Illegal node name: *[node_name]*)']
+	ref_table['putil.tree.Tree.add_nodes']['flat_exceptions'] = sorted(copy.deepcopy(ref_table['putil.tree.Tree.add_nodes']['native_exceptions'])+['RuntimeError (Argument `nodes` is not valid)'])
+	assert exdocobj._extable == ref_table
 	trace_module_functions()
 	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=False, trace_name='exdoc_support_module_1', _step=1)
-	empty_entry = {'native_exceptions':[], 'flat_exceptions':[], 'cross_hierarchical_exceptions':[], 'cross_flat_exceptions':[], 'cross_names':[]}
 	ref_table = dict()
-	ref_table['probe'] = empty_entry
+	ref_table['probe'] = copy.deepcopy(empty_entry)
 	ref_table['probe']['native_exceptions'] = ref_table['probe']['flat_exceptions'] = ['TypeError (Cannot call probe)']
-	ref_table['read'] = empty_entry
+	ref_table['read'] = copy.deepcopy(empty_entry)
 	ref_table['read']['native_exceptions'] = ref_table['read']['flat_exceptions'] = ['TypeError (Cannot call read)']
-	ref_table['write'] = empty_entry
+	ref_table['write'] = copy.deepcopy(empty_entry)
 	ref_table['write']['native_exceptions'] = ['TypeError (Cannot call write)']
 	ref_table['write']['flat_exceptions'] = sorted(['TypeError (Cannot call write)', 'TypeError (Argument is not valid)'])
-	ref_table['exdoc_support_module_1._validate_arguments'] = empty_entry
-	ref_table['exdoc_support_module_1._validate_arguments']['native_exceptions'] = ['TypeError (Argument is not valid)']
-	ref_table['exdoc_support_module_1._validate_arguments']['flat_exceptions'] = ['TypeError (Argument is not valid)']
+	ref_table['exdoc_support_module_1._write'] = empty_entry
+	ref_table['exdoc_support_module_1._write']['native_exceptions'] = []
+	ref_table['exdoc_support_module_1._write']['flat_exceptions'] = ['TypeError (Argument is not valid)']
 	putil.exh.del_exh_obj()
-	print exdocobj._extable
 	assert exdocobj._extable == ref_table
-

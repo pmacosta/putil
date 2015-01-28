@@ -80,7 +80,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		cdb = self._exh_obj.callables_db
 		sep = self._exh_obj.callables_separator
 		data = self._exh_obj.exceptions_db
-		func_list, unique_data = list(), list()
+		unique_data = []
 		for ditem in data:
 			# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
 			#ditem['name'] = sep.join(['{0}[{1}]'.format(cdb[token]['link'][0]['prop'], cdb[token]['link'][0]['action']) if cdb[token]['link'] else token for token in ditem['name'].split(sep)])
@@ -95,12 +95,11 @@ class ExDoc(object):	#pylint: disable=R0902
 			ditem['name'] = sep.join(new_name_list)
 			# Remove prefix (cannot be done in previous step because technically the setter/getter/deleter of propeties can be in a different module) and only handle unique exceptions
 			if ditem['name'].find(self._trace_name) != -1:
+				# Delete hieararchy above trace name
 				ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
-				if ditem['name'] not in func_list:
-					func_list.append(ditem['name'])
-					# Make trace name root node
-					ditem['name'] = '{0}/{1}'.format(ditem['name'][:len(self._trace_name):], ditem['name'][len(self._trace_name)+1:])
-					unique_data.append(ditem)
+				# Make trace name root node
+				ditem['name'] = '{0}/{1}'.format(self._trace_name, ditem['name'][len(self._trace_name)+1:])
+				unique_data.append(ditem)
 		# Actually build tree
 		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
 		self._tobj.add_nodes(unique_data)
@@ -116,13 +115,6 @@ class ExDoc(object):	#pylint: disable=R0902
 			name = name[len(callable_name)+(1 if len(callable_name) < len(name) else 0):]
 		return ret
 
-	def _collapse_ex_tree(self):
-		""" Eliminates nodes without exception data """
-		if not self.no_print:
-			print putil.misc.pcolor('Collapsing tree', 'blue')
-		self._tobj.collapse_subtree(self._tobj.root_name)
-		self._print_ex_tree()
-
 	def _cprint(self, text, color=None):
 		""" Conditionally print text depending on no_print state """
 		if not self.no_print:
@@ -130,13 +122,16 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _create_ex_table(self):	#pylint: disable=R0914
 		""" Creates exception table entry """
-		if not self.no_print:
-			print putil.misc.pcolor('Creating exception table', 'blue')
+		self._cprint('Creating exception table', 'blue')
+		sep = self._exh_obj.callables_separator
 		self._extable = dict()
-		# Build exception table by searching all nodes in tree for those who have exception(s) attached to them
-		for node in [node for node in self._tobj.nodes if self._tobj._get_data(node)]:	#pylint: disable=W0212
+		# Build exception table by searching all nodes in tree for:
+		# a) First level nodes below root that have exception(s) attached to them
+		# b) Second level nodes below root. These may or may not have exceptions attached to them, but there has be an exception attached to a node in their subtree
+		#    otherwise the subtree would not exist. This second level below root is kept and typically shows as in the 'Same as [...] construct
+		for node in [node for node in self._tobj.nodes if ((len(node.split(sep)) < 3) and self._tobj._get_data(node)) or (len(node.split(sep)) == 3)]:	#pylint: disable=W0212
 			# The last callable in the node hierarchy is the one that generated the exception
-			name = node.split(self._exh_obj.callables_separator)[-1]
+			name = node.split(sep)[-1]
 			if name not in self._extable:
 				self._extable[name] = dict()
 				self._extable[name]['native_exceptions'] = sorted(list(set(self._tobj._get_data(node))))	#pylint: disable=W0212
@@ -306,20 +301,6 @@ class ExDoc(object):	#pylint: disable=R0902
 		#REMOVE print indent+'Returning...'
 		return ret
 
-	def _flatten_ex_tree(self):
-		""" Flatten exception tree around class name hierarchy nodes """
-		if not self.no_print:
-			print putil.misc.pcolor('Flattening hierarchy', 'blue')
-		obj_hierarchy = self._tobj.root_name.split('.')
-		sub_trees = ['.'.join(obj_hierarchy[:num]) for num in range(len(obj_hierarchy), 0, -1)]	# List of hiearchical nodes from leaf to root of trace object name, i.e. ['a.b.c', 'a.b', 'a']
-		for sub_tree in sub_trees:
-			if not self.no_print:
-				print '\tFlattening on {0}'.format(sub_tree)
-			for node in self._tobj.nodes:
-				if node.endswith('.{0}'.format(sub_tree)):
-					self._tobj.flatten_subtree(node)
-		self._print_ex_tree()
-
 	def _get_obj_full_name(self, obj_name):
 		""" Find name in package callable dictionary """
 		obj_hierarchy = obj_name.split('.')
@@ -375,18 +356,6 @@ class ExDoc(object):	#pylint: disable=R0902
 		# Collect exceptions in hierarchical call tree
 		if step >= 0:
 			self._build_ex_tree()
-		# Eliminate intermediate call nodes that have no exceptions associated with them
-		#if step >= 1:
-		#	self._collapse_ex_tree()
-		# Flatten hierarchy call on to trace class methods/properties or on to trace module-level function
-		#if step >= 2:
-		#	self._flatten_ex_tree()
-		# # Delete trace class methods/properties or trace module-level function that have/has no exceptions associated with them/it
-		# if step >= 3:
-		# 	self._prune_ex_tree()
-		# # Add getter/setter/deleter exceptions to trace class properties (if needed)
-		# if step >= 4:
-		# 	self._alias_attributes()
 		# Create exception table
 		if step >= 1:
 			self._create_ex_table()
@@ -400,16 +369,6 @@ class ExDoc(object):	#pylint: disable=R0902
 		# Create Sphinx-formatted output
 		if step >= 8:
 			self._create_ex_table_output()
-
-	def _prune_ex_tree(self):
-		""" Prune tree (delete trace object methods/attributes that have no exceptions """
-		if not self.no_print:
-			print putil.misc.pcolor('Prunning tree', 'blue')
-		children = self._tobj._get_children(self._tobj.root_name)	#pylint: disable=W0212
-		for child in children:
-			if not self._tobj._get_data(child):	#pylint: disable=W0212
-				self._tobj._delete_subtree(child)	#pylint: disable=W0212
-		self._print_ex_tree()
 
 	def _ptable(self, name):	#pylint: disable=C0111
 		data = self._tobj.get_data(name)
