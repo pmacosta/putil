@@ -226,8 +226,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _detect_ex_tree_cross_usage(self):	#pylint: disable=R0912,R0914
 		""" Replace exceptions from other class methods with 'Same as [...]' construct """
-		if not self.no_print:
-			print putil.misc.pcolor('Detecting cross-usage across sub-trees', 'blue')
+		self._cprint('Detecting cross-usage across sub-trees', 'blue')
 		# Generate trace class method/attribute or module-level class function callable list
 		trace_obj_callable_list = [self._get_obj_full_name(child[len(self._tobj.root_name)+1:]) for child in sorted(self._tobj.get_children(self._tobj.root_name))]
 		# Detect cross-usage
@@ -360,7 +359,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		if step >= 1:
 			self._create_ex_table()
 		# Add exceptions of the form 'Same as [...]' to account for the fact that some trace class methods/attributes may use methods/properties/functions from the same package
-		if step >= 6:
+		if step >= 2:
 			self._detect_ex_tree_cross_usage()
 		# Remove exceptions of trace class methods/properties or trace module-level function that are in their 'Same as [...]' exception constructs
 		# Replace identical trace class methods/properties or trace module-level functions with 'Same as [...]' exception constructs
