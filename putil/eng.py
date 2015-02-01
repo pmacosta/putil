@@ -12,7 +12,7 @@ import putil.misc
 _UNIT_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
 
 def _to_eng_tuple(number):
-	""" Returns a string version of the number where the exponent is a multile of 3 """
+	""" Returns a string version of the number where the exponent is a multiple of 3 """
 	mant, exp = putil.misc.to_scientific_tuple(str(number))
 	mant = mant+('.00' if mant.find('.') == -1 else '00')
 	new_exp = exp-(exp % 3)
@@ -23,7 +23,7 @@ def _to_eng_tuple(number):
 
 
 def _to_eng_string(number):
-	""" Returns a string version of the number where the exponent is a multile of 3 """
+	""" Returns a string version of the number where the exponent is a multiple of 3 """
 	mant, exp = _to_eng_tuple(number)
 	return '{0}E{1}{2}'.format(mant, '-' if exp < 0 else '+', abs(exp))
 
@@ -185,7 +185,7 @@ def peng_power(snum):
 	"""
 	Returns a tuple with the engineering suffix (first tuple element) and floating point representation of the suffix (second tuple element) of an number string in engineering notation
 
-	:param snum: Number string in engineering notation
+	:param	snum: Number string in engineering notation
 	:type	snum: string
 	:rtype: tuple
 
