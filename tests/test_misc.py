@@ -335,8 +335,43 @@ def test_flatten_list():
 	assert putil.misc.flatten_list([1, [2, 3, [4, 5, 6]], 7]) == [1, 2, 3, 4, 5, 6, 7]
 	assert putil.misc.flatten_list([1, [2, 3, [4, [5, 6, 7], 8, 9]], [10, 11], 12]) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
+
 def test_delete_module():
 	""" Test delete_module() function """
 	putil.test.assert_exception(putil.misc.delete_module, {'modname':'not_a_module'}, ValueError, 'Module not_a_module is not imported')
 	putil.misc.delete_module('putil.pcsv')
 	assert 'putil.pcsv' not in sys.modules
+
+
+def test_to_scientific_string():
+	""" Test _to_scientific() function """
+	# Standard floating point mantissa length appears to be 12 digits
+	# Positive
+	assert putil.misc.to_scientific_string('5.35E+3') == '5.35E+3'
+	assert putil.misc.to_scientific_string(0) == '0E+0'
+	assert putil.misc.to_scientific_string(0.1) == '1E-1'
+	assert putil.misc.to_scientific_string(0.01) == '1E-2'
+	assert putil.misc.to_scientific_string(0.001) == '1E-3'
+	assert putil.misc.to_scientific_string(0.00101) == '1.01E-3'
+	assert putil.misc.to_scientific_string(0.123456789012) == '1.23456789012E-1'
+	assert putil.misc.to_scientific_string(1234567.89012) == '1.23456789012E+6'
+	assert putil.misc.to_scientific_string(1) == '1E+0'
+	assert putil.misc.to_scientific_string(20) == '2E+1'
+	assert putil.misc.to_scientific_string(200) == '2E+2'
+	assert putil.misc.to_scientific_string(333) == '3.33E+2'
+	assert putil.misc.to_scientific_string(4567) == '4.567E+3'
+	assert putil.misc.to_scientific_string(4567.890) == '4.56789E+3'
+	# Negative
+	assert putil.misc.to_scientific_string(-0.1) == '-1E-1'
+	assert putil.misc.to_scientific_string(-0.01) == '-1E-2'
+	assert putil.misc.to_scientific_string(-0.001) == '-1E-3'
+	assert putil.misc.to_scientific_string(-0.00101) == '-1.01E-3'
+	assert putil.misc.to_scientific_string(-0.123456789012) == '-1.23456789012E-1'
+	assert putil.misc.to_scientific_string(-1234567.89012) == '-1.23456789012E+6'
+	assert putil.misc.to_scientific_string(-1) == '-1E+0'
+	assert putil.misc.to_scientific_string(-20) == '-2E+1'
+	assert putil.misc.to_scientific_string(-200) == '-2E+2'
+	assert putil.misc.to_scientific_string(-333) == '-3.33E+2'
+	assert putil.misc.to_scientific_string(-4567) == '-4.567E+3'
+	assert putil.misc.to_scientific_string(-4567.890) == '-4.56789E+3'
+

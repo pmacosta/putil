@@ -45,6 +45,7 @@ Numbers
 .. autofunction:: putil.misc.per
 .. autofunction:: putil.misc.pgcd
 .. autofunction:: putil.misc.smart_round
+.. autofunction:: putil.misc.to_scientific_tuple
 
 String
 ``````
@@ -59,3 +60,4 @@ String
 .. autofunction:: putil.misc.strtype
 .. autofunction:: putil.misc.strtype_item
 .. autofunction:: putil.misc.strframe
+.. autofunction:: putil.misc.to_scientific_string

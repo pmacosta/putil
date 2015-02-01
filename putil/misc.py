@@ -7,6 +7,7 @@ import os
 import sys
 import numpy
 import types
+import decimal
 import inspect
 import textwrap
 import tempfile
@@ -703,3 +704,32 @@ def split_every(text, sep, count, lstrip=False, rstrip=False):
 	tlist = text.split(sep)
 	lines = [sep.join(tlist[num:min(num+count, len(tlist))]) for num in range(0, len(tlist), count)]
 	return [line.rstrip() if (rstrip and not lstrip) else (line.lstrip() if (lstrip and not rstrip) else (line.strip() if lstrip and rstrip else line)) for line in lines]
+
+def to_scientific_tuple(number):
+	"""
+	Returns a tuple where the first element is the mantissa (*string*) and the second element is the exponent (*integer*) of a number when expressed in scientific notation. Full precision is maintained if the number is
+	represented a string
+
+	:param	number: number to extract information from
+	:type	number: number or string of a number
+	:rtype: tuple
+	"""
+	convert = not isinstance(number, str)
+	if (convert and (number == 0)) or ((not convert) and (not number.strip('0').strip('.'))):
+		return ('0', 0)
+	num_sign, digits, exp = decimal.Decimal(str(number) if convert else number).as_tuple()	#num_sign = 1 -> negative number, pylint: disable=W0632
+	mant = ('-' if num_sign else '')+(str(digits[0])+('.'+(''.join([str(num) for num in digits[1:]])) if len(digits) > 1 else '')).rstrip('0').rstrip('.')
+	exp += len(digits)-1
+	return (mant, exp)
+
+def to_scientific_string(number):
+	"""
+	Converts a number or a string representing a number to a string with the number expressed in scientific notation. Full precision is maintained if the number is represented a string
+
+
+	:param	number: number to convert
+	:type	number: number or string of a number
+	:rtype: string
+	"""
+	mant, exp = to_scientific_tuple(number)
+	return '{0}E{1}{2}'.format(mant, '-' if exp < 0 else '+', abs(exp))
