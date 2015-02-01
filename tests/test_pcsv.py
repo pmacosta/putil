@@ -1,5 +1,5 @@
 ﻿# test_pcsv.py
-# Copyright (c) 2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0302
 

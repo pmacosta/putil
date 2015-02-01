@@ -232,9 +232,9 @@ def test_peng():	#pylint: disable=R0915
 	#putil.test.assert_exception(putil.eng.peng, {'number':['5'], 'mantissa':3, 'rjust':True}, RuntimeError, 'Argument `number` is not valid')
 	#putil.test.assert_exception(putil.eng.peng, {'number':5, 'mantissa':3.5, 'rjust':True}, RuntimeError, 'Argument `mantissa` is not valid')
 	#putil.test.assert_exception(putil.eng.peng, {'number':5, 'mantissa':3, 'rjust':'hello'}, RuntimeError, 'Argument `rjust` is not valid')
-	assert putil.eng.peng(3.0333333333, 1, False) == '3.0 '
+	assert putil.eng.peng(3.0333333333, 1, False) == '3.0'
 	assert putil.eng.peng(0, 3, True) == '   0.000 '
-	assert putil.eng.peng(0, 3, False) == '0.000 '
+	assert putil.eng.peng(0, 3, False) == '0.000'
 	# Positive
 	assert putil.eng.peng(1e-25, 3, True) == '   1.000y'
 	assert putil.eng.peng(1e-24, 3, True) == '   1.000y'
@@ -296,10 +296,10 @@ def test_peng():	#pylint: disable=R0915
 	assert putil.eng.peng(999.999e3, 1) == '   1.0M'
 	assert putil.eng.peng(999.999e3, 1, False) == '1.0M'
 	assert putil.eng.peng(0.995, 0, False) == '995m'
-	assert putil.eng.peng(0.9999, 0, False) == '1 '
-	assert putil.eng.peng(1.9999, 0, False) == '2 '
+	assert putil.eng.peng(0.9999, 0, False) == '1'
+	assert putil.eng.peng(1.9999, 0, False) == '2'
 	assert putil.eng.peng(999.99, 0, False) == '1k'
-	assert putil.eng.peng(9.99, 1, False) == '10.0 '
+	assert putil.eng.peng(9.99, 1, False) == '10.0'
 	assert putil.eng.peng(5.25e3, 1, True) == '   5.3k'
 	assert putil.eng.peng(1.05e3, 0, True) == '   1k'
 	# Negative
@@ -363,28 +363,32 @@ def test_peng():	#pylint: disable=R0915
 	assert putil.eng.peng(-999.999e3, 1) == '  -1.0M'
 	assert putil.eng.peng(-999.999e3, 1, False) == '-1.0M'
 	assert putil.eng.peng(-0.995, 0, False) == '-995m'
-	assert putil.eng.peng(-0.9999, 0, False) == '-1 '
-	assert putil.eng.peng(-1.9999, 0, False) == '-2 '
+	assert putil.eng.peng(-0.9999, 0, False) == '-1'
+	assert putil.eng.peng(-1.9999, 0, False) == '-2'
 	assert putil.eng.peng(-999.99, 0, False) == '-1k'
-	assert putil.eng.peng(-9.99, 1, False) == '-10.0 '
+	assert putil.eng.peng(-9.99, 1, False) == '-10.0'
 	assert putil.eng.peng(-5.25e3, 1, True) == '  -5.3k'
 	assert putil.eng.peng(-1.05e3, 0, True) == '  -1k'
+
 
 def test_peng_unit():
 	""" Test peng_unit() function """
 	assert putil.eng.peng_unit(putil.eng.peng(1, 3, True)) == ' '
 	assert putil.eng.peng_unit(putil.eng.peng(-10.5e-6, 3, False)) == 'u'
 
+
 def test_peng_unit_math():
 	""" Test peng_unit_math() function """
-	putil.test.assert_exception(putil.eng.peng_unit_math, {'center':'X', 'offset':-1}, RuntimeError, 'Unit `X` not recognized')
+	putil.test.assert_exception(putil.eng.peng_unit_math, {'suffix':'X', 'offset':-1}, RuntimeError, 'Unit `X` not recognized')
 	assert putil.eng.peng_unit_math(' ', 3) == 'G'
 	assert putil.eng.peng_unit_math('u', -2) == 'p'
 
 
 def test_peng_power():
 	""" Test peng_power() function """
-	assert putil.eng.peng_power(putil.eng.peng(1234.567, 3, True)) == ('k', 1E3)
+	tup = putil.eng.peng_power(putil.eng.peng(1234.567, 3, True))
+	assert tup == ('k', 1000.0)
+	assert isinstance(tup[1], float)
 
 
 def test_peng_int():
@@ -392,16 +396,16 @@ def test_peng_int():
 	assert putil.eng.peng_int(putil.eng.peng(5234.567, 6, True)) == 5
 
 
+def test_peng_frac():
+	""" Test peng_frac() function """
+	assert putil.eng.peng_frac(putil.eng.peng(5234.567, 6, True)) == 234567
+
+
 def test_peng_mant():
 	""" Test peng_mant() function """
-	assert putil.eng.peng_mant(putil.eng.peng(5234.567, 6, True)) == 234567
+	assert putil.eng.peng_mant(putil.eng.peng(5234.567, 3, True)) == 5.235
 
 
 def test_peng_float():
 	""" Test peng_float() function """
-	assert putil.eng.peng_float(putil.eng.peng(5234.567, 3, True)) == 5.235
-
-
-def test_peng_num():
-	""" Test peng_num() function """
-	assert putil.eng.peng_num(putil.eng.peng(5234.567, 3, True)) == 5.235e3
+	assert putil.eng.peng_float(putil.eng.peng(5234.567, 3, True)) == 5.235e3

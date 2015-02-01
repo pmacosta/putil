@@ -1947,14 +1947,14 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
 	# Step 1: Look at two contiguous ticks and lower mantissa digits till they are no more right zeros
 	mant = 10
 	for mant in range(10, mant_min-1, -1):
-		if (str(putil.eng.peng_mant(putil.eng.peng(tick_list[-1], mant)))[-1] != '0') or (str(putil.eng.peng_mant(putil.eng.peng(tick_list[-2], mant)))[-1] != '0'):
+		if (str(putil.eng.peng_frac(putil.eng.peng(tick_list[-1], mant)))[-1] != '0') or (str(putil.eng.peng_frac(putil.eng.peng(tick_list[-2], mant)))[-1] != '0'):
 			break
 	# Step 2: Confirm labels are unique
 	unique_mant_found = False
 	while mant >= mant_min:
 		loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
 		if (sum([1 if labels[index] != labels[index+1] else 0 for index in range(0, len(labels[:-1]))]) == len(labels)-1) and \
-				(sum([1 if (putil.eng.peng_num(label) != 0) or ((putil.eng.peng_num(label) == 0) and (num == 0)) else 0 for num, label in zip(tick_list, labels)]) == len(labels)):
+				(sum([1 if (putil.eng.peng_float(label) != 0) or ((putil.eng.peng_float(label) == 0) and (num == 0)) else 0 for num, label in zip(tick_list, labels)]) == len(labels)):
 			unique_mant_found = True
 			mant -= 1
 		else:

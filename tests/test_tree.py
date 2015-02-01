@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # test_tree.py
-# Copyright (c) 2014 Pablo Acosta-Serafini
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=W0212
 

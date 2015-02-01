@@ -1,12 +1,12 @@
-.. _exh-module:
+.. _eng-module:
 
 ##########
-exh module
+eng module
 ##########
 
 
 
-This module can be used to manage exceptions, registering exceptions and then conditionally raising them if a given condition is true.
+This module provides electrical engineering helper functions
 
 ***********
 Interpreter
@@ -24,13 +24,17 @@ Standard Python library and other Putil library modules
 Application programming interface (API)
 ***************************************
 
-Classes
-=======
+Functions
+=========
 
-.. automodule:: putil.exh
-    :members: ExHandle
-    :undoc-members:
-    :show-inheritance:
+.. autofunction:: putil.eng.peng
+.. autofunction:: putil.eng.peng_float
+.. autofunction:: putil.eng.peng_frac
+.. autofunction:: putil.eng.peng_int
+.. autofunction:: putil.eng.peng_mant
+.. autofunction:: putil.eng.peng_power
+.. autofunction:: putil.eng.peng_unit
+.. autofunction:: putil.eng.peng_unit_math
 
 *******
 License
