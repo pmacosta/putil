@@ -45,7 +45,7 @@ def peng(number, mantissa, rjust=True):
 	ppos = mant.find('.')
 	new_mant = mant+('.' if mantissa else '')+('0'*mantissa) if ppos == -1 else mant[:ppos+1]+(mant[ppos+1:].ljust(mantissa, '0'))
 	if (ppos != -1) and (len(mant)-ppos-1 > mantissa):
-		mant, exp = _to_eng_tuple(str(decimal.Decimal(new_mant+'E'+str(exp))+decimal.Decimal(('-' if sign == -1 else '')+'0.'+('0'*(mantissa-1))+'1E'+str(exp))))
+		mant, exp = _to_eng_tuple(str(decimal.Decimal(new_mant+'E'+str(exp))+decimal.Decimal(('-' if sign == -1 else '')+'0.'+('0'*mantissa)+'5E'+str(exp))))
 		ppos = mant.find('.')
 		new_mant = mant+('.' if mantissa else '')+('0'*mantissa) if ppos == -1 else mant[:ppos+1]+(mant[ppos+1:].ljust(mantissa, '0'))
 	ppos = new_mant.find('.') if mantissa else (len(new_mant) if new_mant.find('.') == -1 else new_mant.find('.')-1)
@@ -60,7 +60,8 @@ def peng(number, mantissa, rjust=True):
 
 def peng_unit(text):
 	""" Return unit of number string in engineering notation """
-	return text[-1]
+	text = text.strip()
+	return ' ' if text[-1].isdigit() else text[-1]
 
 def peng_unit_math(center, offset):
 	""" Return engineering unit letter based on a center/start unit and an offset of units """
@@ -73,32 +74,24 @@ def peng_unit_math(center, offset):
 
 def peng_power(text):
 	""" Return exponent of number string in engineering notation """
-	text = text.strip()
-	if len(text) > 0:
-		unit = peng_unit(text)
-		if unit in _UNIT_LIST:
-			return (unit, float(pow(10, 3*(_UNIT_LIST.index(unit)-8))))
-		else:
-			raise Exception('Unrecognized unit '+unit+' in fucntion peng_scale')
-	else:
-		raise Exception('Empty number passed to function peng_scale')
+	unit = peng_unit(text)
+	for key, value in _UNIT_DICT.iteritems():
+		if value == unit:
+			return (unit, 10**key)
 
 def peng_int(text):
 	""" Return integer part of number string in engineering notation """
-	text = text.strip()
-	return int(text[:text.find('.')]) if text.find('.') != -1 else int(text[:len(text) if peng_unit(text) == ' ' else -1])
+	return int(peng_float(text))
 
 def peng_mant(text):
 	""" Return mantissa part of number string in engineering notation """
-	text = text.strip()
-	return 0 if text.find('.') == -1 else int(text[text.find('.')+1:len(text) if peng_unit(text) == ' ' else -1])
+	text = text.replace(peng_unit(text), '')
+	return 0 if text.find('.') == -1 else int(text[text.find('.')+1:])
 
 def peng_float(text):
 	""" Return number without engineering unit of number string in engineering notation """
-	text = text.strip()
-	return float(text[:len(text) if peng_unit(text) == ' ' else -1])
+	return float(text.replace(peng_unit(text), ''))
 
 def peng_num(text):
 	""" Return float from number string in engineering notation """
-	_, scale = peng_power(text)
-	return peng_float(text)*scale
+	return peng_float(text)*peng_power(text)[1]

@@ -226,11 +226,13 @@ def test_to_eng_string():	#pylint: disable=R0915
 	assert putil.eng._to_eng_string('100000.1234567890') == '100.000123456789E+3'
 	assert putil.eng._to_eng_string('-100000.1234567890') == '-100.000123456789E+3'
 
+
 def test_peng():	#pylint: disable=R0915
 	""" Test peng() function """
 	#putil.test.assert_exception(putil.eng.peng, {'number':['5'], 'mantissa':3, 'rjust':True}, RuntimeError, 'Argument `number` is not valid')
 	#putil.test.assert_exception(putil.eng.peng, {'number':5, 'mantissa':3.5, 'rjust':True}, RuntimeError, 'Argument `mantissa` is not valid')
 	#putil.test.assert_exception(putil.eng.peng, {'number':5, 'mantissa':3, 'rjust':'hello'}, RuntimeError, 'Argument `rjust` is not valid')
+	assert putil.eng.peng(3.0333333333, 1, False) == '3.0 '
 	assert putil.eng.peng(0, 3, True) == '   0.000 '
 	assert putil.eng.peng(0, 3, False) == '0.000 '
 	# Positive
@@ -378,3 +380,28 @@ def test_peng_unit_math():
 	putil.test.assert_exception(putil.eng.peng_unit_math, {'center':'X', 'offset':-1}, RuntimeError, 'Unit `X` not recognized')
 	assert putil.eng.peng_unit_math(' ', 3) == 'G'
 	assert putil.eng.peng_unit_math('u', -2) == 'p'
+
+
+def test_peng_power():
+	""" Test peng_power() function """
+	assert putil.eng.peng_power(putil.eng.peng(1234.567, 3, True)) == ('k', 1E3)
+
+
+def test_peng_int():
+	""" Test peng_int() function """
+	assert putil.eng.peng_int(putil.eng.peng(5234.567, 6, True)) == 5
+
+
+def test_peng_mant():
+	""" Test peng_mant() function """
+	assert putil.eng.peng_mant(putil.eng.peng(5234.567, 6, True)) == 234567
+
+
+def test_peng_float():
+	""" Test peng_float() function """
+	assert putil.eng.peng_float(putil.eng.peng(5234.567, 3, True)) == 5.235
+
+
+def test_peng_num():
+	""" Test peng_num() function """
+	assert putil.eng.peng_num(putil.eng.peng(5234.567, 3, True)) == 5.235e3
