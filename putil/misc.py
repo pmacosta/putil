@@ -14,8 +14,6 @@ import tempfile
 import decorator
 import fractions
 
-import putil.eng
-
 
 @decorator.contextmanager
 def ignored(*exceptions):
@@ -447,6 +445,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):
 		[ 0.001, 2e-05, 300000000.0, ..., 700, 8, 9 ]
 
 	"""
+	import putil.eng
 	def _str(element):
 		""" Print a straight number or one with engineering notation """
 		return element if not eng else putil.eng.peng(element, mant, True)

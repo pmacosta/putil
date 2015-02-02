@@ -24,6 +24,26 @@ Standard Python library and other Putil library modules
 Application programming interface (API)
 ***************************************
 
+Pseudo-types
+============
+
+EngineeringNotationNumber
+-------------------------
+
+String with a number represented in engineering notation. Optional leading whitespace can precede the mantissa; optional whitespace can also follow the engineering suffix. An optional minus sign (-) can precede the mantissa after
+the leading whitespace. The suffix must be one of [y, z, a, f, p, n, u, m, (space) , k, M, G, T, P, E, Z, Y]
+
+EngineeringNotationSuffix
+-------------------------
+
+A single character string, one of [y, z, a, f, p, n, u, m, (space) , k, M, G, T, P, E, Z, Y]
+
+Contracts
+=========
+
+.. autofunction:: putil.eng.engineering_notation_number
+.. autofunction:: putil.eng.engineering_notation_suffix
+
 Functions
 =========
 
@@ -33,8 +53,8 @@ Functions
 .. autofunction:: putil.eng.peng_int
 .. autofunction:: putil.eng.peng_mant
 .. autofunction:: putil.eng.peng_power
-.. autofunction:: putil.eng.peng_unit
-.. autofunction:: putil.eng.peng_unit_math
+.. autofunction:: putil.eng.peng_suffix
+.. autofunction:: putil.eng.peng_suffix_math
 
 *******
 License

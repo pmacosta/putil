@@ -374,4 +374,3 @@ def test_to_scientific_string():
 	assert putil.misc.to_scientific_string(-333) == '-3.33E+2'
 	assert putil.misc.to_scientific_string(-4567) == '-4.567E+3'
 	assert putil.misc.to_scientific_string(-4567.890) == '-4.56789E+3'
-

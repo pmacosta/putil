@@ -6,10 +6,52 @@
 import decimal
 
 import putil.misc
-#import putil.pcontracts
+import putil.pcontracts
 
 
-_UNIT_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
+_SUFFIX_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
+@putil.pcontracts.new_contract()
+def engineering_notation_number(snum):
+	r"""
+	Number string in engineering notation
+
+	:param	snum: Number
+	:type	snum: EngineeringNotationNumber
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	msg = putil.pcontracts.get_exdesc()
+	if (not snum) or (not isinstance(snum, str)) or (isinstance(snum, str) and (not snum.strip())):
+		raise ValueError(msg)
+	snum = snum.strip()
+	suffix = ' ' if snum[-1].isdigit() else snum[-1]
+	for value in _SUFFIX_DICT.values():
+		if value == suffix:
+			break
+	else:
+		raise ValueError(msg)
+	snum = snum.replace(suffix, '')
+	if (not putil.misc.isalpha(snum)) or ('+' in snum):
+		raise ValueError(msg)
+
+
+@putil.pcontracts.new_contract()
+def engineering_notation_suffix(suffix):
+	r"""
+	Engineering notation suffix
+
+	:param	suffix: Suffix
+	:type	suffix: EngineerngNotationSuffix
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	msg = putil.pcontracts.get_exdesc()
+	suffix_list = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+	if (not isinstance(suffix, str)) or (isinstance(suffix, str) and (suffix not in suffix_list)):
+		raise ValueError(msg)
+
 
 def _to_eng_tuple(number):
 	""" Returns a string version of the number where the exponent is a multiple of 3 """
@@ -28,7 +70,7 @@ def _to_eng_string(number):
 	return '{0}E{1}{2}'.format(mant, '-' if exp < 0 else '+', abs(exp))
 
 
-#@putil.pcontracts.contract(number='int|float', mantissa='int,>=0', rjust=bool)
+@putil.pcontracts.contract(number='int|float', frac_length='int,>=0', rjust=bool)
 def peng(number, frac_length, rjust=True):
 	"""
 	Returns number as a string using engineering notation. The absolute value of the number (if it is not exactly zero) is bounded to the interval [1E-24, 1E+24)
@@ -40,6 +82,12 @@ def peng(number, frac_length, rjust=True):
 	:param	rjust: Flag that indicates whether the number should be right-justified (*True*) or not
 	:type	rjust: boolean
 	:rtype: string
+	:raises:
+	 * RuntimeError (Argument `frac_length` is not valid)
+
+	 * RuntimeError (Argument `number` is not valid)
+
+	 * RuntimeError (Argument `rjust` is not valid)
 
 	The engineering suffixes used are:
 
@@ -110,16 +158,18 @@ def peng(number, frac_length, rjust=True):
 	# Justify number
 	if rjust:
 		new_mant = new_mant.rjust(4+(1 if frac_length else 0)+frac_length)
-	return '{0}{1}'.format(new_mant, _UNIT_DICT[exp] if rjust else _UNIT_DICT[exp].rstrip())
+	return '{0}{1}'.format(new_mant, _SUFFIX_DICT[exp] if rjust else _SUFFIX_DICT[exp].rstrip())
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_float(snum):
 	"""
 	Returns floating point number representation of number string in engineering notation
 
-	:param	snum: Number as a string in engineering notation
-	:type	snum: string
+	:param	snum: Number
+	:type	snum: EngineeringNotationNumber
 	:rtype: string
+	:raises: RuntimeError (Argument `snum` is not valid)
 
 	For example:
 
@@ -130,13 +180,15 @@ def peng_float(snum):
 	return peng_mant(snum)*(peng_power(snum)[1])
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_frac(snum):
 	"""
 	Returns fractional part a number string in engineering notation
 
-	:param	snum: Number as a string in engineering notation
-	:type	snum: string
+	:param	snum: Number
+	:type	snum: EngineeringNotationNumber
 	:rtype: integer
+	:raises: RuntimeError (Argument `snum` is not valid)
 
 	For example:
 
@@ -144,16 +196,18 @@ def peng_frac(snum):
 		236
 
 	"""
-	snum = snum.replace(peng_unit(snum), '')
+	snum = snum.replace(peng_suffix(snum), '')
 	return 0 if snum.find('.') == -1 else int(snum[snum.find('.')+1:])
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_int(snum):
 	"""Returns integer part of number string in engineering notation
 
-	:param snum: Number string in engineering notation
-	:type	snum: string
+	:param snum: Number
+	:type	snum: EngineeringNotationNumber
 	:rtype: integer
+	:raises: RuntimeError (Argument `snum` is not valid)
 
 	For example:
 
@@ -164,13 +218,15 @@ def peng_int(snum):
 	return int(peng_mant(snum))
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_mant(snum):
 	"""
 	Returns mantissa of number string in engineering notation
 
-	:param	snum: Number as a string in engineering notation
-	:type	snum: string
+	:param	snum: Number
+	:type	snum: EngineeringNotationNumber
 	:rtype: integer
+	:raises: RuntimeError (Argument `snum` is not valid)
 
 	For example:
 
@@ -178,16 +234,18 @@ def peng_mant(snum):
 		1.236
 
 	"""
-	return float(snum.replace(peng_unit(snum), ''))
+	return float(snum.replace(peng_suffix(snum), ''))
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_power(snum):
 	"""
 	Returns a tuple with the engineering suffix (first tuple element) and floating point representation of the suffix (second tuple element) of an number string in engineering notation
 
-	:param	snum: Number string in engineering notation
-	:type	snum: string
+	:param	snum: Number
+	:type	snum: EngineeringNotationNumber
 	:rtype: tuple
+	:raises: RuntimeError (Argument `snum` is not valid)
 
 	For example:
 
@@ -195,23 +253,25 @@ def peng_power(snum):
 		('M', 1000000.0)
 
 	"""
-	unit = peng_unit(snum)
-	for key, value in _UNIT_DICT.iteritems():
-		if value == unit:
-			return (unit, float(10**key))
+	suffix = peng_suffix(snum)
+	for key, value in _SUFFIX_DICT.iteritems():
+		if value == suffix:
+			return (suffix, float(10**key))
 
 
-def peng_unit(snum):
+@putil.pcontracts.contract(snum='engineering_notation_number')
+def peng_suffix(snum):
 	"""
-	Returns unit of number string in engineering notation
+	Returns suffix of number string in engineering notation
 
-	:param	snum: Number as a string in engineering notation
-	:type	snum: string
+	:param	snum: Number
+	:type	snum: EngineeringNotationNumber
 	:rtype: string
+	:raises: RuntimeError (Argument `snum` is not valid)
 
 	For example:
 
-		>>> putil.eng.peng_unit(putil.eng.peng(1235.6789E3, 3, False))
+		>>> putil.eng.peng_suffix(putil.eng.peng(1235.6789E3, 3, False))
 		'M'
 
 	"""
@@ -219,25 +279,32 @@ def peng_unit(snum):
 	return ' ' if snum[-1].isdigit() else snum[-1]
 
 
-def peng_unit_math(suffix, offset):
+@putil.pcontracts.contract(suffix='engineering_notation_suffix', offset=int)
+def peng_suffix_math(suffix, offset):
 	"""
 	Returns engineering suffix based on a starting suffix and an offset of number of suffixes
 
 	:param	suffix: Engineering suffix
-	:type	suffix: string
+	:type	suffix: EngineeringNotationSuffix
 	:param	offset: Engineering suffix offset
 	:type	offset: integer
 	:rtype: string
+	:raises:
+	 * RuntimeError (Argument `offset` is not valid)
+
+	 * RuntimeError (Argument `suffix` is not valid)
 
 	For example:
 
-		>>> putil.eng.peng_unit_math('u', 6)
+		>>> putil.eng.peng_suffix_math('u', 6)
 		'T'
 
 	"""
-	for key, value in _UNIT_DICT.iteritems():
+	for key, value in _SUFFIX_DICT.iteritems():
 		if value == suffix:
 			break
-	else:
-		raise RuntimeError('Unit `{0}` not recognized'.format(suffix))
-	return _UNIT_DICT[key+3*offset]	#pylint: disable=W0631
+	try:
+		return _SUFFIX_DICT[key+3*offset]	#pylint: disable=W0631
+	except:
+		raise ValueError('Argument `offset` is not valid')
+

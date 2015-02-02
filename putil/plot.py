@@ -1927,7 +1927,7 @@ def _scale_ticks(tick_list, mode):
 	# Move one engineering unit back if there are more ticks below 1.0 than above it
 	rollback = (sum((tick_list/scale) >= 1000) > sum((tick_list/scale) < 1000)) and (tick_list[-1]/scale < 10000)
 	scale = 1 if rollback else scale
-	unit = putil.eng.peng_unit_math(unit, +1) if rollback else unit
+	unit = putil.eng.peng_suffix_math(unit, +1) if rollback else unit
 	tick_list = numpy.array([putil.misc.smart_round(element/scale, PRECISION) for element in tick_list])
 	tick_min = putil.misc.smart_round(tick_min/scale, PRECISION)
 	tick_max = putil.misc.smart_round(tick_max/scale, PRECISION)

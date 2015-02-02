@@ -1,6 +1,6 @@
 #!/bin/bash
 
-modules=(misc eng pcontracts pcsv tree pinspect exh exdoc plot)
+modules=(check eng exdoc exh misc pinspect pcontracts pcsv plot tree)
 cd ../putil
 for module in ${modules[@]}; do
 	if ! py.test --cov putil.${module} --cov-report term-missing ../tests/test_${module}.py; then
