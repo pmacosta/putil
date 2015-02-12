@@ -42,11 +42,6 @@ def _get_code_id(frame_obj):
 	return (frame_obj.f_code.co_filename, frame_obj.f_code.co_firstlineno)
 
 
-def _is_decorator(fin, lin, fuc, fui):
-	""" Determine if frame components refer to a decorator """
-	return (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None)
-
-
 def _valid_frame(fin, fna):
 	""" Selects valid stack frame to process """
 	return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or\
@@ -107,31 +102,26 @@ class ExHandle(object):	#pylint: disable=R0902
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
 		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
 		ret = list()
-		decorator_flag = False
-		skip_num = 0
+		decorator_flag, skip_flag = False, False
 		prev_name = name = ''
 
 		#fstack = tuple([obj for obj in inspect.stack()][::-1])
 		#for num, (fob, fin, lin, fun, fuc, fui) in enumerate(fstack):
 		for fob, fin, lin, fun, fuc, fui in reversed(stack[fnum:]):	#pylint: disable=W0631
 			# print putil.misc.pcolor('{0:3d}/{1:3d}'.format(num, len(fstack)), 'yellow')+' '+putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
-			if skip_num > 0:
+			if skip_flag:
 				# print putil.misc.pcolor('Skipped', 'green')
-				skip_num -= 1
+				skip_flag = False
 				continue
 			# Gobble up two frames if it is a decorator
-			if _is_decorator(fin, lin, fuc, fui) and (not decorator_flag):
-				#name = prev_name = self._get_callable_full_name(fob, fun)
-				name = prev_name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
-				# print putil.misc.pcolor('Decorator (frame used) -> {0}'.format(name), 'green')
-				ret.append(name)
-				skip_num = 1
-				decorator_flag = True
-				continue
-			elif _is_decorator(fin, lin, fuc, fui) and decorator_flag:
-				# print putil.misc.pcolor('Chained decorator', 'green')
-				skip_num = 1
-				continue
+			if (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None):	# frame corresponds to a decorator
+				skip_flag = True
+				if not decorator_flag:
+					#name = prev_name = self._get_callable_full_name(fob, fun)
+					name = prev_name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
+					# print putil.misc.pcolor('Decorator (frame used) -> {0}'.format(name), 'green')
+					ret.append(name)
+					decorator_flag = True
 			elif _valid_frame(fin, fun):
 				#name = self._get_callable_full_name(fob, fun)
 				name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
@@ -141,9 +131,7 @@ class ExHandle(object):	#pylint: disable=R0902
 				# else:
 					# print putil.misc.pcolor('Chained decorator (extra frame)', 'green')
 				prev_name = name
-			# else:
-				# print putil.misc.pcolor('Invalid frame', 'green')
-			decorator_flag = False
+				decorator_flag = False
 		# print self._callables_separator.join(ret)
 		ret = self._callables_separator.join(ret)
 		if len(self._cache) > 10:
@@ -163,9 +151,10 @@ class ExHandle(object):	#pylint: disable=R0902
 				func_obj = getattr(func_obj, '__wrapped__')
 			code_id = putil.pinspect._get_code_id(func_obj)	# pylint: disable=W0212
 		self._get_module_name(fob, func_obj)
-		if code_id not in self._callables_obj.reverse_callables_db:
+		try:
+			return self._callables_obj.reverse_callables_db[code_id]
+		except:
 			raise RuntimeError('Callable with call ID {0} not found in reverse callables database'.format(code_id))
-		return self._callables_obj.reverse_callables_db[code_id]
 
 	def _get_callables_separator(self):
 		""" Get callable separator character """

@@ -378,7 +378,6 @@ def test_peng_suffix():
 	putil.test.assert_exception(putil.eng.peng_suffix, {'snum':' 5x'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_suffix, {'snum':'a5M'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_suffix, {'snum':'- - a5M'}, RuntimeError, 'Argument `snum` is not valid')
-	putil.test.assert_exception(putil.eng.peng_suffix, {'snum':'+5M'}, RuntimeError, 'Argument `snum` is not valid')
 	assert putil.eng.peng_suffix(putil.eng.peng(1, 3, True)) == ' '
 	assert putil.eng.peng_suffix(putil.eng.peng(-10.5e-6, 3, False)) == 'u'
 
@@ -399,7 +398,6 @@ def test_peng_power():
 	putil.test.assert_exception(putil.eng.peng_power, {'snum':' 5x'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_power, {'snum':'a5M'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_power, {'snum':'- - a5M'}, RuntimeError, 'Argument `snum` is not valid')
-	putil.test.assert_exception(putil.eng.peng_power, {'snum':'+5M'}, RuntimeError, 'Argument `snum` is not valid')
 	tup = putil.eng.peng_power(putil.eng.peng(1234.567, 3, True))
 	assert tup == ('k', 1000.0)
 	assert isinstance(tup[1], float)
@@ -412,7 +410,6 @@ def test_peng_int():
 	putil.test.assert_exception(putil.eng.peng_int, {'snum':' 5x'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_int, {'snum':'a5M'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_int, {'snum':'- - a5M'}, RuntimeError, 'Argument `snum` is not valid')
-	putil.test.assert_exception(putil.eng.peng_int, {'snum':'+5M'}, RuntimeError, 'Argument `snum` is not valid')
 	assert putil.eng.peng_int(putil.eng.peng(5234.567, 6, True)) == 5
 
 
@@ -423,7 +420,6 @@ def test_peng_frac():
 	putil.test.assert_exception(putil.eng.peng_frac, {'snum':' 5x'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_frac, {'snum':'a5M'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_frac, {'snum':'- - a5M'}, RuntimeError, 'Argument `snum` is not valid')
-	putil.test.assert_exception(putil.eng.peng_frac, {'snum':'+5M'}, RuntimeError, 'Argument `snum` is not valid')
 	assert putil.eng.peng_frac(putil.eng.peng(5234.567, 6, True)) == 234567
 
 
@@ -434,7 +430,6 @@ def test_peng_mant():
 	putil.test.assert_exception(putil.eng.peng_mant, {'snum':' 5x'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_mant, {'snum':'a5M'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_mant, {'snum':'- - a5M'}, RuntimeError, 'Argument `snum` is not valid')
-	putil.test.assert_exception(putil.eng.peng_mant, {'snum':'+5M'}, RuntimeError, 'Argument `snum` is not valid')
 	assert putil.eng.peng_mant(putil.eng.peng(5234.567, 3, True)) == 5.235
 
 
@@ -445,7 +440,6 @@ def test_peng_float():
 	putil.test.assert_exception(putil.eng.peng_float, {'snum':' 5x'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_float, {'snum':'a5M'}, RuntimeError, 'Argument `snum` is not valid')
 	putil.test.assert_exception(putil.eng.peng_float, {'snum':'- - a5M'}, RuntimeError, 'Argument `snum` is not valid')
-	putil.test.assert_exception(putil.eng.peng_float, {'snum':'+5M'}, RuntimeError, 'Argument `snum` is not valid')
 	assert putil.eng.peng_float(putil.eng.peng(5234.567, 3, True)) == 5.235e3
 	assert putil.eng.peng_float('     5.235k    ') == 5.235e3
 	assert putil.eng.peng_float('    -5.235k    ') == -5.235e3

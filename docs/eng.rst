@@ -30,7 +30,7 @@ Pseudo-types
 EngineeringNotationNumber
 -------------------------
 
-String with a number represented in engineering notation. Optional leading whitespace can precede the mantissa; optional whitespace can also follow the engineering suffix. An optional minus sign (-) can precede the mantissa after
+String with a number represented in engineering notation. Optional leading whitespace can precede the mantissa; optional whitespace can also follow the engineering suffix. An optional sign (+ or -) can precede the mantissa after
 the leading whitespace. The suffix must be one of [y, z, a, f, p, n, u, m, (space) , k, M, G, T, P, E, Z, Y]
 
 EngineeringNotationSuffix

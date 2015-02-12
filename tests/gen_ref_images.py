@@ -13,7 +13,7 @@ import itertools
 import putil.plot
 import putil.misc
 
-def unittest_series_images(mode=None, test_dir=None):	#pylint: disable=R0914
+def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: disable=R0914
 	""" Images for Series() class """
 	mode = 'ref' if mode is None else mode.lower()
 	ref_dir = './support/ref_images/'
@@ -25,6 +25,7 @@ def unittest_series_images(mode=None, test_dir=None):	#pylint: disable=R0914
 	master_list = [marker_list, interp_list, line_style_list]
 	comb_list = itertools.product(*master_list)	#pylint: disable-msg=W0142
 	output_list = list()
+	print
 	for marker, interp, line_style in comb_list:
 		ref_file_name = '{0}/series_marker_{1}_interp_{2}_line_style_{3}.png'.format(ref_dir, 'true' if marker else 'false', interp.lower(), line_style_desc[line_style])
 		test_file_name = '{0}/series_marker_{1}_interp_{2}_line_style_{3}.png'.format(test_dir, 'true' if marker else 'false', interp.lower(), line_style_desc[line_style])
@@ -54,6 +55,9 @@ def unittest_series_images(mode=None, test_dir=None):	#pylint: disable=R0914
 		if mode == 'ref':
 			putil.misc.make_dir(ref_file_name)
 		fig_obj.save(ref_file_name if mode == 'ref' else test_file_name)
+		if _timeit:
+			break
+
 	return output_list
 
 def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915

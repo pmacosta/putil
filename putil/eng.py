@@ -9,7 +9,11 @@ import putil.misc
 import putil.pcontracts
 
 
-_SUFFIX_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
+_POWER_TO_SUFFIX_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
+_SUFFIX_TO_POWER_DICT = {'y':-24, 'z':-21, 'a':-18, 'f':-15, 'p':-12, 'n':-9, 'u':-6, 'm':-3, ' ':0, 'k':3, 'M':6, 'G':9, 'T':12, 'P':15, 'E':18, 'Z':21, 'Y':24}
+_SUFFIX_LIST = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+
+
 @putil.pcontracts.new_contract()
 def engineering_notation_number(snum):
 	r"""
@@ -21,19 +25,11 @@ def engineering_notation_number(snum):
 
 	:rtype: None
 	"""
-	msg = putil.pcontracts.get_exdesc()
-	if (not snum) or (not isinstance(snum, str)) or (isinstance(snum, str) and (not snum.strip())):
-		raise ValueError(msg)
-	snum = snum.strip()
-	suffix = ' ' if snum[-1].isdigit() else snum[-1]
-	for value in _SUFFIX_DICT.values():
-		if value == suffix:
-			break
-	else:
-		raise ValueError(msg)
-	snum = snum.replace(suffix, '')
-	if (not putil.misc.isalpha(snum)) or ('+' in snum):
-		raise ValueError(msg)
+	try:
+		snum = snum.strip()
+		float(snum[:-1 if snum[-1] in _SUFFIX_LIST else len(snum)])
+	except:
+		raise ValueError(putil.pcontracts.get_exdesc())
 
 
 @putil.pcontracts.new_contract()
@@ -47,10 +43,8 @@ def engineering_notation_suffix(suffix):
 
 	:rtype: None
 	"""
-	msg = putil.pcontracts.get_exdesc()
-	suffix_list = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
-	if (not isinstance(suffix, str)) or (isinstance(suffix, str) and (suffix not in suffix_list)):
-		raise ValueError(msg)
+	if suffix not in _SUFFIX_LIST:
+		raise ValueError(putil.pcontracts.get_exdesc())
 
 
 def _to_eng_tuple(number):
@@ -158,10 +152,9 @@ def peng(number, frac_length, rjust=True):
 	# Justify number
 	if rjust:
 		new_mant = new_mant.rjust(4+(1 if frac_length else 0)+frac_length)
-	return '{0}{1}'.format(new_mant, _SUFFIX_DICT[exp] if rjust else _SUFFIX_DICT[exp].rstrip())
+	return '{0}{1}'.format(new_mant, _POWER_TO_SUFFIX_DICT[exp] if rjust else _POWER_TO_SUFFIX_DICT[exp].rstrip())
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_float(snum):
 	"""
 	Returns floating point number representation of number string in engineering notation
@@ -180,7 +173,6 @@ def peng_float(snum):
 	return peng_mant(snum)*(peng_power(snum)[1])
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_frac(snum):
 	"""
 	Returns fractional part a number string in engineering notation
@@ -196,11 +188,12 @@ def peng_frac(snum):
 		236
 
 	"""
-	snum = snum.replace(peng_suffix(snum), '')
-	return 0 if snum.find('.') == -1 else int(snum[snum.find('.')+1:])
+	suffix = peng_suffix(snum)
+	snum = snum.replace(suffix, '')
+	pindex = snum.find('.')
+	return 0 if pindex == -1 else int(snum[pindex+1:])
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_int(snum):
 	"""Returns integer part of number string in engineering notation
 
@@ -218,7 +211,6 @@ def peng_int(snum):
 	return int(peng_mant(snum))
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_mant(snum):
 	"""
 	Returns mantissa of number string in engineering notation
@@ -234,10 +226,10 @@ def peng_mant(snum):
 		1.236
 
 	"""
-	return float(snum.replace(peng_suffix(snum), ''))
+	suffix = peng_suffix(snum)
+	return float(snum.replace(suffix, ''))
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_power(snum):
 	"""
 	Returns a tuple with the engineering suffix (first tuple element) and floating point representation of the suffix (second tuple element) of an number string in engineering notation
@@ -254,9 +246,7 @@ def peng_power(snum):
 
 	"""
 	suffix = peng_suffix(snum)
-	for key, value in _SUFFIX_DICT.iteritems():
-		if value == suffix:
-			return (suffix, float(10**key))
+	return (suffix, 1.0*(10**_SUFFIX_TO_POWER_DICT[suffix]))
 
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
@@ -300,11 +290,10 @@ def peng_suffix_math(suffix, offset):
 		'T'
 
 	"""
-	for key, value in _SUFFIX_DICT.iteritems():
-		if value == suffix:
-			break
+	exhobj = putil.exh.get_exh_obj()	#pylint: disable=W0212
+	exhobj = exhobj if exhobj else putil.exh.ExHandle()
+	exhobj.add_exception(exname='invalid_offset', extype=ValueError, exmsg='Argument `offset` is not valid')
 	try:
-		return _SUFFIX_DICT[key+3*offset]	#pylint: disable=W0631
-	except:
-		raise ValueError('Argument `offset` is not valid')
-
+		return _POWER_TO_SUFFIX_DICT[_SUFFIX_TO_POWER_DICT[suffix]+3*offset]	#pylint: disable=W0631
+	except:	#pylint: disable=W0702
+		exhobj.raise_exception_if(exname='invalid_offset', condition=True)
