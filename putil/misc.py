@@ -5,6 +5,7 @@
 
 import os
 import sys
+import time
 import numpy
 import types
 import decimal
@@ -15,6 +16,9 @@ import decorator
 import fractions
 
 
+###
+# Context managers
+###
 @decorator.contextmanager
 def ignored(*exceptions):
 	"""
@@ -34,6 +38,72 @@ def ignored(*exceptions):
 		pass
 
 
+class TmpFile(object):	#pylint: disable=R0903
+	"""
+	Context manager for temporary files.
+
+	:param	fpointer: Pointer to a function that writes data to file or *None*. If the argument is not *None* the function pointed to receives exactly one argument, a file-like object as created by the\
+	`tempfile.NamedTemporaryFile <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_ function.
+	:type	fpointer: function pointer
+	:returns:	File name of temporary file
+	:rtype:		string
+	:raises:	TypeError (Argument `fpointer` is not valid)
+	"""
+	def __init__(self, fpointer=None):
+		if fpointer and (not isinstance(fpointer, types.FunctionType)) and (not isinstance(fpointer, types.LambdaType)):
+			raise TypeError('Argument `fpointer` is not valid')
+		self._file_name = None
+		self._fpointer = fpointer
+
+	def __enter__(self):
+		with tempfile.NamedTemporaryFile(delete=False) as fobj:
+			self._file_name = fobj.name
+			if self._fpointer:
+				self._fpointer(fobj)
+		return self._file_name
+
+	def __exit__(self, exc_type, exc_value, exc_tb):
+		with ignored(OSError):
+			os.remove(self._file_name)
+		if exc_type is not None:
+			return False
+
+
+class Timer(object):	#pylint: disable=R0903
+	"""
+	Context manager for profiling blocks of code by calculating elapsed time between context manager enter and exit time points. Largely from `Huy Nguyen blog <http://www.huyng.com/posts/python-performance-analysis/>`_
+
+	:param	verbose: print elapsed time upon exit
+	:type	verbose: boolean
+	:raises: TypeError (Argument `verbose` is not valid)
+	"""
+	def __init__(self, verbose=False):
+		if not isinstance(verbose, bool):
+			raise TypeError('Argument `verbose` is not valid')
+		self._start_time, self._stop_time, self._elapsed_time, self._verbose = None, None, None, verbose
+
+	def __enter__(self):
+		self._start_time = time.time()
+		return self
+
+	def __exit__(self, exc_type, exc_value, exc_tb):
+		self._stop_time = time.time()
+		self._elapsed_time = 1000.0*(self._stop_time-self._start_time)
+		if self._verbose:
+			print 'Elapsed time: {0}[msec]'.format(self._elapsed_time)
+		if exc_type is not None:
+			return False
+
+	def _get_elapsed_time(self):
+		return self._elapsed_time
+
+	elapsed_time = property(_get_elapsed_time, None, None, doc='Elapsed time')
+	"""
+	Returns elapsed time between context manager enter and exit time points
+	:rtype: float
+	"""
+
+
 def pcolor(text, color, tab=0):
 	"""
 	Returns a string that once printed is colorized
@@ -42,7 +112,7 @@ def pcolor(text, color, tab=0):
 	:type	text: string
 	:param	color: Color to use, one of `['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'none'] (case insensitive)`
 	:type	color: string
-	:param	tab: Number of spaces to preprend **text** with
+	:param	tab: Number of spaces to prefix **text** with
 	:type	tab: integer
 	:rtype:	string
 	:raises:
@@ -492,7 +562,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):
 
 
 def elapsed_time_string(start_time, stop_time):
-	""" Returns a formatted string with the ellapsed time between two time points. The string includes years (365 days), months (30 days), days (24 hours), hours (60 minutes), minutes (60 seconds) and seconds.
+	""" Returns a formatted string with the elapsed time between two time points. The string includes years (365 days), months (30 days), days (24 hours), hours (60 minutes), minutes (60 seconds) and seconds.
 	If **start_time** and **stop_time** are equal, the string returned is 'None'; otherwise, the string returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s], [MM minute[s] [and SS second[s]]]]]].
 	Any piece (year[s], month[s], etc.) is omitted if the number of the token is null/zero.
 
@@ -521,40 +591,6 @@ def elapsed_time_string(start_time, stop_time):
 		return ret_list[0]+' and '+ret_list[1]
 	else:
 		return (', '.join(ret_list[0:-1]))+' and '+ret_list[-1]
-
-
-###
-# Context manager to create temporary files and delete them after it has been read
-###
-class TmpFile(object):	#pylint: disable=R0903
-	"""
-	Context manager for temporary files. A
-
-	:param	fpointer: Pointer to a function that writes data to file or *None*. If the argument is not *None* the function pointed to receives exactly one argument, a file-like object as created by the\
-	`tempfile.NamedTemporaryFile <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_ function.
-	:type	fpointer: function pointer
-	:returns:	File name of temporary file
-	:rtype:		string
-	:raises:	TypeError (Argument `fpointer` is not valid)
-	"""
-	def __init__(self, fpointer=None):
-		if fpointer and (not isinstance(fpointer, types.FunctionType)) and (not isinstance(fpointer, types.LambdaType)):
-			raise TypeError('Argument `fpointer` is not valid')
-		self._file_name = None
-		self._fpointer = fpointer
-
-	def __enter__(self):
-		with tempfile.NamedTemporaryFile(delete=False) as fobj:
-			self._file_name = fobj.name
-			if self._fpointer:
-				self._fpointer(fobj)
-		return self._file_name
-
-	def __exit__(self, exc_type, exc_value, exc_tb):
-		with ignored(OSError):
-			os.remove(self._file_name)
-		if exc_type is not None:
-			return False
 
 
 def strframe(obj, extended=False):

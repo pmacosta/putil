@@ -4,6 +4,7 @@
 # pylint: disable=C0302,C0111
 
 import os
+import re
 import sys
 import mock
 import numpy
@@ -30,6 +31,29 @@ def test_ignored():
 		assert not os.path.exists(fobj.name)
 	with putil.misc.ignored(OSError):
 		os.remove('_some_file_')
+
+
+def test_timer(capsys):
+	""" Test Timer context manager """
+	# Test argument validation
+	with pytest.raises(TypeError) as excinfo:
+		with putil.misc.Timer(5):
+			pass
+	assert excinfo.value.message == 'Argument `verbose` is not valid'
+	# Test that exceptions within the with statement are re-raised
+	with pytest.raises(RuntimeError) as excinfo:
+		with putil.misc.Timer():
+			raise RuntimeError('Error in code')
+	assert excinfo.value.message == 'Error in code'
+	# Test normal operation
+	with putil.misc.Timer() as tobj:
+		sum(xrange(100))
+	assert isinstance(tobj.elapsed_time, float) and (tobj.elapsed_time > 0)
+	tregexp = re.compile(r'Elapsed time: [\d|\.]+\[msec\]')
+	with putil.misc.Timer(verbose=True) as tobj:
+		sum(xrange(100))
+	out, _ = capsys.readouterr()
+	assert tregexp.match(out)
 
 
 def test_pcolor():

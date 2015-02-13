@@ -12,6 +12,7 @@ Context managers
 ````````````````
 
 .. autofunction:: putil.misc.ignored
+.. autofunction:: putil.misc.Timer
 .. autofunction:: putil.misc.TmpFile
 
 File
