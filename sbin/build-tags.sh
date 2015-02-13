@@ -7,6 +7,7 @@ while [ -h "$source" ]; do # resolve $source until the file is no longer a symli
 	[[ $source != /* ]] && source="$dir/$source" # if $source was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 dir="$( cd -P "$( dirname "$source" )" && pwd )"
-export PACKAGE_ROOT=$(dirname ${dir})
-ctags -V --tag-relative -f $PACKAGE_ROOT/tags -R $PACKAGE_ROOT/putil/*.py $PACKAGE_ROOT/tests/*.py
+package_root=$(dirname ${dir})
+package_name=$(basename ${dir})
+ctags -V --tag-relative -f $package_root/tags -R $package_root/${package_name}/*.py $package_root/tests/*.py
 # */2 * * * * /proj/ad9625_e_expctl/sos_pacosta/pacosta/sim/bin/build_tags.sh &>/home/pacosta/log/cheetah_tags.log
