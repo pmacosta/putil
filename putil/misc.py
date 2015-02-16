@@ -46,7 +46,6 @@ class TmpFile(object):	#pylint: disable=R0903
 	`tempfile.NamedTemporaryFile <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_ function.
 	:type	fpointer: function pointer
 	:returns:	File name of temporary file
-	:rtype:		string
 	:raises:	TypeError (Argument `fpointer` is not valid)
 	"""
 	def __init__(self, fpointer=None):
@@ -75,6 +74,7 @@ class Timer(object):	#pylint: disable=R0903
 
 	:param	verbose: print elapsed time upon exit
 	:type	verbose: boolean
+	:returns: :py:class:`putil.misc.Timer()` context manager object
 	:raises: TypeError (Argument `verbose` is not valid)
 	"""
 	def __init__(self, verbose=False):
@@ -100,6 +100,7 @@ class Timer(object):	#pylint: disable=R0903
 	elapsed_time = property(_get_elapsed_time, None, None, doc='Elapsed time')
 	"""
 	Returns elapsed time between context manager enter and exit time points
+
 	:rtype: float
 	"""
 

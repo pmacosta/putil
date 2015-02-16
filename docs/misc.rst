@@ -12,8 +12,9 @@ Context managers
 ````````````````
 
 .. autofunction:: putil.misc.ignored
-.. autofunction:: putil.misc.Timer
-.. autofunction:: putil.misc.TmpFile
+.. autoclass:: putil.misc.Timer
+	:members: elapsed_time
+.. autoclass:: putil.misc.TmpFile
 
 File
 ````
@@ -36,7 +37,6 @@ Miscellaneous
 .. autofunction:: putil.misc.Bundle
 .. autofunction:: putil.misc.delete_module
 .. autofunction:: putil.misc.flatten_list
-
 
 Numbers
 ```````
