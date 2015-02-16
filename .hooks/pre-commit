@@ -57,7 +57,6 @@ fi
 
 #echo -e "\tValidating author name and email"
 # Check that e-mail and name match the e-mail and address of first commit
-git log ${first_commit_hash} | grep -E "^Author:"
 first_commit_hash=$(git rev-list --max-parents=0 HEAD)
 history_name=$(git log ${first_commit_hash} --format="%an" | head -n 1)
 history_email=$(git log ${first_commit_hash} --format="%ae" | head -n 1)
