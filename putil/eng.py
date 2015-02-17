@@ -5,13 +5,14 @@
 
 import decimal
 
+import putil.exh
 import putil.misc
 import putil.pcontracts
 
 
 _POWER_TO_SUFFIX_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
 _SUFFIX_TO_POWER_DICT = {'y':-24, 'z':-21, 'a':-18, 'f':-15, 'p':-12, 'n':-9, 'u':-6, 'm':-3, ' ':0, 'k':3, 'M':6, 'G':9, 'T':12, 'P':15, 'E':18, 'Z':21, 'Y':24}
-_SUFFIX_LIST = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+_SUFFIX_TUPLE = ['y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
 
 
 @putil.pcontracts.new_contract()
@@ -26,8 +27,8 @@ def engineering_notation_number(snum):
 	:rtype: None
 	"""
 	try:
-		snum = snum.strip()
-		float(snum[:-1 if snum[-1] in _SUFFIX_LIST else len(snum)])
+		snum = snum.rstrip()
+		float(snum[:-1] if snum[-1] in _SUFFIX_TUPLE else snum)
 	except:
 		raise ValueError(putil.pcontracts.get_exdesc())
 
@@ -43,7 +44,7 @@ def engineering_notation_suffix(suffix):
 
 	:rtype: None
 	"""
-	if suffix not in _SUFFIX_LIST:
+	if suffix not in _SUFFIX_TUPLE:
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 
@@ -211,6 +212,7 @@ def peng_int(snum):
 	return int(peng_mant(snum))
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_mant(snum):
 	"""
 	Returns mantissa of number string in engineering notation
@@ -226,8 +228,8 @@ def peng_mant(snum):
 		1.236
 
 	"""
-	suffix = peng_suffix(snum)
-	return float(snum.replace(suffix, ''))
+	snum = snum.rstrip()
+	return float(snum if snum[-1].isdigit() else snum[:-1])
 
 
 def peng_power(snum):
@@ -265,7 +267,7 @@ def peng_suffix(snum):
 		'M'
 
 	"""
-	snum = snum.strip()
+	snum = snum.rstrip()
 	return ' ' if snum[-1].isdigit() else snum[-1]
 
 
