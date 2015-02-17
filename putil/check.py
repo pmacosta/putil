@@ -11,6 +11,7 @@ import funcsigs
 import decorator
 import itertools
 
+import putil.exh
 import putil.misc
 
 
@@ -696,17 +697,13 @@ def format_msg(msg, edata):
 		msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
 	return msg
 
-def get_exh_obj():
-	""" Get exception handler object (if any) """
-	root_module = inspect.stack()[-1][0]
-	return root_module.f_locals.get('_EXH', None) if root_module else None
 
 def check_argument_type(param_name, param_type):
 	""" Decorator to check that a argument is of a certain type """
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):
 		"""	Wrapper function to test argument type """
-		check_argument_type_internal(param_name, param_type, func, get_exh_obj(), *args, **kwargs)
+		check_argument_type_internal(param_name, param_type, func, putil.exh.get_exh_obj(), *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -725,7 +722,7 @@ def check_argument(param_spec):	#pylint: disable=R0912
 			if len(arguments) == 1:
 				raise RuntimeError('Function {0} has no arguments after self'.format(func.__name__))
 			param_name = next(fiter)[0]
-		check_argument_internal(param_name, param_spec, func, get_exh_obj(), *args, **kwargs)
+		check_argument_internal(param_name, param_spec, func, putil.exh.get_exh_obj(), *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -746,7 +743,7 @@ def check_arguments(param_dict):	#pylint: disable=R0912
 		for param_name, param_spec in param_dict.items():
 			if param_name not in arguments:
 				raise RuntimeError('Argument {0} is not an argument of function {1}'.format(param_name, func.__name__))
-			check_argument_internal(param_name, param_spec, func, get_exh_obj(), *args, **kwargs)
+			check_argument_internal(param_name, param_spec, func, putil.exh.get_exh_obj(), *args, **kwargs)
 		return func(*args, **kwargs)
 	return wrapper
 

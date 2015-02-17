@@ -232,7 +232,6 @@ def contract(**contract_args):	#pylint: disable=R0912
 	@decorator.decorator
 	def wrapper(func, *args, **kwargs):	#pylint: disable=R0912,R0914
 		""" Decorator """
-		param_dict = _create_argument_value_pairs(func, *args, **kwargs)
 		# Register exceptions if exception handler object exists
 		exhobj = putil.exh.get_exh_obj()	#pylint: disable=W0212
 		if exhobj:
@@ -252,6 +251,7 @@ def contract(**contract_args):	#pylint: disable=R0912
 		except contracts.ContractNotRespected as eobj:
 			#_, _, tbobj = sys.exc_info()
 			# Extract which function parameter triggered exception
+			param_dict = _create_argument_value_pairs(func, *args, **kwargs)
 			param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]	# re.search returns the string with quotes in it
 			# Raise exception
 			exdict = _get_contract_exception_dict(eobj.error)
