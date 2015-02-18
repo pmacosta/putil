@@ -11,8 +11,9 @@ import putil.pcontracts
 
 
 _POWER_TO_SUFFIX_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
-_SUFFIX_TO_POWER_DICT = {'y':-24, 'z':-21, 'a':-18, 'f':-15, 'p':-12, 'n':-9, 'u':-6, 'm':-3, ' ':0, 'k':3, 'M':6, 'G':9, 'T':12, 'P':15, 'E':18, 'Z':21, 'Y':24}
-_SUFFIX_TUPLE = ('y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+_SUFFIX_TO_POWER_DICT = dict([(value, key) for key, value in _POWER_TO_SUFFIX_DICT.iteritems()])
+_SUFFIX_TUPLE = tuple(_SUFFIX_TO_POWER_DICT.keys())
+_SUFFIX_POWER_DICT = dict([(key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.iteritems()])
 
 
 @putil.pcontracts.new_contract()
@@ -156,6 +157,7 @@ def peng(number, frac_length, rjust=True):
 	return '{0}{1}'.format(new_mant, _POWER_TO_SUFFIX_DICT[exp] if rjust else _POWER_TO_SUFFIX_DICT[exp].rstrip())
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_float(snum):
 	"""
 	Returns floating point number representation of number string in engineering notation
@@ -171,9 +173,13 @@ def peng_float(snum):
 		1236000.0
 
 	"""
-	return peng_mant(snum)*(peng_power(snum)[1])
+	# This can be coded as peng_mant(snum)*(peng_power(snum)[1]), but the "function unrolling" is about 4x faster
+	snum = snum.rstrip()
+	suffix = ' ' if snum[-1].isdigit() else snum[-1]
+	return float(snum if snum[-1].isdigit() else snum[:-1])*_SUFFIX_POWER_DICT[suffix]
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_frac(snum):
 	"""
 	Returns fractional part a number string in engineering notation
@@ -189,10 +195,9 @@ def peng_frac(snum):
 		236
 
 	"""
-	suffix = peng_suffix(snum)
-	snum = snum.replace(suffix, '')
+	snum = snum.rstrip()
 	pindex = snum.find('.')
-	return 0 if pindex == -1 else int(snum[pindex+1:])
+	return 0 if pindex == -1 else int(snum[pindex+1:] if snum[-1].isdigit() else snum[pindex+1:-1])
 
 
 def peng_int(snum):
@@ -232,6 +237,7 @@ def peng_mant(snum):
 	return float(snum if snum[-1].isdigit() else snum[:-1])
 
 
+@putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_power(snum):
 	"""
 	Returns a tuple with the engineering suffix (first tuple element) and floating point representation of the suffix (second tuple element) of an number string in engineering notation
@@ -247,8 +253,9 @@ def peng_power(snum):
 		('M', 1000000.0)
 
 	"""
-	suffix = peng_suffix(snum)
-	return (suffix, 1.0*(10**_SUFFIX_TO_POWER_DICT[suffix]))
+	#suffix = peng_suffix(snum)
+	suffix = ' ' if snum[-1].isdigit() else snum[-1]
+	return (suffix, _SUFFIX_POWER_DICT[suffix])
 
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
