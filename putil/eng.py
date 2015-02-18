@@ -45,7 +45,9 @@ def engineering_notation_suffix(suffix):
 
 	:rtype: None
 	"""
-	if suffix not in _SUFFIX_TUPLE:
+	try:
+		assert suffix in _SUFFIX_TUPLE
+	except:
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 
@@ -253,7 +255,6 @@ def peng_power(snum):
 		('M', 1000000.0)
 
 	"""
-	#suffix = peng_suffix(snum)
 	suffix = ' ' if snum[-1].isdigit() else snum[-1]
 	return (suffix, _SUFFIX_POWER_DICT[suffix])
 
