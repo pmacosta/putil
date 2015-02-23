@@ -233,6 +233,8 @@ def contract(**contract_args):	#pylint: disable=R0912
 	def wrapper(func, *args, **kwargs):	#pylint: disable=R0912,R0914
 		""" Decorator """
 		# Register exceptions if exception handler object exists
+		if all_disabled():
+			return func(*args, **kwargs)
 		exhobj = putil.exh.get_exh_obj()	#pylint: disable=W0212
 		if exhobj:
 			for param_name, param_contract in contract_args.iteritems():	#pylint: disable=W0631

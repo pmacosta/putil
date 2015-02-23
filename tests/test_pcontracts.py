@@ -348,10 +348,15 @@ def test_file_name_exists_contract():
 
 def test_enable_disable_contracts():
 	""" Test wrappers around disable_all(), enable_all() and all_disabled() functions """
-	test_list = list()
-	test_list.append(putil.pcontracts.all_disabled() == False)
+	@putil.pcontracts.contract(number=int)
+	def func(number):	#pylint: disable=C0111,W0612
+		return number
+	assert putil.pcontracts.all_disabled() == False
+	putil.test.assert_exception(func, {'number':None}, RuntimeError, 'Argument `number` is not valid')
 	putil.pcontracts.disable_all()
-	test_list.append(putil.pcontracts.all_disabled() == True)
+	assert putil.pcontracts.all_disabled() == True
+	assert func(['a', 'b']) == ['a', 'b']
 	putil.pcontracts.enable_all()
-	test_list.append(putil.pcontracts.all_disabled() == False)
-	assert test_list == len(test_list)*[True]
+	assert putil.pcontracts.all_disabled() == False
+	putil.test.assert_exception(func, {'number':None}, RuntimeError, 'Argument `number` is not valid')
+
