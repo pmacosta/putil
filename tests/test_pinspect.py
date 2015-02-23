@@ -58,12 +58,10 @@ def test_is_magic_method():
 
 def test_loaded_package_modules():
 	""" Test loaded_package_modules() function """
-	test_list = list()
-	module_name_list = ['check', 'misc', 'pinspect', 'test']
+	module_name_list = ['check', 'misc', 'pinspect', 'test', 'exh']
 	modules_obj_list = set([sys.modules['putil']]+[sys.modules['putil.{0}'.format(module_name)] for module_name in module_name_list])
-	test_list.append(set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list)
-	test_list.append(set(putil.pinspect.loaded_package_modules(sys.modules['putil.pinspect'])) == modules_obj_list)
-	assert test_list == [True]*len(test_list)
+	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list
+	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil.pinspect'])) == modules_obj_list
 
 def test_replace_tabs():
 	""" Test _replace_tabs() function """
