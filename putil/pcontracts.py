@@ -247,9 +247,12 @@ def contract(**contract_args):	#pylint: disable=R0912
 				for exdict in contracts_dicts:
 					exname = 'contract_{0}_{1}_{2}'.format(func.__name__, param_name, exdict['num'])
 					exhobj.add_exception(exname=exname, extype=exdict['type'], exmsg=exdict['msg'].replace('*[argument_name]*', param_name))
-		# Argument validation
+		# Argument validation. PyContracts "entry" is the contracts.contract_decorator, which has some logic to figure out which way the contract was specified. Since this module (pcontracts) supports only the decorator
+		# way of specifying the contracts, all the mentioned logic can be bypassed by calling contracs.contracts_decorate, which is renamed to contracts.decorate in the contracts __init__.py file
 		try:
-			return contracts.contract_decorator(func, **contract_args)(*args, **kwargs)
+			return contracts.decorate(func, False, **contract_args)(*args, **kwargs)
+		except contracts.ContractSyntaxError:
+			raise
 		except contracts.ContractNotRespected as eobj:
 			#_, _, tbobj = sys.exc_info()
 			# Extract which function parameter triggered exception

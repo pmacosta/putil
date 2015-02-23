@@ -9,6 +9,7 @@ putil.pcontracts unit tests
 import sys
 import copy
 import pytest
+import contracts
 import functools
 
 import putil.exh
@@ -277,19 +278,21 @@ def test_contract():	#pylint: disable=C0103,R0912
 		if number == 1:
 			raise ValueError(exdesc)
 		return True
-	test_list = list()
-	test_list.append(putil.test.trigger_exception(func1, {'number':'a string'}, RuntimeError, 'Argument `number` is not valid'))
-	test_list.append(putil.test.trigger_exception(func2, {'number':0}, RuntimeError, 'Illegal number: 0'))
-	test_list.append(putil.test.trigger_exception(func2, {'number':1}, TypeError, 'Unfathomable'))
-	test_list.append(putil.test.trigger_exception(func3, {'fname':'a', 'fnumber':5, 'flag':False}, RuntimeError, 'The argument fname is wrong'))
-	test_list.append(putil.test.trigger_exception(func3, {'fname':'b', 'fnumber':5, 'flag':False}, IOError, 'File name `b` not found'))
-	test_list.append(putil.test.trigger_exception(func3, {'fname':'zzz', 'fnumber':5, 'flag':45}, RuntimeError, 'Argument `flag` is not valid'))
+	@putil.pcontracts.contract(fname='not_a_valid_contract')
+	def func6(fname):	#pylint: disable=C0111,W0613
+		return fname
+	putil.test.assert_exception(func1, {'number':'a string'}, RuntimeError, 'Argument `number` is not valid')
+	putil.test.assert_exception(func2, {'number':0}, RuntimeError, 'Illegal number: 0')
+	putil.test.assert_exception(func2, {'number':1}, TypeError, 'Unfathomable')
+	putil.test.assert_exception(func3, {'fname':'a', 'fnumber':5, 'flag':False}, RuntimeError, 'The argument fname is wrong')
+	putil.test.assert_exception(func3, {'fname':'b', 'fnumber':5, 'flag':False}, IOError, 'File name `b` not found')
+	putil.test.assert_exception(func3, {'fname':'zzz', 'fnumber':5, 'flag':45}, RuntimeError, 'Argument `flag` is not valid')
 	with pytest.raises(TypeError) as excinfo:
 		func2(2, 5, 10)	#pylint: disable=E1121
-	test_list.append(excinfo.value.message == 'func2() takes exactly 1 argument (3 given)')
-	test_list.append(func1(5) == 5)
-	test_list.append(func2(10) == 10)
-	test_list.append(func3('hello', 'world', False) == ('hello', 'world'))
+	assert excinfo.value.message == 'func2() takes exactly 1 argument (3 given)'
+	assert func1(5) == 5
+	assert func2(10) == 10
+	assert func3('hello', 'world', False) == ('hello', 'world')
 	putil.exh.set_exh_obj(putil.exh.ExHandle())
 	@putil.pcontracts.contract(fname='str,file_name_valid')
 	def func4(fname, fnumber):	#pylint: disable=C0111
@@ -304,18 +307,18 @@ def test_contract():	#pylint: disable=C0103,R0912
 	pexlist = list()
 	for exkey, exitem in exdict.items():
 		pexlist.append({'name':exkey[exkey.rfind(putil.exh.get_exh_obj()._callables_separator)+1:], 'type':exitem['type'], 'msg':exitem['msg']})
-	test_list.append(sorted(pexlist) == sorted([{'name':'contract_func5_flag_0', 'type':RuntimeError, 'msg':'Argument `flag` is not valid'}, \
-												{'name':'contract_func5_fudge_0', 'type':RuntimeError, 'msg':'Argument `fudge` is not valid'}, \
-												{'name':'contract_func5_num_0', 'type':RuntimeError, 'msg':'Illegal number: unity'}, \
-									            {'name':'contract_func4_fname_0', 'type':IOError, 'msg':'File name `*[file_name]*` not found'}, \
-									            {'name':'contract_func4_fname_1', 'type':RuntimeError, 'msg':'The argument fname is wrong'}]))
-	test_list.append(putil.test.trigger_exception(func4, {'fname':'a', 'fnumber':5}, RuntimeError, 'The argument fname is wrong'))
-	test_list.append(putil.test.trigger_exception(func4, {'fname':'b', 'fnumber':5}, IOError, 'File name `b` not found'))
-	test_list.append(putil.test.trigger_exception(func5, {'num':1}, RuntimeError, 'Illegal number: unity'))
-	test_list.append(putil.test.trigger_exception(func5, {'num':1.0, 'flag':45}, RuntimeError, 'Argument `flag` is not valid'))
-	test_list.append(putil.test.trigger_exception(func5, {'num':1.0, 'fudge':1.0}, RuntimeError, 'Argument `fudge` is not valid'))
+	assert sorted(pexlist) == sorted([{'name':'contract_func5_flag_0', 'type':RuntimeError, 'msg':'Argument `flag` is not valid'}, \
+									  {'name':'contract_func5_fudge_0', 'type':RuntimeError, 'msg':'Argument `fudge` is not valid'}, \
+									  {'name':'contract_func5_num_0', 'type':RuntimeError, 'msg':'Illegal number: unity'}, \
+									  {'name':'contract_func4_fname_0', 'type':IOError, 'msg':'File name `*[file_name]*` not found'}, \
+									  {'name':'contract_func4_fname_1', 'type':RuntimeError, 'msg':'The argument fname is wrong'}])
+	putil.test.assert_exception(func4, {'fname':'a', 'fnumber':5}, RuntimeError, 'The argument fname is wrong')
+	putil.test.assert_exception(func4, {'fname':'b', 'fnumber':5}, IOError, 'File name `b` not found')
+	putil.test.assert_exception(func5, {'num':1}, RuntimeError, 'Illegal number: unity')
+	putil.test.assert_exception(func5, {'num':1.0, 'flag':45}, RuntimeError, 'Argument `flag` is not valid')
+	putil.test.assert_exception(func5, {'num':1.0, 'fudge':1.0}, RuntimeError, 'Argument `fudge` is not valid')
 	putil.exh.del_exh_obj()
-	assert test_list == len(test_list)*[True]
+	putil.test.assert_exception(func6, {'fname':5}, contracts.interface.ContractSyntaxError, '')
 
 def test_file_name_contract():
 	""" Test for file_name custom contract """
