@@ -420,7 +420,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
 	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable=C0111
-		# Check that extra argnuments to see if they are in the function definition
+		# Check that extra arguments to see if they are in the function definition
 		self._fproc_eargs = fproc_eargs
 		self._check_fproc_eargs()
 		self._process_data()
@@ -508,7 +508,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			self._check_var(dep_var, 'dependent variable')
 			if len(indep_var) != len(dep_var):
 				raise ValueError('Processed independent and dependent variables are of different length')
-			# The processing function could potentially expand (say, via interpolation) or shorten the data set length. To avoid errors that dependent and independet variables have different number of elements
+			# The processing function could potentially expand (say, via interpolation) or shorten the data set length. To avoid errors that dependent and independent variables have different number of elements
 			# while setting the first processed variable (either independent or dependent) both are "reset" to some dummy value first
 			self._raw_indep_var = None
 			self._raw_dep_var = None
@@ -565,7 +565,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
 	"""
-	Data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and a column value (dictionary value). All rows which cointain the specified value in the
+	Data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and a column value (dictionary value). All rows which contain the specified value in the
 	specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified by each individual filter. For example, if the file name to be processed is:
 
 	+------+-----+--------+
@@ -743,7 +743,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	:type	color:			polymorphic
 	:param	marker:			marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. *None* indicates no marker.
 	:type	marker:			string or None
-	:param	interp:			interpolation option, one of None (no interpolation) 'STRAIGHT' (straight line connects data points), 'STEP' (horizontal segments betweend data points), 'CUBIC' (cubic interpolation between \
+	:param	interp:			interpolation option, one of None (no interpolation) 'STRAIGHT' (straight line connects data points), 'STEP' (horizontal segments between data points), 'CUBIC' (cubic interpolation between \
 	data points) or 'LINREG' (linear regression based on data points). The interpolation option is case insensitive.
 	:type	interp:			string or None
 	:param	line_style:		line style.   All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. *None* indicates no line.
@@ -1490,9 +1490,9 @@ class Figure(object):	#pylint: disable=R0902
 	:type	indep_var_label:	string
 	:param	indep_var_units:	independent variable units
 	:type	indep_var_units:	string
-	:param	fig_width:			hardcopy plot width
+	:param	fig_width:			hard copy plot width
 	:type	fig_width:			positive number
-	:param	fig_height:			hardcopy plot height
+	:param	fig_height:			hard copy plot height
 	:type	fig_height:			positive number
 	:param	title:				plot title
 	:type	title:				string
@@ -1757,9 +1757,9 @@ class Figure(object):	#pylint: disable=R0902
 	 * Same as :py:attr:`putil.plot.Figure.panels`
 	"""	#pylint: disable=W0105
 
-	fig_width = property(_get_fig_width, _set_fig_width, doc='Width of the hardcopy plot')
+	fig_width = property(_get_fig_width, _set_fig_width, doc='Width of the hard copy plot')
 	"""
-	Width of the hardcopy plot
+	Width of the hard copy plot
 
 	:type:		positive number, float or integer
 	:raises:
@@ -1768,9 +1768,9 @@ class Figure(object):	#pylint: disable=R0902
 	 * ValueError (Argument `fig_width` is not positive number)
 	"""	#pylint: disable=W0105
 
-	fig_height = property(_get_fig_height, _set_fig_height, doc='height of the hardcopy plot')
+	fig_height = property(_get_fig_height, _set_fig_height, doc='height of the hard copy plot')
 	"""
-	Height of the hardcopy plot
+	Height of the hard copy plot
 
 	:type:		positive number, float or integer
 	:raises:
@@ -1942,7 +1942,7 @@ def _mantissa_digits(num):
 
 def _uniquify_tick_labels(tick_list, tmin, tmax):
 	""" Calculate minimum tick mantissa given tick spacing """
-	# If mininum or maximum has a mantissa, at least preserve one digit
+	# If minimum or maximum has a mantissa, at least preserve one digit
 	mant_min = 1 if max(_mantissa_digits(tick_list[0]), _mantissa_digits(tick_list[-1])) > 0 else 0
 	# Step 1: Look at two contiguous ticks and lower mantissa digits till they are no more right zeros
 	mant = 10
