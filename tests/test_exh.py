@@ -17,10 +17,17 @@ import putil.pcontracts
 
 def test_star_exh_obj():
 	""" Test [get|set|del]_exh_obj() function """
-	putil.exh.set_exh_obj('Test global variable')
-	assert putil.exh.get_exh_obj() == 'Test global variable'
+	putil.test.assert_exception(putil.exh.set_exh_obj, {'value':5}, TypeError, 'Argument `value` is not valid')
+	exobj = putil.exh.ExHandle()
+	putil.exh.set_exh_obj(exobj)
+	assert id(putil.exh.get_exh_obj()) == id(exobj)
 	putil.exh.del_exh_obj()
 	assert putil.exh.get_exh_obj() == None
+	putil.exh.del_exh_obj()	# Test that nothing happens if del_exh_obj is called when there is no global object handler set
+	new_exh_obj = putil.exh.get_or_create_exh_obj()
+	assert id(new_exh_obj) != id(exobj)
+	assert id(putil.exh.get_or_create_exh_obj()) == id(new_exh_obj)
+
 
 def test_ex_type_str():
 	""" test _ex_type_str() function """

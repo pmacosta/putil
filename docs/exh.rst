@@ -24,6 +24,14 @@ Standard Python library and other Putil library modules
 Application programming interface (API)
 ***************************************
 
+Functions
+=========
+
+.. autofunction:: putil.exh.get_exh_obj
+.. autofunction:: putil.exh.get_or_create_exh_obj
+.. autofunction:: putil.exh.del_exh_obj
+.. autofunction:: putil.exh.set_exh_obj
+
 Classes
 =======
 

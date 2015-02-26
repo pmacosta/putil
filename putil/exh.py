@@ -15,21 +15,51 @@ import putil.pinspect
 # Functions
 ###
 def set_exh_obj(value):
-	""" Create exception handler object """
+	"""
+	Sets global exception handler
+
+	:param	value: Exception handler
+	:type	value: :py:class:`putil.exh.ExHandle()` object
+
+	:raises: TypeError (Argument `value` is not valid)
+	"""
+	if not isinstance(value, ExHandle):
+		raise TypeError('Argument `value` is not valid')
 	mod_obj = sys.modules['__main__']
 	setattr(mod_obj, '_EXH', value)
 
 
 def get_exh_obj():
-	""" Get exception handler object (if any) """
+	"""
+	Returns global exception handler
+
+	:rtype: :py:class:`putil.exh.ExHandle()` object if global exception handler is set, *None* otherwise
+	"""
 	mod_obj = sys.modules['__main__']
 	return getattr(mod_obj, '_EXH') if hasattr(mod_obj, '_EXH') else None
 
 
-def del_exh_obj():
-	""" Create exception handler object """
+def get_or_create_exh_obj():
+	"""
+	Returns global exception handler if it is set, otherwise creates a new global exception handler and returns it
+
+	:rtype: :py:class:`putil.exh.ExHandle()` object if handler is set
+	"""
 	mod_obj = sys.modules['__main__']
-	delattr(mod_obj, '_EXH')
+	if not hasattr(mod_obj, '_EXH'):
+		set_exh_obj(ExHandle())
+	return getattr(mod_obj, '_EXH')
+
+
+def del_exh_obj():
+	"""
+	Deletes global exception handler (if any)
+	"""
+	mod_obj = sys.modules['__main__']
+	try:
+		delattr(mod_obj, '_EXH')
+	except:	#pylint: disable=W0702
+		pass
 
 
 def _ex_type_str(extype):	#pylint: disable-msg=R0201
