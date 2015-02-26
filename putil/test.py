@@ -227,14 +227,22 @@ def trigger_exception(obj, args, extype, exmsg):
 
 def assert_exception(obj, args, extype, exmsg):
 	""" Triggers exception withing the Py.test environment and records value """
+	regexp = re.compile(exmsg)
 	try:
 		with pytest.raises(extype) as excinfo:
 			obj(**args)	#pylint: disable=W0142
 	except Exception as eobj:	#pylint: disable=W0703
 		if eobj.message == 'DID NOT RAISE':
 			raise
-		assert '{0} ({1})'.format(repr(eobj)[:repr(eobj).find('(')], eobj.message) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
-	assert '{0} ({1})'.format(exception_type_str(excinfo.type), excinfo.value.message) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
+		eobj_extype = repr(eobj)[:repr(eobj).find('(')]
+		if (eobj_extype == exception_type_str(extype)) and ((eobj.message == exmsg) or regexp.match(eobj.message)):
+			assert True
+		else:
+			assert '{0} ({1})'.format(eobj_extype, eobj.message) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
+	if (exception_type_str(excinfo.type) == exception_type_str(extype)) and ((excinfo.value.message == exmsg) or regexp.match(excinfo.value.message)):
+		assert True
+	else:
+		assert '{0} ({1})'.format(exception_type_str(excinfo.type), excinfo.value.message) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
 
 
 def trigger_pcontract_exception(obj, args, exmsg):
