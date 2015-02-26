@@ -42,8 +42,10 @@ def _get_code_id(frame_obj):
 	return (frame_obj.f_code.co_filename, frame_obj.f_code.co_firstlineno)
 
 
-def _valid_frame(fin, fna):
+def _valid_frame(fobj):
 	""" Selects valid stack frame to process """
+	fin = fobj.f_code.co_filename
+	fna = fobj.f_code.co_name
 	return not (fin.endswith('/putil/exh.py') or fin.endswith('/putil/exdoc.py') or fin.endswith('/putil/check.py')  or fin.endswith('/putil/pcontracts.py') or\
 			 (fna in ['<module>', '<lambda>', 'contracts_checker']))
 
@@ -91,11 +93,13 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_callable_path(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
-		stack = inspect.stack()
-		for fnum, cache_frame in enumerate(stack):
-			if _valid_frame(cache_frame[1], cache_frame[3]):
-				break
-		cache_key = id(cache_frame[0])	#pylint: disable=W0631
+		# Calling inspect.stack() is slow, try to see if there is a cache hit calling sys._getframe which is faster and only use inspect.stack() if there is a cache miss
+		fnum = 0
+		cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
+		while not _valid_frame(cache_frame):
+			fnum += 1
+			cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
+		cache_key = id(cache_frame)	#pylint: disable=W0631
 		if cache_key in self._cache:
 			return cache_key, self._cache[cache_key]
 
@@ -108,6 +112,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 		#fstack = tuple([obj for obj in inspect.stack()][::-1])
 		#for num, (fob, fin, lin, fun, fuc, fui) in enumerate(fstack):
+		stack = inspect.stack()
 		for fob, fin, lin, fun, fuc, fui in reversed(stack[fnum:]):	#pylint: disable=W0631
 			# print putil.misc.pcolor('{0:3d}/{1:3d}'.format(num, len(fstack)), 'yellow')+' '+putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
 			if skip_flag:
@@ -123,7 +128,7 @@ class ExHandle(object):	#pylint: disable=R0902
 					# print putil.misc.pcolor('Decorator (frame used) -> {0}'.format(name), 'green')
 					ret.append(name)
 					decorator_flag = True
-			elif _valid_frame(fin, fun):
+			elif _valid_frame(fob):
 				#name = self._get_callable_full_name(fob, fun)
 				name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
 				if (decorator_flag and (name != prev_name)) or (not decorator_flag):
@@ -172,7 +177,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		""" Returns hierarchical function name """
 		func_id, func_name = self._get_callable_path()
 		ex_name = ''.join([str(func_id), self._callables_separator if name is not None else '', name if name is not None else ''])
-		#ex_name = ''.join([func_name, self._callables_separator if func_name is not None else '', name if name is not None else ''])
 		return {'func_name':func_name, 'ex_name':ex_name}
 
 	def _get_module_name(self, frame_obj, func_obj):
