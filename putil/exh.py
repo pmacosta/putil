@@ -39,15 +39,19 @@ def get_exh_obj():
 	return getattr(mod_obj, '_EXH') if hasattr(mod_obj, '_EXH') else None
 
 
-def get_or_create_exh_obj():
+def get_or_create_exh_obj(full_fname=False):
 	"""
 	Returns global exception handler if it is set, otherwise creates a new global exception handler and returns it
 
+	:param	full_fname: Flag that indicates whether fully qualified function/method names should be obtained for functions/methods that use the exception manager. There is performance penalty if **full_name** is `True` as \
+	the call stack needs to be traced. This argument is only relevant if the global exception handler is not set and a new one is created
+	:type	full_fname: boolean
 	:rtype: :py:class:`putil.exh.ExHandle()` object if handler is set
+	:raises: TypeError (Argument `full_name` is not valid)
 	"""
 	mod_obj = sys.modules['__main__']
 	if not hasattr(mod_obj, '_EXH'):
-		set_exh_obj(ExHandle())
+		set_exh_obj(ExHandle(full_fname))
 	return getattr(mod_obj, '_EXH')
 
 
@@ -85,13 +89,22 @@ def _valid_frame(fobj):
 ###
 class ExHandle(object):	#pylint: disable=R0902
 	"""
-	Manages exceptions
+	Exception manager
+
+	:param	full_fname: Flag that indicates whether fully qualified function/method names should be obtained for functions/methods that use the exception manager. There is performance penalty if **full_name** is `True` as \
+	the call stack needs to be traced
+	:type	full_fname: boolean
+	:rtype: :py:class:`putil.exh.ExHandle()` object
+	:raises: TypeError (Argument `full_name` is not valid)
 	"""
-	def __init__(self):
+	def __init__(self, full_fname=False):
+		if not isinstance(full_fname, bool):
+			raise TypeError('Argument `full_fname` is not valid')
 		self._cache = {}
 		self._ex_dict = {}
 		self._callables_obj = putil.pinspect.Callables()
 		self._callables_separator = '/'
+		self._full_fname = full_fname
 
 	def __copy__(self):
 		cobj = ExHandle()
@@ -106,7 +119,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _exceptions_db(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		return [{'name':self._ex_dict[key]['function'], 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
+		return [{'name':self._ex_dict[key]['function'] if self._full_fname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
 		""" Substitute parameters in exception message """
@@ -132,6 +145,8 @@ class ExHandle(object):	#pylint: disable=R0902
 		cache_key = id(cache_frame)	#pylint: disable=W0631
 		if cache_key in self._cache:
 			return cache_key, self._cache[cache_key]
+		if not self._full_fname:
+			return cache_key, None
 
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
 		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
@@ -303,20 +318,22 @@ class ExHandle(object):	#pylint: disable=R0902
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')
 	"""
-	Callables database of the modules needed to be traced to uniquely identify the function where exceptions are added, as reported by :py:meth:`putil.pinspect.Callables.callables_db`
+	Callables database of the modules using the exception handler, as reported by :py:meth:`putil.pinspect.Callables.callables_db`
 	"""
 
 	callables_separator = property(_get_callables_separator, None, None, doc='Callable separator character')
 	"""
-	Callables separator character ('/')
+	Character ('/') used to separate the sub-parts of fully qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and **name** key of :py:meth:`putil.exh.ExHandle.exceptions_db`
 	"""
 
 	exceptions_db = property(_exceptions_db, None, None, doc='Formatted exceptions')
 	"""
 	Exceptions database. A list of dictionaries that contain the following keys:
 
-	 * **name** *(string)* -- Exception name of the format *function_name*. *exception_name*, where *function_name* is the full function name as it appears in the callable database (:py:meth:`putil.exh.ExHandle.callables_db`)
-	   and *exception_name* is the name of the exception given when defined by :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
+	 * **name** *(string)* -- Exception name of the form '*function_identifier* / *exception_name*'. The contents of *function_identifier* depend on the value of **full_fname** used to
+	   create the exception handler. If **full_name** is `True`, *function_identifier* is the fully qualified function name as it appears in the callables database (:py:meth:`putil.exh.ExHandle.callables_db`).
+	   If **full_name** is `False`, then *function_identifier* is a decimal string representation of the function's identifier as reported by the `id() <https://docs.python.org/2/library/functions.html#id>`_
+	   function. *exception_name* is the name of the exception provided when it was defined in :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
 
 	 * **data** *(string)* -- Text of the form '*exception_type* (*exception_message*)' where *exception_type* and *exception_message* are the exception type and exception message, respectively, given when the exception was
 	   defined by :py:meth:`putil.exh.ExHandle.add_exception` (**extype** and **exmsg** arguments)

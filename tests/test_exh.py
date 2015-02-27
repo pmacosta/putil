@@ -1,12 +1,13 @@
 ﻿# test_exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0302,W0212
+# pylint: disable=C0302,W0212,W0640
 
 """
 putil.exh unit tests
 """
 
+import re
 import copy
 import mock
 import pytest
@@ -26,7 +27,14 @@ def test_star_exh_obj():
 	putil.exh.del_exh_obj()	# Test that nothing happens if del_exh_obj is called when there is no global object handler set
 	new_exh_obj = putil.exh.get_or_create_exh_obj()
 	assert id(new_exh_obj) != id(exobj)
-	assert id(putil.exh.get_or_create_exh_obj()) == id(new_exh_obj)
+	assert new_exh_obj._full_fname == False
+	assert id(putil.exh.get_or_create_exh_obj(True)) == id(new_exh_obj)
+	assert new_exh_obj._full_fname == False
+	putil.exh.del_exh_obj()
+	new_exh_obj = putil.exh.get_or_create_exh_obj(True)
+	assert new_exh_obj._full_fname == True
+	putil.exh.del_exh_obj()
+	putil.test.assert_exception(putil.exh.get_or_create_exh_obj, {'full_fname':5}, TypeError, 'Argument `full_fname` is not valid')
 
 
 def test_ex_type_str():
@@ -34,135 +42,166 @@ def test_ex_type_str():
 	assert putil.exh._ex_type_str(RuntimeError) == 'RuntimeError'
 	assert putil.exh._ex_type_str(IOError) == 'IOError'
 
+
+def test_init_errors():
+	""" Test __init__() method errors """
+	putil.test.assert_exception(putil.exh.ExHandle, {'full_fname':5}, TypeError, 'Argument `full_fname` is not valid')
+	exobj = putil.exh.ExHandle()
+	assert exobj._full_fname == False
+	exobj = putil.exh.ExHandle(False)
+	assert exobj._full_fname == False
+	exobj = putil.exh.ExHandle(True)
+	assert exobj._full_fname == True
+
+
 def test_add_exception_errors():
 	""" Test add_exception() function errors """
 	def mock_get_code_id(obj):	#pylint: disable=W0612,W0613
 		""" Return unique identity tuple to individualize callable object """
 		return None
-	obj = putil.exh.ExHandle()
-	putil.test.assert_exception(obj.add_exception, {'exname':5, 'extype':RuntimeError, 'exmsg':'Message'}, TypeError, 'Argument `exname` is not valid')
-	putil.test.assert_exception(obj.add_exception, {'exname':'exception', 'extype':5, 'exmsg':'Message'}, TypeError, 'Argument `extype` is not valid')
-	putil.test.assert_exception(obj.add_exception, {'exname':'exception', 'extype':RuntimeError, 'exmsg':True}, TypeError, 'Argument `exmsg` is not valid')
-	# These should not raise an exception
-	obj = putil.exh.ExHandle()
-	obj.add_exception(exname='exception name', extype=RuntimeError, exmsg='exception message for exception #1')
-	obj.add_exception(exname='exception name', extype=TypeError, exmsg='exception message for exception #2')
+	for full_fname in [True, False]:
+		obj = putil.exh.ExHandle(full_fname)
+		putil.test.assert_exception(obj.add_exception, {'exname':5, 'extype':RuntimeError, 'exmsg':'Message'}, TypeError, 'Argument `exname` is not valid')
+		putil.test.assert_exception(obj.add_exception, {'exname':'exception', 'extype':5, 'exmsg':'Message'}, TypeError, 'Argument `extype` is not valid')
+		putil.test.assert_exception(obj.add_exception, {'exname':'exception', 'extype':RuntimeError, 'exmsg':True}, TypeError, 'Argument `exmsg` is not valid')
+		# These should not raise an exception
+		obj = putil.exh.ExHandle(full_fname)
+		obj.add_exception(exname='exception name', extype=RuntimeError, exmsg='exception message for exception #1')
+		obj.add_exception(exname='exception name', extype=TypeError, exmsg='exception message for exception #2')
 	# Test case where callable is not found in callable database
+	obj = putil.exh.ExHandle(True)
 	with mock.patch('putil.exh._get_code_id') as mock_get_code_id:
 		#test_list.append(putil.test.trigger_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, 'Callable full name could not be obtained'))
 		putil.test.assert_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, \
 			r'Callable with call ID <([\w|\W|\s]+)> not found in reverse callables database')
 
+
 def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 	""" Test add_exception() function works """
-	exobj = putil.exh.ExHandle()
-	def func1():	#pylint: disable=C0111,W0612
-		exobj.add_exception('first_exception', TypeError, 'This is the first exception')
-		print "Hello"
-	def prop_decorator(func):	#pylint: disable=C0111,W0612
-		return func
-	@putil.pcontracts.contract(text=str)
-	@prop_decorator
-	def func2(text):	#pylint: disable=C0111,W0612
-		exobj.add_exception('second_exception', ValueError, 'This is the second exception')
-		exobj.add_exception('third_exception', IOError, 'This is the third exception')
-		print text
-	class Class1(object):	#pylint: disable=C0111,R0903
-		def __init__(self, exobj):
-			self._value = None
-			self._exobj = exobj
-		@property
-		def value3(self):	#pylint: disable=C0111
-			self._exobj.add_exception('getter_exception', TypeError, 'Get function exception')
-			return self._value
-		@value3.setter
-		@putil.pcontracts.contract(value=int)
-		def value3(self, value):	#pylint: disable=C0111
-			self._exobj.add_exception('setter_exception', TypeError, 'Set function exception')
-			self._value = value
-		@value3.deleter
-		def value3(self):	#pylint: disable=C0111,R0201
-			self._exobj.add_exception('deleter_exception', TypeError, 'Delete function exception')
-			print 'Cannot delete attribute'
-	def func7():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_7', TypeError, 'Total exception #7')
-	def func8():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_8', TypeError, 'Total exception #8')
-	def func9():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_9', TypeError, 'Total exception #9')
-	def func10():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_10', TypeError, 'Total exception #10')
-	def func11():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_11', TypeError, 'Total exception #11')
-	def func12():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_12', TypeError, 'Total exception #12')
-	def func13():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_13', TypeError, 'Total exception #13')
-	def func14():	#pylint: disable=C0111,W0612
-		exobj.add_exception('total_exception_14', TypeError, 'Total exception #14')
-	dobj = Class1(exobj)	#pylint: disable=W0612
-	dobj.value3 = 5
-	print dobj.value3
-	del dobj.value3
-	cdb = exobj._ex_dict
-	func1()
-	func2("world")
-	func7()
-	func8()
-	func9()
-	func10()
-	func11()
-	func12()
-	func13()
-	func14()
-	if not cdb:
-		assert False
-	for exname in cdb:
-		erec = cdb[exname]
-		if exname.endswith('/first_exception'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func1') and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception') and (erec['checked'] == False)
-		elif exname.endswith('/second_exception'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception') and (erec['checked'] == False)
-		elif exname.endswith('/third_exception'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func2') and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception') and (erec['checked'] == False)
-		elif exname.endswith('/setter_exception'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(setter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception') and (erec['checked'] == False)
-		elif exname.endswith('/getter_exception'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(getter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception') and (erec['checked'] == False)
-		elif exname.endswith('/deleter_exception'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_7'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func7') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_8'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func8') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_9'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func9') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_10'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func10') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_11'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func11') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_12'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func12') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_13'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func13') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13') and (erec['checked'] == False)
-		elif exname.endswith('/total_exception_14'):
-			assert erec['function'].endswith('test_exh.test_add_exception_works.func14') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14') and (erec['checked'] == False)
-		else:
+	for full_fname in [True, False]:
+		exobj = putil.exh.ExHandle(full_fname)
+		def func1():	#pylint: disable=C0111,W0612
+			exobj.add_exception('first_exception', TypeError, 'This is the first exception')
+			print "Hello"
+		def prop_decorator(func):	#pylint: disable=C0111,W0612
+			return func
+		@putil.pcontracts.contract(text=str)
+		@prop_decorator
+		def func2(text):	#pylint: disable=C0111,W0612
+			exobj.add_exception('second_exception', ValueError, 'This is the second exception')
+			exobj.add_exception('third_exception', IOError, 'This is the third exception')
+			print text
+		class Class1(object):	#pylint: disable=C0111,R0903
+			def __init__(self, exobj):
+				self._value = None
+				self._exobj = exobj
+			@property
+			def value3(self):	#pylint: disable=C0111
+				self._exobj.add_exception('getter_exception', TypeError, 'Get function exception')
+				return self._value
+			@value3.setter
+			@putil.pcontracts.contract(value=int)
+			def value3(self, value):	#pylint: disable=C0111
+				self._exobj.add_exception('setter_exception', TypeError, 'Set function exception')
+				self._value = value
+			@value3.deleter
+			def value3(self):	#pylint: disable=C0111,R0201
+				self._exobj.add_exception('deleter_exception', TypeError, 'Delete function exception')
+				print 'Cannot delete attribute'
+		def func7():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_7', TypeError, 'Total exception #7')
+		def func8():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_8', TypeError, 'Total exception #8')
+		def func9():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_9', TypeError, 'Total exception #9')
+		def func10():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_10', TypeError, 'Total exception #10')
+		def func11():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_11', TypeError, 'Total exception #11')
+		def func12():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_12', TypeError, 'Total exception #12')
+		def func13():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_13', TypeError, 'Total exception #13')
+		def func14():	#pylint: disable=C0111,W0612
+			exobj.add_exception('total_exception_14', TypeError, 'Total exception #14')
+		dobj = Class1(exobj)	#pylint: disable=W0612
+		dobj.value3 = 5
+		print dobj.value3
+		del dobj.value3
+		cdb = exobj._ex_dict
+		func1()
+		func2("world")
+		func7()
+		func8()
+		func9()
+		func10()
+		func11()
+		func12()
+		func13()
+		func14()
+		if not cdb:
 			assert False
-	# Test that function IDs are unique
-	repeated_found = False
-	exlist = []
-	for exname in cdb:
-		if (exname.endswith('/second_exception') or exname.endswith('/third_exception')) and (not repeated_found):
-			func_id = exname.split('/')[0]
-			repeated_found = True
-			exlist.append(func_id)
-		elif exname.endswith('/second_exception') or exname.endswith('/third_exception'):
-			if exname.split('/')[0] != func_id:
+		for exname in cdb:
+			erec = cdb[exname]
+			if re.compile(r'\d+/first_exception').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func1')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception') and (erec['checked'] == False)
+			elif re.compile(r'\d+/second_exception').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func2')) \
+					and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception') and (erec['checked'] == False)
+			elif re.compile(r'\d+/third_exception').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func2')) \
+					and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception') and (erec['checked'] == False)
+			elif re.compile(r'\d+/setter_exception').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(setter)')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception') and (erec['checked'] == False)
+			elif re.compile(r'\d+/getter_exception').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(getter)')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception') and (erec['checked'] == False)
+			elif re.compile(r'\d+/deleter_exception').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_7').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func7')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_8').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func8')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_9').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func9')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_10').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func10')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_11').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func11')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_12').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func12')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_13').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func13')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13') and (erec['checked'] == False)
+			elif re.compile(r'\d+/total_exception_14').match(exname):
+				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func14')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14') and (erec['checked'] == False)
+			else:
 				assert False
-		else:
-			exlist.append(exname.split('/')[0])
-	assert len(set(exlist)) == len(exlist)
+		# Test that function IDs are unique
+		repeated_found = False
+		exlist = []
+		for exname in cdb:
+			if (exname.endswith('/second_exception') or exname.endswith('/third_exception')) and (not repeated_found):
+				func_id = exname.split('/')[0]
+				repeated_found = True
+				exlist.append(func_id)
+			elif exname.endswith('/second_exception') or exname.endswith('/third_exception'):
+				if exname.split('/')[0] != func_id:
+					assert False
+			else:
+				exlist.append(exname.split('/')[0])
+		assert len(set(exlist)) == len(exlist)
+
 
 def test_raise_exception():
 	""" Test raise_exception_if() function errors """
@@ -196,43 +235,47 @@ def test_raise_exception():
 	if not cdb:
 		assert False
 	for exname, erec in cdb.items():
-		if exname.endswith('test_exh.test_raise_exception.func3.my_exception1'):
+		if exname.endswith('/test_exh.test_raise_exception.func3.my_exception1'):
 			assert erec['function'].endswith('test_exh.test_raise_exception.func3') and (erec['type'] == RuntimeError) and (erec['msg'] == 'This is an exception') and (erec['checked'] == True)
-		if exname.endswith('test_exh.test_raise_exception.func3.my_exception2'):
+		if exname.endswith('/test_exh.test_raise_exception.func3.my_exception2'):
 			assert erec['function'].endswith('test_exh.test_raise_exception.func3') and (erec['type'] == IOError) and (erec['msg'] == 'This is an exception with a *[file_name]* field') and (erec['checked'] == True)
+
 
 def test_exceptions_db():
 	""" Test _exceptions_db() property """
-	# Functions definitions
-	def func4(exobj):	#pylint: disable=C0111,W0612
-		exobj.add_exception('my_exception1', RuntimeError, 'This is exception #1')
-	def func5(exobj):	#pylint: disable=C0111,W0612
-		exobj.add_exception('my_exception2', ValueError, 'This is exception #2, *[result]*')
-		exobj.add_exception('my_exception3', TypeError, 'This is exception #3')
-	exobj = putil.exh.ExHandle()
-	func4(exobj)
-	func5(exobj)
-	# Actual tests
-	# Test that property cannot be deleted
-	with pytest.raises(AttributeError) as excinfo:
-		del exobj.exceptions_db
-	assert excinfo.value.message == "can't delete attribute"
-	# Test contents
-	tdata_in = exobj.exceptions_db
-	if (not tdata_in) or (len(tdata_in) != 3):
-		assert False
-	tdata_out = list()
-	for erec in tdata_in:
-		if erec['name'].endswith('test_exh.test_exceptions_db.func4'):
-			name = 'test_exh.test_exceptions_db.func4'
-		elif erec['name'].endswith('test_exh.test_exceptions_db.func5'):
-			name = 'test_exh.test_exceptions_db.func5'
-		else:
+	for full_fname in [True, False]:
+		# Functions definitions
+		def func4(exobj):	#pylint: disable=C0111,W0612
+			exobj.add_exception('my_exception1', RuntimeError, 'This is exception #1')
+		def func5(exobj):	#pylint: disable=C0111,W0612
+			exobj.add_exception('my_exception2', ValueError, 'This is exception #2, *[result]*')
+			exobj.add_exception('my_exception3', TypeError, 'This is exception #3')
+		exobj = putil.exh.ExHandle(full_fname)
+		func4(exobj)
+		func5(exobj)
+		# Actual tests
+		# Test that property cannot be deleted
+		with pytest.raises(AttributeError) as excinfo:
+			del exobj.exceptions_db
+		assert excinfo.value.message == "can't delete attribute"
+		# Test contents
+		tdata_in = exobj.exceptions_db
+		if (not tdata_in) or (len(tdata_in) != 3):
 			assert False
-		tdata_out.append({'name':name, 'data':erec['data']})
-	assert sorted(tdata_out) == sorted([{'name':'test_exh.test_exceptions_db.func4', 'data':'RuntimeError (This is exception #1)'},
-										{'name':'test_exh.test_exceptions_db.func5', 'data':'ValueError (This is exception #2, *[result]*)'},
-		                                {'name':'test_exh.test_exceptions_db.func5', 'data':'TypeError (This is exception #3)'}])
+		tdata_out = list()
+		for erec in tdata_in:
+			if (full_fname and (re.compile(r'[\w|\W]+/test_exh.test_exceptions_db.func4').match(erec['name']) is not None)) or ((not full_fname) and (re.compile(r'\d+/my_exception1').match(erec['name']) is not None)):
+				name = 'test_exh.test_exceptions_db.func4'
+			elif (full_fname and (re.compile(r'[\w|\W]+/test_exh.test_exceptions_db.func5').match(erec['name']) is not None)) or ((not full_fname) and (re.compile(r'\d+/my_exception[2-3]').match(erec['name']) is not None)):
+				name = 'test_exh.test_exceptions_db.func5'
+			else:
+				print 'NOT FOUND'
+				assert False
+			tdata_out.append({'name':name, 'data':erec['data']})
+		assert sorted(tdata_out) == sorted([{'name':'test_exh.test_exceptions_db.func4', 'data':'RuntimeError (This is exception #1)'},
+											{'name':'test_exh.test_exceptions_db.func5', 'data':'ValueError (This is exception #2, *[result]*)'},
+			                                {'name':'test_exh.test_exceptions_db.func5', 'data':'TypeError (This is exception #3)'}])
+
 
 def test_callables_db():
 	""" Test callables_db property """
@@ -249,6 +292,7 @@ def test_callables_db():
 		del exobj.callables_db
 	assert excinfo.value.message == "can't delete attribute"
 
+
 def test_callables_separator():
 	""" Test callables_separator property """
 	exobj = putil.exh.ExHandle()
@@ -259,40 +303,43 @@ def test_callables_separator():
 		del exobj.callables_separator
 	assert excinfo.value.message == "can't delete attribute"
 
+
 def test_str():
 	""" Test str() function """
-	# Functions definition
-	def func7(exobj):	#pylint: disable=C0111,W0612
-		exobj.add_exception('my_exception7', RuntimeError, 'This is exception #7')
-		exobj.raise_exception_if('my_exception7', False)
-	def func8(exobj):	#pylint: disable=C0111,W0612
-		exobj.add_exception('my_exception8', ValueError, 'This is exception #8, *[fname]*')
-		exobj.add_exception('my_exception9', TypeError, 'This is exception #9')
-	exobj = putil.exh.ExHandle()
-	func7(exobj)
-	func8(exobj)
-	# Actual tests
-	str_in = str(exobj).split('\n\n')
-	str_out = list()
-	for str_element in str_in:
-		str_list = str_element.split('\n')
-		if str_list[0].endswith('/my_exception7'):
-			str_list[0] = 'Name....: test_exh.test_str.func7/my_exception7'
-		elif str_list[0].endswith('/my_exception8'):
-			str_list[0] = 'Name....: test_exh.test_str.func8/my_exception8'
-		elif str_list[0].endswith('/my_exception9'):
-			str_list[0] = 'Name....: test_exh.test_str.func8/my_exception9'
-		if str_list[1].endswith('test_exh.test_str.func7'):
-			str_list[1] = 'Function: test_exh.test_str.func7'
-		elif str_list[1].endswith('test_exh.test_str.func8'):
-			str_list[1] = 'Function: test_exh.test_str.func8'
-		str_out.append('\n'.join(str_list))
-	#
-	str_check = list()
-	str_check.append('Name....: test_exh.test_str.func7/my_exception7\nFunction: test_exh.test_str.func7\nType....: RuntimeError\nMessage.: This is exception #7\nChecked.: True')
-	str_check.append('Name....: test_exh.test_str.func8/my_exception8\nFunction: test_exh.test_str.func8\nType....: ValueError\nMessage.: This is exception #8, *[fname]*\nChecked.: False')
-	str_check.append('Name....: test_exh.test_str.func8/my_exception9\nFunction: test_exh.test_str.func8\nType....: TypeError\nMessage.: This is exception #9\nChecked.: False')
-	assert sorted(str_out) == sorted(str_check)
+	for full_fname in [True, False]:
+		# Functions definition
+		def func7(exobj):	#pylint: disable=C0111,W0612
+			exobj.add_exception('my_exception7', RuntimeError, 'This is exception #7')
+			exobj.raise_exception_if('my_exception7', False)
+		def func8(exobj):	#pylint: disable=C0111,W0612
+			exobj.add_exception('my_exception8', ValueError, 'This is exception #8, *[fname]*')
+			exobj.add_exception('my_exception9', TypeError, 'This is exception #9')
+		exobj = putil.exh.ExHandle(full_fname)
+		func7(exobj)
+		func8(exobj)
+		# Actual tests
+		str_in = str(exobj).split('\n\n')
+		str_out = list()
+		for str_element in str_in:
+			str_list = str_element.split('\n')
+			if str_list[0].endswith('/my_exception7'):
+				str_list[0] = 'Name....: test_exh.test_str.func7/my_exception7'
+			elif str_list[0].endswith('/my_exception8'):
+				str_list[0] = 'Name....: test_exh.test_str.func8/my_exception8'
+			elif str_list[0].endswith('/my_exception9'):
+				str_list[0] = 'Name....: test_exh.test_str.func8/my_exception9'
+			if str_list[1].endswith('test_exh.test_str.func7'):
+				str_list[1] = 'Function: '+('test_exh.test_str.func7' if full_fname else 'None')
+			elif str_list[1].endswith('test_exh.test_str.func8'):
+				str_list[1] = 'Function: '+('test_exh.test_str.func8' if full_fname else 'None')
+			str_out.append('\n'.join(str_list))
+		#
+		str_check = list()
+		str_check.append('Name....: test_exh.test_str.func7/my_exception7\nFunction: '+('test_exh.test_str.func7' if full_fname else 'None')+'\nType....: RuntimeError\nMessage.: This is exception #7\nChecked.: True')
+		str_check.append('Name....: test_exh.test_str.func8/my_exception8\nFunction: '+('test_exh.test_str.func8' if full_fname else 'None')+'\nType....: ValueError\nMessage.: This is exception #8, *[fname]*\nChecked.: False')
+		str_check.append('Name....: test_exh.test_str.func8/my_exception9\nFunction: '+('test_exh.test_str.func8' if full_fname else 'None')+'\nType....: TypeError\nMessage.: This is exception #9\nChecked.: False')
+		assert sorted(str_out) == sorted(str_check)
+
 
 def test_copy():
 	""" Test __copy__() magic method """

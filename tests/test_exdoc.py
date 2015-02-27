@@ -37,7 +37,7 @@ def trace_error_class():
 	""" Trace classes that use the same getter function """
 	if putil.exh.get_exh_obj():
 		putil.exh.del_exh_obj()
-	putil.exh.set_exh_obj(putil.exh.ExHandle())
+	putil.exh.set_exh_obj(putil.exh.ExHandle(True))
 	obj = exdoc_support_module_3.Class1()
 	obj.value1	#pylint: disable=W0104
 
@@ -45,7 +45,7 @@ def trace_class():
 	""" Trace support module class """
 	if putil.exh.get_exh_obj():
 		putil.exh.del_exh_obj()
-	putil.exh.set_exh_obj(putil.exh.ExHandle())
+	putil.exh.set_exh_obj(putil.exh.ExHandle(True))
 	obj = exdoc_support_module_1.ExceptionAutoDocClass(10)
 	obj.add(5)
 	obj.subtract(3)
@@ -66,20 +66,20 @@ def trace_module_functions():
 	""" Trace support module class """
 	if putil.exh.get_exh_obj():
 		putil.exh.del_exh_obj()
-	putil.exh.set_exh_obj(putil.exh.ExHandle())
+	putil.exh.set_exh_obj(putil.exh.ExHandle(True))
 	exdoc_support_module_1.write()
 	exdoc_support_module_1.read()
 	exdoc_support_module_1.probe()
 
 def test_exdoc_errors():
 	""" Test exdoc data validation """
-	exobj = putil.exh.ExHandle()
+	exobj = putil.exh.ExHandle(True)
 	def func1():	#pylint: disable=C0111,W0612
 		exobj.add_exception('first_exception', TypeError, 'This is the first exception')
 	func1()
 	obj = putil.exdoc.ExDoc
 	putil.test.assert_exception(obj, {'exh_obj':5, 'no_print':False, 'trace_name':'hello'}, TypeError, 'Argument `exh_obj` is not valid')
-	putil.test.assert_exception(obj, {'exh_obj':putil.exh.ExHandle(), 'no_print':False, 'trace_name':'hello'}, ValueError, 'Object of argument `exh_obj` does not have any exception trace information')
+	putil.test.assert_exception(obj, {'exh_obj':putil.exh.ExHandle(True), 'no_print':False, 'trace_name':'hello'}, ValueError, 'Object of argument `exh_obj` does not have any exception trace information')
 	putil.test.assert_exception(obj, {'exh_obj':exobj, 'no_print':5, 'trace_name':'hello'}, TypeError, 'Argument `no_print` is not valid')
 	putil.test.assert_exception(obj, {'exh_obj':exobj, 'no_print':False, 'trace_name':5}, TypeError, 'Argument `trace_name` is not valid')
 	putil.exdoc.ExDoc(exobj, True, 'hello', -1)
@@ -155,7 +155,7 @@ def test_create_ex_table():
 	ref_table['putil.tree.Tree.add_nodes']['flat_exceptions'] = sorted(copy.deepcopy(ref_table['putil.tree.Tree.add_nodes']['native_exceptions'])+['RuntimeError (Argument `nodes` is not valid)'])
 	assert exdocobj._extable == ref_table
 	trace_module_functions()
-	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=False, trace_name='exdoc_support_module_1', _step=1)
+	exdocobj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), no_print=True, trace_name='exdoc_support_module_1', _step=1)
 	ref_table = dict()
 	ref_table['probe'] = copy.deepcopy(empty_entry)
 	ref_table['probe']['native_exceptions'] = ref_table['probe']['flat_exceptions'] = ['TypeError (Cannot call probe)']
