@@ -33,6 +33,7 @@ def load_support_module():
 	else:
 		__import__(module_name)
 
+
 def trace_error_class():
 	""" Trace classes that use the same getter function """
 	if putil.exh.get_exh_obj():
@@ -40,6 +41,7 @@ def trace_error_class():
 	putil.exh.set_exh_obj(putil.exh.ExHandle(True))
 	obj = exdoc_support_module_3.Class1()
 	obj.value1	#pylint: disable=W0104
+
 
 def trace_class():
 	""" Trace support module class """
@@ -62,6 +64,7 @@ def trace_class():
 	print obj.temp
 	del obj.temp
 
+
 def trace_module_functions():
 	""" Trace support module class """
 	if putil.exh.get_exh_obj():
@@ -70,6 +73,7 @@ def trace_module_functions():
 	exdoc_support_module_1.write()
 	exdoc_support_module_1.read()
 	exdoc_support_module_1.probe()
+
 
 def test_exdoc_errors():
 	""" Test exdoc data validation """
@@ -83,6 +87,7 @@ def test_exdoc_errors():
 	putil.test.assert_exception(obj, {'exh_obj':exobj, 'no_print':5, 'trace_name':'hello'}, TypeError, 'Argument `no_print` is not valid')
 	putil.test.assert_exception(obj, {'exh_obj':exobj, 'no_print':False, 'trace_name':5}, TypeError, 'Argument `trace_name` is not valid')
 	putil.exdoc.ExDoc(exobj, True, 'hello', -1)
+
 
 def test_build_ex_tree():
 	""" Test _build_ex_tree() function """
@@ -117,6 +122,7 @@ def test_build_ex_tree():
 	trace_error_class()
 	exobj = putil.exh.get_exh_obj()
 	putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj, 'trace_name':'exdoc_support_module_3', 'no_print':True, '_step':0}, RuntimeError, 'Functions performing actions for multiple properties not supported')
+
 
 def test_create_ex_table():
 	""" Test _create_ex_table() function """

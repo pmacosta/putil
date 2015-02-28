@@ -93,9 +93,9 @@ class ExDoc(object):	#pylint: disable=R0902
 				else:
 					new_name_list.append(token)
 			ditem['name'] = sep.join(new_name_list)
-			# Remove prefix (cannot be done in previous step because technically the setter/getter/deleter of propeties can be in a different module) and only handle unique exceptions
+			# Remove prefix (cannot be done in previous step because technically the setter/getter/deleter of properties can be in a different module) and only handle unique exceptions
 			if ditem['name'].find(self._trace_name) != -1:
-				# Delete hieararchy above trace name
+				# Delete hierarchy above trace name
 				ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
 				# Make trace name root node
 				ditem['name'] = '{0}/{1}'.format(self._trace_name, ditem['name'][len(self._trace_name)+1:])
@@ -106,7 +106,7 @@ class ExDoc(object):	#pylint: disable=R0902
 		self._print_ex_tree()
 
 	def _callable_list(self, node):
-		""" Returns list of callables from a exception call tree """
+		""" Returns list of callables from an exception call tree """
 		ret = list()
 		name = copy.deepcopy(node)
 		while name:
