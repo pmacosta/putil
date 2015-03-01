@@ -557,7 +557,7 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		assert test_list == len(test_list)*[True]
 
 	def test_root_node_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
-		""" Test that del method raises an exception on all class attributes """
+		""" Test that root_node property works """
 		tree1, _, _, _ = default_trees
 		tree4 = putil.tree.Tree()
 		test_list = list()
@@ -566,7 +566,7 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		assert test_list == len(test_list)*[True]
 
 	def test_root_name_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
-		""" Test that del method raises an exception on all class attributes """
+		""" Test that root_name property works """
 		tree1, _, _, _ = default_trees
 		tree4 = putil.tree.Tree()
 		test_list = list()
@@ -574,17 +574,23 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		test_list.append(tree4.root_name == None)
 		assert test_list == len(test_list)*[True]
 
+	def test_node_separator_property_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
+		""" Test that node_separator property works """
+		tree1, _, _, _ = default_trees
+		assert tree1.node_separator == '.'
+
 	def test_cannot_delete_attributes(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
 		tree1, _, _, _ = default_trees
-		test_list = list()
 		with pytest.raises(AttributeError) as excinfo:
 			del tree1.root_node
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del tree1.root_name
-		test_list.append(excinfo.value.message == "can't delete attribute")
-		assert test_list == len(test_list)*[True]
+		assert excinfo.value.message == "can't delete attribute"
+		with pytest.raises(AttributeError) as excinfo:
+			del tree1.node_separator
+		assert excinfo.value.message == "can't delete attribute"
 
 	def test_str_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that ppstr method works """

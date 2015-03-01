@@ -143,6 +143,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	def _get_nodes(self):	#pylint: disable=C0111
 		return None if not self._db else sorted(self._db.keys())
 
+	def _get_node_separator(self):	#pylint: disable=C0111
+		return self._node_separator
+
 	def _get_root_name(self):	#pylint: disable=C0111
 		return self._root
 
@@ -901,6 +904,13 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	Name of all tree nodes, *None* if an empty tree. See `NodeName`_ pseudo-type specification
 
 	:rtype: list of NodeNames or None
+	"""	#pylint: disable=W0105
+
+	node_separator = property(_get_node_separator, None, None, doc='Node separator')
+	"""
+	Node separator character
+
+	:rtype: string
 	"""	#pylint: disable=W0105
 
 	root_node = property(_get_root_node, None, None, doc='Tree root node')
