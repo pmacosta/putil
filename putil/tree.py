@@ -224,6 +224,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		""" NodeWithData pseudo-type validation """
 		self._exh.add_exception(exname='illegal_node_with_data', extype=RuntimeError, exmsg='Argument `nodes` is not valid')
 		names = names if isinstance(names, list) else [names]
+		self._exh.raise_exception_if(exname='illegal_node_with_data', condition=not names)
 		for ndict in names:
 			self._exh.raise_exception_if(exname='illegal_node_with_data', condition=(not isinstance(ndict, dict)) or (isinstance(ndict, dict) and (set(ndict.keys()) != set(['name', 'data']))))
 			name = ndict['name']
