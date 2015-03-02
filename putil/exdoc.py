@@ -94,15 +94,26 @@ class ExDoc(object):	#pylint: disable=R0902
 					new_name_list.append(token)
 			ditem['name'] = sep.join(new_name_list)
 			# Remove prefix (cannot be done in previous step because technically the setter/getter/deleter of properties can be in a different module) and only handle unique exceptions
-			if ditem['name'].find(self._trace_name) != -1:
-				# Delete hierarchy above trace name
-				ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
-				# Make trace name root node
-				ditem['name'] = '{0}/{1}'.format(self._trace_name, ditem['name'][len(self._trace_name)+1:])
-				unique_data.append(ditem)
+			#if ditem['name'].find(self._trace_name) != -1:
+			#	# Delete hierarchy above trace name
+			#	ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
+			#	# Make trace name root node
+			#	ditem['name'] = '{0}/{1}'.format(self._trace_name, ditem['name'][len(self._trace_name)+1:])
+			unique_data.append(ditem)
 		# Actually build tree
-		self._tobj = putil.tree.Tree(self._exh_obj.callables_separator)
-		self._tobj.add_nodes(unique_data)
+		self._tobj = putil.tree.Tree(sep)
+		try:
+			self._tobj.add_nodes(unique_data)
+		except ValueError as eobj:
+			if str(eobj).startswith('Illegal node name'):
+				raise RuntimeError('Exceptions do not have a common callable')
+			raise
+		# Find root node
+		print self._tobj.root_name
+		self._tobj.collapse_subtree(self._tobj.root_name)
+		if self._tobj.node_separator in self._tobj.root_name:
+			self._tobj.delete_prefix(self._tobj.node_separator.join(self._tobj.root_name.split(self._tobj.node_separator)[:-1]))
+		print str(self._tobj)
 		self._print_ex_tree()
 
 	def _callable_list(self, node):
@@ -123,7 +134,7 @@ class ExDoc(object):	#pylint: disable=R0902
 	def _create_ex_table(self):	#pylint: disable=R0914
 		""" Creates exception table entry """
 		self._cprint('Creating exception table', 'blue')
-		sep = self._exh_obj.callables_separator
+		sep = self._tobj.node_separator
 		self._extable = dict()
 		# Build exception table by searching all nodes in tree for:
 		# a) First level nodes below root that have exception(s) attached to them
