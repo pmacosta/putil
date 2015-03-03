@@ -41,6 +41,15 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._exh.raise_exception_if(exname='illegal_node_separator', condition=(not isinstance(node_separator, str)) or (isinstance(node_separator, str) and len(node_separator) != 1))
 		self._node_separator = node_separator
 
+	def __copy__(self, memodict=None):
+		memodict = dict() if memodict is None else memodict
+		cobj = Tree(self.node_separator)
+		cobj._db = copy.deepcopy(self._db, memodict)	#pylint: disable=W0212
+		cobj._root = self._root
+		cobj._root_hierarchy_length = self._root_hierarchy_length
+		cobj._exh = self._exh
+		return cobj
+
 	def __str__(self):
 		u"""
 		String with the tree structure 'pretty printed' as a character-based tree structure. Only node names are shown, nodes with data are marked with an asterisk (*). For example:

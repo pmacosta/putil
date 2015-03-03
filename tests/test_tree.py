@@ -708,3 +708,13 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		tobj.delete_prefix('hello/world')
 		test_list.append(str(tobj) == u'root\n├anode (*)\n├bnode\n│└anode\n└cnode\n └anode\n  └leaf'.encode('utf-8'))
 		assert test_list == len(test_list)*[True]
+
+	def test_copy_works(self, default_trees):	#pylint: disable=R0201,W0621
+		""" Test __copy__() method """
+		_, _, _, tree4 = default_trees
+		ntree = copy.copy(tree4)
+		assert id(ntree) != id(tree4)
+		assert (ntree._db == tree4._db) and (id(ntree._db) != id(tree4._db))
+		assert ntree._root == tree4._root
+		assert ntree._root_hierarchy_length is tree4._root_hierarchy_length
+		assert ntree._exh is tree4._exh
