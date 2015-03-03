@@ -27,7 +27,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	:param	node_separator: Single character used to separate nodes in the tree
 	:type	node_separator: string
 	:rtype: :py:class:`putil.tree.Tree()` object
-	:raises: RuntimeError ('Argument `node_separator` is not valid')
+	:raises: RuntimeError (Argument `node_separator` is not valid)
 	"""
 	def __init__(self, node_separator='.'):	#pylint: disable=R0913
 		self._db = dict()

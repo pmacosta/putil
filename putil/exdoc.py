@@ -46,7 +46,8 @@ class ExDoc(object):	#pylint: disable=R0902
 		self._depth, self._exclude, self._trace_obj_type, self._trace_obj_name, self._trace_list, self._tobj, self._extable, self._cross_usage_extable, self._exoutput = 9*[None]
 		self._set_depth(depth)
 		self._set_exclude(exclude)
-		self._process_exceptions(_step)
+		self._build_ex_tree()
+		#self._process_exceptions(_step)
 
 	def __copy__(self):
 		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), _no_print=self._no_print)
@@ -93,12 +94,6 @@ class ExDoc(object):	#pylint: disable=R0902
 				else:
 					new_name_list.append(token)
 			ditem['name'] = sep.join(new_name_list)
-			# Remove prefix (cannot be done in previous step because technically the setter/getter/deleter of properties can be in a different module) and only handle unique exceptions
-			#if ditem['name'].find(self._trace_name) != -1:
-			#	# Delete hierarchy above trace name
-			#	ditem['name'] = ditem['name'][ditem['name'].find(self._trace_name):]
-			#	# Make trace name root node
-			#	ditem['name'] = '{0}/{1}'.format(self._trace_name, ditem['name'][len(self._trace_name)+1:])
 			unique_data.append(ditem)
 		# Actually build tree
 		self._tobj = putil.tree.Tree(sep)
@@ -399,15 +394,19 @@ class ExDoc(object):	#pylint: disable=R0902
 			sex = [exname for exname in data if 'Same as' in exname]
 			self._extable[key]['hier_exceptions'] = sorted(list(set(bex)))+sorted(list(set(sex)))
 
-	def get_sphinx_doc_for_member(self, member, depth=None, exclude=None):
+	def get_sphinx_doc(self, name, depth=None, exclude=None):	#pylint: disable=R0914
 		"""
 		Returns exception list marked up in `reStructuredText<http://sphinx-doc.org>`_
 
-		:param	depth: Default hierarchy levels to include in the exceptions per callable (overrides default **depth** argument)
+		:param	name: Name of the callable (method or function) to generate exception documentatio for
+		:type	name: string
+		:param	depth: Hierarchy levels to include in the exceptions list (overrides default **depth** argument)
 		:type	depth: non-negative integer
-		:param	exclude: Default list of (potentially partial) module and callable names to exclude from exceptions per callable  (overrides default **exclude** argument)
+		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument)
 		:type	exclude: list
 		:raises:
+		 * RuntimeError (Callable not found in exception list: *[name]*)
+
 		 * TypeError (Argument `depth` is not valid)
 
 		 * TypeError (Argument `exclude` is not valid)
@@ -416,15 +415,32 @@ class ExDoc(object):	#pylint: disable=R0902
 			raise TypeError('Argument `depth` is not valid')
 		if exclude and ((not isinstance(exclude, list)) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude]))):
 			raise TypeError('Argument `exclude` is not valid')
-		depth = self._depth if not depth else depth
+		depth = self._depth if depth == None else depth
 		exclude = self._exclude if not exclude else exclude
 		try:
-			node = self._tobj.search_tree(member)[0]
+			callable_root = self._tobj.search_tree(name)[0]
 		except:
-			raise RuntimeError('Member `{0}` not found in exception list'.format(member))
-		if not self._exoutput:
-			raise RuntimeError('No exception table data')
-		return ('\n'.join(self._exoutput[member]))+'\n' if member in self._exoutput else ''
+			raise RuntimeError('Callable not found in exception list: {0}'.format(name))
+		# Create exception table
+		sep = self._tobj.node_separator
+		exlist, exoutput = [], []
+		root_hierarchy_level = callable_root.count(sep)
+		for full_node, rebased_node in [(node, sep.join(node.split(sep)[root_hierarchy_level:])) for node in self._tobj.get_subtree(callable_root)]:	#pylint: disable=W0212
+			data = self._tobj._get_data(full_node)	#pylint: disable=W0212
+			if ((depth == None) or ((depth != None) and (rebased_node.count(sep) <= depth))) and ((not exclude) or (not any([item in rebased_node for item in exclude]))) and data:
+				for exc in data:
+					exlist.append(exc)
+		# Format exceptions
+		if exlist:
+			exlist = sorted(exlist)
+			if len(exlist) == 1:
+				exoutput.append(':raises: {0}'.format(exlist[0]))
+			else:
+				exoutput.append(':raises:')
+				for exname in exlist:
+					exoutput.append(' * {0}'.format(exname))
+			exoutput.append('')
+		return ('\n'.join(exoutput))+'\n' if exoutput else ''
 
 	def print_ex_table(self):
 		""" Prints exception table """
@@ -444,7 +460,6 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _set_depth(self, depth):
 		""" depth setter """
-		print "TETO"
 		if depth and ((not isinstance(depth, int)) or (isinstance(depth, int) and (depth < 0))):
 			raise TypeError('Argument `depth` is not valid')
 		self._depth = depth
