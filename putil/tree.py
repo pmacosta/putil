@@ -202,8 +202,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def _search_tree(self, name):
 		""" Search_tree for nodes that contain a specific hierarchy name """
-		return sorted([node for node in self._db if ('{0}{1}{0}'.format(self._node_separator, name) in node) or ('{0}{1}'.format(self._node_separator, name) in node) or \
-		  ('{1}{0}'.format(self._node_separator, name) in node) or (name == node)])
+		return sorted([node for node in self._db if ('{0}{1}{0}'.format(self._node_separator, name) in node) or node.endswith('{0}{1}'.format(self._node_separator, name)) or \
+		  node.startswith('{0}{1}'.format(name, self._node_separator)) or (name == node)])
 
 	def _set_children(self, name, children):
 		self._db[name]['children'] = sorted(list(set(children)))

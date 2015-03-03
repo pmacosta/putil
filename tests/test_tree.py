@@ -677,12 +677,14 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 				        {'name':'root/bnode', 'data':list()},
 				        {'name':'root/cnode', 'data':list()},
 		                {'name':'root/bnode/anode', 'data':list()},
-		                {'name':'root/cnode/anode/leaf', 'data':list()}
+		                {'name':'root/cnode/anode/leaf', 'data':list()},
+		                {'name':'root/cnode/anode/leaf1', 'data':list()}
 		               ])
 		putil.test.assert_exception(tobj.search_tree, {'name':5}, RuntimeError, 'Argument `name` is not valid')
 		putil.test.assert_exception(tobj.search_tree, {'name':'a/ b'}, RuntimeError, 'Argument `name` is not valid')
 		putil.test.assert_exception(tobj.search_tree, {'name':'a/b//c'}, RuntimeError, 'Argument `name` is not valid')
-		assert tobj.search_tree('anode') == sorted(['root/anode', 'root/bnode/anode', 'root/cnode/anode', 'root/cnode/anode/leaf'])
+		assert tobj.search_tree('anode') == sorted(['root/anode', 'root/bnode/anode', 'root/cnode/anode', 'root/cnode/anode/leaf', 'root/cnode/anode/leaf1'])
+		assert tobj.search_tree('leaf') == sorted(['root/cnode/anode/leaf'])
 		tobj = putil.tree.Tree('/')
 		tobj.add_nodes([{'name':'anode', 'data':list()}, {'name':'anode/some_node', 'data':list()}])
 		assert tobj.search_tree('anode') == sorted(['anode', 'anode/some_node'])
