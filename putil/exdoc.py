@@ -19,37 +19,37 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	:param	exh_obj: Exception handler containing exception information for the callable(s) to be documented
 	:type	exh_obj: :py:class:`putil.exh.ExHandle` object
-	:param	no_print: Print step-by-step processing information (False) or not (True) flag
-	:type	no_print: boolean
+	:param	depth: Default hierarchy levels to include in the exceptions per callable
+	:type	depth: non-negative integer
+	:param	exclude: Default list of (potentially partial) module and callable names to exclude from exceptions per callable (see :py:attr:`putil.exdoc.ExDoc.exclude`)
+	:type	exclude: list
 	:rtype: :py:class:`putil.exdoc.ExDoc()` object
-
 	:raises:
-	 * TypeError (Argument `exh_obj` is of the wrong type)
+	 * TypeError (Argument `depth` is not valid)
 
-	 * TypeError (Argument `no_print` is of the wrong type)
+	 * TypeError (Argument `exclude` is not valid)
 
-	 * TypeError (Argument `trace_name` is of the wrong type)
+	 * TypeError (Argument `exh_obj` is not valid)
 
 	 * ValueError (Object of argument `exh_obj` does not have any exception trace information)
 	"""
-	def __init__(self, exh_obj, no_print=False, trace_name=None, _step=None):
+	def __init__(self, exh_obj, depth=None, exclude=None, _no_print=False, _step=None):
 		if not isinstance(exh_obj, putil.exh.ExHandle):
 			raise TypeError('Argument `exh_obj` is not valid')
 		if not exh_obj.exceptions_db:
 			raise ValueError('Object of argument `exh_obj` does not have any exception trace information')
-		if not isinstance(no_print, bool):
-			raise TypeError('Argument `no_print` is not valid')
-		if not isinstance(trace_name, str):
-			raise TypeError('Argument `trace_name` is not valid')
-		self._trace_name = trace_name
+		if not isinstance(_no_print, bool):
+			raise TypeError('Argument `_no_print` is not valid')
 		self._exh_obj = exh_obj
 		self._callables_db = self._exh_obj.callables_db
-		self.no_print = no_print
-		self._trace_obj_type, self._trace_obj_name, self._trace_list, self._tobj, self._extable, self._cross_usage_extable, self._exoutput = None, None, None, None, None, None, None
+		self._no_print = _no_print
+		self._depth, self._exclude, self._trace_obj_type, self._trace_obj_name, self._trace_list, self._tobj, self._extable, self._cross_usage_extable, self._exoutput = 9*[None]
+		self._set_depth(depth)
+		self._set_exclude(exclude)
 		self._process_exceptions(_step)
 
 	def __copy__(self):
-		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), no_print=self.no_print)
+		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), _no_print=self._no_print)
 		cobj._trace_obj_type = copy.copy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.copy(self._trace_obj_name)	#pylint: disable=W0212
 		cobj._callables_db = copy.copy(self._callables_db)	#pylint: disable=W0212
@@ -62,7 +62,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def __deepcopy__(self, memodict=None):
 		memodict = dict() if memodict is None else memodict
-		cobj = ExDoc(exh_obj=copy.deepcopy(self._exh_obj), no_print=self.no_print)
+		cobj = ExDoc(exh_obj=copy.deepcopy(self._exh_obj), _no_print=self._no_print)
 		cobj._trace_obj_type = copy.deepcopy(self._trace_obj_type)	#pylint: disable=W0212
 		cobj._trace_obj_name = copy.deepcopy(self._trace_obj_name, memodict)	#pylint: disable=W0212
 		cobj._callables_db = copy.deepcopy(self._callables_db)	#pylint: disable=W0212
@@ -108,11 +108,13 @@ class ExDoc(object):	#pylint: disable=R0902
 			if str(eobj).startswith('Illegal node name'):
 				raise RuntimeError('Exceptions do not have a common callable')
 			raise
-		# Find root node
-		print self._tobj.root_name
-		self._tobj.collapse_subtree(self._tobj.root_name)
-		if self._tobj.node_separator in self._tobj.root_name:
-			self._tobj.delete_prefix(self._tobj.node_separator.join(self._tobj.root_name.split(self._tobj.node_separator)[:-1]))
+		# Find closest root node to first branching
+		node = self._tobj.root_name
+		while len(self._tobj.get_children(node)) == 1:
+			node = self._tobj.get_children(node)[0]
+		if not self._tobj.is_root(node):
+			self._tobj.make_root(node)
+			self._tobj.delete_prefix(self._tobj.node_separator.join(node.split(self._tobj.node_separator)[:-1]))
 		print str(self._tobj)
 		self._print_ex_tree()
 
@@ -128,7 +130,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _cprint(self, text, color=None):
 		""" Conditionally print text depending on no_print state """
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor(text, 'white' if not color else color)
 
 	def _create_ex_table(self):	#pylint: disable=R0914
@@ -153,7 +155,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _create_ex_table_output(self):	#pylint: disable=R0912
 		""" Create final exception table output """
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor('Creating final exception table output', 'blue')
 		if not self._extable:
 			raise RuntimeError('No exception table data')
@@ -192,12 +194,12 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _deduplicate_ex_table(self):	#pylint: disable=R0912
 		""" Remove exceptions that could be in 'Same as [...]' entry or 'Same as [...] enties that have the same base exceptions """
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor('De-duplicating native exceptions', 'blue')
 		# Remove exceptions that could be in 'Same as [...]' entry
 		for key in self._extable:
 			self._extable[key]['native_exceptions'] = [exdesc for exdesc in self._extable[key]['native_exceptions'] if exdesc not in self._extable[key]['cross_flat_exceptions']]
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor('Homogenizing cross-exceptions', 'blue')
 		# Remove 'Same as [...]' entries that have the same exceptions
 		sorted_children = sorted(self._extable.keys())
@@ -210,7 +212,7 @@ class ExDoc(object):	#pylint: disable=R0902
 				sorted_cross_names = sorted(list(set(new_list[:])))
 			self._extable[child]['cross_names'] = copy.deepcopy(sorted_cross_names)
 			self._extable[child]['cross_hierarchical_exceptions'] = sorted(['Same as :py:{0}:`{1}`'.format(self._callables_db[cross_name]['type'], cross_name) for cross_name in sorted_cross_names])
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor('Removing cross-exception loops', 'blue')
 		# Expand entries pointed by 'Same as [...]' that only have a 'Same as [...]' as exception
 		sorted_children = sorted(self._extable.keys())
@@ -222,7 +224,7 @@ class ExDoc(object):	#pylint: disable=R0902
 					self._extable[key1]['cross_names'] = list()
 					self._extable[key1]['cross_flat_exceptions'] = list()
 					self._extable[key1]['cross_hierarchical_exceptions'] = list()
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor('Detecting exception table', 'blue')
 		# Detect trace class methods/properties or trace module-level functions that are identical
 		changed_entries = list()
@@ -269,7 +271,7 @@ class ExDoc(object):	#pylint: disable=R0902
 			self._extable[child_name]['cross_hierarchical_exceptions'] = sorted(list(set(self._extable[child_name]['cross_hierarchical_exceptions'])))
 
 		self._print_ex_tree()
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor('Condensing private callables', 'blue')
 		# Move all exceptions in private callable sub-tree to child
 		for child in sorted(self._tobj._get_children(self._tobj.root_name)):	#pylint: disable=W0212
@@ -327,14 +329,14 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _print_ex_table(self, msg=''):
 		""" Prints exception table (for debugging purposes) """
-		if not self.no_print:
+		if not self._no_print:
 			print 'self._extable{0}:'.format(' ({0})'.format(msg) if msg else msg)
 			for key in sorted(self._extable.keys()):
 				print 'Member {0} ({1}): {2}\n'.format(key, self._extable[key]['obj_name'], self._extable[key]['hier_exceptions'])
 
 	def _print_extable_for_debug(self):
 		""" Pretty prints exception table (mainly for debugging purposes) """
-		if not self.no_print:
+		if not self._no_print:
 			for key in sorted(self._extable.keys()):
 				print 'Member: {0}'.format(key)
 				print 'Native exceptions:'
@@ -357,7 +359,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _print_ex_tree(self):
 		""" Prints exception tree """
-		if not self.no_print:
+		if not self._no_print:
 			print str(self._tobj)
 
 	def _process_exceptions(self, step):	#pylint: disable=R0912,R0914,R0915
@@ -389,7 +391,7 @@ class ExDoc(object):	#pylint: disable=R0902
 
 	def _sort_ex_table_members(self):
 		""" Sort exceptions with 'Same as [...]' at the end, and both 'sections' sorted alphabetically """
-		if not self.no_print:
+		if not self._no_print:
 			print putil.misc.pcolor('Sorting exception table members', 'blue')
 		for key in self._extable:
 			data = self._extable[key]['hier_exceptions']
@@ -397,8 +399,29 @@ class ExDoc(object):	#pylint: disable=R0902
 			sex = [exname for exname in data if 'Same as' in exname]
 			self._extable[key]['hier_exceptions'] = sorted(list(set(bex)))+sorted(list(set(sex)))
 
-	def get_sphinx_doc_for_member(self, member):
-		""" Returns Sphinx-compatible exception list """
+	def get_sphinx_doc_for_member(self, member, depth=None, exclude=None):
+		"""
+		Returns exception list marked up in `reStructuredText<http://sphinx-doc.org>`_
+
+		:param	depth: Default hierarchy levels to include in the exceptions per callable (overrides default **depth** argument)
+		:type	depth: non-negative integer
+		:param	exclude: Default list of (potentially partial) module and callable names to exclude from exceptions per callable  (overrides default **exclude** argument)
+		:type	exclude: list
+		:raises:
+		 * TypeError (Argument `depth` is not valid)
+
+		 * TypeError (Argument `exclude` is not valid)
+		"""
+		if depth and ((not isinstance(depth, int)) or (isinstance(depth, int) and (depth < 0))):
+			raise TypeError('Argument `depth` is not valid')
+		if exclude and ((not isinstance(exclude, list)) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude]))):
+			raise TypeError('Argument `exclude` is not valid')
+		depth = self._depth if not depth else depth
+		exclude = self._exclude if not exclude else exclude
+		try:
+			node = self._tobj.search_tree(member)[0]
+		except:
+			raise RuntimeError('Member `{0}` not found in exception list'.format(member))
 		if not self._exoutput:
 			raise RuntimeError('No exception table data')
 		return ('\n'.join(self._exoutput[member]))+'\n' if member in self._exoutput else ''
@@ -414,3 +437,41 @@ class ExDoc(object):	#pylint: disable=R0902
 	def print_ex_tree(self):
 		""" Prints exception tree """
 		print str(self._tobj)
+
+	def _get_depth(self):
+		""" depth getter """
+		return self._depth
+
+	def _set_depth(self, depth):
+		""" depth setter """
+		print "TETO"
+		if depth and ((not isinstance(depth, int)) or (isinstance(depth, int) and (depth < 0))):
+			raise TypeError('Argument `depth` is not valid')
+		self._depth = depth
+
+	depth = property(_get_depth, _set_depth, None, doc='Call hierarchy depth')
+	"""
+	Default hierarchy levels to include in the exceptions per callable
+
+	:rtype: non-negative integer
+	:raises: TypeError (Argument `depth` is not valid)
+	"""	#pylint: disable=W0105
+
+	def _get_exclude(self):
+		""" exclude getter """
+		return self._exclude
+
+	def _set_exclude(self, exclude):
+		""" exclude setter """
+		if exclude and ((not isinstance(exclude, list)) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude]))):
+			raise TypeError('Argument `exclude` is not valid')
+		self._exclude = exclude
+
+	exclude = property(_get_exclude, _set_exclude, None, doc='Modules and callables to exclude')
+	"""
+	Default list of (potentially partial) module and callable names to exclude from exceptions per callable. For example, :code:`['putil.ex']` excludes all exceptions from modules :code:`putil.exh` and :code:`putil.exdoc`.
+	In addition to these modules, :code:`['putil.ex', 'putil.eng.peng']` excludes exceptions from the function :code:`putil.eng.peng`.
+
+	:rtype: list
+	:raises: TypeError (Argument `exclude` is not valid)
+	"""	#pylint: disable=W0105
