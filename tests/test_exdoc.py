@@ -8,6 +8,8 @@ putil.exdoc unit tests
 """
 
 import sys
+import mock
+import copy
 import pytest
 
 import putil.exh
@@ -91,12 +93,12 @@ def test_exdoc_errors(simple_exobj):	#pylint: disable=W0621
 	putil.test.assert_exception(obj, {'exh_obj':simple_exobj, 'exclude':['hello', 3]}, TypeError, 'Argument `exclude` is not valid')
 	putil.test.assert_exception(obj, {'exh_obj':putil.exh.ExHandle(True), '_no_print':False}, ValueError, 'Object of argument `exh_obj` does not have any exception trace information')
 	putil.test.assert_exception(obj, {'exh_obj':simple_exobj, '_no_print':5}, TypeError, 'Argument `_no_print` is not valid')
-	putil.exdoc.ExDoc(simple_exobj, depth=1, exclude=[], _step=-1)
+	putil.exdoc.ExDoc(simple_exobj, depth=1, exclude=[])
 
 
 def test_depth_property(simple_exobj):	#pylint: disable=W0621
 	""" Test depth class property """
-	obj = putil.exdoc.ExDoc(simple_exobj, _no_print=True, _step=1)
+	obj = putil.exdoc.ExDoc(simple_exobj, _no_print=True)
 	assert obj.depth == None
 	obj.depth = 5
 	assert obj.depth == 5
@@ -107,7 +109,7 @@ def test_depth_property(simple_exobj):	#pylint: disable=W0621
 
 def test_exclude_property(simple_exobj):	#pylint: disable=W0621
 	""" Test exclude class property """
-	obj = putil.exdoc.ExDoc(simple_exobj, _no_print=True, _step=1)
+	obj = putil.exdoc.ExDoc(simple_exobj, _no_print=True)
 	assert obj.exclude == None
 	obj.exclude = ['a', 'b']
 	assert obj.exclude == ['a', 'b']
@@ -118,6 +120,16 @@ def test_exclude_property(simple_exobj):	#pylint: disable=W0621
 
 def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 	""" Test _build_ex_tree() method """
+	exobj1 = putil.exh.ExHandle(True)
+	def func1():	#pylint: disable=C0111,W0612
+		exobj1.add_exception('first_exception', TypeError, 'This is the first exception')
+	func1()
+	def mock_add_nodes1(self):	#pylint: disable=C0111,W0613
+		raise ValueError('Illegal node name: _node_')
+	def mock_add_nodes2(self):	#pylint: disable=C0111,W0613
+		raise ValueError('General exception #1')
+	def mock_add_nodes3(self):	#pylint: disable=C0111,W0613
+		raise IOError('General exception #2')
 	assert str(exdocobj._tobj) == \
 		u'test_exdoc.exdocobj\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.ExceptionAutoDocClass.__init__ (*)\n'.encode('utf-8') + \
@@ -139,9 +151,14 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		u' └exdoc_support_module_1._write\n'.encode('utf-8') + \
 		u'  └exdoc_support_module_1._validate_arguments (*)'.encode('utf-8')
 	trace_error_class()
-	exobj = putil.exh.get_exh_obj()
-	putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj, '_no_print':True}, RuntimeError, 'Functions performing actions for multiple properties not supported')
-
+	exobj2 = putil.exh.get_exh_obj()
+	putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj2, '_no_print':True}, RuntimeError, 'Functions performing actions for multiple properties not supported')
+	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes1):
+		putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj1, '_no_print':True}, RuntimeError, 'Exceptions do not have a common callable')
+	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes2):
+		putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj1, '_no_print':True}, ValueError, 'General exception #1')
+	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes3):
+		putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj1, '_no_print':True}, IOError, 'General exception #2')
 
 def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	""" Test get_sphinx_doc() method """
@@ -151,22 +168,35 @@ def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':-1}, TypeError, 'Argument `exclude` is not valid')
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':['hello', 3]}, TypeError, 'Argument `exclude` is not valid')
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.read')
-	assert tstr == ':raises: TypeError (Cannot call read)\n\n'
+	assert tstr == ':raises: TypeError (Cannot call read)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write')
-	assert tstr == ':raises:\n * TypeError (Argument is not valid)\n * TypeError (Cannot call write)\n\n'
+	assert tstr == ':raises:\n * TypeError (Argument is not valid)\n\n * TypeError (Cannot call write)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write', depth=1)
-	assert tstr == ':raises: TypeError (Cannot call write)\n\n'
+	assert tstr == ':raises: TypeError (Cannot call write)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', depth=1)
-	assert tstr == ':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n * RuntimeError (Argument `value1` is not valid)\n * RuntimeError (Argument `value2` is not valid)\n'+\
-					' * RuntimeError (Argument `value3` is not valid)\n * RuntimeError (Argument `value4` is not valid)\n * ValueError (Illegal node name: *[node_name]*)\n\n'
+	assert tstr == ':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)\n\n * ValueError (Illegal node name: *[node_name]*)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', depth=0)
-	assert tstr == ':raises:\n * RuntimeError (Argument `value1` is not valid)\n * RuntimeError (Argument `value2` is not valid)\n * RuntimeError (Argument `value3` is not valid)\n * RuntimeError (Argument `value4` is not valid)\n\n'
+	assert tstr == ':raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value4` is not valid)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', exclude=['putil.tree'])
-	assert tstr == ':raises:\n * RuntimeError (Argument `value1` is not valid)\n * RuntimeError (Argument `value2` is not valid)\n * RuntimeError (Argument `value3` is not valid)\n * RuntimeError (Argument `value4` is not valid)\n\n'
+	assert tstr == ':raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value4` is not valid)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', exclude=['add_nodes', '_validate_nodes_with_data'])
-	assert tstr == ':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n * RuntimeError (Argument `value1` is not valid)\n * RuntimeError (Argument `value2` is not valid)\n'+\
-					' * RuntimeError (Argument `value3` is not valid)\n * RuntimeError (Argument `value4` is not valid)\n\n'
+	assert tstr == ':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value3')
-	print "*****"
-	print tstr
-	print "*****"
+	assert tstr == ':raises:\n * When assigned\n\n   * TypeError (Argument `value3` is not valid)\n\n * When deleted\n\n   * TypeError (Cannot delete value3)\n\n * When retrieved\n\n   * TypeError (Cannot get value3)'
+	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.temp')
+	assert tstr == ':raises: (when assigned) RuntimeError (Argument `value` is not valid)'
+	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value2')
+	assert tstr == ':raises: (when assigned)\n * IOError (Argument `value2` is not a file)\n\n * TypeError (Argument `value2` is not valid)'
+
+def test_copy_works(exdocobj):	#pylint: disable=W0621
+	""" Test __copy__() method works """
+	exdocobj.exclude = ['a', 'b', 'c']
+	nobj = copy.copy(exdocobj)
+	assert id(nobj) != id(exdocobj)
+	assert nobj._depth == exdocobj._depth
+	assert (nobj._exclude == exdocobj._exclude) and (id(nobj._exclude) != id(exdocobj._exclude))
+	assert nobj._no_print == exdocobj._no_print

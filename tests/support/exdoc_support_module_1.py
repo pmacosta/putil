@@ -79,7 +79,8 @@ class ExceptionAutoDocClass(object):	#pylint: disable=R0902,R0903
 
 	def _set_value2(self, value):	# pylint: disable=C0111
 		""" Setter method for propety with getter defined via lambda """
-		self._exobj.add_exception(exname='illegal_value2', extype=TypeError, exmsg='Argument `value2` is not valid')
+		self._exobj.add_exception(exname='illegal_value2_1', extype=TypeError, exmsg='Argument `value2` is not valid')
+		self._exobj.add_exception(exname='illegal_value2_2', extype=IOError, exmsg='Argument `value2` is not a file')
 		self._value2 = value
 
 	def _set_value3(self, value):	# pylint: disable=C0111

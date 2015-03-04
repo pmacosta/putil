@@ -349,10 +349,23 @@ def test_copy():
 	def funcb(exobj):	#pylint: disable=C0111,W0612
 		exobj.add_exception('my_exceptionB', ValueError, 'This is exception #B')
 		exobj.add_exception('my_exceptionC', TypeError, 'This is exception #C')
-	source_obj = putil.exh.ExHandle()
+	class Clsc(object):	#pylint: disable=C0111,R0903
+		def __init__(self, exobj):	#pylint: disable=C0111
+			self._exobj = exobj
+			self._value = None
+		def _set_value(self, value):	#pylint: disable=C0111
+			self._exobj.add_exception('my_exceptionD', IOError, 'This is exception #D')
+			self._value = value
+		value = property(None, _set_value, None, doc='Value property')
+	source_obj = putil.exh.ExHandle(full_fname=True)
 	funca(source_obj)
 	funcb(source_obj)
+	obj = Clsc(source_obj)
+	obj.value = 5
 	# Actual tests
 	dest_obj = copy.copy(source_obj)
 	assert (source_obj._ex_dict == dest_obj._ex_dict) and (id(source_obj._ex_dict) != id(dest_obj._ex_dict))
 	assert (source_obj._callables_obj == dest_obj._callables_obj) and (id(source_obj._callables_obj) != id(dest_obj._callables_obj))
+	assert source_obj._full_fname == dest_obj._full_fname
+	assert source_obj.exceptions_db == dest_obj.exceptions_db
+

@@ -107,7 +107,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		self._full_fname = full_fname
 
 	def __copy__(self):
-		cobj = ExHandle()
+		cobj = ExHandle(full_fname=self._full_fname)
 		cobj._ex_dict = copy.deepcopy(self._ex_dict)	#pylint: disable=W0212
 		cobj._callables_obj = copy.copy(self._callables_obj)	#pylint: disable=W0212
 		return cobj
