@@ -22,7 +22,7 @@ def _get_code_id(obj, file_name=None, offset=0):
 
 def _line_parser(lines):	#pylint: disable=R0914
 	""" Perform all matches on source file line """
-	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*\(')
+	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*[\(|\:]')
 	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
 	get_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
 	set_prop_regexp = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
@@ -30,17 +30,39 @@ def _line_parser(lines):	#pylint: disable=R0914
 	decorator_regexp = re.compile(r'^(\s*)@(.+)')
 	import_regexp = re.compile(r'^(\s*)import\s+')
 	from_regexp = re.compile(r'^(\s*)from\s+')
+	multi_line_string, multi_line_string_line_num, cont_flag, cont_lines, cont_line_num = False, 0, False, [], 0
 	for line_num, line in enumerate(lines, start=1):
-		class_match = class_regexp.match(line)
-		class_indent, class_name = class_match.groups() if class_match else (None, None)
-		func_match = func_regexp.match(line)
-		func_indent, func_name = func_match.groups() if func_match else (None, None)
-		get_match, set_match, del_match = get_prop_regexp.match(line), set_prop_regexp.match(line), del_prop_regexp.match(line)
-		decorator_match = decorator_regexp.match(line)
-		import_match, from_match = import_regexp.match(line), from_regexp.match(line)
-		namespace_indent, namespace_match = import_match.group(1) if import_match else (from_match.group(1) if from_match else None), import_match or from_match
-		line_match = class_match or func_match or namespace_match
-		yield line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match
+		sline = line.strip()
+		multi_line_string = sline.startswith('"""') if not multi_line_string else multi_line_string
+		multi_line_string_line_num = line_num if (not multi_line_string) and sline.startswith('"""') else multi_line_string_line_num
+		if not multi_line_string:
+			line = line.rstrip()
+			cont_line_num = line_num if not cont_lines else cont_line_num
+			if (line.endswith('\\') or line.endswith(',')) or cont_flag:
+				cont_flag = line.endswith('\\') or line.endswith(',')
+				line = line.strip() if cont_lines else line
+				cont_lines.append(line[:-1] if cont_flag and line.endswith('\\') else line)
+				if cont_flag:
+					continue
+			if cont_lines:
+				line = ''.join(cont_lines)
+				line_num = cont_line_num
+				cont_lines = []
+				cont_line_num = 0
+			class_match = class_regexp.match(line)
+			class_indent, class_name = class_match.groups() if class_match else (None, None)
+			func_match = func_regexp.match(line)
+			func_indent, func_name = func_match.groups() if func_match else (None, None)
+			get_match, set_match, del_match = get_prop_regexp.match(line), set_prop_regexp.match(line), del_prop_regexp.match(line)
+			decorator_match = decorator_regexp.match(line)
+			import_match, from_match = import_regexp.match(line), from_regexp.match(line)
+			namespace_indent, namespace_match = import_match.group(1) if import_match else (from_match.group(1) if from_match else None), import_match or from_match
+			line_match = class_match or func_match or namespace_match
+			yield line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match
+		elif multi_line_string:
+			multi_line_string = False if ((sline == '"""') and (line_num > multi_line_string_line_num)) or (sline.endswith('"""') and (len(sline) > 3)) else True
+			yield line_num, line, False, False, 0, '', False, 0, '', False, False, False, False, 0, False
+
 
 def _private_props(obj):
 	""" Generator to yield private properties of object """
@@ -295,6 +317,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				self._trace_class(class_obj)
 			# Closure class tracing, exec creates tvar variable which contains an unbound object of the closure class
 			for class_obj in self._closure_class_obj_list:
+				#print '--------------------'
+				#print class_obj['code']
 				exec class_obj['code'] in locals()	#pylint: disable=W0122
 				self._trace_class(tvar, class_obj['file'], class_obj['name'], class_obj['lineno']-1)	#pylint: disable=E0602
 

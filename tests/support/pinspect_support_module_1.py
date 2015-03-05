@@ -30,7 +30,9 @@ def class_enclosing_func():
 			return self.obj
 
 		def set_obj(self, obj):
-			""" Setter method """
+			"""
+			Setter method
+			"""
 			self.obj = obj
 
 		def sub_enclosure_method(self):
@@ -129,12 +131,16 @@ import pinspect_support_module_4
 def class_namespace_test_enclosing_func():	#pylint: disable=C0103
 	""" Test namespace support for enclosed class properties """
 	class NamespaceTestClosureClass(object):	#pylint: disable=R0903
-		""" Actual class """
-		def __init__(self, value):
+		""" Actual class
+		"""
+		def __init__(self,
+			   value):
+			_, _, _ = (5, \
+				3,
+				7)
+
 			self._value = value
 
 		nameprop = pinspect_support_module_4.another_property_action_enclosing_function()
 
 	return NamespaceTestClosureClass
-
-
