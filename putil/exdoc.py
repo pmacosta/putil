@@ -146,7 +146,7 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			raise TypeError('Argument `exclude` is not valid')
 		self._exclude = exclude
 
-	def get_sphinx_doc(self, name, depth=None, exclude=None):	#pylint: disable=R0912,R0914,R0915
+	def get_sphinx_doc(self, name, depth=None, exclude=None, error=False):	#pylint: disable=R0912,R0914,R0915
 		"""
 		Returns exception list marked up in `reStructuredText`_
 
@@ -184,8 +184,10 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 				if instances:
 					callable_dict[prop_name] = {'type':action, 'instances':instances}
 					prop = True
-		if not callable_dict:
+		if error and (not callable_dict):
 			raise RuntimeError('Callable not found in exception list: {0}'.format(name))
+		elif not callable_dict:
+			return ''
 		# Create exception table taking into account depth and exclude arguments
 		sep = self._tobj.node_separator
 		for name_dict in callable_dict.values():

@@ -167,11 +167,12 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 
 def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	""" Test get_sphinx_doc() method """
-	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'_not_found_'}, RuntimeError, 'Callable not found in exception list: _not_found_')
+	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'_not_found_', 'error':True}, RuntimeError, 'Callable not found in exception list: _not_found_')
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'depth':'hello'}, TypeError, 'Argument `depth` is not valid')
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'depth':-1}, TypeError, 'Argument `depth` is not valid')
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':-1}, TypeError, 'Argument `exclude` is not valid')
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':['hello', 3]}, TypeError, 'Argument `exclude` is not valid')
+	assert exdocobj.get_sphinx_doc('_not_found_') == ''
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.read')
 	assert tstr == ':raises: TypeError (Cannot call read)'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write')
