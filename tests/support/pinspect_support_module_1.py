@@ -20,7 +20,7 @@ def class_enclosing_func():
 	""" Test function to see if classes within enclosures are detected """
 	import pinspect_support_module_3
 	class ClosureClass(object):
-		""" Actual closure class """
+		r""" Actual closure class """
 		def __init__(self):
 			""" Constructor method """
 			self.obj = None
@@ -131,8 +131,8 @@ import pinspect_support_module_4
 def class_namespace_test_enclosing_func():	#pylint: disable=C0103
 	""" Test namespace support for enclosed class properties """
 	class NamespaceTestClosureClass(object):	#pylint: disable=R0903
-		""" Actual class
-		"""
+		r""" Actual class
+		"""	#This is to test a comment after a multi-line docstring
 		def __init__(self,
 			   value):
 			_, _, _ = (5, \

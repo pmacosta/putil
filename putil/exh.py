@@ -205,6 +205,12 @@ class ExHandle(object):	#pylint: disable=R0902
 		try:
 			return self._callables_obj.reverse_callables_db[code_id]
 		except:
+			# print '\nCallables database'
+			# print '------------------'
+			# print '\n'.join(sorted(self._get_callables_db().keys()))
+			# print 'Reverse callables database'
+			# print '--------------------------'
+			# print '\n'.join(sorted(self._callables_obj.reverse_callables_db.values()))
 			raise RuntimeError('Callable with call ID {0} not found in reverse callables database'.format(code_id))
 
 	def _get_callables_separator(self):

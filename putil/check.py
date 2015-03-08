@@ -636,8 +636,8 @@ def check_argument_type_internal(param_name, param_type, func, exhobj, *args, **
 	arg_dict = create_argument_dictionary(func, *args, **kwargs)
 	if exhobj:
 		ex_name = 'check_argument_type_internal_{0}'.format(param_name)
-		exhobj.add_exception(name=ex_name, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
-		exhobj.raise_exception_if(name=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))))
+		exhobj.add_exception(exname=ex_name, extype=TypeError, exmsg='Argument `{0}` is of the wrong type'.format(param_name))
+		exhobj.raise_exception_if(exname=ex_name, condition=(len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))))
 	elif (len(arg_dict) > 0) and (not type_match(arg_dict.get(param_name), param_type, strict_dict=isinstance(param_type, dict))):
 		raise TypeError('Argument `{0}` is of the wrong type'.format(param_name))
 
@@ -664,11 +664,11 @@ def check_argument_internal(param_name, param_spec, func, exhobj, *args, **kwarg
 				ex_dict_list_full = [get_exception(param_spec, **exparam_dict) for param_spec, exparam_dict in itertools.izip(sub_param_spec, exparam_dict_list)]	#pylint: disable=W0142
 				for num, ex in enumerate(ex_dict_list_full):
 					ex_name = 'check_argument_internal_{0}{1}'.format(param_name, '' if len(ex_dict_list_full) == 1 else num)
-					exhobj.add_exception(name=ex_name, extype=ex['type'], exmsg=ex['msg'])
+					exhobj.add_exception(exname=ex_name, extype=ex['type'], exmsg=ex['msg'])
 					if ('edata' in ex) and len(ex['edata']):
-						exhobj.raise_exception_if(name=ex_name, condition=False, edata=ex['edata'])
+						exhobj.raise_exception_if(exname=ex_name, condition=False, edata=ex['edata'])
 					else:
-						exhobj.raise_exception_if(name=ex_name, condition=False)
+						exhobj.raise_exception_if(exname=ex_name, condition=False)
 			exp_dict = dict()
 			if len(ex_dict_list) == len(sub_param_spec):
 				same_exp = all(item['type'] == ex_dict_list[0]['type'] for item in ex_dict_list)

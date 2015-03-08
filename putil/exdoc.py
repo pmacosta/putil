@@ -11,6 +11,27 @@ import putil.tree
 
 
 ###
+# Context manager
+###
+class ExDocCxt(object):	#pylint: disable=R0903
+	""" ExDoc context manager """
+	def __init__(self, _no_print=True):
+		putil.exh.get_or_create_exh_obj(True)
+		self._exdoc_obj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), _empty=True, _no_print=_no_print)
+
+	def __enter__(self):
+		return self._exdoc_obj
+
+	def __exit__(self, exc_type, exc_value, exc_tb):
+		if exc_type is not None:
+			putil.exh.del_exh_obj()
+			return False
+		self._exdoc_obj._exh_obj = copy.copy(putil.exh.get_exh_obj())	#pylint: disable=W0212
+		putil.exh.del_exh_obj()
+		self._exdoc_obj._build_ex_tree()	#pylint: disable=W0212
+
+
+###
 # Classes
 ###
 class ExDoc(object):	#pylint: disable=R0902,R0903
@@ -33,10 +54,10 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Object of argument `exh_obj` does not have any exception trace information)
 	"""
-	def __init__(self, exh_obj, depth=None, exclude=None, _no_print=False):
-		if not isinstance(exh_obj, putil.exh.ExHandle):
+	def __init__(self, exh_obj, depth=None, exclude=None, _empty=False, _no_print=False):
+		if (not _empty) and (not isinstance(exh_obj, putil.exh.ExHandle)):
 			raise TypeError('Argument `exh_obj` is not valid')
-		if not exh_obj.exceptions_db:
+		if (not _empty) and (not exh_obj.exceptions_db):
 			raise ValueError('Object of argument `exh_obj` does not have any exception trace information')
 		if not isinstance(_no_print, bool):
 			raise TypeError('Argument `_no_print` is not valid')
@@ -45,10 +66,12 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		self._depth, self._exclude, self._tobj = 3*[None]
 		self._set_depth(depth)
 		self._set_exclude(exclude)
-		self._build_ex_tree()
+		if not _empty:
+			self._build_ex_tree()
 
 	def __copy__(self):
-		cobj = ExDoc(exh_obj=copy.copy(self._exh_obj), depth=self.depth, exclude=self.exclude[:] if self.exclude else self.exclude, _no_print=self._no_print)
+		cobj = ExDoc(exh_obj=None, depth=self.depth, exclude=self.exclude[:] if self.exclude else self.exclude, _empty=True, _no_print=self._no_print)
+		cobj._exh_obj = copy.copy(self._exh_obj)	#pylint: disable=W0212
 		cobj._tobj = copy.copy(self._tobj)	#pylint: disable=W0212
 		return cobj
 
@@ -116,7 +139,6 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			raise TypeError('Argument `exclude` is not valid')
 		self._exclude = exclude
 
-
 	def get_sphinx_doc(self, name, depth=None, exclude=None):	#pylint: disable=R0912,R0914,R0915
 		"""
 		Returns exception list marked up in `reStructuredText`_
@@ -173,7 +195,7 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 				callable_root = callable_dict.keys()[0]
 				action = callable_dict[callable_root]['type']
 				desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
-				exlist = sorted(callable_dict[callable_root]['exlist'])
+				exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
 				exoutput = [':raises: (when {0}) {1}'.format(desc, exlist[0])] if len(exlist) == 1 else [':raises: (when {0})'.format(desc)]+[' * {0}\n'.format(exname) for exname in exlist]
 			else:
 				exoutput = [':raises:']
@@ -181,10 +203,10 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 					desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
 					for callable_root in callable_dict:
 						if callable_dict[callable_root]['type'] == action:
-							exlist = sorted(callable_dict[callable_root]['exlist'])
+							exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
 							exoutput = exoutput+[' * When {0}\n'.format(desc)]+['   * {0}\n'.format(exname) for exname in exlist]
 		else:
-			exlist = sorted(callable_dict[callable_dict.keys()[0]]['exlist'])
+			exlist = sorted(list(set(callable_dict[callable_dict.keys()[0]]['exlist'])))
 			exoutput = [':raises: {0}'.format(exlist[0])] if len(exlist) == 1 else [':raises:']+[' * {0}\n'.format(exname) for exname in exlist]
 		return ('\n'.join(exoutput)).rstrip() if exoutput else ''
 
