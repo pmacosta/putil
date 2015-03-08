@@ -32,7 +32,7 @@ Classes
 =======
 
 .. automodule:: putil.exdoc
-    :members: ExDoc
+    :members: ExDoc, ExDocCxt
     :undoc-members:
     :show-inheritance:
 

@@ -14,7 +14,14 @@ import putil.tree
 # Context manager
 ###
 class ExDocCxt(object):	#pylint: disable=R0903
-	""" ExDoc context manager """
+	""" Context manager to simplify exception tracing. For example:
+
+		>>> with putil.exdoc.ExDocCxt() as exdoc_obj:
+		...     test_module()
+		>>> exdoc_obj.get_sphinx_doc('my_func')
+
+	"""
+
 	def __init__(self, _no_print=True):
 		putil.exh.get_or_create_exh_obj(True)
 		self._exdoc_obj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), _empty=True, _no_print=_no_print)

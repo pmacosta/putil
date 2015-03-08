@@ -50,28 +50,26 @@ def exdocobj():
 	""" Trace support module class """
 	if putil.exh.get_exh_obj():
 		putil.exh.del_exh_obj()
-	putil.exh.set_exh_obj(putil.exh.ExHandle(True))
-	obj = exdoc_support_module_1.ExceptionAutoDocClass(10)
-	obj.add(5)
-	obj.subtract(3)
-	obj.divide(5.2)
-	obj.multiply(5.2)
-	obj.value1 = 11
-	print obj.value1
-	obj.value2 = 33
-	print obj.value2
-	obj.value3 = 77
-	print obj.value3
-	del obj.value3
-	obj.temp = 10
-	print obj.temp
-	del obj.temp
-	exdoc_support_module_1.write()
-	exdoc_support_module_1.read()
-	exdoc_support_module_1.probe()
-	obj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), _no_print=True)
-	putil.exh.del_exh_obj()
-	return obj
+	with putil.exdoc.ExDocCxt(_no_print=True) as exdoc_obj:
+		obj = exdoc_support_module_1.ExceptionAutoDocClass(10)
+		obj.add(5)
+		obj.subtract(3)
+		obj.divide(5.2)
+		obj.multiply(5.2)
+		obj.value1 = 11
+		print obj.value1
+		obj.value2 = 33
+		print obj.value2
+		obj.value3 = 77
+		print obj.value3
+		del obj.value3
+		obj.temp = 10
+		print obj.temp
+		del obj.temp
+		exdoc_support_module_1.write()
+		exdoc_support_module_1.read()
+		exdoc_support_module_1.probe()
+	return exdoc_obj
 
 
 @pytest.fixture
@@ -200,3 +198,14 @@ def test_copy_works(exdocobj):	#pylint: disable=W0621
 	assert nobj._depth == exdocobj._depth
 	assert (nobj._exclude == exdocobj._exclude) and (id(nobj._exclude) != id(exdocobj._exclude))
 	assert nobj._no_print == exdocobj._no_print
+
+def test_exdoccxt_errors():	#pylint: disable=W0621
+	""" Test that ExDocCxt context manager correctly handles exceptions """
+	if putil.exh.get_exh_obj():
+		putil.exh.del_exh_obj()
+	with pytest.raises(IOError) as excinfo:
+		with putil.exdoc.ExDocCxt(True):
+			raise IOError('This is bad')
+	assert excinfo.value.message == 'This is bad'
+	assert putil.exh.get_exh_obj() == None
+
