@@ -172,30 +172,32 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		callable_dict = {}
 		prop = False
 		# Try to find "regular" callable
-		try:
-			callable_dict[self._tobj.search_tree(name)[0]] = {'type':'regular'}
-		except:	#pylint: disable=W0702
+		# The trace may have several calls to the same callable, capturing potentially different exception or behaviors, thus capture them all
+		instances = self._tobj.search_tree(name)
+		if instances:
+			callable_dict[name] = {'type':'regular', 'instances':instances}
+		else:
 			# Try to find property callable
 			for action in ['fget', 'fset', 'fdel']:
 				prop_name = '{0}[{1}]'.format(name, action)
-				try:
-					callable_dict[self._tobj.search_tree(prop_name)[0]] = {'type':action}
+				instances = self._tobj.search_tree(prop_name)
+				if instances:
+					callable_dict[prop_name] = {'type':action, 'instances':instances}
 					prop = True
-				except:	#pylint: disable=W0702
-					pass
 		if not callable_dict:
 			raise RuntimeError('Callable not found in exception list: {0}'.format(name))
 		# Create exception table taking into account depth and exclude arguments
 		sep = self._tobj.node_separator
-		for callable_root in callable_dict:
+		for name_dict in callable_dict.values():
 			exlist = []
-			root_hierarchy_level = callable_root.count(sep)
-			for full_node, rebased_node in [(node, sep.join(node.split(sep)[root_hierarchy_level:])) for node in self._tobj.get_subtree(callable_root)]:	#pylint: disable=W0212
-				data = self._tobj._get_data(full_node)	#pylint: disable=W0212
-				if ((depth == None) or ((depth != None) and (rebased_node.count(sep) <= depth))) and ((not exclude) or (not any([item in rebased_node for item in exclude]))) and data:
-					for exc in data:
-						exlist.append(exc)
-			callable_dict[callable_root]['exlist'] = exlist[:]
+			for callable_root in name_dict['instances']:
+				root_hierarchy_level = callable_root[:callable_root.index(name)].count(sep)
+				for full_node, rebased_node in [(node, sep.join(node.split(sep)[root_hierarchy_level:])) for node in self._tobj.get_subtree(callable_root)]:	#pylint: disable=W0212
+					data = self._tobj._get_data(full_node)	#pylint: disable=W0212
+					if ((depth == None) or ((depth != None) and (rebased_node.count(sep) <= depth))) and ((not exclude) or (not any([item in rebased_node for item in exclude]))) and data:
+						for exc in data:
+							exlist.append(exc)
+			name_dict['exlist'] = list(set(exlist[:]))
 		# Generate final output
 		if prop:
 			if len(callable_dict) == 1:

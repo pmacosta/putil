@@ -50,6 +50,9 @@ def exdocobj():
 	""" Trace support module class """
 	if putil.exh.get_exh_obj():
 		putil.exh.del_exh_obj()
+	def multi_level_write():
+		""" Test that multiple calls to the same function with different hierarchy levels get correctly aggregated """
+		exdoc_support_module_1.write(True)
 	with putil.exdoc.ExDocCxt(_no_print=True) as exdoc_obj:
 		obj = exdoc_support_module_1.ExceptionAutoDocClass(10)
 		obj.add(5)
@@ -67,6 +70,7 @@ def exdocobj():
 		print obj.temp
 		del obj.temp
 		exdoc_support_module_1.write()
+		multi_level_write()
 		exdoc_support_module_1.read()
 		exdoc_support_module_1.probe()
 	return exdoc_obj
@@ -128,6 +132,7 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		raise ValueError('General exception #1')
 	def mock_add_nodes3(self):	#pylint: disable=C0111,W0613
 		raise IOError('General exception #2')
+	print str(exdocobj._tobj)
 	assert str(exdocobj._tobj) == \
 		u'test_exdoc.exdocobj\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.ExceptionAutoDocClass.__init__ (*)\n'.encode('utf-8') + \
@@ -145,9 +150,11 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		u'├exdoc_support_module_1.ExceptionAutoDocClass.value3[fset] (*)\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.probe (*)\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.read (*)\n'.encode('utf-8') + \
-		u'└exdoc_support_module_1.write (*)\n'.encode('utf-8') + \
-		u' └exdoc_support_module_1._write\n'.encode('utf-8') + \
-		u'  └exdoc_support_module_1._validate_arguments (*)'.encode('utf-8')
+		u'├exdoc_support_module_1.write (*)\n'.encode('utf-8') + \
+		u'└test_exdoc.exdocobj.multi_level_write\n'.encode('utf-8') + \
+		u' └exdoc_support_module_1.write (*)\n'.encode('utf-8') + \
+		u'  └exdoc_support_module_1._write\n'.encode('utf-8') + \
+		u'   └exdoc_support_module_1._validate_arguments (*)'.encode('utf-8')
 	trace_error_class()
 	exobj2 = putil.exh.get_exh_obj()
 	putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj2, '_no_print':True}, RuntimeError, 'Functions performing actions for multiple properties not supported')

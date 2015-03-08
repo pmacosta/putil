@@ -23,11 +23,12 @@ def _write():
 	_validate_arguments()
 
 
-def write():
+def write(validate=False):
 	""" Module level function #1 """
 	exobj = putil.exh.get_exh_obj() if putil.exh.get_exh_obj() else putil.exh.ExHandle()
 	exobj.add_exception(exname='illegal_write_call', extype=TypeError, exmsg='Cannot call write')
-	_write()
+	if validate:
+		_write()
 
 
 def read():
