@@ -22,8 +22,8 @@ def _get_code_id(obj, file_name=None, offset=0):
 
 def _line_parser(lines):	#pylint: disable=R0914
 	""" Perform all matches on source file line """
-	docstring_start_regexp = re.compile(r'^\s*r?""".*')
-	single_line_docstring_regexp = re.compile(r'^\s*r?""".*""".*$')
+	docstring_start_regexp = re.compile(r'^.*r?""".*')
+	single_line_docstring_regexp = re.compile(r'^.*r?""".*""".*$')
 	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*[\(|\:]')
 	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
 	get_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
@@ -32,14 +32,15 @@ def _line_parser(lines):	#pylint: disable=R0914
 	decorator_regexp = re.compile(r'^(\s*)@(.+)')
 	import_regexp = re.compile(r'^(\s*)import\s+')
 	from_regexp = re.compile(r'^(\s*)from\s+')
-	multi_line_docstring, multi_line_docstring_line_num, cont_flag, cont_lines, cont_line_num = False, 0, False, [], 0
+	multi_line_string, multi_line_string_line_num, cont_flag, cont_lines, cont_line_num = False, 0, False, [], 0
 	for line_num, line in enumerate(lines, start=1):
 		# Multi line docstring support. LINE ORDER IS IMPORTANT!!!
-		docstring_start = docstring_start_regexp.match(line)
-		multi_line_docstring_line_num = line_num if (not multi_line_docstring) and docstring_start else multi_line_docstring_line_num
-		multi_line_docstring = docstring_start if not multi_line_docstring else multi_line_docstring
+		docstring_start = (docstring_start_regexp.match(line) != None) and (not single_line_docstring_regexp.match(line))
+		multi_line_string_line_num = line_num if (not multi_line_string) and docstring_start else multi_line_string_line_num
+		#multi_line_string = docstring_start if not multi_line_string else multi_line_string
+		multi_line_string = docstring_start if not multi_line_string else multi_line_string
 		#
-		if not multi_line_docstring:
+		if not multi_line_string:
 			line = line.rstrip()
 			cont_line_num = line_num if not cont_lines else cont_line_num
 			if (line.endswith('\\') or line.endswith(',')) or cont_flag:
@@ -63,8 +64,8 @@ def _line_parser(lines):	#pylint: disable=R0914
 			namespace_indent, namespace_match = import_match.group(1) if import_match else (from_match.group(1) if from_match else None), import_match or from_match
 			line_match = class_match or func_match or namespace_match
 			yield line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match
-		elif multi_line_docstring:
-			multi_line_docstring = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_docstring_line_num) else (not ('"""' in line)))	#pylint: disable=C0325
+		elif multi_line_string:
+			multi_line_string = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_string_line_num) else (not ('"""' in line)))	#pylint: disable=C0325
 			yield line_num, line, False, False, 0, '', False, 0, '', False, False, False, False, 0, False
 
 

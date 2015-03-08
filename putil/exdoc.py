@@ -21,7 +21,6 @@ class ExDocCxt(object):	#pylint: disable=R0903
 		>>> exdoc_obj.get_sphinx_doc('my_func')
 
 	"""
-
 	def __init__(self, _no_print=True):
 		putil.exh.get_or_create_exh_obj(True)
 		self._exdoc_obj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), _empty=True, _no_print=_no_print)
@@ -36,7 +35,6 @@ class ExDocCxt(object):	#pylint: disable=R0903
 		self._exdoc_obj._exh_obj = copy.copy(putil.exh.get_exh_obj())	#pylint: disable=W0212
 		putil.exh.del_exh_obj()
 		self._exdoc_obj._build_ex_tree()	#pylint: disable=W0212
-
 
 ###
 # Classes
@@ -207,9 +205,9 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 				action = callable_dict[callable_root]['type']
 				desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
 				exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
-				exoutput = [':raises: (when {0}) {1}'.format(desc, exlist[0])] if len(exlist) == 1 else [':raises: (when {0})'.format(desc)]+[' * {0}\n'.format(exname) for exname in exlist]
+				exoutput = ['\n:raises: (when {0}) {1}'.format(desc, exlist[0])] if len(exlist) == 1 else ['\n:raises: (when {0})\n'.format(desc)]+[' * {0}\n'.format(exname) for exname in exlist]
 			else:
-				exoutput = [':raises:']
+				exoutput = ['\n:raises:']
 				for action in ['fset', 'fdel', 'fget']:
 					desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
 					for callable_root in callable_dict:
@@ -218,8 +216,10 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 							exoutput = exoutput+[' * When {0}\n'.format(desc)]+['   * {0}\n'.format(exname) for exname in exlist]
 		else:
 			exlist = sorted(list(set(callable_dict[callable_dict.keys()[0]]['exlist'])))
-			exoutput = [':raises: {0}'.format(exlist[0])] if len(exlist) == 1 else [':raises:']+[' * {0}\n'.format(exname) for exname in exlist]
-		return ('\n'.join(exoutput)).rstrip() if exoutput else ''
+			exoutput = ['\n:raises: {0}'.format(exlist[0])] if len(exlist) == 1 else ['\n:raises:']+[' * {0}\n'.format(exname) for exname in exlist]
+		if exoutput:
+			exoutput[-1] = exoutput[-1].rstrip() + '\n\n'
+		return ('\n'.join(exoutput)) if exoutput else ''
 
 	depth = property(_get_depth, _set_depth, None, doc='Call hierarchy depth')
 	"""

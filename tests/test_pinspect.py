@@ -175,8 +175,8 @@ def test_callables():	# pylint: disable=R0915
 	ref_list.append('pinspect_support_module_3.another_property_action_enclosing_function.fget: func (27)')
 	ref_list.append('pinspect_support_module_3.deleter: func (7)')
 	ref_list.append('   fdel of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
-	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function: func (7)')
-	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function.fget: func (9)')
+	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function: func (16)')
+	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function.fget: func (18)')
 	ref_list.append('   fget of: pinspect_support_module_1.class_namespace_test_enclosing_func.NamespaceTestClosureClass.nameprop')
 	ref_text = '\n'.join(ref_list)
 	if str(obj) != ref_text:

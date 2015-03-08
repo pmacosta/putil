@@ -16,8 +16,7 @@ import putil.pcontracts
 """
 [[[cog
 import trace_ex_pcsv
-exobj_csvfile = trace_ex_pcsv.trace_csvfile(no_print=True)
-exobj_funcs = trace_ex_pcsv.trace_functions(no_print=True)
+exobj = trace_ex_pcsv.trace_module(no_print=True)
 ]]]
 [[[end]]]
 """	#pylint: disable=W0105
@@ -36,7 +35,7 @@ def csv_data_filter(dfilter):
 	:raises:
 	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
 
-	 *  :code:`ValueError ('Argument \`*[argument_name]*\` is empty')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * :code:`ValueError ('Argument \`*[argument_name]*\` is empty')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
 
 	:rtype: None
 	"""
@@ -74,7 +73,7 @@ def write(file_name, data, append=True):
 	(overwriting an existing file with the same name if such file exists)
 	:type	append: boolean
 
-	.. [[[cog cog.out(exobj_funcs.get_sphinx_doc_for_member('write')) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.write')) ]]]
 
 	:raises:
 	 * IOError (File *[file_name]* could not be created: *[reason]*)
@@ -147,7 +146,7 @@ class CsvFile(object):
 	:type	dfilter:	DataFilter
 	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
 
-	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('__init__')) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.__init__')) ]]]
 
 	:raises:
 	 * IOError (File `*[file_name]*` could not be found)
@@ -225,9 +224,14 @@ class CsvFile(object):
 		:param	dfilter:	Data filter. See `DataFilter`_ pseudo-type specification
 		:type	dfilter:	DataFilter
 
-		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('add_dfilter')) ]]]
+		.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.add_dfilter')) ]]]
 
-		:raises: Same as :py:meth:`putil.pcsv.CsvFile.dfilter[fset]`
+		:raises:
+		 * RuntimeError (Argument `dfilter` is not valid)
+
+		 * ValueError (Argument `dfilter` is empty)
+
+		 * ValueError (Column *[column_name]* not found in header)
 
 		.. [[[end]]]
 		"""
@@ -259,7 +263,7 @@ class CsvFile(object):
 		:type	filtered: boolean
 		:rtype:	list
 
-		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('data')) ]]]
+		.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.data')) ]]]
 
 		:raises:
 		 * RuntimeError (Argument `col` is not valid)
@@ -295,7 +299,7 @@ class CsvFile(object):
 		(overwriting an existing file with the same name if such file exists)
 		:type	append: boolean
 
-		.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('write')) ]]]
+		.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.write')) ]]]
 
 		:raises:
 		 * IOError (File *[file_name]* could not be created: *[reason]*)
@@ -356,9 +360,15 @@ class CsvFile(object):
 	:type:		DataFilter. See `DataFilter`_ pseudo-type specification
 	:rtype:		DataFilter or None
 
-	.. [[[cog cog.out(exobj_csvfile.get_sphinx_doc_for_member('dfilter')) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.dfilter')) ]]]
 
-	:raises: Same as :py:meth:`putil.pcsv.CsvFile.add_dfilter`
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `dfilter` is not valid)
+
+	 * ValueError (Argument `dfilter` is empty)
+
+	 * ValueError (Column *[column_name]* not found in header)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105

@@ -174,29 +174,29 @@ def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':['hello', 3]}, TypeError, 'Argument `exclude` is not valid')
 	assert exdocobj.get_sphinx_doc('_not_found_') == ''
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.read')
-	assert tstr == ':raises: TypeError (Cannot call read)'
+	assert tstr == '\n:raises: TypeError (Cannot call read)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write')
-	assert tstr == ':raises:\n * TypeError (Argument is not valid)\n\n * TypeError (Cannot call write)'
+	assert tstr == '\n:raises:\n * TypeError (Argument is not valid)\n\n * TypeError (Cannot call write)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write', depth=1)
-	assert tstr == ':raises: TypeError (Cannot call write)'
+	assert tstr == '\n:raises: TypeError (Cannot call write)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', depth=1)
-	assert tstr == ':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
-					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)\n\n * ValueError (Illegal node name: *[node_name]*)'
+	assert tstr == '\n:raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)\n\n * ValueError (Illegal node name: *[node_name]*)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', depth=0)
-	assert tstr == ':raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
-					' * RuntimeError (Argument `value4` is not valid)'
+	assert tstr == '\n:raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value4` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', exclude=['putil.tree'])
-	assert tstr == ':raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
-					' * RuntimeError (Argument `value4` is not valid)'
+	assert tstr == '\n:raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value4` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', exclude=['add_nodes', '_validate_nodes_with_data'])
-	assert tstr == ':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
-					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)'
+	assert tstr == '\n:raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
+					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value3')
-	assert tstr == ':raises:\n * When assigned\n\n   * TypeError (Argument `value3` is not valid)\n\n * When deleted\n\n   * TypeError (Cannot delete value3)\n\n * When retrieved\n\n   * TypeError (Cannot get value3)'
+	assert tstr == '\n:raises:\n * When assigned\n\n   * TypeError (Argument `value3` is not valid)\n\n * When deleted\n\n   * TypeError (Cannot delete value3)\n\n * When retrieved\n\n   * TypeError (Cannot get value3)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.temp')
-	assert tstr == ':raises: (when assigned) RuntimeError (Argument `value` is not valid)'
+	assert tstr == '\n:raises: (when assigned) RuntimeError (Argument `value` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value2')
-	assert tstr == ':raises: (when assigned)\n * IOError (Argument `value2` is not a file)\n\n * TypeError (Argument `value2` is not valid)'
+	assert tstr == '\n:raises: (when assigned)\n\n * IOError (Argument `value2` is not a file)\n\n * TypeError (Argument `value2` is not valid)\n\n'
 
 def test_copy_works(exdocobj):	#pylint: disable=W0621
 	""" Test __copy__() method works """
