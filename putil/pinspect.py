@@ -20,7 +20,7 @@ def _get_code_id(obj, file_name=None, offset=0):
 	elif file_name:
 		return (file_name, obj.func_code.co_firstlineno+offset)
 
-def _line_parser(lines):	#pylint: disable=R0914
+def _lproc(lines):	#pylint: disable=R0914
 	""" Perform all matches on source file line """
 	docstring_start_regexp = re.compile(r'^.*r?""".*')
 	single_line_docstring_regexp = re.compile(r'^.*r?""".*""".*$')
@@ -33,6 +33,7 @@ def _line_parser(lines):	#pylint: disable=R0914
 	import_regexp = re.compile(r'^(\s*)import\s+')
 	from_regexp = re.compile(r'^(\s*)from\s+')
 	multi_line_string, multi_line_string_line_num, cont_flag, cont_lines, cont_line_num = False, 0, False, [], 0
+	num_lines = len(lines)-1
 	for line_num, line in enumerate(lines, start=1):
 		# Multi line docstring support. LINE ORDER IS IMPORTANT!!!
 		docstring_start = (docstring_start_regexp.match(line) != None) and (not single_line_docstring_regexp.match(line))
@@ -63,10 +64,10 @@ def _line_parser(lines):	#pylint: disable=R0914
 			import_match, from_match = import_regexp.match(line), from_regexp.match(line)
 			namespace_indent, namespace_match = import_match.group(1) if import_match else (from_match.group(1) if from_match else None), import_match or from_match
 			line_match = class_match or func_match or namespace_match
-			yield line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match
+			yield num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match
 		elif multi_line_string:
 			multi_line_string = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_string_line_num) else (not ('"""' in line)))	#pylint: disable=C0325
-			yield line_num, line, False, False, 0, '', False, 0, '', False, False, False, False, 0, False
+			yield num_lines, line_num, line, False, False, 0, '', False, 0, '', False, False, False, False, 0, False
 
 
 def _private_props(obj):
@@ -230,13 +231,13 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			module_lines = file_obj.read().split('\n')
 		# Initialize mini-parser variables
 		indent_stack, import_stack, decorator_num, attr_name, closure_class, closure_class_list = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], [{'level':0, 'type':'module', 'line':None}], None, '', False, []
-		for line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match in _line_parser(module_lines):
+		for num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match in _lproc(module_lines):
 			# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
 			attr_name = attr_name if attr_name else '(getter)' if get_match else ('(setter)' if set_match else ('(deleter)' if del_match else ''))
 			decorator_num = line_num if decorator_match and (decorator_num == None) else decorator_num
 			element_num = decorator_num if decorator_num else line_num
 			indent = len(_replace_tabs(class_indent if class_match else (func_indent if func_match else namespace_indent))) if line_match else -1
-			if namespace_match:
+			if (namespace_match) and (not closure_class):
 				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
 					import_stack.pop()
 				import_stack.append({'level':indent, 'line':line.lstrip(), 'type':'not module'})
@@ -265,7 +266,9 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				start_space, content = self._whitespace_regexp.match(line).groups()
 				for class_dict in closure_class_list:
 					start_space_length = len(start_space)
-					if class_dict['code'] and content and ((start_space_length <= class_dict['indent']) or (start_space_length == 0)):
+					if class_dict['code'] and ((content and ((start_space_length <= class_dict['indent']) or (start_space_length == 0))) or ((line_num == num_lines) and (start_space_length > class_dict['indent']))):
+						if (line_num == num_lines) and (start_space_length > class_dict['indent']):
+							class_dict['code'].append(line[class_dict['indent']:])
 						class_dict['code'].append(class_dict['eval'])
 						self._closure_class_obj_list.append({'code':'\n'.join(class_dict['namespace']+class_dict['code']), 'file':class_dict['file'], 'name':class_dict['name'], 'lineno':class_dict['lineno']-len(class_dict['namespace'])})
 						closure_class_list.pop()
@@ -322,8 +325,37 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				self._trace_class(class_obj)
 			# Closure class tracing, exec creates tvar variable which contains an unbound object of the closure class
 			for class_obj in self._closure_class_obj_list:
-				exec class_obj['code'] in locals()	#pylint: disable=W0122
-				self._trace_class(tvar, class_obj['file'], class_obj['name'], class_obj['lineno']-1)	#pylint: disable=E0602
+				# The namespace recreating is inherently brittle because the imports can be conditional on variables, which affects the importing dynamically at runtime.
+				# The approach is to try with all the (potentiall conditional) imports first and if there is an import error, remove the offending import and try again
+				error = True
+				lines_removed = 0
+				while error:
+					try:
+						#print '----'
+						#print class_obj['code']
+						#print '----'
+						exec class_obj['code'] in locals()	#pylint: disable=W0122
+						error = False
+					except ImportError as exobj:
+						module_name = exobj.message.split(' ')[-1]	#pylint: disable=E1101
+					except:
+						raise
+					if error:
+						# Remove "offending" import
+						new_code = []
+						in_class = False
+						for line in class_obj['code'].split('\n'):
+							in_class = line.startswith('class') if not in_class else in_class
+							namespace_line = line.startswith('import ') or line.startswith('from ') if not in_class else False
+							if namespace_line:
+								tokens = re.findall(r'[\w\.]+', line)
+								modules = tokens[1:] if tokens[0] == 'import' else [tokens[1]]
+								if module_name in modules:
+									lines_removed += 1
+									continue
+							new_code.append(line)
+						class_obj['code'] = '\n'.join(new_code)
+				self._trace_class(tvar, class_obj['file'], class_obj['name'], class_obj['lineno']-1+lines_removed)	#pylint: disable=E0602
 
 	def trace(self, obj):
 		"""

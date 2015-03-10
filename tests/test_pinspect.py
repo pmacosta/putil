@@ -12,6 +12,7 @@ import sys
 import copy
 import mock
 import types
+import pytest
 import random
 import string
 import inspect
@@ -239,3 +240,46 @@ def test_eq():
 	obj2.trace(sys.modules['pinspect_support_module_1'])
 	obj3.trace(sys.modules['putil.test'])
 	assert (obj1 == obj2) and (obj1 != obj3)
+
+
+def test_namespace_resolution():
+	""" Test correct handling of import statements that cause errors """
+	import pinspect_support_module_5	#pylint: disable=F0401,W0612
+	obj = putil.pinspect.Callables()
+	obj.trace(sys.modules['pinspect_support_module_5'])
+	ref_list = list()
+	ref_list.append('Modules:')
+	ref_list.append('   pinspect_support_module_5')
+	ref_list.append('Classes:')
+	ref_list.append('   pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass')
+	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function: func (14)')
+	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.__init__: meth (18)')
+	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._get_data: meth (21)')
+	ref_list.append('   fget of: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data')
+	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data: meth (24)')
+	ref_list.append('   fset of: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data')
+	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data: prop')
+	ref_list.append('   fset: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data')
+	ref_list.append('   fget: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._get_data')
+	ref_text = '\n'.join(ref_list)
+	if str(obj) != ref_text:
+		print str(obj)
+		print '---[Differing lines]---'
+		actual_list = str(obj).split('\n')
+		for actual_line, ref_line in zip(actual_list, ref_list):
+			if actual_line != ref_line:
+				print 'Actual line...: {0}'.format(actual_line)
+				print 'Reference line: {0}'.format(ref_line)
+				break
+		print '-----------------------'
+		if len(actual_list) != len(ref_list):
+			print '{0} longer than {1}'.format('Actual' if len(actual_list) > len(ref_list) else 'Reference', 'reference' if len(actual_list) > len(ref_list) else 'actual')
+			print_list = actual_list if len(actual_list) > len(ref_list) else ref_list
+			print print_list[min([len(actual_list), len(ref_list)]):]
+			print '-----------------------'
+	assert str(obj) == ref_text
+	import pinspect_support_module_6	#pylint: disable=F0401,W0612
+	obj = putil.pinspect.Callables()
+	with pytest.raises(ValueError) as excinfo:
+		obj.trace(sys.modules['pinspect_support_module_6'])
+	assert excinfo.value.message == 'math domain error'
