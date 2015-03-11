@@ -10,7 +10,7 @@ import putil.exh
 import putil.exdoc
 
 
-def trace_module(no_print=False):
+def trace_module(no_print=True):
 	""" Trace tree module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
 		pytest.main('-s -vv -x ../tests/test_tree.py')
@@ -27,4 +27,4 @@ def trace_module(no_print=False):
 
 
 if __name__ == '__main__':
-	trace_module()
+	trace_module(False)

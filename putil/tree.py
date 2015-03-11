@@ -14,7 +14,7 @@ import putil.exh
 """
 [[[cog
 import trace_ex_tree
-exobj_tree = trace_ex_tree.trace_tree(no_print=True)
+exobj_tree = trace_ex_tree.trace_module(no_print=True)
 ]]]
 [[[end]]]
 """	#pylint: disable=W0105
@@ -123,7 +123,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	def _delete_subtree(self, nodes):
 		""" Delete subtree private method (no argument validation and usage of getter/setter private methods for speed) """
 		nodes = nodes if isinstance(nodes, list) else [nodes]
-		for parent, node in [(self._db[node]['parent'], node) for node in nodes if self._node_in_tree(node)]:
+		for parent, node in [(self._db[node]['parent'], node) for node in nodes if self._node_name_in_tree(node)]:
 			# Delete link to parent (if not root node)
 			del_list = self._get_subtree(node)
 			if parent:
@@ -168,6 +168,11 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return self._db[name]['parent']
 
 	def _node_in_tree(self, name):	#pylint: disable=C0111
+		self._exh.add_exception(exname='node_not_in_tree', extype=RuntimeError, exmsg='Node *[name]* not in tree')
+		self._exh.raise_exception_if(exname='node_not_in_tree', condition=name not in self._db, edata={'field':'name', 'value':name})
+		return True
+
+	def _node_name_in_tree(self, name):	#pylint: disable=C0111
 		self._exh.add_exception(exname='node_not_in_tree', extype=RuntimeError, exmsg='Node *[node_name]* not in tree')
 		self._exh.raise_exception_if(exname='node_not_in_tree', condition=name not in self._db, edata={'field':'node_name', 'value':name})
 		return True
@@ -220,14 +225,13 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	def _split_node_name(self, name, root_name=None):	#pylint: disable=C0111,R0201
 		return [element.strip() for element in name.strip().split(self._node_separator)][0 if not root_name else self._root_hierarchy_length:]
 
-	def _validate_node_name(self, var_value, var_name='name'):
+	def _validate_node_name(self, var_value):	#pylint: disable=R0201
 		""" NodeName pseudo-type validation """
 		var_values = var_value if isinstance(var_value, list) else [var_value]
-		self._exh.add_exception(exname='illegal_node_name', extype=RuntimeError, exmsg='Argument `*[var_name]*` is not valid')
 		for var_value in var_values:
-			self._exh.raise_exception_if(exname='illegal_node_name',
-								   condition=(not isinstance(var_value, str)) or (isinstance(var_value, str) and ((' ' in var_value) or any([element.strip() == '' for element in var_value.strip().split(self._node_separator)]))),
-								   edata={'field':'var_name', 'value':var_name})
+			if (not isinstance(var_value, str)) or (isinstance(var_value, str) and ((' ' in var_value) or any([element.strip() == '' for element in var_value.strip().split(self._node_separator)]))):
+				return True
+		return False
 
 	def _validate_nodes_with_data(self, names):
 		""" NodeWithData pseudo-type validation """
@@ -248,7 +252,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		**nodes** with the same node name, in their order of appearance, in addition to any existing node data if the node is already present in the tree.
 		:type	nodes: NodesWithData
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('add_nodes')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.add_nodes')) ]]]
 
 		:raises:
 		 * RuntimeError (Argument `nodes` is not valid)
@@ -308,12 +312,14 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	recursive: Flag that indicates whether the collapse operation should be performed on the whole sub-tree (True) or whether it should stop upon reaching the first node
 		 where the collapsing condition is not satisfied (False)
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('collapse_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.collapse_subtree')) ]]]
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
 
-		 * RuntimeError (Node *[node_name]* not in tree)
+		 * RuntimeError (Argument `recursive` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 
@@ -339,7 +345,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		``root.branch1.leaf1`` is collapsed because it only has one child (``root.branch1.leaf1.subleaf1``) and no data; ``root.branch1.leaf2`` is not collapsed because although it has one child (``root.branch1.leaf2.subleaf2``) \
 		it does have data associated with it, *'Hello world!'*
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._exh.add_exception(exname='illegal_recursive', extype=RuntimeError, exmsg='Argument `recursive` is not valid')
 		self._exh.raise_exception_if(exname='illegal_recursive', condition=not isinstance(recursive, bool))
 		self._node_in_tree(name)
@@ -354,7 +361,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	dest_name: Root node of the sub-tree to copy to. See `NodeName`_ pseudo-type specification
 		:type	dest_name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('copy_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.copy_subtree')) ]]]
 
 		:raises:
 		 * RuntimeError (Argument `dest_node` is not valid)
@@ -363,7 +370,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		 * RuntimeError (Illegal root in destination node)
 
-		 * RuntimeError (Node *[node_name]* not in tree)
+		 * RuntimeError (Node *[source_node]* not in tree)
 
 		.. [[[end]]]
 
@@ -393,11 +400,14 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			  └subleaf2
 
 		"""
-		self._validate_node_name(source_node, 'source_node')
-		self._validate_node_name(dest_node, 'dest_node')
-		self._exh.add_exception(exname='illegal_dest_node', extype=RuntimeError, exmsg='Illegal root in destination node')
-		self._node_in_tree(source_node)
-		self._exh.raise_exception_if(exname='illegal_dest_node', condition=not dest_node.startswith(self.root_name+self._node_separator))
+		self._exh.add_exception(exname='illegal_source_node', extype=RuntimeError, exmsg='Argument `source_node` is not valid')
+		self._exh.add_exception(exname='source_node_not_in_tree', extype=RuntimeError, exmsg='Node *[source_node]* not in tree')
+		self._exh.add_exception(exname='illegal_dest_node1', extype=RuntimeError, exmsg='Argument `dest_node` is not valid')
+		self._exh.add_exception(exname='illegal_dest_node2', extype=RuntimeError, exmsg='Illegal root in destination node')
+		self._exh.raise_exception_if(exname='illegal_source_node', condition=self._validate_node_name(source_node))
+		self._exh.raise_exception_if(exname='illegal_dest_node1', condition=self._validate_node_name(dest_node))
+		self._exh.raise_exception_if(exname='source_node_not_in_tree', condition=source_node not in self._db, edata={'field':'source_node', 'value':source_node})
+		self._exh.raise_exception_if(exname='illegal_dest_node2', condition=not dest_node.startswith(self.root_name+self._node_separator))
 		for node in self._get_subtree(source_node):
 			self._db[node.replace(source_node, dest_node, 1)] = {'parent':self._db[node]['parent'].replace(source_node, dest_node, 1),
 														         'children':[child.replace(source_node, dest_node, 1) for child in self._db[node]['children']],
@@ -414,7 +424,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName or list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.delete_subtree')) ]]]
 
 		:raises:
 		 * RuntimeError (Argument `nodes` is not valid)
@@ -441,7 +451,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			  └subleaf2
 
 		"""
-		self._validate_node_name(nodes, 'nodes')
+		self._exh.add_exception(exname='illegal_nodes', extype=RuntimeError, exmsg='Argument `nodes` is not valid')
+		self._exh.raise_exception_if(exname='illegal_nodes', condition=self._validate_node_name(nodes))
 		self._delete_subtree(nodes)
 
 	def delete_prefix(self, name):
@@ -451,7 +462,13 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	nodes: Prefix to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('delete_prefix')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.delete_prefix')) ]]]
+
+		:raises:
+		 * RuntimeError (Argument `name` is not a valid prefix)
+
+		 * RuntimeError (Argument `name` is not valid)
+
 		.. [[[end]]]
 
 		For example:
@@ -481,8 +498,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			 └anode
 			  └leaf (*)
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
 		self._exh.add_exception(exname='illegal_prefix', extype=RuntimeError, exmsg='Argument `name` is not a valid prefix')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._exh.raise_exception_if(exname='illegal_prefix', condition=(not self.root_name.startswith(name)) or (self.root_name == name))
 		self._delete_prefix(name)
 
@@ -493,9 +511,12 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Ending hierarchy node whose sub-trees are to be flattened. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('flatten_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.flatten_subtree')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 
@@ -544,7 +565,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			  └another_subleaf2
 
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		parent = self._db[name]['parent']
 		if (parent) and (not self._db[name]['data']):
@@ -563,13 +585,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_children')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_children')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return sorted(self._db[name]['children'])
 
@@ -581,13 +607,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeNames
 		:rtype: any type or list of objects of any type
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_data')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_data')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return self._db[name]['data']
 
@@ -599,16 +629,19 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_leafs')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_leafs')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return [node for node in self._get_subtree(name) if self.is_leaf(node)]
-
 
 	def get_node(self, name):	#pylint: disable=C0111
 		"""
@@ -624,13 +657,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: string
 		:rtype: dictionary
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_node')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return self._db[name]
 
@@ -642,13 +679,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_children')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_node_children')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return [self._db[child] for child in self._db[name]['children']]
 
@@ -660,13 +701,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: dictionary
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_node_parent')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_node_parent')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
@@ -678,9 +723,12 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('get_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_subtree')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 
@@ -698,7 +746,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			['root.branch1', 'root.branch1.leaf1', 'root.branch1.leaf1.subleaf1', 'root.branch1.leaf2', 'root.branch1.leaf2.subleaf2']
 
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return self._get_subtree(name)
 
@@ -710,13 +759,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: boolean
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_root')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.is_root')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return not self._db[name]['parent']
 
@@ -728,13 +781,14 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype	data: boolean
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('in_tree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.in_tree')) ]]]
 
 		:raises: RuntimeError (Argument `name` is not valid)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		return name in self._db
 
 	def is_leaf(self, name):	#pylint: disable=C0111
@@ -745,13 +799,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: boolean
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('is_leaf')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.is_leaf')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		return not self._db[name]['children']
 
@@ -762,9 +820,12 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: New root node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('make_root')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.make_root')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 
@@ -787,7 +848,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			 └subleaf2
 
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		if (name != self.root_name) and (self._node_in_tree(name)):
 			for key in [node for node in self.nodes if node.find(name) != 0]:
 				del self._db[key]
@@ -802,13 +864,17 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('print_node')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.print_node')) ]]]
 
-		:raises: Same as :py:meth:`putil.tree.Tree.collapse_subtree`
+		:raises:
+		 * RuntimeError (Argument `name` is not valid)
+
+		 * RuntimeError (Node *[name]* not in tree)
 
 		.. [[[end]]]
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._node_in_tree(name)
 		node = self._db[name]
 		children = [self._split_node_name(child)[-1] for child in node['children']] if node['children'] else node['children']
@@ -823,7 +889,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Node name to rename. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('rename_node')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.rename_node')) ]]]
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -834,9 +900,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		 * RuntimeError (Argument `new_name` is not valid)
 
-		 * RuntimeError (Node *[node_name]* already exists)
+		 * RuntimeError (Node *[name]* not in tree)
 
-		 * RuntimeError (Node *[node_name]* not in tree)
+		 * RuntimeError (Node *[new_name]* already exists)
 
 		.. [[[end]]]
 
@@ -861,14 +927,16 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			└branch2
 
 		"""
-		self._validate_node_name(name)
-		self._validate_node_name(new_name, 'new_name')
-		self._exh.add_exception(exname='new_name_exists', extype=RuntimeError, exmsg='Node *[node_name]* already exists')
-		self._exh.add_exception(exname='illegal_new_name', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.add_exception(exname='illegal_new_name1', extype=RuntimeError, exmsg='Argument `new_name` is not valid')
+		self._exh.add_exception(exname='new_name_exists', extype=RuntimeError, exmsg='Node *[new_name]* already exists')
+		self._exh.add_exception(exname='illegal_new_name2', extype=RuntimeError, exmsg='Argument `new_name` has an illegal root node')
 		self._exh.add_exception(exname='illegal_new_root_name', extype=RuntimeError, exmsg='Argument `new_name` is an illegal root node name')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
+		self._exh.raise_exception_if(exname='illegal_new_name1', condition=self._validate_node_name(new_name))
 		self._node_in_tree(name)
-		self._exh.raise_exception_if(exname='new_name_exists', condition=self.in_tree(new_name) and (name != self.root_name), edata={'field':'node_name', 'value':new_name})
-		self._exh.raise_exception_if(exname='illegal_new_name', condition=(name.split(self._node_separator)[:-1] != new_name.split(self._node_separator)[:-1]) and (name != self.root_name))
+		self._exh.raise_exception_if(exname='new_name_exists', condition=self.in_tree(new_name) and (name != self.root_name), edata={'field':'new_name', 'value':new_name})
+		self._exh.raise_exception_if(exname='illegal_new_name2', condition=(name.split(self._node_separator)[:-1] != new_name.split(self._node_separator)[:-1]) and (name != self.root_name))
 		old_hierarchy_length = len(name.split(self._node_separator))
 		new_hierarchy_length = len(new_name.split(self._node_separator))
 		self._exh.raise_exception_if(exname='illegal_new_root_name', condition=(name == self.root_name) and (old_hierarchy_length < new_hierarchy_length))
@@ -881,7 +949,10 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Name to search for. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc_for_member('search_tree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.search_tree')) ]]]
+
+		:raises: RuntimeError (Argument `name` is not valid)
+
 		.. [[[end]]]
 
 		For example:
@@ -905,7 +976,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			['root/anode', 'root/bnode/anode', 'root/cnode/anode', 'root/cnode/anode/leaf']
 
 		"""
-		self._validate_node_name(name)
+		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
+		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		return self._search_tree(name)
 
 	# Managed attributes

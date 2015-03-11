@@ -88,16 +88,6 @@ def default_trees():	#pylint: disable=R0914
 class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	""" Tests for CsvFile class """
 
-	def test_node_name(self):	#pylint: disable=C0103,R0201
-		""" Test for node_name custom PyContract contract """
-		obj = putil.tree.Tree()
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':5}, RuntimeError, 'Argument `name` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a. b'}, RuntimeError, 'Argument `name` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj._validate_node_name, {'var_value':'a.b..c', 'var_name':'node'}, RuntimeError, 'Argument `node` is not valid'))
-		obj._validate_node_name('a.b.c.d')	#pylint: disable=W0212
-		assert test_list == len(test_list)*[True]
-
 	def test_node_names(self):	#pylint: disable=C0103,R0201
 		""" Test for node_names custom PyContract contract """
 		obj = putil.tree.Tree()
@@ -279,14 +269,12 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		""" Test that copy_subtree() method raises the right exceptions """
 		obj = putil.tree.Tree()
 		obj.add_nodes([{'name':'root', 'data':list()}, {'name':'root.leaf1', 'data':5}, {'name':'root.leaf2', 'data':7}])
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':5, 'dest_node':'root.x'}, RuntimeError, 'Argument `source_node` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'.x.y', 'dest_node':'root.x'}, RuntimeError, 'Argument `source_node` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'hello', 'dest_node':'root.x'}, RuntimeError, 'Node hello not in tree'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':5}, RuntimeError, 'Argument `dest_node` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':'x..y'}, RuntimeError, 'Argument `dest_node` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':'teto.leaf2'}, RuntimeError, 'Illegal root in destination node'))
-		assert test_list == len(test_list)*[True]
+		putil.test.assert_exception(obj.copy_subtree, {'source_node':5, 'dest_node':'root.x'}, RuntimeError, 'Argument `source_node` is not valid')
+		putil.test.assert_exception(obj.copy_subtree, {'source_node':'.x.y', 'dest_node':'root.x'}, RuntimeError, 'Argument `source_node` is not valid')
+		putil.test.assert_exception(obj.copy_subtree, {'source_node':'hello', 'dest_node':'root.x'}, RuntimeError, 'Node hello not in tree')
+		putil.test.assert_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':5}, RuntimeError, 'Argument `dest_node` is not valid')
+		putil.test.assert_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':'x..y'}, RuntimeError, 'Argument `dest_node` is not valid')
+		putil.test.assert_exception(obj.copy_subtree, {'source_node':'root.leaf1', 'dest_node':'teto.leaf2'}, RuntimeError, 'Illegal root in destination node')
 
 	def test_copy_subtree_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that copy_subtree() method works """
@@ -524,16 +512,14 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_rename_node_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the method rename_node() raises the appropriate exceptions """
 		_, _, _, tree4 = default_trees
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':5, 'new_name':'root.x'}, RuntimeError, 'Argument `name` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'a.b..c', 'new_name':'root.x'}, RuntimeError, 'Argument `name` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'a.b.c', 'new_name':'root.x'}, RuntimeError, 'Node a.b.c not in tree'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':5}, RuntimeError, 'Argument `new_name` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':'a..b'}, RuntimeError, 'Argument `new_name` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root.branch1', 'new_name':'root.branch1'}, RuntimeError, 'Node root.branch1 already exists'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root.branch1', 'new_name':'a.b.c'}, RuntimeError, 'Argument `new_name` has an illegal root node'))
-		test_list.append(putil.test.trigger_exception(tree4.rename_node, {'name':'root', 'new_name':'dummy.hier'}, RuntimeError, 'Argument `new_name` is an illegal root node name'))
-		assert test_list == len(test_list)*[True]
+		putil.test.assert_exception(tree4.rename_node, {'name':5, 'new_name':'root.x'}, RuntimeError, 'Argument `name` is not valid')
+		putil.test.assert_exception(tree4.rename_node, {'name':'a.b..c', 'new_name':'root.x'}, RuntimeError, 'Argument `name` is not valid')
+		putil.test.assert_exception(tree4.rename_node, {'name':'a.b.c', 'new_name':'root.x'}, RuntimeError, 'Node a.b.c not in tree')
+		putil.test.assert_exception(tree4.rename_node, {'name':'root', 'new_name':5}, RuntimeError, 'Argument `new_name` is not valid')
+		putil.test.assert_exception(tree4.rename_node, {'name':'root', 'new_name':'a..b'}, RuntimeError, 'Argument `new_name` is not valid')
+		putil.test.assert_exception(tree4.rename_node, {'name':'root.branch1', 'new_name':'root.branch1'}, RuntimeError, 'Node root.branch1 already exists')
+		putil.test.assert_exception(tree4.rename_node, {'name':'root.branch1', 'new_name':'a.b.c'}, RuntimeError, 'Argument `new_name` has an illegal root node')
+		putil.test.assert_exception(tree4.rename_node, {'name':'root', 'new_name':'dummy.hier'}, RuntimeError, 'Argument `new_name` is an illegal root node name')
 
 	def test_rename_node_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the method rename_node() works as expected """
