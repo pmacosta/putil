@@ -113,8 +113,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		return cobj
 
 	def __str__(self):
-		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}\nChecked.: {4}'.format(key, self._ex_dict[key]['function'], _ex_type_str(self._ex_dict[key]['type']), \
-																							self._ex_dict[key]['msg'], self._ex_dict[key]['checked']) for key in sorted(self._ex_dict.keys())]
+		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}'.format(key, self._ex_dict[key]['function'], _ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg']) for key in sorted(self._ex_dict.keys())]
 		return '\n\n'.join(ret)
 
 	def _exceptions_db(self):	#pylint: disable-msg=R0201
@@ -285,7 +284,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not isinstance(exmsg, str):
 			raise TypeError('Argument `exmsg` is not valid')
 		ex_data = self._get_ex_data(exname)
-		self._ex_dict[ex_data['ex_name']] = {'function':ex_data['func_name'], 'type':extype, 'msg':exmsg, 'checked':False}
+		self._ex_dict[ex_data['ex_name']] = {'function':ex_data['func_name'], 'type':extype, 'msg':exmsg}
 
 	def raise_exception_if(self, exname, condition, edata=None):
 		"""
@@ -319,7 +318,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		eobj = self._get_exception_by_name(exname)
 		if condition:
 			self._raise_exception(eobj, edata)
-		eobj['checked'] = True
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')

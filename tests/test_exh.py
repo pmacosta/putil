@@ -145,46 +145,46 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 			erec = cdb[exname]
 			if re.compile(r'\d+/first_exception').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func1')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception')
 			elif re.compile(r'\d+/second_exception').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func2')) \
-					and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception') and (erec['checked'] == False)
+					and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception')
 			elif re.compile(r'\d+/third_exception').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func2')) \
-					and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception') and (erec['checked'] == False)
+					and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception')
 			elif re.compile(r'\d+/setter_exception').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(setter)')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception')
 			elif re.compile(r'\d+/getter_exception').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(getter)')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception')
 			elif re.compile(r'\d+/deleter_exception').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception')
 			elif re.compile(r'\d+/total_exception_7').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func7')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7')
 			elif re.compile(r'\d+/total_exception_8').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func8')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8')
 			elif re.compile(r'\d+/total_exception_9').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func9')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9')
 			elif re.compile(r'\d+/total_exception_10').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func10')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10')
 			elif re.compile(r'\d+/total_exception_11').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func11')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11')
 			elif re.compile(r'\d+/total_exception_12').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func12')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12')
 			elif re.compile(r'\d+/total_exception_13').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func13')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13')
 			elif re.compile(r'\d+/total_exception_14').match(exname):
 				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func14')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14') and (erec['checked'] == False)
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14')
 			else:
 				assert False
 		# Test that function IDs are unique
@@ -236,9 +236,9 @@ def test_raise_exception():
 		assert False
 	for exname, erec in cdb.items():
 		if exname.endswith('/test_exh.test_raise_exception.func3.my_exception1'):
-			assert erec['function'].endswith('test_exh.test_raise_exception.func3') and (erec['type'] == RuntimeError) and (erec['msg'] == 'This is an exception') and (erec['checked'] == True)
+			assert erec['function'].endswith('test_exh.test_raise_exception.func3') and (erec['type'] == RuntimeError) and (erec['msg'] == 'This is an exception')
 		if exname.endswith('/test_exh.test_raise_exception.func3.my_exception2'):
-			assert erec['function'].endswith('test_exh.test_raise_exception.func3') and (erec['type'] == IOError) and (erec['msg'] == 'This is an exception with a *[file_name]* field') and (erec['checked'] == True)
+			assert erec['function'].endswith('test_exh.test_raise_exception.func3') and (erec['type'] == IOError) and (erec['msg'] == 'This is an exception with a *[file_name]* field')
 
 
 def test_exceptions_db():
@@ -335,9 +335,9 @@ def test_str():
 			str_out.append('\n'.join(str_list))
 		#
 		str_check = list()
-		str_check.append('Name....: test_exh.test_str.func7/my_exception7\nFunction: '+('test_exh.test_str.func7' if full_fname else 'None')+'\nType....: RuntimeError\nMessage.: This is exception #7\nChecked.: True')
-		str_check.append('Name....: test_exh.test_str.func8/my_exception8\nFunction: '+('test_exh.test_str.func8' if full_fname else 'None')+'\nType....: ValueError\nMessage.: This is exception #8, *[fname]*\nChecked.: False')
-		str_check.append('Name....: test_exh.test_str.func8/my_exception9\nFunction: '+('test_exh.test_str.func8' if full_fname else 'None')+'\nType....: TypeError\nMessage.: This is exception #9\nChecked.: False')
+		str_check.append('Name....: test_exh.test_str.func7/my_exception7\nFunction: '+('test_exh.test_str.func7' if full_fname else 'None')+'\nType....: RuntimeError\nMessage.: This is exception #7')
+		str_check.append('Name....: test_exh.test_str.func8/my_exception8\nFunction: '+('test_exh.test_str.func8' if full_fname else 'None')+'\nType....: ValueError\nMessage.: This is exception #8, *[fname]*')
+		str_check.append('Name....: test_exh.test_str.func8/my_exception9\nFunction: '+('test_exh.test_str.func8' if full_fname else 'None')+'\nType....: TypeError\nMessage.: This is exception #9')
 		assert sorted(str_out) == sorted(str_check)
 
 
@@ -367,5 +367,5 @@ def test_copy():
 	assert (source_obj._ex_dict == dest_obj._ex_dict) and (id(source_obj._ex_dict) != id(dest_obj._ex_dict))
 	assert (source_obj._callables_obj == dest_obj._callables_obj) and (id(source_obj._callables_obj) != id(dest_obj._callables_obj))
 	assert source_obj._full_fname == dest_obj._full_fname
-	assert source_obj.exceptions_db == dest_obj.exceptions_db
+	assert sorted(source_obj.exceptions_db) == sorted(dest_obj.exceptions_db)
 
