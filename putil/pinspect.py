@@ -20,12 +20,13 @@ def _get_code_id(obj, file_name=None, offset=0):
 	elif file_name:
 		return (file_name, obj.func_code.co_firstlineno+offset)
 
-def _lproc(lines):	#pylint: disable=R0914
+def _line_tokenizer(lines):	#pylint: disable=R0914
 	""" Perform all matches on source file line """
 	docstring_start_regexp = re.compile(r'^.*r?""".*')
 	single_line_docstring_regexp = re.compile(r'^.*r?""".*""".*$')
 	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*[\(|\:]')
 	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
+	prop_regexp = re.compile(r'^(\s*)(\w+)\s*=\s*property\(')
 	get_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
 	set_prop_regexp = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
 	del_prop_regexp = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
@@ -59,15 +60,18 @@ def _lproc(lines):	#pylint: disable=R0914
 			class_indent, class_name = class_match.groups() if class_match else (None, None)
 			func_match = func_regexp.match(line)
 			func_indent, func_name = func_match.groups() if func_match else (None, None)
+			prop_match = prop_regexp.match(line)
+			prop_indent, prop_name = prop_match.groups() if prop_match else (None, None)
 			get_match, set_match, del_match = get_prop_regexp.match(line), set_prop_regexp.match(line), del_prop_regexp.match(line)
 			decorator_match = decorator_regexp.match(line)
 			import_match, from_match = import_regexp.match(line), from_regexp.match(line)
 			namespace_indent, namespace_match = import_match.group(1) if import_match else (from_match.group(1) if from_match else None), import_match or from_match
-			line_match = class_match or func_match or namespace_match
-			yield num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match
+			line_match = class_match or func_match or namespace_match or prop_match
+			yield num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, prop_match, prop_indent, prop_name, get_match, set_match, del_match, decorator_match,\
+				namespace_indent, namespace_match
 		elif multi_line_string:
 			multi_line_string = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_string_line_num) else (not ('"""' in line)))	#pylint: disable=C0325
-			yield num_lines, line_num, line, False, False, 0, '', False, 0, '', False, False, False, False, 0, False
+			yield num_lines, line_num, line, False, False, 0, None, False, 0, None, False, 0, None, False, False, False, False, 0, False
 
 
 def _private_props(obj):
@@ -231,18 +235,19 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			module_lines = file_obj.read().split('\n')
 		# Initialize mini-parser variables
 		indent_stack, import_stack, decorator_num, attr_name, closure_class, closure_class_list = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], [{'level':0, 'type':'module', 'line':None}], None, '', False, []
-		for num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, get_match, set_match, del_match, decorator_match, namespace_indent, namespace_match in _lproc(module_lines):
+		for num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, prop_match, prop_indent, prop_name, get_match, set_match, del_match, decorator_match,\
+				namespace_indent, namespace_match in _line_tokenizer(module_lines):
 			# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
 			attr_name = attr_name if attr_name else '(getter)' if get_match else ('(setter)' if set_match else ('(deleter)' if del_match else ''))
 			decorator_num = line_num if decorator_match and (decorator_num == None) else decorator_num
 			element_num = decorator_num if decorator_num else line_num
-			indent = len(_replace_tabs(class_indent if class_match else (func_indent if func_match else namespace_indent))) if line_match else -1
+			indent = len(_replace_tabs(class_indent if class_match else (func_indent if func_match else (prop_indent if prop_match else namespace_indent)))) if line_match else -1
 			if (namespace_match) and (not closure_class):
 				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
 					import_stack.pop()
 				import_stack.append({'level':indent, 'line':line.lstrip(), 'type':'not module'})
 				continue
-			elif class_match or func_match:
+			elif class_match or func_match or prop_match:
 				# Remove all blocks at the same level to find out the indentation "parent"
 				while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 					indent_stack.pop()
@@ -254,9 +259,11 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						namespace_code = [import_dict['line'] for import_dict in import_stack[1:]]
 						eval_line = 'tvar = {0}'.format(class_name)
 						closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
-				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], class_name if class_name else func_name, attr_name)
-				if func_name and (element_full_name not in self._callables_db):
-					self._callables_db[element_full_name] = {'type':'meth' if indent_stack[-1]['type'] == 'class' else 'func', 'code_id':(module_file_name, element_num), 'attr':None, 'link':[]}
+					self._callables_db[full_class_name] = {'type':'class', 'code_id':(module_file_name, line_num), 'attr':None, 'link':[]}
+					self._reverse_callables_db[(module_file_name, element_num)] = full_class_name
+				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], prop_name if prop_match else (class_name if class_name else func_name), attr_name)
+				if (prop_match or func_name) and (element_full_name not in self._callables_db):
+					self._callables_db[element_full_name] = {'type':'prop' if prop_match else ('meth' if indent_stack[-1]['type'] == 'class' else 'func'), 'code_id':(module_file_name, element_num), 'attr':None, 'link':[]}
 					self._reverse_callables_db[(module_file_name, element_num)] = element_full_name
 				indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 				# Reset property variables
@@ -311,7 +318,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		class_name = closure_name if closure_name else '.'.join([obj.__module__, obj.__name__])
 		self._class_names.add(class_name)	# Classes are only traced once because modules are only traced once, no need to check if they are already traced
 		for prop_name, prop_obj in [('.'.join([class_name, prop_name]), prop_obj) for prop_name, prop_obj in inspect.getmembers(obj) if isinstance(prop_obj, property)]:
-			self._callables_db[prop_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':[]}
+			if prop_name not in self._callables_db:
+				self._callables_db[prop_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':[]}
 			self._get_prop_components(prop_name, prop_obj, closure_file_name, closure_offset)	# Find out which callables re the setter/getter/deleter of properties
 
 	def _trace_module(self, obj):
