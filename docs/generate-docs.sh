@@ -21,9 +21,10 @@ if [ $rebuild == 1 ]; then
 	modules=(pcsv tree)
 	for module in ${modules[@]}; do
 		module_file="$src_dir"/"$module".py
-		echo '   Processing module '$module_file
-		cog.py -e -x -r $module_file > /dev/null
-		cog.py -e -r $module_file > /dev/null
+		echo '   Processing module '${module_file}
+		cog.py -e -x -r ${module_file} > /dev/null
+		cog.py -e -o ${module_file}.tmp ${module_file} > /dev/null
+		mv -f ${module_file}.tmp ${module_file}
 	done
 fi
 echo ' '
