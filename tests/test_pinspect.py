@@ -20,6 +20,26 @@ import inspect
 import putil.test
 import putil.pinspect
 
+def compare_str_outputs(obj, ref_list):
+	""" Produce helpful output when reference output does not match actual output """
+	ref_text = '\n'.join(ref_list)
+	if str(obj) != ref_text:
+		print str(obj)
+		print '---[Differing lines]---'
+		actual_list = str(obj).split('\n')
+		for actual_line, ref_line in zip(actual_list, ref_list):
+			if actual_line != ref_line:
+				print 'Actual line...: {0}'.format(actual_line)
+				print 'Reference line: {0}'.format(ref_line)
+				break
+		print '-----------------------'
+		if len(actual_list) != len(ref_list):
+			print '{0} longer than {1}'.format('Actual' if len(actual_list) > len(ref_list) else 'Reference', 'reference' if len(actual_list) > len(ref_list) else 'actual')
+			print_list = actual_list if len(actual_list) > len(ref_list) else ref_list
+			print print_list[min([len(actual_list), len(ref_list)]):]
+			print '-----------------------'
+	return ref_text
+
 def test_object_is_module():
 	""" Test object_is_module() function """
 	test_list = list()
@@ -80,12 +100,11 @@ def test_callables():	# pylint: disable=R0915
 	def mock_get_code_id(obj, file_name=None, offset=0):	#pylint: disable=W0612,W0613
 		""" Mock function to trigger exception related to callable not found in database """
 		return (''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)), random.random())
-	test_list = list()
 	obj = putil.pinspect.Callables()
-	test_list.append(obj.callables_db == dict())
-	test_list.append(obj.reverse_callables_db == dict())
-	test_list.append(putil.test.trigger_exception(obj.trace, {'obj':None}, TypeError, 'Argument `obj` is not valid'))
-	test_list.append(putil.test.trigger_exception(obj.trace, {'obj':'not_an_object'}, TypeError, 'Argument `obj` is not valid'))
+	assert obj.callables_db == dict()
+	assert obj.reverse_callables_db == dict()
+	putil.test.assert_exception(obj.trace, {'obj':None}, TypeError, 'Argument `obj` is not valid')
+	putil.test.assert_exception(obj.trace, {'obj':'not_an_object'}, TypeError, 'Argument `obj` is not valid')
 	sys.path.append(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), 'support'))
 	import pinspect_support_module_1	#pylint: disable=F0401,W0612
 	obj.trace(sys.modules['pinspect_support_module_1'])
@@ -187,23 +206,8 @@ def test_callables():	# pylint: disable=R0915
 	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function: func (16)')
 	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function.fget: func (18)')
 	ref_list.append('   fget of: pinspect_support_module_1.class_namespace_test_enclosing_func.NamespaceTestClosureClass.nameprop')
-	ref_text = '\n'.join(ref_list)
-	if str(obj) != ref_text:
-		print str(obj)
-		print '---[Differing lines]---'
-		actual_list = str(obj).split('\n')
-		for actual_line, ref_line in zip(actual_list, ref_list):
-			if actual_line != ref_line:
-				print 'Actual line...: {0}'.format(actual_line)
-				print 'Reference line: {0}'.format(ref_line)
-				break
-		print '-----------------------'
-		if len(actual_list) != len(ref_list):
-			print '{0} longer than {1}'.format('Actual' if len(actual_list) > len(ref_list) else 'Reference', 'reference' if len(actual_list) > len(ref_list) else 'actual')
-			print_list = actual_list if len(actual_list) > len(ref_list) else ref_list
-			print print_list[min([len(actual_list), len(ref_list)]):]
-			print '-----------------------'
-	test_list.append(str(obj) == ref_text)
+	ref_text = compare_str_outputs(obj, ref_list)
+	assert str(obj) == ref_text
 	# Test that callables_db and reverse_callables_db are in sync
 	congruence_flag = True
 	for key, value in obj.callables_db.items():
@@ -211,17 +215,42 @@ def test_callables():	# pylint: disable=R0915
 			congruence_flag = obj.reverse_callables_db[value['code_id']] == key
 			if not congruence_flag:
 				break
-	test_list.append(congruence_flag)
+	assert congruence_flag
 	# Test string and representation methods
-	test_list.append(repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3'], sys.modules['pinspect_support_module_4']])")
-	test_list.append(str(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == ref_text)
-	test_list.append(repr(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == \
-				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3'], sys.modules['pinspect_support_module_4']])")
-	test_list.append(repr(putil.pinspect.Callables()) == "putil.pinspect.Callables()")
+	assert repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3'], sys.modules['pinspect_support_module_4']])"
+	assert str(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == ref_text
+	assert repr(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == \
+				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3'], sys.modules['pinspect_support_module_4']])"
+	assert repr(putil.pinspect.Callables()) == "putil.pinspect.Callables()"
+	# Test multiple enclosed classes
+	obj = putil.pinspect.Callables()
+	import pinspect_support_module_7	#pylint: disable=F0401,W0612
+	obj.trace(sys.modules['pinspect_support_module_7'])
+	ref_list = list()
+	ref_list.append('Modules:')
+	ref_list.append('   pinspect_support_module_7')
+	ref_list.append('Classes:')
+	ref_list.append('   pinspect_support_module_7.test_enclosure_class.FinalClass')
+	ref_list.append('   pinspect_support_module_7.test_enclosure_class.MockFCode')
+	ref_list.append('   pinspect_support_module_7.test_enclosure_class.MockGetFrame')
+	ref_list.append('   pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method.SubClosureClass')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class: func (6)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.FinalClass: class (23)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.FinalClass.__init__: meth (24)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockFCode: class (7)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockFCode.__init__: meth (8)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame: class (10)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.__init__: meth (11)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method: meth (13)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method.SubClosureClass: class (16)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method.SubClosureClass.__init__: meth (18)')
+	ref_list.append('pinspect_support_module_7.test_enclosure_class.mock_getframe: func (27)')
+	ref_text = compare_str_outputs(obj, ref_list)
+	assert str(obj) == ref_text
 	# Test exception raised when callable is not found in database (mainly to cover potential edge cases not considered during development)
 	with mock.patch('putil.pinspect._get_code_id', side_effect=mock_get_code_id):
-		test_list.append(putil.test.trigger_exception(putil.pinspect.Callables, {'obj':sys.modules['pinspect_support_module_2']}, RuntimeError, r'Attribute `([\w|\W]+)` of property `([\w|\W]+)` not found in callable database'))
-	assert test_list == [True]*len(test_list)
+		putil.test.assert_exception(putil.pinspect.Callables, {'obj':sys.modules['pinspect_support_module_2']}, RuntimeError, r'Attribute `([\w|\W]+)` of property `([\w|\W]+)` not found in callable database')
+
 
 def test_copy():
 	""" Test __copy__() magic method """
@@ -270,22 +299,7 @@ def test_namespace_resolution():
 	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data: prop (27)')
 	ref_list.append('   fset: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data')
 	ref_list.append('   fget: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._get_data')
-	ref_text = '\n'.join(ref_list)
-	if str(obj) != ref_text:
-		print str(obj)
-		print '---[Differing lines]---'
-		actual_list = str(obj).split('\n')
-		for actual_line, ref_line in zip(actual_list, ref_list):
-			if actual_line != ref_line:
-				print 'Actual line...: {0}'.format(actual_line)
-				print 'Reference line: {0}'.format(ref_line)
-				break
-		print '-----------------------'
-		if len(actual_list) != len(ref_list):
-			print '{0} longer than {1}'.format('Actual' if len(actual_list) > len(ref_list) else 'Reference', 'reference' if len(actual_list) > len(ref_list) else 'actual')
-			print_list = actual_list if len(actual_list) > len(ref_list) else ref_list
-			print print_list[min([len(actual_list), len(ref_list)]):]
-			print '-----------------------'
+	ref_text = compare_str_outputs(obj, ref_list)
 	assert str(obj) == ref_text
 	import pinspect_support_module_6	#pylint: disable=F0401,W0612
 	obj = putil.pinspect.Callables()

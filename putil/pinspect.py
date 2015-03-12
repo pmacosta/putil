@@ -249,10 +249,14 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				continue
 			elif class_match or func_match or prop_match:
 				# Remove all blocks at the same level to find out the indentation "parent"
+				deindent = False
 				while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
+					deindent = True
 					indent_stack.pop()
 				if class_match:
 					closure_class = indent_stack[-1]['type'] != 'module'
+					if closure_class and deindent:
+						self._process_enclosed_class(line, closure_class, closure_class_list, line_num, num_lines)
 					full_class_name = '{0}.{1}'.format(indent_stack[-1]['prefix'], class_name)
 					self._class_names.add(full_class_name)
 					if closure_class:
@@ -268,21 +272,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
 				# Reset property variables
 				decorator_num, attr_name = None, ''
-			if closure_class:
-				line = _replace_tabs(line)
-				start_space, content = self._whitespace_regexp.match(line).groups()
-				for class_dict in closure_class_list:
-					start_space_length = len(start_space)
-					if class_dict['code'] and ((content and ((start_space_length <= class_dict['indent']) or (start_space_length == 0))) or ((line_num == num_lines) and (start_space_length > class_dict['indent']))):
-						if (line_num == num_lines) and (start_space_length > class_dict['indent']):
-							class_dict['code'].append(line[class_dict['indent']:])
-						class_dict['code'].append(class_dict['eval'])
-						self._closure_class_obj_list.append({'code':'\n'.join(class_dict['namespace']+class_dict['code']), 'file':class_dict['file'], 'name':class_dict['name'], 'lineno':class_dict['lineno']-len(class_dict['namespace'])})
-						closure_class_list.pop()
-						closure_class = bool(closure_class_list)
-					else:
-						# Remove base indentation from lines, as the code is going to be executed via exec, which would give an error if there is extra whitespace at the beginning of all lines
-						class_dict['code'].append(line[class_dict['indent']:])
+			closure_class = self._process_enclosed_class(line, closure_class, closure_class_list, line_num, num_lines)
 
 	def _get_prop_components(self, prop_name, prop_obj, closure_file_name=None, closure_offset=0):
 		""" Find getter, setter, deleter functions of a property """
@@ -312,6 +302,25 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	def _get_reverse_callables_db(self):
 		""" Getter for reverse_callables_db property """
 		return self._reverse_callables_db
+
+	def _process_enclosed_class(self, line, closure_class, closure_class_list, line_num, num_lines):	#pylint: disable=R0913
+		""" Process enclosed class: finish code snippet or add lines to enclosed clas """
+		if closure_class:
+			line = _replace_tabs(line)
+			start_space, content = self._whitespace_regexp.match(line).groups()
+			for class_dict in closure_class_list:
+				start_space_length = len(start_space)
+				if class_dict['code'] and ((content and ((start_space_length <= class_dict['indent']) or (start_space_length == 0))) or ((line_num == num_lines) and (start_space_length > class_dict['indent']))):
+					if (line_num == num_lines) and (start_space_length > class_dict['indent']):
+						class_dict['code'].append(line[class_dict['indent']:])
+					class_dict['code'].append(class_dict['eval'])
+					self._closure_class_obj_list.append({'code':'\n'.join(class_dict['namespace']+class_dict['code']), 'file':class_dict['file'], 'name':class_dict['name'], 'lineno':class_dict['lineno']-len(class_dict['namespace'])})
+					closure_class_list.pop()
+				else:
+					# Remove base indentation from lines, as the code is going to be executed via exec, which would give an error if there is extra whitespace at the beginning of all lines
+					class_dict['code'].append(line[class_dict['indent']:])
+			closure_class = bool(closure_class_list)
+		return closure_class
 
 	def _trace_class(self, obj, closure_file_name=None, closure_name=None, closure_offset=0):
 		""" Trace class properties, methods have already been added to database by mini-parser """
