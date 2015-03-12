@@ -247,6 +247,9 @@ def test_copy_works(exdocobj):	#pylint: disable=W0621
 	assert nobj._depth == exdocobj._depth
 	assert (nobj._exclude == exdocobj._exclude) and (id(nobj._exclude) != id(exdocobj._exclude))
 	assert nobj._no_print == exdocobj._no_print
+	assert id(nobj._exh_obj) != id(exdocobj._exh_obj)
+	assert id(nobj._tobj) != id(exdocobj._tobj)
+	assert (nobj._module_obj_db == exdocobj._module_obj_db) and (id(nobj._module_obj_db) != id(exdocobj._module_obj_db))
 
 
 def test_exdoccxt_errors():	#pylint: disable=W0621
