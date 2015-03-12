@@ -184,16 +184,16 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		frame = sys._getframe(1)	#pylint: disable=W0212
 		index = frame.f_code.co_filename.rfind('+')
 		file_name = os.path.abspath(frame.f_code.co_filename[:index])
-		line_no = int(frame.f_code.co_filename[index+1:])
-		for callable_dict in self._module_obj_db[file_name]:
-			if (len(self._module_obj_db[file_name]) == 1) and (callable_dict['line'] <= line_no):
+		line_num = int(frame.f_code.co_filename[index+1:])
+		for item_num, callable_dict in enumerate(self._module_obj_db[file_name]):
+			if (item_num == len(self._module_obj_db[file_name])-1) and (callable_dict['line'] <= line_num):
 				name = callable_dict['name']
 				break
-			elif callable_dict['line'] > line_no:
+			elif callable_dict['line'] > line_num:
 				break
 			name = callable_dict['name']
-		else:
-			raise RuntimeError('Unable to determine callable name')
+		#else:
+		#	raise RuntimeError('Unable to determine callable name')
 		return self.get_sphinx_doc(name, depth=depth, exclude=exclude, error=error)
 
 	def get_sphinx_doc(self, name, depth=None, exclude=None, error=False):	#pylint: disable=R0912,R0914,R0915
