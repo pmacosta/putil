@@ -73,7 +73,8 @@ def write(file_name, data, append=True):
 	(overwriting an existing file with the same name if such file exists)
 	:type	append: boolean
 
-	.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.write')) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.pcsv.write
 
 	:raises:
 	 * IOError (File *[file_name]* could not be created: *[reason]*)
@@ -146,7 +147,8 @@ class CsvFile(object):
 	:type	dfilter:	DataFilter
 	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
 
-	.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.__init__')) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.__init__
 
 	:raises:
 	 * IOError (File `*[file_name]*` could not be found)
@@ -224,7 +226,8 @@ class CsvFile(object):
 		:param	dfilter:	Data filter. See `DataFilter`_ pseudo-type specification
 		:type	dfilter:	DataFilter
 
-		.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.add_dfilter')) ]]]
+		.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.add_dfilter
 
 		:raises:
 		 * RuntimeError (Argument `dfilter` is not valid)
@@ -263,7 +266,8 @@ class CsvFile(object):
 		:type	filtered: boolean
 		:rtype:	list
 
-		.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.data')) ]]]
+		.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.data
 
 		:raises:
 		 * RuntimeError (Argument `col` is not valid)
@@ -299,7 +303,8 @@ class CsvFile(object):
 		(overwriting an existing file with the same name if such file exists)
 		:type	append: boolean
 
-		.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.write')) ]]]
+		.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.write
 
 		:raises:
 		 * IOError (File *[file_name]* could not be created: *[reason]*)
@@ -360,7 +365,8 @@ class CsvFile(object):
 	:type:		DataFilter. See `DataFilter`_ pseudo-type specification
 	:rtype:		DataFilter or None
 
-	.. [[[cog cog.out(exobj.get_sphinx_doc('putil.pcsv.CsvFile.dfilter')) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.dfilter
 
 	:raises: (when assigned)
 

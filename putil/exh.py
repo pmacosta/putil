@@ -116,10 +116,6 @@ class ExHandle(object):	#pylint: disable=R0902
 		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}'.format(key, self._ex_dict[key]['function'], _ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg']) for key in sorted(self._ex_dict.keys())]
 		return '\n\n'.join(ret)
 
-	def _exceptions_db(self):	#pylint: disable-msg=R0201
-		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		return [{'name':self._ex_dict[key]['function'] if self._full_fname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
-
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
 		""" Substitute parameters in exception message """
 		edata = edata if isinstance(edata, list) else [edata]
@@ -222,6 +218,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		if exname not in self._ex_dict:
 			raise ValueError('Exception name {0} not found'.format(name))
 		return self._ex_dict[exname]
+
+	def _get_exceptions_db(self):	#pylint: disable-msg=R0201
+		""" Returns a list of dictionaries suitable to be used with putil.tree module """
+		return [{'name':self._ex_dict[key]['function'] if self._full_fname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 
 	def _get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
@@ -330,7 +330,7 @@ class ExHandle(object):	#pylint: disable=R0902
 	Character ('/') used to separate the sub-parts of fully qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and **name** key of :py:meth:`putil.exh.ExHandle.exceptions_db`
 	"""
 
-	exceptions_db = property(_exceptions_db, None, None, doc='Formatted exceptions')
+	exceptions_db = property(_get_exceptions_db, None, None, doc='Formatted exceptions')
 	"""
 	Exceptions database. A list of dictionaries that contain the following keys:
 

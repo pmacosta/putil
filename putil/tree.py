@@ -252,7 +252,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		**nodes** with the same node name, in their order of appearance, in addition to any existing node data if the node is already present in the tree.
 		:type	nodes: NodesWithData
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.add_nodes')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.add_nodes
 
 		:raises:
 		 * RuntimeError (Argument `nodes` is not valid)
@@ -312,7 +313,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	recursive: Flag that indicates whether the collapse operation should be performed on the whole sub-tree (True) or whether it should stop upon reaching the first node
 		 where the collapsing condition is not satisfied (False)
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.collapse_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.collapse_subtree
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -361,7 +363,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	dest_name: Root node of the sub-tree to copy to. See `NodeName`_ pseudo-type specification
 		:type	dest_name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.copy_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.copy_subtree
 
 		:raises:
 		 * RuntimeError (Argument `dest_node` is not valid)
@@ -424,7 +427,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName or list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.delete_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.delete_subtree
 
 		:raises:
 		 * RuntimeError (Argument `nodes` is not valid)
@@ -462,7 +466,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	nodes: Prefix to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.delete_prefix')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.delete_prefix
 
 		:raises:
 		 * RuntimeError (Argument `name` is not a valid prefix)
@@ -511,7 +516,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Ending hierarchy node whose sub-trees are to be flattened. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.flatten_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.flatten_subtree
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -585,7 +591,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_children')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.get_children
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -607,7 +614,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeNames
 		:rtype: any type or list of objects of any type
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_data')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.get_data
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -629,7 +637,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_leafs')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.get_leafs
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -657,7 +666,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: string
 		:rtype: dictionary
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_node')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.get_node
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -679,7 +689,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_node_children')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.get_node_children
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -701,7 +712,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: dictionary
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_node_parent')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.get_node_parent
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -723,7 +735,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: list of NodeNames
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.get_subtree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.get_subtree
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -759,7 +772,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: boolean
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.is_root')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.is_root
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -781,7 +795,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype	data: boolean
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.in_tree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.in_tree
 
 		:raises: RuntimeError (Argument `name` is not valid)
 
@@ -799,7 +814,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:type	name: NodeName
 		:rtype: boolean
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.is_leaf')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.is_leaf
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -820,7 +836,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: New root node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.make_root')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.make_root
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -864,7 +881,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.print_node')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.print_node
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -889,7 +907,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Node name to rename. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.rename_node')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.rename_node
 
 		:raises:
 		 * RuntimeError (Argument `name` is not valid)
@@ -949,7 +968,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		:param	name: Name to search for. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
-		.. [[[cog cog.out(exobj_tree.get_sphinx_doc('putil.tree.Tree.search_tree')) ]]]
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.search_tree
 
 		:raises: RuntimeError (Argument `name` is not valid)
 
