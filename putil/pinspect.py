@@ -20,10 +20,12 @@ def _get_code_id(obj, file_name=None, offset=0):
 	elif file_name:
 		return (file_name, obj.func_code.co_firstlineno+offset)
 
-def _line_tokenizer(lines):	#pylint: disable=R0914
+def _line_tokenizer(lines):	#pylint: disable=R0914,R0915
 	""" Perform all matches on source file line """
-	docstring_start_regexp = re.compile(r'^.*r?""".*')
-	single_line_docstring_regexp = re.compile(r'^.*r?""".*""".*$')
+	docstring_start_regexp_1 = re.compile(r'^.*r?""".*')
+	docstring_start_regexp_2 = re.compile(r"^.*r?'''.*")
+	single_line_docstring_regexp_1 = re.compile(r'^.*r?""".*""".*$')
+	single_line_docstring_regexp_2 = re.compile(r"^.*r?'''.*'''.*$")
 	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*[\(|\:]')
 	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
 	prop_regexp = re.compile(r'^(\s*)(\w+)\s*=\s*property\(')
@@ -37,7 +39,15 @@ def _line_tokenizer(lines):	#pylint: disable=R0914
 	num_lines = len(lines)-1
 	for line_num, line in enumerate(lines, start=1):
 		# Multi line docstring support. LINE ORDER IS IMPORTANT!!!
-		docstring_start = (docstring_start_regexp.match(line) != None) and (not single_line_docstring_regexp.match(line))
+		docstring_start_1 = (docstring_start_regexp_1.match(line) != None) and (not single_line_docstring_regexp_1.match(line))
+		docstring_start_2 = (docstring_start_regexp_2.match(line) != None) and (not single_line_docstring_regexp_2.match(line))
+		docstring_start = docstring_start_1 or docstring_start_2
+		if docstring_start_1:
+			single_line_docstring_regexp = single_line_docstring_regexp_1
+			delimiter = '"""'
+		elif docstring_start_2:
+			single_line_docstring_regexp = single_line_docstring_regexp_2
+			delimiter = "'''"
 		multi_line_string_line_num = line_num if (not multi_line_string) and docstring_start else multi_line_string_line_num
 		#multi_line_string = docstring_start if not multi_line_string else multi_line_string
 		multi_line_string = docstring_start if not multi_line_string else multi_line_string
@@ -70,7 +80,7 @@ def _line_tokenizer(lines):	#pylint: disable=R0914
 			yield num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, prop_match, prop_indent, prop_name, get_match, set_match, del_match, decorator_match,\
 				namespace_indent, namespace_match
 		elif multi_line_string:
-			multi_line_string = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_string_line_num) else (not ('"""' in line)))	#pylint: disable=C0325
+			multi_line_string = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_string_line_num) else (not (delimiter in line)))	#pylint: disable=C0325
 			yield num_lines, line_num, line, False, False, 0, None, False, 0, None, False, 0, None, False, False, False, False, 0, False
 
 
