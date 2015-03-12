@@ -18,6 +18,7 @@ import putil.test
 import putil.exdoc
 import exdoc_support_module_1
 import exdoc_support_module_3
+import exdoc_support_module_5
 
 ###
 # Functions
@@ -76,6 +77,15 @@ def exdocobj():
 		exdoc_support_module_1.probe()
 	return exdoc_obj
 
+@pytest.fixture
+def exdocobj_single():
+	""" Trace support module that only has one callable """
+	if putil.exh.get_exh_obj():
+		putil.exh.del_exh_obj()
+	with putil.exdoc.ExDocCxt(_no_print=True) as exdoc_single_obj:
+		exdoc_support_module_5.func('John')
+	return exdoc_single_obj
+
 
 @pytest.fixture
 def simple_exobj():	#pylint: disable=R0914
@@ -87,11 +97,12 @@ def simple_exobj():	#pylint: disable=R0914
 	return exobj
 
 
-SEQ = [69, 102, 1000]
+SEQ = [('../tests/support/exdoc_support_module_1.py+{0}', 69), ('../tests/support/exdoc_support_module_1.py+{0}', 102), ('../tests/support/exdoc_support_module_5.py+{0}', 23), \
+	   ('../tests/support/exdoc_support_module_1.py+{0}', 1000)]
 class MockFCode(object):	#pylint: disable=R0903,C0111
 	def __init__(self):
-		line_no = SEQ.pop(0)
-		self.co_filename = '../tests/support/exdoc_support_module_1.py+{0}'.format(line_no)
+		text, line_no = SEQ.pop(0)
+		self.co_filename = text.format(line_no)
 
 
 class MockGetFrame(object):	#pylint: disable=R0903,C0111
@@ -224,7 +235,7 @@ def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 					':raises: (when assigned)\n\n * IOError (Argument `value2` is not a file)\n\n * TypeError (Argument `value2` is not valid)\n\n'
 
 
-def test_get_sphinx_autodoc(exdocobj):	#pylint: disable=W0621
+def test_get_sphinx_autodoc(exdocobj, exdocobj_single):	#pylint: disable=W0621
 	""" Test get_sphinx_autodoc() method """
 	mobj = sys.modules['putil.exdoc']
 	delattr(mobj, 'sys')
@@ -236,6 +247,8 @@ def test_get_sphinx_autodoc(exdocobj):	#pylint: disable=W0621
 		assert tstr == ''
 		tstr = exdocobj.get_sphinx_autodoc()
 		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.multiply\n\n:raises: ValueError (Overflow)\n\n'
+		tstr = exdocobj_single.get_sphinx_autodoc()
+		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_5.func\n\n:raises: TypeError (Argument `name` is not valid)\n\n'
 		putil.test.assert_exception(exdocobj.get_sphinx_autodoc, {}, RuntimeError, 'Unable to determine callable name')
 
 

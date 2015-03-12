@@ -20,6 +20,8 @@ class ExDocCxt(object):	#pylint: disable=R0903
 		>>> with putil.exdoc.ExDocCxt() as exdoc_obj:
 		...     test_module()
 		>>> exdoc_obj.get_sphinx_doc('my_func')
+		.. Auto-generated exceptions documentation for my_func
+		:raises: [...]
 
 	"""
 	def __init__(self, _no_print=True):
@@ -173,6 +175,8 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		:raises:
 		 * RuntimeError (Callable not found in exception list: *[name]*)
 
+		 * RuntimeError (Unable to determine callable name)
+
 		 * TypeError (Argument `depth` is not valid)
 
 		 * TypeError (Argument `exclude` is not valid)
@@ -182,7 +186,10 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		file_name = os.path.abspath(frame.f_code.co_filename[:index])
 		line_no = int(frame.f_code.co_filename[index+1:])
 		for callable_dict in self._module_obj_db[file_name]:
-			if callable_dict['line'] > line_no:
+			if (len(self._module_obj_db[file_name]) == 1) and (callable_dict['line'] <= line_no):
+				name = callable_dict['name']
+				break
+			elif callable_dict['line'] > line_no:
 				break
 			name = callable_dict['name']
 		else:
