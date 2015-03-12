@@ -18,7 +18,7 @@ import putil.test
 import putil.exdoc
 import exdoc_support_module_1
 import exdoc_support_module_3
-import exdoc_support_module_5
+import exdoc_support_module_4
 
 ###
 # Functions
@@ -83,7 +83,7 @@ def exdocobj_single():
 	if putil.exh.get_exh_obj():
 		putil.exh.del_exh_obj()
 	with putil.exdoc.ExDocCxt(_no_print=True) as exdoc_single_obj:
-		exdoc_support_module_5.func('John')
+		exdoc_support_module_4.func('John')
 	return exdoc_single_obj
 
 
@@ -97,7 +97,7 @@ def simple_exobj():	#pylint: disable=R0914
 	return exobj
 
 
-SEQ = [('../tests/support/exdoc_support_module_1.py+{0}', 69), ('../tests/support/exdoc_support_module_1.py+{0}', 102), ('../tests/support/exdoc_support_module_5.py+{0}', 23), \
+SEQ = [('../tests/support/exdoc_support_module_1.py+{0}', 69), ('../tests/support/exdoc_support_module_1.py+{0}', 102), ('../tests/support/exdoc_support_module_4.py+{0}', 23), \
 	   ('../tests/support/exdoc_support_module_1.py+{0}', 1000)]
 class MockFCode(object):	#pylint: disable=R0903,C0111
 	def __init__(self):
@@ -248,7 +248,7 @@ def test_get_sphinx_autodoc(exdocobj, exdocobj_single):	#pylint: disable=W0621
 		tstr = exdocobj.get_sphinx_autodoc()
 		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.multiply\n\n:raises: ValueError (Overflow)\n\n'
 		tstr = exdocobj_single.get_sphinx_autodoc()
-		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_5.func\n\n:raises: TypeError (Argument `name` is not valid)\n\n'
+		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_4.func\n\n:raises: TypeError (Argument `name` is not valid)\n\n'
 		putil.test.assert_exception(exdocobj.get_sphinx_autodoc, {}, RuntimeError, 'Unable to determine callable name')
 
 
