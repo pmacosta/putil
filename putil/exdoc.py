@@ -3,12 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+import os
+import sys
 import copy
 
 import putil.exh
 import putil.misc
 import putil.tree
-
 
 ###
 # Context manager
@@ -35,6 +36,8 @@ class ExDocCxt(object):	#pylint: disable=R0903
 		self._exdoc_obj._exh_obj = copy.copy(putil.exh.get_exh_obj())	#pylint: disable=W0212
 		putil.exh.del_exh_obj()
 		self._exdoc_obj._build_ex_tree()	#pylint: disable=W0212
+		self._exdoc_obj._build_module_db()	#pylint: disable=W0212
+
 
 ###
 # Classes
@@ -66,6 +69,7 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			raise ValueError('Object of argument `exh_obj` does not have any exception trace information')
 		if not isinstance(_no_print, bool):
 			raise TypeError('Argument `_no_print` is not valid')
+		self._module_obj_db = {}
 		self._exh_obj = exh_obj
 		self._no_print = _no_print
 		self._depth, self._exclude, self._tobj = 3*[None]
@@ -73,11 +77,13 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		self._set_exclude(exclude)
 		if not _empty:
 			self._build_ex_tree()
+			self._build_module_db()
 
 	def __copy__(self):
 		cobj = ExDoc(exh_obj=None, depth=self.depth, exclude=self.exclude[:] if self.exclude else self.exclude, _empty=True, _no_print=self._no_print)
 		cobj._exh_obj = copy.copy(self._exh_obj)	#pylint: disable=W0212
 		cobj._tobj = copy.copy(self._tobj)	#pylint: disable=W0212
+		cobj._module_obj_db = copy.deepcopy(self._module_obj_db)	#pylint: disable=W0212
 		return cobj
 
 	def _build_ex_tree(self):
@@ -119,6 +125,18 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			self._tobj.delete_prefix(self._tobj.node_separator.join(node.split(self._tobj.node_separator)[:-1]))
 		self._print_ex_tree()
 
+	def _build_module_db(self):
+		""" Build database of module callables sorted by line number """
+		tdict = {}
+		for callable_name, callable_dict in self._exh_obj.callables_db.iteritems():
+			if callable_dict['code_id']:
+				file_name, line_no = callable_dict['code_id']
+				if file_name not in tdict:
+					tdict[file_name] = list()
+				tdict[file_name].append({'name':'{0}.__init__'.format(callable_name) if callable_dict['type'] == 'class' else callable_name, 'line':line_no})
+		for file_name in tdict.iterkeys():
+			self._module_obj_db[file_name] = sorted(tdict[file_name], key=lambda idict: idict['line'])
+
 	def _get_depth(self):
 		""" depth getter """
 		return self._depth
@@ -143,6 +161,33 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		if exclude and ((not isinstance(exclude, list)) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude]))):
 			raise TypeError('Argument `exclude` is not valid')
 		self._exclude = exclude
+
+	def get_sphinx_autodoc(self, depth=None, exclude=None, error=False):	#pylint: disable=R0201
+		"""
+		Returns exception list marked up in `reStructuredText`_ automatically determining callable name
+
+		:param	depth: Hierarchy levels to include in the exceptions list (overrides default **depth** argument)
+		:type	depth: non-negative integer
+		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument)
+		:type	exclude: list
+		:raises:
+		 * RuntimeError (Callable not found in exception list: *[name]*)
+
+		 * TypeError (Argument `depth` is not valid)
+
+		 * TypeError (Argument `exclude` is not valid)
+		"""
+		frame = sys._getframe(1)	#pylint: disable=W0212
+		index = frame.f_code.co_filename.rfind('+')
+		file_name = os.path.abspath(frame.f_code.co_filename[:index])
+		line_no = int(frame.f_code.co_filename[index+1:])
+		for callable_dict in self._module_obj_db[file_name]:
+			if callable_dict['line'] > line_no:
+				break
+			name = callable_dict['name']
+		else:
+			raise RuntimeError('Unable to determine callable name')
+		return self.get_sphinx_doc(name, depth=depth, exclude=exclude, error=error)
 
 	def get_sphinx_doc(self, name, depth=None, exclude=None, error=False):	#pylint: disable=R0912,R0914,R0915
 		"""
@@ -199,24 +244,25 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 							exlist.append(exc)
 			name_dict['exlist'] = list(set(exlist[:]))
 		# Generate final output
+		exoutput = ['.. Auto-generated exceptions documentation for {0}'.format(name)]
 		if prop:
 			if len(callable_dict) == 1:
 				callable_root = callable_dict.keys()[0]
 				action = callable_dict[callable_root]['type']
 				desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
 				exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
-				exoutput = ['\n:raises: (when {0}) {1}'.format(desc, exlist[0])] if len(exlist) == 1 else ['\n:raises: (when {0})\n'.format(desc)]+[' * {0}\n'.format(exname) for exname in exlist]
+				exoutput.extend(['\n:raises: (when {0}) {1}'.format(desc, exlist[0])] if len(exlist) == 1 else ['\n:raises: (when {0})\n'.format(desc)]+[' * {0}\n'.format(exname) for exname in exlist])
 			else:
-				exoutput = ['\n:raises:']
+				exoutput.append('\n:raises:')
 				for action in ['fset', 'fdel', 'fget']:
 					desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
 					for callable_root in callable_dict:
 						if callable_dict[callable_root]['type'] == action:
 							exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
-							exoutput = exoutput+[' * When {0}\n'.format(desc)]+['   * {0}\n'.format(exname) for exname in exlist]
+							exoutput.extend([' * When {0}\n'.format(desc)]+['   * {0}\n'.format(exname) for exname in exlist])
 		else:
 			exlist = sorted(list(set(callable_dict[callable_dict.keys()[0]]['exlist'])))
-			exoutput = ['\n:raises: {0}'.format(exlist[0])] if len(exlist) == 1 else ['\n:raises:']+[' * {0}\n'.format(exname) for exname in exlist]
+			exoutput.extend(['\n:raises: {0}'.format(exlist[0])] if len(exlist) == 1 else ['\n:raises:']+[' * {0}\n'.format(exname) for exname in exlist])
 		if exoutput:
 			exoutput[-1] = exoutput[-1].rstrip() + '\n\n'
 		return ('\n'.join(exoutput)) if exoutput else ''

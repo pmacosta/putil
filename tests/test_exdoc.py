@@ -7,6 +7,7 @@
 putil.exdoc unit tests
 """
 
+import imp
 import sys
 import mock
 import copy
@@ -84,6 +85,23 @@ def simple_exobj():	#pylint: disable=R0914
 		exobj.add_exception('first_exception', TypeError, 'This is the first exception')
 	func1()
 	return exobj
+
+
+SEQ = [69, 102, 1000]
+class MockFCode(object):	#pylint: disable=R0903,C0111
+	def __init__(self):
+		line_no = SEQ.pop(0)
+		self.co_filename = '../tests/support/exdoc_support_module_1.py+{0}'.format(line_no)
+
+
+class MockGetFrame(object):	#pylint: disable=R0903,C0111
+	def __init__(self):
+		self.f_code = MockFCode()
+
+
+def mock_getframe(num):	#pylint: disable=W0613,C0111
+	return MockGetFrame()
+
 
 def test_exdoc_errors(simple_exobj):	#pylint: disable=W0621
 	""" Test exdoc data validation """
@@ -165,6 +183,7 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes3):
 		putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj1, '_no_print':True}, IOError, 'General exception #2')
 
+
 def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	""" Test get_sphinx_doc() method """
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'_not_found_', 'error':True}, RuntimeError, 'Callable not found in exception list: _not_found_')
@@ -174,29 +193,51 @@ def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':['hello', 3]}, TypeError, 'Argument `exclude` is not valid')
 	assert exdocobj.get_sphinx_doc('_not_found_') == ''
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.read')
-	assert tstr == '\n:raises: TypeError (Cannot call read)\n\n'
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.read\n\n:raises: TypeError (Cannot call read)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write')
-	assert tstr == '\n:raises:\n * TypeError (Argument is not valid)\n\n * TypeError (Cannot call write)\n\n'
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.write\n\n:raises:\n * TypeError (Argument is not valid)\n\n * TypeError (Cannot call write)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write', depth=1)
-	assert tstr == '\n:raises: TypeError (Cannot call write)\n\n'
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.write\n\n:raises: TypeError (Cannot call write)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', depth=1)
-	assert tstr == '\n:raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.__init__\n\n'+\
+					':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
 					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)\n\n * ValueError (Illegal node name: *[node_name]*)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', depth=0)
-	assert tstr == '\n:raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.__init__\n\n'+\
+					':raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
 					' * RuntimeError (Argument `value4` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', exclude=['putil.tree'])
-	assert tstr == '\n:raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.__init__\n\n'+\
+					':raises:\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n * RuntimeError (Argument `value3` is not valid)\n\n'+\
 					' * RuntimeError (Argument `value4` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', exclude=['add_nodes', '_validate_nodes_with_data'])
-	assert tstr == '\n:raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.__init__\n\n'+\
+					':raises:\n * RuntimeError (Argument `node_separator` is not valid)\n\n * RuntimeError (Argument `value1` is not valid)\n\n * RuntimeError (Argument `value2` is not valid)\n\n'+\
 					' * RuntimeError (Argument `value3` is not valid)\n\n * RuntimeError (Argument `value4` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value3')
-	assert tstr == '\n:raises:\n * When assigned\n\n   * TypeError (Argument `value3` is not valid)\n\n * When deleted\n\n   * TypeError (Cannot delete value3)\n\n * When retrieved\n\n   * TypeError (Cannot get value3)\n\n'
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.value3\n\n'+\
+					':raises:\n * When assigned\n\n   * TypeError (Argument `value3` is not valid)\n\n * When deleted\n\n   * TypeError (Cannot delete value3)\n\n * When retrieved\n\n   * TypeError (Cannot get value3)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.temp')
-	assert tstr == '\n:raises: (when assigned) RuntimeError (Argument `value` is not valid)\n\n'
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.temp\n\n:raises: (when assigned) RuntimeError (Argument `value` is not valid)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value2')
-	assert tstr == '\n:raises: (when assigned)\n\n * IOError (Argument `value2` is not a file)\n\n * TypeError (Argument `value2` is not valid)\n\n'
+	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.value2\n\n'+\
+					':raises: (when assigned)\n\n * IOError (Argument `value2` is not a file)\n\n * TypeError (Argument `value2` is not valid)\n\n'
+
+
+def test_get_sphinx_autodoc(exdocobj):	#pylint: disable=W0621
+	""" Test get_sphinx_autodoc() method """
+	mobj = sys.modules['putil.exdoc']
+	delattr(mobj, 'sys')
+	del sys.modules['sys']
+	nsys = imp.load_module('sys_patched', *imp.find_module('sys'))
+	setattr(mobj, 'sys', nsys)
+	with mock.patch('putil.exdoc.sys._getframe', side_effect=mock_getframe):
+		tstr = exdocobj.get_sphinx_autodoc()
+		assert tstr == ''
+		tstr = exdocobj.get_sphinx_autodoc()
+		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.multiply\n\n:raises: ValueError (Overflow)\n\n'
+		putil.test.assert_exception(exdocobj.get_sphinx_autodoc, {}, RuntimeError, 'Unable to determine callable name')
+
 
 def test_copy_works(exdocobj):	#pylint: disable=W0621
 	""" Test __copy__() method works """
@@ -207,6 +248,7 @@ def test_copy_works(exdocobj):	#pylint: disable=W0621
 	assert (nobj._exclude == exdocobj._exclude) and (id(nobj._exclude) != id(exdocobj._exclude))
 	assert nobj._no_print == exdocobj._no_print
 
+
 def test_exdoccxt_errors():	#pylint: disable=W0621
 	""" Test that ExDocCxt context manager correctly handles exceptions """
 	if putil.exh.get_exh_obj():
@@ -216,4 +258,3 @@ def test_exdoccxt_errors():	#pylint: disable=W0621
 			raise IOError('This is bad')
 	assert excinfo.value.message == 'This is bad'
 	assert putil.exh.get_exh_obj() == None
-
