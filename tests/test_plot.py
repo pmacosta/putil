@@ -13,8 +13,9 @@ import matplotlib
 import matplotlib.path
 from scipy.misc import imread	#pylint: disable=E0611
 
-import putil.plot
 import putil.misc
+import putil.test
+import putil.plot
 import gen_ref_images
 
 IMGTOL = 1e-3
@@ -76,6 +77,49 @@ def indep_min_greater_than_indep_max(func):	#pylint: disable=C0103
 	comp.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
 	assert comp == 2*[True]
 
+
+###
+# Contracts test
+###
+def test_real_num_contract():	#pylint: disable=W0232
+	""" Tests for RealNumpyVector pseudo-type """
+	putil.test.assert_exception(putil.plot.real_num, {'num':'a'}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_num, {'num':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_num, {'num':False}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.plot.real_num(1)
+	putil.plot.real_num(2.0)
+
+
+def test_real_numpy_vector_contract():	#pylint: disable=W0232
+	""" Tests for RealNumpyVector pseudo-type """
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':'a'}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':numpy.array([])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':numpy.array([[1, 2, 3], [4, 5, 6]])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':numpy.array(['a', 'b'])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.plot.real_numpy_vector(numpy.array([1, 2, 3]))
+	putil.plot.real_numpy_vector(numpy.array([10.0, 8.0, 2.0]))
+	putil.plot.real_numpy_vector(numpy.array([10.0]))
+
+
+def test_increasing_real_numpy_vector_contract():	#pylint: disable=W0232,C0103
+	""" Tests for IncreasingRealNumpyVector pseudo-type """
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':'a'}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([])}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([[1, 2, 3], [4, 5, 6]])},\
+							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array(['a', 'b'])},\
+							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([1, 0, -3])},\
+							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([10.0, 8.0, 2.0])},\
+							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.plot.increasing_real_numpy_vector(numpy.array([1, 2, 3]))
+	putil.plot.increasing_real_numpy_vector(numpy.array([10.0, 12.1, 12.5]))
+	putil.plot.increasing_real_numpy_vector(numpy.array([10.0]))
+
+
 ###
 # Tests for BasicSource
 ###
@@ -83,13 +127,10 @@ class TestBasicSource(object):	#pylint: disable=W0232
 	""" Tests for BasicSource """
 	def test_indep_min_type(self):	#pylint: disable=C0103,R0201
 		""" Tests indep_min type validation """
-		test_list = list()
 		# __init__ path
 		# Wrong types
-		for param_value in ['a', False]:
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=param_value)
-			test_list.append(excinfo.value.message == 'Argument `indep_min` is of the wrong type')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':numpy.array([10, 20, 30]), 'indep_min':'a'}, RuntimeError, 'Argument `indep_min` is not valid')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':numpy.array([10, 20, 30]), 'indep_min':False}, RuntimeError, 'Argument `indep_min` is not valid')
 		# Valid values, these should not raise an exception
 		for param_value in [1, 2.0]:
 			putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=param_value)
@@ -97,24 +138,20 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		# Wrong types
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]))	#pylint: disable=W0612
 		for param_value in ['a', False]:
-			with pytest.raises(TypeError) as excinfo:
+			with pytest.raises(RuntimeError) as excinfo:
 				obj.indep_min = param_value
-			test_list.append(excinfo.value.message == 'Argument `indep_min` is of the wrong type')
+			assert excinfo.value.message == 'Argument `indep_min` is not valid'
 		# Valid values, these should not raise an exception
 		for param_value in [1, 2.0]:
 			obj.indep_min = param_value
-			test_list.append(obj.indep_min == param_value)
-		assert test_list == 6*[True]
+			assert obj.indep_min == param_value
 
 	def test_indep_max_type(self):	#pylint: disable=C0103,R0201
 		""" Tests indep_max type validation """
-		test_list = list()
 		# __init__ path
 		# Wrong types
-		for param_value in ['a', False]:
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_max=param_value)
-			test_list.append(excinfo.value.message == 'Argument `indep_max` is of the wrong type')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':numpy.array([10, 20, 30]), 'indep_max':'a'}, RuntimeError, 'Argument `indep_max` is not valid')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':numpy.array([10, 20, 30]), 'indep_max':False}, RuntimeError, 'Argument `indep_max` is not valid')
 		# Valid values, these should not raise an exception
 		for param_value in [1, 2.0]:
 			putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_max=param_value)
@@ -122,153 +159,125 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		# Wrong types
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]))	#pylint: disable=W0612
 		for param_value in ['a', False]:
-			with pytest.raises(TypeError) as excinfo:
+			with pytest.raises(RuntimeError) as excinfo:
 				obj.indep_max = param_value
-			test_list.append(excinfo.value.message == 'Argument `indep_max` is of the wrong type')
+			assert excinfo.value.message == 'Argument `indep_max` is not valid'
 		# Valid values, these should not raise an exception
 		for param_value in [1, 2.0]:
 			obj.indep_max = param_value
-			test_list.append(obj.indep_max == param_value)
-		assert test_list == 6*[True]
+			assert obj.indep_max == param_value
 
 	def test_indep_min_greater_than_indep_max(self):	#pylint: disable=C0103,R0201
 		""" Test if object behaves correctly when indep_min and indep_max are incongrous """
-		test_list = list()
 		# Assign indep_min first
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=0.5)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_max = 0
-		test_list.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
+		assert excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`'
 		# Assign indep_max first
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]))
 		obj.indep_max = 40
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_min = 50
-		test_list.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
-		assert test_list == 2*[True]
+		assert excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`'
 
 	def test_indep_var_type(self):	#pylint: disable=C0103,R0201
 		""" Tests indep_var type validation """
-		test_list = list()
 		# __init__ path
 		# Wrong type
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.BasicSource(indep_var=None, dep_var=numpy.array([10, 20, 30]))
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.BasicSource(indep_var='a', dep_var=numpy.array([10, 20, 30]))
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':None, 'dep_var':numpy.array([10, 20, 30])}, RuntimeError, 'Argument `indep_var` is not valid')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':'a', 'dep_var':numpy.array([10, 20, 30])}, RuntimeError, 'Argument `indep_var` is not valid')
 		# Non monotonically increasing vector
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([1.0, 2.0, 0.0, 3.0]), dep_var=numpy.array([10, 20, 30]))
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1.0, 2.0, 0.0, 3.0]), 'dep_var':numpy.array([10, 20, 30])}, RuntimeError, 'Argument `indep_var` is not valid')
 		# Empty vector
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([]), dep_var=numpy.array([10, 20, 30]))
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([]), 'dep_var':numpy.array([10, 20, 30])}, RuntimeError, 'Argument `indep_var` is not valid')
 		# Valid values, these should not raise any exception
-		test_list.append((putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30])).indep_var == numpy.array([1, 2, 3])).all())
-		test_list.append((putil.plot.BasicSource(indep_var=numpy.array([4.0, 5.0, 6.0]), dep_var=numpy.array([10, 20, 30])).indep_var == numpy.array([4.0, 5.0, 6.0])).all())
+		assert (putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30])).indep_var == numpy.array([1, 2, 3])).all()
+		assert (putil.plot.BasicSource(indep_var=numpy.array([4.0, 5.0, 6.0]), dep_var=numpy.array([10, 20, 30])).indep_var == numpy.array([4.0, 5.0, 6.0])).all()
 		# Invalid range bounding
 		# Assign indep_min via attribute
 		obj = putil.plot.BasicSource(numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]))
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_min = 45
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		assert excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding'
 		# Assign indep_max via attribute
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]))
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_max = 0
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		assert excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding'
 		# Assign both indep_min and indep_max via __init__ path
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=4, indep_max=10)
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':numpy.array([10, 20, 30]), 'indep_min':4, 'indep_max':10},\
+							  ValueError, 'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 		# Managed attribute path
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]))
 		# Wrong type
-		test_list.append((obj.indep_var == numpy.array([1, 2, 3])).all())
-		with pytest.raises(TypeError) as excinfo:
+		assert (obj.indep_var == numpy.array([1, 2, 3])).all()
+		with pytest.raises(RuntimeError) as excinfo:
 			obj.indep_var = None
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
+		assert excinfo.value.message == 'Argument `indep_var` is not valid'
+		with pytest.raises(RuntimeError) as excinfo:
 			obj.indep_var = 'a'
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
+		assert excinfo.value.message == 'Argument `indep_var` is not valid'
 		# Non monotonically increasing vector
-		with pytest.raises(TypeError) as excinfo:
+		with pytest.raises(RuntimeError) as excinfo:
 			obj.indep_var = numpy.array([1.0, 2.0, 0.0, 3.0])
-		test_list.append(excinfo.value.message == 'Argument `indep_var` is of the wrong type')
+		assert excinfo.value.message == 'Argument `indep_var` is not valid'
 		# Valid values, these should not raise any exception
 		obj.indep_var = numpy.array([4.0, 5.0, 6.0])
-		test_list.append((obj.indep_var == numpy.array([4.0, 5.0, 6.0])).all())
-		assert test_list == 14*[True]
+		assert (obj.indep_var == numpy.array([4.0, 5.0, 6.0])).all()
 
 	def test_dep_var_type(self):	#pylint: disable=C0103,R0201
 		""" Tests dep_var type validation """
-		test_list = list()
 		# __init__ path
 		# Wrong type
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=None)
-		test_list.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var='a')
-		test_list.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':None}, RuntimeError, 'Argument `dep_var` is not valid')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':'a'}, RuntimeError, 'Argument `dep_var` is not valid')
 		# Empty vector
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([]))
-		test_list.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([1, 2, 3]), 'dep_var':[]}, RuntimeError, 'Argument `dep_var` is not valid')
 		# Valid values, these should not raise any exception
-		test_list.append((putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([1, 2, 3])).dep_var == numpy.array([1, 2, 3])).all())
-		test_list.append((putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([4.0, 5.0, 6.0])).dep_var == numpy.array([4.0, 5.0, 6.0])).all())
+		assert (putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([1, 2, 3])).dep_var == numpy.array([1, 2, 3])).all()
+		assert (putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([4.0, 5.0, 6.0])).dep_var == numpy.array([4.0, 5.0, 6.0])).all()
 		# Managed attribute path
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([1, 2, 3]))
 		# Wrong type
-		with pytest.raises(TypeError) as excinfo:
+		with pytest.raises(RuntimeError) as excinfo:
 			obj.dep_var = 'a'
-		test_list.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
+		assert excinfo.value.message == 'Argument `dep_var` is not valid'
 		# Empty vector
-		with pytest.raises(TypeError) as excinfo:
+		with pytest.raises(RuntimeError) as excinfo:
 			obj.dep_var = numpy.array([])
-		test_list.append(excinfo.value.message == 'Argument `dep_var` is of the wrong type')
+		assert excinfo.value.message == 'Argument `dep_var` is not valid'
 		# Valid values, these should not raise any exception
 		obj.dep_var = numpy.array([1, 2, 3])
-		test_list.append((obj.dep_var == numpy.array([1, 2, 3])).all())
+		assert (obj.dep_var == numpy.array([1, 2, 3])).all()
 		obj.dep_var = numpy.array([4.0, 5.0, 6.0])
-		test_list.append((obj.dep_var == numpy.array([4.0, 5.0, 6.0])).all())
-		assert test_list == 9*[True]
+		assert (obj.dep_var == numpy.array([4.0, 5.0, 6.0])).all()
 
 	def test_indep_var_and_dep_var_do_not_have_the_same_number_of_elements(self):	#pylint: disable=C0103,R0201
 		""" Tests dep_var type validation """
-		test_list = list()
 		# Both set at object creation
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([1, 2, 3, 4, 5, 6]), indep_min=30, indep_max=50)
-		test_list.append(excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements')
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([1, 2]), indep_min=30, indep_max=50)
-		test_list.append(excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([10, 20, 30]), 'dep_var':numpy.array([1, 2, 3, 4, 5, 6]), 'indep_min':30, 'indep_max':50},\
+							  ValueError, 'Arguments `indep_var` and `dep_var` must have the same number of elements')
+		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([10, 20, 30]), 'dep_var':numpy.array([1, 2]), 'indep_min':30, 'indep_max':50},\
+							  ValueError, 'Arguments `indep_var` and `dep_var` must have the same number of elements')
 		# indep_var set first
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30, 40, 50, 60]), dep_var=numpy.array([1, 2, 3, 4, 5, 6]), indep_min=30, indep_max=50)
 		with pytest.raises(ValueError) as excinfo:
 			obj.dep_var = numpy.array([100, 200, 300])
-		test_list.append(excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements')
+		assert excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements'
 		# dep_var set first
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([100, 200, 300]), indep_min=30, indep_max=50)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
-		test_list.append(excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements')
-		assert test_list == 4*[True]
+		assert excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements'
 
 	def test_complete(self):	#pylint: disable=C0103,R0201
 		""" Test that _complete() method behaves correctly """
-		test_list = list()
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([100, 200, 300]), indep_min=0, indep_max=50)
 		obj._indep_var = None	#pylint: disable=W0212
-		test_list.append(obj._complete() == False)	#pylint: disable=W0212
+		assert obj._complete() == False	#pylint: disable=W0212
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([100, 200, 300]), indep_min=0, indep_max=50)
-		test_list.append(obj._complete() == True)	#pylint: disable=W0212
-		assert test_list == 2*[True]
+		assert obj._complete() == True	#pylint: disable=W0212
 
 	def test_str(self):	#pylint: disable=C0103,R0201
 		""" Test that str behaves correctly """
@@ -292,20 +301,18 @@ class TestBasicSource(object):	#pylint: disable=W0232
 	def test_cannot_delete_attributes(self):	#pylint: disable=C0103,R0201
 		""" Test that del method raises an exception on all class attributes """
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([100, 200, 300]))
-		test_list = list()
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_min
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_max
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_var
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.dep_var
-		test_list.append(excinfo.value.message == "can't delete attribute")
-		assert test_list == 4*[True]
+		assert excinfo.value.message == "can't delete attribute"
 
 ###
 # Tests for CsvSource
