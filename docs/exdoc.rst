@@ -53,6 +53,8 @@ After the script is run and the auto-documentation generated, each callable has 
 .. warning:: Due to the limited introspection capabilities of class properties, only properties defined using the `property() <https://docs.python.org/2/library/functions.html#property>`_ built-in function can be documented with
 	:py:meth:`putil.exdoc.ExDoc.get_sphinx_autodoc()`. Properties defined by other methods can still be auto-documented with :py:meth:`putil.exdoc.ExDoc.get_sphinx_doc()` and explicitly providing the method/function name.
 
+.. note:: Documentation strings have to be raw (for example, :code:`r""" Docstring """`) to properly display the documentation of exceptions with display multi-line messages
+
 ***********
 Interpreter
 ***********

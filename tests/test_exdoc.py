@@ -202,11 +202,22 @@ def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'depth':-1}, TypeError, 'Argument `depth` is not valid')
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':-1}, TypeError, 'Argument `exclude` is not valid')
 	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'exclude':['hello', 3]}, TypeError, 'Argument `exclude` is not valid')
+	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'width':1.0}, TypeError, 'Argument `width` is not valid')
+	putil.test.assert_exception(exdocobj.get_sphinx_doc, {'name':'callable', 'width':5}, TypeError, 'Argument `width` is not valid')
+	minwidth = putil.exdoc._MINWIDTH
 	assert exdocobj.get_sphinx_doc('_not_found_') == ''
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.read')
 	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.read\n\n:raises: TypeError (Cannot call read)\n\n'
+	putil.exdoc._MINWIDTH = 16
+	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.read', width=16)
+	assert tstr == '.. Auto-\ngenerated\nexceptions\ndocumentation\nfor exdoc_suppor\nt_module_1.read\n\n:raises:\nTypeError\n(Cannot call\nread)\n\n'
+	putil.exdoc._MINWIDTH = minwidth
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write')
 	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.write\n\n:raises:\n * TypeError (Argument is not valid)\n\n * TypeError (Cannot call write)\n\n'
+	putil.exdoc._MINWIDTH = 16
+	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write', width=16)
+	assert tstr == '.. Auto-\ngenerated\nexceptions\ndocumentation\nfor exdoc_suppor\nt_module_1.write\n\n:raises:\n * TypeError\n   (Argument is\n   not valid)\n\n * TypeError\n   (Cannot call\n   write)\n\n'
+	putil.exdoc._MINWIDTH = minwidth
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.write', depth=1)
 	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.write\n\n:raises: TypeError (Cannot call write)\n\n'
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.__init__', depth=1)
@@ -228,11 +239,26 @@ def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value3')
 	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.value3\n\n'+\
 					':raises:\n * When assigned\n\n   * TypeError (Argument `value3` is not valid)\n\n * When deleted\n\n   * TypeError (Cannot delete value3)\n\n * When retrieved\n\n   * TypeError (Cannot get value3)\n\n'
+	putil.exdoc._MINWIDTH = 16
+	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value3', width=16)
+	assert tstr == '.. Auto-\ngenerated\nexceptions\ndocumentation\nfor exdoc_suppor\nt_module_1.Excep\ntionAutoDocClass\n.value3\n\n'+\
+					':raises:\n * When assigned\n\n   * TypeError\n     (Argument\n     `value3` is\n     not valid)\n\n * When deleted\n\n   * TypeError\n     (Cannot\n     delete\n     value3)\n\n * When retrieved\n\n'+\
+		            '   * TypeError\n     (Cannot get\n     value3)\n\n'
+	putil.exdoc._MINWIDTH = minwidth
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.temp')
 	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.temp\n\n:raises: (when assigned) RuntimeError (Argument `value` is not valid)\n\n'
+	putil.exdoc._MINWIDTH = 16
+	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.temp', width=16)
+	assert tstr == '.. Auto-\ngenerated\nexceptions\ndocumentation\nfor exdoc_suppor\nt_module_1.Excep\ntionAutoDocClass\n.temp\n\n:raises: (when\nassigned)\nRuntimeError\n(Argument\n`value` is not\nvalid)\n\n'
+	putil.exdoc._MINWIDTH = minwidth
 	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value2')
 	assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.value2\n\n'+\
 					':raises: (when assigned)\n\n * IOError (Argument `value2` is not a file)\n\n * TypeError (Argument `value2` is not valid)\n\n'
+	putil.exdoc._MINWIDTH = 16
+	tstr = exdocobj.get_sphinx_doc('exdoc_support_module_1.ExceptionAutoDocClass.value2', width=16)
+	assert tstr == '.. Auto-\ngenerated\nexceptions\ndocumentation\nfor exdoc_suppor\nt_module_1.Excep\ntionAutoDocClass\n.value2\n\n'+\
+					':raises: (when assigned)\n\n * IOError\n   (Argument\n   `value2` is\n   not a file)\n\n * TypeError\n   (Argument\n   `value2` is\n   not valid)\n\n'
+	putil.exdoc._MINWIDTH = minwidth
 
 
 def test_get_sphinx_autodoc(exdocobj, exdocobj_single):	#pylint: disable=W0621

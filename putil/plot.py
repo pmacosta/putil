@@ -314,6 +314,8 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
+	 * RuntimeError (Argument `indep_max` is not valid)
+
 	 * RuntimeError (Argument `indep_min` is not valid)
 
 	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
@@ -383,7 +385,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 
 class CsvSource(object):	#pylint: disable=R0902,R0903
-	"""
+	r"""
 	Objects of this class hold a data set from a CSV file intended for plotting. The raw data from the file can be filtered and a callback function can be used for more general data pre-processing.
 
 	:param	file_name:			comma-separated file name
@@ -405,6 +407,82 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:rtype:						:py:class:`putil.plot.CsvSource()` object
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.__init__
+
+	:raises:
+	 * IOError (File `*[file_name]*` could not be found)
+
+	 * RuntimeError (Argument `col` is not valid)
+
+	 * RuntimeError (Argument `dep_col_label` is not valid)
+
+	 * RuntimeError (Argument `dep_var` is not valid)
+
+	 * RuntimeError (Argument `dfilter` is not valid)
+
+	 * RuntimeError (Argument `file_name` is not valid)
+
+	 * RuntimeError (Argument `filtered` is not valid)
+
+	 * RuntimeError (Argument `fproc_eargs` is not valid)
+
+	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+
+	 * RuntimeError (Argument `fproc` is not valid)
+
+	 * RuntimeError (Argument `indep_col_label` is not valid)
+
+	 * RuntimeError (Argument `indep_max` is not valid)
+
+	 * RuntimeError (Argument `indep_min` is not valid)
+
+	 * RuntimeError (Argument `indep_var` is not valid)
+
+	 * RuntimeError (Column headers are not unique)
+
+	 * RuntimeError (File *[file_name]* has no valid data)
+
+	 * RuntimeError (File *[file_name]* is empty)
+
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
+	   ``\n`` Exception error: *[exception_error_message]*)
+
+	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+
+	 * TypeError (Processed dependent variable is not valid)
+
+	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Argument `dfilter` is empty)
+
+	 * ValueError (Argument `fproc` (function *[func_name]*) does not have at least 2 arguments)
+
+	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
+	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
+
+	 * ValueError (Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[col_name]* (independent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[column_name]* not found in header)
+
+	 * ValueError (Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition)
+
+	 * ValueError (Filtered dependent variable is empty)
+
+	 * ValueError (Filtered independent variable is empty)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * ValueError (Processed independent variable is empty)
+
 	.. [[[end]]]
 
 	:raises:
@@ -699,12 +777,71 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 		return (self.indep_var is not None) and (self.dep_var is not None)
 
 	file_name = property(_get_file_name, _set_file_name, doc='Comma-separated file name')
-	"""
+	r"""
 	Comma-separated file from which data series is to be extracted. It is assumed that the first line of file contains unique headers for each column
 
 	:type:		string
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.file_name
+
+	:raises: (when assigned)
+
+	 * IOError (File `*[file_name]*` could not be found)
+
+	 * RuntimeError (Argument `col` is not valid)
+
+	 * RuntimeError (Argument `dep_var` is not valid)
+
+	 * RuntimeError (Argument `dfilter` is not valid)
+
+	 * RuntimeError (Argument `file_name` is not valid)
+
+	 * RuntimeError (Argument `filtered` is not valid)
+
+	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+
+	 * RuntimeError (Argument `indep_var` is not valid)
+
+	 * RuntimeError (Column headers are not unique)
+
+	 * RuntimeError (File *[file_name]* has no valid data)
+
+	 * RuntimeError (File *[file_name]* is empty)
+
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
+	   ``\n`` Exception error: *[exception_error_message]*)
+
+	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+
+	 * TypeError (Processed dependent variable is not valid)
+
+	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Argument `dfilter` is empty)
+
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
+	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
+
+	 * ValueError (Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[col_name]* (independent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[column_name]* not found in header)
+
+	 * ValueError (Filtered dependent variable is empty)
+
+	 * ValueError (Filtered independent variable is empty)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * ValueError (Processed independent variable is empty)
+
 	.. [[[end]]]
 
 	:raises:
@@ -716,7 +853,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
-	"""
+	r"""
 	Data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and a column value (dictionary value). All rows which contain the specified value in the
 	specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified by each individual filter. For example, if the file name to be processed is:
 
@@ -746,6 +883,35 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:type:		dictionary, default is *None*
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.dfilter
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `dfilter` is not valid)
+
+	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
+	   ``\n`` Exception error: *[exception_error_message]*)
+
+	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+
+	 * TypeError (Processed dependent variable is not valid)
+
+	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Filtered dependent variable is empty)
+
+	 * ValueError (Filtered independent variable is empty)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * ValueError (Processed independent variable is empty)
+
 	.. [[[end]]]
 
 	:raises:
@@ -763,12 +929,43 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
-	"""
+	r"""
 	Independent variable column label (column name)
 
 	:type:	string
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_col_label
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+
+	 * RuntimeError (Argument `indep_col_label` is not valid)
+
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
+	   ``\n`` Exception error: *[exception_error_message]*)
+
+	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+
+	 * TypeError (Processed dependent variable is not valid)
+
+	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Column *[col_name]* (independent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Filtered dependent variable is empty)
+
+	 * ValueError (Filtered independent variable is empty)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * ValueError (Processed independent variable is empty)
+
 	.. [[[end]]]
 
 	:raises:
@@ -780,12 +977,45 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	dep_col_label = property(_get_dep_col_label, _set_dep_col_label, doc='Dependent column label (column name)')
-	"""
+	r"""
 	Dependent variable column label (column name)
 
 	:type:	string
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.dep_col_label
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `dep_col_label` is not valid)
+
+	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+
+	 * RuntimeError (Argument `indep_min` is not valid)
+
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
+	   ``\n`` Exception error: *[exception_error_message]*)
+
+	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+
+	 * TypeError (Processed dependent variable is not valid)
+
+	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
+
+	 * ValueError (Filtered dependent variable is empty)
+
+	 * ValueError (Filtered independent variable is empty)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * ValueError (Processed independent variable is empty)
+
 	.. [[[end]]]
 
 	:raises:
@@ -803,6 +1033,16 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:type:		number or None, default is *None*
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_min
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `indep_min` is not valid)
+
+	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
 	.. [[[end]]]
 
 	:raises:
@@ -820,6 +1060,16 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:type:		number or None, default is *None*
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_max
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `indep_max` is not valid)
+
+	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
 	.. [[[end]]]
 
 	:raises:
@@ -831,7 +1081,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
-	"""
+	r"""
 	Data processing function pointer. The processing function is useful for "light" data massaging, like scaling, unit conversion, etc.; it is called after the data has been retrieved from the comma-separated value and\
 	the resulting filtered data set has been thresholded by **indep_var_min** and **dep_var_min** (if applicable).
 
@@ -849,6 +1099,33 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:type:	function pointer, default is *None*
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.fproc
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+
+	 * RuntimeError (Argument `fproc` is not valid)
+
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
+	   ``\n`` Exception error: *[exception_error_message]*)
+
+	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+
+	 * TypeError (Processed dependent variable is not valid)
+
+	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Argument `fproc` (function *[func_name]*) does not have at least 2 arguments)
+
+	 * ValueError (Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * ValueError (Processed independent variable is empty)
+
 	.. [[[end]]]
 
 	:raises:
@@ -881,7 +1158,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
 	#pylint: disable=W1401
-	"""
+	r"""
 	Extra arguments for the data processing function. The arguments are specified by key-value pairs of a dictionary, for each dictionary element the dictionary key specifies the argument name and the dictionary value
 	specifies the argument value. The extra parameters are passed by keyword so they must appear in the function definition explicitly or keyword variable argument collection must be used (\*\*kwargs, for example).
 
@@ -895,6 +1172,31 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:type:	dictionary, default is *None*
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.CsvSource.fproc_eargs
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `fproc_eargs` is not valid)
+
+	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
+	   ``\n`` Exception error: *[exception_error_message]*)
+
+	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+
+	 * TypeError (Processed dependent variable is not valid)
+
+	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition)
+
+	 * ValueError (Processed dependent variable is empty)
+
+	 * ValueError (Processed independent and dependent variables are of different length)
+
+	 * ValueError (Processed independent variable is empty)
+
 	.. [[[end]]]
 
 	:raises:

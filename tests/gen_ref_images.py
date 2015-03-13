@@ -6,6 +6,7 @@
 Generate reference images to be used for putil.plot unit testing
 """
 
+import os
 import math
 import numpy
 import itertools
@@ -16,8 +17,8 @@ import putil.misc
 def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: disable=R0914
 	""" Images for Series() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = './support/ref_images/'
-	test_dir = './test_images' if test_dir is None else test_dir
+	ref_dir = os.path.abspath('../tests/support/ref_images/')
+	test_dir = os.path.abspath('./test_images') if test_dir is None else test_dir
 	marker_list = [False, True]
 	interp_list = ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
 	line_style_list = ['-', '--', '-.', ':']
@@ -63,8 +64,8 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: di
 def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915
 	""" Images for Panel() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = './support/ref_images/'
-	test_dir = './test_images' if test_dir is None else test_dir
+	ref_dir = os.path.abspath('../tests/support/ref_images/')
+	test_dir = os.path.abspath('./test_images') if test_dir is None else test_dir
 	axis_type_list = ['single', 'linear', 'log', 'filter']
 	series_in_axis = ['primary', 'secondary', 'both']
 	master_list = [axis_type_list, series_in_axis]
@@ -150,8 +151,8 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915
 	""" Images for Figure() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = './support/ref_images/'
-	test_dir = './test_images' if test_dir is None else test_dir
+	ref_dir = os.path.abspath('../tests/support/ref_images/')
+	test_dir = os.path.abspath('./test_images') if test_dir is None else test_dir
 	output_list = list()
 	ds1_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([1, 2, 3, 4]))
 	ds2_obj = putil.plot.BasicSource(indep_var=numpy.array([300, 400, 500, 600, 700]), dep_var=numpy.array([3, 4, 5, 6, 7]))

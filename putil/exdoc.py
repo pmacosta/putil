@@ -6,10 +6,24 @@
 import os
 import sys
 import copy
+import textwrap
 
 import putil.exh
 import putil.misc
 import putil.tree
+
+###
+# Global variables
+###
+_MINWIDTH = 40	# Minimum width of the output lines, broken out as a global variable mainly to ease testing
+
+###
+# Functions
+###
+def _format_msg(text, width, indent=0):
+	""" Replace newline characters \n with ``\n`` and wrap text as needed"""
+	text = repr(text).replace('\\n', ' ``\\n`` ')
+	return ('\n'.join(textwrap.wrap(text, width, subsequent_indent=indent*' ')))[1:-1].rstrip()
 
 ###
 # Context manager
@@ -164,7 +178,7 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			raise TypeError('Argument `exclude` is not valid')
 		self._exclude = exclude
 
-	def get_sphinx_autodoc(self, depth=None, exclude=None, error=False):	#pylint: disable=R0201
+	def get_sphinx_autodoc(self, depth=None, exclude=None, width=230, error=False):	#pylint: disable=R0201
 		"""
 		Returns exception list marked up in `reStructuredText`_ automatically determining callable name
 
@@ -172,6 +186,8 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		:type	depth: non-negative integer
 		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument)
 		:type	exclude: list
+		:param	width: Maximum width of the lines of text (minimum 40)
+		:type	width: integer
 		:raises:
 		 * RuntimeError (Callable not found in exception list: *[name]*)
 
@@ -180,6 +196,8 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		 * TypeError (Argument `depth` is not valid)
 
 		 * TypeError (Argument `exclude` is not valid)
+
+		 * TypeError (Argument `width` is not valid)
 		"""
 		frame = sys._getframe(1)	#pylint: disable=W0212
 		index = frame.f_code.co_filename.rfind('+')
@@ -194,9 +212,9 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			name = callable_dict['name']
 		#else:
 		#	raise RuntimeError('Unable to determine callable name')
-		return self.get_sphinx_doc(name, depth=depth, exclude=exclude, error=error)
+		return self.get_sphinx_doc(name, depth=depth, exclude=exclude, width=width, error=error)
 
-	def get_sphinx_doc(self, name, depth=None, exclude=None, error=False):	#pylint: disable=R0912,R0914,R0915
+	def get_sphinx_doc(self, name, depth=None, exclude=None, width=230, error=False):	#pylint: disable=R0912,R0913,R0914,R0915
 		"""
 		Returns exception list marked up in `reStructuredText`_
 
@@ -206,17 +224,23 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		:type	depth: non-negative integer
 		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument)
 		:type	exclude: list
+		:param	width: Maximum width of the lines of text (minimum 40)
+		:type	width: integer
 		:raises:
 		 * RuntimeError (Callable not found in exception list: *[name]*)
 
 		 * TypeError (Argument `depth` is not valid)
 
 		 * TypeError (Argument `exclude` is not valid)
+
+		 * TypeError (Argument `width` is not valid)
 		"""
 		if depth and ((not isinstance(depth, int)) or (isinstance(depth, int) and (depth < 0))):
 			raise TypeError('Argument `depth` is not valid')
 		if exclude and ((not isinstance(exclude, list)) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude]))):
 			raise TypeError('Argument `exclude` is not valid')
+		if (not isinstance(width, int)) or (isinstance(width, int) and (width < _MINWIDTH)):
+			raise TypeError('Argument `width` is not valid')
 		depth = self._depth if depth == None else depth
 		exclude = self._exclude if not exclude else exclude
 		callable_dict = {}
@@ -251,14 +275,15 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 							exlist.append(exc)
 			name_dict['exlist'] = list(set(exlist[:]))
 		# Generate final output
-		exoutput = ['.. Auto-generated exceptions documentation for {0}'.format(name)]
+		exoutput = [_format_msg('.. Auto-generated exceptions documentation for {0}'.format(name), width)]
 		if prop:
 			if len(callable_dict) == 1:
 				callable_root = callable_dict.keys()[0]
 				action = callable_dict[callable_root]['type']
 				desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
 				exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
-				exoutput.extend(['\n:raises: (when {0}) {1}'.format(desc, exlist[0])] if len(exlist) == 1 else ['\n:raises: (when {0})\n'.format(desc)]+[' * {0}\n'.format(exname) for exname in exlist])
+				exoutput.extend(['\n{0}'.format(_format_msg(':raises: (when {0}) {1}'.format(desc, exlist[0]), width))] if len(exlist) == 1 else\
+					['\n:raises: (when {0})\n'.format(desc)]+[' * {0}\n'.format(_format_msg(exname, width, 3)) for exname in exlist])
 			else:
 				exoutput.append('\n:raises:')
 				for action in ['fset', 'fdel', 'fget']:
@@ -266,10 +291,10 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 					for callable_root in callable_dict:
 						if callable_dict[callable_root]['type'] == action:
 							exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
-							exoutput.extend([' * When {0}\n'.format(desc)]+['   * {0}\n'.format(exname) for exname in exlist])
+							exoutput.extend([' * When {0}\n'.format(desc)]+['   * {0}\n'.format(_format_msg(exname, width, 5)) for exname in exlist])
 		else:
 			exlist = sorted(list(set(callable_dict[callable_dict.keys()[0]]['exlist'])))
-			exoutput.extend(['\n:raises: {0}'.format(exlist[0])] if len(exlist) == 1 else ['\n:raises:']+[' * {0}\n'.format(exname) for exname in exlist])
+			exoutput.extend(['\n{0}'.format(_format_msg(':raises: {0}'.format(exlist[0]), width))] if len(exlist) == 1 else ['\n:raises:']+[' * {0}\n'.format(_format_msg(exname, width, 3)) for exname in exlist])
 		if exoutput:
 			exoutput[-1] = exoutput[-1].rstrip() + '\n\n'
 		return ('\n'.join(exoutput)) if exoutput else ''
