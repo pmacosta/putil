@@ -90,6 +90,13 @@ def test_real_num_contract():	#pylint: disable=W0232
 	putil.plot.real_num(2.0)
 
 
+def test_function():	#pylint: disable=W0232
+	""" Tests for RealNumpyVector pseudo-type """
+	putil.test.assert_exception(putil.plot.function, {'obj':'a'}, ValueError, '[START CONTRACT MSG: function]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.plot.function(test_real_num_contract)
+	putil.plot.function(None)
+
+
 def test_real_numpy_vector_contract():	#pylint: disable=W0232
 	""" Tests for RealNumpyVector pseudo-type """
 	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':'a'}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
@@ -108,13 +115,13 @@ def test_increasing_real_numpy_vector_contract():	#pylint: disable=W0232,C0103
 	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([])}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([[1, 2, 3], [4, 5, 6]])},\
-							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array(['a', 'b'])},\
-							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([1, 0, -3])},\
-							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([10.0, 8.0, 2.0])},\
-							 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.plot.increasing_real_numpy_vector(numpy.array([1, 2, 3]))
 	putil.plot.increasing_real_numpy_vector(numpy.array([10.0, 12.1, 12.5]))
 	putil.plot.increasing_real_numpy_vector(numpy.array([10.0]))
@@ -257,9 +264,9 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		""" Tests dep_var type validation """
 		# Both set at object creation
 		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([10, 20, 30]), 'dep_var':numpy.array([1, 2, 3, 4, 5, 6]), 'indep_min':30, 'indep_max':50},\
-							  ValueError, 'Arguments `indep_var` and `dep_var` must have the same number of elements')
+			  ValueError, 'Arguments `indep_var` and `dep_var` must have the same number of elements')
 		putil.test.assert_exception(putil.plot.BasicSource, {'indep_var':numpy.array([10, 20, 30]), 'dep_var':numpy.array([1, 2]), 'indep_min':30, 'indep_max':50},\
-							  ValueError, 'Arguments `indep_var` and `dep_var` must have the same number of elements')
+			  ValueError, 'Arguments `indep_var` and `dep_var` must have the same number of elements')
 		# indep_var set first
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30, 40, 50, 60]), dep_var=numpy.array([1, 2, 3, 4, 5, 6]), indep_min=30, indep_max=50)
 		with pytest.raises(ValueError) as excinfo:
@@ -330,89 +337,72 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 	""" Tests for CsvSource """
 	def test_indep_min_type(self):	#pylint: disable=R0201
 		""" Tests indep_min type validation """
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# __init__ path
 			# Wrong types
-			for param_value in ['a', False]:
-				with pytest.raises(TypeError) as excinfo:
-					putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=param_value)
-				test_list.append(excinfo.value.message == 'Argument `indep_min` is of the wrong type')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'indep_min':'a'}, RuntimeError, 'Argument `indep_min` is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'indep_min':False}, RuntimeError, 'Argument `indep_min` is not valid')
 			# Valid values, these should not raise an exception
-			for param_value in [1, 2.0]:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=param_value)
+			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=1)
+			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=2.0)
 			# Managed attribute path
 			# Wrong types
-			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=param_value)
+			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=2.0)
 			for param_value in ['a', False]:
-				with pytest.raises(TypeError) as excinfo:
+				with pytest.raises(RuntimeError) as excinfo:
 					obj.indep_min = param_value
-				test_list.append(excinfo.value.message == 'Argument `indep_min` is of the wrong type')
+				assert excinfo.value.message == 'Argument `indep_min` is not valid'
 			# Valid values, these should not raise an exception
 			for param_value in [1, 2.0]:
 				obj.indep_min = param_value
-				test_list.append(obj.indep_min == param_value)
-		assert test_list == 6*[True]
+				assert obj.indep_min == param_value
 
 	def test_indep_max_type(self):	#pylint: disable=R0201
 		""" Tests indep_max type validation """
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# __init__ path
 			# Wrong types
-			for param_value in ['a', False]:
-				with pytest.raises(TypeError) as excinfo:
-					putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_max=param_value)
-				test_list.append(excinfo.value.message == 'Argument `indep_max` is of the wrong type')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'indep_max':'a'}, RuntimeError, 'Argument `indep_max` is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'indep_max':False}, RuntimeError, 'Argument `indep_max` is not valid')
 			# Valid values, these should not raise an exception
-			for param_value in [1, 2.0]:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_max=param_value)
+			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_max=1)
+			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_max=2.0)
 			# Managed attribute path
 			# Wrong types
 			obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]))
 			for param_value in ['a', False]:
-				with pytest.raises(TypeError) as excinfo:
+				with pytest.raises(RuntimeError) as excinfo:
 					obj.indep_max = param_value
-				test_list.append(excinfo.value.message == 'Argument `indep_max` is of the wrong type')
+				assert excinfo.value.message == 'Argument `indep_max` is not valid'
 			# Valid values, these should not raise an exception
 			for param_value in [1, 2.0]:
 				obj.indep_max = param_value
-				test_list.append(obj.indep_max == param_value)
-		assert test_list == 6*[True]
+				assert obj.indep_max == param_value
 
 	def test_indep_min_greater_than_indep_max(self):	#pylint: disable=R0201,C0103
 		""" Test if object behaves correctly when indep_min and indep_max are incongrous """
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# Assign indep_min first
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=0.5)
 			with pytest.raises(ValueError) as excinfo:
 				obj.indep_max = 0
-			test_list.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
+			assert excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`'
 			# Assign indep_max first
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_max=10)
 			with pytest.raises(ValueError) as excinfo:
 				obj.indep_min = 50
-			test_list.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
-		assert test_list == 2*[True]
+			assert excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`'
 
 	def test_file_name_wrong_type(self):	#pylint: disable=C0103,R0201
-		""" Test if object behaves correctly when file_name is of the wrong type """
+		""" Test if object behaves correctly when file_name is not valid """
 		# This assignment should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.CsvSource(file_name=5, indep_col_label='Col7', dep_col_label='Col2')
-		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.CsvSource(file_name=None, indep_col_label='Col7', dep_col_label='Col2')
-		test_list.append(excinfo.value.message == 'Argument `file_name` is of the wrong type')
+		putil.test.assert_exception(putil.plot.CsvSource, {'file_name':5, 'indep_col_label':'Col7', 'dep_col_label':'Col2'}, RuntimeError, 'Argument `file_name` is not valid')
+		putil.test.assert_exception(putil.plot.CsvSource, {'file_name':None, 'indep_col_label':'Col7', 'dep_col_label':'Col2'}, RuntimeError, 'Argument `file_name` is not valid')
 
 	def test_file_does_not_exist(self):	#pylint: disable=C0103,R0201
 		""" Test if object behaves correctly when CSV file does not exist """
 		file_name = 'nonexistent_file_name.csv'
-		with pytest.raises(IOError) as excinfo:
-			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2')
-		assert excinfo.value.message == 'File {0} could not be found'.format(file_name)
+		putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2'}, IOError, 'File `{0}` could not be found'.format(file_name))
 
 	def test_file_exists(self):	#pylint: disable=R0201
 		""" Test if object behaves correctly when CSV file exists """
@@ -420,103 +410,76 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2')
 
 	def test_data_filter_wrong_type(self):	#pylint: disable=R0201
-		""" Test if object behaves correctly when dfilter is of the wrong type """
+		""" Test if object behaves correctly when dfilter is not valid """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# This assignment should raise an exception
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter=5)
-			test = excinfo.value.message == 'Argument `dfilter` is of the wrong type'
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'dfilter':5}, RuntimeError, 'Argument `dfilter` is not valid')
 			# This assignment should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter=None)
-		assert test == True
 
 	def test_data_filter_operation(self):	#pylint: disable=R0201
 		""" Test if object behaves correctly when data filter and file name are given """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# This assignment should raise an exception
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter={'Col99':500})
-			test = excinfo.value.message == 'Column Col99 in data filter not found in comma-separated file {0} header'.format(file_name)
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'dfilter':{'Col99':500}},\
+				ValueError, 'Column Col99 in data filter not found in comma-separated file {0} header'.format(file_name))
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter={'Col1':0})
-		assert test == True
 
 	def test_indep_col_label_wrong_type(self):	#pylint: disable=R0201
-		""" Test if object behaves correctly when indep_col_label is of the wrong type """
-		test_list = list()
+		""" Test if object behaves correctly when indep_col_label is not valid """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# These assignments should raise an exception
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label=None, dep_col_label='Col2')
-			test_list.append(excinfo.value.message == 'Argument `indep_col_label` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label=5, dep_col_label='Col2')
-			test_list.append(excinfo.value.message == 'Argument `indep_col_label` is of the wrong type')
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col99', dep_col_label='Col2')
-			test_list.append(excinfo.value.message == 'Column Col99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':None, 'dep_col_label':'Col2'}, RuntimeError, 'Argument `indep_col_label` is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':5, 'dep_col_label':'Col2'}, RuntimeError, 'Argument `indep_col_label` is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col99', 'dep_col_label':'Col2'},\
+				ValueError, 'Column Col99 (independent column label) could not be found in comma-separated file {0} header'.format(file_name))
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', dfilter={'Col1':0})
-		assert test_list == 3*[True]
 
 	def test_dep_col_label_wrong_type(self):	#pylint: disable=R0201
-		""" Test if object behaves correctly when dep_col_label is of the wrong type """
-		test_list = list()
+		""" Test if object behaves correctly when dep_col_label is not valid """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# This assignment should raise an exception
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label=None)
-			test_list.append(excinfo.value.message == 'Argument `dep_col_label` is of the wrong type')
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label=5)
-			test_list.append(excinfo.value.message == 'Argument `dep_col_label` is of the wrong type')
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col99')
-			test_list.append(excinfo.value.message == 'Column Col99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))	# Thess assignments should not raise an exception
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':None}, RuntimeError, 'Argument `dep_col_label` is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':5}, RuntimeError, 'Argument `dep_col_label` is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col99'},\
+				ValueError, 'Column Col99 (dependent column label) could not be found in comma-separated file {0} header'.format(file_name))
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col3')
-		assert test_list == 3*[True]
 
 	def test_empty_indep_var_after_filter(self):	#pylint: disable=R0201,C0103
 		""" Test if object behaves correctly when the independent variable is empty after data filter is applied """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':10})
-		assert excinfo.value.message == 'Filtered independent variable is empty'
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':10}}, ValueError, 'Filtered independent variable is empty')
 
 	def test_empty_dep_var_after_filter(self):	#pylint: disable=R0201
 		""" Test if object behaves correctly when the dependent variable is empty after data filter is applied """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col5', dfilter={'Col1':0})
-		assert excinfo.value.message == 'Filtered dependent variable is empty'
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col5', 'dfilter':{'Col1':0}}, ValueError, 'Filtered dependent variable is empty')
 
 	def test_data_reversed(self):	#pylint: disable=R0201
 		""" Test if object behaves correctly when the independent dat is descending order """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col6', dep_col_label='Col3', dfilter={'Col1':0})
-		assert ((obj.indep_var == numpy.array([3, 4, 5])).all(), (obj.dep_var == numpy.array([1, 4, 2])).all()) == (True, True)
+		assert (obj.indep_var == numpy.array([3, 4, 5])).all()
+		assert (obj.dep_var == numpy.array([1, 4, 2])).all()
 
 	def test_fproc_wrong_type(self):	#pylint: disable=R0201
-		""" Test if object behaves correctly when fproc is of the wrong type """
+		""" Test if object behaves correctly when fproc is not valid """
 		def fproc1():	#pylint: disable=C0111
 			return numpy.array([1]), numpy.array([1])
 		def fproc2(*args):	#pylint: disable=C0111,W0613
 			return numpy.array([1]), numpy.array([1])
 		def fproc3(*args, **kwargs):	#pylint: disable=C0111,W0613
 			return numpy.array([1, 2, 3, 4, 5]), numpy.array([1, 2, 3, 1, 2])
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# These assignments should raise an exception
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc=5)
-			test_list.append(excinfo.value.message == 'Argument `fproc` is of the wrong type')
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc=fproc1)
-			test_list.append(excinfo.value.message == 'Argument `fproc` (function fproc1) does not have at least 2 arguments')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'fproc':5}, RuntimeError, 'Argument `fproc` is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'fproc':fproc1},\
+				ValueError, 'Argument `fproc` (function fproc1) does not have at least 2 arguments')
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc=fproc2)
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc=fproc3)
-		assert test_list == 2*[True]
 
 	def test_fproc_wrong_return(self):	#pylint: disable=R0201,R0912,R0914
 		""" Test if object behaves correctly when fproc returns the wrong type and/or number of arguments """
@@ -545,62 +508,57 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		def fproc12(indep_var, dep_var):	#pylint: disable=C0111,W0613
 			return [numpy.array([1, 3]), numpy.array([1, 2, 3])]
 		def fproc13(indep_var, dep_var, par1):	#pylint: disable=C0111,W0613
-			raise RuntimeError('Test exception message')
+			raise RuntimeError('Test exception message #1')
+		def fproc14(indep_var, dep_var, par1=None):	#pylint: disable=C0111,W0613
+			raise RuntimeError('Test exception message #2')
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# These assignments should raise an exception
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1)
-			assert excinfo.value.message == 'Argument `fproc` (function fproc1) return value is of the wrong type'
-			with pytest.raises(RuntimeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc2)
-			assert excinfo.value.message == 'Argument `fproc` (function fproc2) returned an illegal number of values'
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc4)
-			assert excinfo.value.message == 'Processed independent variable is of the wrong type'
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc5)
-			assert excinfo.value.message == 'Processed independent variable is of the wrong type'
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc6)
-			assert excinfo.value.message == 'Processed dependent variable is of the wrong type'
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc8)
-			assert excinfo.value.message == 'Processed independent variable is empty'
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc9)
-			assert excinfo.value.message == 'Processed dependent variable is empty'
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc10)
-			assert excinfo.value.message == 'Processed independent variable is empty'
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc11)
-			assert excinfo.value.message == 'Processed dependent variable is empty'
-			with pytest.raises(ValueError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc12)
-			assert excinfo.value.message == 'Processed independent and dependent variables are of different length'
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc1},\
+				TypeError, 'Argument `fproc` (function fproc1) return value is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc2},\
+				RuntimeError, 'Argument `fproc` (function fproc2) returned an illegal number of values')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc4}, TypeError, 'Processed independent variable is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc5}, TypeError, 'Processed independent variable is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc6}, TypeError, 'Processed dependent variable is not valid')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc8}, ValueError, 'Processed independent variable is empty')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc9}, ValueError, 'Processed dependent variable is empty')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc10}, ValueError, 'Processed independent variable is empty')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc11}, ValueError, 'Processed dependent variable is empty')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc12},\
+				ValueError, 'Processed independent and dependent variables are of different length')
 			with pytest.raises(RuntimeError) as excinfo:
 				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
 			msg = 'Processing function fproc13 raised an exception when called with the following arguments:\n'
 			msg += 'indep_var: [ 1, 2, 3 ]\n'
 			msg += 'dep_var: [ 1, 2, 3 ]\n'
-			msg += 'par1: 13\n'
-			msg += 'Exception error: Test exception message'
+			msg += 'fproc_eargs: \n'
+			msg += '   par1: 13\n'
+			msg += 'Exception error: Test exception message #1'
+			assert excinfo.value.message == msg
+			with pytest.raises(RuntimeError) as excinfo:
+				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc14, fproc_eargs={})
+			msg = 'Processing function fproc14 raised an exception when called with the following arguments:\n'
+			msg += 'indep_var: [ 1, 2, 3 ]\n'
+			msg += 'dep_var: [ 1, 2, 3 ]\n'
+			msg += 'fproc_eargs: None\n'
+			msg += 'Exception error: Test exception message #2'
+			assert excinfo.value.message == msg
+			with pytest.raises(RuntimeError) as excinfo:
+				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc14)
 			assert excinfo.value.message == msg
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc3)
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc7)
 
 	def test_fproc_eargs_wrong_type(self):	#pylint: disable=R0201
-		""" Test if object behaves correctly when fprog_eargs is of the wrong type """
+		""" Test if object behaves correctly when fprog_eargs is not valid """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# This assignment should raise an exception
-			with pytest.raises(TypeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc_eargs=5)
-			test = excinfo.value.message == 'Argument `fproc_eargs` is of the wrong type'
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'fproc_eargs':5},\
+				RuntimeError, 'Argument `fproc_eargs` is not valid')
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc_eargs=None)
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc_eargs={'arg1':23})
-		assert test == True
 
 	def test_fproc_eargs_argument_name_validation(self):	#pylint: disable=R0201,C0103
 		""" Test if object behaves correctly when checking if the arguments in the fprog_eargs dictionary exist """
@@ -610,18 +568,14 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			return [numpy.array([1, 2]), numpy.array([1, 2])]
 		def fproc3(indep_var, dep_var, **kwargs):	#pylint: disable=C0111,W0613
 			return [numpy.array([1, 2]), numpy.array([1, 2])]
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# These assignments should raise an exception
-			with pytest.raises(RuntimeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc=fproc1, fproc_eargs={'par1':5})
-			test_list.append(excinfo.value.message == 'Extra argument `par1` not found in argument `fproc` (function fproc1) definition')
-			with pytest.raises(RuntimeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc=fproc2, fproc_eargs={'par3':5})
-			test_list.append(excinfo.value.message == 'Extra argument `par3` not found in argument `fproc` (function fproc2) definition')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'fproc':fproc1, 'fproc_eargs':{'par1':5}},\
+				ValueError, 'Extra argument `par1` not found in argument `fproc` (function fproc1) definition')
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2', 'fproc':fproc2, 'fproc_eargs':{'par3':5}},\
+				ValueError, 'Extra argument `par3` not found in argument `fproc` (function fproc2) definition')
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', fproc=fproc3, fproc_eargs={'par99':5})
-		assert test_list == 2*[True]
 
 	def test_fproc_works(self):	#pylint: disable=R0201
 		""" Test if object behaves correctly when executing function defined in fproc argument with extra arguments defined in fproc_eargs argument """
@@ -629,7 +583,8 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			return indep_var+indep_offset, dep_var+dep_offset
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc1, fproc_eargs={'indep_offset':3, 'dep_offset':100})
-		assert [(obj.indep_var == numpy.array([4, 5, 6])).all(), (obj.dep_var == numpy.array([102, 104, 101])).all()] == [True]*2
+		assert (obj.indep_var == numpy.array([4, 5, 6])).all()
+		assert (obj.dep_var == numpy.array([102, 104, 101])).all()
 
 	def test_str(self):	#pylint: disable=R0201
 		""" Test that str behaves correctly """
@@ -666,51 +621,48 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 
 	def test_complete(self):	#pylint: disable=R0201
 		""" Test that _complete() method behaves correctly """
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', )
 			obj._indep_var = None	#pylint: disable=W0212
-			test_list.append(obj._complete() == False)	#pylint: disable=W0212
+			assert obj._complete() == False	#pylint: disable=W0212
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', )
-			test_list.append(obj._complete() == True)	#pylint: disable=W0212
-		assert test_list == 2*[True]
+			assert obj._complete() == True	#pylint: disable=W0212
 
 	def test_cannot_delete_attributes(self):	#pylint: disable=R0201
 		""" Test that del method raises an exception on all class attributes """
-		test_list = list()
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2')
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.file_name
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.dfilter
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_col_label
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.dep_col_label
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.fproc
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.fproc_eargs
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_min
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_max
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_var
-			test_list.append(excinfo.value.message == "can't delete attribute")
+			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.dep_var
-			test_list.append(excinfo.value.message == "can't delete attribute")
-		assert test_list == 10*[True]
+			assert excinfo.value.message == "can't delete attribute"
+
 
 ###
 # Tests for Series

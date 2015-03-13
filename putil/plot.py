@@ -6,6 +6,7 @@
 import os
 import math
 import numpy
+import inspect
 from scipy import stats
 import matplotlib.path
 import matplotlib.markers
@@ -120,6 +121,30 @@ def real_num(num):
 
 
 @putil.pcontracts.new_contract()
+def function(obj):
+	r"""
+	Function object validation
+
+	:param	vector: Function object
+	:type	vector: Function object
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	if (obj == None) or inspect.isfunction(obj):
+		return None
+	raise ValueError(putil.pcontracts.get_exdesc())
+
+
+def _check_real_numpy_vector(vector):
+	if (type(vector) != numpy.ndarray) or ((type(vector) == numpy.ndarray) and ((len(vector.shape) > 1) or ((len(vector.shape) == 1) and (vector.shape[0] == 0)))):
+		return True
+	if (vector.dtype.type == numpy.array([0]).dtype.type) or (vector.dtype.type == numpy.array([0.0]).dtype.type):
+		return False
+	return True
+
+
+@putil.pcontracts.new_contract()
 def real_numpy_vector(vector):
 	r"""
 	RealNumpyVector pseudo-type validation
@@ -130,12 +155,16 @@ def real_numpy_vector(vector):
 
 	:rtype: None
 	"""
-	msg = putil.pcontracts.get_exdesc()
+	if _check_real_numpy_vector(vector):
+		raise ValueError(putil.pcontracts.get_exdesc())
+
+
+def _check_increasing_real_numpy_vector(vector):	#pylint: disable=C0103
 	if (type(vector) != numpy.ndarray) or ((type(vector) == numpy.ndarray) and ((len(vector.shape) > 1) or ((len(vector.shape) == 1) and (vector.shape[0] == 0)))):
-		raise ValueError(msg)
-	if (vector.dtype.type == numpy.array([0]).dtype.type) or (vector.dtype.type == numpy.array([0.0]).dtype.type):
-		return None
-	raise ValueError(msg)
+		return True
+	if ((vector.dtype.type == numpy.array([0]).dtype.type) or (vector.dtype.type == numpy.array([0.0]).dtype.type)) and ((vector.shape[0] == 1) or ((vector.shape[0] > 1) and (not min(numpy.diff(vector)) <= 0))):
+		return False
+	return True
 
 
 @putil.pcontracts.new_contract()
@@ -149,12 +178,8 @@ def increasing_real_numpy_vector(vector):
 
 	:rtype: None
 	"""
-	msg = putil.pcontracts.get_exdesc()
-	if (type(vector) != numpy.ndarray) or ((type(vector) == numpy.ndarray) and ((len(vector.shape) > 1) or ((len(vector.shape) == 1) and (vector.shape[0] == 0)))):
-		raise ValueError(msg)
-	if ((vector.dtype.type == numpy.array([0]).dtype.type) or (vector.dtype.type == numpy.array([0.0]).dtype.type)) and ((vector.shape[0] == 1) or ((vector.shape[0] > 1) and (not min(numpy.diff(vector)) <= 0))):
-		return None
-	raise ValueError(msg)
+	if _check_increasing_real_numpy_vector(vector):
+		raise ValueError(putil.pcontracts.get_exdesc())
 
 
 class BasicSource(object):	#pylint: disable=R0902,R0903
@@ -378,6 +403,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:param	fproc_eargs:		data processing function extra arguments
 	:type	fproc_eargs:		dictionary or None
 	:rtype:						:py:class:`putil.plot.CsvSource()` object
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * Same as :py:attr:`putil.plot.CsvSource.file_name`
 
@@ -401,6 +430,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""
 	def __init__(self, file_name, indep_col_label, dep_col_label, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		# Private attributes
+		self._exh = putil.exh.get_or_create_exh_obj()
 		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
 		self._csv_obj, self._reverse_data = None, False
 		# Public attributes
@@ -419,7 +449,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_file_name(self):	#pylint: disable=C0111
 		return self._file_name
 
-	@putil.check.check_argument(putil.check.File(check_existance=True))
+	@putil.pcontracts.contract(file_name='file_name_exists')
 	def _set_file_name(self, file_name):	#pylint: disable=C0111
 		self._file_name = file_name
 		self._csv_obj = putil.pcsv.CsvFile(file_name)
@@ -429,7 +459,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
+	@putil.pcontracts.contract(dfilter='None|dict')
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
 		self._dfilter = dict([(key, value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# putil.pcsv is case insensitive and all caps
 		self._apply_dfilter()
@@ -438,7 +468,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_col_label(self):	#pylint: disable=C0111
 		return self._indep_col_label
 
-	@putil.check.check_argument(str)
+	@putil.pcontracts.contract(indep_col_label=str)
 	def _set_indep_col_label(self, indep_col_label):	#pylint: disable=C0111
 		self._indep_col_label = indep_col_label if isinstance(indep_col_label, str) else indep_col_label	# putil.pcsv is case insensitive and all caps
 		self._check_indep_col_label()
@@ -448,7 +478,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_dep_col_label(self):	#pylint: disable=C0111
 		return self._dep_col_label
 
-	@putil.check.check_argument(str)
+	@putil.pcontracts.contract(dep_col_label=str)
 	def _set_dep_col_label(self, dep_col_label):	#pylint: disable=C0111
 		self._dep_col_label = dep_col_label if isinstance(dep_col_label, str) else dep_col_label	 	# putil.pcsv is case insensitive and all caps
 		self._check_dep_col_label()
@@ -458,10 +488,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_var(self):	#pylint: disable=C0111
 		return self._indep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument(putil.check.IncreasingRealNumpyVector())
+	@putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
-		if (indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)):	#pylint: disable=W0212
-			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
+		self._exh.add_exception(exname='same', extype=ValueError, exmsg='Arguments `indep_var` and `dep_var` must have the same number of elements')
+		self._exh.raise_exception_if(exname='same', condition=(indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)))	#pylint: disable=W0212
 		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)	#pylint: disable=W0212
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
 		self._update_dep_var()	#pylint: disable=W0212
@@ -469,20 +499,20 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_dep_var(self):	#pylint: disable=C0111
 		return self._dep_var	#pylint: disable=W0212
 
-	@putil.check.check_argument(putil.check.RealNumpyVector())
+	@putil.pcontracts.contract(dep_var='real_numpy_vector')
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
-		if (dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)):	#pylint: disable=W0212
-			raise ValueError('Arguments `indep_var` and `dep_var` must have the same number of elements')
+		self._exh.add_exception(exname='same', extype=ValueError, exmsg='Arguments `indep_var` and `dep_var` must have the same number of elements')
+		self._exh.raise_exception_if(exname='same', condition=(dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)))	#pylint: disable=W0212
 		self._raw_dep_var = putil.misc.smart_round(dep_var, PRECISION)	#pylint: disable=W0212
 		self._update_dep_var()	#pylint: disable=W0212
 
 	def _get_indep_min(self):	#pylint: disable=C0111
 		return self._indep_min	#pylint: disable=W0212
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.pcontracts.contract(indep_min='real_num')
 	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
-		if (self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min):
-			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
+		self._exh.add_exception(exname='min_max', extype=ValueError, exmsg='Argument `indep_min` is greater than argument `indep_max`')
+		self._exh.raise_exception_if(exname='min_max', condition=(self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min))
 		self._indep_min = putil.misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min	#pylint: disable=W0212
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
 		self._update_dep_var()	#pylint: disable=W0212
@@ -490,23 +520,23 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_indep_max(self):	#pylint: disable=C0111
 		return self._indep_max	#pylint: disable=W0212
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Real()]))
+	@putil.pcontracts.contract(indep_max='real_num')
 	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
-		if (self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min):
-			raise ValueError('Argument `indep_min` is greater than argument `indep_max`')
+		self._exh.add_exception(exname='min_max', extype=ValueError, exmsg='Argument `indep_min` is greater than argument `indep_max`')
+		self._exh.raise_exception_if(exname='min_max', condition=(self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min))
 		self._indep_max = putil.misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max	#pylint: disable=W0212
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
 		self._update_dep_var()	#pylint: disable=W0212
 
 	def _update_indep_var(self):
 		""" Update independent variable according to its minimum and maximum limits """
+		self._exh.add_exception(exname='empty', extype=ValueError, exmsg='Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
 		if self._raw_indep_var is not None:	#pylint: disable=W0212
 			min_indexes = (self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0]))	#pylint: disable=W0212
 			max_indexes = (self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1]))	#pylint: disable=W0212
 			self._indep_var_indexes = numpy.where(min_indexes & max_indexes)	#pylint: disable=W0212
 			self._indep_var = self._raw_indep_var[self._indep_var_indexes]	#pylint: disable=W0212
-			if len(self.indep_var) == 0:
-				raise ValueError('Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
+			self._exh.raise_exception_if(exname='empty', condition=len(self.indep_var) == 0)
 
 	def _update_dep_var(self):
 		""" Update dependent variable (if assigned) to match the independent variable range bounding """
@@ -517,12 +547,12 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Function()]))
+	@putil.pcontracts.contract(fproc='function')
 	def _set_fproc(self, fproc):	#pylint: disable=C0111
+		self._exh.add_exception(exname='min_args', extype=ValueError, exmsg='Argument `fproc` (function *[func_name]*) does not have at least 2 arguments')
 		if fproc is not None:
 			args = putil.check.get_function_args(fproc)
-			if (fproc is not None) and (len(args) < 2) and ('*args' not in args) and ('**kwargs' not in args):
-				raise ValueError('Argument `fproc` (function {0}) does not have at least 2 arguments'.format(fproc.__name__))
+			self._exh.raise_exception_if(exname='min_args', condition=(fproc is not None) and (len(args) < 2) and ('*args' not in args) and ('**kwargs' not in args), edata={'field':'func_name', 'value':fproc.__name__})
 		self._fproc = fproc
 		self._check_fproc_eargs()
 		self._process_data()
@@ -530,7 +560,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_fproc_eargs(self):	#pylint: disable=C0111
 		return self._fproc_eargs
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
+	@putil.pcontracts.contract(fproc_eargs='None|dict')
 	def _set_fproc_eargs(self, fproc_eargs):	#pylint: disable=C0111
 		# Check that extra arguments to see if they are in the function definition
 		self._fproc_eargs = fproc_eargs
@@ -539,28 +569,31 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	def _check_fproc_eargs(self):
 		""" Checks that the extra arguments are in the processing function definition """
+		self._exh.add_exception(exname='extra_args', extype=ValueError, exmsg='Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition')
 		if (self.fproc is not None) and (self.fproc_eargs is not None):
 			args = putil.check.get_function_args(self._fproc)
 			for key in self.fproc_eargs:
-				if (key not in args) and ('*args' not in args) and ('**kwargs' not in args):
-					raise RuntimeError('Extra argument `{0}` not found in argument `fproc` (function {1}) definition'.format(key, self.fproc.__name__))
+				self._exh.raise_exception_if(exname='extra_args', condition=(key not in args) and ('*args' not in args) and ('**kwargs' not in args),\
+							  edata=[{'field':'func_name', 'value':self.fproc.__name__}, {'field':'arg_name', 'value':key}])
 
 	def _check_indep_col_label(self):
 		""" Check that independent column label can be found in comma-separated file header """
-		if (self._csv_obj is not None) and (self.indep_col_label is not None) and (self.indep_col_label not in self._csv_obj.header):
-			raise ValueError('Column {0} (independent column label) could not be found in comma-separated file {1} header'.format(self.indep_col_label, self.file_name))
+		self._exh.add_exception(exname='label', extype=ValueError, exmsg='Column *[col_name]* (independent column label) could not be found in comma-separated file *[file_name]* header')
+		self._exh.raise_exception_if(exname='label', condition=(self._csv_obj is not None) and (self.indep_col_label is not None) and (self.indep_col_label not in self._csv_obj.header),\
+					  edata=[{'field':'col_name', 'value':self.indep_col_label}, {'field':'file_name', 'value':self.file_name}])
 
 	def _check_dep_col_label(self):
 		""" Check that dependent column label can be found in comma-separated file header """
-		if (self._csv_obj is not None) and (self.dep_col_label is not None) and (self.dep_col_label not in self._csv_obj.header):
-			raise ValueError('Column {0} (dependent column label) could not be found in comma-separated file {1} header'.format(self.dep_col_label, self.file_name))
+		self._exh.add_exception(exname='label', extype=ValueError, exmsg='Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header')
+		self._exh.raise_exception_if(exname='label', condition=(self._csv_obj is not None) and (self.dep_col_label is not None) and (self.dep_col_label not in self._csv_obj.header),\
+					  edata=[{'field':'col_name', 'value':self.dep_col_label}, {'field':'file_name', 'value':self.file_name}])
 
 	def _check_dfilter(self):
 		""" Check that columns in filter specification can be found in comma-separated file header """
+		self._exh.add_exception(exname='dfilter', extype=ValueError, exmsg='Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header')
 		if (self._csv_obj is not None) and (self.dfilter is not None):
 			for key in self.dfilter:
-				if key not in self._csv_obj.header:
-					raise ValueError('Column {0} in data filter not found in comma-separated file {1} header'.format(key, self.file_name))
+				self._exh.raise_exception_if(exname='dfilter', condition=key not in self._csv_obj.header, edata=[{'field':'col_name', 'value':key}, {'field':'file_name', 'value':self.file_name}])
 
 	def _apply_dfilter(self):
 		""" Apply data filters to loaded data """
@@ -574,11 +607,11 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	def _get_indep_var_from_file(self):
 		""" Retrieve independent data variable from comma-separated file """
+		self._exh.add_exception(exname='empty', extype=ValueError, exmsg='Filtered independent variable is empty')
 		if (self._csv_obj is not None) and (self.indep_col_label is not None):
 			self._check_indep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array([row[0] for row in self._csv_obj.data(self.indep_col_label, filtered=True)])
-			if (len(data) == 0) or ((data == [None]*len(data)).all()):
-				raise ValueError('Filtered independent variable is empty')
+			self._exh.raise_exception_if(exname='empty', condition=(len(data) == 0) or bool(((data == [None]*len(data)).all())))
 			# Flip data if it is in descending order (affects interpolation)
 			if max(numpy.diff(data)) < 0:
 				self._reverse_data = True
@@ -589,37 +622,47 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	def _get_dep_var_from_file(self):
 		""" Retrieve dependent data variable from comma-separated file """
+		self._exh.add_exception(exname='empty', extype=ValueError, exmsg='Filtered dependent variable is empty')
 		if (self._csv_obj is not None) and (self.dep_col_label is not None):
 			self._check_dep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
 			data = numpy.array([row[0] for row in self._csv_obj.data(self.dep_col_label, filtered=True)])
-			if (len(data) == 0) or ((data == [None]*len(data)).all()):
-				raise ValueError('Filtered dependent variable is empty')
+			self._exh.raise_exception_if(exname='empty', condition=(len(data) == 0) or bool(((data == [None]*len(data)).all())))
 			self._set_dep_var(data[::-1] if self._reverse_data else data)	#pylint: disable=W0212
 
 	def _process_data(self):
 		""" Process data through call-back function """
+		self._exh.add_exception(exname='invalid_ret', extype=TypeError, exmsg='Argument `fproc` (function *[func_name]*) return value is not valid')
+		self._exh.add_exception(exname='illegal_ret', extype=RuntimeError, exmsg='Argument `fproc` (function *[func_name]*) returned an illegal number of values')
+		self._exh.add_exception(exname='length', extype=ValueError, exmsg='Processed independent and dependent variables are of different length')
+		self._exh.add_exception(exname='empty_indep_var', extype=ValueError, exmsg='Processed independent variable is empty')
+		self._exh.add_exception(exname='illegal_indep_var', extype=TypeError, exmsg='Processed independent variable is not valid')
+		self._exh.add_exception(exname='empty_dep_var', extype=ValueError, exmsg='Processed dependent variable is empty')
+		self._exh.add_exception(exname='illegal_dep_var', extype=TypeError, exmsg='Processed dependent variable is not valid')
+		msg = 'Processing function *[func_name]* raised an exception when called with the following arguments:\nindep_var: *[indep_var_value]*\ndep_var: *[dep_var_value]*\nfproc_eargs: *[fproc_eargs_value]*\n'+\
+			  'Exception error: *[exception_error_message]*'
+		self._exh.add_exception(exname='proc_fun_ex', extype=RuntimeError, exmsg=msg)
 		if (self.fproc is not None) and (self.indep_var is not None) and (self.dep_var is not None):
 			try:
 				ret = self.fproc(self.indep_var, self.dep_var) if self.fproc_eargs is None else self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs)
-			except Exception as error_msg:
-				msg = 'Processing function {0} raised an exception when called with the following arguments:\n'.format(self.fproc.__name__)
-				msg += 'indep_var: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, limit=10))
-				msg += 'dep_var: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, limit=10))
-				if self.fproc_eargs is not None:
+			except Exception as error_msg:	#pylint: disable=W0703
+				if (self.fproc_eargs == None) or (not self.fproc_eargs):
+					eamsg = 'None'
+				else:
+					eamsg = '\n'
 					for key, value in self.fproc_eargs.items():
-						msg += '{0}: {1}\n'.format(key, value)
-				msg += 'Exception error: {0}'.format(error_msg)
-				raise RuntimeError(msg)
-			if (not isinstance(ret, list)) and (not isinstance(ret, tuple)):
-				raise TypeError('Argument `fproc` (function {0}) return value is of the wrong type'.format(self.fproc.__name__))
-			if len(ret) != 2:
-				raise RuntimeError('Argument `fproc` (function {0}) returned an illegal number of values'.format(self.fproc.__name__))
+						eamsg += '   {0}: {1}\n'.format(key, value)
+					eamsg = eamsg.rstrip()
+				self._exh.raise_exception_if(exname='proc_fun_ex', condition=True, edata=[{'field':'func_name', 'value':self.fproc.__name__}, {'field':'indep_var_value', 'value':putil.misc.pprint_vector(self.indep_var, limit=10)},
+					{'field':'dep_var_value', 'value':putil.misc.pprint_vector(self.indep_var, limit=10)}, {'field':'fproc_eargs_value', 'value':eamsg}, {'field':'exception_error_message', 'value':str(error_msg)}])
+			self._exh.raise_exception_if(exname='invalid_ret', condition=(not isinstance(ret, list)) and (not isinstance(ret, tuple)), edata={'field':'func_name', 'value':self.fproc.__name__})
+			self._exh.raise_exception_if(exname='illegal_ret', condition=len(ret) != 2, edata={'field':'func_name', 'value':self.fproc.__name__})
 			indep_var = ret[0]
 			dep_var = ret[1]
-			self._check_var(indep_var, 'independent variable')
-			self._check_var(dep_var, 'dependent variable')
-			if len(indep_var) != len(dep_var):
-				raise ValueError('Processed independent and dependent variables are of different length')
+			self._exh.raise_exception_if(exname='empty_indep_var', condition=isinstance(indep_var, type(numpy.array([]))) and ((len(indep_var) == 0) or bool(((indep_var == [None]*len(indep_var)).all()))))
+			self._exh.raise_exception_if(exname='illegal_indep_var', condition=_check_increasing_real_numpy_vector(indep_var))
+			self._exh.raise_exception_if(exname='empty_dep_var', condition=isinstance(dep_var, type(numpy.array([]))) and ((len(dep_var) == 0) or bool(((dep_var == [None]*len(dep_var)).all()))))
+			self._exh.raise_exception_if(exname='illegal_dep_var', condition=_check_real_numpy_vector(dep_var))
+			self._exh.raise_exception_if(exname='length', condition=len(indep_var) != len(dep_var))
 			# The processing function could potentially expand (say, via interpolation) or shorten the data set length. To avoid errors that dependent and independent variables have different number of elements
 			# while setting the first processed variable (either independent or dependent) both are "reset" to some dummy value first
 			self._raw_indep_var = None
@@ -627,13 +670,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			self._indep_var_indexes = None
 			self._set_indep_var(indep_var)	#pylint: disable=W0212
 			self._set_dep_var(dep_var)	#pylint: disable=W0212
-
-	def _check_var(self, var, name):	#pylint:disable=R0201
-		""" Validate (in)dependent variable returned by processing function """
-		if isinstance(var, type(numpy.array([]))) and ((len(var) == 0) or ((var == [None]*len(var)).all())):
-			raise ValueError('Processed {0} is empty'.format(name))
-		if not putil.check.type_match(var, putil.check.IncreasingRealNumpyVector() if name == 'independent variable' else putil.check.RealNumpyVector()):
-			raise TypeError('Processed {0} is of the wrong type'.format(name))
 
 	def __str__(self):
 		""" Print comma-separated value source information """
@@ -667,6 +703,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	Comma-separated file from which data series is to be extracted. It is assumed that the first line of file contains unique headers for each column
 
 	:type:		string
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `file_name` is of the wrong type)
 
@@ -704,6 +744,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	the `Ref` individual filter.
 
 	:type:		dictionary, default is *None*
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `dfilter` is of the wrong type)
 
@@ -723,6 +767,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	Independent variable column label (column name)
 
 	:type:	string
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `indep_col_label` is of the wrong type)
 
@@ -736,6 +784,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	Dependent variable column label (column name)
 
 	:type:	string
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `dep_col_label` is of the wrong type)
 
@@ -749,6 +801,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	Minimum independent variable limit
 
 	:type:		number or None, default is *None*
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `indep_min` is of the wrong type)
 
@@ -762,6 +818,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	Maximum independent variable limit
 
 	:type:		number or None, default is *None*
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `indep_max` is of the wrong type)
 
@@ -787,6 +847,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			return indep_var, dep_var	# Return value is a 2-element tuple
 
 	:type:	function pointer, default is *None*
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `fproc` is of the wrong type)
 
@@ -829,6 +893,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			return indep_var+(2*par1), dep_var+sum(par2)
 
 	:type:	dictionary, default is *None*
+
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `fproc_eargs` is of the wrong type)
 
