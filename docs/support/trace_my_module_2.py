@@ -7,10 +7,13 @@ import my_module
 def trace_module(no_print=True):
 	""" Trace my_module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		my_module.func('John')
-		obj = my_module.MyClass()
-		obj.value = 5
-		obj.value
+		try:
+			my_module.func('John')
+			obj = my_module.MyClass()
+			obj.value = 5
+			obj.value
+		except:
+			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'my_module.'
 		callable_names = ['func']

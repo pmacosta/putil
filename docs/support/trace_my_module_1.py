@@ -7,7 +7,8 @@ import putil.exdoc
 def trace_module(no_print=True):
 	""" Trace my_module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		pytest.main('-s -vv -x ../tests/test_my_module.py')
+		if pytest.main('-s -vv -x ../tests/test_my_module.py'):
+			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'my_module.'
 		callable_names = ['func']

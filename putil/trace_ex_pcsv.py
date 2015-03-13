@@ -13,7 +13,8 @@ import putil.exdoc
 def trace_module(no_print=False):
 	""" Trace pcsv module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		pytest.main('-s -vv -x ../tests/test_pcsv.py')
+		if pytest.main('-s -vv -x ../tests/test_pcsv.py'):
+			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'putil.pcsv.'
 		callable_names = ['write', 'CsvFile.__init__', 'CsvFile.add_dfilter', 'CsvFile.data', 'CsvFile.reset_dfilter', 'CsvFile.write', 'CsvFile.dfilter', 'CsvFile.header']

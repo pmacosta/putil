@@ -108,6 +108,8 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		cdb = self._exh_obj.callables_db
 		sep = self._exh_obj.callables_separator
 		data = self._exh_obj.exceptions_db
+		if not data:
+			raise RuntimeError('Exceptions database is empty')
 		unique_data = []
 		for ditem in data:
 			# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built

@@ -151,6 +151,10 @@ def test_exclude_property(simple_exobj):	#pylint: disable=W0621
 
 def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 	""" Test _build_ex_tree() method """
+	with pytest.raises(RuntimeError) as excinfo:
+		with putil.exdoc.ExDocCxt():
+			pass
+	assert excinfo.value.message == 'Exceptions database is empty'
 	exobj1 = putil.exh.ExHandle(True)
 	def func1():	#pylint: disable=C0111,W0612
 		exobj1.add_exception('first_exception', TypeError, 'This is the first exception')

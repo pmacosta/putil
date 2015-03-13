@@ -13,7 +13,8 @@ import putil.exdoc
 def trace_module(no_print=True):
 	""" Trace tree module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		pytest.main('-s -vv -x ../tests/test_tree.py')
+		if pytest.main('-s -vv -x ../tests/test_tree.py'):
+			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'putil.tree.Tree.'
 		callable_names = ['__init__', 'add_nodes', 'collapse_subtree', 'copy_subtree', 'delete_subtree', 'delete_prefix', 'flatten_subtree', 'get_children', 'get_data', 'get_leafs',
