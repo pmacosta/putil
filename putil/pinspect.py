@@ -255,14 +255,17 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			if namespace_match:
 				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
 					import_stack.pop()
-				if indent:	# Top-level imports are handled by including the whole module code before the extracted enclosed class
+				# Top-level imports are handled by including the whole module code before the extracted enclosed class, no need to add them to the enclosed class namespace
+				if indent:	# Top-level imports are handled by including the whole module code before the extracted enclosed class, no need to add them to the enclosed class namespace
 					import_stack.append({'level':indent, 'line':line.lstrip(), 'type':'not module'})
 			elif class_match or func_match or prop_match:
 				# Remove all blocks at the same level to find out the indentation "parent"
 				deindent = False
+				# Update callable stack
 				while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 					deindent = True
 					indent_stack.pop()
+				# Update enclosed class namespace stack
 				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
 					import_stack.pop()
 				if class_match:
@@ -275,7 +278,6 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						namespace_code = ['###', '# Start of enclosed class', '###']+[import_dict['line'] for import_dict in import_stack[1:]]
 						eval_line = 'tvar = {0}'.format(class_name)
 						closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':module_lines+namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
-						#closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
 					self._callables_db[full_class_name] = {'type':'class', 'code_id':(module_file_name, line_num), 'attr':None, 'link':[]}
 					self._reverse_callables_db[(module_file_name, element_num)] = full_class_name
 				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], prop_name if prop_match else (class_name if class_name else func_name), attr_name)
