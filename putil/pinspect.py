@@ -252,17 +252,19 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			decorator_num = line_num if decorator_match and (decorator_num == None) else decorator_num
 			element_num = decorator_num if decorator_num else line_num
 			indent = len(_replace_tabs(class_indent if class_match else (func_indent if func_match else (prop_indent if prop_match else namespace_indent)))) if line_match else -1
-			if (namespace_match) and (not closure_class):
+			if namespace_match:
 				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
 					import_stack.pop()
-				import_stack.append({'level':indent, 'line':line.lstrip(), 'type':'not module'})
-				continue
+				if indent:	# Top-level imports are handled by including the whole module code before the extracted enclosed class
+					import_stack.append({'level':indent, 'line':line.lstrip(), 'type':'not module'})
 			elif class_match or func_match or prop_match:
 				# Remove all blocks at the same level to find out the indentation "parent"
 				deindent = False
 				while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
 					deindent = True
 					indent_stack.pop()
+				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
+					import_stack.pop()
 				if class_match:
 					closure_class = indent_stack[-1]['type'] != 'module'
 					if closure_class and deindent:
@@ -270,9 +272,10 @@ class Callables(object):	#pylint: disable=R0903,R0902
 					full_class_name = '{0}.{1}'.format(indent_stack[-1]['prefix'], class_name)
 					self._class_names.add(full_class_name)
 					if closure_class:
-						namespace_code = [import_dict['line'] for import_dict in import_stack[1:]]
+						namespace_code = ['###', '# Start of enclosed class', '###']+[import_dict['line'] for import_dict in import_stack[1:]]
 						eval_line = 'tvar = {0}'.format(class_name)
-						closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
+						closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':module_lines+namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
+						#closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
 					self._callables_db[full_class_name] = {'type':'class', 'code_id':(module_file_name, line_num), 'attr':None, 'link':[]}
 					self._reverse_callables_db[(module_file_name, element_num)] = full_class_name
 				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], prop_name if prop_match else (class_name if class_name else func_name), attr_name)
@@ -341,7 +344,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				self._callables_db[prop_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':[]}
 			self._get_prop_components(prop_name, prop_obj, closure_file_name, closure_offset)	# Find out which callables re the setter/getter/deleter of properties
 
-	def _trace_module(self, obj):
+	def _trace_module(self, obj):	#pylint: disable=R0914
 		""" Generate a list of object callables (internal function, no argument validation)"""
 		if obj.__name__ not in self._module_names:
 			self._module_names.add(obj.__name__)
@@ -371,7 +374,8 @@ class Callables(object):	#pylint: disable=R0903,R0902
 						# Remove "offending" import
 						new_code = []
 						in_class = False
-						for line in class_obj['code'].split('\n'):
+						lines = class_obj['code'].split('\n')
+						for line in lines[lines.index('# Start of enclosed class'):]:
 							in_class = line.startswith('class') if not in_class else in_class
 							namespace_line = line.startswith('import ') or line.startswith('from ') if not in_class else False
 							if namespace_line:

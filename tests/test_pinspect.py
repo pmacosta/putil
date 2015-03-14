@@ -247,6 +247,34 @@ def test_callables():	# pylint: disable=R0915
 	ref_list.append('pinspect_support_module_7.test_enclosure_class.mock_getframe: func (27)')
 	ref_text = compare_str_outputs(obj, ref_list)
 	assert str(obj) == ref_text
+	# Test enclosed class with inheritance
+	obj = putil.pinspect.Callables()
+	import pinspect_support_module_8	#pylint: disable=F0401,W0612
+	obj.trace(sys.modules['pinspect_support_module_8'])
+	ref_list = list()
+	ref_list.append('Modules:')
+	ref_list.append('   pinspect_support_module_8')
+	ref_list.append('Classes:')
+	ref_list.append('   pinspect_support_module_8.BaseClass')
+	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassA')
+	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassB')
+	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method.SubClassC')
+	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassD')
+	ref_list.append('pinspect_support_module_8.BaseClass: class (6)')
+	ref_list.append('pinspect_support_module_8.BaseClass.__init__: meth (8)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class: func (11)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassA: class (13)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassA.__init__: meth (14)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB: class (18)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.__init__: meth (19)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method: meth (22)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method.SubClassC: class (26)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method.SubClassC.__init__: meth (28)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassD: class (33)')
+	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassD.__init__: meth (34)')
+	ref_text = compare_str_outputs(obj, ref_list)
+	assert str(obj) == ref_text
+
 	# Test exception raised when callable is not found in database (mainly to cover potential edge cases not considered during development)
 	with mock.patch('putil.pinspect._get_code_id', side_effect=mock_get_code_id):
 		putil.test.assert_exception(putil.pinspect.Callables, {'obj':sys.modules['pinspect_support_module_2']}, RuntimeError, r'Attribute `([\w|\W]+)` of property `([\w|\W]+)` not found in callable database')
