@@ -26,7 +26,7 @@ import putil.pcontracts
 """
 [[[cog
 import trace_ex_plot
-exobj = trace_ex_plot.trace_module(no_print=True)
+exobj_plot = trace_ex_plot.trace_module(no_print=True)
 ]]]
 [[[end]]]
 """	#pylint: disable=W0105
@@ -197,7 +197,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	:type	indep_max:			number or None
 	:rtype:						:py:class:`putil.plot.BasicSource()` object
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.__init__
 
 	:raises:
@@ -309,7 +309,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		number or None, default is *None*
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.indep_min
 
 	:raises: (when assigned)
@@ -329,7 +329,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		number or None, default is *None*
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.indep_max
 
 	:raises: (when assigned)
@@ -349,7 +349,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		increasing real Numpy vector
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.indep_var
 
 	:raises: (when assigned)
@@ -369,7 +369,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		real Numpy vector
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.dep_var
 
 	:raises: (when assigned)
@@ -404,7 +404,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:type	fproc_eargs:		dictionary or None
 	:rtype:						:py:class:`putil.plot.CsvSource()` object
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.__init__
 
 	:raises:
@@ -759,7 +759,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		string
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.file_name
 
 	:raises: (when assigned)
@@ -852,7 +852,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		dictionary, default is *None*
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.dfilter
 
 	:raises: (when assigned)
@@ -869,8 +869,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
-
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
 
@@ -893,7 +891,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:	string
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_col_label
 
 	:raises: (when assigned)
@@ -910,8 +908,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
-
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
 	 * ValueError (Column *[col_name]* (independent column label) could not be found in comma-separated file *[file_name]* header)
 
@@ -936,7 +932,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:	string
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.dep_col_label
 
 	:raises: (when assigned)
@@ -953,8 +949,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
-
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
 	 * ValueError (Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
 
@@ -979,7 +973,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		number or None, default is *None*
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_min
 
 	:raises: (when assigned)
@@ -990,8 +984,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
-	 * ValueError (Filtered independent variable is empty)
-
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
@@ -1001,7 +993,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:		number or None, default is *None*
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_max
 
 	:raises: (when assigned)
@@ -1011,8 +1003,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
 
 	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
-
-	 * ValueError (Filtered independent variable is empty)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
@@ -1035,7 +1025,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:	function pointer, default is *None*
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.fproc
 
 	:raises: (when assigned)
@@ -1081,7 +1071,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:type:	dictionary, default is *None*
 
-	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.fproc_eargs
 
 	:raises: (when assigned)

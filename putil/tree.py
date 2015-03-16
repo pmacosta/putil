@@ -426,45 +426,6 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._db[dest_node]['parent'] = parent
 		self._db[parent]['children'] = sorted(self._db[parent]['children']+[dest_node])
 
-	def delete_subtree(self, nodes):
-		"""
-		Delete nodes (and their sub-trees) from tree
-
-		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
-		:type	nodes: NodeName or list of NodeNames
-
-		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
-		.. Auto-generated exceptions documentation for putil.tree.Tree.delete_subtree
-
-		:raises:
-		 * RuntimeError (Argument `nodes` is not valid)
-
-		 * RuntimeError (Node *[node_name]* not in tree)
-
-		.. [[[end]]]
-
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
-
-			>>> print str(tobj)
-			root
-			├branch1 (*)
-			│├leaf1
-			││└subleaf1 (*)
-			│└leaf2 (*)
-			│ └subleaf2
-			└branch2
-			>>> tobj.delete_subtree(['root.branch1.leaf1', 'root.branch2'])
-			>>> print str(tobj)
-			root
-			└branch1 (*)
-			 └leaf2 (*)
-			  └subleaf2
-
-		"""
-		self._exh.add_exception(exname='illegal_nodes', extype=RuntimeError, exmsg='Argument `nodes` is not valid')
-		self._exh.raise_exception_if(exname='illegal_nodes', condition=self._validate_node_name(nodes))
-		self._delete_subtree(nodes)
-
 	def delete_prefix(self, name):
 		"""
 		Delete hierarchy levels from all nodes in the tree
@@ -514,6 +475,45 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
 		self._exh.raise_exception_if(exname='illegal_prefix', condition=(not self.root_name.startswith(name)) or (self.root_name == name))
 		self._delete_prefix(name)
+
+	def delete_subtree(self, nodes):
+		"""
+		Delete nodes (and their sub-trees) from tree
+
+		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
+		:type	nodes: NodeName or list of NodeNames
+
+		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
+		.. Auto-generated exceptions documentation for putil.tree.Tree.delete_subtree
+
+		:raises:
+		 * RuntimeError (Argument `nodes` is not valid)
+
+		 * RuntimeError (Node *[node_name]* not in tree)
+
+		.. [[[end]]]
+
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+
+			>>> print str(tobj)
+			root
+			├branch1 (*)
+			│├leaf1
+			││└subleaf1 (*)
+			│└leaf2 (*)
+			│ └subleaf2
+			└branch2
+			>>> tobj.delete_subtree(['root.branch1.leaf1', 'root.branch2'])
+			>>> print str(tobj)
+			root
+			└branch1 (*)
+			 └leaf2 (*)
+			  └subleaf2
+
+		"""
+		self._exh.add_exception(exname='illegal_nodes', extype=RuntimeError, exmsg='Argument `nodes` is not valid')
+		self._exh.raise_exception_if(exname='illegal_nodes', condition=self._validate_node_name(nodes))
+		self._delete_subtree(nodes)
 
 	def flatten_subtree(self, name):
 		"""

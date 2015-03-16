@@ -143,7 +143,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		while not _valid_frame(cache_frame):
 			fnum += 1
 			cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
-		cache_key = id(cache_frame)	#pylint: disable=W0631
+		cache_key = id(cache_frame.f_code)	#pylint: disable=W0631
 		if not self._full_fname:
 			return cache_key, None
 

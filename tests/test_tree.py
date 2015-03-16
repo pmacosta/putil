@@ -156,8 +156,8 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_errors_for_single_node_function(self):	#pylint: disable=C0103,R0201
 		""" Check that correct exceptions are raise for methods that have a single NodeName argument that has to be in the tree """
 		obj = putil.tree.Tree()
-		method_list = ['collapse_subtree', 'flatten_subtree', 'get_children', 'get_data', 'get_leafs', 'get_node', 'get_node_children', 'get_node_parent', 'get_subtree', 'print_node', 'is_root', \
-				 'is_leaf', 'make_root']
+		method_list = ['collapse_subtree', 'flatten_subtree', 'get_children', 'get_data', 'get_leafs', 'get_node', 'get_node_children', 'get_node_parent', 'get_subtree', 'is_leaf',\
+				 'is_root', 'is_leaf', 'make_root', 'print_node']
 		for method in method_list:
 			putil.test.assert_exception(getattr(obj, method), {'name':5}, RuntimeError, 'Argument `name` is not valid')
 			putil.test.assert_exception(getattr(obj, method), {'name':'a.b..c'}, RuntimeError, 'Argument `name` is not valid')
@@ -310,14 +310,12 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_delete_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that delete() method raises the right exceptions """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':'a..b'}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 'a..b']}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':5}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 5]}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
-		test_list.append(putil.test.trigger_exception(tree1.delete_subtree, {'nodes':['t1l1', 'a.b.c']}, RuntimeError, 'Node a.b.c not in tree'))
-		assert test_list == len(test_list)*[True]
+		putil.test.assert_exception(tree1.delete_subtree, {'nodes':'a..b'}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(tree1.delete_subtree, {'nodes':['t1l1', 'a..b']}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(tree1.delete_subtree, {'nodes':5}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(tree1.delete_subtree, {'nodes':['t1l1', 5]}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(tree1.delete_subtree, {'nodes':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree')
+		putil.test.assert_exception(tree1.delete_subtree, {'nodes':['t1l1', 'a.b.c']}, RuntimeError, 'Node a.b.c not in tree')
 
 	def test_delete_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that delete() method works """
