@@ -13,6 +13,7 @@ import mock
 import pytest
 
 import putil.exh
+import putil.misc
 import putil.test
 import putil.pcontracts
 
@@ -144,46 +145,46 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 		for exname in cdb:
 			erec = cdb[exname]
 			if re.compile(r'\d+/first_exception').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func1')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func1')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception')
 			elif re.compile(r'\d+/second_exception').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func2')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func2')) \
 					and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception')
 			elif re.compile(r'\d+/third_exception').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func2')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func2')) \
 					and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception')
 			elif re.compile(r'\d+/setter_exception').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(setter)')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.Class1.value3(setter)')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception')
 			elif re.compile(r'\d+/getter_exception').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(getter)')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.Class1.value3(getter)')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception')
 			elif re.compile(r'\d+/deleter_exception').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception')
 			elif re.compile(r'\d+/total_exception_7').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func7')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func7')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7')
 			elif re.compile(r'\d+/total_exception_8').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func8')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func8')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8')
 			elif re.compile(r'\d+/total_exception_9').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func9')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func9')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9')
 			elif re.compile(r'\d+/total_exception_10').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func10')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func10')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10')
 			elif re.compile(r'\d+/total_exception_11').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func11')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func11')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11')
 			elif re.compile(r'\d+/total_exception_12').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func12')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func12')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12')
 			elif re.compile(r'\d+/total_exception_13').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func13')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func13')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13')
 			elif re.compile(r'\d+/total_exception_14').match(exname):
-				assert (erec['function'] == None if not full_fname else erec['function'].endswith('test_exh.test_add_exception_works.func14')) \
+				assert (erec['function'][0] == None if not full_fname else erec['function'][0].endswith('test_exh.test_add_exception_works.func14')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14')
 			else:
 				assert False
@@ -369,3 +370,31 @@ def test_copy():
 	assert source_obj._full_fname == dest_obj._full_fname
 	assert sorted(source_obj.exceptions_db) == sorted(dest_obj.exceptions_db)
 
+
+def test_multiple_paths_to_same_exception():	#pylint: disable=C0103
+	""" Test that different paths to a single exception definition do not overwrite each other """
+	def exdef(obj):	#pylint: disable=C0111,W0612
+		obj.add_exception('my_exception', RuntimeError, 'This is the exception')
+	def funca(obj):	#pylint: disable=C0111,W0612
+		exdef(obj)
+	def funcb(obj):	#pylint: disable=C0111,W0612
+		exdef(obj)
+	exobj = putil.exh.ExHandle(full_fname=True)
+	funca(exobj)
+	funcb(exobj)
+	exdb = sorted(exobj.exceptions_db)
+	assert len(exdb) == 2
+	assert exdb[0]['data'] == 'RuntimeError (This is the exception)'
+	assert exdb[1]['data'] == 'RuntimeError (This is the exception)'
+	assert exdb[0]['name'].endswith('test_exh.test_multiple_paths_to_same_exception/test_exh.test_multiple_paths_to_same_exception.funca/test_exh.test_multiple_paths_to_same_exception.exdef')
+	assert exdb[1]['name'].endswith('test_exh.test_multiple_paths_to_same_exception/test_exh.test_multiple_paths_to_same_exception.funcb/test_exh.test_multiple_paths_to_same_exception.exdef')
+	str_in = putil.misc.flatten_list([item.split('\n') for item in str(exobj).split('\n\n')])
+	fstring = 'test_exh.test_multiple_paths_to_same_exception/test_exh.test_multiple_paths_to_same_exception.func{0}/test_exh.test_multiple_paths_to_same_exception.exdef'
+	assert str_in[0].endswith('/my_exception')
+	assert str_in[1].endswith(fstring.format('a')) or str_in[1].endswith(fstring.format('b'))
+	assert str_in[2] == 'Type....: RuntimeError'
+	assert str_in[3] == 'Message.: This is the exception'
+	assert str_in[4].endswith('/my_exception')
+	assert str_in[5].endswith(fstring.format('a' if str_in[1].endswith(fstring.format('b')) else 'b'))
+	assert str_in[6] == 'Type....: RuntimeError'
+	assert str_in[7] == 'Message.: This is the exception'

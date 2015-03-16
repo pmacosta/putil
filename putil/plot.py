@@ -314,8 +314,6 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_max` is not valid)
-
 	 * RuntimeError (Argument `indep_min` is not valid)
 
 	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
@@ -484,27 +482,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
-
-	:raises:
-	 * Same as :py:attr:`putil.plot.CsvSource.file_name`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.indep_col_label`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.dep_col_label`
-
-	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
-
-	 * Same as :py:attr:`putil.plot.BasicSource.dep_var`
-
-	 * Same as :py:attr:`putil.plot.BasicSource.indep_min`
-
-	 * Same as :py:attr:`putil.plot.BasicSource.indep_max`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
 	"""
 	def __init__(self, file_name, indep_col_label, dep_col_label, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		# Private attributes
@@ -843,13 +820,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `file_name` is of the wrong type)
-
-	 * IOError (File *[file_name]* could not be found)
-
-	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 	"""	#pylint: disable=W0105
 
 	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
@@ -900,6 +870,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * TypeError (Processed independent variable is not valid)
 
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
 	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
 
 	 * ValueError (Filtered dependent variable is empty)
@@ -913,19 +885,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `dfilter` is of the wrong type)
-
-	 * ValueError (Filtered independent variable is empty)
-
-	 * ValueError (Filtered dependent variable is empty)
-
-	 * ValueError (Column *[column]* in data filter not found in comma-separated file *[file_name]* header)
-
-	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
 	"""	#pylint: disable=W0105
 
 	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
@@ -952,6 +911,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * TypeError (Processed independent variable is not valid)
 
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+
 	 * ValueError (Column *[col_name]* (independent column label) could not be found in comma-separated file *[file_name]* header)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
@@ -967,13 +928,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `indep_col_label` is of the wrong type)
-
-	 * ValueError (Column *[indep_col_label]* (independent column label) could not be found in comma-separated file *[file_name]* header)
-
-	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 	"""	#pylint: disable=W0105
 
 	dep_col_label = property(_get_dep_col_label, _set_dep_col_label, doc='Dependent column label (column name)')
@@ -991,8 +945,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Argument `indep_min` is not valid)
-
 	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
 	   ``\n`` Exception error: *[exception_error_message]*)
 
@@ -1001,6 +953,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
 	 * ValueError (Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
 
@@ -1017,13 +971,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `dep_col_label` is of the wrong type)
-
-	 * ValueError (Column *[dep_col_label]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
-
-	 * Same as :py:attr:`putil.plot.CsvSource.dfilter`
 	"""	#pylint: disable=W0105
 
 	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
@@ -1043,14 +990,9 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
+	 * ValueError (Filtered independent variable is empty)
+
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `indep_min` is of the wrong type)
-
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
-
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
 	"""	#pylint: disable=W0105
 
 	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
@@ -1070,14 +1012,9 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
 
+	 * ValueError (Filtered independent variable is empty)
+
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `indep_max` is of the wrong type)
-
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
-
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
 	"""	#pylint: disable=W0105
 
 	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
@@ -1127,33 +1064,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `fproc` is of the wrong type)
-
-	 * TypeError (Argument `fproc` (function *[function name pointed by fproc]*) return value is of the wrong type)
-
-	 * TypeError (Processed independent variable is of the wrong type)
-
-	 * TypeError (Processed dependent variable is of the wrong type)
-
-	 * ValueError (Processed independent variable is empty)
-
-	 * ValueError (Processed dependent variable is empty)
-
-	 * ValueError (Argument `fproc` (function *[function name pointed by fproc]*) does not have at least 2 arguments)
-
-	 * ValueError (Processed independent and dependent variables are of different length)
-
-	 * RuntimeError (Argument `fproc` (function *[function name pointed by fproc]*) returned an illegal number of values)
-
-	 * RuntimeError (Processing function *[function name pointed by fproc]* raised an exception when called with the following arguments [...])
-
-	 * Same as :py:attr:`putil.plot.BasicSource.indep_var`
-
-	 * Same as :py:attr:`putil.plot.BasicSource.dep_var`
-
-	 * Same as :py:attr:`putil.plot.CsvSource.fproc_eargs`
 	"""	#pylint: disable=W0105
 
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
@@ -1198,13 +1108,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `fproc_eargs` is of the wrong type)
-
-	 * ValueError (Extra argument *[argument name]* not found in argument `fproc` (function *[function name pointed by fproc]*) definition)
-
-	 * Same as :py:attr:`putil.plot.CsvSource.fproc`
 	"""	#pylint: disable=W0105
 
 	# indep_var is read only

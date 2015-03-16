@@ -111,7 +111,6 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 
 	def test_node_separator_works(self):	#pylint: disable=C0103,R0201
 		""" Check that the node separator feature works as expected """
-		test_list = list()
 		def create_tree():
 			""" Create test tree """
 			tobj = putil.tree.Tree('+')
@@ -126,15 +125,15 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 			])
 			return tobj
 		tobj = create_tree()
-		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
+		assert str(tobj) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8')
 		tobj.collapse_subtree('root+branch1')
-		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
+		assert str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8')
 		tobj = create_tree()
 		tobj.copy_subtree('root+branch1', 'root+branch3')
-		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n├branch2\n└branch3 (*)\n ├leaf1\n │└subleaf1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8'))
+		assert str(tobj) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n├branch2\n└branch3 (*)\n ├leaf1\n │└subleaf1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8')
 		tobj = create_tree()
 		tobj.delete_subtree(['root+branch1+leaf1', 'root+branch2'])
-		test_list.append(str(tobj) == u'root\n└branch1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8'))
+		assert str(tobj) == u'root\n└branch1 (*)\n └leaf2 (*)\n  └subleaf2'.encode('utf-8')
 		tobj = create_tree()
 		tobj.add_nodes([{'name':'root+branch1+leaf1+subleaf2', 'data':list()},
 			{'name':'root+branch2+leaf1', 'data':'loren ipsum'},
@@ -142,29 +141,27 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 			{'name':'root+branch2+leaf1+another_subleaf2', 'data':list()}
 		])
 		tobj.flatten_subtree('root+branch1+leaf1')
-		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│├leaf1+subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
+		assert str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│├leaf1+subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8')
 		tobj.flatten_subtree('root+branch2+leaf1')
-		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│├leaf1+subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
+		assert str(tobj) == u'root\n├branch1 (*)\n│├leaf1+subleaf1 (*)\n│├leaf1+subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8')
 		tobj = create_tree()
-		test_list.append(sorted(tobj.get_subtree('root+branch1')) == sorted(['root+branch1', 'root+branch1+leaf1', 'root+branch1+leaf1+subleaf1', 'root+branch1+leaf2', 'root+branch1+leaf2+subleaf2']))
+		assert sorted(tobj.get_subtree('root+branch1')) == sorted(['root+branch1', 'root+branch1+leaf1', 'root+branch1+leaf1+subleaf1', 'root+branch1+leaf2', 'root+branch1+leaf2+subleaf2'])
 		tobj = create_tree()
 		tobj.make_root('root+branch1')
-		test_list.append(str(tobj) == u'root+branch1 (*)\n├leaf1\n│└subleaf1 (*)\n└leaf2 (*)\n └subleaf2'.encode('utf-8'))
+		assert str(tobj) == u'root+branch1 (*)\n├leaf1\n│└subleaf1 (*)\n└leaf2 (*)\n └subleaf2'.encode('utf-8')
 		tobj = create_tree()
 		tobj.rename_node('root+branch1+leaf1', 'root+branch1+mapleleaf1')
-		test_list.append(str(tobj) == u'root\n├branch1 (*)\n│├leaf2 (*)\n││└subleaf2\n│└mapleleaf1\n│ └subleaf1 (*)\n└branch2'.encode('utf-8'))
-		assert test_list == len(test_list)*[True]
+		assert str(tobj) == u'root\n├branch1 (*)\n│├leaf2 (*)\n││└subleaf2\n│└mapleleaf1\n│ └subleaf1 (*)\n└branch2'.encode('utf-8')
 
 	def test_errors_for_single_node_function(self):	#pylint: disable=C0103,R0201
 		""" Check that correct exceptions are raise for methods that have a single NodeName argument that has to be in the tree """
 		obj = putil.tree.Tree()
 		method_list = ['collapse_subtree', 'flatten_subtree', 'get_children', 'get_data', 'get_leafs', 'get_node', 'get_node_children', 'get_node_parent', 'get_subtree', 'print_node', 'is_root', \
 				 'is_leaf', 'make_root']
-		exdesc = list()
-		exdesc.append(({'name':5}, RuntimeError, 'Argument `name` is not valid'))
-		exdesc.append(({'name':'a.b..c'}, RuntimeError, 'Argument `name` is not valid'))
-		exdesc.append(({'name':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree'))
-		putil.test.evaluate_exception_series([(getattr(obj, method), args, extype, exmsg) for method in method_list for args, extype, exmsg in exdesc])
+		for method in method_list:
+			putil.test.assert_exception(getattr(obj, method), {'name':5}, RuntimeError, 'Argument `name` is not valid')
+			putil.test.assert_exception(getattr(obj, method), {'name':'a.b..c'}, RuntimeError, 'Argument `name` is not valid')
+			putil.test.assert_exception(getattr(obj, method), {'name':'a.b.c'}, RuntimeError, 'Node a.b.c not in tree')
 
 	def test_add_nodes_errors(self):	#pylint: disable=C0103,R0201
 		""" Test that add() method raises the right exceptions """

@@ -113,7 +113,12 @@ class ExHandle(object):	#pylint: disable=R0902
 		return cobj
 
 	def __str__(self):
-		ret = ['Name....: {0}\nFunction: {1}\nType....: {2}\nMessage.: {3}'.format(key, self._ex_dict[key]['function'], _ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg']) for key in sorted(self._ex_dict.keys())]
+		ret = []
+		for key in sorted(self._ex_dict.keys()):
+			rstr = 'Name....: {0}\n'.format(key)
+			for fnum, func_name in enumerate(sorted(self._ex_dict[key]['function'])):
+				rstr += '{0}{1}\n'.format('Function: ' if fnum == 0 else ' '*10, func_name)
+			ret.append(rstr+'Type....: {0}\nMessage.: {1}'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg']))
 		return '\n\n'.join(ret)
 
 	def _format_msg(self, msg, edata):	#pylint: disable=R0201
@@ -131,15 +136,14 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_callable_path(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
-		# Calling inspect.stack() is slow, try to see if there is a cache hit calling sys._getframe which is faster and only use inspect.stack() if there is a cache miss
+		# If full_fname is False, then the only thing that matters is to return the ID of the calling function as fast as possible. If full_name is True, the full calling path has to be calculated because multiple
+		# callables can call the same callable, thus the ID does not uniquely identify the callable path
 		fnum = 0
 		cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
 		while not _valid_frame(cache_frame):
 			fnum += 1
 			cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
-		cache_key = id(cache_frame.f_code)	#pylint: disable=W0631
-		if cache_key in self._cache:
-			return cache_key, self._cache[cache_key]
+		cache_key = id(cache_frame)	#pylint: disable=W0631
 		if not self._full_fname:
 			return cache_key, None
 
@@ -178,11 +182,7 @@ class ExHandle(object):	#pylint: disable=R0902
 					# print putil.misc.pcolor('Chained decorator (extra frame)', 'green')
 				prev_name = name
 				decorator_flag = False
-		# print self._callables_separator.join(ret)
 		ret = self._callables_separator.join(ret)
-		if len(self._cache) > 10:
-			self._cache.clear()
-		self._cache[cache_key] = ret
 		return cache_key, ret
 
 	def _get_callable_full_name(self, fob, fin, lin, fun, fuc, fui):	#pylint: disable=R0913,W0613
@@ -221,7 +221,13 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_exceptions_db(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		return [{'name':self._ex_dict[key]['function'] if self._full_fname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
+		if not self._full_fname:
+			return [{'name':self._ex_dict[key]['function'] if self._full_fname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
+		ret = []
+		for key in self._ex_dict.keys():
+			for func_name in self._ex_dict[key]['function']:
+				ret.append({'name':func_name, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])})
+		return ret
 
 	def _get_ex_data(self, name=None):	#pylint: disable=R0201
 		""" Returns hierarchical function name """
@@ -284,7 +290,9 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not isinstance(exmsg, str):
 			raise TypeError('Argument `exmsg` is not valid')
 		ex_data = self._get_ex_data(exname)
-		self._ex_dict[ex_data['ex_name']] = {'function':ex_data['func_name'], 'type':extype, 'msg':exmsg}
+		entry = self._ex_dict.get(ex_data['ex_name'], {'function':[], 'type':extype, 'msg':exmsg})
+		entry['function'].append(ex_data['func_name'])
+		self._ex_dict[ex_data['ex_name']] = entry
 
 	def raise_exception_if(self, exname, condition, edata=None):
 		"""
