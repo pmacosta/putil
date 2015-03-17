@@ -33,52 +33,6 @@ def compare_images(image_file_name1, image_file_name2):
 	return (m_norm, z_norm)
 
 ###
-# Reusable tests
-###
-def indep_min_max_type(func, param):
-	""" Tests indep_min and indep_max type validation """
-	comp = list()
-	# __init__ path
-	# Wrong types
-	for param_value in ['a', False]:
-		with pytest.raises(TypeError) as excinfo:
-			func(**{param:param_value})	#pylint: disable=W0142
-		comp.append(excinfo.value.message == 'Argument `{0}` is of the wrong type'.format(param))
-	# Valid values, these should not raise an exception
-	for param_value in [None, 1, 2.0]:
-		kwarg = {param:param_value}	#pylint: disable=W0612
-		exec('comp.append(func(**kwarg).{0} == {1})'.format(param, param_value))	#pylint: disable=W0142,W0122
-	# Managed attribute path
-	# Wrong types
-	obj = func()	#pylint: disable=W0612
-	for param_value in ['a', False]:
-		with pytest.raises(TypeError) as excinfo:
-			exec("obj.{0} = {1}".format(param, "'{0}'".format(param_value) if isinstance(param_value, str) else param_value))	#pylint: disable=W0122
-		comp.append(excinfo.value.message == 'Argument `{0}` is of the wrong type'.format(param))
-	# Valid values, these should not raise an exception
-	for param_value in [None, 1, 2.0]:
-		exec('obj.{0} = {1}'.format(param, param_value))	#pylint: disable=W0122
-		exec('comp.append(obj.{0} == {1})'.format(param, param_value))	#pylint: disable=W0122
-	assert comp == 10*[True]
-
-def indep_min_greater_than_indep_max(func):	#pylint: disable=C0103
-	""" Test if object behaves correctly when indep_min and indep_max are incongrous """
-	comp = list()
-	# Assign indep_min first
-	obj = func(indep_min=45)
-	with pytest.raises(ValueError) as excinfo:
-		obj.indep_max = 0
-	comp.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
-	# Assign indep_max first
-	obj = func()
-	obj.indep_max = 40
-	with pytest.raises(ValueError) as excinfo:
-		obj.indep_min = 50
-	comp.append(excinfo.value.message == 'Argument `indep_min` is greater than argument `indep_max`')
-	assert comp == 2*[True]
-
-
-###
 # Contracts test
 ###
 def test_real_num_contract():	#pylint: disable=W0232
@@ -125,6 +79,27 @@ def test_increasing_real_numpy_vector_contract():	#pylint: disable=W0232,C0103
 	putil.plot.increasing_real_numpy_vector(numpy.array([1, 2, 3]))
 	putil.plot.increasing_real_numpy_vector(numpy.array([10.0, 12.1, 12.5]))
 	putil.plot.increasing_real_numpy_vector(numpy.array([10.0]))
+
+
+def test_interpolation_option():	#pylint: disable=W0232
+	""" Tests for RealNumpyVector pseudo-type """
+	putil.test.assert_exception(putil.plot.interpolation_option, {'option':5}, ValueError, '[START CONTRACT MSG: interpolation_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.interpolation_option, {'option':'x'}, ValueError,\
+							 "[START CONTRACT MSG: interpolation_option]Argument `*[argument_name]*` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)[STOP CONTRACT MSG]")
+	putil.plot.interpolation_option(None)
+	for item in ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']:
+		putil.plot.interpolation_option(item)
+		putil.plot.interpolation_option(item.lower())
+
+
+def test_line_style_option():	#pylint: disable=W0232
+	""" Tests for RealNumpyVector pseudo-type """
+	putil.test.assert_exception(putil.plot.line_style_option, {'option':5}, ValueError, '[START CONTRACT MSG: line_style_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.line_style_option, {'option':'x'}, ValueError,\
+							 "[START CONTRACT MSG: line_style_option]Argument `*[argument_name]*` is not one of ['-', '--', '-.', ':'][STOP CONTRACT MSG]")
+	putil.plot.line_style_option(None)
+	for item in ['-', '--', '-.', ':']:
+		putil.plot.line_style_option(item)
 
 
 ###
@@ -325,12 +300,12 @@ class TestBasicSource(object):	#pylint: disable=W0232
 # Tests for CsvSource
 ###
 def write_csv_file(file_handle):	#pylint: disable=C0111
-	file_handle.write('Col1,Col2,Col3,Col4,Col5,Col6,Col7\n')
-	file_handle.write('0,1,2,3,,5,1\n')
-	file_handle.write('0,2,4,5,,4,2\n')
-	file_handle.write('0,3,1,8,,3,3\n')
-	file_handle.write('1,1,5,7,8,0,4\n')
-	file_handle.write('1,2,3,7,9,7,5\n')
+	file_handle.write('Col1,Col2,Col3,Col4,Col5,Col6,Col7,Col8\n')
+	file_handle.write('0,1,2,3,,5,1,7\n')
+	file_handle.write('0,2,4,5,,4,2,6\n')
+	file_handle.write('0,3,1,8,,3,3,5\n')
+	file_handle.write('1,1,5,7,8,0,4,4\n')
+	file_handle.write('1,2,3,7,9,7,5,3\n')
 
 
 class TestCsvSource(object):	#pylint: disable=W0232,R0904
@@ -837,7 +812,7 @@ class TestSeries(object):	#pylint: disable=W0232
 	def test_str(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
 		marker_list = [{'value':None, 'string':'None'}, {'value':'o', 'string':'o'}, {'value':matplotlib.path.Path([(0, 0), (1, 1)]), 'string':'matplotlib.path.Path object'}, {'value':[(0, 0), (1, 1)], 'string':'[(0, 0), (1, 1)]'},
-				 {'value':r'$a_{b}$', 'string':r'$a_{b}$'}]
+				 {'value':r'$a_{b}$', 'string':r'$a_{b}$'}, {'value':matplotlib.markers.TICKLEFT, 'string':'matplotlib.markers.TICKLEFT'}]
 		for marker_dict in marker_list:
 			obj = putil.plot.Series(data_source=default_source, label='test', marker=marker_dict['value'])
 			ret = ''

@@ -101,6 +101,16 @@ Global variables
 .. autodata:: putil.plot.SUGGESTED_MAX_TICKS
 .. autodata:: putil.plot.TITLE_FONT_SIZE
 
+Pseudo-types
+============
+
+.. autofunction:: putil.plot.real_num
+.. autofunction:: putil.plot.function
+.. autofunction:: putil.plot.real_numpy_vector
+.. autofunction:: putil.plot.increasing_real_numpy_vector
+.. autofunction:: putil.plot.interpolation_option
+.. autofunction:: putil.plot.line_style_option
+
 Functions
 =========
 

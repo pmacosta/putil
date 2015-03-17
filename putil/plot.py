@@ -107,7 +107,7 @@ Scale factor for panel legend. The legend font size in points is equal to the ax
 @putil.pcontracts.new_contract()
 def real_num(num):
 	r"""
-	RealNum pseudo-type validation
+	Contract to validate if a number is an integer or a float
 
 	:param	vector: Real number (float or integer) or None
 	:type	vector: RealNum
@@ -123,7 +123,7 @@ def real_num(num):
 @putil.pcontracts.new_contract()
 def function(obj):
 	r"""
-	Function object validation
+	Contract to validate if an object is a function pointer
 
 	:param	vector: Function object
 	:type	vector: Function object
@@ -147,7 +147,7 @@ def _check_real_numpy_vector(vector):
 @putil.pcontracts.new_contract()
 def real_numpy_vector(vector):
 	r"""
-	RealNumpyVector pseudo-type validation
+	Contract to validate if the elements of a Numpy vector contains integer or floating numbers
 
 	:param	vector: Numpy vector in which each item is a number
 	:type	vector: RealNumpyVector
@@ -170,7 +170,7 @@ def _check_increasing_real_numpy_vector(vector):	#pylint: disable=C0103
 @putil.pcontracts.new_contract()
 def increasing_real_numpy_vector(vector):
 	r"""
-	IncreasingNumpyVector pseudo-type validation
+	Contract to validate if the elements of a Numpy vector contains numbers that are monotonically increasing
 
 	:param	vector: Non-empty Numpy vector in which each item is a number strictly greater than the previous one
 	:type	vector: IncreasingNumpyVector
@@ -186,11 +186,15 @@ def increasing_real_numpy_vector(vector):
 							   argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)"))
 def interpolation_option(option):
 	r"""
-	Interpolation object validation
+	Contract to validate if a string is a valid series interpolation type
 
 	:param	option: Series interpololation type, one of *None*, 'STRAIGHT', 'STEP', 'CUBIC' or 'LINREG'
 	:type	option: string
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:raises:
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument
+	   the contract is attached to
 
 	:rtype: None
 	"""
@@ -205,11 +209,14 @@ def interpolation_option(option):
 @putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of ['-', '--', '-.', ':']"))
 def line_style_option(option):
 	r"""
-	Interpolation object validation
+	Contract to validate if a string is a valid Matplot lib line style
 
 	:param	option: Series line style, one of *None*, '-', '--', '-.' or ':'
 	:type	option: string
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:raises:
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not one of ['-', '--', '-.', ':']')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
 
 	:rtype: None
 	"""
@@ -221,6 +228,9 @@ def line_style_option(option):
 	raise ValueError(exdesc['argument_bad_choice'])
 
 
+###
+# Classes
+###
 class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Objects of this class hold a given data set intended for plotting. It is intended as a convenient way to plot manually-entered data or data coming from
@@ -710,8 +720,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			if max(numpy.diff(data)) < 0:
 				self._reverse_data = True
 				data = data[::-1]
-				if self.dep_var is not None:
-					self._set_dep_var(self.dep_var[::-1])	#pylint: disable=W0212
 			self._set_indep_var(data)	#pylint: disable=W0212
 
 	def _get_dep_var_from_file(self):

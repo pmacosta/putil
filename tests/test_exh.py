@@ -391,10 +391,9 @@ def test_multiple_paths_to_same_exception():	#pylint: disable=C0103
 	str_in = putil.misc.flatten_list([item.split('\n') for item in str(exobj).split('\n\n')])
 	fstring = 'test_exh.test_multiple_paths_to_same_exception/test_exh.test_multiple_paths_to_same_exception.func{0}/test_exh.test_multiple_paths_to_same_exception.exdef'
 	assert str_in[0].endswith('/my_exception')
+	assert str_in[1].startswith('Function: ')
 	assert str_in[1].endswith(fstring.format('a')) or str_in[1].endswith(fstring.format('b'))
-	assert str_in[2] == 'Type....: RuntimeError'
-	assert str_in[3] == 'Message.: This is the exception'
-	assert str_in[4].endswith('/my_exception')
-	assert str_in[5].endswith(fstring.format('a' if str_in[1].endswith(fstring.format('b')) else 'b'))
-	assert str_in[6] == 'Type....: RuntimeError'
-	assert str_in[7] == 'Message.: This is the exception'
+	assert str_in[2].startswith('          ')
+	assert str_in[2].endswith(fstring.format('a' if str_in[1].endswith(fstring.format('b')) else 'b'))
+	assert str_in[3] == 'Type....: RuntimeError'
+	assert str_in[4] == 'Message.: This is the exception'
