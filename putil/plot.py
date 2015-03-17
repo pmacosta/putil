@@ -182,6 +182,45 @@ def increasing_real_numpy_vector(vector):
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 
+@putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid',\
+							   argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)"))
+def interpolation_option(option):
+	r"""
+	Interpolation object validation
+
+	:param	option: Series interpololation type, one of *None*, 'STRAIGHT', 'STEP', 'CUBIC' or 'LINREG'
+	:type	option: string
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	exdesc = putil.pcontracts.get_exdesc()
+	if (option != None) and (not isinstance(option, str)):
+		raise ValueError(exdesc['argument_invalid'])
+	if (option == None) or (option and any([item.lower() == option.lower() for item in ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']])):
+		return None
+	raise ValueError(exdesc['argument_bad_choice'])
+
+
+@putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of ['-', '--', '-.', ':']"))
+def line_style_option(option):
+	r"""
+	Interpolation object validation
+
+	:param	option: Series line style, one of *None*, '-', '--', '-.' or ':'
+	:type	option: string
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	exdesc = putil.pcontracts.get_exdesc()
+	if (option != None) and (not isinstance(option, str)):
+		raise ValueError(exdesc['argument_invalid'])
+	if option in [None, '-', '--', '-.', ':']:
+		return None
+	raise ValueError(exdesc['argument_bad_choice'])
+
+
 class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
 	Objects of this class hold a given data set intended for plotting. It is intended as a convenient way to plot manually-entered data or data coming from
@@ -1106,6 +1145,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	# dep_var is read only
 	dep_var = property(_get_dep_var, None, doc='Dependent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
 
+
 class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	Specifies a series within a panel
@@ -1125,6 +1165,41 @@ class Series(object):	#pylint: disable=R0902,R0903
 	:type	line_style:		string or None
 	:param	secondary_axis:	secondary axis flag
 	:type	secondary_axis:	boolean
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.__init__
+
+	:raises:
+	 * RuntimeError (Argument `color` is not valid)
+
+	 * RuntimeError (Argument `data_source` does not have an `dep_var` attribute)
+
+	 * RuntimeError (Argument `data_source` does not have an `indep_var` attribute)
+
+	 * RuntimeError (Argument `data_source` is not fully specified)
+
+	 * RuntimeError (Argument `interp` is not valid)
+
+	 * RuntimeError (Argument `label` is not valid)
+
+	 * RuntimeError (Argument `line_style` is not valid)
+
+	 * RuntimeError (Argument `marker` is not valid)
+
+	 * RuntimeError (Argument `secondary_axis` is not valid)
+
+	 * RuntimeError (Series options make it not plottable)
+
+	 * TypeError (Invalid color specification)
+
+	 * ValueError (Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
+
+	 * ValueError (Argument `line_style` is not one of ['-', '--', '-.', ':'])
+
+	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
+
+	.. [[[end]]]
+
 	:raises:
 	 * Same as :py:attr:`putil.plot.Series.data_source`
 
@@ -1142,6 +1217,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""
 	def __init__(self, data_source, label, color='k', marker='o', interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
 		# Series plotting attributes
+		self._exh = putil.exh.get_or_create_exh_obj()
 		self._ref_linewidth = LINE_WIDTH
 		self._ref_markersize = MARKER_SIZE
 		self._ref_markeredgewidth = self._ref_markersize*(5.0/14.0)
@@ -1168,12 +1244,13 @@ class Series(object):	#pylint: disable=R0902,R0903
 		return self._data_source
 
 	def _set_data_source(self, data_source):	#pylint: disable=C0111
+		self._exh.add_exception(exname='indep_var_attribute', extype=RuntimeError, exmsg='Argument `data_source` does not have an `indep_var` attribute')
+		self._exh.add_exception(exname='dep_var_attribute', extype=RuntimeError, exmsg='Argument `data_source` does not have an `dep_var` attribute')
+		self._exh.add_exception(exname='full_spec', extype=RuntimeError, exmsg='Argument `data_source` is not fully specified')
 		if data_source is not None:
-			for method in ['indep_var', 'dep_var']:
-				if method not in dir(data_source):
-					raise RuntimeError('Argument `data_source` does not have `{0}` attribute'.format(method))
-			if ('_complete' in dir(data_source)) and (not data_source._complete()):	#pylint: disable=W0212
-				raise RuntimeError('Argument `data_source` is not fully specified')
+			self._exh.raise_exception_if(exname='indep_var_attribute', condition='indep_var' not in dir(data_source))
+			self._exh.raise_exception_if(exname='dep_var_attribute', condition='dep_var' not in dir(data_source))
+			self._exh.raise_exception_if(exname='full_spec', condition=('_complete' in dir(data_source)) and (not data_source._complete()))	#pylint: disable=W0212
 			self._data_source = data_source
 			self.indep_var = self.data_source.indep_var
 			self.dep_var = self.data_source.dep_var
@@ -1183,15 +1260,16 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_label(self):	#pylint: disable=C0111
 		return self._label
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(label='None|str')
 	def _set_label(self, label):	#pylint: disable=C0111
 		self._label = label
 
 	def _get_color(self):	#pylint: disable=C0111
 		return self._color
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.Number(), str, list, tuple]))
+	@putil.pcontracts.contract(color='real_num|str|list|tuple')
 	def _set_color(self, color):	#pylint: disable=C0111
+		self._exh.add_exception(exname='invalid_color', extype=TypeError, exmsg='Invalid color specification')
 		valid_html_colors = [
 			'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue',
 			'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkkhaki', 'darkmagenta',
@@ -1220,15 +1298,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 		# RGB or RGBA tuple
 		check_list.append((type(self.color) in [list, tuple]) and (len(self.color) in [3, 4]) and \
 			((numpy.array([True if putil.check.Number().includes(comp) and putil.check.NumberRange(minimum=0.0, maximum=1.0).includes(comp) else False for comp in self.color]) == numpy.array([True]*len(self.color))).all()))
-		if not True in check_list:
-			raise TypeError('Invalid color specification')
+		self._exh.raise_exception_if(exname='invalid_color', condition=not True in check_list)
 
 	def _get_marker(self):	#pylint: disable=C0111
 		return self._marker
 
 	def _set_marker(self, marker):	#pylint: disable=C0111
-		if not self._validate_marker(marker):
-			raise TypeError('Argument `marker` is of the wrong type')
+		self._exh.add_exception(exname='invalid_marker', extype=RuntimeError, exmsg='Argument `marker` is not valid')
+		self._exh.raise_exception_if(exname='invalid_marker', condition=not self._validate_marker(marker))
 		self._marker = marker
 		self._marker_spec = self.marker if self.marker not in ["None", None, ' ', ''] else ''
 		self._check_series_is_plottable()
@@ -1236,7 +1313,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_interp(self):	#pylint: disable=C0111
 		return self._interp
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.OneOf(['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])]))
+	@putil.pcontracts.contract(interp='interpolation_option')
 	def _set_interp(self, interp):	#pylint: disable=C0111
 		self._interp = interp.upper().strip() if isinstance(interp, str) else interp
 		self._check_series_is_plottable()
@@ -1248,7 +1325,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_line_style(self):	#pylint: disable=C0111
 		return self._line_style
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.OneOf(['-', '--', '-.', ':'])]))
+	@putil.pcontracts.contract(line_style='line_style_option')
 	def _set_line_style(self, line_style):	#pylint: disable=C0111
 		self._line_style = line_style
 		self._update_linestyle_spec()
@@ -1258,7 +1335,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	def _get_secondary_axis(self):	#pylint: disable=C0111
 		return self._secondary_axis
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
+	@putil.pcontracts.contract(secondary_axis='None|bool')
 	def _set_secondary_axis(self, secondary_axis):	#pylint: disable=C0111
 		self._secondary_axis = secondary_axis
 
@@ -1278,13 +1355,13 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	def _check_series_is_plottable(self):
 		""" Check that the combination of marker, line style and line width width will produce a printable series """
-		if (self._marker_spec == '') and ((not self.interp) or (not self.line_style)):
-			raise RuntimeError('Series options make it not plottable')
+		self._exh.add_exception(exname='invalid_series', extype=RuntimeError, exmsg='Series options make it not plottable')
+		self._exh.raise_exception_if(exname='invalid_series', condition=(self._marker_spec == '') and ((not self.interp) or (not self.line_style)))
 
 	def _validate_source_length_cubic_interp(self):	#pylint:disable=C0103
 		""" Test if data source has minimum length to calculate cubic interpolation """
-		if (self.interp == 'CUBIC') and (self.indep_var is not None) and (self.dep_var is not None) and (self.indep_var.shape[0] < 4):
-			raise ValueError('At least 4 data points are needed for CUBIC interpolation')
+		self._exh.add_exception(exname='invalid_cubic_series', extype=ValueError, exmsg='At least 4 data points are needed for CUBIC interpolation')
+		self._exh.raise_exception_if(exname='invalid_cubic_series', condition=(self.interp == 'CUBIC') and (self.indep_var is not None) and (self.dep_var is not None) and (self.indep_var.shape[0] < 4))
 
 	def _validate_marker(self, marker):	#pylint:disable=R0201,R0911
 		""" Validate if marker specification is valid """
@@ -1407,6 +1484,22 @@ class Series(object):	#pylint: disable=R0902,R0903
 	numbers and a ``dep_var`` attribute that contains a Numpy vector of real numbers.
 
 	:type:	:py:class:`putil.plot.BasicSource()` object, :py:class:`putil.plot.CsvSource()` object or other objects conforming to the data source specification
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.data_source
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `data_source` does not have an `dep_var` attribute)
+
+	 * RuntimeError (Argument `data_source` does not have an `indep_var` attribute)
+
+	 * RuntimeError (Argument `data_source` is not fully specified)
+
+	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
+
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `data_source` is of the wrong type)
 
@@ -1426,6 +1519,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Series label, to be used in the panel legend if the panel has more than one series.
 
 	:type:	string
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.label
+
+	:raises: (when assigned) RuntimeError (Argument `label` is not valid)
+
+	.. [[[end]]]
+
 	:raises: TypeError (Argument `label` is of the wrong type)
 	"""	#pylint: disable=W0105
 
@@ -1434,6 +1535,18 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Series line and marker color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported.
 
 	:type:	polymorphic, default is *'k'* (black)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.color
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `color` is not valid)
+
+	 * TypeError (Invalid color specification)
+
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `color` is of the wrong type)
 
@@ -1445,6 +1558,18 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Series marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. *None* indicates no marker.
 
 	:type: string or None, default is *'o'* (circle)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.marker
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `marker` is not valid)
+
+	 * RuntimeError (Series options make it not plottable)
+
+	.. [[[end]]]
+
 	:raises: TypeError (Argument `marker` is of the wrong type)
 	"""	#pylint: disable=W0105
 
@@ -1454,6 +1579,22 @@ class Series(object):	#pylint: disable=R0902,R0903
 	data points) or 'LINREG' (linear regression based on data points). The interpolation option is case insensitive.
 
 	:type:	string, default is *'CUBIC'*
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.interp
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `interp` is not valid)
+
+	 * RuntimeError (Series options make it not plottable)
+
+	 * ValueError (Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
+
+	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
+
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `interp` is of the wrong type)
 
@@ -1465,6 +1606,20 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Line style. All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. *None* indicates no line.
 
 	:type:	string or None, default is *'-'*
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.line_style
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `line_style` is not valid)
+
+	 * RuntimeError (Series options make it not plottable)
+
+	 * ValueError (Argument `line_style` is not one of ['-', '--', '-.', ':'])
+
+	.. [[[end]]]
+
 	:raises:
 	 * TypeError (Argument `line_syle` is of the wrong type)
 
@@ -1476,8 +1631,17 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Secondary axis flag. If true, the series belongs to the secondary (right) panel axis.
 
 	:type:	boolean, default is *False*
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Series.secondary_axis
+
+	:raises: (when assigned) RuntimeError (Argument `secondary_axis` is not valid)
+
+	.. [[[end]]]
+
 	:raises: TypeError (Argument `secondary_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
+
 
 class Panel(object):	#pylint: disable=R0902,R0903
 	"""

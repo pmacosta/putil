@@ -679,203 +679,160 @@ class TestSeries(object):	#pylint: disable=W0232
 		class TestSource(object):	#pylint: disable=C0111,R0903,W0612
 			def __init__(self):
 				pass
-		test_list = list()
 		# These assignments should raise an exception
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3, 4]), dep_var=numpy.array([10, 20, 30, 40]))
 		obj._indep_var = None	#pylint: disable=W0212
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Series(data_source=obj, label='test')
-		test_list.append(excinfo.value.message == 'Argument `data_source` is not fully specified')
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Series(data_source=5, label='test')
-		test_list.append(excinfo.value.message == 'Argument `data_source` does not have `indep_var` attribute')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':obj, 'label':'test'}, RuntimeError, 'Argument `data_source` is not fully specified')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':5, 'label':'test'}, RuntimeError, 'Argument `data_source` does not have an `indep_var` attribute')
 		obj = TestSource()
 		obj.indep_var = numpy.array([5, 6, 7, 8])	#pylint: disable=W0201
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Series(data_source=obj, label='test')
-		test_list.append(excinfo.value.message == 'Argument `data_source` does not have `dep_var` attribute')
-		obj.dep_var = numpy.array([0, -10, 5, 4])	#pylint: disable=W0201
+		putil.test.assert_exception(putil.plot.Series, {'data_source':obj, 'label':'test'}, RuntimeError, 'Argument `data_source` does not have an `dep_var` attribute')
 		# These assignments should not raise an exception
+		obj.dep_var = numpy.array([0, -10, 5, 4])	#pylint: disable=W0201
 		putil.plot.Series(data_source=None, label='test')
 		putil.plot.Series(data_source=obj, label='test')
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append(((obj.indep_var == numpy.array([5, 6, 7, 8])).all(), (obj.dep_var == numpy.array([0, -10, 5, 4])).all()) == (True, True))
-		assert test_list == [True]*4
+		assert (obj.indep_var == numpy.array([5, 6, 7, 8])).all()
+		assert (obj.dep_var == numpy.array([0, -10, 5, 4])).all()
+		#test_list.append(((obj.indep_var == numpy.array([5, 6, 7, 8])).all(), (obj.dep_var == numpy.array([0, -10, 5, 4])).all()) == (True, True))
 
 	def test_label_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test label data validation """
 		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label=5)
-		test_list.append(excinfo.value.message == 'Argument `label` is of the wrong type')
-		# These assignments should not raise an exception
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':5}, RuntimeError, 'Argument `label` is not valid')
 		putil.plot.Series(data_source=default_source, label=None)
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append(obj.label == 'test')
-		assert test_list == [True]*2
+		assert obj.label == 'test'
 
 	def test_color_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test color data validation """
 		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', color=default_source)
-		test_list.append(excinfo.value.message == 'Argument `color` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'color':default_source}, RuntimeError, 'Argument `color` is not valid')
 		invalid_color_list = ['invalid_color_name', -0.01, 1.1, '#ABCDEX', (-1, 1, 1), [1, 2, 0.5], [1, 1, 2], (-1, 1, 1, 1), [1, 2, 0.5, 0.5], [1, 1, 2, 1], (1, 1, 1, -1)]
 		valid_color_list = [None, 'moccasin', 0.5, '#ABCDEF', (0.5, 0.5, 0.5), [0.25, 0.25, 0.25, 0.25]]
 		for color in invalid_color_list:
-			with pytest.raises(TypeError) as excinfo:
-				print color
-				putil.plot.Series(data_source=default_source, label='test', color=color)
-			print excinfo.value.message
-			test_list.append(excinfo.value.message == 'Invalid color specification')
+			putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'color':color}, TypeError, 'Invalid color specification')
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=default_source, label='test', color=None)
 		for color in valid_color_list:
 			obj = putil.plot.Series(data_source=default_source, label='test', color=color)
-			test_list.append(obj.color == (color.lower() if isinstance(color, str) else color))
-		print test_list
-		assert test_list == [True]*(len(invalid_color_list)+len(valid_color_list)+1)
+			assert obj.color == (color.lower() if isinstance(color, str) else color)
 
 	def test_marker_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test marker data validation """
 		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', marker='hello')
-		test_list.append(excinfo.value.message == 'Argument `marker` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'marker':'hello'}, RuntimeError, 'Argument `marker` is not valid')
 		# These assignments should not raise an exception
 		obj = putil.plot.Series(data_source=default_source, label='test', marker=None)
-		test_list.append(obj.marker == None)
+		assert obj.marker == None
 		obj = putil.plot.Series(data_source=default_source, label='test', marker='D')
-		test_list.append(obj.marker == 'D')
+		assert obj.marker == 'D'
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append(obj.marker == 'o')
-		assert test_list == [True]*4
+		assert obj.marker == 'o'
 
 	def test_interp_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test interp data validation """
 		# These assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', interp=5)
-		test_list.append(excinfo.value.message == 'Argument `interp` is of the wrong type')
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', interp='NOT_AN_OPTION')
-		test_list.append(excinfo.value.message == "Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)")
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'interp':5}, RuntimeError, 'Argument `interp` is not valid')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'interp':'NOT_AN_OPTION'}, ValueError, "Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)")
 		source_obj = putil.plot.BasicSource(indep_var=numpy.array([5]), dep_var=numpy.array([0]))
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.Series(data_source=source_obj, label='test', interp='CUBIC')
-		test_list.append(excinfo.value.message == 'At least 4 data points are needed for CUBIC interpolation')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':source_obj, 'label':'test', 'interp':'CUBIC'}, ValueError, 'At least 4 data points are needed for CUBIC interpolation')
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=source_obj, label='test', interp='STRAIGHT')
 		putil.plot.Series(data_source=source_obj, label='test', interp='STEP')
 		putil.plot.Series(data_source=source_obj, label='test', interp='LINREG')
 		putil.plot.Series(data_source=default_source, label='test', interp=None)
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='straight')
-		test_list.append(obj.interp == 'STRAIGHT')
+		assert obj.interp == 'STRAIGHT'
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='StEp')
-		test_list.append(obj.interp == 'STEP')
+		assert obj.interp == 'STEP'
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='CUBIC')
-		test_list.append(obj.interp == 'CUBIC')
+		assert obj.interp == 'CUBIC'
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='linreg')
-		test_list.append(obj.interp == 'LINREG')
+		assert obj.interp == 'LINREG'
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append(obj.interp == 'CUBIC')
-		assert test_list == [True]*8
+		assert obj.interp == 'CUBIC'
 
 	def test_line_style_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test line_style data validation """
 		# These assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', line_style=5)
-		test_list.append(excinfo.value.message == 'Argument `line_style` is of the wrong type')
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', line_style='x')
-		test_list.append(excinfo.value.message == "Argument `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive)")
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'line_style':5}, RuntimeError, 'Argument `line_style` is not valid')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'line_style':'x'}, ValueError, "Argument `line_style` is not one of ['-', '--', '-.', ':']")
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=default_source, label='test', line_style=None)
 		obj = putil.plot.Series(data_source=default_source, label='test', line_style='-')
-		test_list.append(obj.line_style == '-')
+		assert obj.line_style == '-'
 		obj = putil.plot.Series(data_source=default_source, label='test', line_style='--')
-		test_list.append(obj.line_style == '--')
+		assert obj.line_style == '--'
 		obj = putil.plot.Series(data_source=default_source, label='test', line_style='-.')
-		test_list.append(obj.line_style == '-.')
+		assert obj.line_style == '-.'
 		obj = putil.plot.Series(data_source=default_source, label='test', line_style=':')
-		test_list.append(obj.line_style == ':')
+		assert obj.line_style == ':'
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append(obj.line_style == '-')
-		assert test_list == [True]*7
+		assert obj.line_style == '-'
 
 	def test_secondary_axis_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test secondary_axis data validation """
 		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', secondary_axis=5)
-		test_list.append(excinfo.value.message == 'Argument `secondary_axis` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'secondary_axis':5}, RuntimeError, 'Argument `secondary_axis` is not valid')
 		# These assignments should not raise an exception
 		putil.plot.Series(data_source=default_source, label='test', secondary_axis=None)
 		obj = putil.plot.Series(data_source=default_source, label='test', secondary_axis=False)
-		test_list.append(obj.secondary_axis == False)
+		assert obj.secondary_axis == False
 		obj = putil.plot.Series(data_source=default_source, label='test', secondary_axis=True)
-		test_list.append(obj.secondary_axis == True)
+		assert obj.secondary_axis == True
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append(obj.secondary_axis == False)
-		assert test_list == [True]*4
+		assert obj.secondary_axis == False
 
 	def test_calculate_curve(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that interpolated curve is calculated when apropriate """
-		test_list = list()
 		obj = putil.plot.Series(data_source=default_source, label='test', interp=None)
-		test_list.append((obj.interp_indep_var, obj.interp_dep_var) == (None, None))
+		assert (obj.interp_indep_var, obj.interp_dep_var) == (None, None)
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='STRAIGHT')
-		test_list.append((obj.interp_indep_var, obj.interp_dep_var) == (None, None))
+		assert (obj.interp_indep_var, obj.interp_dep_var) == (None, None)
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='STEP')
-		test_list.append((obj.interp_indep_var, obj.interp_dep_var) == (None, None))
+		assert (obj.interp_indep_var, obj.interp_dep_var) == (None, None)
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='CUBIC')
-		test_list.append((obj.interp_indep_var, obj.interp_dep_var) != (None, None))
+		assert (obj.interp_indep_var, obj.interp_dep_var) != (None, None)
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='LINREG')
-		test_list.append((obj.interp_indep_var, obj.interp_dep_var) != (None, None))
+		assert (obj.interp_indep_var, obj.interp_dep_var) != (None, None)
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list.append((obj.interp_indep_var, obj.interp_dep_var) != (None, None))
-		assert test_list == [True]*6
+		assert (obj.interp_indep_var, obj.interp_dep_var) != (None, None)
 
 	def test_scale_indep_var(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that independent variable scaling works """
-		test_list = list()
 		obj = putil.plot.Series(data_source=default_source, label='test', interp=None)
-		test_list.append((obj.scaled_indep_var is not None, obj.scaled_dep_var is not None, obj.scaled_interp_indep_var is None, obj.scaled_interp_dep_var is None) == (True, True, True, True))
+		assert obj.scaled_indep_var is not None
+		assert obj.scaled_dep_var is not None
+		assert obj.scaled_interp_indep_var is None
+		assert obj.scaled_interp_dep_var is None
 		obj._scale_indep_var(2)	#pylint: disable=W0212
 		obj._scale_dep_var(4)	#pylint: disable=W0212
-		test_list.append(((obj.scaled_indep_var == numpy.array([2.5, 3.0, 3.5, 4.0])).all(), (obj.scaled_dep_var == numpy.array([0.0, -2.5, 1.25, 1.0])).all(), \
-					   obj.scaled_interp_indep_var is None, obj.scaled_interp_dep_var is None) == (True, True, True, True))
+		assert (obj.scaled_indep_var == numpy.array([2.5, 3.0, 3.5, 4.0])).all()
+		assert (obj.scaled_dep_var == numpy.array([0.0, -2.5, 1.25, 1.0])).all()
+		assert obj.scaled_interp_indep_var is None
+		assert obj.scaled_interp_dep_var is None
 		obj.interp = 'CUBIC'
-		test_list.append(((obj.scaled_indep_var == numpy.array([2.5, 3.0, 3.5, 4.0])).all(), (obj.scaled_dep_var == numpy.array([0.0, -2.5, 1.25, 1.0])).all(), \
-					   obj.scaled_interp_indep_var is not None, obj.scaled_interp_dep_var is not None) == (True, True, True, True))
-		assert test_list == [True]*3
+		assert (obj.scaled_indep_var == numpy.array([2.5, 3.0, 3.5, 4.0])).all()
+		assert (obj.scaled_dep_var == numpy.array([0.0, -2.5, 1.25, 1.0])).all()
+		assert obj.scaled_interp_indep_var is not None
+		assert obj.scaled_interp_dep_var is not None
 
 	def test_plottable(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that object behaves properl when a series is not plottable """
-		test_list = list()
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Series(data_source=default_source, label='test', marker=None, interp=None, line_style=None)
-		test_list.append(excinfo.value.message == 'Series options make it not plottable')
+		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'marker':None, 'interp':None, 'line_style':None}, RuntimeError, 'Series options make it not plottable')
 		obj = putil.plot.Series(data_source=default_source, label='test', marker='o', interp='CUBIC', line_style=None)
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.marker = None
-		test_list.append(excinfo.value.message == 'Series options make it not plottable')
+		assert excinfo.value.message == 'Series options make it not plottable'
 		obj = putil.plot.Series(data_source=default_source, label='test', marker='None', interp='CUBIC', line_style='-')
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.interp = None
-		test_list.append(excinfo.value.message == 'Series options make it not plottable')
+		assert excinfo.value.message == 'Series options make it not plottable'
 		obj = putil.plot.Series(data_source=default_source, label='test', marker=' ', interp='CUBIC', line_style='-')
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.line_style = None
-		test_list.append(excinfo.value.message == 'Series options make it not plottable')
-		assert test_list == [True]*4
+		assert excinfo.value.message == 'Series options make it not plottable'
 
 	def test_str(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
@@ -904,34 +861,31 @@ class TestSeries(object):	#pylint: disable=W0232
 	def test_cannot_delete_attributes(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
 		obj = putil.plot.Series(data_source=default_source, label='test')
-		test_list = list()
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.data_source
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.label
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.color
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.marker
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.interp
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.line_style
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.secondary_axis
-		test_list.append(excinfo.value.message == "can't delete attribute")
-		assert test_list == 7*[True]
+		assert excinfo.value.message == "can't delete attribute"
 
 	def test_images(self, tmpdir):	#pylint: disable=C0103,R0201,W0621
 		""" Compare images to verify correct plotting of series """
 		tmpdir.mkdir('test_images')
-		test_list = list()
 		images_dict_list = gen_ref_images.unittest_series_images(mode='test', test_dir=str(tmpdir))
 		for images_dict in images_dict_list:
 			ref_file_name = images_dict['ref_file_name']
@@ -939,8 +893,8 @@ class TestSeries(object):	#pylint: disable=W0232
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
 			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
-			test_list.append(result)
-		assert test_list == [True]*len(images_dict_list)
+			assert result
+
 
 ###
 # Tests for Panel

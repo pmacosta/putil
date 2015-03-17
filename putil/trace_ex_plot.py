@@ -17,6 +17,8 @@ def trace_module(no_print=True):
 			raise RuntimeError('Tracing did not complete successfully')
 		if pytest.main('-s -vv -x -k TestCsvSource ../tests/test_plot.py'):
 			raise RuntimeError('Tracing did not complete successfully')
+		if pytest.main('-s -vv -x -k TestSeries ../tests/test_plot.py'):
+			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'putil.plot.BasicSource.'
 		callable_names = ['__init__', 'indep_min', 'indep_max', 'indep_var', 'dep_var']

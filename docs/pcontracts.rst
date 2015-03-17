@@ -19,7 +19,7 @@ contracts :py:func:`putil.pcontracts.file_name` and :py:func:`putil.pcontracts.f
     :language: python
     :linenos:
     :tab-width: 3
-    :lines: 382-415
+    :lines: 385-438
 
 This is nearly identical to the way custom contracts are defined using the `PyContracts <https://andreacensi.github.io/contracts/>`_ library with two exceptions:
 
