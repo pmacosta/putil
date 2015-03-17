@@ -127,7 +127,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		for field in edata:
 			if '*[{0}]*'.format(field['field']) not in msg:
 				raise RuntimeError('Field {0} not in exception message'.format(field['field']))
-			msg = msg.replace('*[{0}]*'.format(field['field']), field['value'])
+			msg = msg.replace('*[{0}]*'.format(field['field']), '{0}').format(field['value'])
 		return msg
 
 	def _get_callables_db(self):

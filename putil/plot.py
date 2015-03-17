@@ -228,6 +228,16 @@ def line_style_option(option):
 	raise ValueError(exdesc['argument_bad_choice'])
 
 
+def _legend_position_validation(option):
+	""" Contract to validate if a string is a valid legend position """
+	if (option != None) and (not isinstance(option, str)):
+		return True
+	if (option == None) or (option and any([item.lower() == option.lower() for item in\
+			['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER']])):
+		return False
+	return True
+
+
 ###
 # Classes
 ###
@@ -1622,24 +1632,42 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	:type	legend_props:			dictionary
 	:param	show_indep_axis:		display primary axis flag
 	:type	show_indep_axis:		boolean
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.__init__
+
 	:raises:
-	 * Same as :py:attr:`putil.plot.Panel.series`
+	 * RuntimeError (Argument `legend_props` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Panel.primary_axis_label`
+	 * RuntimeError (Argument `log_dep_axis` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Panel.primary_axis_units`
+	 * RuntimeError (Argument `primary_axis_label` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Panel.log_dep_axis`
+	 * RuntimeError (Argument `primary_axis_units` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Panel.secondary_axis_label`
+	 * RuntimeError (Argument `secondary_axis_label` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Panel.secondary_axis_units`
+	 * RuntimeError (Argument `secondary_axis_units` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Panel.legend_props`
+	 * RuntimeError (Argument `series` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Panel.show_indep_axis`
+	 * RuntimeError (Argument `show_indep_axis` is not valid)
+
+	 * RuntimeError (Legend property `cols` is not valid)
+
+	 * RuntimeError (Series item *[number]* is not fully specified)
+
+	 * TypeError (Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive))
+
+	 * ValueError (Illegal legend property `*[prop_name]*`)
+
+	 * ValueError (Series item *[number]* cannot be plotted in a logarithmic axis because it contains negative data points)
+
+	.. [[[end]]]
 	"""
-	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props={'pos':'BEST', 'cols':1}, show_indep_axis=False):	#pylint: disable=W0102,R0913
+	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=None, show_indep_axis=False):	#pylint: disable=W0102,R0913
+		# Default arguments
+		legend_props = {'pos':'BEST', 'cols':1} if legend_props == None else legend_props
 		# Private attributes
 		self._exh = putil.exh.get_or_create_exh_obj()
 		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props, self._show_indep_axis = \
@@ -1771,18 +1799,18 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	@putil.pcontracts.contract(legend_props='None|dict')
 	def _set_legend_props(self, legend_props):	#pylint: disable=C0111
-		ref_pos_obj = putil.check.OneOf(self._legend_props_pos_list)
+		self._exh.add_exception(exname='invalid_legend_prop', extype=ValueError, exmsg='Illegal legend property `*[prop_name]*`')
+		self._exh.add_exception(exname='illegal_legend_prop', extype=TypeError, exmsg="Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',"+\
+						  " 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive)")
+		self._exh.add_exception(exname='invalid_legend_cols', extype=RuntimeError, exmsg='Legend property `cols` is not valid')
 		self._legend_props = legend_props if legend_props is not None else {'pos':'BEST', 'cols':1}
 		if self.legend_props is not None:
 			self._legend_props.setdefault('pos', 'BEST')
 			self._legend_props.setdefault('cols', 1)
 			for key, value in self.legend_props.iteritems():
-				if key not in self._legend_props_list:
-					raise ValueError('Illegal legend property `{0}`'.format(key))
-				elif (key == 'pos') and (not ref_pos_obj.includes(self.legend_props['pos'])):
-					raise TypeError(ref_pos_obj.exception('pos')['msg'].replace('Argument', 'Legend property'))
-				elif ((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)):
-					raise TypeError('Legend property `cols` is of the wrong type')
+				self._exh.raise_exception_if(exname='invalid_legend_prop', condition=key not in self._legend_props_list, edata={'field':'prop_name', 'value':key})
+				self._exh.raise_exception_if(exname='illegal_legend_prop', condition=(key == 'pos') and _legend_position_validation(self.legend_props['pos']))
+				self._exh.raise_exception_if(exname='invalid_legend_cols', condition=((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)))
 			self._legend_props['pos'] = self._legend_props['pos'].upper()
 
 	def __str__(self):
@@ -1805,12 +1833,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		ret += 'Secondary axis units: {0}\n'.format(self.secondary_axis_units if self.secondary_axis_units not in ['', None] else 'not specified')
 		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
 		ret += 'Show independent axis: {0}\n'.format(self.show_indep_axis)
-		if self.legend_props is None:
-			ret += 'Legend properties: None'
-		else:
-			ret += 'Legend properties:\n'
-			for num, (key, value) in enumerate(self.legend_props.iteritems()):
-				ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props) else '')
+		ret += 'Legend properties:\n'
+		for num, (key, value) in enumerate(self.legend_props.iteritems()):
+			ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props) else '')
 		return ret
 
 	def _validate_series(self):
@@ -1821,7 +1846,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		for num, obj in enumerate(self.series):
 			self._exh.raise_exception_if(exname='invalid_series', condition=type(obj) is not Series)
 			self._exh.raise_exception_if(exname='incomplete_series', condition=not obj._complete(), edata={'field':'number', 'value':num})	#pylint: disable=W0212
-			self._exh.raise_exception_if(exname='no_log', condition=(min(obj.dep_var) <= 0) and self.log_dep_axis, edata={'field':'number', 'value':num})
+			self._exh.raise_exception_if(exname='no_log', condition=bool((min(obj.dep_var) <= 0) and self.log_dep_axis), edata={'field':'number', 'value':num})
 
 	def _complete(self):
 		""" Returns True if panel is fully specified, otherwise returns False """
@@ -1904,12 +1929,19 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel series
 
 	:type:	:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
-	:raises:
-	 * RuntimeError (Series in panel have incongruent primary and secondary axis)
 
-	 * TypeError (Series element is not a Series object)
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.series
 
-	 * RuntimeError (Series element *[index]* is not fully specified)
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `series` is not valid)
+
+	 * RuntimeError (Series item *[number]* is not fully specified)
+
+	 * ValueError (Series item *[number]* cannot be plotted in a logarithmic axis because it contains negative data points)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	primary_axis_label = property(_get_primary_axis_label, _set_primary_axis_label, doc='Panel primary axis label')
@@ -1917,7 +1949,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel primary axis label
 
 	:type:	string default is *''*
-	:raises: TypeError (Argument `primary_axis_label` is of the wrong type)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.primary_axis_label
+
+	:raises: (when assigned) RuntimeError (Argument `primary_axis_label` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	secondary_axis_label = property(_get_secondary_axis_label, _set_secondary_axis_label, doc='Panel secondary axis label')
@@ -1925,7 +1963,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel secondary axis label
 
 	:type:	string, default is *''*
-	:raises: TypeError (Argument `secondary_axis_label` is of the wrong type)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.secondary_axis_label
+
+	:raises: (when assigned) RuntimeError (Argument `secondary_axis_label` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	primary_axis_units = property(_get_primary_axis_units, _set_primary_axis_units, doc='Panel primary axis units')
@@ -1933,7 +1977,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel primary axis units
 
 	:type:	string, default is *''*
-	:raises: TypeError (Argument `primary_axis_units` is of the wrong type)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.primary_axis_units
+
+	:raises: (when assigned) RuntimeError (Argument `primary_axis_units` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	secondary_axis_units = property(_get_secondary_axis_units, _set_secondary_axis_units, doc='Panel secondary axis units')
@@ -1941,7 +1991,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel secondary axis units
 
 	:type:	string, default is *''*
-	:raises: TypeError (Argument `secondary_axis_units` is of the wrong type)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.secondary_axis_units
+
+	:raises: (when assigned) RuntimeError (Argument `secondary_axis_units` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	log_dep_axis = property(_get_log_dep_axis, _set_log_dep_axis, doc='Panel logarithmic dependent axis flag')
@@ -1949,7 +2005,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Panel logarithmic dependent (primary and/or secondary) axis flag. Any plotted axis (primary, secondary or both) uses a logarithmic scale when this flag is *True*.
 
 	:type:	boolean, default is *False*
-	:raises: TypeError (Argument `log_dep_axis` is of the wrong type)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.log_dep_axis
+
+	:raises: (when assigned) RuntimeError (Argument `log_dep_axis` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	legend_props = property(_get_legend_props, _set_legend_props, doc='Panel legend box properties')
@@ -1963,12 +2025,21 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. note:: No legend is shown if a panel has only one series in it
 
 	:type:	dictionary, default is *{'pos':'BEST', 'cols':1}*
-	:raises:
-	 * TypeError (Argument `legend_props` is of the wrong type)
 
-	 * TypeError (Argument `legend_props` key `props` is not one of BEST, UPPER RIGHT, UPPER LEFT, LOWER LEFT, LOWER RIGHT, RIGHT, CENTER LEFT, CENTER RIGHT, LOWER CENTER, UPPER CENTER or CENTER (case insensitive))
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.legend_props
 
-	 * TypeError ((Argument `legend_props` key `cols` is of the wrong type)
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `legend_props` is not valid)
+
+	 * RuntimeError (Legend property `cols` is not valid)
+
+	 * TypeError (Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive))
+
+	 * ValueError (Illegal legend property `*[prop_name]*`)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	show_indep_axis = property(_get_show_indep_axis, _set_show_indep_axis, doc='Show independent axis flag')
@@ -1976,8 +2047,15 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Show independent axis flag.
 
 	:type:	boolean, default is *False*
-	:raises: TypeError (Argument `show_indep_axis` is of the wrong type)
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Panel.show_indep_axis
+
+	:raises: (when assigned) RuntimeError (Argument `show_indep_axis` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
+
 
 class Figure(object):	#pylint: disable=R0902
 	"""
