@@ -1199,21 +1199,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 
 	.. [[[end]]]
-
-	:raises:
-	 * Same as :py:attr:`putil.plot.Series.data_source`
-
-	 * Same as :py:attr:`putil.plot.Series.label`
-
-	 * Same as :py:attr:`putil.plot.Series.color`
-
-	 * Same as :py:attr:`putil.plot.Series.marker`
-
-	 * Same as :py:attr:`putil.plot.Series.interp`
-
-	 * Same as :py:attr:`putil.plot.Series.line_style`
-
-	 * Same as :py:attr:`putil.plot.Series.secondary_axis`
 	"""
 	def __init__(self, data_source, label, color='k', marker='o', interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
 		# Series plotting attributes
@@ -1499,19 +1484,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `data_source` is of the wrong type)
-
-	 * RuntimeError (Argument `data_source` does not have `indep_var` attribute)
-
-	 * RuntimeError (Argument `data_source` does not have `dep_var` attribute)
-
-	 * RuntimeError (Argument `data_source` is not fully specified)
-
-	 * Same as :py:attr:`putil.plot.BasicSource.indep_var` or :py:attr:`putil.plot.CsvSource.indep_var` or exceptions raised by custom data source class while handling independent variable retrieval
-
-	 * Same as :py:attr:`putil.plot.BasicSource.dep_var` or :py:attr:`putil.plot.CsvSource.dep_var` or exceptions raised by custom data source class while handling dependent variable retrieval
 	"""	#pylint: disable=W0105
 
 	label = property(_get_label, _set_label, doc='Series label')
@@ -1526,8 +1498,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	:raises: (when assigned) RuntimeError (Argument `label` is not valid)
 
 	.. [[[end]]]
-
-	:raises: TypeError (Argument `label` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	color = property(_get_color, _set_color, doc='Series line and marker color')
@@ -1546,11 +1516,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * TypeError (Invalid color specification)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `color` is of the wrong type)
-
-	 * TypeError (Invalid color specification)
 	"""	#pylint: disable=W0105
 
 	marker = property(_get_marker, _set_marker, doc='Plot data point markers flag')
@@ -1569,8 +1534,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * RuntimeError (Series options make it not plottable)
 
 	.. [[[end]]]
-
-	:raises: TypeError (Argument `marker` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 	interp = property(_get_interp, _set_interp, doc='Series interpolation option, one of `STRAIGHT`, `CUBIC` or `LINREG` (case insensitive)')
@@ -1594,11 +1557,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `interp` is of the wrong type)
-
-	 * ValueError (Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
 	"""	#pylint: disable=W0105
 
 	line_style = property(_get_line_style, _set_line_style, doc='Series line style, one of `-`, `--`, `-.` or `:`')
@@ -1619,11 +1577,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Argument `line_style` is not one of ['-', '--', '-.', ':'])
 
 	.. [[[end]]]
-
-	:raises:
-	 * TypeError (Argument `line_syle` is of the wrong type)
-
-	 * ValueError (Argument `line_style` is not one of ['-', '--', '-.', ':'] (case insensitive))
 	"""	#pylint: disable=W0105
 
 	secondary_axis = property(_get_secondary_axis, _set_secondary_axis, doc='Series secondary axis flag')
@@ -1638,8 +1591,6 @@ class Series(object):	#pylint: disable=R0902,R0903
 	:raises: (when assigned) RuntimeError (Argument `secondary_axis` is not valid)
 
 	.. [[[end]]]
-
-	:raises: TypeError (Argument `secondary_axis` is of the wrong type)
 	"""	#pylint: disable=W0105
 
 
