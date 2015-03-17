@@ -1641,6 +1641,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	"""
 	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props={'pos':'BEST', 'cols':1}, show_indep_axis=False):	#pylint: disable=W0102,R0913
 		# Private attributes
+		self._exh = putil.exh.get_or_create_exh_obj()
 		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props, self._show_indep_axis = \
 			None, None, None, None, None, None, False, {'pos':'BEST', 'cols':1}, None
 		# Private attributes
@@ -1723,35 +1724,35 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	def _get_primary_axis_label(self):	#pylint: disable=C0111
 		return self._primary_axis_label
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(primary_axis_label='None|str')
 	def _set_primary_axis_label(self, primary_axis_label):	#pylint: disable=C0111
 		self._primary_axis_label = primary_axis_label
 
 	def _get_primary_axis_units(self):	#pylint: disable=C0111
 		return self._primary_axis_units
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(primary_axis_units='None|str')
 	def _set_primary_axis_units(self, primary_axis_units):	#pylint: disable=C0111
 		self._primary_axis_units = primary_axis_units
 
 	def _get_secondary_axis_label(self):	#pylint: disable=C0111
 		return self._secondary_axis_label
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(secondary_axis_label='None|str')
 	def _set_secondary_axis_label(self, secondary_axis_label):	#pylint: disable=C0111
 		self._secondary_axis_label = secondary_axis_label
 
 	def _get_secondary_axis_units(self):	#pylint: disable=C0111
 		return self._secondary_axis_units
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(secondary_axis_units='None|str')
 	def _set_secondary_axis_units(self, secondary_axis_units):	#pylint: disable=C0111
 		self._secondary_axis_units = secondary_axis_units
 
 	def _get_log_dep_axis(self):	#pylint: disable=C0111
 		return self._log_dep_axis
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
+	@putil.pcontracts.contract(log_dep_axis='None|bool')
 	def _set_log_dep_axis(self, log_dep_axis):	#pylint: disable=C0111
 		self._recalculate_series = self.log_dep_axis != log_dep_axis
 		self._log_dep_axis = log_dep_axis
@@ -1761,14 +1762,14 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	def _get_show_indep_axis(self):	#pylint: disable=C0111
 		return self._show_indep_axis
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
+	@putil.pcontracts.contract(show_indep_axis='None|bool')
 	def _set_show_indep_axis(self, show_indep_axis):	#pylint: disable=C0111
 		self._show_indep_axis = show_indep_axis
 
 	def _get_legend_props(self):	#pylint: disable=C0111
 		return self._legend_props
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, dict]))
+	@putil.pcontracts.contract(legend_props='None|dict')
 	def _set_legend_props(self, legend_props):	#pylint: disable=C0111
 		ref_pos_obj = putil.check.OneOf(self._legend_props_pos_list)
 		self._legend_props = legend_props if legend_props is not None else {'pos':'BEST', 'cols':1}
@@ -1814,13 +1815,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	def _validate_series(self):
 		""" Verifies that elements of series list are of the right type and fully specified """
+		self._exh.add_exception(exname='invalid_series', extype=RuntimeError, exmsg='Argument `series` is not valid')
+		self._exh.add_exception(exname='incomplete_series', extype=RuntimeError, exmsg='Series item *[number]* is not fully specified')
+		self._exh.add_exception(exname='no_log', extype=ValueError, exmsg='Series item *[number]* cannot be plotted in a logarithmic axis because it contains negative data points')
 		for num, obj in enumerate(self.series):
-			if type(obj) is not Series:
-				raise TypeError('Argument `series` is of the wrong type')
-			if not obj._complete():	#pylint: disable=W0212
-				raise RuntimeError('Series element {0} is not fully specified'.format(num))
-			if (min(obj.dep_var) <= 0) and self.log_dep_axis:
-				raise ValueError('Series element {0} cannot be plotted in a logarithmic axis because it contains negative data points'.format(num))
+			self._exh.raise_exception_if(exname='invalid_series', condition=type(obj) is not Series)
+			self._exh.raise_exception_if(exname='incomplete_series', condition=not obj._complete(), edata={'field':'number', 'value':num})	#pylint: disable=W0212
+			self._exh.raise_exception_if(exname='no_log', condition=(min(obj.dep_var) <= 0) and self.log_dep_axis, edata={'field':'number', 'value':num})
 
 	def _complete(self):
 		""" Returns True if panel is fully specified, otherwise returns False """
