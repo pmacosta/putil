@@ -25,10 +25,11 @@ Application programming interface (API)
 Functions
 =========
 
-.. autofunction:: putil.pinspect.is_magic_method
-.. autofunction:: putil.pinspect.is_object_module
+.. autofunction:: putil.pinspect.get_function_args
 .. autofunction:: putil.pinspect.get_module_name
 .. autofunction:: putil.pinspect.get_package_name
+.. autofunction:: putil.pinspect.is_magic_method
+.. autofunction:: putil.pinspect.is_object_module
 .. autofunction:: putil.pinspect.loaded_package_modules
 
 Classes

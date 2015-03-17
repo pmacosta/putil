@@ -19,7 +19,6 @@ import putil.exh
 import putil.eng
 import putil.pcsv
 import putil.misc
-import putil.check
 import putil.pcontracts
 
 # Exception tracing initialization code
@@ -109,8 +108,8 @@ def real_num(num):
 	r"""
 	Contract to validate if a number is an integer or a float
 
-	:param	vector: Real number (float or integer) or None
-	:type	vector: RealNum
+	:param	num: Real number (float or integer) or None
+	:type	num: number
 	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
 
 	:rtype: None
@@ -118,6 +117,39 @@ def real_num(num):
 	if (num == None) or ((isinstance(num, int) or isinstance(num, float)) and (not isinstance(num, bool))):
 		return None
 	raise ValueError(putil.pcontracts.get_exdesc())
+
+
+@putil.pcontracts.new_contract()
+def positive_real_num(num):
+	r"""
+	Contract to validate if a number is a positive integer or float
+
+	:param	num: Positive real number (float or integer) or None
+	:type	num: number
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	if (num == None) or ((isinstance(num, int) or isinstance(num, float)) and (num > 0) and (not isinstance(num, bool))):
+		return None
+	raise ValueError(putil.pcontracts.get_exdesc())
+
+
+@putil.pcontracts.new_contract()
+def offset_range(num):
+	r"""
+	Contract to validate if a number is in the [0, 1] range
+
+	:param	num: Real number
+	:type	num: number
+	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	if (isinstance(num, int) or isinstance(num, float)) and (not isinstance(num, bool)) and (num >= 0) and (num <= 1):
+		return None
+	raise ValueError(putil.pcontracts.get_exdesc())
+
 
 
 @putil.pcontracts.new_contract()
@@ -224,6 +256,31 @@ def line_style_option(option):
 	if (option != None) and (not isinstance(option, str)):
 		raise ValueError(exdesc['argument_invalid'])
 	if option in [None, '-', '--', '-.', ':']:
+		return None
+	raise ValueError(exdesc['argument_bad_choice'])
+
+
+@putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', "+\
+	"'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case insensitive)"))
+def color_space_option(option):
+	r"""
+	Contract to validate if a string is a valid Matplot lib colors space
+
+	:param	option: Color space, one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd'
+	:type	option: string
+	:raises:
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds',
+	   'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	exdesc = putil.pcontracts.get_exdesc()
+	if (option != None) and (not isinstance(option, str)):
+		raise ValueError(exdesc['argument_invalid'])
+	if (option == None) or (option and any([item.lower() == option.lower() for item in ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',\
+																					    'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']])):
 		return None
 	raise ValueError(exdesc['argument_bad_choice'])
 
@@ -665,7 +722,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _set_fproc(self, fproc):	#pylint: disable=C0111
 		self._exh.add_exception(exname='min_args', extype=ValueError, exmsg='Argument `fproc` (function *[func_name]*) does not have at least 2 arguments')
 		if fproc is not None:
-			args = putil.check.get_function_args(fproc)
+			args = putil.pinspect.get_function_args(fproc)
 			self._exh.raise_exception_if(exname='min_args', condition=(fproc is not None) and (len(args) < 2) and ('*args' not in args) and ('**kwargs' not in args), edata={'field':'func_name', 'value':fproc.__name__})
 		self._fproc = fproc
 		self._check_fproc_eargs()
@@ -685,7 +742,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 		""" Checks that the extra arguments are in the processing function definition """
 		self._exh.add_exception(exname='extra_args', extype=ValueError, exmsg='Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition')
 		if (self.fproc is not None) and (self.fproc_eargs is not None):
-			args = putil.check.get_function_args(self._fproc)
+			args = putil.pinspect.get_function_args(self._fproc)
 			for key in self.fproc_eargs:
 				self._exh.raise_exception_if(exname='extra_args', condition=(key not in args) and ('*args' not in args) and ('**kwargs' not in args),\
 							  edata=[{'field':'func_name', 'value':self.fproc.__name__}, {'field':'arg_name', 'value':key}])
@@ -1219,8 +1276,8 @@ class Series(object):	#pylint: disable=R0902,R0903
 	.. [[[end]]]
 	"""
 	def __init__(self, data_source, label, color='k', marker='o', interp='CUBIC', line_style='-', secondary_axis=False):	#pylint: disable=R0913
-		# Series plotting attributes
 		self._exh = putil.exh.get_or_create_exh_obj()
+		# Series plotting attributes
 		self._ref_linewidth = LINE_WIDTH
 		self._ref_markersize = MARKER_SIZE
 		self._ref_markeredgewidth = self._ref_markersize*(5.0/14.0)
@@ -1286,12 +1343,12 @@ class Series(object):	#pylint: disable=R0902,R0903
 			'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquois', 'violet', 'wheat', 'white', 'whitesmoke',
 			'yellow', 'yellowgreen'
 		]
-		self._color = color.lower().strip() if isinstance(color, str) else (float(color) if putil.check.Number().includes(color) else color)
+		self._color = color.lower().strip() if isinstance(color, str) else (float(color) if putil.misc.isreal(color) else color)
 		check_list = list()
 		# No color specification
 		check_list.append(self.color is None)
 		# Gray scale color specification, checked by decorator
-		check_list.append(putil.check.NumberRange(minimum=0.0, maximum=1.0).includes(self.color))
+		check_list.append(putil.misc.isreal(self.color) and (color >= 0.0) and (color <= 1.0))
 		# Basic built-in Matplotlib specification
 		check_list.append(isinstance(self.color, str) and (len(self.color) == 1) and (self.color in 'bgrcmykw'))
 		# HTML color name specification
@@ -1300,7 +1357,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		check_list.append(isinstance(self.color, str) and (self.color[0] == '#') and (len(self.color) == 7) and ((numpy.array([putil.misc.ishex(char) for char in self.color[1:]]) == numpy.array([True]*6)).all()))
 		# RGB or RGBA tuple
 		check_list.append((type(self.color) in [list, tuple]) and (len(self.color) in [3, 4]) and \
-			((numpy.array([True if putil.check.Number().includes(comp) and putil.check.NumberRange(minimum=0.0, maximum=1.0).includes(comp) else False for comp in self.color]) == numpy.array([True]*len(self.color))).all()))
+			((numpy.array([True if putil.misc.isreal(comp) and (comp >= 0.0) and (comp <= 1.0) else False for comp in self.color]) == numpy.array([True]*len(self.color))).all()))
 		self._exh.raise_exception_if(exname='invalid_color', condition=not True in check_list)
 
 	def _get_marker(self):	#pylint: disable=C0111
@@ -2073,29 +2130,41 @@ class Figure(object):	#pylint: disable=R0902
 	:type	fig_height:			positive number
 	:param	title:				plot title
 	:type	title:				string
-	:param	log_indep:			logarithmic independent axis flag
-	:type	log_indep:			boolean
+	:param	log_indep_axis:		logarithmic independent axis flag
+	:type	log_indep_axis:		boolean
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.__init__
+
 	:raises:
-	 * Same as :py:attr:`putil.plot.Figure.panels`
+	 * RuntimeError (Argument `fig_height` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Figure.indep_var_label`
+	 * RuntimeError (Argument `fig_width` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Figure.indep_var_units`
+	 * RuntimeError (Argument `indep_var_label` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Figure.title`
+	 * RuntimeError (Argument `indep_var_units` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Figure.log_indep_axis`
+	 * RuntimeError (Argument `log_indep_axis` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Figure.fig_width`
+	 * RuntimeError (Argument `panels` is not valid)
 
-	 * Same as :py:attr:`putil.plot.Figure.fig_height`
+	 * RuntimeError (Argument `title` is not valid)
+
+	 * RuntimeError (Figure object is not fully specified)
 
 	 * RuntimeError (Figure size is too small: minimum width = *[min_width]*, minimum height *[min_height]*)
 
+	 * TypeError (Panel *[panel_num]* is not fully specified)
+
+	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+	.. [[[end]]]
 	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be retrieved using \
 	:py:attr:`putil.plot.Figure.fig_width` and/or :py:attr:`putil.plot.Figure.fig_height` attributes.
 	"""
 	def __init__(self, panels=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep_axis=False):	#pylint: disable=R0913
+		self._exh = putil.exh.get_or_create_exh_obj()
 		# Public attributes
 		self._fig, self._panels, self._indep_var_label, self._indep_var_units, self._title, self._log_indep_axis, self._fig_width, self._fig_height, self._axes_list = None, None, None, None, None, None, None, None, list()
 		# Assignment of arguments to attributes
@@ -2110,7 +2179,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_indep_var_label(self):	#pylint: disable=C0111
 		return self._indep_var_label
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(indep_var_label='None|str')
 	def _set_indep_var_label(self, indep_var_label):	#pylint: disable=C0111
 		self._indep_var_label = indep_var_label
 		self._draw(force_redraw=True)
@@ -2118,7 +2187,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_indep_var_units(self):	#pylint: disable=C0111
 		return self._indep_var_units
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(indep_var_units='None|str')
 	def _set_indep_var_units(self, indep_var_units):	#pylint: disable=C0111
 		self._indep_var_units = indep_var_units
 		self._draw(force_redraw=True)
@@ -2126,7 +2195,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_title(self):	#pylint: disable=C0111
 		return self._title
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, str]))
+	@putil.pcontracts.contract(title='None|str')
 	def _set_title(self, title):	#pylint: disable=C0111
 		self._title = title
 		self._draw(force_redraw=True)
@@ -2134,7 +2203,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_log_indep_axis(self):	#pylint: disable=C0111
 		return self._log_indep_axis
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, bool]))
+	@putil.pcontracts.contract(log_indep_axis='None|bool')
 	def _set_log_indep_axis(self, log_indep_axis):	#pylint: disable=C0111
 		self._log_indep_axis = log_indep_axis
 		self._draw(force_redraw=True)
@@ -2142,14 +2211,14 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_fig_width(self):	#pylint: disable=C0111
 		return self._fig_width
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
+	@putil.pcontracts.contract(fig_width='None|positive_real_num')
 	def _set_fig_width(self, fig_width):	#pylint: disable=C0111
 		self._fig_width = fig_width
 
 	def _get_fig_height(self):	#pylint: disable=C0111
 		return self._fig_height
 
-	@putil.check.check_argument(putil.check.PolymorphicType([None, putil.check.PositiveReal()]))
+	@putil.pcontracts.contract(fig_height='None|positive_real_num')
 	def _set_fig_height(self, fig_height):	#pylint: disable=C0111
 		self._fig_height = fig_height
 
@@ -2164,11 +2233,11 @@ class Figure(object):	#pylint: disable=R0902
 
 	def _validate_panels(self):
 		""" Verifies that elements of panel list are of the right type and fully specified """
+		self._exh.add_exception(exname='invalid_panel', extype=RuntimeError, exmsg='Argument `panels` is not valid')
+		self._exh.add_exception(exname='panel_not_fully_specified', extype=TypeError, exmsg='Panel *[panel_num]* is not fully specified')
 		for num, obj in enumerate(self.panels):
-			if type(obj) is not Panel:
-				raise TypeError('Argument `panels` is of the wrong type')
-			if not obj._complete():	#pylint: disable=W0212
-				raise RuntimeError('Panel {0} is not fully specified'.format(num))
+			self._exh.raise_exception_if(exname='invalid_panel', condition=type(obj) is not Panel)
+			self._exh.raise_exception_if(exname='panel_not_fully_specified', condition=not obj._complete(), edata={'field':'panel_num', 'value':num})	#pylint: disable=W0212
 
 	def _get_fig(self):	#pylint: disable=C0111
 		return self._fig
@@ -2181,6 +2250,9 @@ class Figure(object):	#pylint: disable=R0902
 		return (self.panels is not None) and (len(self.panels) > 0)
 
 	def _draw(self, force_redraw=False, raise_exception=False):	#pylint: disable=C0111,R0914
+		self._exh.add_exception(exname='log_axis', extype=ValueError, exmsg='Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, '+\
+						  'series *[series_num]* contains negative independent data points')
+		self._exh.add_exception(exname='not_fully_specified', extype=RuntimeError, exmsg='Figure object is not fully specified')
 		if (self._complete()) and force_redraw:
 			num_panels = len(self.panels)
 			plt.close('all')
@@ -2192,7 +2264,8 @@ class Figure(object):	#pylint: disable=R0902
 			for panel_num, panel_obj in enumerate(self.panels):
 				for series_num, series_obj in enumerate(panel_obj.series):
 					if (self.log_indep_axis is not None) and self.log_indep_axis and (min(series_obj.indep_var) < 0):
-						raise ValueError('Figure cannot cannot be plotted with a logarithmic independent axis because panel {0}, series {1} contains negative independent data points'.format(panel_num, series_num))
+						self._exh.raise_exception_if(exname='log_axis', condition=bool((self.log_indep_axis is not None) and self.log_indep_axis and (min(series_obj.indep_var) < 0)),\
+								   edata=[{'field':'panel_num', 'value':panel_num}, {'field':'series_num', 'value':series_num}])
 					glob_indep_var = numpy.unique(numpy.append(glob_indep_var, numpy.array([putil.misc.smart_round(element, 10) for element in series_obj.indep_var])))
 			indep_var_locs, indep_var_labels, indep_var_min, indep_var_max, indep_var_div, indep_var_unit_scale = \
 				_intelligent_ticks(glob_indep_var, min(glob_indep_var), max(glob_indep_var), tight=True, log_axis=self.log_indep_axis)
@@ -2215,10 +2288,11 @@ class Figure(object):	#pylint: disable=R0902
 			FigureCanvasAgg(self._fig).draw()	# Draw figure otherwise some bounding boxes return NaN
 			self._calculate_figure_size()
 		elif (not self._complete()) and (raise_exception):
-			raise RuntimeError('Figure object is not fully specified')
+			self._exh.raise_exception_if(exname='not_fully_specified', condition=True)
 
 	def _calculate_figure_size(self):	#pylint: disable=R0201,R0914
 		""" Calculates minimum panel and figure size """
+		self._exh.add_exception(exname='fig_small', extype=RuntimeError, exmsg='Figure size is too small: minimum width = *[min_width]*, minimum height *[min_height]*')
 		title_height = title_width = 0
 		title = self._fig.axes[0].get_title()
 		if (title is not None) and (title.strip() != ''):
@@ -2230,8 +2304,8 @@ class Figure(object):	#pylint: disable=R0902
 		panel_dims = [(yaxis_height+xaxis_height, yaxis_width+xaxis_width) for (yaxis_height, yaxis_width), (xaxis_height, xaxis_width) in zip(yaxis_dims, xaxis_dims)]
 		min_fig_width = round((max(title_width, max([panel_width for _, panel_width in panel_dims])))/float(self._fig.dpi), 2)
 		min_fig_height = round((((len(self._axes_list)*max([panel_height for panel_height, _ in panel_dims]))+title_height)/float(self._fig.dpi)), 2)
-		if ((self.fig_width is not None) and (self.fig_width < min_fig_width)) or ((self.fig_height is not None) and (self.fig_height < min_fig_height)):
-			raise RuntimeError('Figure size is too small: minimum width = {0}, minimum height {1}'.format(min_fig_width, min_fig_height))
+		self._exh.raise_exception_if(exname='fig_small', condition=((self.fig_width is not None) and (self.fig_width < min_fig_width)) or ((self.fig_height is not None) and (self.fig_height < min_fig_height)),\
+							   edata=[{'field':'min_width', 'value':min_fig_width}, {'field':'min_height', 'value':min_fig_height}])
 		self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
 		self.fig_height = min_fig_height if self.fig_height is None else self.fig_height
 
@@ -2239,28 +2313,41 @@ class Figure(object):	#pylint: disable=R0902
 		"""
 		Displays figure
 
+		.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+		.. Auto-generated exceptions documentation for putil.plot.Figure.show
+
 		:raises:
 		 * RuntimeError (Figure object is not fully specified)
 
-		 * Same as :py:attr:`putil.plot.Figure.panels`
+		 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+		.. [[[end]]]
 		"""
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		plt.show()
 
-	@putil.check.check_argument(putil.check.File())
+	@putil.pcontracts.contract(file_name='file_name')
 	def save(self, file_name):
 		"""
 		Saves figure in PNG format to a file
 
 		:param	file_name:	File name
 		:type	file_name:	string
-		:raises:
-		 * TypeError (Argument `file_name` is of the wrong type)
 
-		 * Same as :py:meth:`putil.plot.Figure.show()`
+		.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+		.. Auto-generated exceptions documentation for putil.plot.Figure.save
+
+		:raises:
+		 * RuntimeError (Argument `file_name` is not valid)
+
+		 * RuntimeError (Figure object is not fully specified)
+
+		 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+		.. [[[end]]]
 		"""
-		if not self._complete():
-			raise RuntimeError('Figure object is not fully specified')
+		self._exh.add_exception(exname='fig_not_fully_specified', extype=RuntimeError, exmsg='Figure object is not fully specified')
+		self._exh.raise_exception_if(exname='fig_not_fully_specified', condition=not self._complete())
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		self.fig.set_size_inches(self.fig_width, self.fig_height)
 		file_name = os.path.expanduser(file_name)	# Matplotlib seems to have a problem with ~/, expand it to $HOME
@@ -2295,10 +2382,19 @@ class Figure(object):	#pylint: disable=R0902
 	Figure independent variable label
 
 	:type:		string or None, default is *''*
-	:raises:
-	 * TypeError (Argument `indep_var_label` is of the wrong type)
 
-	 * Same as :py:attr:`putil.plot.Figure.panels`
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.indep_var_label
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `indep_var_label` is not valid)
+
+	 * RuntimeError (Figure object is not fully specified)
+
+	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	indep_var_units = property(_get_indep_var_units, _set_indep_var_units, doc='Figure independent axis units')
@@ -2306,10 +2402,19 @@ class Figure(object):	#pylint: disable=R0902
 	Figure independent variable units
 
 	:type:		string or None, default is *''*
-	:raises:
-	 * TypeError (Argument `indep_var_units` is of the wrong type)
 
-	 * Same as :py:attr:`putil.plot.Figure.panels`
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.indep_var_units
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `indep_var_units` is not valid)
+
+	 * RuntimeError (Figure object is not fully specified)
+
+	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	title = property(_get_title, _set_title, doc='Figure title')
@@ -2317,10 +2422,19 @@ class Figure(object):	#pylint: disable=R0902
 	Figure title
 
 	:type:		string or None, default is *''*
-	:raises:
-	 * TypeError (Argument `title` is of the wrong type)
 
-	 * Same as :py:attr:`putil.plot.Figure.panels`
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.title
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `title` is not valid)
+
+	 * RuntimeError (Figure object is not fully specified)
+
+	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	log_indep_axis = property(_get_log_indep_axis, _set_log_indep_axis, doc='Figure log_indep_axis')
@@ -2328,10 +2442,19 @@ class Figure(object):	#pylint: disable=R0902
 	Figure logarithmic independent axis flag
 
 	:type:		boolean, default is *False*
-	:raises:
-	 * TypeError (Argument `log_indep_axis` is of the wrong type)
 
-	 * Same as :py:attr:`putil.plot.Figure.panels`
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.log_indep_axis
+
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `log_indep_axis` is not valid)
+
+	 * RuntimeError (Figure object is not fully specified)
+
+	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	fig_width = property(_get_fig_width, _set_fig_width, doc='Width of the hard copy plot')
@@ -2339,10 +2462,13 @@ class Figure(object):	#pylint: disable=R0902
 	Width of the hard copy plot
 
 	:type:		positive number, float or integer
-	:raises:
-	 * TypeError (Argument `fig_width` is of the wrong type)
 
-	 * ValueError (Argument `fig_width` is not positive number)
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.fig_width
+
+	:raises: (when assigned) RuntimeError (Argument `fig_width` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	fig_height = property(_get_fig_height, _set_fig_height, doc='height of the hard copy plot')
@@ -2350,10 +2476,13 @@ class Figure(object):	#pylint: disable=R0902
 	Height of the hard copy plot
 
 	:type:		positive number, float or integer
-	:raises:
-	 * TypeError (Argument `fig_height` is of the wrong type)
 
-	 * ValueError (Argument `fig_height` is not positive number)
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.fig_height
+
+	:raises: (when assigned) RuntimeError (Argument `fig_height` is not valid)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	panels = property(_get_panels, _set_panels, doc='Figure panel(s)')
@@ -2361,12 +2490,27 @@ class Figure(object):	#pylint: disable=R0902
 	Figure panel(s)
 
 	:type:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
-	:raises:
-	 * TypeError (Argument `panels` is of the wrong type)
 
-	 * RuntimeError (Panel *[number]* is not fully specified)
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.Figure.panels
 
-	 * ValueError(Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+	:raises: (when assigned)
+
+	 * RuntimeError (Argument `fig_height` is not valid)
+
+	 * RuntimeError (Argument `fig_width` is not valid)
+
+	 * RuntimeError (Argument `panels` is not valid)
+
+	 * RuntimeError (Figure object is not fully specified)
+
+	 * RuntimeError (Figure size is too small: minimum width = *[min_width]*, minimum height *[min_height]*)
+
+	 * TypeError (Panel *[panel_num]* is not fully specified)
+
+	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
+
+	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	fig = property(_get_fig, doc='Figure handle')
@@ -2390,12 +2534,14 @@ class Figure(object):	#pylint: disable=R0902
 	:type: list
 	""" #pylint: disable=W0105
 
+
 def _first_label(label_list):
 	""" Find first non-blank label """
 	for label_index, label_obj in enumerate(label_list):
 		if (label_obj.get_text() is not None) and (label_obj.get_text().strip() != ''):
 			return label_index
 	return None
+
 
 def _get_yaxis_size(fig_obj, tick_labels, axis_label):
 	""" Compute Y axis height and width """
@@ -2412,6 +2558,7 @@ def _get_yaxis_size(fig_obj, tick_labels, axis_label):
 		axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
 	return axis_height, axis_width
 
+
 def _get_xaxis_size(fig_obj, tick_labels, axis_label):
 	""" Compute Y axis height and width """
 	# Minimum of one smallest label separation between horizontal ticks
@@ -2424,6 +2571,7 @@ def _get_xaxis_size(fig_obj, tick_labels, axis_label):
 		axis_width = max(axis_width, _get_text_prop(fig_obj, axis_label)['width'])
 	return axis_height, axis_width
 
+
 def _process_ticks(locs, min_lim, max_lim, mant):
 	"""
 	Returns pretty-printed tick locations that are within the given bound
@@ -2432,6 +2580,7 @@ def _process_ticks(locs, min_lim, max_lim, mant):
 	bounded_locs = [loc for loc in locs if ((loc >= min_lim) or (abs(loc-min_lim) <= 1e-14)) and ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))]
 	raw_labels = [putil.eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(putil.misc.smart_round(loc, mant)) for loc in bounded_locs]
 	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
+
 
 def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=False):	#pylint: disable=R0912,R0914,R0915
 	""" Calculates ticks 'intelligently', trying to calculate sane tick spacing """
@@ -2493,6 +2642,7 @@ def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=Fals
 			opt['labels'].append('')
 	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['scale'], opt['unit'])
 
+
 def _scale_ticks(tick_list, mode):
 	""" Scale series taking the reference to be the series start, stop or delta """
 	mode = mode.strip().upper()
@@ -2512,10 +2662,12 @@ def _scale_ticks(tick_list, mode):
 	count = len(''.join(labels))
 	return {'loc':loc, 'labels':labels, 'unit':unit, 'scale':scale, 'min':tick_min, 'max':tick_max, 'count':count}
 
+
 def _mantissa_digits(num):
 	""" Get number of digits in the mantissa """
 	snum = str(num)
 	return 0 if (snum.find('.') == -1) or str(float(int(num))) == snum else len(snum)-snum.find('.')-1
+
 
 def _uniquify_tick_labels(tick_list, tmin, tmax):
 	""" Calculate minimum tick mantissa given tick spacing """
@@ -2541,20 +2693,15 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
 				break
 	return [putil.misc.smart_round(element, PRECISION) for element in loc], labels
 
+
 def _get_text_prop(fig, text_obj):
 	""" Return length of text in pixels """
 	renderer = fig.canvas.get_renderer()
 	bbox = text_obj.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
 	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
 
-def _get_panel_prop(fig, axarr):
-	""" Return height of (sub)panel in pixels """
-	renderer = fig.canvas.get_renderer()
-	bbox = axarr.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
-	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
 
-_COLOR_SPACE_NAME_LIST = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
-@putil.check.check_arguments({'param_list':putil.check.ArbitraryLengthList(putil.check.Number()), 'offset':putil.check.NumberRange(0, 1), 'color_space':putil.check.OneOf(_COLOR_SPACE_NAME_LIST)})
+@putil.pcontracts.contract(param_list='list(int|float)', offset='offset_range', color_space='color_space_option')
 def parameterized_color_space(param_list, offset=0, color_space='binary'):
 	"""
 	Computes a color space where lighter colors correspond to lower parameter values
@@ -2567,23 +2714,29 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
 	'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case sensitive).
 	:type	color_space:	string
 	:rtype:					Matplotlib color
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.parameterized_color_space
+
 	:raises:
-	 * TypeError (Argument `param_list` is of the wrong type)
+	 * RuntimeError (Argument `color_space` is not valid)
 
-	 * ValueError (Argument `param_list` is empty)
+	 * RuntimeError (Argument `offset` is not valid)
 
-	 * TypeError (Argument `offset` is of the wrong type)
+	 * RuntimeError (Argument `param_list` is not valid)
 
-	 * ValueError (Argument `offset` is not in the range [0.0, 1.0])
+	 * TypeError (Argument `param_list` is empty)
 
-	 * ValueError (Argument `color_space` is of the wrong type')
+	 * ValueError (Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or
+	   'YlOrRd' (case insensitive))
 
-	 * ValueError (Argument `color_space` is not one of ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', \
-	 'YlOrBr', 'YlOrRd'] (case insensitive))
+	.. [[[end]]]
 	"""
-	if len(param_list) == 0:
-		raise TypeError('Argument `param_list` is empty')
+	color_space_name_list = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
+	_exh = putil.exh.get_or_create_exh_obj()
+	_exh.add_exception(exname='par_list_empty', extype=TypeError, exmsg='Argument `param_list` is empty')
+	_exh.raise_exception_if(exname='par_list_empty', condition=len(param_list) == 0)
 	color_pallete_list = [plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.gist_yarg, plt.cm.GnBu, plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,	#pylint: disable=E1101
 					   plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds, plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd]	#pylint: disable=E1101
-	color_dict = dict(zip(_COLOR_SPACE_NAME_LIST, color_pallete_list))
+	color_dict = dict(zip(color_space_name_list, color_pallete_list))
 	return [color_dict[color_space](putil.misc.normalize(value, param_list, offset)) for value in param_list]	#pylint: disable=E1101

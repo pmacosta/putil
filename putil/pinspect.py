@@ -9,6 +9,7 @@ import sys
 import copy
 import types
 import inspect
+import funcsigs
 
 import putil.misc
 
@@ -19,6 +20,17 @@ def _get_code_id(obj, file_name=None, offset=0):
 		return (obj.func_code.co_filename, obj.func_code.co_firstlineno)
 	elif file_name:
 		return (file_name, obj.func_code.co_firstlineno+offset)
+
+
+def _is_parg(arg):
+	""" Returns True if arg argument is the name of a positional variable argument (i.e. *pargs) """
+	return (len(arg) > 1) and (arg[0] == '*') and (arg[1] != '*')
+
+
+def _is_kwarg(arg):
+	""" Returns True if arg argument is the name of a keyword variable argument (i.e. **kwargs) """
+	return (len(arg) > 2) and (arg[:2] == '**')
+
 
 def _line_tokenizer(lines):	#pylint: disable=R0914,R0915
 	""" Perform all matches on source file line """
@@ -91,26 +103,22 @@ def _private_props(obj):
 		yield obj_name
 
 
-def is_magic_method(name):
+def get_function_args(func, no_self=False, no_varargs=False):
 	"""
-	Determines if a method is a magic method or not (with a '__' prefix and suffix)
+	Returns a tuple of function argument names in the order they are specified in the function signature
 
-	:param	name: Method name
-	:type	name: string
-	:rtype: boolean
+	:param	func: Function
+	:type	func: function object
+	:param	no_self: Flag that indicates whether the argument *self* should be included in the output (*False*) or not (*True*)
+	:type	no_self: boolean
+	:param	no_varargs: Flag that indicates whether keyword arguments should be included in the output (*True*) or not (*False*)
+	:rtype: tuple
 	"""
-	return name.startswith('__')
-
-
-def is_object_module(obj):
-	"""
-	Determines whether an object is a module object
-
-	:param	obj: Object
-	:type	obj: object
-	:rtype: boolean
-	"""
-	return isinstance(obj, types.ModuleType)
+	par_dict = funcsigs.signature(func).parameters
+	args = ['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict]
+	self_filtered_args = args if not args else (args[1 if (args[0] == 'self') and no_self else 0:])
+	varargs_filtered_args = tuple([arg for arg in self_filtered_args if (not no_varargs) or (no_varargs and (not _is_parg(arg)) and (not _is_kwarg(arg)))])
+	return varargs_filtered_args
 
 
 def get_module_name(module_obj):
@@ -145,6 +153,28 @@ def get_package_name(module_obj):
 		if module_name in sys.modules:
 			return module_name
 	raise RuntimeError('Loaded package root could not be found')
+
+
+def is_magic_method(name):
+	"""
+	Determines if a method is a magic method or not (with a '__' prefix and suffix)
+
+	:param	name: Method name
+	:type	name: string
+	:rtype: boolean
+	"""
+	return name.startswith('__')
+
+
+def is_object_module(obj):
+	"""
+	Determines whether an object is a module object
+
+	:param	obj: Object
+	:type	obj: object
+	:rtype: boolean
+	"""
+	return isinstance(obj, types.ModuleType)
 
 
 def loaded_package_modules(module_obj, _rarg=None):

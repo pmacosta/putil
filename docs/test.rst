@@ -22,26 +22,11 @@ External libraries
 Application programming interface (API)
 ***************************************
 
-Pseudo-types
-============
-
-None
-
-Global variables
-================
-
-None
-
 Functions
 =========
 
-.. autofunction:: putil.test.evaluate_exception_method
+.. autofunction:: putil.test.assert_exception
 .. autofunction:: putil.test.exception_type_str
-
-Classes
-=======
-
-None
 
 *******
 License

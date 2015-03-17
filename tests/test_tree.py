@@ -91,23 +91,19 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_node_names(self):	#pylint: disable=C0103,R0201
 		""" Test for node_names custom PyContract contract """
 		obj = putil.tree.Tree()
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':3}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':[{'name', 'hello'}, {'name':5, 'data':'a'}],}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':5, 'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a. b', 'data':None}}, RuntimeError, 'Argument `nodes` is not valid'))
-		test_list.append(putil.test.trigger_exception(obj._validate_nodes_with_data, {'names':{'name':'a.b..c', 'data':1.0}}, RuntimeError, 'Argument `nodes` is not valid'))
+		putil.test.assert_exception(obj._validate_nodes_with_data, {'names':3}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(obj._validate_nodes_with_data, {'names':[{'name', 'hello'}, {'name':5, 'data':'a'}],}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(obj._validate_nodes_with_data, {'names':{'name':5, 'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(obj._validate_nodes_with_data, {'names':{'name':'a. b', 'data':None}}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(obj._validate_nodes_with_data, {'names':{'name':'a.b..c', 'data':1.0}}, RuntimeError, 'Argument `nodes` is not valid')
 		obj._validate_nodes_with_data({'name':'a.b.c', 'data':'a'})
 		obj._validate_nodes_with_data([{'name':'a.b', 'data':3}, {'name':'a.b.c', 'data':'a'}])
-		assert test_list == len(test_list)*[True]
 
 	def test_node_separator_errors(self):	#pylint: disable=C0103,R0201
 		""" Check that validation for node_separator argument works as expected """
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(putil.tree.Tree, {'node_separator':3}, RuntimeError, 'Argument `node_separator` is not valid'))
-		test_list.append(putil.test.trigger_exception(putil.tree.Tree, {'node_separator':'hello'}, RuntimeError, 'Argument `node_separator` is not valid'))
+		putil.test.assert_exception(putil.tree.Tree, {'node_separator':3}, RuntimeError, 'Argument `node_separator` is not valid')
+		putil.test.assert_exception(putil.tree.Tree, {'node_separator':'hello'}, RuntimeError, 'Argument `node_separator` is not valid')
 		putil.tree.Tree('+')
-		assert test_list == len(test_list)*[True]
 
 	def test_node_separator_works(self):	#pylint: disable=C0103,R0201
 		""" Check that the node separator feature works as expected """
@@ -165,50 +161,45 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 
 	def test_add_nodes_errors(self):	#pylint: disable=C0103,R0201
 		""" Test that add() method raises the right exceptions """
-		exdesc = list()
-		exdesc.append(({'nodes':5}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':{'key':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':{'name':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':{'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':{'name':'a.b', 'data':'a', 'edata':5}}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'key':'a'}]}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a'}]}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'data':'a'}]}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a.b', 'data':'a', 'edata':5}]}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':[]}, RuntimeError, 'Argument `nodes` is not valid'))
-		exdesc.append(({'nodes':[{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]}, ValueError, 'Illegal node name: d.e'))
-		putil.test.evaluate_exception_series(exdesc, putil.tree.Tree().add_nodes)
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':5}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':{'key':'a'}}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':{'name':'a'}}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':{'data':'a'}}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':{'name':'a.b', 'data':'a', 'edata':5}}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':[{'name':'a.c', 'data':'a'}, {'key':'a'}]}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a'}]}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':[{'name':'a.c', 'data':'a'}, {'data':'a'}]}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'a.b', 'data':'a', 'edata':5}]}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':[]}, RuntimeError, 'Argument `nodes` is not valid')
+		putil.test.assert_exception(putil.tree.Tree().add_nodes, {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]}, ValueError, 'Illegal node name: d.e')
 
 	def test_add_nodes_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that add() method works """
 		tree1, tree2, tree3, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.get_children('t1l1') == ['t1l1.t1l2b1', 't1l1.t1l2b2'])
-		test_list.append(tree1.get_children('t1l1.t1l2b1') == ['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c'])
-		test_list.append(tree1.get_children('t1l1.t1l2b1.t1l3b1a') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b1.t1l3b1b') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b1.t1l3b1c') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b2') == ['t1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c'])
-		test_list.append(tree1.get_children('t1l1.t1l2b2.t1l3b2a') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b2.t1l3b2b') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b2.t1l3b2c') == list())
-		test_list.append(tree2.get_children('t2l1') == ['t2l1.t2l2b1', 't2l1.t2l2b2'])
-		test_list.append(tree2.get_children('t2l1.t2l2b1') == ['t2l1.t2l2b1.t2l3b1a', 't2l1.t2l2b1.t2l3b1b', 't2l1.t2l2b1.t2l3b1c'])
-		test_list.append(tree2.get_children('t2l1.t2l2b1.t2l3b1a') == list())
-		test_list.append(tree2.get_children('t2l1.t2l2b1.t2l3b1b') == list())
-		test_list.append(tree2.get_children('t2l1.t2l2b1.t2l3b1c') == list())
-		test_list.append(tree2.get_children('t2l1.t2l2b2') == ['t2l1.t2l2b2.t2l3b2a', 't2l1.t2l2b2.t2l3b2b', 't2l1.t2l2b2.t2l3b2c'])
-		test_list.append(tree2.get_children('t2l1.t2l2b2.t2l3b2a') == list())
-		test_list.append(tree2.get_children('t2l1.t2l2b2.t2l3b2b') == list())
-		test_list.append(tree2.get_children('t2l1.t2l2b2.t2l3b2c') == list())
-		test_list.append(tree3.get_children('t3l1') == list())
+		assert tree1.get_children('t1l1') == ['t1l1.t1l2b1', 't1l1.t1l2b2']
+		assert tree1.get_children('t1l1.t1l2b1') == ['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c']
+		assert tree1.get_children('t1l1.t1l2b1.t1l3b1a') == list()
+		assert tree1.get_children('t1l1.t1l2b1.t1l3b1b') == list()
+		assert tree1.get_children('t1l1.t1l2b1.t1l3b1c') == list()
+		assert tree1.get_children('t1l1.t1l2b2') == ['t1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c']
+		assert tree1.get_children('t1l1.t1l2b2.t1l3b2a') == list()
+		assert tree1.get_children('t1l1.t1l2b2.t1l3b2b') == list()
+		assert tree1.get_children('t1l1.t1l2b2.t1l3b2c') == list()
+		assert tree2.get_children('t2l1') == ['t2l1.t2l2b1', 't2l1.t2l2b2']
+		assert tree2.get_children('t2l1.t2l2b1') == ['t2l1.t2l2b1.t2l3b1a', 't2l1.t2l2b1.t2l3b1b', 't2l1.t2l2b1.t2l3b1c']
+		assert tree2.get_children('t2l1.t2l2b1.t2l3b1a') == list()
+		assert tree2.get_children('t2l1.t2l2b1.t2l3b1b') == list()
+		assert tree2.get_children('t2l1.t2l2b1.t2l3b1c') == list()
+		assert tree2.get_children('t2l1.t2l2b2') == ['t2l1.t2l2b2.t2l3b2a', 't2l1.t2l2b2.t2l3b2b', 't2l1.t2l2b2.t2l3b2c']
+		assert tree2.get_children('t2l1.t2l2b2.t2l3b2a') == list()
+		assert tree2.get_children('t2l1.t2l2b2.t2l3b2b') == list()
+		assert tree2.get_children('t2l1.t2l2b2.t2l3b2c') == list()
+		assert tree3.get_children('t3l1') == list()
 		# Test that data id's are different
 		tree4 = putil.tree.Tree()
 		ndata = [1, 2, 3]
 		tree4.add_nodes([{'name':'root', 'data':list()}, {'name':'root.leaf1', 'data':ndata}, {'name':'root.leaf2', 'data':ndata}])
-		test_list.append(id(tree4.get_data('root.leaf1')) != id(tree4.get_data('root.leaf2')))
-		#
-		assert test_list == len(test_list)*[True]
+		assert id(tree4.get_data('root.leaf1')) != id(tree4.get_data('root.leaf2'))
 
 	def test_collapse_works(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test that collapse method works """
@@ -223,7 +214,6 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
         	                {'name':'hello/world/root/cnode/anode/leaf', 'data':list()}
         	               ])
 			return tobj
-		test_list = list()
 		t1obj = putil.tree.Tree()
 		t1obj.add_nodes([
 			{'name':'l0.l1', 'data':'hello'},
@@ -233,7 +223,7 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 			{'name':'l0.l1.l2.l3b1.l4b1b1.l5b1b1b1.l6b1b1b1b2', 'data':list()},
 			{'name':'l0.l1.l2.l3b1.l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1', 'data':list()},
 		])
-		test_list.append(putil.test.trigger_exception(t1obj.collapse_subtree, {'name':t1obj.root_name, 'recursive':5}, RuntimeError, 'Argument `recursive` is not valid'))
+		putil.test.assert_exception(t1obj.collapse_subtree, {'name':t1obj.root_name, 'recursive':5}, RuntimeError, 'Argument `recursive` is not valid')
 		# Original tree       Collapsed tree
 		# l0                  l0.l1 (*)
 		# └l1 (*)             └l2
@@ -251,16 +241,15 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		#    └l4b2b1 (*)
 		#     └l5b2b1b1
 		t1obj.collapse_subtree(t1obj.root_name)
-		test_list.append(str(t1obj) == u'l0.l1 (*)\n└l2\n ├l3b1\n │├l4b1b1.l5b1b1b1\n ││├l6b1b1b1b1\n ││└l6b1b1b1b2\n │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n └l3b2.l4b2b1 (*)\n  └l5b2b1b1'.encode('utf-8'))
-		test_list.append(t1obj.get_data('l0.l1') == ['hello'])
-		test_list.append(t1obj.get_data('l0.l1.l2.l3b2.l4b2b1') == [5])
+		assert str(t1obj) == u'l0.l1 (*)\n└l2\n ├l3b1\n │├l4b1b1.l5b1b1b1\n ││├l6b1b1b1b1\n ││└l6b1b1b1b2\n │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n └l3b2.l4b2b1 (*)\n  └l5b2b1b1'.encode('utf-8')
+		assert t1obj.get_data('l0.l1') == ['hello']
+		assert t1obj.get_data('l0.l1.l2.l3b2.l4b2b1') == [5]
 		tobj = create_tree()
 		tobj.collapse_subtree(tobj.root_name, False)
-		test_list.append(str(tobj) == u'hello/world/root\n├anode (*)\n├bnode\n│└anode\n└cnode\n └anode\n  └leaf'.encode('utf-8'))
+		assert str(tobj) == u'hello/world/root\n├anode (*)\n├bnode\n│└anode\n└cnode\n └anode\n  └leaf'.encode('utf-8')
 		tobj = create_tree()
 		tobj.collapse_subtree(tobj.root_name, True)
-		test_list.append(str(tobj) == u'hello/world/root\n├anode (*)\n├bnode/anode\n└cnode/anode/leaf'.encode('utf-8'))
-		assert test_list == len(test_list)*[True]
+		assert str(tobj) == u'hello/world/root\n├anode (*)\n├bnode/anode\n└cnode/anode/leaf'.encode('utf-8')
 
 	def test_copy_subtree_errors(self):	#pylint: disable=C0103,R0201
 		""" Test that copy_subtree() method raises the right exceptions """
@@ -276,7 +265,6 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_copy_subtree_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that copy_subtree() method works """
 		_, _, _, tree4 = default_trees
-		test_list = list()
 		tree4.copy_subtree('root.branch1', 'root.branch2.branch3')
 		# Original tree   Copied sub-tree
 		# root            root
@@ -292,20 +280,19 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
         #                   └leaf2 (*)
         #                    └subleaf2
 		# Test tree relationship
-		test_list.append(str(tree4) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └branch3 (*)\n  ├leaf1\n  │└subleaf1 (*)\n  └leaf2 (*)\n   └subleaf2'.encode('utf-8'))
+		assert str(tree4) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └branch3 (*)\n  ├leaf1\n  │└subleaf1 (*)\n  └leaf2 (*)\n   └subleaf2'.encode('utf-8')
 		# Test that there are no pointers between source and destination data
-		test_list.append(id(tree4.get_data('root.branch1')) != id(tree4.get_data('root.branch2.branch3')))
-		test_list.append(id(tree4.get_data('root.branch1.leaf1')) != id(tree4.get_data('root.branch2.branch3.leaf1')))
-		test_list.append(id(tree4.get_data('root.branch1.leaf1.subleaf1')) != id(tree4.get_data('root.branch2.branch3.leaf1.subleaf1')))
-		test_list.append(id(tree4.get_data('root.branch1.leaf2')) != id(tree4.get_data('root.branch2.branch3.leaf2')))
-		test_list.append(id(tree4.get_data('root.branch1.leaf2.subleaf2')) != id(tree4.get_data('root.branch2.branch3.leaf2.subleaf2')))
+		assert id(tree4.get_data('root.branch1')) != id(tree4.get_data('root.branch2.branch3'))
+		assert id(tree4.get_data('root.branch1.leaf1')) != id(tree4.get_data('root.branch2.branch3.leaf1'))
+		assert id(tree4.get_data('root.branch1.leaf1.subleaf1')) != id(tree4.get_data('root.branch2.branch3.leaf1.subleaf1'))
+		assert id(tree4.get_data('root.branch1.leaf2')) != id(tree4.get_data('root.branch2.branch3.leaf2'))
+		assert id(tree4.get_data('root.branch1.leaf2.subleaf2')) != id(tree4.get_data('root.branch2.branch3.leaf2.subleaf2'))
 		# Test that data values are the same
-		test_list.append(tree4.get_data('root.branch1') == tree4.get_data('root.branch2.branch3'))
-		test_list.append(tree4.get_data('root.branch1.leaf1') == tree4.get_data('root.branch2.branch3.leaf1'))
-		test_list.append(tree4.get_data('root.branch1.leaf1.subleaf1') == tree4.get_data('root.branch2.branch3.leaf1.subleaf1'))
-		test_list.append(tree4.get_data('root.branch1.leaf2') == tree4.get_data('root.branch2.branch3.leaf2'))
-		test_list.append(tree4.get_data('root.branch1.leaf2.subleaf2') == tree4.get_data('root.branch2.branch3.leaf2.subleaf2'))
-		assert test_list == len(test_list)*[True]
+		assert tree4.get_data('root.branch1') == tree4.get_data('root.branch2.branch3')
+		assert tree4.get_data('root.branch1.leaf1') == tree4.get_data('root.branch2.branch3.leaf1')
+		assert tree4.get_data('root.branch1.leaf1.subleaf1') == tree4.get_data('root.branch2.branch3.leaf1.subleaf1')
+		assert tree4.get_data('root.branch1.leaf2') == tree4.get_data('root.branch2.branch3.leaf2')
+		assert tree4.get_data('root.branch1.leaf2.subleaf2') == tree4.get_data('root.branch2.branch3.leaf2.subleaf2')
 
 	def test_delete_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that delete() method raises the right exceptions """
@@ -320,23 +307,18 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_delete_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that delete() method works """
 		tree1, tree2, _, _ = default_trees
-		test_list = list()
 		tree1.delete_subtree('t1l1.t1l2b2')
 		tree1.delete_subtree('t1l1.t1l2b1.t1l3b1b')
 		tree2.delete_subtree('t2l1')
-		test_list.append(str(tree1) == u't1l1 (*)\n└t1l2b1 (*)\n ├t1l3b1a (*)\n └t1l3b1c (*)'.encode('utf-8'))
-		test_list.append(str(tree2) == '')
-		test_list.append(tree2.root_name == None)
+		assert str(tree1) == u't1l1 (*)\n└t1l2b1 (*)\n ├t1l3b1a (*)\n └t1l3b1c (*)'.encode('utf-8')
+		assert str(tree2) == ''
+		assert tree2.root_name == None
 		tree2.add_nodes([{'name':'root.branch1', 'data':list()}, {'name':'root.branch1.x', 'data':1999}])
-		test_list.append(tree2.root_name == 'root')
-
-		#
-		assert test_list == len(test_list)*[True]
+		assert tree2.root_name == 'root'
 
 	def test_flatten_subtree_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that flatten_subtree method works """
 		_, _, _, tree4 = default_trees
-		test_list = list()
 		tree4.add_nodes([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
 		          {'name':'root.branch2.leaf1', 'data':'loren ipsum'},
 		          {'name':'root.branch2.leaf1.another_subleaf1', 'data':list()},
@@ -344,130 +326,109 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		])
 		odata = copy.deepcopy(tree4.get_data('root.branch1.leaf1.subleaf1'))
 		tree4.flatten_subtree('root.branch1.leaf1')
-		test_list.append(str(tree4) == u'root\n├branch1 (*)\n│├leaf1.subleaf1 (*)\n│├leaf1.subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
-		test_list.append(tree4.get_data('root.branch1.leaf1.subleaf1') == odata)
+		assert str(tree4) == u'root\n├branch1 (*)\n│├leaf1.subleaf1 (*)\n│├leaf1.subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8')
+		assert tree4.get_data('root.branch1.leaf1.subleaf1') == odata
 		tree4.flatten_subtree('root.branch2.leaf1')
-		test_list.append(str(tree4) == u'root\n├branch1 (*)\n│├leaf1.subleaf1 (*)\n│├leaf1.subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8'))
-		assert test_list == len(test_list)*[True]
+		assert str(tree4) == u'root\n├branch1 (*)\n│├leaf1.subleaf1 (*)\n│├leaf1.subleaf2\n│└leaf2 (*)\n│ └subleaf2\n└branch2\n └leaf1 (*)\n  ├another_subleaf1\n  └another_subleaf2'.encode('utf-8')
 
 	def test_get_children_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_children() method works """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.get_children('t1l1') == ['t1l1.t1l2b1', 't1l1.t1l2b2'])
-		test_list.append(tree1.get_children('t1l1.t1l2b1') == ['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c'])
-		test_list.append(tree1.get_children('t1l1.t1l2b2') == ['t1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c'])
-		test_list.append(tree1.get_children('t1l1.t1l2b1.t1l3b1a') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b1.t1l3b1b') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b1.t1l3b1c') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b2.t1l3b2a') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b2.t1l3b2b') == list())
-		test_list.append(tree1.get_children('t1l1.t1l2b2.t1l3b2c') == list())
-		assert test_list == len(test_list)*[True]
+		assert tree1.get_children('t1l1') == ['t1l1.t1l2b1', 't1l1.t1l2b2']
+		assert tree1.get_children('t1l1.t1l2b1') == ['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c']
+		assert tree1.get_children('t1l1.t1l2b2') == ['t1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c']
+		assert tree1.get_children('t1l1.t1l2b1.t1l3b1a') == list()
+		assert tree1.get_children('t1l1.t1l2b1.t1l3b1b') == list()
+		assert tree1.get_children('t1l1.t1l2b1.t1l3b1c') == list()
+		assert tree1.get_children('t1l1.t1l2b2.t1l3b2a') == list()
+		assert tree1.get_children('t1l1.t1l2b2.t1l3b2b') == list()
+		assert tree1.get_children('t1l1.t1l2b2.t1l3b2c') == list()
 
 	def test_get_data_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_data() method works """
 		tree1, tree2, tree3, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.get_data('t1l1') == ['Tree 1, level 1'])
-		test_list.append(tree1.get_data('t1l1.t1l2b1') == ['Tree 1, level 2, branch 1'])
-		test_list.append(tree1.get_data('t1l1.t1l2b1.t1l3b1a') == ['Tree 1, level 3, branch 1, child a'])
-		test_list.append(tree1.get_data('t1l1.t1l2b1.t1l3b1b') == ['Tree 1, level 3, branch 1, child b'])
-		test_list.append(tree1.get_data('t1l1.t1l2b1.t1l3b1c') == ['Tree 1, level 3, branch 1, child c'])
-		test_list.append(tree1.get_data('t1l1.t1l2b2') == ['Tree 1, level 2, branch 2'])
-		test_list.append(tree1.get_data('t1l1.t1l2b2.t1l3b2a') == ['Tree 1, level 3, branch 2, child a'])
-		test_list.append(tree1.get_data('t1l1.t1l2b2.t1l3b2b') == ['Tree 1, level 3, branch 2, child b'])
-		test_list.append(tree1.get_data('t1l1.t1l2b2.t1l3b2c') == ['Tree 1, level 3, branch 2, child c'])
-		test_list.append(tree2.get_data('t2l1') == ['Tree 2, level 1'])
-		test_list.append(tree2.get_data('t2l1.t2l2b1') == ['Tree 2, level 2, branch 1'])
-		test_list.append(tree2.get_data('t2l1.t2l2b1.t2l3b1a') == ['Tree 2, level 3, branch 1, child a'])
-		test_list.append(tree2.get_data('t2l1.t2l2b1.t2l3b1b') == ['Tree 2, level 3, branch 1, child b'])
-		test_list.append(tree2.get_data('t2l1.t2l2b1.t2l3b1c') == ['Tree 2, level 3, branch 1, child c'])
-		test_list.append(tree2.get_data('t2l1.t2l2b2') == ['Tree 2, level 2, branch 2'])
-		test_list.append(tree2.get_data('t2l1.t2l2b2.t2l3b2a') == ['Tree 2, level 3, branch 2, child a'])
-		test_list.append(tree2.get_data('t2l1.t2l2b2.t2l3b2b') == ['Tree 2, level 3, branch 2, child b'])
-		test_list.append(tree2.get_data('t2l1.t2l2b2.t2l3b2c') == ['Tree 2, level 3, branch 2, child c'])
-		test_list.append(tree3.get_data('t3l1') == ['Tree 3, level 1'])
+		assert tree1.get_data('t1l1') == ['Tree 1, level 1']
+		assert tree1.get_data('t1l1.t1l2b1') == ['Tree 1, level 2, branch 1']
+		assert tree1.get_data('t1l1.t1l2b1.t1l3b1a') == ['Tree 1, level 3, branch 1, child a']
+		assert tree1.get_data('t1l1.t1l2b1.t1l3b1b') == ['Tree 1, level 3, branch 1, child b']
+		assert tree1.get_data('t1l1.t1l2b1.t1l3b1c') == ['Tree 1, level 3, branch 1, child c']
+		assert tree1.get_data('t1l1.t1l2b2') == ['Tree 1, level 2, branch 2']
+		assert tree1.get_data('t1l1.t1l2b2.t1l3b2a') == ['Tree 1, level 3, branch 2, child a']
+		assert tree1.get_data('t1l1.t1l2b2.t1l3b2b') == ['Tree 1, level 3, branch 2, child b']
+		assert tree1.get_data('t1l1.t1l2b2.t1l3b2c') == ['Tree 1, level 3, branch 2, child c']
+		assert tree2.get_data('t2l1') == ['Tree 2, level 1']
+		assert tree2.get_data('t2l1.t2l2b1') == ['Tree 2, level 2, branch 1']
+		assert tree2.get_data('t2l1.t2l2b1.t2l3b1a') == ['Tree 2, level 3, branch 1, child a']
+		assert tree2.get_data('t2l1.t2l2b1.t2l3b1b') == ['Tree 2, level 3, branch 1, child b']
+		assert tree2.get_data('t2l1.t2l2b1.t2l3b1c') == ['Tree 2, level 3, branch 1, child c']
+		assert tree2.get_data('t2l1.t2l2b2') == ['Tree 2, level 2, branch 2']
+		assert tree2.get_data('t2l1.t2l2b2.t2l3b2a') == ['Tree 2, level 3, branch 2, child a']
+		assert tree2.get_data('t2l1.t2l2b2.t2l3b2b') == ['Tree 2, level 3, branch 2, child b']
+		assert tree2.get_data('t2l1.t2l2b2.t2l3b2c') == ['Tree 2, level 3, branch 2, child c']
+		assert tree3.get_data('t3l1') == ['Tree 3, level 1']
 		tree4 = putil.tree.Tree()
 		tree4.add_nodes({'name':'t4l1', 'data':list()})
-		test_list.append(tree4.get_data('t4l1') == list())
+		assert tree4.get_data('t4l1') == list()
 		tree4.add_nodes([{'name':'t4l1', 'data':'Hello'}, {'name':'t4l1', 'data':'world'}])
 		tree4.add_nodes({'name':'t4l1', 'data':'!'})
-		test_list.append(tree4.get_data('t4l1') == ['Hello', 'world', '!'])
-		assert test_list == len(test_list)*[True]
+		assert tree4.get_data('t4l1') == ['Hello', 'world', '!']
 
 	def test_get_leafs_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_data() method works """
 		tree1, tree2, tree3, tree4 = default_trees
-		test_list = list()
-		test_list.append(tree1.get_leafs('t1l1') == ['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c', 't1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c'])
-		test_list.append(tree2.get_leafs('t2l1.t2l2b2') == ['t2l1.t2l2b2.t2l3b2a', 't2l1.t2l2b2.t2l3b2b', 't2l1.t2l2b2.t2l3b2c'])
-		test_list.append(tree3.get_leafs('t3l1') == ['t3l1'])
-		test_list.append(tree4.get_leafs('root.branch1.leaf2') == ['root.branch1.leaf2.subleaf2'])
-		assert test_list == len(test_list)*[True]
+		assert tree1.get_leafs('t1l1') == ['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c', 't1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c']
+		assert tree2.get_leafs('t2l1.t2l2b2') == ['t2l1.t2l2b2.t2l3b2a', 't2l1.t2l2b2.t2l3b2b', 't2l1.t2l2b2.t2l3b2c']
+		assert tree3.get_leafs('t3l1') == ['t3l1']
+		assert tree4.get_leafs('root.branch1.leaf2') == ['root.branch1.leaf2.subleaf2']
 
 	def test_get_node_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_node() method works """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.get_node('t1l1') == {'parent':'', 'children':['t1l1.t1l2b1', 't1l1.t1l2b2'], 'data':['Tree 1, level 1']})
-		test_list.append(tree1.get_node('t1l1.t1l2b1') == {'parent':'t1l1', 'children':['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c'], 'data':['Tree 1, level 2, branch 1']})
-		test_list.append(tree1.get_node('t1l1.t1l2b1.t1l3b1a') == {'parent':'t1l1.t1l2b1', 'children':list(), 'data':['Tree 1, level 3, branch 1, child a']})
-		assert test_list == len(test_list)*[True]
+		assert tree1.get_node('t1l1') == {'parent':'', 'children':['t1l1.t1l2b1', 't1l1.t1l2b2'], 'data':['Tree 1, level 1']}
+		assert tree1.get_node('t1l1.t1l2b1') == {'parent':'t1l1', 'children':['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c'], 'data':['Tree 1, level 2, branch 1']}
+		assert tree1.get_node('t1l1.t1l2b1.t1l3b1a') == {'parent':'t1l1.t1l2b1', 'children':list(), 'data':['Tree 1, level 3, branch 1, child a']}
 
 	def test_get_node_children_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_node_children() method works """
 		tree1, _, tree3, tree4 = default_trees
-		test_list = list()
-		test_list.append(tree1.get_node_children('t1l1') == [{'parent':'t1l1', 'children':['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c'], 'data':['Tree 1, level 2, branch 1']},
-			{'parent':'t1l1', 'children':['t1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c'], 'data':['Tree 1, level 2, branch 2']}])
-		test_list.append(tree3.get_node_children('t3l1') == list())
-		test_list.append(tree4.get_node_children('root.branch1.leaf2') == [{'parent':'root.branch1.leaf2', 'children':[], 'data':[]}])
-		assert test_list == len(test_list)*[True]
+		assert tree1.get_node_children('t1l1') == [{'parent':'t1l1', 'children':['t1l1.t1l2b1.t1l3b1a', 't1l1.t1l2b1.t1l3b1b', 't1l1.t1l2b1.t1l3b1c'], 'data':['Tree 1, level 2, branch 1']},
+			{'parent':'t1l1', 'children':['t1l1.t1l2b2.t1l3b2a', 't1l1.t1l2b2.t1l3b2b', 't1l1.t1l2b2.t1l3b2c'], 'data':['Tree 1, level 2, branch 2']}]
+		assert tree3.get_node_children('t3l1') == list()
+		assert tree4.get_node_children('root.branch1.leaf2') == [{'parent':'root.branch1.leaf2', 'children':[], 'data':[]}]
 
 	def test_get_subtree_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_subtree() method works """
 		_, _, tree3, tree4 = default_trees
-		test_list = list()
-		test_list.append(tree4.get_subtree('root.branch1') == ['root.branch1', 'root.branch1.leaf1', 'root.branch1.leaf1.subleaf1', 'root.branch1.leaf2', 'root.branch1.leaf2.subleaf2'])
-		test_list.append(tree3.get_subtree('t3l1') == ['t3l1'])
-		assert test_list == len(test_list)*[True]
+		assert tree4.get_subtree('root.branch1') == ['root.branch1', 'root.branch1.leaf1', 'root.branch1.leaf1.subleaf1', 'root.branch1.leaf2', 'root.branch1.leaf2.subleaf2']
+		assert tree3.get_subtree('t3l1') == ['t3l1']
 
 	def test_is_root(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the property is_root works as expected """
 		tree1, tree2, tree3, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.is_root('t1l1') == True)
-		test_list.append(tree2.is_root('t2l1.t2l2b1') == False)
-		test_list.append(tree2.is_root('t2l1.t2l2b1.t2l3b1b') == False)
-		test_list.append(tree3.is_root('t3l1') == True)
-		assert test_list == len(test_list)*[True]
+		assert tree1.is_root('t1l1') == True
+		assert tree2.is_root('t2l1.t2l2b1') == False
+		assert tree2.is_root('t2l1.t2l2b1.t2l3b1b') == False
+		assert tree3.is_root('t3l1') == True
 
 	def test_in_tree_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that in_tree() method raises the right exceptions """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(tree1.in_tree, {'name':'a..b'}, RuntimeError, 'Argument `name` is not valid'))
-		test_list.append(putil.test.trigger_exception(tree1.in_tree, {'name':5}, RuntimeError, 'Argument `name` is not valid'))
-		assert test_list == len(test_list)*[True]
+		putil.test.assert_exception(tree1.in_tree, {'name':'a..b'}, RuntimeError, 'Argument `name` is not valid')
+		putil.test.assert_exception(tree1.in_tree, {'name':5}, RuntimeError, 'Argument `name` is not valid')
 
 	def test_in_tree_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that in_tree() method works """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.in_tree('x.x.x') == False)
-		test_list.append(tree1.in_tree('t1l1.t1l2b1') == True)
-		assert test_list == len(test_list)*[True]
+		assert tree1.in_tree('x.x.x') == False
+		assert tree1.in_tree('t1l1.t1l2b1') == True
 
 	def test_is_leaf(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the property is_leaf works as expected """
 		tree1, tree2, tree3, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.is_leaf('t1l1') == False)
-		test_list.append(tree2.is_leaf('t2l1.t2l2b1') == False)
-		test_list.append(tree2.is_leaf('t2l1.t2l2b1.t2l3b1b') == True)
-		test_list.append(tree3.is_leaf('t3l1') == True)
-		assert test_list == len(test_list)*[True]
+		assert tree1.is_leaf('t1l1') == False
+		assert tree2.is_leaf('t2l1.t2l2b1') == False
+		assert tree2.is_leaf('t2l1.t2l2b1.t2l3b1b') == True
+		assert tree3.is_leaf('t3l1') == True
 
 	def test_make_root_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_data() method works """
@@ -480,29 +441,24 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		#	│ └subleaf2
 		#	└branch2
 		_, _, _, tree4 = default_trees
-		test_list = list()
 		tree4.make_root('root')
-		test_list.append(str(tree4) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
+		assert str(tree4) == u'root\n├branch1 (*)\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8')
 		tree4.make_root('root.branch1')
-		test_list.append(str(tree4) == u'root.branch1 (*)\n├leaf1\n│└subleaf1 (*)\n└leaf2 (*)\n └subleaf2'.encode('utf-8'))
+		assert str(tree4) == u'root.branch1 (*)\n├leaf1\n│└subleaf1 (*)\n└leaf2 (*)\n └subleaf2'.encode('utf-8')
 		tree4.make_root('root.branch1.leaf2.subleaf2')
-		test_list.append(str(tree4) == u'root.branch1.leaf2.subleaf2'.encode('utf-8'))
-		assert test_list == len(test_list)*[True]
+		assert str(tree4) == u'root.branch1.leaf2.subleaf2'.encode('utf-8')
 
 	def test_print_node_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the method print_node() works as expected """
 		tree1, tree2, tree3, _ = default_trees
 		obj = putil.tree.Tree()
 		obj.add_nodes([{'name':'dtree', 'data':list()}, {'name':'dtree.my_child', 'data':'Tree 2, level 2'}])
-		test_list = list()
 		#
-		test_list.append(tree1.print_node('t1l1') == 'Name: t1l1\nParent: None\nChildren: t1l2b1, t1l2b2\nData: Tree 1, level 1')
+		assert tree1.print_node('t1l1') == 'Name: t1l1\nParent: None\nChildren: t1l2b1, t1l2b2\nData: Tree 1, level 1'
 		tree2.add_nodes({'name':'t2l1.t2l2b1.t2l3b1b', 'data':14.3})
-		test_list.append(tree2.print_node('t2l1.t2l2b1.t2l3b1b') == "Name: t2l1.t2l2b1.t2l3b1b\nParent: t2l1.t2l2b1\nChildren: None\nData: ['Tree 2, level 3, branch 1, child b', 14.3]")
-		test_list.append(tree3.print_node('t3l1') == 'Name: t3l1\nParent: None\nChildren: None\nData: Tree 3, level 1')
-		test_list.append(obj.print_node('dtree') == 'Name: dtree\nParent: None\nChildren: my_child\nData: None')
-		#
-		assert test_list == len(test_list)*[True]
+		assert tree2.print_node('t2l1.t2l2b1.t2l3b1b') == "Name: t2l1.t2l2b1.t2l3b1b\nParent: t2l1.t2l2b1\nChildren: None\nData: ['Tree 2, level 3, branch 1, child b', 14.3]"
+		assert tree3.print_node('t3l1') == 'Name: t3l1\nParent: None\nChildren: None\nData: Tree 3, level 1'
+		assert obj.print_node('dtree') == 'Name: dtree\nParent: None\nChildren: my_child\nData: None'
 
 	def test_rename_node_errors(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the method rename_node() raises the appropriate exceptions """
@@ -519,11 +475,10 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_rename_node_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that the method rename_node() works as expected """
 		_, _, _, tree4 = default_trees
-		test_list = list()
 		tree4.rename_node('root.branch1.leaf1', 'root.branch1.mapleleaf1')
-		test_list.append(str(tree4) == u'root\n├branch1 (*)\n│├leaf2 (*)\n││└subleaf2\n│└mapleleaf1\n│ └subleaf1 (*)\n└branch2'.encode('utf-8'))
+		assert str(tree4) == u'root\n├branch1 (*)\n│├leaf2 (*)\n││└subleaf2\n│└mapleleaf1\n│ └subleaf1 (*)\n└branch2'.encode('utf-8')
 		tree4.rename_node('root', 'dummy')
-		test_list.append(str(tree4) == u'dummy\n├branch1 (*)\n│├leaf2 (*)\n││└subleaf2\n│└mapleleaf1\n│ └subleaf1 (*)\n└branch2'.encode('utf-8'))
+		assert str(tree4) == u'dummy\n├branch1 (*)\n│├leaf2 (*)\n││└subleaf2\n│└mapleleaf1\n│ └subleaf1 (*)\n└branch2'.encode('utf-8')
 		tobj = putil.tree.Tree()
 		tobj.add_nodes([
 			{'name':'dummy.levels.root.branch1', 'data':list()},
@@ -535,26 +490,21 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		])
 		tobj.make_root('dummy.levels.root')
 		tobj.rename_node('dummy.levels.root', 'top')
-		test_list.append(str(tobj) == u'top\n├branch1\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8'))
-		assert test_list == len(test_list)*[True]
+		assert str(tobj) == u'top\n├branch1\n│├leaf1\n││└subleaf1 (*)\n│└leaf2 (*)\n│ └subleaf2\n└branch2'.encode('utf-8')
 
 	def test_root_node_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that root_node property works """
 		tree1, _, _, _ = default_trees
 		tree4 = putil.tree.Tree()
-		test_list = list()
-		test_list.append(tree1.root_node == {'parent':'', 'children':['t1l1.t1l2b1', 't1l1.t1l2b2'], 'data':['Tree 1, level 1']})
-		test_list.append(tree4.root_node == None)
-		assert test_list == len(test_list)*[True]
+		assert tree1.root_node == {'parent':'', 'children':['t1l1.t1l2b1', 't1l1.t1l2b2'], 'data':['Tree 1, level 1']}
+		assert tree4.root_node == None
 
 	def test_root_name_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that root_name property works """
 		tree1, _, _, _ = default_trees
 		tree4 = putil.tree.Tree()
-		test_list = list()
-		test_list.append(tree1.root_name == 't1l1')
-		test_list.append(tree4.root_name == None)
-		assert test_list == len(test_list)*[True]
+		assert tree1.root_name == 't1l1'
+		assert tree4.root_name == None
 
 	def test_node_separator_property_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that node_separator property works """
@@ -577,7 +527,6 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	def test_str_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that ppstr method works """
 		tree1, tree2, tree3, _ = default_trees
-		test_list = list()
 		tree1.add_nodes([
 			{'name':'t1l1.t1l2b1.t1l3b1a.leaf1', 'data':list()},
 			{'name':'t1l1.t1l2b1.t1l3b1c.leaf2', 'data':list()},
@@ -585,70 +534,55 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 			{'name':'t1l1.t1l2b1.t1l3b1c.leaf2.leaf3', 'data':list()},
 			{'name':'t1l1.t1l2b1.t1l3b1c.leaf2.subleaf4', 'data':list()}
 		])
-		test_list.append(str(tree1) == u't1l1 (*)\n├t1l2b1 (*)\n│├t1l3b1a (*)\n││└leaf1\n│├t1l3b1b (*)\n│└t1l3b1c (*)\n│ └leaf2\n│  ├leaf3\n│  └subleaf4\n└t1l2b2 (*)\n ├t1l3b2a (*)\n ├t1l3b2b (*)\n └t1l3b2c (*)'.encode('utf-8'))
-		test_list.append(str(tree2) == u't2l1 (*)\n├t2l2b1 (*)\n│├t2l3b1a (*)\n│├t2l3b1b (*)\n│└t2l3b1c (*)\n└t2l2b2 (*)\n ├t2l3b2a (*)\n ├t2l3b2b (*)\n └t2l3b2c (*)'.encode('utf-8'))
-		test_list.append(str(tree3) == u't3l1 (*)'.encode('utf-8'))
+		assert str(tree1) == u't1l1 (*)\n├t1l2b1 (*)\n│├t1l3b1a (*)\n││└leaf1\n│├t1l3b1b (*)\n│└t1l3b1c (*)\n│ └leaf2\n│  ├leaf3\n│  └subleaf4\n└t1l2b2 (*)\n ├t1l3b2a (*)\n ├t1l3b2b (*)\n └t1l3b2c (*)'.encode('utf-8')
+		assert str(tree2) == u't2l1 (*)\n├t2l2b1 (*)\n│├t2l3b1a (*)\n│├t2l3b1b (*)\n│└t2l3b1c (*)\n└t2l2b2 (*)\n ├t2l3b2a (*)\n ├t2l3b2b (*)\n └t2l3b2c (*)'.encode('utf-8')
+		assert str(tree3) == u't3l1 (*)'.encode('utf-8')
 		tree3.add_nodes({'name':'t3l1.leaf1', 'data':list()})
-		test_list.append(str(tree3) == u't3l1 (*)\n└leaf1'.encode('utf-8'))
+		assert str(tree3) == u't3l1 (*)\n└leaf1'.encode('utf-8')
 		tree3.add_nodes({'name':'t3l1.leaf2', 'data':list()})
-		test_list.append(str(tree3) == u't3l1 (*)\n├leaf1\n└leaf2'.encode('utf-8'))
-		assert test_list == len(test_list)*[True]
+		assert str(tree3) == u't3l1 (*)\n├leaf1\n└leaf2'.encode('utf-8')
 
 	def test_get_node_parent_works(self, default_trees):	#pylint: disable=C0103,R0201,W0621
 		""" Test that get_node_parent method works """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(tree1.get_node_parent('t1l1') == dict())
-		test_list.append(cmp(tree1.get_node_parent('t1l1.t1l2b1'), {'parent':'', 'children':['t1l1.t1l2b1', 't1l1.t1l2b2'], 'data':['Tree 1, level 1']}) == 0)
-		assert test_list == len(test_list)*[True]
+		assert tree1.get_node_parent('t1l1') == dict()
+		assert cmp(tree1.get_node_parent('t1l1.t1l2b1'), {'parent':'', 'children':['t1l1.t1l2b1', 't1l1.t1l2b2'], 'data':['Tree 1, level 1']}) == 0
 
 	def test_private_get_children_works(self, default_trees):	#pylint: disable=R0201,W0621
 		""" Test _get_children method works """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(sorted(tree1._get_children('t1l1')) == sorted(['t1l1.t1l2b1', 't1l1.t1l2b2']))	#pylint: disable=W0212
-		test_list.append(tree1._get_children('t1l1.t1l2b2.t1l3b2c') == list())	#pylint: disable=W0212
-		assert test_list == len(test_list)*[True]
+		assert sorted(tree1._get_children('t1l1')) == sorted(['t1l1.t1l2b1', 't1l1.t1l2b2'])	#pylint: disable=W0212
+		assert tree1._get_children('t1l1.t1l2b2.t1l3b2c') == list()	#pylint: disable=W0212
 
 	def test_private_get_parent_works(self, default_trees):	#pylint: disable=R0201,W0621
 		""" Test _get_parent method works """
 		tree1, _, _, _ = default_trees
-		test_list = list()
-		test_list.append(tree1._get_parent('t1l1') == '')	#pylint: disable=W0212
-		test_list.append(tree1._get_parent('t1l1.t1l2b2.t1l3b2c') == 't1l1.t1l2b2')	#pylint: disable=W0212
-		assert test_list == len(test_list)*[True]
+		assert tree1._get_parent('t1l1') == ''	#pylint: disable=W0212
+		assert tree1._get_parent('t1l1.t1l2b2.t1l3b2c') == 't1l1.t1l2b2'	#pylint: disable=W0212
 
 	def test_private_get_data_works(self, default_trees):	#pylint: disable=R0201,W0621
 		""" Test _get_data method works """
 		_, _, _, tree4 = default_trees
-		test_list = list()
-		test_list.append(tree4._get_data('root.branch1.leaf1') == list())	#pylint: disable=W0212
-		test_list.append(tree4._get_data('root.branch1') == [5, 7])	#pylint: disable=W0212
-		assert test_list == len(test_list)*[True]
+		assert tree4._get_data('root.branch1.leaf1') == list()	#pylint: disable=W0212
+		assert tree4._get_data('root.branch1') == [5, 7]	#pylint: disable=W0212
 
 	def test_private_set_children_works(self, default_trees):	#pylint: disable=R0201,W0621
 		""" Test _set_children method works """
 		_, _, _, tree4 = default_trees
-		test_list = list()
 		tree4._set_children('root.branch1.leaf2', ['root.branch1.leaf2.c', 'root.branch1.leaf2.x', 'root.branch1.leaf2.a'])	#pylint: disable=W0212
-		test_list.append(tree4._get_children('root.branch1.leaf2') == ['root.branch1.leaf2.a', 'root.branch1.leaf2.c', 'root.branch1.leaf2.x'])	#pylint: disable=W0212
-		assert test_list == len(test_list)*[True]
+		assert tree4._get_children('root.branch1.leaf2') == ['root.branch1.leaf2.a', 'root.branch1.leaf2.c', 'root.branch1.leaf2.x']	#pylint: disable=W0212
 
 	def test_private_set_data_works(self, default_trees):	#pylint: disable=R0201,W0621
 		""" Test _set_data method works """
 		_, _, _, tree4 = default_trees
-		test_list = list()
 		tree4._set_data('root.branch1', ['Hello world'])	#pylint: disable=W0212
-		test_list.append(tree4._get_data('root.branch1') == ['Hello world'])	#pylint: disable=W0212
-		assert test_list == len(test_list)*[True]
+		assert tree4._get_data('root.branch1') == ['Hello world']	#pylint: disable=W0212
 
 	def test_private_set_parent_works(self, default_trees):	#pylint: disable=R0201,W0621
 		""" Test _set_parent method works """
 		_, _, _, tree4 = default_trees
-		test_list = list()
 		tree4._set_parent('root.branch1.leaf2.subleaf2', 'leaf_zzz')	#pylint: disable=W0212
-		test_list.append(tree4._get_parent('root.branch1.leaf2.subleaf2') == 'leaf_zzz')	#pylint: disable=W0212
-		assert test_list == len(test_list)*[True]
+		assert tree4._get_parent('root.branch1.leaf2.subleaf2') == 'leaf_zzz'	#pylint: disable=W0212
 
 	def test_search_tree(self):	#pylint: disable=R0201,W0621
 		""" Test search() method works """
@@ -683,14 +617,12 @@ class TestTreeNode(object):	#pylint: disable=W0232,R0904
 		                {'name':'hello/world/root/bnode/anode', 'data':list()},
 		                {'name':'hello/world/root/cnode/anode/leaf', 'data':list()}
 		               ])
-		test_list = list()
-		test_list.append(putil.test.trigger_exception(tobj.delete_prefix, {'name':5}, RuntimeError, 'Argument `name` is not valid'))
-		test_list.append(putil.test.trigger_exception(tobj.delete_prefix, {'name':'hello/world/root'}, RuntimeError, 'Argument `name` is not a valid prefix'))
-		test_list.append(putil.test.trigger_exception(tobj.delete_prefix, {'name':'hello/world!!!!'}, RuntimeError, 'Argument `name` is not a valid prefix'))
+		putil.test.assert_exception(tobj.delete_prefix, {'name':5}, RuntimeError, 'Argument `name` is not valid')
+		putil.test.assert_exception(tobj.delete_prefix, {'name':'hello/world/root'}, RuntimeError, 'Argument `name` is not a valid prefix')
+		putil.test.assert_exception(tobj.delete_prefix, {'name':'hello/world!!!!'}, RuntimeError, 'Argument `name` is not a valid prefix')
 		tobj.collapse_subtree(tobj.root_name, recursive=False)
 		tobj.delete_prefix('hello/world')
-		test_list.append(str(tobj) == u'root\n├anode (*)\n├bnode\n│└anode\n└cnode\n └anode\n  └leaf'.encode('utf-8'))
-		assert test_list == len(test_list)*[True]
+		assert str(tobj) == u'root\n├anode (*)\n├bnode\n│└anode\n└cnode\n └anode\n  └leaf'.encode('utf-8')
 
 	def test_copy_works(self, default_trees):	#pylint: disable=R0201,W0621
 		""" Test __copy__() method """

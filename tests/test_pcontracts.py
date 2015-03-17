@@ -1,11 +1,8 @@
 ﻿# test_pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=W0212
+# pylint: disable=C0111,W0212
 
-"""
-putil.pcontracts unit tests
-"""
 import sys
 import copy
 import pytest
@@ -15,6 +12,7 @@ import functools
 import putil.exh
 import putil.test
 import putil.pcontracts	#pylint: disable=W0611
+
 
 _ORIGINAL_CUSTOM_CONTRACTS = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
 
@@ -29,142 +27,131 @@ def test_get_exdesc():
 		""" Local test function to test get_exdesc() function """
 		tmp_local = putil.pcontracts.get_exdesc()
 		return tmp_local
-	test_list = list()
 	sample_func_local.exdesc = 'Test local function property'
 	sample_func_global.exdesc = 'Test global function property'
-	test_list.append(sample_func_local() == 'Test local function property')
-	test_list.append(sample_func_global() == 'Test global function property')
+	assert sample_func_local() == 'Test local function property'
+	assert sample_func_global() == 'Test global function property'
 	del globals()['sample_func_global']
-	test_list.append(putil.test.trigger_exception(putil.pcontracts.get_exdesc, {}, RuntimeError, 'Function object could not be found for function `trigger_exception`'))
-	assert test_list == len(test_list)*[True]
+	putil.test.assert_exception(putil.pcontracts.get_exdesc, {}, RuntimeError, 'Function object could not be found for function `assert_exception`')
 
 
 def test_get_replacement_token():
 	""" Test _get_replacement_token() function """
-	test_list = list()
-	test_list.append(putil.pcontracts._get_replacement_token('Argument `*[argument_name]*` could not be found') == 'argument_name')
-	test_list.append(putil.pcontracts._get_replacement_token('Argument `*file_name*` could not be found') == None)
-	assert test_list == len(test_list)*[True]
+	assert putil.pcontracts._get_replacement_token('Argument `*[argument_name]*` could not be found') == 'argument_name'
+	assert putil.pcontracts._get_replacement_token('Argument `*file_name*` could not be found') == None
 
 
 def test_format_arg_errors():
 	""" Test _format_arg() function exceptions """
-	exdesc = list()
-	exdesc.append(({'arg':''}, ValueError, 'Empty custom contract exception message'))
-	exdesc.append(({'arg':[RuntimeError, '']}, ValueError, 'Empty custom contract exception message'))
-	exdesc.append(({'arg':['', RuntimeError]}, ValueError, 'Empty custom contract exception message'))
-	exdesc.append(({'arg':['']}, ValueError, 'Empty custom contract exception message'))
-	exdesc.append(({'arg':set([RuntimeError, 'Message'])}, TypeError, 'Illegal custom contract exception definition'))
-	exdesc.append(({'arg':[]}, TypeError, 'Illegal custom contract exception definition'))
-	exdesc.append(({'arg':(RuntimeError, 'Message', 3)}, TypeError, 'Illegal custom contract exception definition'))
-	exdesc.append(({'arg':[3]}, TypeError, 'Illegal custom contract exception definition'))
-	exdesc.append(({'arg':['a', 3]}, TypeError, 'Illegal custom contract exception definition'))
-	exdesc.append(({'arg':[3, 'a']}, TypeError, 'Illegal custom contract exception definition'))
-	exdesc.append(({'arg':[ValueError, 3]}, TypeError, 'Illegal custom contract exception definition'))
-	exdesc.append(({'arg':[3, ValueError]}, TypeError, 'Illegal custom contract exception definition'))
-	putil.test.evaluate_exception_series(exdesc, putil.pcontracts._format_arg)
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':''}, ValueError, 'Empty custom contract exception message')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':[RuntimeError, '']}, ValueError, 'Empty custom contract exception message')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':['', RuntimeError]}, ValueError, 'Empty custom contract exception message')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':['']}, ValueError, 'Empty custom contract exception message')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':set([RuntimeError, 'Message'])}, TypeError, 'Illegal custom contract exception definition')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':[]}, TypeError, 'Illegal custom contract exception definition')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':(RuntimeError, 'Message', 3)}, TypeError, 'Illegal custom contract exception definition')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':[3]}, TypeError, 'Illegal custom contract exception definition')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':['a', 3]}, TypeError, 'Illegal custom contract exception definition')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':[3, 'a']}, TypeError, 'Illegal custom contract exception definition')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':[ValueError, 3]}, TypeError, 'Illegal custom contract exception definition')
+	putil.test.assert_exception(putil.pcontracts._format_arg, {'arg':[3, ValueError]}, TypeError, 'Illegal custom contract exception definition')
 
 
 def test_format_arg_works():
 	""" Test _format_arg() function """
 	fobj = putil.pcontracts._format_arg
-	test_list = list()
-	test_list.append(cmp(fobj('Message'), {'msg':'Message', 'type':RuntimeError}) == 0)
-	test_list.append(cmp(fobj(IOError), {'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}) == 0)
-	test_list.append(cmp(fobj((ValueError, 'Description 1')), {'msg':'Description 1', 'type':ValueError}) == 0)
-	test_list.append(cmp(fobj(('Description 2', TypeError)), {'msg':'Description 2', 'type':TypeError}) == 0)
-	assert test_list == len(test_list)*[True]
+	assert cmp(fobj('Message'), {'msg':'Message', 'type':RuntimeError}) == 0
+	assert cmp(fobj(IOError), {'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}) == 0
+	assert cmp(fobj((ValueError, 'Description 1')), {'msg':'Description 1', 'type':ValueError}) == 0
+	assert cmp(fobj(('Description 2', TypeError)), {'msg':'Description 2', 'type':TypeError}) == 0
 
 
 def test_parse_new_contract_args():
 	""" Test _parse_new_contract_args() function """
 	fobj = putil.pcontracts._parse_new_contract_args
-	test_list = list()
 	# Validate *args
 	with pytest.raises(TypeError) as excinfo:
 		fobj('Desc1', file_not_found='Desc2')
-	test_list.append(excinfo.value.message == 'Illegal custom contract exception definition')
+	assert excinfo.value.message == 'Illegal custom contract exception definition'
 	with pytest.raises(TypeError) as excinfo:
 		fobj('Desc1', 'Desc2')
-	test_list.append(excinfo.value.message == 'Illegal custom contract exception definition')
+	assert excinfo.value.message == 'Illegal custom contract exception definition'
 	with pytest.raises(TypeError) as excinfo:
 		fobj(5)
-	test_list.append(excinfo.value.message == 'Illegal custom contract exception definition')
+	assert excinfo.value.message == 'Illegal custom contract exception definition'
 	# Normal behavior
-	test_list.append(fobj() == [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError}])
-	test_list.append(fobj('Desc') == [{'name':'default', 'msg':'Desc', 'type':RuntimeError}])
-	test_list.append(fobj(IOError) == [{'name':'default', 'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}])
-	test_list.append(fobj(('a', )) == [{'name':'default', 'msg':'a', 'type':RuntimeError}])
-	test_list.append(fobj((IOError, )) == [{'name':'default', 'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}])
-	test_list.append(fobj([TypeError, 'bcd']) == [{'name':'default', 'msg':'bcd', 'type':TypeError}])
-	test_list.append(fobj(['xyz', ValueError]) == [{'name':'default', 'msg':'xyz', 'type':ValueError}])
+	assert fobj() == [{'name':'argument_invalid', 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError}]
+	assert fobj('Desc') == [{'name':'default', 'msg':'Desc', 'type':RuntimeError}]
+	assert fobj(IOError) == [{'name':'default', 'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}]
+	assert fobj(('a', )) == [{'name':'default', 'msg':'a', 'type':RuntimeError}]
+	assert fobj((IOError, )) == [{'name':'default', 'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}]
+	assert fobj([TypeError, 'bcd']) == [{'name':'default', 'msg':'bcd', 'type':TypeError}]
+	assert fobj(['xyz', ValueError]) == [{'name':'default', 'msg':'xyz', 'type':ValueError}]
 	# Validate **kwargs
-	test_list.append(putil.test.trigger_exception(fobj, {'a':45}, TypeError, 'Illegal custom contract exception definition'))
-	test_list.append(fobj(char='Desc1', other=['a', ValueError]) == [{'name':'char', 'msg':'Desc1', 'type':RuntimeError}, {'name':'other', 'msg':'a', 'type':ValueError}])
-	assert test_list == len(test_list)*[True]
+	putil.test.assert_exception(fobj, {'a':45}, TypeError, 'Illegal custom contract exception definition')
+	assert fobj(char='Desc1', other=['a', ValueError]) == [{'name':'char', 'msg':'Desc1', 'type':RuntimeError}, {'name':'other', 'msg':'a', 'type':ValueError}]
+
 
 def test_register_custom_contracts():
 	""" Test _register_custom_contracts() function """
 	fobj = putil.pcontracts._register_custom_contracts
-	ftest = putil.test.trigger_exception
+	ftest = putil.test.assert_exception
 	key1 = 'contract_name'
 	key2 = 'contract_exceptions'
-	test_list = list()
 	# Test data validation
-	test_list.append(ftest(fobj, {key1:5, key2:{}}, TypeError, 'Argument `contract_name` is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:5}, TypeError, 'Argument `contract_exceptions` is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:{'msg':'b', 'key':'hole'}}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{5:'b'}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'a':'b'}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b', 'x':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':5, 'msg':'b', 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':5, 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b', 'type':5}]}, TypeError, 'Contract exception definition is of the wrong type'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b'}, {'name':'a', 'msg':'c',}]}, ValueError, 'Contract exception names are not unique'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}]}, ValueError, 'Contract exception messages are not unique'))
-	test_list.append(ftest(fobj, {key1:'test', key2:[{'name':'x', 'msg':'I am *[spartacus]*'}, {'name':'y', 'msg':'A move is *[spartacus]*',}]}, ValueError, 'Multiple replacement fields to be substituted by argument value'))
+	ftest(fobj, {key1:5, key2:{}}, TypeError, 'Argument `contract_name` is of the wrong type')
+	ftest(fobj, {key1:'test', key2:5}, TypeError, 'Argument `contract_exceptions` is of the wrong type')
+	ftest(fobj, {key1:'test', key2:{'msg':'b', 'key':'hole'}}, TypeError, 'Contract exception definition is of the wrong type')
+	ftest(fobj, {key1:'test', key2:[{5:'b'}]}, TypeError, 'Contract exception definition is of the wrong type')
+	ftest(fobj, {key1:'test', key2:[{'a':'b'}]}, TypeError, 'Contract exception definition is of the wrong type')
+	ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b', 'x':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type')
+	ftest(fobj, {key1:'test', key2:[{'name':5, 'msg':'b', 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type')
+	ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':5, 'type':RuntimeError}]}, TypeError, 'Contract exception definition is of the wrong type')
+	ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b', 'type':5}]}, TypeError, 'Contract exception definition is of the wrong type')
+	ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'b'}, {'name':'a', 'msg':'c',}]}, ValueError, 'Contract exception names are not unique')
+	ftest(fobj, {key1:'test', key2:[{'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}]}, ValueError, 'Contract exception messages are not unique')
+	ftest(fobj, {key1:'test', key2:[{'name':'x', 'msg':'I am *[spartacus]*'}, {'name':'y', 'msg':'A move is *[spartacus]*',}]}, ValueError, 'Multiple replacement fields to be substituted by argument value')
 	putil.pcontracts._register_custom_contracts(contract_name='test1', contract_exceptions=[{'name':'a', 'msg':'desc'}])
-	test_list.append(putil.test.trigger_exception(fobj, {'contract_name':'test1', 'contract_exceptions':[{'name':'a', 'msg':'other desc'}]}, RuntimeError, 'Attempt to redefine custom contract `test1`'))
+	putil.test.assert_exception(fobj, {'contract_name':'test1', 'contract_exceptions':[{'name':'a', 'msg':'other desc'}]}, RuntimeError, 'Attempt to redefine custom contract `test1`')
 	# Test homogenization of exception definitions
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract1', 'my description')
-	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract1':{'default':{'num':0, 'msg':'my description', 'type':RuntimeError, 'field':None}}}) == 0)
+	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract1':{'default':{'num':0, 'msg':'my description', 'type':RuntimeError, 'field':None}}}) == 0
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract2', [{'name':'mex1', 'msg':'msg1', 'type':ValueError}, {'name':'mex2', 'msg':'msg2 *[token_name]* hello world'}])
-	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract2':{'mex1':{'num':0, 'msg':'msg1', 'type':ValueError, 'field':None}, \
-														                        'mex2':{'num':1, 'msg':'msg2 *[token_name]* hello world', 'type':RuntimeError, 'field':'token_name'}}}) == 0)
+	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract2':{'mex1':{'num':0, 'msg':'msg1', 'type':ValueError, 'field':None}, \
+														                        'mex2':{'num':1, 'msg':'msg2 *[token_name]* hello world', 'type':RuntimeError, 'field':'token_name'}}}) == 0
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract3', [{'name':'mex1', 'msg':'msg1', 'type':ValueError}])
 	fobj('test_contract4', [{'name':'mex2', 'msg':'msg2 *[token_name]* hello world'}])
-	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract3':{'mex1':{'num':0, 'msg':'msg1', 'type':ValueError, 'field':None}}, \
-														      'test_contract4':{'mex2':{'num':0, 'msg':'msg2 *[token_name]* hello world', 'type':RuntimeError, 'field':'token_name'}}}) == 0)
+	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract3':{'mex1':{'num':0, 'msg':'msg1', 'type':ValueError, 'field':None}}, \
+														      'test_contract4':{'mex2':{'num':0, 'msg':'msg2 *[token_name]* hello world', 'type':RuntimeError, 'field':'token_name'}}}) == 0
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract5', {'name':'mex5', 'msg':'msg5', 'type':ValueError})
-	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract5':{'mex5':{'num':0, 'msg':'msg5', 'type':ValueError, 'field':None}}}) == 0)
+	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract5':{'mex5':{'num':0, 'msg':'msg5', 'type':ValueError, 'field':None}}}) == 0
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
-	assert test_list == len(test_list)*[True]
+
 
 def test_new_contract():
 	""" Tests for new_contract decorator """
 	@putil.pcontracts.new_contract()
 	def func1(name1):	#pylint: disable=C0111
 		return name1, putil.pcontracts.get_exdesc()
-	test_list = list()
-	test_list.append(func1('a') == ('a', '[START CONTRACT MSG: func1]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]'))
-	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func1':{'argument_invalid':{'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}}}) == 0)
+	assert func1('a') == ('a', '[START CONTRACT MSG: func1]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func1':{'argument_invalid':{'num':0, 'msg':'Argument `*[argument_name]*` is not valid', 'type':RuntimeError, 'field':'argument_name'}}}) == 0
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract('Simple message')
 	def func2(name2):	#pylint: disable=C0111
 		return name2, putil.pcontracts.get_exdesc()
-	test_list.append(func2('bc') == ('bc', '[START CONTRACT MSG: func2]Simple message[STOP CONTRACT MSG]'))
-	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func2':{'default':{'num':0, 'msg':'Simple message', 'type':RuntimeError, 'field':None}}}) == 0)
+	assert func2('bc') == ('bc', '[START CONTRACT MSG: func2]Simple message[STOP CONTRACT MSG]')
+	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func2':{'default':{'num':0, 'msg':'Simple message', 'type':RuntimeError, 'field':None}}}) == 0
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract(ex1='Medium message', ex2=('Complex *[data]*', TypeError))
 	def func3(name3):	#pylint: disable=C0111
 		return name3, putil.pcontracts.get_exdesc()
-	test_list.append(func3('def') == ('def', {'ex1':'[START CONTRACT MSG: func3]Medium message[STOP CONTRACT MSG]', 'ex2':'[START CONTRACT MSG: func3]Complex *[data]*[STOP CONTRACT MSG]'}))
-	test_list.append(cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func3':{'ex1':{'num':0, 'msg':'Medium message', 'type':RuntimeError, 'field':None}, 'ex2':{'num':1, 'msg':'Complex *[data]*', 'type':TypeError, 'field':'data'}}}) == 0)
-	assert test_list == len(test_list)*[True]
+	assert func3('def') == ('def', {'ex1':'[START CONTRACT MSG: func3]Medium message[STOP CONTRACT MSG]', 'ex2':'[START CONTRACT MSG: func3]Complex *[data]*[STOP CONTRACT MSG]'})
+	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func3':{'ex1':{'num':0, 'msg':'Medium message', 'type':RuntimeError, 'field':None}, 'ex2':{'num':1, 'msg':'Complex *[data]*', 'type':TypeError, 'field':'data'}}}) == 0
+
 
 ###
 # Tests for _create_argument_value_pairs()
@@ -172,6 +159,7 @@ def test_new_contract():
 def ret_func(par):
 	""" Returns the passed argument """
 	return par
+
 
 def decfunc(func):
 	"""" Decorator function to test _create_argument_value_pairs function """
@@ -183,6 +171,7 @@ def decfunc(func):
 		"""
 		return ret_func(putil.pcontracts._create_argument_value_pairs(func, *args, **kwargs))
 	return wrapper
+
 
 class TestCreateArgumentValuePairs(object):	#pylint: disable=W0232
 	""" Tests for _create_argument_value_pairs function """
@@ -320,6 +309,7 @@ def test_contract():	#pylint: disable=C0103,R0912
 	putil.exh.del_exh_obj()
 	putil.test.assert_exception(func6, {'fname':5}, contracts.interface.ContractSyntaxError, '')
 
+
 def test_file_name_contract():
 	""" Test for file_name custom contract """
 	putil.pcontracts._CUSTOM_CONTRACTS = _ORIGINAL_CUSTOM_CONTRACTS
@@ -327,12 +317,10 @@ def test_file_name_contract():
 	def func(sfn):
 		""" Sample function to test file_name custom contract """
 		return sfn
-	test_list = list()
-	test_list.append(putil.test.trigger_exception(func, {'sfn':3}, RuntimeError, 'Argument `sfn` is not valid'))
-	test_list.append(putil.test.trigger_exception(func, {'sfn':'test\0'}, RuntimeError, 'Argument `sfn` is not valid'))
+	putil.test.assert_exception(func, {'sfn':3}, RuntimeError, 'Argument `sfn` is not valid')
+	putil.test.assert_exception(func, {'sfn':'test\0'}, RuntimeError, 'Argument `sfn` is not valid')
 	func('some_file.txt')
 	func(sys.executable)	# Test with Python executable (should be portable across systems), file should be valid although not having permissions to write it
-	assert test_list == len(test_list)*[True]
 
 
 def test_file_name_exists_contract():
@@ -341,12 +329,10 @@ def test_file_name_exists_contract():
 	def func(sfn):
 		""" Sample function to test file_name_exists custom contract """
 		return sfn
-	test_list = list()
-	test_list.append(putil.test.trigger_exception(func, {'sfn':3}, RuntimeError, 'Argument `sfn` is not valid'))
-	test_list.append(putil.test.trigger_exception(func, {'sfn':'test\0'}, RuntimeError, 'Argument `sfn` is not valid'))
-	test_list.append(putil.test.trigger_exception(func, {'sfn':'_file_does_not_exist'}, IOError, 'File `_file_does_not_exist` could not be found'))
+	putil.test.assert_exception(func, {'sfn':3}, RuntimeError, 'Argument `sfn` is not valid')
+	putil.test.assert_exception(func, {'sfn':'test\0'}, RuntimeError, 'Argument `sfn` is not valid')
+	putil.test.assert_exception(func, {'sfn':'_file_does_not_exist'}, IOError, 'File `_file_does_not_exist` could not be found')
 	func(sys.executable)	# Test with Python executable (should be portable across systems)
-	assert test_list == len(test_list)*[True]
 
 
 def test_enable_disable_contracts():
@@ -362,4 +348,3 @@ def test_enable_disable_contracts():
 	putil.pcontracts.enable_all()
 	assert putil.pcontracts.all_disabled() == False
 	putil.test.assert_exception(func, {'number':None}, RuntimeError, 'Argument `number` is not valid')
-

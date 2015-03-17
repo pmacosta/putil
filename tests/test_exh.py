@@ -17,6 +17,7 @@ import putil.misc
 import putil.test
 import putil.pcontracts
 
+
 def test_star_exh_obj():
 	""" Test [get|set|del]_exh_obj() function """
 	putil.test.assert_exception(putil.exh.set_exh_obj, {'value':5}, TypeError, 'Argument `value` is not valid')
@@ -72,7 +73,6 @@ def test_add_exception_errors():
 	# Test case where callable is not found in callable database
 	obj = putil.exh.ExHandle(True)
 	with mock.patch('putil.exh._get_code_id') as mock_get_code_id:
-		#test_list.append(putil.test.trigger_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, 'Callable full name could not be obtained'))
 		putil.test.assert_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, \
 			r'Callable with call ID <([\w|\W|\s]+)> not found in reverse callables database')
 

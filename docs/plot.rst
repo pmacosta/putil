@@ -104,12 +104,14 @@ Global variables
 Pseudo-types
 ============
 
-.. autofunction:: putil.plot.real_num
 .. autofunction:: putil.plot.function
-.. autofunction:: putil.plot.real_numpy_vector
 .. autofunction:: putil.plot.increasing_real_numpy_vector
 .. autofunction:: putil.plot.interpolation_option
 .. autofunction:: putil.plot.line_style_option
+.. autofunction:: putil.plot.offset_range
+.. autofunction:: putil.plot.positive_real_num
+.. autofunction:: putil.plot.real_num
+.. autofunction:: putil.plot.real_numpy_vector
 
 Functions
 =========

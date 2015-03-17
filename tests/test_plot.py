@@ -6,6 +6,7 @@
 putil.plot unit tests
 """
 
+import mock
 import scipy
 import numpy
 import pytest
@@ -36,7 +37,7 @@ def compare_images(image_file_name1, image_file_name2):
 # Contracts test
 ###
 def test_real_num_contract():	#pylint: disable=W0232
-	""" Tests for RealNumpyVector pseudo-type """
+	""" Tests for RealNumber pseudo-type """
 	putil.test.assert_exception(putil.plot.real_num, {'num':'a'}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.real_num, {'num':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.real_num, {'num':False}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
@@ -44,8 +45,31 @@ def test_real_num_contract():	#pylint: disable=W0232
 	putil.plot.real_num(2.0)
 
 
-def test_function():	#pylint: disable=W0232
-	""" Tests for RealNumpyVector pseudo-type """
+def test_positive_real_num_contract():	#pylint: disable=W0232
+	""" Tests for PositiveRealNumber pseudo-type """
+	putil.test.assert_exception(putil.plot.positive_real_num, {'num':'a'}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'num':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'num':False}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'num':-1}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'num':-2.0}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.plot.positive_real_num(1)
+	putil.plot.positive_real_num(2.0)
+
+
+def test_offset_range_contract():	#pylint: disable=W0232
+	""" Tests for PositiveRealNumber pseudo-type """
+	putil.test.assert_exception(putil.plot.offset_range, {'num':'a'}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'num':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'num':False}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'num':-0.1}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'num':-1.1}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.plot.offset_range(0)
+	putil.plot.offset_range(0.5)
+	putil.plot.offset_range(1)
+
+
+def test_function_contract():	#pylint: disable=W0232
+	""" Tests for Function pseudo-type """
 	putil.test.assert_exception(putil.plot.function, {'obj':'a'}, ValueError, '[START CONTRACT MSG: function]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.plot.function(test_real_num_contract)
 	putil.plot.function(None)
@@ -81,8 +105,8 @@ def test_increasing_real_numpy_vector_contract():	#pylint: disable=W0232,C0103
 	putil.plot.increasing_real_numpy_vector(numpy.array([10.0]))
 
 
-def test_interpolation_option():	#pylint: disable=W0232
-	""" Tests for RealNumpyVector pseudo-type """
+def test_interpolation_option_contract():	#pylint: disable=W0232,C0103
+	""" Tests for InterpolationOption pseudo-type """
 	putil.test.assert_exception(putil.plot.interpolation_option, {'option':5}, ValueError, '[START CONTRACT MSG: interpolation_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.interpolation_option, {'option':'x'}, ValueError,\
 							 "[START CONTRACT MSG: interpolation_option]Argument `*[argument_name]*` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)[STOP CONTRACT MSG]")
@@ -92,14 +116,24 @@ def test_interpolation_option():	#pylint: disable=W0232
 		putil.plot.interpolation_option(item.lower())
 
 
-def test_line_style_option():	#pylint: disable=W0232
-	""" Tests for RealNumpyVector pseudo-type """
+def test_line_style_option_contract():	#pylint: disable=W0232
+	""" Tests for LineStyleOption pseudo-type """
 	putil.test.assert_exception(putil.plot.line_style_option, {'option':5}, ValueError, '[START CONTRACT MSG: line_style_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.test.assert_exception(putil.plot.line_style_option, {'option':'x'}, ValueError,\
 							 "[START CONTRACT MSG: line_style_option]Argument `*[argument_name]*` is not one of ['-', '--', '-.', ':'][STOP CONTRACT MSG]")
 	putil.plot.line_style_option(None)
 	for item in ['-', '--', '-.', ':']:
 		putil.plot.line_style_option(item)
+
+
+def test_color_space_option_contract():	#pylint: disable=W0232,C0103
+	""" Tests for LineStyleOption pseudo-type """
+	putil.test.assert_exception(putil.plot.color_space_option, {'option':5}, ValueError, '[START CONTRACT MSG: color_space_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.color_space_option, {'option':'x'}, ValueError,\
+							 "[START CONTRACT MSG: color_space_option]Argument `*[argument_name]*` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', "+\
+							 "'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case insensitive)[STOP CONTRACT MSG]")
+	for item in ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']:
+		putil.plot.color_space_option(item)
 
 
 def test_legend_position_validation():	#pylint: disable=W0232
@@ -509,26 +543,35 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc11}, ValueError, 'Processed dependent variable is empty')
 			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc12},\
 				ValueError, 'Processed independent and dependent variables are of different length')
-			with pytest.raises(RuntimeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
 			msg = 'Processing function fproc13 raised an exception when called with the following arguments:\n'
 			msg += 'indep_var: [ 1, 2, 3 ]\n'
 			msg += 'dep_var: [ 1, 2, 3 ]\n'
 			msg += 'fproc_eargs: \n'
 			msg += '   par1: 13\n'
 			msg += 'Exception error: Test exception message #1'
-			assert excinfo.value.message == msg
-			with pytest.raises(RuntimeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc14, fproc_eargs={})
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc13, 'fproc_eargs':{'par1':13}}, RuntimeError, msg)
+			#with pytest.raises(RuntimeError) as excinfo:
+			#	putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13})
+			#msg = 'Processing function fproc13 raised an exception when called with the following arguments:\n'
+			#msg += 'indep_var: [ 1, 2, 3 ]\n'
+			#msg += 'dep_var: [ 1, 2, 3 ]\n'
+			#msg += 'fproc_eargs: \n'
+			#msg += '   par1: 13\n'
+			#msg += 'Exception error: Test exception message #1'
+			#assert excinfo.value.message == msg
+			#with pytest.raises(RuntimeError) as excinfo:
+			#	putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc14, fproc_eargs={})
 			msg = 'Processing function fproc14 raised an exception when called with the following arguments:\n'
 			msg += 'indep_var: [ 1, 2, 3 ]\n'
 			msg += 'dep_var: [ 1, 2, 3 ]\n'
 			msg += 'fproc_eargs: None\n'
 			msg += 'Exception error: Test exception message #2'
-			assert excinfo.value.message == msg
-			with pytest.raises(RuntimeError) as excinfo:
-				putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc14)
-			assert excinfo.value.message == msg
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc14, 'fproc_eargs':{}}, RuntimeError, msg)
+			#assert excinfo.value.message == msg
+			#with pytest.raises(RuntimeError) as excinfo:
+			#	putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc14)
+			#assert excinfo.value.message == msg
+			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col3', 'dfilter':{'Col1':0}, 'fproc':fproc14}, RuntimeError, msg)
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc3)
 			putil.plot.CsvSource(file_name=file_name, indep_col_label='Col2', dep_col_label='Col3', dfilter={'Col1':0}, fproc=fproc7)
@@ -677,7 +720,6 @@ class TestSeries(object):	#pylint: disable=W0232
 		obj = putil.plot.Series(data_source=default_source, label='test')
 		assert (obj.indep_var == numpy.array([5, 6, 7, 8])).all()
 		assert (obj.dep_var == numpy.array([0, -10, 5, 4])).all()
-		#test_list.append(((obj.indep_var == numpy.array([5, 6, 7, 8])).all(), (obj.dep_var == numpy.array([0, -10, 5, 4])).all()) == (True, True))
 
 	def test_label_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
 		""" Test label data validation """
@@ -1330,160 +1372,113 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 	""" Tests for Figure """
 	def test_indep_var_label_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test indep_var_label data validation """
-		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, indep_var_label=5)
-		test_list.append(excinfo.value.message == 'Argument `indep_var_label` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':5}, RuntimeError, 'Argument `indep_var_label` is not valid')
 		# These assignments should not raise an exception
 		putil.plot.Figure(panels=default_panel, indep_var_label=None)
 		putil.plot.Figure(panels=default_panel, indep_var_label='sec')
 		obj = putil.plot.Figure(panels=default_panel, indep_var_label='test')
-		test_list.append(obj.indep_var_label == 'test')
-		assert test_list == [True]*2
+		assert obj.indep_var_label == 'test'
 
 	def test_indep_var_units_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test indep_var_units data validation """
-		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, indep_var_units=5)
-		test_list.append(excinfo.value.message == 'Argument `indep_var_units` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_units':5}, RuntimeError, 'Argument `indep_var_units` is not valid')
 		# These assignments should not raise an exception
 		putil.plot.Figure(panels=default_panel, indep_var_units=None)
 		putil.plot.Figure(panels=default_panel, indep_var_units='sec')
 		obj = putil.plot.Figure(panels=default_panel, indep_var_units='test')
-		test_list.append(obj.indep_var_units == 'test')
-		assert test_list == [True]*2
+		assert obj.indep_var_units == 'test'
 
 	def test_title_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test title data validation """
-		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, title=5)
-		test_list.append(excinfo.value.message == 'Argument `title` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'title':5}, RuntimeError, 'Argument `title` is not valid')
 		# These assignments should not raise an exception
 		putil.plot.Figure(panels=default_panel, title=None)
 		putil.plot.Figure(panels=default_panel, title='sec')
 		obj = putil.plot.Figure(panels=default_panel, title='test')
-		test_list.append(obj.title == 'test')
-		assert test_list == [True]*2
+		assert obj.title == 'test'
 
 	def test_log_indep_axis_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test log_indep_axis data validation """
-		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, log_indep_axis=5)
-		test_list.append(excinfo.value.message == 'Argument `log_indep_axis` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'log_indep_axis':5}, RuntimeError, 'Argument `log_indep_axis` is not valid')
 		negative_data_source = putil.plot.BasicSource(indep_var=numpy.array([-5, 6, 7, 8]), dep_var=numpy.array([0.1, 10, 5, 4]))
 		negative_series = putil.plot.Series(data_source=negative_data_source, label='negative data series')
 		negative_panel = putil.plot.Panel(series=negative_series)
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.Figure(panels=negative_panel, log_indep_axis=True)
-		test_list.append(excinfo.value.message == 'Figure cannot cannot be plotted with a logarithmic independent axis because panel 0, series 0 contains negative independent data points')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':negative_panel, 'log_indep_axis':True}, ValueError, 'Figure cannot cannot be plotted with a logarithmic independent axis because panel 0, series 0 contains '+\
+							  'negative independent data points')
 		# These assignments should not raise an exception
 		obj = putil.plot.Figure(panels=default_panel, log_indep_axis=False)
-		test_list.append(obj.log_indep_axis == False)
+		assert obj.log_indep_axis == False
 		obj = putil.plot.Figure(panels=default_panel, log_indep_axis=True)
-		test_list.append(obj.log_indep_axis == True)
+		assert obj.log_indep_axis == True
 		obj = putil.plot.Figure(panels=default_panel)
-		test_list.append(obj.log_indep_axis == False)
-		assert test_list == [True]*5
+		assert obj.log_indep_axis == False
 
 	def test_fig_width_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test figure width data validation """
-		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, fig_width='a')
-		test_list.append(excinfo.value.message == 'Argument `fig_width` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'fig_width':'a'}, RuntimeError, 'Argument `fig_width` is not valid')
 		# These assignments should not raise an exception
 		obj = putil.plot.Figure(panels=None)
-		test_list.append(obj.fig_width == None)
+		assert obj.fig_width == None
 		obj = putil.plot.Figure(panels=default_panel)
-		test_list.append(obj.fig_width-6.08 < 1e-10)
+		assert obj.fig_width-6.08 < 1e-10
 		obj.fig_width = 5
-		test_list.append(obj.fig_width == 5)
-		assert test_list == 4*[True]
+		assert obj.fig_width == 5
 
 	def test_fig_height_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test figure height data validation """
-		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, fig_height='a')
-		test_list.append(excinfo.value.message == 'Argument `fig_height` is of the wrong type')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'fig_height':'a'}, RuntimeError, 'Argument `fig_height` is not valid')
 		# These assignments should not raise an exception
 		obj = putil.plot.Figure(panels=None)
-		test_list.append(obj.fig_height == None)
+		assert obj.fig_height == None
 		obj = putil.plot.Figure(panels=default_panel)
-		test_list.append(obj.fig_height-4.31 < 1e-10)
+		assert obj.fig_height-4.31 < 1e-10
 		obj.fig_height = 5
-		test_list.append(obj.fig_height == 5)
-		assert test_list == 4*[True]
+		assert obj.fig_height == 5
 
 	def test_panels_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test panel data validation """
-		# This assignments should raise an exception
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.Figure(panels=5)
-		test_list.append(excinfo.value.message == 'Argument `panels` is of the wrong type')
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Figure(panels=[default_panel, putil.plot.Panel(series=None)])
-		test_list.append(excinfo.value.message == 'Panel 1 is not fully specified')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':5}, RuntimeError, 'Argument `panels` is not valid')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':[default_panel, putil.plot.Panel(series=None)]}, TypeError, 'Panel 1 is not fully specified')
 		# These assignments should not raise an exception
 		putil.plot.Figure(panels=None)
 		putil.plot.Figure(panels=default_panel)
-		assert test_list == 2*[True]
 
 	def test_fig_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test fig attribute """
-		test_list = list()
 		obj = putil.plot.Figure(panels=None)
-		test_list.append(obj.fig == None)
+		assert obj.fig == None
 		obj = putil.plot.Figure(panels=default_panel)
-		test_list.append(isinstance(obj.fig, matplotlib.figure.Figure))
-		assert test_list == 2*[True]
+		assert isinstance(obj.fig, matplotlib.figure.Figure)
 
 	def test_axes_list(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test axes_list attribute """
-		test_list = list()
 		obj = putil.plot.Figure(panels=None)
-		test_list.append(obj.axes_list == list())
+		assert obj.axes_list == list()
 		obj = putil.plot.Figure(panels=default_panel)
 		comp_list = list()
 		for num, axis_dict in enumerate(obj.axes_list):
 			if (axis_dict['number'] == num) and ((axis_dict['primary'] is None) or (isinstance(axis_dict['primary'], matplotlib.axes.Axes))) and \
 					((axis_dict['secondary'] is None) or (isinstance(axis_dict['secondary'], matplotlib.axes.Axes))):
 				comp_list.append(True)
-		test_list.append(comp_list == len(obj.axes_list)*[True])
-		assert test_list == 2*[True]
+		assert comp_list == len(obj.axes_list)*[True]
 
 	def test_specified_figure_size_too_small(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that method behaves correctly when requested figure size is too small """
-		test_list = list()
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph', fig_width=0.1, fig_height=200)
-		test_list.append(excinfo.value.message == 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph', fig_width=200, fig_height=0.1)
-		test_list.append(excinfo.value.message == 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
-		with pytest.raises(RuntimeError) as excinfo:
-			putil.plot.Figure(panels=default_panel, indep_var_label='Input', indep_var_units='Amps', title='My graph', fig_width=0.1, fig_height=0.1)
-		test_list.append(excinfo.value.message == 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
-		assert test_list == 3*[True]
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':200},\
+							  RuntimeError, 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':200, 'fig_height':0.1},\
+							  RuntimeError, 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':0.1},\
+							  RuntimeError, 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
 
 	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that _complete() method behaves correctly """
-		test_list = list()
 		obj = putil.plot.Figure(panels=None)
-		test_list.append(obj._complete() == False)	#pylint: disable=W0212
+		assert obj._complete() == False	#pylint: disable=W0212
 		obj.panels = default_panel
-		test_list.append(obj._complete() == True)	#pylint: disable=W0212
-		assert test_list == 2*[True]
+		assert obj._complete() == True	#pylint: disable=W0212
+		obj = putil.plot.Figure(panels=None)
+		putil.test.assert_exception(obj.show, {}, RuntimeError, 'Figure object is not fully specified')
 
 	def test_str(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that str behaves correctly """
@@ -1528,40 +1523,47 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 	def test_cannot_delete_attributes(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
 		obj = putil.plot.Figure(panels=default_panel)
-		test_list = list()
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.panels
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_var_label
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_var_units
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.title
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.log_indep_axis
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.fig_width
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.fig_height
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.fig
-		test_list.append(excinfo.value.message == "can't delete attribute")
+		assert excinfo.value.message == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.axes_list
-		test_list.append(excinfo.value.message == "can't delete attribute")
-		assert test_list == 9*[True]
+		assert excinfo.value.message == "can't delete attribute"
+
+	def test_show(self, default_panel, capsys):	#pylint: disable=C0103,R0201,W0621
+		""" Test that show() method behaves correctly """
+		def mock_show():	#pylint: disable=C0111
+			print 'show called'
+		obj = putil.plot.Figure(panels=default_panel)
+		with mock.patch('putil.plot.plt.show', side_effect=mock_show):
+			obj.show()
+		out, _ = capsys.readouterr()
+		assert out == 'show called\n'
 
 	def test_images(self, tmpdir):	#pylint: disable=C0103,R0201,W0621
 		""" Compare images to verify correct plotting of figure """
 		tmpdir.mkdir('test_images')
-		test_list = list()
 		images_dict_list = gen_ref_images.unittest_figure_images(mode='test', test_dir=str(tmpdir))
 		for images_dict in images_dict_list:
 			ref_file_name = images_dict['ref_file_name']
@@ -1569,8 +1571,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
 			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
-			test_list.append(result)
-		assert test_list == [True]*len(images_dict_list)
+			assert result
 
 ###
 # Tests for parameterized_color_space
@@ -1579,45 +1580,25 @@ class TestParameterizedColorSpace(object):	#pylint: disable=W0232,R0903
 	""" Tests for function parameterized_color_space """
 	def test_param_list_wrong_type(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test for invalid series parameter """
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.parameterized_color_space('a')
-		test_list.append(excinfo.value.message == 'Argument `param_list` is of the wrong type')
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.parameterized_color_space(list())
-		test_list.append(excinfo.value.message == 'Argument `param_list` is empty')
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.parameterized_color_space(['a', None, False])
-		test_list.append(excinfo.value.message == 'Argument `param_list` is of the wrong type')
-		# This should not raise an exception
+		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':'a'}, RuntimeError, 'Argument `param_list` is not valid')
+		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':list()}, TypeError, 'Argument `param_list` is empty')
+		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':['a', None, False]}, RuntimeError, 'Argument `param_list` is not valid')
 		putil.plot.parameterized_color_space([0, 1, 2, 3.3])
-		assert test_list == 3*[True]
 
 	def test_offset_wrong_type(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test for invalid offset parameter """
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.parameterized_color_space([1, 2], 'a')
-		test_list.append(excinfo.value.message == 'Argument `offset` is of the wrong type')
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.parameterized_color_space([1, 2], -0.1)
-		test_list.append(excinfo.value.message == 'Argument `offset` is not in the range [0.0, 1.0]')
-		# This should not raise an exception
+		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':[1, 2], 'offset':'a'}, RuntimeError, 'Argument `offset` is not valid')
+		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':[1, 2], 'offset':-0.1}, RuntimeError, 'Argument `offset` is not valid')
 		putil.plot.parameterized_color_space([0, 1, 2, 3.3], 0.5)
-		assert test_list == 2*[True]
 
 	def test_color_space_wrong_type(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test for invalid offset parameter """
-		test_list = list()
-		with pytest.raises(TypeError) as excinfo:
-			putil.plot.parameterized_color_space([1, 2], color_space=3)
-		test_list.append(excinfo.value.message == 'Argument `color_space` is of the wrong type')
-		with pytest.raises(ValueError) as excinfo:
-			putil.plot.parameterized_color_space([1, 2], color_space='a')
-		test_list.append(excinfo.value.message == "Argument `color_space` is not one of ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd'] (case insensitive)")	#pylint: disable=C0301
+		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':[1, 2], 'color_space':3}, RuntimeError, 'Argument `color_space` is not valid')
+		msg = "Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' "+\
+			"or 'YlOrRd' (case insensitive)"
+		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':[1, 2], 'color_space':'a'}, ValueError, msg)
 		# This should not raise an exception
 		putil.plot.parameterized_color_space([0, 1, 2, 3.3], color_space='Blues')
-		assert test_list == 2*[True]
 
 	def test_function_works(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test for correct behavior of function """

@@ -12,13 +12,13 @@ import sys
 import copy
 import mock
 import types
-import pytest
 import random
 import string
 import inspect
 
 import putil.test
 import putil.pinspect
+
 
 def compare_str_outputs(obj, ref_list):
 	""" Produce helpful output when reference output does not match actual output """
@@ -40,60 +40,53 @@ def compare_str_outputs(obj, ref_list):
 			print '-----------------------'
 	return ref_text
 
+
 def test_object_is_module():
 	""" Test object_is_module() function """
-	test_list = list()
-	test_list.append(putil.pinspect.is_object_module(5) == False)
-	test_list.append(putil.pinspect.is_object_module(sys.modules['putil.pinspect']) == True)
-	assert test_list == [True]*len(test_list)
+	assert putil.pinspect.is_object_module(5) == False
+	assert putil.pinspect.is_object_module(sys.modules['putil.pinspect']) == True
 
 
 def test_get_module_name():
 	""" Test get_module_name() function """
-	test_list = list()
-	test_list.append(putil.test.trigger_exception(putil.pinspect.get_module_name, {'module_obj':5}, TypeError, 'Argument `module_obj` is not a module object'))
+	putil.test.assert_exception(putil.pinspect.get_module_name, {'module_obj':5}, TypeError, 'Argument `module_obj` is not a module object')
 	mock_module_obj = types.ModuleType('mock_module_obj', 'Mock module')
-	test_list.append(putil.test.trigger_exception(putil.pinspect.get_module_name, {'module_obj':mock_module_obj}, RuntimeError, 'Module object `mock_module_obj` could not be found in loaded modules'))
-	test_list.append(putil.pinspect.get_module_name(sys.modules['putil.pinspect']) == 'putil.pinspect')
-	test_list.append(putil.pinspect.get_module_name(sys.modules['putil']) == 'putil')
-	assert test_list == [True]*len(test_list)
+	putil.test.assert_exception(putil.pinspect.get_module_name, {'module_obj':mock_module_obj}, RuntimeError, 'Module object `mock_module_obj` could not be found in loaded modules')
+	assert putil.pinspect.get_module_name(sys.modules['putil.pinspect']) == 'putil.pinspect'
+	assert putil.pinspect.get_module_name(sys.modules['putil']) == 'putil'
 
 
 def test_get_package_name():
 	""" Test get_package_name() function """
-	test_list = list()
 	sys.modules['no_pkg.module'] = types.ModuleType('no_pkg.module', 'Mock module')
-	test_list.append(putil.test.trigger_exception(putil.pinspect.get_package_name, {'module_obj':sys.modules['no_pkg.module']}, RuntimeError, 'Loaded package root could not be found'))
-	test_list.append(putil.pinspect.get_package_name(sys.modules['putil.pinspect']) == 'putil')
-	assert test_list == [True]*len(test_list)
+	putil.test.assert_exception(putil.pinspect.get_package_name, {'module_obj':sys.modules['no_pkg.module']}, RuntimeError, 'Loaded package root could not be found')
+	assert putil.pinspect.get_package_name(sys.modules['putil.pinspect']) == 'putil'
 
 
 def test_is_magic_method():
 	""" Test is_magic_method() function """
-	test_list = list()
-	test_list.append(putil.pinspect.is_magic_method('func_name') == False)
-	test_list.append(putil.pinspect.is_magic_method('_func_name_') == False)
-	test_list.append(putil.pinspect.is_magic_method('__func_name__') == True)
-	assert test_list == [True]*len(test_list)
+	assert putil.pinspect.is_magic_method('func_name') == False
+	assert putil.pinspect.is_magic_method('_func_name_') == False
+	assert putil.pinspect.is_magic_method('__func_name__') == True
 
 
 def test_loaded_package_modules():
 	""" Test loaded_package_modules() function """
-	module_name_list = ['check', 'misc', 'pinspect', 'test', 'exh']
+	module_name_list = ['misc', 'pinspect', 'test']
 	modules_obj_list = set([sys.modules['putil']]+[sys.modules['putil.{0}'.format(module_name)] for module_name in module_name_list])
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil.pinspect'])) == modules_obj_list
 
+
 def test_replace_tabs():
 	""" Test _replace_tabs() function """
-	test_list = list()
-	test_list.append(putil.pinspect._replace_tabs('    def func()') == '    def func()')
+	assert putil.pinspect._replace_tabs('    def func()') == '    def func()'
 	for snum in range(0, 8):
-		test_list.append(putil.pinspect._replace_tabs((' '*snum)+'\tdef func()') == (' '*8)+'def func()')
-	test_list.append(putil.pinspect._replace_tabs('   \t   def func()') == (' '*8)+'   def func()')
-	test_list.append(putil.pinspect._replace_tabs('   \t  \t def func()') == (' '*16)+' def func()')
-	test_list.append(putil.pinspect._replace_tabs('\f   \t  \t def func()') == (' '*16)+' def func()')
-	assert test_list == [True]*len(test_list)
+		assert putil.pinspect._replace_tabs((' '*snum)+'\tdef func()') == (' '*8)+'def func()'
+	assert putil.pinspect._replace_tabs('   \t   def func()') == (' '*8)+'   def func()'
+	assert putil.pinspect._replace_tabs('   \t  \t def func()') == (' '*16)+' def func()'
+	assert putil.pinspect._replace_tabs('\f   \t  \t def func()') == (' '*16)+' def func()'
+
 
 def test_callables():	# pylint: disable=R0915
 	""" Test callables class """
@@ -286,12 +279,11 @@ def test_copy():
 	import pinspect_support_module_1	#pylint: disable=F0401,W0612
 	source_obj.trace(sys.modules['pinspect_support_module_1'])
 	dest_obj = copy.copy(source_obj)
-	test_list = list()
-	test_list.append((source_obj._module_names == dest_obj._module_names) and (id(source_obj._module_names) != id(dest_obj._module_names)))
-	test_list.append((source_obj._class_names == dest_obj._class_names) and (id(source_obj._class_names) != id(dest_obj._class_names)))
-	test_list.append((source_obj._callables_db == dest_obj._callables_db) and (id(source_obj._callables_db) != id(dest_obj._callables_db)))
-	test_list.append((source_obj._reverse_callables_db == dest_obj._reverse_callables_db) and (id(source_obj._reverse_callables_db) != id(dest_obj._reverse_callables_db)))
-	assert test_list == [True]*len(test_list)
+	assert (source_obj._module_names == dest_obj._module_names) and (id(source_obj._module_names) != id(dest_obj._module_names))
+	assert (source_obj._class_names == dest_obj._class_names) and (id(source_obj._class_names) != id(dest_obj._class_names))
+	assert (source_obj._callables_db == dest_obj._callables_db) and (id(source_obj._callables_db) != id(dest_obj._callables_db))
+	assert (source_obj._reverse_callables_db == dest_obj._reverse_callables_db) and (id(source_obj._reverse_callables_db) != id(dest_obj._reverse_callables_db))
+
 
 def test_eq():
 	""" Test __eq__() magic method """
@@ -331,6 +323,46 @@ def test_namespace_resolution():
 	assert str(obj) == ref_text
 	import pinspect_support_module_6	#pylint: disable=F0401,W0612
 	obj = putil.pinspect.Callables()
-	with pytest.raises(ValueError) as excinfo:
-		obj.trace(sys.modules['pinspect_support_module_6'])
-	assert excinfo.value.message == 'math domain error'
+	putil.test.assert_exception(obj.trace, {'obj':sys.modules['pinspect_support_module_6']}, ValueError, 'math domain error')
+
+
+##
+# Tests for get_function_args()
+###
+class TestGetFunctionArgs(object):	#pylint: disable=W0232
+	""" Tests for get_function_args function """
+
+	def test_all_positional_arguments(self):	#pylint: disable=R0201,C0103
+		""" Test that function behaves properly when all arguments are positional arguments """
+		def func(ppar1, ppar2, ppar3):	#pylint: disable=C0111,W0613
+			pass
+		assert putil.pinspect.get_function_args(func) == ('ppar1', 'ppar2', 'ppar3')
+
+	def test_all_keyword_arguments(self):	#pylint: disable=R0201,C0103,W0613
+		""" Test that function behaves properly when all arguments are keywords arguments """
+		def func(kpar1=1, kpar2=2, kpar3=3):	#pylint: disable=C0111,R0913,W0613
+			pass
+		assert putil.pinspect.get_function_args(func) == ('kpar1', 'kpar2', 'kpar3')
+
+	def test_positional_and_keyword_arguments(self):	#pylint: disable=R0201,C0103
+		""" Test that function behaves properly when arguments are a mix of positional and keywords arguments """
+		def func(ppar1, ppar2, ppar3, kpar1=1, kpar2=2, kpar3=3, **kwargs):	#pylint: disable=C0103,C0111,R0913,W0613
+			pass
+		assert putil.pinspect.get_function_args(func) == ('ppar1', 'ppar2', 'ppar3', 'kpar1', 'kpar2', 'kpar3', '**kwargs')
+		assert putil.pinspect.get_function_args(func, no_varargs=True) == ('ppar1', 'ppar2', 'ppar3', 'kpar1', 'kpar2', 'kpar3')
+
+	def test_no_arguments(self):	#pylint: disable=R0201,C0103
+		""" Test that function behaves properly when there are no arguments passed """
+		def func():	#pylint: disable=C0111,R0913,W0613
+			pass
+		assert putil.pinspect.get_function_args(func) == ()
+
+	def test_no_self(self):	#pylint: disable=R0201,C0103
+		""" Test that function behaves properly when there are no arguments passed """
+		class MyClass(object):	#pylint: disable=C0111,R0903
+			def __init__(self, value, **kwargs):	#pylint: disable=C0111,R0913,W0613
+				pass
+		assert putil.pinspect.get_function_args(MyClass.__init__) == ('self', 'value', '**kwargs')
+		assert putil.pinspect.get_function_args(MyClass.__init__, no_self=True) == ('value', '**kwargs')
+		assert putil.pinspect.get_function_args(MyClass.__init__, no_self=True, no_varargs=True) == ('value', )
+		assert putil.pinspect.get_function_args(MyClass.__init__, no_varargs=True) == ('self', 'value')
