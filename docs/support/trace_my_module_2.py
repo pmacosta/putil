@@ -1,9 +1,7 @@
 ﻿# trace_my_module_2.py
-# Option 2: use alrady written test bench
+# Option 2: manually use all callables to document
 # pylint: disable=C0111,W0104
-import copy
-import putil.exdoc
-import my_module
+import copy, my_module, putil.exdoc
 def trace_module(no_print=True):
 	""" Trace my_module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:

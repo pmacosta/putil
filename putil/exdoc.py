@@ -3,14 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import os
-import sys
-import copy
-import textwrap
+import copy, os, sys, textwrap
 
-import putil.exh
-import putil.misc
-import putil.tree
+import putil.exh, putil.misc, putil.tree
+
 
 ###
 # Global variables
@@ -26,10 +22,11 @@ def _format_msg(text, width, indent=0):
 	return ('\n'.join(textwrap.wrap(text, width, subsequent_indent=indent*' ')))[1:-1].rstrip()
 
 ###
-# Context manager
+# Context managers
 ###
 class ExDocCxt(object):	#pylint: disable=R0903
-	""" Context manager to simplify exception tracing. For example:
+	""" Context manager to simplify exception tracing; it sets up the tracing environment and returns a :py:class:`putil.exdoc.ExDoc` object that can the be used in the documentation string of each callable to extract the
+	exceptions documentation with either :py:meth:`putil.exdoc.ExDoc.get_sphinx_doc` or :py:meth:`putil.exdoc.ExDoc.get_sphinx_autodoc`. For example:
 
 		>>> with putil.exdoc.ExDocCxt() as exdoc_obj:
 		...     test_module()
@@ -64,11 +61,11 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 
 	:param	exh_obj: Exception handler containing exception information for the callable(s) to be documented
 	:type	exh_obj: :py:class:`putil.exh.ExHandle` object
-	:param	depth: Default hierarchy levels to include in the exceptions per callable
+	:param	depth: Default hierarchy levels to include in the exceptions per callable (see :py:attr:`putil.exdoc.ExDoc.depth`)
 	:type	depth: non-negative integer
 	:param	exclude: Default list of (potentially partial) module and callable names to exclude from exceptions per callable (see :py:attr:`putil.exdoc.ExDoc.exclude`)
 	:type	exclude: list
-	:rtype: :py:class:`putil.exdoc.ExDoc()` object
+	:rtype: :py:class:`putil.exdoc.ExDoc` object
 	:raises:
 	 * TypeError (Argument `depth` is not valid)
 
@@ -113,7 +110,6 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		unique_data = []
 		for ditem in data:
 			# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
-			#ditem['name'] = sep.join(['{0}[{1}]'.format(cdb[token]['link'][0]['prop'], cdb[token]['link'][0]['action']) if cdb[token]['link'] else token for token in ditem['name'].split(sep)])
 			new_name_list = []
 			for token in ditem['name'].split(sep):
 				if cdb[token]['link'] and (len(cdb[token]['link']) > 1):
@@ -182,11 +178,11 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 
 	def get_sphinx_autodoc(self, depth=None, exclude=None, width=230, error=False):	#pylint: disable=R0201
 		"""
-		Returns exception list marked up in `reStructuredText`_ automatically determining callable name
+		Returns an exception list marked up in `reStructuredText`_ automatically determining callable name
 
-		:param	depth: Hierarchy levels to include in the exceptions list (overrides default **depth** argument)
+		:param	depth: Hierarchy levels to include in the exceptions list (overrides default **depth** argument; see :py:attr:`putil.exdoc.ExDoc.depth`)
 		:type	depth: non-negative integer
-		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument)
+		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument, see :py:attr:`putil.exdoc.ExDoc.exclude`)
 		:type	exclude: list
 		:param	width: Maximum width of the lines of text (minimum 40)
 		:type	width: integer
@@ -218,13 +214,13 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 
 	def get_sphinx_doc(self, name, depth=None, exclude=None, width=230, error=False):	#pylint: disable=R0912,R0913,R0914,R0915
 		"""
-		Returns exception list marked up in `reStructuredText`_
+		Returns an exception list marked up in `reStructuredText`_
 
-		:param	name: Name of the callable (method or function) to generate exception documentatio for
+		:param	name: Name of the callable (method, function or class property) to generate exceptions documentation for
 		:type	name: string
-		:param	depth: Hierarchy levels to include in the exceptions list (overrides default **depth** argument)
+		:param	depth: Hierarchy levels to include in the exceptions list (overrides default **depth** argument; see :py:attr:`putil.exdoc.ExDoc.depth`)
 		:type	depth: non-negative integer
-		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument)
+		:param	exclude: List of (potentially partial) module and callable names to exclude from exceptions list  (overrides default **exclude** argument; see :py:attr:`putil.exdoc.ExDoc.exclude`)
 		:type	exclude: list
 		:param	width: Maximum width of the lines of text (minimum 40)
 		:type	width: integer
@@ -303,7 +299,17 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 
 	depth = property(_get_depth, _set_depth, None, doc='Call hierarchy depth')
 	"""
-	Default hierarchy levels to include in the exceptions per callable
+	Gets or sets the default hierarchy levels to include in the exceptions per callable. For example, a function :code:`my_func()` calls two other functions, :code:`get_data()` and :code:`process_data()`, and in turn
+	:code:`get_data()` calls another function, :code:`open_socket()`. In this scenario, the calls hierarchy is::
+
+			my_func            <- depth = 0
+			├get_data          <- depth = 1
+			│└open_socket      <- depth = 2
+			└process_data      <- depth = 1
+
+	Setting :code:`depth=0` means that only exceptions raised by :code:`my_func()` are going to be included in the documentation; Setting :code:`depth=1` means that only exceptions raised by :code:`my_func()`, :code:`get_data()`
+	and :code:`process_data()` are going to be included in the documentation; and finally setting :code:`depth=2` (in this case it has the same effects as :code:`depth=None`) means that only exceptions raised by :code:`my_func()`,
+	:code:`get_data()`, :code:`process_data()` and :code:`open_socket()` are going to be included in the documentation.
 
 	:rtype: non-negative integer
 	:raises: TypeError (Argument `depth` is not valid)
@@ -311,8 +317,8 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 
 	exclude = property(_get_exclude, _set_exclude, None, doc='Modules and callables to exclude')
 	"""
-	Default list of (potentially partial) module and callable names to exclude from exceptions per callable. For example, :code:`['putil.ex']` excludes all exceptions from modules :code:`putil.exh` and :code:`putil.exdoc`.
-	In addition to these modules, :code:`['putil.ex', 'putil.eng.peng']` excludes exceptions from the function :code:`putil.eng.peng`.
+	Gets or sets the default list of (potentially partial) module and callable names to exclude from exceptions per callable. For example, :code:`['putil.ex']` excludes all exceptions from modules :code:`putil.exh` and
+	:code:`putil.exdoc` (it acts as :code:`r'putil.ex*'`).  In addition to these modules, :code:`['putil.ex', 'putil.eng.peng']` excludes exceptions from the function :code:`putil.eng.peng`.
 
 	:rtype: list
 	:raises: TypeError (Argument `exclude` is not valid)
