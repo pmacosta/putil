@@ -1,16 +1,15 @@
 # Putil Library #
 
-Provides a collection of utility modules to supplement the Python standard library:
+Provides a collection of utility modules to supplement the Python standard library
 
-* check: decorators to help API argument checking/validation
 * eng: enginering-related helper functions
-* pdict: case insensitive keys dictionary support
+* exdoc: auto-documentation of exceptions
 * exh: exception handling and auto-documentation
-* log: convenience wrapper around the standard logging module
 * misc: miscellaneous helper functions
-
-* pcsv: read/write and lightweight filtering of comma-separated files
+* pcontracts: validation of callables arguments data types
+* pcsv: read/write and lightweight processing of comma-separated files
 * plot: easy generation of presentation-quality graps using Matplotlib
+* test: unit testing helper functions
 * tree: lightweight trie creation and processing
 
 ### License ###
