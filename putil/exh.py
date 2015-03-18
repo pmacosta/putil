@@ -3,61 +3,58 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import sys
-import copy
-import inspect
+import copy, inspect, sys
 
-import putil.misc
-import putil.pinspect
+import putil.misc, putil.pinspect
 
 
 ###
 # Functions
 ###
-def set_exh_obj(value):
+def set_exh_obj(obj):
 	"""
-	Sets global exception handler
+	Sets the global exception handler
 
-	:param	value: Exception handler
-	:type	value: :py:class:`putil.exh.ExHandle()` object
+	:param	obj: Exception handler
+	:type	obj: :py:class:`putil.exh.ExHandle` object
 
-	:raises: TypeError (Argument `value` is not valid)
+	:raises: RuntimeError (Argument \\`obj\\` is not valid)
 	"""
-	if not isinstance(value, ExHandle):
-		raise TypeError('Argument `value` is not valid')
+	if not isinstance(obj, ExHandle):
+		raise RuntimeError('Argument `obj` is not valid')
 	mod_obj = sys.modules['__main__']
-	setattr(mod_obj, '_EXH', value)
+	setattr(mod_obj, '_EXH', obj)
 
 
 def get_exh_obj():
 	"""
-	Returns global exception handler
+	Returns the global exception handler
 
-	:rtype: :py:class:`putil.exh.ExHandle()` object if global exception handler is set, *None* otherwise
+	:rtype: :py:class:`putil.exh.ExHandle` object if global exception handler is set, *None* otherwise
 	"""
 	mod_obj = sys.modules['__main__']
 	return getattr(mod_obj, '_EXH') if hasattr(mod_obj, '_EXH') else None
 
 
-def get_or_create_exh_obj(full_fname=False):
+def get_or_create_exh_obj(full_cname=False):
 	"""
-	Returns global exception handler if it is set, otherwise creates a new global exception handler and returns it
+	Returns the global exception handler if it is set, otherwise creates a new global exception handler and returns it
 
-	:param	full_fname: Flag that indicates whether fully qualified function/method names should be obtained for functions/methods that use the exception manager. There is performance penalty if **full_name** is `True` as \
-	the call stack needs to be traced. This argument is only relevant if the global exception handler is not set and a new one is created
-	:type	full_fname: boolean
-	:rtype: :py:class:`putil.exh.ExHandle()` object if handler is set
-	:raises: TypeError (Argument `full_name` is not valid)
+	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (*True*) or not (*False*).
+	  There is a performance penalty if the flag is *True* as the call stack needs to be traced. This argument is only relevant if the global exception handler is not set and a new one is created
+	:type	full_cname: boolean
+	:rtype: :py:class:`putil.exh.ExHandle` object
+	:raises: RuntimeError (Argument \\`full_cname\\` is not valid)
 	"""
 	mod_obj = sys.modules['__main__']
 	if not hasattr(mod_obj, '_EXH'):
-		set_exh_obj(ExHandle(full_fname))
+		set_exh_obj(ExHandle(full_cname))
 	return getattr(mod_obj, '_EXH')
 
 
 def del_exh_obj():
 	"""
-	Deletes global exception handler (if any)
+	Deletes global exception handler (if set)
 	"""
 	mod_obj = sys.modules['__main__']
 	try:
@@ -89,25 +86,25 @@ def _valid_frame(fobj):
 ###
 class ExHandle(object):	#pylint: disable=R0902
 	"""
-	Exception manager
+	Exception handler
 
-	:param	full_fname: Flag that indicates whether fully qualified function/method names should be obtained for functions/methods that use the exception manager. There is performance penalty if **full_name** is `True` as \
-	the call stack needs to be traced
-	:type	full_fname: boolean
-	:rtype: :py:class:`putil.exh.ExHandle()` object
-	:raises: TypeError (Argument `full_name` is not valid)
+	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (*True*) or not (*False*).
+	  There is a performance penalty if the flag is *True* as the call stack needs to be traced
+	:type	full_cname: boolean
+	:rtype: :py:class:`putil.exh.ExHandle` object
+	:raises: RuntimeError (Argument \\`full_cname\\` is not valid)
 	"""
-	def __init__(self, full_fname=False):
-		if not isinstance(full_fname, bool):
-			raise TypeError('Argument `full_fname` is not valid')
+	def __init__(self, full_cname=False):
+		if not isinstance(full_cname, bool):
+			raise RuntimeError('Argument `full_cname` is not valid')
 		self._cache = {}
 		self._ex_dict = {}
 		self._callables_obj = putil.pinspect.Callables()
 		self._callables_separator = '/'
-		self._full_fname = full_fname
+		self._full_cname = full_cname
 
 	def __copy__(self):
-		cobj = ExHandle(full_fname=self._full_fname)
+		cobj = ExHandle(full_cname=self._full_cname)
 		cobj._ex_dict = copy.deepcopy(self._ex_dict)	#pylint: disable=W0212
 		cobj._callables_obj = copy.copy(self._callables_obj)	#pylint: disable=W0212
 		return cobj
@@ -136,7 +133,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_callable_path(self):	#pylint: disable=R0201,R0914
 		""" Get fully qualified calling function name """
-		# If full_fname is False, then the only thing that matters is to return the ID of the calling function as fast as possible. If full_name is True, the full calling path has to be calculated because multiple
+		# If full_cname is False, then the only thing that matters is to return the ID of the calling function as fast as possible. If full_cname is True, the full calling path has to be calculated because multiple
 		# callables can call the same callable, thus the ID does not uniquely identify the callable path
 		fnum = 0
 		cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
@@ -144,7 +141,7 @@ class ExHandle(object):	#pylint: disable=R0902
 			fnum += 1
 			cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
 		cache_key = id(cache_frame.f_code)	#pylint: disable=W0631
-		if not self._full_fname:
+		if not self._full_cname:
 			return cache_key, None
 
 		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
@@ -221,8 +218,8 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def _get_exceptions_db(self):	#pylint: disable-msg=R0201
 		""" Returns a list of dictionaries suitable to be used with putil.tree module """
-		if not self._full_fname:
-			return [{'name':self._ex_dict[key]['function'] if self._full_fname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
+		if not self._full_cname:
+			return [{'name':self._ex_dict[key]['function'] if self._full_cname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
 		ret = []
 		for key in self._ex_dict.keys():
 			for func_name in self._ex_dict[key]['function']:
@@ -267,28 +264,28 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def add_exception(self, exname, extype, exmsg):	#pylint: disable=R0913,R0914
 		r"""
-		Adds exception to handler
+		Adds an exception to the handler
 
-		:param	exname: Exception name. Has to be unique within the namespace, duplicates are eliminated
+		:param	exname: Exception name; has to be unique within the namespace, duplicates are eliminated
 		:type	exname: string
-		:param	extype: Exception type. *Must* be derived from `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
+		:param	extype: Exception type; *must* be derived from the `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
 		:type	extype: Exception type object, i.e. RuntimeError, TypeError, etc.
-		:param	exmsg: Exception message that can contain fields to be replaced when the exception is raised via :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with the characters '\*[' and ends with the \
+		:param	exmsg: Exception message; it can contain fields to be replaced when the exception is raised via :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with the characters '\*[' and ends with the \
 		 characters ']\*', the field name follows the same rules as variable names and is between these two sets of characters. For example, `*[file_name]*` defines the `file_name` field
 		:type	exmsg: string
 		:raises:
-		 * TypeError (Argument `exmsg` is of the wrong type)
+		 * RuntimeError (Argument \`exmsg\` is not valid)
 
-		 * TypeError (Argument `extype` is of the wrong type)
+		 * RuntimeError (Argument \`exname\` is not valid)
 
-		 * TypeError (Argument `exname` is of the wrong type)
+		 * RuntimeError (Argument \`extype\` is not valid)
 		"""
 		if not isinstance(exname, str):
-			raise TypeError('Argument `exname` is not valid')
+			raise RuntimeError('Argument `exname` is not valid')
 		if not str(extype).startswith("<type 'exceptions."):
-			raise TypeError('Argument `extype` is not valid')
+			raise RuntimeError('Argument `extype` is not valid')
 		if not isinstance(exmsg, str):
-			raise TypeError('Argument `exmsg` is not valid')
+			raise RuntimeError('Argument `exmsg` is not valid')
 		ex_data = self._get_ex_data(exname)
 		entry = self._ex_dict.get(ex_data['ex_name'], {'function':[], 'type':extype, 'msg':exmsg})
 		entry['function'].append(ex_data['func_name'])
@@ -296,33 +293,32 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	def raise_exception_if(self, exname, condition, edata=None):
 		"""
-		Conditionally raises exception
+		Raises exception conditionally
 
 		:param	exname: Exception name
 		:type	exname: string
-		:param condition: Value that determines whether the exception is raised *(True)* or not *(False)*.
+		:param condition: Flag that indicates whether the exception should be raised *(True)* or not *(False)*
 		:type  condition: boolean
-		:param edata: Replacement values for fields in the exception message (see :py:meth:`putil.exh.ExHandle.add_exception`). Each dictionary can have only these two keys:
+		:param edata: Replacement values for fields in the exception message (see :py:meth:`putil.exh.ExHandle.add_exception` for how to define fields). Each dictionary can have only these two keys:
 
 		 * **field** *(string)* -- Field name
 
-		 * **value** *(any)* -- Field value, to be converted into a string with the format string method
-		:type  edata: Dictionary or iterable of dictionaries
+		 * **value** *(any)* -- Field value, to be converted into a string with the `format <https://docs.python.org/2/library/stdtypes.html#str.format>`_ string method
+
+		:type  edata: dictionary or iterable of dictionaries
 		:raises:
-		 * TypeError (Argument `condition` is of the wrong type)
+		 * RuntimeError (Argument \\`condition\\` is not valid)
 
-		 * TypeError (Argument `edata` is of the wrong type)
+		 * RuntimeError (Argument \\`edata\\` is not valid)
 
-		 * TypeError (Argument `exmsg` is of the wrong type)
-
-		 * TypeError (Argument `exname` is of the wrong type)
+		 * RuntimeError (Argument \\`exname\\` is not valid)
 		"""
 		if not isinstance(exname, str):
-			raise TypeError('Argument `exname` is not valid')
+			raise RuntimeError('Argument `exname` is not valid')
 		if not isinstance(condition, bool):
-			raise TypeError('Argument `condition` is not valid')
+			raise RuntimeError('Argument `condition` is not valid')
 		if not self._validate_edata(edata):
-			raise TypeError('Argument `edata` is not valid')
+			raise RuntimeError('Argument `edata` is not valid')
 		eobj = self._get_exception_by_name(exname)
 		if condition:
 			self._raise_exception(eobj, edata)
@@ -330,21 +326,21 @@ class ExHandle(object):	#pylint: disable=R0902
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')
 	"""
-	Callables database of the modules using the exception handler, as reported by :py:meth:`putil.pinspect.Callables.callables_db`
+	Returns the callables database of the modules using the exception handler, as reported by :py:meth:`putil.pinspect.Callables.callables_db`
 	"""
 
 	callables_separator = property(_get_callables_separator, None, None, doc='Callable separator character')
 	"""
-	Character ('/') used to separate the sub-parts of fully qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and **name** key of :py:meth:`putil.exh.ExHandle.exceptions_db`
+	Returns the character ('/') used to separate the sub-parts of fully qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and **name** key of :py:meth:`putil.exh.ExHandle.exceptions_db`
 	"""
 
 	exceptions_db = property(_get_exceptions_db, None, None, doc='Formatted exceptions')
 	"""
-	Exceptions database. A list of dictionaries that contain the following keys:
+	Returns the exceptions database. This database is a list of dictionaries that contain the following keys:
 
-	 * **name** *(string)* -- Exception name of the form '*function_identifier* / *exception_name*'. The contents of *function_identifier* depend on the value of **full_fname** used to
-	   create the exception handler. If **full_name** is `True`, *function_identifier* is the fully qualified function name as it appears in the callables database (:py:meth:`putil.exh.ExHandle.callables_db`).
-	   If **full_name** is `False`, then *function_identifier* is a decimal string representation of the function's identifier as reported by the `id() <https://docs.python.org/2/library/functions.html#id>`_
+	 * **name** *(string)* -- Exception name of the form '*callable_identifier* / *exception_name*'. The contents of *callable_identifier* depend on the value of the argument **full_cname** used to
+	   create the exception handler. If **full_cname** is *True*, *callable_identifier* is the fully qualified callable name as it appears in the callables database (:py:meth:`putil.exh.ExHandle.callables_db`).
+	   If **full_cname** is *False*, then *callable_identifier* is a decimal string representation of the callable's code identifier as reported by the `id() <https://docs.python.org/2/library/functions.html#id>`_
 	   function. *exception_name* is the name of the exception provided when it was defined in :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
 
 	 * **data** *(string)* -- Text of the form '*exception_type* (*exception_message*)' where *exception_type* and *exception_message* are the exception type and exception message, respectively, given when the exception was

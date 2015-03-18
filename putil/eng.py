@@ -101,11 +101,11 @@ def peng(number, frac_length, rjust=True):
 	.. Auto-generated exceptions documentation for putil.eng.peng
 
 	:raises:
-	 * RuntimeError (Argument `frac_length` is not valid)
+	 * RuntimeError (Argument \`frac_length\` is not valid)
 
-	 * RuntimeError (Argument `number` is not valid)
+	 * RuntimeError (Argument \`number\` is not valid)
 
-	 * RuntimeError (Argument `rjust` is not valid)
+	 * RuntimeError (Argument \`rjust\` is not valid)
 
 	.. [[[end]]]
 
@@ -193,7 +193,7 @@ def peng_float(snum):
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.eng.peng_float
 
-	:raises: RuntimeError (Argument `snum` is not valid)
+	:raises: RuntimeError (Argument \`snum\` is not valid)
 
 	.. [[[end]]]
 
@@ -221,7 +221,7 @@ def peng_frac(snum):
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.eng.peng_frac
 
-	:raises: RuntimeError (Argument `snum` is not valid)
+	:raises: RuntimeError (Argument \`snum\` is not valid)
 
 	.. [[[end]]]
 
@@ -247,7 +247,7 @@ def peng_int(snum):
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.eng.peng_int
 
-	:raises: RuntimeError (Argument `snum` is not valid)
+	:raises: RuntimeError (Argument \`snum\` is not valid)
 
 	.. [[[end]]]
 
@@ -272,7 +272,7 @@ def peng_mant(snum):
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.eng.peng_mant
 
-	:raises: RuntimeError (Argument `snum` is not valid)
+	:raises: RuntimeError (Argument \`snum\` is not valid)
 
 	.. [[[end]]]
 
@@ -299,7 +299,7 @@ def peng_power(snum):
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.eng.peng_power
 
-	:raises: RuntimeError (Argument `snum` is not valid)
+	:raises: RuntimeError (Argument \`snum\` is not valid)
 
 	.. [[[end]]]
 
@@ -325,7 +325,7 @@ def peng_suffix(snum):
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.eng.peng_suffix
 
-	:raises: RuntimeError (Argument `snum` is not valid)
+	:raises: RuntimeError (Argument \`snum\` is not valid)
 
 	.. [[[end]]]
 
@@ -354,11 +354,11 @@ def peng_suffix_math(suffix, offset):
 	.. Auto-generated exceptions documentation for putil.eng.peng_suffix_math
 
 	:raises:
-	 * RuntimeError (Argument `offset` is not valid)
+	 * RuntimeError (Argument \`offset\` is not valid)
 
-	 * RuntimeError (Argument `suffix` is not valid)
+	 * RuntimeError (Argument \`suffix\` is not valid)
 
-	 * ValueError (Argument `offset` is not valid)
+	 * ValueError (Argument \`offset\` is not valid)
 
 	.. [[[end]]]
 

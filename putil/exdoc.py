@@ -18,7 +18,7 @@ _MINWIDTH = 40	# Minimum width of the output lines, broken out as a global varia
 ###
 def _format_msg(text, width, indent=0):
 	""" Replace newline characters \n with ``\n`` and wrap text as needed"""
-	text = repr(text).replace('\\n', ' ``\\n`` ')
+	text = repr(text).replace('\\n', ' ``\\n`` ').replace('`', '\\`')
 	return ('\n'.join(textwrap.wrap(text, width, subsequent_indent=indent*' ')))[1:-1].rstrip()
 
 ###
@@ -67,21 +67,21 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 	:type	exclude: list
 	:rtype: :py:class:`putil.exdoc.ExDoc` object
 	:raises:
-	 * TypeError (Argument `depth` is not valid)
+	 * RuntimeError (Argument \\`depth\\` is not valid)
 
-	 * TypeError (Argument `exclude` is not valid)
+	 * RuntimeError (Argument \\`exclude\\` is not valid)
 
-	 * TypeError (Argument `exh_obj` is not valid)
+	 * RuntimeError (Argument \\`exh_obj\\` is not valid)
 
-	 * ValueError (Object of argument `exh_obj` does not have any exception trace information)
+	 * ValueError (Object of argument \\`exh_obj\\` does not have any exception trace information)
 	"""
 	def __init__(self, exh_obj, depth=None, exclude=None, _empty=False, _no_print=False):
 		if (not _empty) and (not isinstance(exh_obj, putil.exh.ExHandle)):
-			raise TypeError('Argument `exh_obj` is not valid')
+			raise RuntimeError('Argument `exh_obj` is not valid')
 		if (not _empty) and (not exh_obj.exceptions_db):
 			raise ValueError('Object of argument `exh_obj` does not have any exception trace information')
 		if not isinstance(_no_print, bool):
-			raise TypeError('Argument `_no_print` is not valid')
+			raise RuntimeError('Argument `_no_print` is not valid')
 		self._module_obj_db = {}
 		self._exh_obj = exh_obj
 		self._no_print = _no_print
@@ -167,13 +167,13 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 	def _set_depth(self, depth):
 		""" depth setter """
 		if depth and ((not isinstance(depth, int)) or (isinstance(depth, int) and (depth < 0))):
-			raise TypeError('Argument `depth` is not valid')
+			raise RuntimeError('Argument `depth` is not valid')
 		self._depth = depth
 
 	def _set_exclude(self, exclude):
 		""" exclude setter """
 		if exclude and ((not isinstance(exclude, list)) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude]))):
-			raise TypeError('Argument `exclude` is not valid')
+			raise RuntimeError('Argument `exclude` is not valid')
 		self._exclude = exclude
 
 	def get_sphinx_autodoc(self, depth=None, exclude=None, width=230, error=False):	#pylint: disable=R0201
@@ -187,15 +187,16 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		:param	width: Maximum width of the lines of text (minimum 40)
 		:type	width: integer
 		:raises:
+
+		 * RuntimeError (Argument \\`depth\\` is not valid)
+
+		 * RuntimeError (Argument \\`exclude\\` is not valid)
+
+		 * RuntimeError (Argument \\`width\\` is not valid)
+
 		 * RuntimeError (Callable not found in exception list: *[name]*)
 
 		 * RuntimeError (Unable to determine callable name)
-
-		 * TypeError (Argument `depth` is not valid)
-
-		 * TypeError (Argument `exclude` is not valid)
-
-		 * TypeError (Argument `width` is not valid)
 		"""
 		frame = sys._getframe(1)	#pylint: disable=W0212
 		index = frame.f_code.co_filename.rfind('+')
@@ -225,20 +226,20 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		:param	width: Maximum width of the lines of text (minimum 40)
 		:type	width: integer
 		:raises:
+		 * RuntimeError (Argument \\`depth\\` is not valid)
+
+		 * RuntimeError (Argument \\`exclude\\` is not valid)
+
+		 * RuntimeError (Argument \\`width\\` is not valid)
+
 		 * RuntimeError (Callable not found in exception list: *[name]*)
-
-		 * TypeError (Argument `depth` is not valid)
-
-		 * TypeError (Argument `exclude` is not valid)
-
-		 * TypeError (Argument `width` is not valid)
 		"""
 		if depth and ((not isinstance(depth, int)) or (isinstance(depth, int) and (depth < 0))):
-			raise TypeError('Argument `depth` is not valid')
+			raise RuntimeError('Argument `depth` is not valid')
 		if exclude and ((not isinstance(exclude, list)) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude]))):
-			raise TypeError('Argument `exclude` is not valid')
+			raise RuntimeError('Argument `exclude` is not valid')
 		if (not isinstance(width, int)) or (isinstance(width, int) and (width < _MINWIDTH)):
-			raise TypeError('Argument `width` is not valid')
+			raise RuntimeError('Argument `width` is not valid')
 		depth = self._depth if depth == None else depth
 		exclude = self._exclude if not exclude else exclude
 		callable_dict = {}
@@ -312,7 +313,7 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 	:code:`get_data()`, :code:`process_data()` and :code:`open_socket()` are going to be included in the documentation.
 
 	:rtype: non-negative integer
-	:raises: TypeError (Argument `depth` is not valid)
+	:raises: RuntimeError (Argument \\`depth\\` is not valid)
 	"""	#pylint: disable=W0105
 
 	exclude = property(_get_exclude, _set_exclude, None, doc='Modules and callables to exclude')
@@ -321,5 +322,5 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 	:code:`putil.exdoc` (it acts as :code:`r'putil.ex*'`).  In addition to these modules, :code:`['putil.ex', 'putil.eng.peng']` excludes exceptions from the function :code:`putil.eng.peng`.
 
 	:rtype: list
-	:raises: TypeError (Argument `exclude` is not valid)
+	:raises: RuntimeError (Argument \\`exclude\\` is not valid)
 	"""	#pylint: disable=W0105
