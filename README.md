@@ -2,13 +2,13 @@
 
 Provides a collection of utility modules to supplement the Python standard library
 
-* eng: enginering-related helper functions
+* eng: engineering-related helper functions
 * exdoc: auto-documentation of exceptions
 * exh: exception handling and auto-documentation
 * misc: miscellaneous helper functions
 * pcontracts: validation of callables arguments data types
 * pcsv: read/write and lightweight processing of comma-separated files
-* plot: easy generation of presentation-quality graps using Matplotlib
+* plot: easy generation of presentation-quality graphs using Matplotlib
 * test: unit testing helper functions
 * tree: lightweight trie creation and processing
 
