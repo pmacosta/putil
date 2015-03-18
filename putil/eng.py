@@ -9,21 +9,37 @@ import putil.exh
 import putil.misc
 import putil.pcontracts
 
+###
+# Exception tracing initialization code
+###
+"""
+[[[cog
+import trace_ex_eng
+exobj_eng = trace_ex_eng.trace_module(no_print=True)
+]]]
+[[[end]]]
+"""	#pylint: disable=W0105
+
+###
+# Global variables
+###
 
 _POWER_TO_SUFFIX_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
 _SUFFIX_TO_POWER_DICT = dict([(value, key) for key, value in _POWER_TO_SUFFIX_DICT.iteritems()])
 _SUFFIX_TUPLE = tuple(_SUFFIX_TO_POWER_DICT.keys())
 _SUFFIX_POWER_DICT = dict([(key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.iteritems()])
 
-
+###
+# Functions
+###
 @putil.pcontracts.new_contract()
 def engineering_notation_number(snum):
 	r"""
-	Number string in engineering notation
+	Contract that validates if a string is a number represented in engineering notation
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token *[argument_name]* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
@@ -37,11 +53,11 @@ def engineering_notation_number(snum):
 @putil.pcontracts.new_contract()
 def engineering_notation_suffix(suffix):
 	r"""
-	Engineering notation suffix
+	Contract that validates if a character is an engineering notation suffix
 
 	:param	suffix: Suffix
 	:type	suffix: EngineerngNotationSuffix
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token *[argument_name]* is replaced by the *name* of the argument the contract is attached to
 
 	:rtype: None
 	"""
@@ -71,15 +87,19 @@ def _to_eng_string(number):
 @putil.pcontracts.contract(number='int|float', frac_length='int,>=0', rjust=bool)
 def peng(number, frac_length, rjust=True):
 	"""
-	Returns number as a string using engineering notation. The absolute value of the number (if it is not exactly zero) is bounded to the interval [1E-24, 1E+24)
+	Converts a number to engineering notation. The absolute value of the number (if it is not exactly zero) is bounded to the interval [1E-24, 1E+24)
 
-	:param	number: Number to print
+	:param	number: Number to convert
 	:type	number: number
 	:param	frac_length: Number of digits of fractional part
 	:type	frac_length: integer
-	:param	rjust: Flag that indicates whether the number should be right-justified (*True*) or not
+	:param	rjust: Flag that indicates whether the number should be right-justified (*True*) or not (*False*)
 	:type	rjust: boolean
 	:rtype: string
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng
+
 	:raises:
 	 * RuntimeError (Argument `frac_length` is not valid)
 
@@ -87,7 +107,9 @@ def peng(number, frac_length, rjust=True):
 
 	 * RuntimeError (Argument `rjust` is not valid)
 
-	The engineering suffixes used are:
+	.. [[[end]]]
+
+	The supported engineering suffixes are:
 
 	+----------+-------+--------+
 	| Exponent | Name  | Suffix |
@@ -162,12 +184,18 @@ def peng(number, frac_length, rjust=True):
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_float(snum):
 	"""
-	Returns floating point number representation of number string in engineering notation
+	Returns the floating point representation of a number in engineering notation
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
 	:rtype: string
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng_float
+
 	:raises: RuntimeError (Argument `snum` is not valid)
+
+	.. [[[end]]]
 
 	For example:
 
@@ -184,12 +212,18 @@ def peng_float(snum):
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_frac(snum):
 	"""
-	Returns fractional part a number string in engineering notation
+	Returns the fractional part of a number represented in engineering notation
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
 	:rtype: integer
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng_frac
+
 	:raises: RuntimeError (Argument `snum` is not valid)
+
+	.. [[[end]]]
 
 	For example:
 
@@ -203,12 +237,19 @@ def peng_frac(snum):
 
 
 def peng_int(snum):
-	"""Returns integer part of number string in engineering notation
+	"""
+	Returns the integer part of a number represented in engineering notation
 
 	:param snum: Number
 	:type	snum: EngineeringNotationNumber
 	:rtype: integer
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng_int
+
 	:raises: RuntimeError (Argument `snum` is not valid)
+
+	.. [[[end]]]
 
 	For example:
 
@@ -222,12 +263,18 @@ def peng_int(snum):
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_mant(snum):
 	"""
-	Returns mantissa of number string in engineering notation
+	Returns the mantissa of a number represented in engineering notation
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
 	:rtype: integer
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng_mant
+
 	:raises: RuntimeError (Argument `snum` is not valid)
+
+	.. [[[end]]]
 
 	For example:
 
@@ -242,12 +289,19 @@ def peng_mant(snum):
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_power(snum):
 	"""
-	Returns a tuple with the engineering suffix (first tuple element) and floating point representation of the suffix (second tuple element) of an number string in engineering notation
+	Returns a tuple with the engineering suffix (first tuple element) and floating point equivalent of the suffix (second tuple element) of an number represented in engineering notation. :py:func:`putil.eng.peng` lists
+	the correspondence between suffix and floating exponent.
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
 	:rtype: tuple
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng_power
+
 	:raises: RuntimeError (Argument `snum` is not valid)
+
+	.. [[[end]]]
 
 	For example:
 
@@ -262,12 +316,18 @@ def peng_power(snum):
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_suffix(snum):
 	"""
-	Returns suffix of number string in engineering notation
+	Returns the suffix of a number represented in engineering notation
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
 	:rtype: string
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng_suffix
+
 	:raises: RuntimeError (Argument `snum` is not valid)
+
+	.. [[[end]]]
 
 	For example:
 
@@ -282,17 +342,25 @@ def peng_suffix(snum):
 @putil.pcontracts.contract(suffix='engineering_notation_suffix', offset=int)
 def peng_suffix_math(suffix, offset):
 	"""
-	Returns engineering suffix based on a starting suffix and an offset of number of suffixes
+	Returns an engineering suffix based on a starting suffix and an offset of number of suffixes
 
 	:param	suffix: Engineering suffix
 	:type	suffix: EngineeringNotationSuffix
 	:param	offset: Engineering suffix offset
 	:type	offset: integer
 	:rtype: string
+
+	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.eng.peng_suffix_math
+
 	:raises:
 	 * RuntimeError (Argument `offset` is not valid)
 
 	 * RuntimeError (Argument `suffix` is not valid)
+
+	 * ValueError (Argument `offset` is not valid)
+
+	.. [[[end]]]
 
 	For example:
 
