@@ -70,7 +70,14 @@ class TmpFile(object):	#pylint: disable=R0903
 
 class Timer(object):	#pylint: disable=R0903
 	"""
-	Context manager for profiling blocks of code by calculating elapsed time between context manager enter and exit time points. Largely from `Huy Nguyen blog <http://www.huyng.com/posts/python-performance-analysis/>`_
+	Context manager for profiling blocks of code by calculating elapsed time between context manager enter and exit time points. Largely from `Huy Nguyen blog <http://www.huyng.com/posts/python-performance-analysis/>`_.
+	For example::
+
+		num_tries = 1000
+		with putil.misc.Timer() as tobj:
+			for _ in xrange(num_tries):
+				function_to_profile()
+		print 'Time per call: {0}'.format(tobj.elapsed_time/(2.0*num_tries))
 
 	:param	verbose: print elapsed time upon exit
 	:type	verbose: boolean
@@ -104,7 +111,9 @@ class Timer(object):	#pylint: disable=R0903
 	:rtype: float
 	"""
 
-
+###
+# Functions
+###
 def pcolor(text, color, tab=0):
 	"""
 	Returns a string that once printed is colorized
@@ -769,3 +778,38 @@ def to_scientific_string(number):
 	"""
 	mant, exp = to_scientific_tuple(number)
 	return '{0}E{1}{2}'.format(mant, '-' if exp < 0 else '+', abs(exp))
+
+
+###
+# Classes
+###
+class CiDict(dict):
+	"""
+	Dictionary class with case-insensitive keys
+	"""
+	def __init__(self, posarg=None, **kwargs):
+		# Algorithm:
+		# 1. Create a dictionary with the build-in dict() method (this ensures that all exceptions will be identical)
+		# 2. Create a new dictionary with lower-case keys of dictionary created in step #1
+		# 3. Associate dictionary created in step #2 to self
+		# Method may not be the most efficient for large dictionaries, where an iteration-based algorithm may have less memory requirements
+		_dict1 = dict()
+		if posarg is not None:
+			try:
+				_dict1.update(posarg)
+			except TypeError:
+				raise
+			except ValueError:
+				raise
+		if kwargs is not None:
+			_dict1.update(kwargs)
+		_dict2 = dict()
+		for key in _dict1.keys():
+			_dict2[key.lower() if isinstance(key, str) is True else key] = _dict1[key]
+		dict.__init__(self, _dict2)
+
+	def __getitem__(self, key):
+		return super(CiDict, self).__getitem__(key.lower() if isinstance(key, str) is True else key)
+
+	def __setitem__(self, key, val):
+		super(CiDict, self).__setitem__(key.lower() if isinstance(key, str) is True else key, val)

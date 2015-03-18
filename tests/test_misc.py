@@ -398,3 +398,24 @@ def test_to_scientific_string():
 	assert putil.misc.to_scientific_string(-333) == '-3.33E+2'
 	assert putil.misc.to_scientific_string(-4567) == '-4.567E+3'
 	assert putil.misc.to_scientific_string(-4567.890) == '-4.56789E+3'
+
+def test_cidict():
+	""" Test CiDict class """
+	assert putil.misc.CiDict() == {}
+	obj = putil.misc.CiDict(one=1, TwO=2, tHrEe=3, FOUR=4)
+	assert obj == {'one':1, 'two':2, 'three':3, 'four':4}
+	assert obj['four'] == 4
+	obj['FIve'] = 5
+	assert obj == {'one':1, 'two':2, 'three':3, 'four':4, 'five':5}
+	assert obj['five'] == 5
+	assert len(obj) == 5
+	del obj['five']
+	assert obj == {'one':1, 'two':2, 'three':3, 'four':4}
+	obj = putil.misc.CiDict(zip(['aa', 'bb', 'cc'], [10, 20, 30]))
+	assert obj == {'aa':10, 'bb':20, 'cc':30}
+	with pytest.raises(TypeError) as excinfo:
+		putil.misc.CiDict(zip(['aa', 'bb', [1, 2]], [10, 20, 30]))
+	assert excinfo.value.message == "unhashable type: 'list'"
+	with pytest.raises(ValueError) as excinfo:
+		putil.misc.CiDict(['Prop1', 'Prop2', 'Prop3', 'Prop4'])
+	assert excinfo.value.message == "dictionary update sequence element #0 has length 5; 2 is required"
