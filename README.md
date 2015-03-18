@@ -16,7 +16,7 @@ Provides a collection of utility modules to supplement the Python standard libra
 
 The MIT License (MIT)
 
-Copyright (c) 2013-2014 Pablo Acosta-Serafini
+Copyright (c) 2013-2015 Pablo Acosta-Serafini
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
