@@ -1,10 +1,17 @@
+.. _pcsv-module:
+
 ###########
 pcsv module
 ###########
 
 
 
-This module can be used to process information in comma-separated values (CSV) files
+This module can be used to handle comma-separated values (CSV) files and do lightweight processing on their data. For example:
+
+.. literalinclude:: ./support/pcsv_example.py
+    :language: python
+    :linenos:
+    :tab-width: 3
 
 ***********
 Interpreter
@@ -12,11 +19,11 @@ Interpreter
 
 The module has been developed using Python 2.7, but it *should* also work with Python 3.x
 
-******************
-External libraries
-******************
+************
+Dependencies
+************
 
-Standard Python library and other Putil library modules
+None
 
 ***************************************
 Application programming interface (API)

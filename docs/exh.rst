@@ -33,7 +33,7 @@ The module has been developed using Python 2.7, but it *should* also work with P
 Dependencies
 ************
 
-Standard Python library and other Putil library modules
+None
 
 ***************************************
 Application programming interface (API)

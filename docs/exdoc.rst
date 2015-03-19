@@ -65,11 +65,7 @@ The module has been developed using Python 2.7, but it *should* also work with P
 Dependencies
 ************
 
-* Standard Python library
-  
-* Putil library modules
-
-* Cog (`<http://nedbatchelder.com/code/cog/>`_) for inserting exception documentation automatically in source files
+Cog (`<http://nedbatchelder.com/code/cog/>`_) for inserting exception documentation automatically in source files
 
 ***************************************
 Application programming interface (API)

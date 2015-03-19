@@ -3,27 +3,31 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import re
-import pytest
+import pytest, re
 
 
+###
+# Functions
+###
 def exception_type_str(extype):
 	"""
-	Returns exception type string. For example:
-
-		>>> exception_type_str(RuntimeError)
-		... 'RuntimeError'
+	Returns an exception type string
 
 	:param	extype: Exception
 	:type	extype: type
 	:rtype: string
+
+	For example:
+
+		>>> exception_type_str(RuntimeError)
+		... 'RuntimeError'
 	"""
 	return str(extype).split('.')[-1][:-2]
 
 
 def assert_exception(obj, args, extype, exmsg):
 	"""
-	Asserts exception type and message within the Py.test environment. If the actual exception message and the expected exception message do not literally match then the expected exception message is
+	Asserts an exception type and message within the Py.test environment. If the actual exception message and the expected exception message do not literally match then the expected exception message is
 	treated as a regular expression and a match is sought with the actual exception message
 
 	:param	obj: Object to evaluate
@@ -35,6 +39,12 @@ def assert_exception(obj, args, extype, exmsg):
 	:param	exmsg: Expected exception message (can have regular expressions)
 	:type	exmsg: string
 	:rtype: None
+
+	For example:
+
+	.. code-block:: python
+
+		putil.test.assert_exception(putil.eng.peng, {'number':['5'], 'frac_length':3, 'rjust':True}, RuntimeError, 'Argument `number` is not valid')
 	"""
 	regexp = re.compile(exmsg)
 	try:

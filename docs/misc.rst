@@ -1,15 +1,32 @@
+.. _misc-module:
+
+###########
 misc module
-===========
+###########
 
 
 
-This is a library that can contains miscellaneous utility functions
+This module contains miscellaneous utility functions that can be applied in a variety of circumstances: there are context managers, membership functions (a certain argument is of a given type), numerical functions
+and string functions.
 
+***********
+Interpreter
+***********
+
+The module has been developed using Python 2.7, but it *should* also work with Python 3.x
+
+************
+Dependencies
+************
+
+None
+
+***************************************
 Application programming interface (API)
----------------------------------------
+***************************************
 
 Context managers
-````````````````
+================
 
 .. autofunction:: putil.misc.ignored
 .. autoclass:: putil.misc.Timer
@@ -17,12 +34,12 @@ Context managers
 .. autoclass:: putil.misc.TmpFile
 
 File
-````
+====
 
 .. autofunction:: putil.misc.make_dir
 
 Membership
-``````````
+==========
 
 .. autofunction:: putil.misc.isalpha
 .. autofunction:: putil.misc.isexception
@@ -32,14 +49,14 @@ Membership
 .. autofunction:: putil.misc.isreal
 
 Miscellaneous
-`````````````
+=============
 
 .. autofunction:: putil.misc.Bundle
 .. autofunction:: putil.misc.delete_module
 .. autofunction:: putil.misc.flatten_list
 
 Numbers
-```````
+=======
 
 .. autofunction:: putil.misc.gcd
 .. autofunction:: putil.misc.normalize
@@ -49,7 +66,7 @@ Numbers
 .. autofunction:: putil.misc.to_scientific_tuple
 
 String
-``````
+======
 
 .. autofunction:: putil.misc.binary_string_to_octal_string
 .. autofunction:: putil.misc.char_to_decimal

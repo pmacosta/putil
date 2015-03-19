@@ -36,7 +36,7 @@ def test_ignored():
 def test_timer(capsys):
 	""" Test Timer context manager """
 	# Test argument validation
-	with pytest.raises(TypeError) as excinfo:
+	with pytest.raises(RuntimeError) as excinfo:
 		with putil.misc.Timer(5):
 			pass
 	assert excinfo.value.message == 'Argument `verbose` is not valid'
@@ -58,9 +58,9 @@ def test_timer(capsys):
 
 def test_pcolor():
 	""" Test pcolor() function """
-	putil.test.assert_exception(putil.misc.pcolor, {'text':5, 'color':'red', 'tab':0}, TypeError, 'Argument `text` is not valid')
-	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':5, 'tab':0}, TypeError, 'Argument `color` is not valid')
-	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':'red', 'tab':5.1}, TypeError, 'Argument `tab` is not valid')
+	putil.test.assert_exception(putil.misc.pcolor, {'text':5, 'color':'red', 'tab':0}, RuntimeError, 'Argument `text` is not valid')
+	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':5, 'tab':0}, RuntimeError, 'Argument `color` is not valid')
+	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':'red', 'tab':5.1}, RuntimeError, 'Argument `tab` is not valid')
 	putil.test.assert_exception(putil.misc.pcolor, {'text':'hello', 'color':'hello', 'tab':5}, ValueError, 'Unknown color hello')
 	assert putil.misc.pcolor('Text', 'none', 5) == '     Text'
 	assert putil.misc.pcolor('Text', 'blue', 2) == '\033[34m  Text\033[0m'
@@ -95,11 +95,11 @@ def test_isreal():	#pylint: disable=C0103
 	assert putil.misc.isreal(True) == False
 
 
-def test_prec():	#pylint: disable=C0103
+def test_per():	#pylint: disable=C0103
 	""" Test prec() function """
-	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':7, 'prec':'Hello'}, TypeError, 'Argument `prec` is not valid')
-	putil.test.assert_exception(putil.misc.per, {'arga':'Hello', 'argb':7, 'prec':1}, TypeError, 'Argument `arga` is not valid')
-	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':'Hello', 'prec':1}, TypeError, 'Argument `argb` is not valid')
+	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':7, 'prec':'Hello'}, RuntimeError, 'Argument `prec` is not valid')
+	putil.test.assert_exception(putil.misc.per, {'arga':'Hello', 'argb':7, 'prec':1}, RuntimeError, 'Argument `arga` is not valid')
+	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':'Hello', 'prec':1}, RuntimeError, 'Argument `argb` is not valid')
 	putil.test.assert_exception(putil.misc.per, {'arga':5, 'argb':[5, 7], 'prec':1}, TypeError, 'Arguments are not of the same type')
 	assert putil.misc.per(3, 2, 1) == 0.5
 	assert putil.misc.per(3.1, 3.1, 1) == 0
@@ -145,9 +145,9 @@ def test_make_dir(capsys):
 	def mock_os_makedir(file_path):	#pylint: disable=C0111
 		print file_path
 	with mock.patch('os.makedirs', side_effect=mock_os_makedir):
-		putil.misc.make_dir('~/some_dir/some_file.ext')
+		putil.misc.make_dir('/home/pacosta/some_dir/some_file.ext')
 		stdout, _ = capsys.readouterr()
-		assert stdout == '~/some_dir\n'
+		assert stdout == '/home/pacosta/some_dir\n'
 		putil.misc.make_dir('/some_file.ext')
 		stdout, _ = capsys.readouterr()
 		assert stdout == ''
@@ -155,6 +155,9 @@ def test_make_dir(capsys):
 
 def test_normalize():
 	""" Test normalize() function """
+	putil.test.assert_exception(putil.misc.normalize, {'value':'a', 'series':[2, 5], 'offset':10}, RuntimeError, 'Argument `value` is not valid')
+	putil.test.assert_exception(putil.misc.normalize, {'value':5, 'series':[2, 5], 'offset':'a'}, RuntimeError, 'Argument `offset` is not valid')
+	putil.test.assert_exception(putil.misc.normalize, {'value':5, 'series':['a', 'b']}, RuntimeError, 'Argument `series` is not valid')
 	putil.test.assert_exception(putil.misc.normalize, {'value':5, 'series':[2, 5], 'offset':10}, ValueError, 'Argument `offset` has to be in the [0.0, 1.0] range')
 	putil.test.assert_exception(putil.misc.normalize, {'value':0, 'series':[2, 5], 'offset':0}, ValueError, 'Argument `value` has to be within the bounds of argument `series`')
 	assert putil.misc.normalize(15, [10, 20]) == 0.5
@@ -275,7 +278,7 @@ def test_tmp_file():
 	def write_data(file_handle):	#pylint: disable=C0111
 		file_handle.write('Hello world!')
 	# Test argument validation
-	with pytest.raises(TypeError) as excinfo:
+	with pytest.raises(RuntimeError) as excinfo:
 		with putil.misc.TmpFile(5) as file_name:
 			pass
 	assert excinfo.value.message == 'Argument `fpointer` is not valid'

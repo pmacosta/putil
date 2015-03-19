@@ -49,7 +49,7 @@ def test_object_is_module():
 
 def test_get_module_name():
 	""" Test get_module_name() function """
-	putil.test.assert_exception(putil.pinspect.get_module_name, {'module_obj':5}, TypeError, 'Argument `module_obj` is not a module object')
+	putil.test.assert_exception(putil.pinspect.get_module_name, {'module_obj':5}, RuntimeError, 'Argument `module_obj` is not valid')
 	mock_module_obj = types.ModuleType('mock_module_obj', 'Mock module')
 	putil.test.assert_exception(putil.pinspect.get_module_name, {'module_obj':mock_module_obj}, RuntimeError, 'Module object `mock_module_obj` could not be found in loaded modules')
 	assert putil.pinspect.get_module_name(sys.modules['putil.pinspect']) == 'putil.pinspect'
@@ -63,11 +63,11 @@ def test_get_package_name():
 	assert putil.pinspect.get_package_name(sys.modules['putil.pinspect']) == 'putil'
 
 
-def test_is_magic_method():
-	""" Test is_magic_method() function """
-	assert putil.pinspect.is_magic_method('func_name') == False
-	assert putil.pinspect.is_magic_method('_func_name_') == False
-	assert putil.pinspect.is_magic_method('__func_name__') == True
+def test_is_special_method():
+	""" Test is_special_method() function """
+	assert putil.pinspect.is_special_method('func_name') == False
+	assert putil.pinspect.is_special_method('_func_name_') == False
+	assert putil.pinspect.is_special_method('__func_name__') == True
 
 
 def test_loaded_package_modules():
@@ -96,8 +96,8 @@ def test_callables():	# pylint: disable=R0915
 	obj = putil.pinspect.Callables()
 	assert obj.callables_db == dict()
 	assert obj.reverse_callables_db == dict()
-	putil.test.assert_exception(obj.trace, {'obj':None}, TypeError, 'Argument `obj` is not valid')
-	putil.test.assert_exception(obj.trace, {'obj':'not_an_object'}, TypeError, 'Argument `obj` is not valid')
+	putil.test.assert_exception(obj.trace, {'obj':None}, RuntimeError, 'Argument `obj` is not valid')
+	putil.test.assert_exception(obj.trace, {'obj':'not_an_object'}, RuntimeError, 'Argument `obj` is not valid')
 	sys.path.append(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), 'support'))
 	import pinspect_support_module_1	#pylint: disable=F0401,W0612
 	obj.trace(sys.modules['pinspect_support_module_1'])

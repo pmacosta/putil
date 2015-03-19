@@ -9,6 +9,7 @@ import putil.exh
 import putil.misc
 import putil.pcontracts
 
+
 ###
 # Exception tracing initialization code
 ###
@@ -20,14 +21,15 @@ exobj_eng = trace_ex_eng.trace_module(no_print=True)
 [[[end]]]
 """	#pylint: disable=W0105
 
+
 ###
 # Global variables
 ###
-
 _POWER_TO_SUFFIX_DICT = {-24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m', 0:' ', 3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'}
 _SUFFIX_TO_POWER_DICT = dict([(value, key) for key, value in _POWER_TO_SUFFIX_DICT.iteritems()])
 _SUFFIX_TUPLE = tuple(_SUFFIX_TO_POWER_DICT.keys())
 _SUFFIX_POWER_DICT = dict([(key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.iteritems()])
+
 
 ###
 # Functions
@@ -39,7 +41,7 @@ def engineering_notation_number(snum):
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
-	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token *[argument_name]* is replaced by the name of the argument the contract is attached to
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
@@ -57,7 +59,7 @@ def engineering_notation_suffix(suffix):
 
 	:param	suffix: Suffix
 	:type	suffix: EngineerngNotationSuffix
-	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token *[argument_name]* is replaced by the *name* of the argument the contract is attached to
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the *name* of the argument the contract is attached to
 
 	:rtype: None
 	"""
@@ -86,14 +88,14 @@ def _to_eng_string(number):
 
 @putil.pcontracts.contract(number='int|float', frac_length='int,>=0', rjust=bool)
 def peng(number, frac_length, rjust=True):
-	"""
+	r"""
 	Converts a number to engineering notation. The absolute value of the number (if it is not exactly zero) is bounded to the interval [1E-24, 1E+24)
 
 	:param	number: Number to convert
 	:type	number: number
 	:param	frac_length: Number of digits of fractional part
 	:type	frac_length: integer
-	:param	rjust: Flag that indicates whether the number should be right-justified (*True*) or not (*False*)
+	:param	rjust: Flag that indicates whether the number should be right-justified (True) or not (False)
 	:type	rjust: boolean
 	:rtype: string
 
@@ -183,7 +185,7 @@ def peng(number, frac_length, rjust=True):
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_float(snum):
-	"""
+	r"""
 	Returns the floating point representation of a number in engineering notation
 
 	:param	snum: Number
@@ -211,7 +213,7 @@ def peng_float(snum):
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_frac(snum):
-	"""
+	r"""
 	Returns the fractional part of a number represented in engineering notation
 
 	:param	snum: Number
@@ -237,7 +239,7 @@ def peng_frac(snum):
 
 
 def peng_int(snum):
-	"""
+	r"""
 	Returns the integer part of a number represented in engineering notation
 
 	:param snum: Number
@@ -262,7 +264,7 @@ def peng_int(snum):
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_mant(snum):
-	"""
+	r"""
 	Returns the mantissa of a number represented in engineering notation
 
 	:param	snum: Number
@@ -288,9 +290,9 @@ def peng_mant(snum):
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_power(snum):
-	"""
+	r"""
 	Returns a tuple with the engineering suffix (first tuple element) and floating point equivalent of the suffix (second tuple element) of an number represented in engineering notation. :py:func:`putil.eng.peng` lists
-	the correspondence between suffix and floating exponent.
+	the correspondence between suffix and floating point exponent.
 
 	:param	snum: Number
 	:type	snum: EngineeringNotationNumber
@@ -315,7 +317,7 @@ def peng_power(snum):
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_suffix(snum):
-	"""
+	r"""
 	Returns the suffix of a number represented in engineering notation
 
 	:param	snum: Number
@@ -341,7 +343,7 @@ def peng_suffix(snum):
 
 @putil.pcontracts.contract(suffix='engineering_notation_suffix', offset=int)
 def peng_suffix_math(suffix, offset):
-	"""
+	r"""
 	Returns an engineering suffix based on a starting suffix and an offset of number of suffixes
 
 	:param	suffix: Engineering suffix

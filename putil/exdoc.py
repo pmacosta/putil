@@ -13,6 +13,7 @@ import putil.exh, putil.misc, putil.tree
 ###
 _MINWIDTH = 40	# Minimum width of the output lines, broken out as a global variable mainly to ease testing
 
+
 ###
 # Functions
 ###
@@ -20,6 +21,7 @@ def _format_msg(text, width, indent=0):
 	""" Replace newline characters \n with ``\n`` and wrap text as needed"""
 	text = repr(text).replace('\\n', ' ``\\n`` ').replace('`', '\\`')
 	return ('\n'.join(textwrap.wrap(text, width, subsequent_indent=indent*' ')))[1:-1].rstrip()
+
 
 ###
 # Context managers

@@ -4,13 +4,14 @@
 # See LICENSE for details
 # pylint: disable=W0212,C0111
 
-import copy
-import itertools
+import itertools, copy
 
 import putil.exh
 
 
+###
 # Exception tracing initialization code
+###
 """
 [[[cog
 import trace_ex_tree
@@ -20,13 +21,16 @@ exobj_tree = trace_ex_tree.trace_module(no_print=True)
 """	#pylint: disable=W0105
 
 
+###
+# Classes
+###
 class Tree(object):	#pylint: disable=R0903,R0902
 	"""
-	Provides basic trie (radix tree) functionality
+	Provides basic `trie <http://wikipedia.org/wiki/Trie>`_ (radix tree) functionality
 
 	:param	node_separator: Single character used to separate nodes in the tree
 	:type	node_separator: string
-	:rtype: :py:class:`putil.tree.Tree()` object
+	:rtype: :py:class:`putil.tree.Tree` object
 
 	.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.tree.Tree.__init__
@@ -252,10 +256,11 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def add_nodes(self, nodes):
 		"""
-		Add nodes to tree
+		Adds nodes to tree
 
-		:param	nodes: Node(s) to add with associated data. If there are several list items in **nodes** with the same node name the resulting node data is a list with items corresponding to the data of each entry in \
-		**nodes** with the same node name, in their order of appearance, in addition to any existing node data if the node is already present in the tree.
+		:param	nodes: Node(s) to add with associated data. If there are several list items in the argument with the same node name the resulting node data is a list with items corresponding to the data of each entry in \
+		the argument with the same node name, in their order of appearance, in addition to any existing node data if the node is already present in the tree
+
 		:type	nodes: NodesWithData
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -312,7 +317,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def collapse_subtree(self, name, recursive=True):
 		"""
-		Nodes that have a single child and no data are combined with their child as a single tree node
+		Collapses a sub-tree; nodes that have a single child and no data are combined with their child as a single tree node
 
 		:param	name: Root of the sub-tree to collapse. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -331,7 +336,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		.. [[[end]]]
 
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`:
 
 			>>> print str(tobj)
 			root
@@ -351,7 +356,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			└branch2
 
 		``root.branch1.leaf1`` is collapsed because it only has one child (``root.branch1.leaf1.subleaf1``) and no data; ``root.branch1.leaf2`` is not collapsed because although it has one child (``root.branch1.leaf2.subleaf2``) \
-		it does have data associated with it, *'Hello world!'*
+		it does have data associated with it, :code:`'Hello world!'`
 		"""
 		self._exh.add_exception(exname='illegal_name', extype=RuntimeError, exmsg='Argument `name` is not valid')
 		self._exh.raise_exception_if(exname='illegal_name', condition=self._validate_node_name(name))
@@ -362,7 +367,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def copy_subtree(self, source_node, dest_node):
 		"""
-		Copy a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-tree exist in the destination sub-tree
+		Copies a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-tree exist in the destination sub-tree
 
 		:param	source_name: Root node of the sub-tree to copy from. See `NodeName`_ pseudo-type specification
 		:type	source_name: NodeName
@@ -383,7 +388,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		.. [[[end]]]
 
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`:
 
 			>>> print str(tobj)
 			root
@@ -428,7 +433,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def delete_prefix(self, name):
 		"""
-		Delete hierarchy levels from all nodes in the tree
+		Deletes hierarchy levels from all nodes in the tree
 
 		:param	nodes: Prefix to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName
@@ -478,7 +483,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def delete_subtree(self, nodes):
 		"""
-		Delete nodes (and their sub-trees) from tree
+		Deletes nodes (and their sub-trees) from the tree
 
 		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
 		:type	nodes: NodeName or list of NodeNames
@@ -493,7 +498,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		.. [[[end]]]
 
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`:
 
 			>>> print str(tobj)
 			root
@@ -517,7 +522,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def flatten_subtree(self, name):
 		"""
-		Nodes that have children and no data are merged with each child
+		Flattens sub-tree; nodes that have children and no data are merged with each child
 
 		:param	name: Ending hierarchy node whose sub-trees are to be flattened. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -532,7 +537,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		.. [[[end]]]
 
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`:
 
 			>>> tobj.add_nodes([{'name':'root.branch1.leaf1.subleaf2', 'data':list()},
 			...                 {'name':'root.branch2.leaf1', 'data':'loren ipsum'},
@@ -591,9 +596,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def get_children(self, name):	#pylint: disable=C0111
 		"""
-		Return children node names of a node
+		Gets the children node names of a node
 
-		:param	name: Node name. See `NodeName`_ pseudo-type specification
+		:param	name: Parent node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 		:rtype: list of NodeNames
 
@@ -614,7 +619,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def get_data(self, name):	#pylint: disable=C0111
 		"""
-		Return node data
+		Gets the data associated with a node
 
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeNames
@@ -637,7 +642,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def get_leafs(self, name):	#pylint: disable=C0111
 		"""
-		Return sub-tree leaf node(s)
+		Gets the sub-tree leaf node(s)
 
 		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -660,13 +665,13 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def get_node(self, name):	#pylint: disable=C0111
 		"""
-		Get tree node structure. The structure is a dictionary with the following keys:
+		Gets a tree node structure. The structure is a dictionary with the following keys:
 
-		 * **parent** (*NodeName*) Parent node name, *''* if node is the root node. See `NodeName`_ pseudo-type specification
+		 * **parent** (*NodeName*) Parent node name, :code:`''` if the node is the root node. See `NodeName`_ pseudo-type specification
 
-		 * **children** (*list of NodeNames*) Children node names, empty list if node is a leaf. See `NodeName`_ pseudo-type specification
+		 * **children** (*list of NodeNames*) Children node names, an empty list if node is a leaf. See `NodeName`_ pseudo-type specification
 
-		 * **data** (*list*) Node data, empty list if node contains no data
+		 * **data** (*list*) Node data, an empty list if node contains no data
 
 		:param	name: Node name
 		:type	name: string
@@ -689,9 +694,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def get_node_children(self, name):	#pylint: disable=C0111
 		"""
-		Return list of children structures of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure.
+		Gets the list of children structures of a node. See :py:meth:`putil.tree.Tree.get_node` for details about the structure
 
-		:param	name: Child node name. See `NodeName`_ pseudo-type specification
+		:param	name: Parent node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 		:rtype: list
 
@@ -712,7 +717,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def get_node_parent(self, name):	#pylint: disable=C0111
 		"""
-		Return parent structure of a node. See :py:meth:`putil.tree.Tree.get_node()` for details about structure
+		Gets the parent structure of a node. See :py:meth:`putil.tree.Tree.get_node` for details about the structure
 
 		:param	name: Child node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -735,7 +740,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def get_subtree(self, name):
 		"""
-		Return all node names in a sub-tree
+		Gets all node names in a sub-tree
 
 		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -751,7 +756,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		.. [[[end]]]
 
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`:
 
 			>>> print str(tobj)
 			root
@@ -772,7 +777,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def is_root(self, name):	#pylint: disable=C0111
 		"""
-		Root node flag, *True* if node is the root node (node with no ancestors), *False* otherwise
+		Tests if a node is the root node (node with no ancestors)
 
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -795,7 +800,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def in_tree(self, name):
 		"""
-		Return *True* if node name is in the tree, *False* otherwise
+		Tests if a node is in the tree
 
 		:param	name: Node name to search for. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -814,7 +819,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def is_leaf(self, name):	#pylint: disable=C0111
 		"""
-		Leaf node flag, *True* if node is a leaf node (node with no children), *False* otherwise
+		Tests if a node is a leaf node (node with no children)
 
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -852,7 +857,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		.. [[[end]]]
 
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`:
 
 			>>> print str(tobj)
 			root
@@ -907,8 +912,8 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def rename_node(self, name, new_name):
 		"""
-		Rename a tree node. It is typical to have a root node name with more than one hierarchy level after using :py:meth:`putil.tree.Tree.make_root`. In this instance the root node *can* be \
-		renamed as long as the new root name has the same or less hierarchy levels as the old root name.
+		Renames a tree node. It is typical to have a root node name with more than one hierarchy level after using :py:meth:`putil.tree.Tree.make_root`. In this instance the root node *can* be \
+		renamed as long as the new root name has the same or less hierarchy levels as the existing root name.
 
 		:param	name: Node name to rename. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
@@ -931,7 +936,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 		.. [[[end]]]
 
-		Using the same example tree created in :py:meth:`putil.tree.Tree.add`:
+		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`:
 
 			>>> print str(tobj)
 			root
@@ -969,9 +974,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 	def search_tree(self, name):
 		"""
-		Search tree for all nodes of a specific name
+		Searches tree for all nodes of a specific name
 
-		:param	name: Name to search for. See `NodeName`_ pseudo-type specification
+		:param	name: Node name to search for. See `NodeName`_ pseudo-type specification
 		:type	name: NodeName
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1009,28 +1014,28 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	# Managed attributes
 	nodes = property(_get_nodes, None, None, doc='Tree nodes')
 	"""
-	Name of all tree nodes, *None* if an empty tree. See `NodeName`_ pseudo-type specification
+	Gets the name of all tree nodes, :code:`None` if the tree is empty. See `NodeName`_ pseudo-type specification
 
 	:rtype: list of NodeNames or None
 	"""	#pylint: disable=W0105
 
 	node_separator = property(_get_node_separator, None, None, doc='Node separator')
 	"""
-	Node separator character
+	Gets the node separator character
 
 	:rtype: string
 	"""	#pylint: disable=W0105
 
 	root_node = property(_get_root_node, None, None, doc='Tree root node')
 	"""
-	Tree root node or *None* if :py:class:`putil.tree.Tree()` object has no nodes. See :py:meth:`putil.tree.Tree.get_node()` for details about returned dictionary.
+	Gets the tree root node structure or :code:`None` if :py:class:`putil.tree.Tree` object has no nodes. See :py:meth:`putil.tree.Tree.get_node` for details about returned dictionary.
 
 	:rtype: dictionary or None
 	"""	#pylint: disable=W0105
 
 	root_name = property(_get_root_name, None, None, doc='Tree root node name')
 	"""
-	Tree root node name, *None* if :py:class:`putil.tree.Tree()` object has no nodes. See `NodeName`_ pseudo-type specification
+	Gets the tree root node name, :code:`None` if the :py:class:`putil.tree.Tree` object has no nodes. See `NodeName`_ pseudo-type specification
 
 	:rtype: NodeName or None
 	"""	#pylint: disable=W0105

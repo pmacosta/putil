@@ -1,3 +1,5 @@
+.. _tree-module:
+
 ###########
 tree module
 ###########
@@ -12,11 +14,11 @@ Interpreter
 
 The module has been developed using Python 2.7, but it *should* also work with Python 3.x
 
-******************
-External libraries
-******************
+************
+Dependencies
+************
 
-Standard Python library and other Putil library modules
+None
 
 ***************************************
 Application programming interface (API)
@@ -28,7 +30,7 @@ Pseudo-types
 NodeName
 --------
 
-A tree node name is a *string* where hierarchy levels are denoted by node separator characters ("." by default). Node names cannot contain spaces, empty hierarchy levels, start or end with a node separator character.
+A tree node name is a *string* where hierarchy levels are denoted by node separator characters (:code:`'.'` by default). Node names cannot contain spaces, empty hierarchy levels, start or end with a node separator character.
 
 For this example tree::
 
@@ -47,7 +49,7 @@ Dictionary or list of dictionaries. Each dictionary must contain exactly two key
 
 * **name** (*NodeName*) Node name. See `NodeName`_ pseudo-type specification
 
-* **data** (*any*) node data.
+* **data** (*any*) node data
 
 The node data should be an empty list to create a node without data, for example: :code:`{'name':'a.b.c', 'data':list()}`
 

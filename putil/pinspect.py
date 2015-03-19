@@ -3,17 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import re
-import os
-import sys
-import copy
-import types
-import inspect
-import funcsigs
+import copy, funcsigs, inspect, os, re, sys, types
 
 import putil.misc
 
 
+###
+# Functions
+###
 def _get_code_id(obj, file_name=None, offset=0):
 	""" Return unique identity tuple to individualize callable object """
 	if hasattr(obj, 'func_code') and (obj.func_code.co_filename != '<string>'):
@@ -105,14 +102,29 @@ def _private_props(obj):
 
 def get_function_args(func, no_self=False, no_varargs=False):
 	"""
-	Returns a tuple of function argument names in the order they are specified in the function signature
+	Returns a tuple of the function argument names in the order they are specified in the function signature
 
 	:param	func: Function
 	:type	func: function object
-	:param	no_self: Flag that indicates whether the argument *self* should be included in the output (*False*) or not (*True*)
+	:param	no_self: Flag that indicates whether the argument *self* should be included in the output (False) or not (True)
 	:type	no_self: boolean
-	:param	no_varargs: Flag that indicates whether keyword arguments should be included in the output (*True*) or not (*False*)
+	:param	no_varargs: Flag that indicates whether keyword arguments should be included in the output (True) or not (False)
 	:rtype: tuple
+
+	For example:
+
+		>>> class MyClass(object):
+		...	def __init__(self, value, **kwargs):
+		...		pass
+		...
+		>>> putil.pinspect.get_function_args(MyClass.__init__)
+		('self', 'value', '**kwargs')
+		>>> putil.pinspect.get_function_args(MyClass.__init__, no_self=True)
+		('value', '**kwargs')
+		>>> putil.pinspect.get_function_args(MyClass.__init__, no_self=True, no_varargs=True)
+		('value', )
+		>>> putil.pinspect.get_function_args(MyClass.__init__, no_varargs=True)
+		('self', 'value')
 	"""
 	par_dict = funcsigs.signature(func).parameters
 	args = ['{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par) for par in par_dict]
@@ -122,15 +134,24 @@ def get_function_args(func, no_self=False, no_varargs=False):
 
 
 def get_module_name(module_obj):
-	"""
-	Get module name from module object with validation
+	r"""
+	Retrieves the module name from a module object
 
 	:param	module_obj: Module object
 	:type	module_obj: object
 	:rtype: string
+	:raises:
+	 * RuntimeError (Argument \`module_obj\` is not valid)
+
+	 * RuntimeError (Module object \`*[module_name]*\` could not be found in loaded modules)
+
+	For example:
+
+		>>> putil.pinspect.get_module_name(sys.modules['putil.pinspect'])
+		'putil.pinspect'
 	"""
 	if not is_object_module(module_obj):
-		raise TypeError('Argument `module_obj` is not a module object')
+		raise RuntimeError('Argument `module_obj` is not valid')
 	name = module_obj.__name__
 	if name not in sys.modules:
 		raise RuntimeError('Module object `{0}` could not be found in loaded modules'.format(name))
@@ -139,11 +160,18 @@ def get_module_name(module_obj):
 
 def get_package_name(module_obj):
 	"""
-	Find loaded root package name of module object
+	Finds loaded root package name of module object
 
 	:param	module_obj: Module object
 	:type	module_obj: object
 	:rtype: string
+	:raises: RuntimeError (Loaded package root could not be found)
+
+	For example:
+
+		>>> import putil.pinspect
+		>>> putil.pinspect.get_package_name(sys.modules['putil.pinspect'])
+		'putil'
 	"""
 	name = get_module_name(module_obj)
 	obj_name_tokens = name.split('.')
@@ -155,35 +183,47 @@ def get_package_name(module_obj):
 	raise RuntimeError('Loaded package root could not be found')
 
 
-def is_magic_method(name):
+def is_object_module(obj):
 	"""
-	Determines if a method is a magic method or not (with a '__' prefix and suffix)
+	Tests if the argument is a module object
 
-	:param	name: Method name
+	:param	obj: Object
+	:type	obj: any
+	:rtype: boolean
+	"""
+	return isinstance(obj, types.ModuleType)
+
+
+def is_special_method(name):
+	"""
+	Tests if a callable name is a special Python method (has a :code:`'__'` prefix and suffix)
+
+	:param	name: Callable name
 	:type	name: string
 	:rtype: boolean
 	"""
 	return name.startswith('__')
 
 
-def is_object_module(obj):
-	"""
-	Determines whether an object is a module object
-
-	:param	obj: Object
-	:type	obj: object
-	:rtype: boolean
-	"""
-	return isinstance(obj, types.ModuleType)
-
-
 def loaded_package_modules(module_obj, _rarg=None):
 	"""
-	Generates a list of loaded package module objects from a module object of a package
+	Generates a list of loaded package module objects from a module object belonging to a given package
 
 	:param	module_obj: Module object
 	:type	module_obj: object
-	:rtype: list of module objects
+	:rtype: list
+
+	For example:
+
+		>>> import matplotlib.compat.subprocess, pprint
+		>>> pprint.pprint(putil.pinspect.loaded_package_modules(sys.modules['matplotlib.compat.subprocess']))
+		[<module 'matplotlib' from '/usr/lib/python2.7/dist-packages/matplotlib/__init__.pyc'>,
+		 <module 'matplotlib.cbook' from '/usr/lib/python2.7/dist-packages/matplotlib/cbook.pyc'>,
+		 <module 'matplotlib.colors' from '/usr/lib/python2.7/dist-packages/matplotlib/colors.pyc'>,
+		 <module 'matplotlib.compat' from '/usr/lib/python2.7/dist-packages/matplotlib/compat/__init__.pyc'>,
+		 <module 'matplotlib.compat.subprocess' from '/usr/lib/python2.7/dist-packages/matplotlib/compat/subprocess.pyc'>,
+		 <module 'matplotlib.fontconfig_pattern' from '/usr/lib/python2.7/dist-packages/matplotlib/fontconfig_pattern.pyc'>,
+		 <module 'matplotlib.rcsetup' from '/usr/lib/python2.7/dist-packages/matplotlib/rcsetup.pyc'>]
 	"""
 	recursive = bool(_rarg)
 	root_name = (get_module_name if recursive else get_package_name)(module_obj)
@@ -207,19 +247,25 @@ def _replace_tabs(text):
 	return -1 if text == None else text.lstrip('\f').expandtabs()
 
 
+###
+# Classes
+###
 class Callables(object):	#pylint: disable=R0903,R0902
-	"""
-	Generates list of module callables (functions and properties) and gets their attributes (type, file name, starting line number). Information from multiple modules can be stored in the callables database of the object by
-	repeatedly calling :py:meth:`putil.pinspect.Callables.trace()` with different module objects. A :py:class:`putil.pinspect.Callables()` object retains knowledge of which modules have been traced so repeated calls to
-	:py:meth:`putil.pinspect.Callables.trace()` with the *same* module object will *not* result in module re-traces (and the consequent performance hit).
+	r"""
+	Generates a list of module callables (functions, classes, methods and class properties) and gets their attributes (callable type, file name, starting line number). Information from multiple modules can be stored in the
+	callables database of the object by repeatedly calling :py:meth:`putil.pinspect.Callables.trace` with different module objects. A :py:class:`putil.pinspect.Callables` object retains knowledge of which modules have been traced
+	so repeated calls to :py:meth:`putil.pinspect.Callables.trace` with the *same* module object will *not* result in module re-traces (and the consequent performance hit).
 
-	Enclosed functions and classes are supported. Class property action functions (getter, setter, deleter) in a different module than the one in which the class is defined are also supported both in module classes as well
+	Enclosed functions and classes are supported. Class property action functions (getter, deleter and setter) in a different module than the one in which the class is defined are also supported both in module classes as well
 	as in enclosed classes. For the latter only property action functions for which the module in which they are defined is imported via ``import`` or ``from [module name] import [...]`` are supported.
 
 	:param obj: Module object(s)
 	:type	obj: object or iterable of objects
-	:rtype: :py:class:`putil.pinspect.Callables()` object
-	:raises: TypeError (Argument `obj` is not valid)
+	:rtype: :py:class:`putil.pinspect.Callables` object
+	:raises:
+	 * RuntimeError (Argument \`obj\` is not valid)
+
+	 * RuntimeError (Attribute \`*[attribute_name]*\` of property \`*[property_name]*\` not found in callable database)
 	"""
 	def __init__(self, obj=None):
 		self._module_names, self._class_names, self._callables_db, self._reverse_callables_db, self._closure_class_obj_list = set(), set(), {}, {}, []
@@ -349,7 +395,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		return self._reverse_callables_db
 
 	def _process_enclosed_class(self, line, closure_class, closure_class_list, line_num, num_lines):	#pylint: disable=R0913
-		""" Process enclosed class: finish code snippet or add lines to enclosed clas """
+		""" Process enclosed class: finish code snippet or add lines to enclosed class """
 		if closure_class:
 			line = _replace_tabs(line)
 			start_space, content = self._whitespace_regexp.match(line).groups()
@@ -388,7 +434,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 			# Closure class tracing, exec creates tvar variable which contains an unbound object of the closure class
 			for class_obj in self._closure_class_obj_list:
 				# The namespace recreating is inherently brittle because the imports can be conditional on variables, which affects the importing dynamically at runtime.
-				# The approach is to try with all the (potentiall conditional) imports first and if there is an import error, remove the offending import and try again
+				# The approach is to try with all the (potentially conditional) imports first and if there is an import error, remove the offending import and try again
 				error = True
 				lines_removed = 0
 				while error:
@@ -421,43 +467,47 @@ class Callables(object):	#pylint: disable=R0903,R0902
 				self._trace_class(tvar, class_obj['file'], class_obj['name'], class_obj['lineno']-1+lines_removed)	#pylint: disable=E0602
 
 	def trace(self, obj):
-		"""
-		Generates list of module callables (functions and properties) and gets their attributes (type, file name, starting line number).
+		r"""
+		Generates a list of module callables (functions, classes, methods and class properties) and gets their attributes (callable type, file name, starting line number)
 
 		:param obj: Module object(s)
 		:type	obj: object or iterable of objects
-		:raises: TypeError (Argument `obj` is not valid)
+		:raises:
+		 * RuntimeError (Argument \`obj\` is not valid)
+
+		 * RuntimeError (Attribute \`*[attribute_name]*\` of property \`*[property_name]*\` not found in callable database)
+
 		"""
 		if (obj == None) or (not (inspect.ismodule(obj) or putil.misc.isiterable(obj))):
-			raise TypeError('Argument `obj` is not valid')
+			raise RuntimeError('Argument `obj` is not valid')
 		for obj in obj if putil.misc.isiterable(obj) else [obj]:
 			if not inspect.ismodule(obj):
-				raise TypeError('Argument `obj` is not valid')
+				raise RuntimeError('Argument `obj` is not valid')
 			self._trace_module(obj)
 
 	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Module(s) callables database')
 	"""
-	Returns callable database
+	Returns the callables database
 
 	:rtype: dictionary
 
 	The callable database is a dictionary that has the following structure:
 
-	 * **full callable name** *(string)* -- Dictionary key. Elements in the callable path are separated by periods ('.'). For example, method `my_method` from class `MyClass` from module `my_module` appears as
-	   `my_module.MyClass.my_method`
+	* **full callable name** *(string)* -- Dictionary key. Elements in the callable path are separated by periods (:code:`'.'`). For example, method :code:`my_method()` from class :code:`MyClass` from module :code:`my_module`
+	  appears as :code:`'my_module.MyClass.my_method'`
 
 	 * **callable properties** *(dictionary)* -- Dictionary value. The elements of this dictionary are:
 
-	  * **type** *(string)* -- 'meth' for methods, 'func' for functions or 'prop' for properties
+	  * **type** *(string)* -- :code:`'class'` for classes, :code:`'meth'` for methods, :code:`'func'` for functions or :code:`'prop'` for properties
 
-	  * **code_id** *(tuple or None)* -- *None* if **type** is 'prop', otherwise a tuple with the following elements:
+	  * **code_id** *(tuple or None)* -- None if **type** is :code:`'prop'`, otherwise a tuple with the following elements:
 
 	    * **file name** *(string)* -- the first element contains the file name where the callable can be found
 
-	    * **line number** *(integer)* -- the second element contains the line number in which the callable code starts (including decorators) within **file name**
+	    * **line number** *(integer)* -- the second element contains the line number in which the callable code starts (including decorators)
 
-	  * **attr** *(dictionary or None)* -- *None* if **type** is 'meth' or 'func', otherwise a dictionary with the following elements:
+	  * **attr** *(dictionary or None)* -- None if **type** is :code:`'class'`, :code:`'meth'`, :code:`'func'`, otherwise a dictionary with the following elements:
 
 	   * **fget** *(string or None)* -- Name of the getter function or method associated with the property (if any)
 
@@ -465,24 +515,24 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	   * **fdel** *(string or None)* -- Name of the deleter function or method associated with the property (if any)
 
-	  * **link** *(dictionary or None)* -- *None* if callable is not the getter, setter or deleter of a property, otherwise a dictionary with the following elements:
+	  * **link** *(dictionary or None)* -- None if callable is not the getter, setter or deleter of a property, otherwise a dictionary with the following elements:
 
 	   * **prop** *(string)* -- Property the callable is associated with
 
-	   * **action** *(string)* -- Property action the callable performs, one of `['fget', 'fset', 'fdel']`
+	   * **action** *(string)* -- Property action the callable performs, one of :code:`'fget'`, :code:`'fset'` or :code:`'fdel'`
 
 	"""
 	reverse_callables_db = property(_get_reverse_callables_db, None, None, doc='Reverse module(s) callables database')
 	"""
-	Returns reverse callable database
+	Returns the reverse callables database
 
 	:rtype: dictionary
 
 	The reverse callable database is a dictionary that has the following structure:
 
-	 * **callable id** *(tuple)* -- Dictionary key. 2-element tuple of the format ([file name], [line number]) wehere [file name] is the file name where the callable is defined and [line number] is the line number within
-	   [file name] where the callable definition starts
+	 * **callable id** *(tuple)* -- Dictionary key. Two-element tuple in which the first tuple element is the file name where the callable is defined and the second tuple element is the line number
+	   where the callable definition starts
 
-	 * **full callable name** *(string)* -- Dictionary value. Elements in the callable path are separated by periods ('.'). For example, method `my_method` from class `MyClass` from module `my_module` appears as
-	   `my_module.MyClass.my_method`
+	 * **full callable name** *(string)* -- Dictionary value. Elements in the callable path are separated by periods (:code:`'.'`). For example, method :code:`my_method()` from class :code:`MyClass` from module :code:`my_module`
+	   appears as :code:`'my_module.MyClass.my_method'`
 	"""

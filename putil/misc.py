@@ -3,17 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import os
-import sys
-import time
-import numpy
-import types
-import decimal
-import inspect
-import textwrap
-import tempfile
-import decorator
-import fractions
+import decimal, decorator, fractions, inspect, numpy, os, sys, tempfile, textwrap, time, types
 
 
 ###
@@ -22,7 +12,8 @@ import fractions
 @decorator.contextmanager
 def ignored(*exceptions):
 	"""
-	Context manager to execute commands and selectively ignore exceptions (from "Transforming Code into Beautiful, Idiomatic Python" talk at PyCon US 2013 by Raymond Hettinger)
+	Context manager to execute commands and selectively ignore exceptions (from `"Transforming Code into Beautiful, Idiomatic Python"
+	<http://pyvideo.org/video/1780/transforming-code-into-beautiful-idiomatic-pytho>`_ talk at PyCon US 2013 by Raymond Hettinger)
 
 	:param	exceptions: Exception types to ignore
 	:type	exceptions: Exception object, i.e. RuntimeError, IOError, etc.
@@ -40,17 +31,29 @@ def ignored(*exceptions):
 
 class TmpFile(object):	#pylint: disable=R0903
 	"""
-	Context manager for temporary files.
+	Context manager for temporary files
 
-	:param	fpointer: Pointer to a function that writes data to file or *None*. If the argument is not *None* the function pointed to receives exactly one argument, a file-like object as created by the\
-	`tempfile.NamedTemporaryFile <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_ function.
+	:param	fpointer: Pointer to a function that writes data to file or None. If the argument is not None the function pointed to receives exactly one argument, a file-like object as created by the\
+	 `tempfile.NamedTemporaryFile <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_ function.
+	:type	fpointer: function object or None
 	:type	fpointer: function pointer
-	:returns:	File name of temporary file
-	:raises:	TypeError (Argument `fpointer` is not valid)
+	:returns:	string with file name of temporary file
+	:raises:	RuntimeError (Argument \\`fpointer\\` is not valid)
+
+	For example:
+
+	.. code-block:: python
+
+		def write_data(file_handle):
+			file_handle.write('Hello world!')
+
+		with putil.misc.TmpFile(write_data) as file_name:
+			with open(file_name, 'r') as fobj:
+				line = fobj.readlines()
 	"""
 	def __init__(self, fpointer=None):
 		if fpointer and (not isinstance(fpointer, types.FunctionType)) and (not isinstance(fpointer, types.LambdaType)):
-			raise TypeError('Argument `fpointer` is not valid')
+			raise RuntimeError('Argument `fpointer` is not valid')
 		self._file_name = None
 		self._fpointer = fpointer
 
@@ -69,8 +72,14 @@ class TmpFile(object):	#pylint: disable=R0903
 
 
 class Timer(object):	#pylint: disable=R0903
-	"""
-	Context manager for profiling blocks of code by calculating elapsed time between context manager enter and exit time points. Largely from `Huy Nguyen blog <http://www.huyng.com/posts/python-performance-analysis/>`_.
+	r"""
+	Context manager for profiling blocks of code by calculating elapsed time between context manager entry and exit time points. Largely from `Huy Nguyen's blog <http://www.huyng.com/posts/python-performance-analysis/>`_.
+
+	:param	verbose: Flag that indicates whether the ellapsed time is printed upon exit (True) or not (False)
+	:type	verbose: boolean
+	:returns: :py:class:`putil.misc.Timer` context manager object
+	:raises: RuntimeError (Argument \`verbose\` is not valid)
+
 	For example::
 
 		num_tries = 1000
@@ -78,15 +87,10 @@ class Timer(object):	#pylint: disable=R0903
 			for _ in xrange(num_tries):
 				function_to_profile()
 		print 'Time per call: {0}'.format(tobj.elapsed_time/(2.0*num_tries))
-
-	:param	verbose: print elapsed time upon exit
-	:type	verbose: boolean
-	:returns: :py:class:`putil.misc.Timer()` context manager object
-	:raises: TypeError (Argument `verbose` is not valid)
 	"""
 	def __init__(self, verbose=False):
 		if not isinstance(verbose, bool):
-			raise TypeError('Argument `verbose` is not valid')
+			raise RuntimeError('Argument `verbose` is not valid')
 		self._start_time, self._stop_time, self._elapsed_time, self._verbose = None, None, None, verbose
 
 	def __enter__(self):
@@ -106,41 +110,42 @@ class Timer(object):	#pylint: disable=R0903
 
 	elapsed_time = property(_get_elapsed_time, None, None, doc='Elapsed time')
 	"""
-	Returns elapsed time between context manager enter and exit time points
+	Returns elapsed time between context manager entry and exit time points
 
 	:rtype: float
 	"""
+
 
 ###
 # Functions
 ###
 def pcolor(text, color, tab=0):
-	"""
+	r"""
 	Returns a string that once printed is colorized
 
 	:param	text: Text to colorize
 	:type	text: string
-	:param	color: Color to use, one of `['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'none'] (case insensitive)`
+	:param	color: Color to use, one of :code:`'black'`, :code:`'red'`, :code:`'green'`, :code:`'yellow'`, :code:`'blue'`, :code:`'magenta'`, :code:`'cyan'`, :code:`'white'` or :code:`'none'` (case insensitive)
 	:type	color: string
 	:param	tab: Number of spaces to prefix **text** with
 	:type	tab: integer
 	:rtype:	string
 	:raises:
-	 * TypeError (Argument `color` is not valid)
+	 * RuntimeError (Argument \`color\` is not valid)
 
-	 * TypeError (Argument `tab` is not valid)
+	 * RuntimeError (Argument \`tab\` is not valid)
 
-	 * TypeError (Argument `text` is not valid)
+	 * RuntimeError (Argument \`text\` is not valid)
 
 	 * ValueError (Unknown color *[color]*)
 	"""
 	esc_dict = {'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35, 'cyan':36, 'white':37, 'none':-1}
 	if not isinstance(text, str):
-		raise TypeError('Argument `text` is not valid')
+		raise RuntimeError('Argument `text` is not valid')
 	if not isinstance(color, str):
-		raise TypeError('Argument `color` is not valid')
+		raise RuntimeError('Argument `color` is not valid')
 	if not isinstance(tab, int):
-		raise TypeError('Argument `tab` is not valid')
+		raise RuntimeError('Argument `tab` is not valid')
 	color = color.lower()
 	if color not in esc_dict:
 		raise ValueError('Unknown color {0}'.format(color))
@@ -149,7 +154,7 @@ def pcolor(text, color, tab=0):
 
 def binary_string_to_octal_string(text):	#pylint: disable=C0103
 	r"""
-	Prints binary-packed string in octal representation aliasing typical codes to their escape sequences.
+	Prints a binary-packed string in octal representation aliasing typical codes to their escape sequences
 
 	:param	text: Text to convert
 	:type	text: string
@@ -211,57 +216,57 @@ def char_to_decimal(text):
 	return ' '.join([str(ord(char)) for char in text])
 
 
-def isnumber(arg):
+def isnumber(obj):
 	"""
-	Checks if argument is a number: complex, float or integer
+	Tests if the argument is a number (complex, float or integer)
 
-	:param	arg: Argument to check
-	:type	arg: any
+	:param	obj: Object
+	:type	obj: any
 	:rtype: boolean
 	"""
-	return (arg is not None) and (not isinstance(arg, bool)) and (isinstance(arg, int) or isinstance(arg, float) or isinstance(arg, complex))
+	return (obj is not None) and (not isinstance(obj, bool)) and (isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, complex))
 
 
-def isreal(arg):
+def isreal(obj):
 	"""
-	Checks if argument is a real number: float or integer
+	Tests if the argument is a real number (float or integer)
 
-	:param	arg: Argument to check
-	:type	arg: any
+	:param	obj: Object
+	:type	obj: any
 	:rtype: boolean
 	"""
-	return (arg is not None) and (not isinstance(arg, bool)) and (isinstance(arg, int) or isinstance(arg, float))
+	return (obj is not None) and (not isinstance(obj, bool)) and (isinstance(obj, int) or isinstance(obj, float))
 
 
 def per(arga, argb, prec=10):
-	"""
-	Calculates percentage difference between two numbers or the element-wise percentage difference between two list of numbers or Numpy vectors.
-	If any of the numbers in the arguments **arga** or **argb** is zero the value returned is 1E+20
+	r"""
+	Calculates the percentage difference between two numbers or the element-wise percentage difference between two lists of numbers or Numpy vectors.
+	If any of the numbers in the arguments is zero the value returned is 1E+20
 
 	:param	arga: First number, list of numbers or Numpy vector
 	:type	arga: float, integer, list of floats or integers, or Numpy vector of floats or integers
-	:param	argb: Second numbe, list of numbers or or Numpy vector
+	:param	argb: Second number, list of numbers or or Numpy vector
 	:type	argb: float, integer, list of floats or integers, or Numpy vector of floats or integers
-	:param	prec: Number of digits after the decimal point to which the result is rounded to
+	:param	prec: Decimal places of the result
 	:type	prec: integer
-	:rtype: Float, list of floats or Numpy vector, depending on the type of **arga** (which is the same as **argb**)
+	:rtype: Float, list of floats or Numpy vector, depending on the arguments type
 	:raises:
-	 * TypError (Argument `arga` is not valid)
+	 * RuntimeError (Argument \`arga\` is not valid)
 
-	 * TypError (Argument `argb` is not valid)
+	 * RuntimeError (Argument \`argb\` is not valid)
 
-	 * TypError (Argument `prec` is not valid)
+	 * RuntimeError (Argument \`prec\` is not valid)
 
 	 * TypeError (Arguments are not of the same type)
 	"""
 	if not isinstance(prec, int):
-		raise TypeError('Argument `prec` is not valid')
+		raise RuntimeError('Argument `prec` is not valid')
 	arga_type = 1 if isreal(arga) is True else (2 if (isinstance(arga, numpy.ndarray) is True) or (isinstance(arga, list) is True) else 0)	#pylint: disable=E1101
 	argb_type = 1 if isreal(argb) is True else (2 if (isinstance(argb, numpy.ndarray) is True) or (isinstance(argb, list) is True) else 0)	#pylint: disable=E1101
 	if not arga_type:
-		raise TypeError('Argument `arga` is not valid')
+		raise RuntimeError('Argument `arga` is not valid')
 	if not argb_type:
-		raise TypeError('Argument `argb` is not valid')
+		raise RuntimeError('Argument `argb` is not valid')
 	if arga_type != argb_type:
 		raise TypeError('Arguments are not of the same type')
 	if arga_type == 1:
@@ -282,68 +287,64 @@ def per(arga, argb, prec=10):
 		return numpy.round(numpy.where(arga == argb, 0, lim_num), prec)	#pylint: disable=E1101
 
 
-class Bundle(object):	#pylint: disable=R0903
-	"""
-	Bundle a collection of variables into one object.
-
-	:param	elements: Variable(s) value(s)
-	:type	elements: any
-
-	For example:
-
-		>>> obj = putil.misc.Bundle(var1=10)
-		>>> obj.var2 = 20
-		>>> print str(obj)
-		var1 = 10
-		var2 = 20
-		>>> obj.var2
-		20
-		>>> del obj.var1
-		>>> print str(obj)
-		var2 = 20
-
-	"""
-	def __init__(self, **elements):
-		self.__dict__.update(elements)
-
-	def __len__(self):
-		return len(self.__dict__)
-
-	def __repr__(self):
-		return 'Bundle({0})'.format(', '.join(['{0}={1}'.format(key, self.__dict__[key]) for key in sorted(self.__dict__.iterkeys())]))
-
-	def __str__(self):
-		return '\n'.join(['{0} = {1}'.format(key, self.__dict__[key]) for key in sorted(self.__dict__.iterkeys())])
-
-
 def make_dir(file_name):
 	"""
-	Creates the directory of a fully qualified file name if it does not exists
+	Creates the directory of a fully qualified file name if it does not exists. Equivalent to these Bash shell commands:
+
+	.. code-block:: bash
+
+		$ dir=$(dirname ${file_name})
+		$ mkdir -p ${dir}
 
 	:param	file_name: Fully qualified file name
 	:type	file_name: string
 	"""
-	file_path, file_name = os.path.split(file_name)
+	file_path, file_name = os.path.split(os.path.abspath(file_name))
 	if os.path.exists(file_path) is False:
 		os.makedirs(file_path)
 
 
 def normalize(value, series, offset=0):
-	"""
-	Scale a value to the range defined by a series
+	r"""
+	Scales a value to the range defined by a series
 
 	:param	value: Value to normalize
 	:type	value: number
-	:param	series: Series that defines the normalization range
-	:type	series: list of numbers
+	:param	series: List of numbers that defines the normalization range
+	:type	series: list
 	:param	offset: Normalization offset, i.e. the returned value will be in the range [**offset**, 1.0]
 	:type	offset: number
 	:rtype: number
 	:raises:
-	 * ValueError (Argument `offset` has to be in the [0.0, 1.0] range)
+	 * RuntimeError (Argument \`offset\` is not valid)
 
-	 * ValueError (Argument `value` has to be within the bounds of the argument `series`)
+	 * RuntimeError (Argument \`series\` is not valid)
+
+	 * RuntimeError (Argument \`value\` is not valid)
+
+	 * ValueError (Argument \`offset\` has to be in the [0.0, 1.0] range)
+
+	 * ValueError (Argument \`value\` has to be within the bounds of the argument `series`)
+
+	For example:
+
+	.. code-block:: python
+
+		>> putil.misc.normalize(15, [10, 20])
+		0.5
+		>> putil.misc.normalize(15, [10, 20], 0.5)
+		0.75
+
 	"""
+	if not isreal(value):
+		raise RuntimeError('Argument `value` is not valid')
+	if not isreal(offset):
+		raise RuntimeError('Argument `offset` is not valid')
+	try:
+		assert isreal(min(series))
+		assert isreal(max(series))
+	except:
+		raise RuntimeError('Argument `series` is not valid')
 	if (offset < 0) or (offset > 1):
 		raise ValueError('Argument `offset` has to be in the [0.0, 1.0] range')
 	if (value < min(series)) or (value > max(series)):
@@ -353,24 +354,12 @@ def normalize(value, series, offset=0):
 
 def gcd(vector):
 	"""
-	Calculates the greatest common divisor of a list of numbers or a Numpy vector of numbers. The computations are carried out with a precision of 1E-12 if the objects are not
+	Calculates the greatest common divisor (GCD) of a list of numbers or a Numpy vector of numbers. The computations are carried out with a precision of 1E-12 if the objects are not
 	`fractions <https://docs.python.org/2/library/fractions.html>`_. When possible it is best to use the `fractions <https://docs.python.org/2/library/fractions.html>`_ data type defined with the **numerator** and
-	**denominator** arguments when computing the GCD of floating numbers (see example).
+	**denominator** arguments when computing the GCD of floating point numbers.
 
 	:param	vector: Vector of numbers
 	:type	vector: list of numbers or Numpy vector of numbers
-
-	For example:
-
-		>>> putil.misc.gcd([20, 12, 16])
-		4
-		>>> putil.misc.gcd([5/3.0, 2/3.0, 10/3])
-		0.3333333333333333
-		>>> putil.misc.gcd([fractions.Fraction(5/3.0), fractions.Fraction(2/3.0), fractions.Fraction(10/3.0)])
-		Fraction(1, 3)
-		>>> putil.misc.gcd([fractions.Fraction(5, 3), fractions.Fraction(2, 3), fractions.Fraction(10, 3)])
-		Fraction(1, 3)
-
 	"""
 	if len(vector) == 0:
 		return None
@@ -418,12 +407,12 @@ def pgcd(numa, numb):
 	return int(numa) if int_args else (numa if fraction_args else float(numa))
 
 
-def isalpha(text):
+def isalpha(obj):
 	"""
-	Test if the string represents a number
+	Tests if the argument is a string representing a number
 
-	:param	text: String to test
-	:type	text: string
+	:param	obj: Object
+	:type	obj: any
 	:rtype: boolean
 
 	For example:
@@ -437,7 +426,7 @@ def isalpha(text):
 
 	"""
 	try:
-		float(text)
+		float(obj)
 		return True
 	except ValueError:
 		return False
@@ -445,9 +434,9 @@ def isalpha(text):
 
 def ishex(obj):
 	"""
-	Tests whether argument is a valid hexadecimal digit string
+	Tests if the argument is a string representing a valid hexadecimal digit
 
-	:param  obj: Test object
+	:param  obj: Object
 	:type	obj: any
 	:rtype: boolean
 	"""
@@ -460,9 +449,9 @@ def smart_round(arg, decimals=0):
 
 	:param	arg: Input data
 	:type	arg: number, Numpy vector of numbers or None
-	:param	decimals: Number of decimal places to round to. For Numpy vectors if decimals is negative, it specifies the number of positions to the left of the decimal point
+	:param	decimals: Number of decimal places to round the result to. For Numpy vectors if decimals is negative, it specifies the number of positions to the left of the decimal point
 	:param	decimals: integer
-	:rtype: number, Numpy vector of numbers or None depending on type of **arg**
+	:rtype: number, Numpy vector of numbers or None depending on the argument type
 	"""
 	if arg is None:
 		return arg
@@ -474,9 +463,9 @@ def smart_round(arg, decimals=0):
 
 def isiterable(obj):
 	"""
-	Tests whether an objects is an iterable
+	Tests if the argument is an iterable
 
-	:param	obj: Test object
+	:param	obj: Object
 	:type	obj: any
 	:rtype: boolean
 	"""
@@ -490,20 +479,20 @@ def isiterable(obj):
 
 def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):	#pylint: disable=R0913,R0914
 	"""
-	Formats a list of numers (vector) or a Numpy vector for printing. If **vector** is *None* the string 'None' is returned
+	Formats a list of numers (vector) or a Numpy vector for printing. If the argument **vector** is :code:`None` the string :code:`'None'` is returned
 
-	:param	vector: Vector to pretty print or *None*
-	:type	vector: list of numbers, Numpy vector or *None*
-	:param	limit: Flag that indicates if at most 6 vector elements should be printed (all vector elements if its length is equal or less than 6, first and last 3 vector elements if it is not) (*True*), or if the entire vector\
-	 should be printed (*False*)
+	:param	vector: Vector to pretty print or None
+	:type	vector: list of numbers, Numpy vector or None
+	:param	limit: Flag that indicates if at most 6 vector elements should be printed (all vector elements if its length is equal or less than 6, first and last 3 vector elements if it is not) (True), or if the entire vector\
+	 should be printed (False)
 	:type	limit: boolean
-	:param	width: Number of characters per line available to print vector. If *None* the vector is printed in one line
+	:param	width: Number of characters per line available. If None the vector is printed in one line
 	:type	width: integer or None
-	:param	indent: Flag that indicates whether all subsequent lines after the first one are to be indented (*True*) or not (*False*). Only relevant is **width** is not *None*
+	:param	indent: Flag that indicates whether all subsequent lines after the first one are to be indented (True) or not (False). Only relevant if **width** is not None
 	:type	indent: boolean
-	:param	eng: Flag that indicates whether engineering notation should be used to print vector contents (*True*) or not (*False*)
+	:param	eng: Flag that indicates whether engineering notation should be used (True) or not (False)
 	:type	eng: boolean
-	:param	mant: Number of mantissa digits (only applicable if **eng** is *True*)
+	:param	mant: Number of mantissa digits (only applicable if **eng** is True)
 	:type	mant: integer
 	:rtype: string
 
@@ -572,9 +561,10 @@ def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):
 
 
 def elapsed_time_string(start_time, stop_time):
-	""" Returns a formatted string with the elapsed time between two time points. The string includes years (365 days), months (30 days), days (24 hours), hours (60 minutes), minutes (60 seconds) and seconds.
-	If **start_time** and **stop_time** are equal, the string returned is 'None'; otherwise, the string returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s], [MM minute[s] [and SS second[s]]]]]].
-	Any piece (year[s], month[s], etc.) is omitted if the number of the token is null/zero.
+	"""
+	Returns a formatted string with the elapsed time between two time points. The string includes years (365 days), months (30 days), days (24 hours), hours (60 minutes), minutes (60 seconds) and seconds.
+	If **start_time** and **stop_time** are equal, the string returned is :code:`'None'`; otherwise, the string returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s], [MM minute[s] [and SS second[s]]]]]].
+	Any part (year[s], month[s], etc.) is omitted if the value of that part is null/zero.
 
 	:param	start_time:	Starting time point
 	:type	start_time:	`datetime <https://docs.python.org/2/library/datetime.html#datetime-objects>`_ object
@@ -582,6 +572,13 @@ def elapsed_time_string(start_time, stop_time):
 	:type	stop_time:	`datetime`_ object
 	:rtype:				string
 	:raises: RuntimeError (Invalid time delta specification)
+
+	For example:
+
+		>>> start_time = datetime.datetime(2014, 1, 1, 1, 10, 1)
+		>>> stop_time = datetime.datetime(2015, 1, 3, 1, 10, 3)
+		>>> putil.misc.elapsed_time_string(start_time, stop_time)
+		'1 year, 2 days and 2 seconds'
 	"""
 	if start_time > stop_time:
 		raise RuntimeError('Invalid time delta specification')
@@ -609,7 +606,7 @@ def strframe(obj, extended=False):
 
 	:param	obj: Frame record
 	:type	obj: tuple
-	:param	extended: Additionally pretty prints contents of frame object of frame record (*True*) or not (*False*)
+	:param	extended: Additionally pretty prints contents of frame object of frame record (True) or not (False)
 	:type	extended: boolean
 	:rtype:		string
 	"""
@@ -654,26 +651,52 @@ def delete_module(modname):
 
 def quote_str(obj):
 	"""
-	Adds extra quotes to string object
+	Adds extra quotes to a string. If the argument is not a string it is returned unmodified
 
-	:param	obj: Object to be quoted if string
+	:param	obj: Object
 	:type	obj: any
-	:rtype:	Same as **obj**
+	:rtype:	Same as argument
+
+	For example:
+
+		>>> putil.misc.quote_str(5)
+		5
+		>>> putil.misc.quote_str('Hello!')
+		'"Hello!"'
+		>>> putil.misc.quote_str('He said "hello!"')
+		"'He said \"hello!\"'"
 	"""
 	return obj if not isinstance(obj, str) else ("'{0}'".format(obj) if '"' in obj else '"{0}"'.format(obj))
 
 
-def strtype_item(type_obj):
-	""" Generates a string of a type definition (int, str, etc.) otherwise returns the sting of the object via the str() function """
-	return str(type_obj).replace("<type '", '').replace("<class '", '')[:-2] if isinstance(type_obj, type) else (quote_str(type_obj) if isinstance(type_obj, str) else str(type_obj))
-
-
-def strtype(type_obj):
+def strtype_item(obj):
 	"""
-	Generates a string of a type definition (int, str, etc.) or type definition list otherwise returns the string or list of the object(s) via the str() function
+	Generates a string representation of a type definition (i.e. int, str, etc.) otherwise returns the sting of the object via the str() function
 
-	:param	type_obj: Object for which to get type string or string of its contents
-	:type	type_obj: any
+	:param	obj: Object
+	:type	obj: any
+	:rtype: string
+
+	For example:
+
+		>>> putil.misc.strtype_item(str)
+		'str'
+		>>> putil.misc.strtype_item('hello')
+		'"hello"'
+		>>> putil.misc.strtype_item(5)
+		'5'
+		>>> putil.misc.strtype_item(putil.pcsv.CsvFile)
+		'putil.pcsv.CsvFile'
+	"""
+	return str(obj).replace("<type '", '').replace("<class '", '')[:-2] if isinstance(obj, type) else (quote_str(obj) if isinstance(obj, str) else str(obj))
+
+
+def strtype(obj):
+	"""
+	Generates a string representation of a type definition (i.e. int, str, etc.) or type definition list, otherwise returns the string or list of the object(s) via the str() function
+
+	:param	obj: Object
+	:type	obj: any
 	:rtype: string
 
 	For example:
@@ -684,20 +707,20 @@ def strtype(type_obj):
 		'str'
 
 	"""
-	if (not isiterable(type_obj)) or (type(type_obj) not in [dict, list, set, tuple]):
-		return strtype_item(type_obj)
-	if isinstance(type_obj, dict):
-		return '{'+(', '.join(['"{0}":{1}'.format(key, strtype(type_obj[key])) for key in sorted(type_obj.keys())]))+'}'
-	prefix = '[' if isinstance(type_obj, list) else ('(' if isinstance(type_obj, tuple) else 'set(')
-	suffix = ']' if isinstance(type_obj, list) else ')'
-	type_obj = sorted(type_obj) if isinstance(type_obj, set) else type_obj
-	ret_list = [strtype(type_obj_item) for type_obj_item in type_obj]
+	if (not isiterable(obj)) or (type(obj) not in [dict, list, set, tuple]):
+		return strtype_item(obj)
+	if isinstance(obj, dict):
+		return '{'+(', '.join(['"{0}":{1}'.format(key, strtype(obj[key])) for key in sorted(obj.keys())]))+'}'
+	prefix = '[' if isinstance(obj, list) else ('(' if isinstance(obj, tuple) else 'set(')
+	suffix = ']' if isinstance(obj, list) else ')'
+	obj = sorted(obj) if isinstance(obj, set) else obj
+	ret_list = [strtype(obj_item) for obj_item in obj]
 	return '{0}{1}{2}'.format(prefix, ', '.join(ret_list), suffix)
 
 
 def flatten_list(lobj):
 	"""
-	Recursively flattens list
+	Recursively flattens a list
 
 	:param	lobj: List to flatten
 	:type	lobj: list
@@ -721,7 +744,7 @@ def flatten_list(lobj):
 
 def isexception(obj):
 	"""
-	Tests whether an object is an exception object
+	Tests if the argument is an exception object
 
 	:param	obj: Object to test
 	:type	obj: any
@@ -738,11 +761,11 @@ def split_every(text, sep, count, lstrip=False, rstrip=False):
 	:type	text: string
 	:param	sep: Separator
 	:type	sep: string
-	:param	count: Number of separators to use as delimiter
+	:param	count: Number of separators to use as word delimiter
 	:type	count: integer
-	:param	lstrip: Flag that indicates whether whitespace should be removed from the beginning of each list item (*True*) or not (*False*)
+	:param	lstrip: Flag that indicates whether whitespace should be removed from the beginning of each list item (True) or not (False)
 	:type	lstrip: boolean
-	:param	rstrip: Flag that indicates whether whitespace should be removed from the end of each list item (*True*) or not (*False*)
+	:param	rstrip: Flag that indicates whether whitespace should be removed from the end of each list item (True) or not (False)
 	:type	rstrip: boolean
 	:rtype: list
 	"""
@@ -750,14 +773,23 @@ def split_every(text, sep, count, lstrip=False, rstrip=False):
 	lines = [sep.join(tlist[num:min(num+count, len(tlist))]) for num in range(0, len(tlist), count)]
 	return [line.rstrip() if (rstrip and not lstrip) else (line.lstrip() if (lstrip and not rstrip) else (line.strip() if lstrip and rstrip else line)) for line in lines]
 
+
 def to_scientific_tuple(number):
 	"""
-	Returns a tuple where the first element is the mantissa (*string*) and the second element is the exponent (*integer*) of a number when expressed in scientific notation. Full precision is maintained if the number is
-	represented a string
+	Returns a tuple in which the first element is the mantissa (*string*) and the second element is the exponent (*integer*) of a number when expressed in scientific notation. Full precision is maintained if the number is
+	represented as a string
 
-	:param	number: number to extract information from
+	:param	number: Number
 	:type	number: number or string of a number
 	:rtype: tuple
+
+	For example:
+
+		>>> putil.misc.to_scientific_tuple('135.56E-8')
+		('1.3556', -6)
+		>>> putil.misc.to_scientific_tuple(0.0000013556)
+		('1.3556', -6)
+
 	"""
 	convert = not isinstance(number, str)
 	if (convert and (number == 0)) or ((not convert) and (not number.strip('0').strip('.'))):
@@ -767,14 +799,22 @@ def to_scientific_tuple(number):
 	exp += len(digits)-1
 	return (mant, exp)
 
+
 def to_scientific_string(number):
 	"""
-	Converts a number or a string representing a number to a string with the number expressed in scientific notation. Full precision is maintained if the number is represented a string
+	Converts a number or a string representing a number to a string with the number expressed in scientific notation. Full precision is maintained if the number is represented as a string
 
 
-	:param	number: number to convert
-	:type	number: number or string of a number
+	:param	number: Number to convert
+	:type	number: number or string
 	:rtype: string
+
+	For example:
+
+		>>> putil.misc.to_scientific_string(333)
+		'3.33E+2'
+		>>> putil.misc.to_scientific_string(0.00101)
+		'1.01E-3'
 	"""
 	mant, exp = to_scientific_tuple(number)
 	return '{0}E{1}{2}'.format(mant, '-' if exp < 0 else '+', abs(exp))
@@ -813,3 +853,33 @@ class CiDict(dict):
 
 	def __setitem__(self, key, val):
 		super(CiDict, self).__setitem__(key.lower() if isinstance(key, str) is True else key, val)
+
+
+class Bundle(object):	#pylint: disable=R0903
+	"""
+	Bundles a collection of variables into one object. They keyword arguments names in **elements** represent the variable names, the keyword arguments values in **elements**
+	are the variable values. For example:
+
+		>>> obj = putil.misc.Bundle(var1=10)
+		>>> obj.var2 = 20
+		>>> print str(obj)
+		var1 = 10
+		var2 = 20
+		>>> obj.var2
+		20
+		>>> del obj.var1
+		>>> print str(obj)
+		var2 = 20
+
+	"""
+	def __init__(self, **elements):
+		self.__dict__.update(elements)
+
+	def __len__(self):
+		return len(self.__dict__)
+
+	def __repr__(self):
+		return 'Bundle({0})'.format(', '.join(['{0}={1}'.format(key, self.__dict__[key]) for key in sorted(self.__dict__.iterkeys())]))
+
+	def __str__(self):
+		return '\n'.join(['{0} = {1}'.format(key, self.__dict__[key]) for key in sorted(self.__dict__.iterkeys())])

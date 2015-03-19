@@ -30,7 +30,7 @@ def get_exh_obj():
 	"""
 	Returns the global exception handler
 
-	:rtype: :py:class:`putil.exh.ExHandle` object if global exception handler is set, *None* otherwise
+	:rtype: :py:class:`putil.exh.ExHandle` object if global exception handler is set, None otherwise
 	"""
 	mod_obj = sys.modules['__main__']
 	return getattr(mod_obj, '_EXH') if hasattr(mod_obj, '_EXH') else None
@@ -40,8 +40,8 @@ def get_or_create_exh_obj(full_cname=False):
 	"""
 	Returns the global exception handler if it is set, otherwise creates a new global exception handler and returns it
 
-	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (*True*) or not (*False*).
-	  There is a performance penalty if the flag is *True* as the call stack needs to be traced. This argument is only relevant if the global exception handler is not set and a new one is created
+	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (True) or not (False).
+	  There is a performance penalty if the flag is True as the call stack needs to be traced. This argument is only relevant if the global exception handler is not set and a new one is created
 	:type	full_cname: boolean
 	:rtype: :py:class:`putil.exh.ExHandle` object
 	:raises: RuntimeError (Argument \\`full_cname\\` is not valid)
@@ -88,8 +88,8 @@ class ExHandle(object):	#pylint: disable=R0902
 	"""
 	Exception handler
 
-	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (*True*) or not (*False*).
-	  There is a performance penalty if the flag is *True* as the call stack needs to be traced
+	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (True) or not (False).
+	  There is a performance penalty if the flag is True as the call stack needs to be traced
 	:type	full_cname: boolean
 	:rtype: :py:class:`putil.exh.ExHandle` object
 	:raises: RuntimeError (Argument \\`full_cname\\` is not valid)
@@ -270,8 +270,8 @@ class ExHandle(object):	#pylint: disable=R0902
 		:type	exname: string
 		:param	extype: Exception type; *must* be derived from the `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
 		:type	extype: Exception type object, i.e. RuntimeError, TypeError, etc.
-		:param	exmsg: Exception message; it can contain fields to be replaced when the exception is raised via :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with the characters '\*[' and ends with the \
-		 characters ']\*', the field name follows the same rules as variable names and is between these two sets of characters. For example, `*[file_name]*` defines the `file_name` field
+		:param	exmsg: Exception message; it can contain fields to be replaced when the exception is raised via :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with the characters :code:`'\*['` and ends with the \
+		 characters :code:`']\*'`, the field name follows the same rules as variable names and is between these two sets of characters. For example, :code:`\*[file_name]\*` defines the :code:`file_name` field
 		:type	exmsg: string
 		:raises:
 		 * RuntimeError (Argument \`exmsg\` is not valid)
@@ -331,18 +331,18 @@ class ExHandle(object):	#pylint: disable=R0902
 
 	callables_separator = property(_get_callables_separator, None, None, doc='Callable separator character')
 	"""
-	Returns the character ('/') used to separate the sub-parts of fully qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and **name** key of :py:meth:`putil.exh.ExHandle.exceptions_db`
+	Returns the character (:code:`'/'`) used to separate the sub-parts of fully qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and **name** key of :py:meth:`putil.exh.ExHandle.exceptions_db`
 	"""
 
 	exceptions_db = property(_get_exceptions_db, None, None, doc='Formatted exceptions')
 	"""
 	Returns the exceptions database. This database is a list of dictionaries that contain the following keys:
 
-	 * **name** *(string)* -- Exception name of the form '*callable_identifier* / *exception_name*'. The contents of *callable_identifier* depend on the value of the argument **full_cname** used to
-	   create the exception handler. If **full_cname** is *True*, *callable_identifier* is the fully qualified callable name as it appears in the callables database (:py:meth:`putil.exh.ExHandle.callables_db`).
-	   If **full_cname** is *False*, then *callable_identifier* is a decimal string representation of the callable's code identifier as reported by the `id() <https://docs.python.org/2/library/functions.html#id>`_
+	 * **name** *(string)* -- Exception name of the form :code:`'callable_identifier/exception_name'`. The contents of *callable_identifier* depend on the value of the argument **full_cname** used to
+	   create the exception handler. If **full_cname** is True, *callable_identifier* is the fully qualified callable name as it appears in the callables database (:py:meth:`putil.exh.ExHandle.callables_db`).
+	   If **full_cname** is False, then *callable_identifier* is a decimal string representation of the callable's code identifier as reported by the `id() <https://docs.python.org/2/library/functions.html#id>`_
 	   function. *exception_name* is the name of the exception provided when it was defined in :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
 
-	 * **data** *(string)* -- Text of the form '*exception_type* (*exception_message*)' where *exception_type* and *exception_message* are the exception type and exception message, respectively, given when the exception was
+	 * **data** *(string)* -- Text of the form :code:`'exception_type (exception_message)'` where *exception_type* and *exception_message* are the exception type and exception message, respectively, given when the exception was
 	   defined by :py:meth:`putil.exh.ExHandle.add_exception` (**extype** and **exmsg** arguments)
 	"""

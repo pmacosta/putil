@@ -3,16 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import csv
-import sys
-import itertools
+import csv, itertools, sys
 
-import putil.exh
-import putil.misc
-import putil.pcontracts
+import putil.exh, putil.misc, putil.pcontracts
 
 
+###
 # Exception tracing initialization code
+###
 """
 [[[cog
 import trace_ex_pcsv
@@ -26,51 +24,52 @@ exobj = trace_ex_pcsv.trace_module(no_print=True)
 # DataFilter custom pseudo-type
 ###
 @putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_empty=(ValueError, 'Argument `*[argument_name]*` is empty'))
-def csv_data_filter(dfilter):
+def csv_data_filter(obj):
 	r"""
-	DataFilter pseudo-type validation
+	Contract that validates if an object is a dictionary that represents a DataFilter pseudo-type object
 
-	:param	dfilter: Data filter
-	:type	dfilter: DataFilter
+	:param	obj: Object
+	:type	obj: any
 	:raises:
-	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the *name* of the argument the contract is attached to
 
-	 * :code:`ValueError ('Argument \`*[argument_name]*\` is empty')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * ValueError (Argument \`*[argument_name]*\` is empty). The token \*[argument_name]\* is replaced by the *name* of the argument the contract is attached to
 
 	:rtype: None
 	"""
 	exdesc = putil.pcontracts.get_exdesc()
-	if dfilter == None:
+	if obj == None:
 		return None
-	if not isinstance(dfilter, dict):
+	if not isinstance(obj, dict):
 		raise ValueError(exdesc['argument_invalid'])
-	if not len(dfilter):
+	if not len(obj):
 		raise ValueError(exdesc['argument_empty'])
-	if any([not isinstance(col_name, str) for col_name in dfilter.iterkeys()]):
+	if any([not isinstance(col_name, str) for col_name in obj.iterkeys()]):
 		raise ValueError(exdesc['argument_invalid'])
-	for col_name in dfilter:
-		if (not isinstance(dfilter[col_name], list)) and (not putil.misc.isnumber(dfilter[col_name])) and (not isinstance(dfilter[col_name], str)):
+	for col_name in obj:
+		if (not isinstance(obj[col_name], list)) and (not putil.misc.isnumber(obj[col_name])) and (not isinstance(obj[col_name], str)):
 			raise ValueError(exdesc['argument_invalid'])
-		if isinstance(dfilter[col_name], list):
-			for element in dfilter[col_name]:
+		if isinstance(obj[col_name], list):
+			for element in obj[col_name]:
 				if (not putil.misc.isnumber(element)) and (not isinstance(element, str)):
 					raise ValueError(exdesc['argument_invalid'])
 
+
 ###
-# Fuctions
+# Functions
 ###
 @putil.pcontracts.contract(file_name='file_name', data='list(list(str|int|float))', append=bool)
 def write(file_name, data, append=True):
-	"""
-	Write data to a specified comma-separated values (CSV) file
+	r"""
+	Writes data to a specified comma-separated values (CSV) file
 
 	:param	file_name:	File name of the comma-separated values file to be written
 	:type	file_name:	string
-	:param	data:	Data to write to file. Each item in **data** should contain a sub-list corresponding to a row of data; each item in the sub-lists should contain data corresponding to a \
-	particular column
+	:param	data:	Data to write to file. Each item in **data** should contain a sub-list corresponding to a row of data; each item in the sub-lists should contain data corresponding to a
+	 particular column
 	:type	data:	list
-	:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
-	(overwriting an existing file with the same name if such file exists)
+	:param	append: Flag that indicates if data is added to an existing file (or a new file is created if it does not exist) (True), or if data overwrites the file contents (if the file exists) or creates a new file if the file
+	 does not exists (False)
 	:type	append: boolean
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
@@ -81,11 +80,11 @@ def write(file_name, data, append=True):
 
 	 * OSError (File *[file_name]* could not be created: *[reason]*)
 
-	 * RuntimeError (Argument `append` is not valid)
+	 * RuntimeError (Argument \`append\` is not valid)
 
-	 * RuntimeError (Argument `data` is not valid)
+	 * RuntimeError (Argument \`data\` is not valid)
 
-	 * RuntimeError (Argument `file_name` is not valid)
+	 * RuntimeError (Argument \`file_name\` is not valid)
 
 	 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
 
@@ -94,6 +93,7 @@ def write(file_name, data, append=True):
 	.. [[[end]]]
 	"""
 	_write_int(file_name, data, append)
+
 
 def _write_int(file_name, data, append=True):
 	_exh = putil.exh.get_or_create_exh_obj()
@@ -134,28 +134,29 @@ def _number_failsafe(obj):
 		except:	#pylint: disable=W0702
 			return obj
 
+
 ###
 # Classes
 ###
 class CsvFile(object):
-	"""
-	Process comma-separated values (CSV) files
+	r"""
+	Processes comma-separated values (CSV) files
 
 	:param	file_name:	File name of the comma-separated values file to be read
 	:type	file_name:	string
 	:param	dfilter:	Data filter. See `DataFilter`_ pseudo-type specification
 	:type	dfilter:	DataFilter
-	:rtype:	:py:class:`putil.pcsv.CsvFile()` object
+	:rtype:	:py:class:`putil.pcsv.CsvFile` object
 
 	.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.__init__
 
 	:raises:
-	 * IOError (File `*[file_name]*` could not be found)
+	 * IOError (File \`*[file_name]*\` could not be found)
 
-	 * RuntimeError (Argument `dfilter` is not valid)
+	 * RuntimeError (Argument \`dfilter\` is not valid)
 
-	 * RuntimeError (Argument `file_name` is not valid)
+	 * RuntimeError (Argument \`file_name\` is not valid)
 
 	 * RuntimeError (Column headers are not unique)
 
@@ -163,7 +164,7 @@ class CsvFile(object):
 
 	 * RuntimeError (File *[file_name]* is empty)
 
-	 * ValueError (Argument `dfilter` is empty)
+	 * ValueError (Argument \`dfilter\` is empty)
 
 	 * ValueError (Column *[column_name]* not found in header)
 
@@ -220,8 +221,8 @@ class CsvFile(object):
 
 	@putil.pcontracts.contract(dfilter='csv_data_filter')
 	def add_dfilter(self, dfilter):
-		"""
-		Add more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
+		r"""
+		Adds more data filter(s) to the existing filter(s). Data is added to the current filter for a particular column if that column was already filtered, duplicate filter values are eliminated.
 
 		:param	dfilter:	Data filter. See `DataFilter`_ pseudo-type specification
 		:type	dfilter:	DataFilter
@@ -230,9 +231,9 @@ class CsvFile(object):
 		.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.add_dfilter
 
 		:raises:
-		 * RuntimeError (Argument `dfilter` is not valid)
+		 * RuntimeError (Argument \`dfilter\` is not valid)
 
-		 * ValueError (Argument `dfilter` is empty)
+		 * ValueError (Argument \`dfilter\` is empty)
 
 		 * ValueError (Column *[column_name]* not found in header)
 
@@ -256,13 +257,13 @@ class CsvFile(object):
 
 	@putil.pcontracts.contract(col='None|str|list(str)', filtered=bool)
 	def data(self, col=None, filtered=False):
-		"""
-		 Return (filtered) file data. The returned object is a list, each item is a sub-list corresponding to a row of data; each item in the sub-lists contains data corresponding to a \
+		r"""
+		 Returns (filtered) file data. The returned object is a list, each item is a sub-list corresponding to a row of data; each item in the sub-lists contains data corresponding to a \
 		 particular column
 
-		:param	col:	Column(s) to extract from filtered data. If no column specification is given (or **col** is *None*) all columns are returned
+		:param	col:	Column(s) to extract from filtered data. If no column specification is given (or the argument is None) all columns are returned
 		:type	col:	string, list of strings or None
-		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is returned, if **filtered** is *False* the raw (original) file data is returned
+		:param	filtered: Flag that indicates whether the raw (original) data should be returned (False) or whether filtered data should be retuned (True)
 		:type	filtered: boolean
 		:rtype:	list
 
@@ -270,9 +271,9 @@ class CsvFile(object):
 		.. Auto-generated exceptions documentation for putil.pcsv.CsvFile.data
 
 		:raises:
-		 * RuntimeError (Argument `col` is not valid)
+		 * RuntimeError (Argument \`col\` is not valid)
 
-		 * RuntimeError (Argument `filtered` is not valid)
+		 * RuntimeError (Argument \`filtered\` is not valid)
 
 		 * ValueError (Column *[column_name]* not found in header)
 
@@ -282,25 +283,25 @@ class CsvFile(object):
 		return (self._data if not filtered else self._fdata) if col is None else self._core_data((self._data if not filtered else self._fdata), col)
 
 	def reset_dfilter(self):
-		""" Reset (clears) data filter """
+		""" Reset (clears) the data filter """
 		self._fdata = self._data[:]
 		self._dfilter = None
 
 	@putil.pcontracts.contract(file_name='file_name', col='None|str|list(str)', filtered=bool, headers=bool, append=bool)
 	def write(self, file_name, col=None, filtered=False, headers=True, append=True):	#pylint: disable=R0913
-		"""
-		Write (processed) data to a specified comma-separated values (CSV) file
+		r"""
+		Writes (processed) data to a specified comma-separated values (CSV) file
 
 		:param	file_name:	File name of the comma-separated values file to be written
 		:type	file_name:	string
-		:param	col:	Column(s) to write to file. If no column specification is given (or **col** is *None*) all columns in data are written
+		:param	col:	Column(s) to write to file. If no column specification is given (or the argument is None) all columns in the data are written
 		:type	col:	string, list of strings or None
-		:param	filtered: Raw or filtered data flag. If **filtered** is *True*, the filtered data is written, if **filtered** is *False* the raw (original) file data is written
+		:param	filtered: Flag that indicates whether the raw (original) data should be written (False) or whether filtered data should be written (True)
 		:type	filtered: boolean
-		:param	headers: Include headers flag. If **headers** is *True* headers and data are written, if **headers** is *False* only data is written
+		:param	headers: Flag that indicates whether column headers should be written (True) or not (False)
 		:type	headers: boolean
-		:param	append: Append data flag. If **append** is *True* data is added to **file_name** if it exits, otherwise a new file is created. If **append** is *False*, a new file is created, \
-		(overwriting an existing file with the same name if such file exists)
+		:param	append: Flag that indicates if data is added to an existing file (or a new file is created if it does not exist) (True), or if data overwrites the file contents (if the
+		 file exists) or creates a new file if the file does not exists (False)
 		:type	append: boolean
 
 		.. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
@@ -311,15 +312,15 @@ class CsvFile(object):
 
 		 * OSError (File *[file_name]* could not be created: *[reason]*)
 
-		 * RuntimeError (Argument `append` is not valid)
+		 * RuntimeError (Argument \`append\` is not valid)
 
-		 * RuntimeError (Argument `col` is not valid)
+		 * RuntimeError (Argument \`col\` is not valid)
 
-		 * RuntimeError (Argument `file_name` is not valid)
+		 * RuntimeError (Argument \`file_name\` is not valid)
 
-		 * RuntimeError (Argument `filtered` is not valid)
+		 * RuntimeError (Argument \`filtered\` is not valid)
 
-		 * RuntimeError (Argument `headers` is not valid)
+		 * RuntimeError (Argument \`headers\` is not valid)
 
 		 * RuntimeError (File *[file_name]* could not be created: *[reason]*)
 
@@ -359,8 +360,8 @@ class CsvFile(object):
 
 	# Managed attributes
 	dfilter = property(_get_dfilter, _set_dfilter, None, doc='Data filter')
-	"""
-	Set or return the data filter.
+	r"""
+	Sets or returns the data filter
 
 	:type:		DataFilter. See `DataFilter`_ pseudo-type specification
 	:rtype:		DataFilter or None
@@ -370,9 +371,9 @@ class CsvFile(object):
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `dfilter` is not valid)
+	 * RuntimeError (Argument \`dfilter\` is not valid)
 
-	 * ValueError (Argument `dfilter` is empty)
+	 * ValueError (Argument \`dfilter\` is empty)
 
 	 * ValueError (Column *[column_name]* not found in header)
 
@@ -381,7 +382,7 @@ class CsvFile(object):
 
 	header = property(_get_header, None, None, doc='Comma-separated file (CSV) header')
 	"""
-	Return the header of the comma-separated values file. Each list item is a column header
+	Returns the header of the comma-separated values file. Each list item is a column header
 
 	:rtype:	list of strings
 	"""	#pylint: disable=W0105

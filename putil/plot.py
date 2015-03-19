@@ -3,25 +3,20 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302
 
-import os
-import math
-import numpy
-import inspect
-from scipy import stats
-import matplotlib.path
-import matplotlib.markers
+import inspect, math, matplotlib.markers, matplotlib.path, numpy, os
+
 import matplotlib.pyplot as plt
+from scipy import stats
+from collections import OrderedDict
 from scipy.interpolate import interp1d  #pylint: disable=E0611
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-from collections import OrderedDict
 
-import putil.exh
-import putil.eng
-import putil.pcsv
-import putil.misc
-import putil.pcontracts
+import putil.eng, putil.exh, putil.misc, putil.pcontracts, putil.pcsv
 
+
+###
 # Exception tracing initialization code
+###
 """
 [[[cog
 import trace_ex_plot
@@ -31,7 +26,7 @@ exobj_plot = trace_ex_plot.trace_module(no_print=True)
 """	#pylint: disable=W0105
 
 ###
-# Module properties
+# Global variables
 ###
 PRECISION = 10
 """
@@ -40,12 +35,14 @@ Number of mantissa significant digits used in all computations
 :type:	integer
 """	#pylint: disable=W0105
 
+
 LINE_WIDTH = 2.5
 """
 Series line width in points
 
 :type: float
 """	#pylint: disable=W0105
+
 
 MARKER_SIZE = 14
 """
@@ -54,12 +51,14 @@ Series marker size in points
 :type: integer
 """	#pylint: disable=W0105
 
+
 MIN_TICKS = 6
 """
 Minimum number of ticks desired for the independent and dependent axis of a panel
 
 :type:	integer
 """	#pylint: disable=W0105
+
 
 SUGGESTED_MAX_TICKS = 10
 """
@@ -72,26 +71,30 @@ of the panel and below the minimum data point of the panel.
 :type:	integer
 """	#pylint: disable=W0105
 
+
 TITLE_FONT_SIZE = 24
 """
-Font size in points for figure title
+Figure title font size in points
 
 :type:	integer
 """	#pylint: disable=W0105
+
 
 AXIS_LABEL_FONT_SIZE = 18
 """
-Font size in points for axis labels
+Axis labels font size in points
 
 :type:	integer
 """	#pylint: disable=W0105
+
 
 AXIS_TICKS_FONT_SIZE = 14
 """
-Font size in points for axis tick labels
+Axis tick labels font size in points
 
 :type:	integer
 """	#pylint: disable=W0105
+
 
 LEGEND_SCALE = 1.5
 """
@@ -100,53 +103,54 @@ Scale factor for panel legend. The legend font size in points is equal to the ax
 :type:	number
 """	#pylint: disable=W0105
 
+
 ###
 # Contracts
 ###
 @putil.pcontracts.new_contract()
-def real_num(num):
+def real_num(obj):
 	r"""
-	Contract to validate if a number is an integer or a float
+	Contract that validates if an object is an integer, float or :code:`None`
 
-	:param	num: Real number (float or integer) or None
-	:type	num: number
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:param	obj: Object
+	:type	obj: any
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
-	if (num == None) or ((isinstance(num, int) or isinstance(num, float)) and (not isinstance(num, bool))):
+	if (obj == None) or ((isinstance(obj, int) or isinstance(obj, float)) and (not isinstance(obj, bool))):
 		return None
 	raise ValueError(putil.pcontracts.get_exdesc())
 
 
 @putil.pcontracts.new_contract()
-def positive_real_num(num):
+def positive_real_num(obj):
 	r"""
-	Contract to validate if a number is a positive integer or float
+	Contract that validates if an object is a positive integer, positive float or :code:`None`
 
-	:param	num: Positive real number (float or integer) or None
-	:type	num: number
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:param	obj: Object
+	:type	obj: any
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
-	if (num == None) or ((isinstance(num, int) or isinstance(num, float)) and (num > 0) and (not isinstance(num, bool))):
+	if (obj == None) or ((isinstance(obj, int) or isinstance(obj, float)) and (obj > 0) and (not isinstance(obj, bool))):
 		return None
 	raise ValueError(putil.pcontracts.get_exdesc())
 
 
 @putil.pcontracts.new_contract()
-def offset_range(num):
+def offset_range(obj):
 	r"""
-	Contract to validate if a number is in the [0, 1] range
+	Contract that validates if an object is a number is in the [0, 1] range
 
-	:param	num: Real number
-	:type	num: number
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:param	obj: Object
+	:type	obj: any
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
-	if (isinstance(num, int) or isinstance(num, float)) and (not isinstance(num, bool)) and (num >= 0) and (num <= 1):
+	if (isinstance(obj, int) or isinstance(obj, float)) and (not isinstance(obj, bool)) and (obj >= 0) and (obj <= 1):
 		return None
 	raise ValueError(putil.pcontracts.get_exdesc())
 
@@ -155,11 +159,11 @@ def offset_range(num):
 @putil.pcontracts.new_contract()
 def function(obj):
 	r"""
-	Contract to validate if an object is a function pointer
+	Contract that validates if an object is a function pointer or :code:`None`
 
-	:param	vector: Function object
-	:type	vector: Function object
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:param	obj: Object
+	:type	obj: any
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
@@ -168,131 +172,344 @@ def function(obj):
 	raise ValueError(putil.pcontracts.get_exdesc())
 
 
-def _check_real_numpy_vector(vector):
-	if (type(vector) != numpy.ndarray) or ((type(vector) == numpy.ndarray) and ((len(vector.shape) > 1) or ((len(vector.shape) == 1) and (vector.shape[0] == 0)))):
+def _check_real_numpy_vector(obj):
+	if (type(obj) != numpy.ndarray) or ((type(obj) == numpy.ndarray) and ((len(obj.shape) > 1) or ((len(obj.shape) == 1) and (obj.shape[0] == 0)))):
 		return True
-	if (vector.dtype.type == numpy.array([0]).dtype.type) or (vector.dtype.type == numpy.array([0.0]).dtype.type):
+	if (obj.dtype.type == numpy.array([0]).dtype.type) or (obj.dtype.type == numpy.array([0.0]).dtype.type):
 		return False
 	return True
 
 
 @putil.pcontracts.new_contract()
-def real_numpy_vector(vector):
+def real_numpy_vector(obj):
 	r"""
-	Contract to validate if the elements of a Numpy vector contains integer or floating numbers
+	Contract that validates if an object is a Numpy vector with integer or floating point numbers
 
-	:param	vector: Numpy vector in which each item is a number
-	:type	vector: RealNumpyVector
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:param	obj: Object
+	:type	obj: any
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
-	if _check_real_numpy_vector(vector):
+	if _check_real_numpy_vector(obj):
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 
-def _check_increasing_real_numpy_vector(vector):	#pylint: disable=C0103
-	if (type(vector) != numpy.ndarray) or ((type(vector) == numpy.ndarray) and ((len(vector.shape) > 1) or ((len(vector.shape) == 1) and (vector.shape[0] == 0)))):
+def _check_increasing_real_numpy_vector(obj):	#pylint: disable=C0103
+	if (type(obj) != numpy.ndarray) or ((type(obj) == numpy.ndarray) and ((len(obj.shape) > 1) or ((len(obj.shape) == 1) and (obj.shape[0] == 0)))):
 		return True
-	if ((vector.dtype.type == numpy.array([0]).dtype.type) or (vector.dtype.type == numpy.array([0.0]).dtype.type)) and ((vector.shape[0] == 1) or ((vector.shape[0] > 1) and (not min(numpy.diff(vector)) <= 0))):
+	if ((obj.dtype.type == numpy.array([0]).dtype.type) or (obj.dtype.type == numpy.array([0.0]).dtype.type)) and ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and (not min(numpy.diff(obj)) <= 0))):
 		return False
 	return True
 
 
 @putil.pcontracts.new_contract()
-def increasing_real_numpy_vector(vector):
+def increasing_real_numpy_vector(obj):
 	r"""
-	Contract to validate if the elements of a Numpy vector contains numbers that are monotonically increasing
+	Contract that validates if an object is a Numpy vector with numbers that are monotonically increasing
 
-	:param	vector: Non-empty Numpy vector in which each item is a number strictly greater than the previous one
-	:type	vector: IncreasingNumpyVector
-	:raises: :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	:param	obj: Object
+	:type	obj: any
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
-	if _check_increasing_real_numpy_vector(vector):
+	if _check_increasing_real_numpy_vector(obj):
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 
 @putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid',\
 							   argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)"))
-def interpolation_option(option):
+def interpolation_option(obj):
 	r"""
-	Contract to validate if a string is a valid series interpolation type
+	Contract that validates if an object is a valid series interpolation type. Valid options are :code:`None`, :code:`'STRAIGHT'`, :code:`'STEP'`, :code:`'CUBIC'` or :code:`'LINREG'`
 
-	:param	option: Series interpololation type, one of *None*, 'STRAIGHT', 'STEP', 'CUBIC' or 'LINREG'
-	:type	option: string
+	:param	obj: Object
+	:type	obj: any
 	:raises:
-	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
-	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument
+	 * RuntimeError (Argument \`*[argument_name]*\` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)). The token \*[argument_name]\* is replaced by the name of the argument
 	   the contract is attached to
 
 	:rtype: None
 	"""
 	exdesc = putil.pcontracts.get_exdesc()
-	if (option != None) and (not isinstance(option, str)):
+	if (obj != None) and (not isinstance(obj, str)):
 		raise ValueError(exdesc['argument_invalid'])
-	if (option == None) or (option and any([item.lower() == option.lower() for item in ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']])):
+	if (obj == None) or (obj and any([item.lower() == obj.lower() for item in ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']])):
 		return None
 	raise ValueError(exdesc['argument_bad_choice'])
 
 
 @putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of ['-', '--', '-.', ':']"))
-def line_style_option(option):
+def line_style_option(obj):
 	r"""
-	Contract to validate if a string is a valid Matplot lib line style
+	Contract that validates if an object is a valid Matplotlib line style. Valid options are :code:`None`, :code:`'-'`, :code:`'--'`, :code:`'-.'` or :code:`':'`
 
-	:param	option: Series line style, one of *None*, '-', '--', '-.' or ':'
-	:type	option: string
+	:param	obj: Object
+	:type	obj: any
 	:raises:
-	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
-	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not one of ['-', '--', '-.', ':']')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * RuntimeError (Argument \`*[argument_name]*\` is not one of ['-', '--', '-.', ':']). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
 	exdesc = putil.pcontracts.get_exdesc()
-	if (option != None) and (not isinstance(option, str)):
+	if (obj != None) and (not isinstance(obj, str)):
 		raise ValueError(exdesc['argument_invalid'])
-	if option in [None, '-', '--', '-.', ':']:
+	if obj in [None, '-', '--', '-.', ':']:
 		return None
 	raise ValueError(exdesc['argument_bad_choice'])
 
 
-@putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', "+\
+@putil.pcontracts.new_contract(argument_invalid='Argument `*[argument_name]*` is not valid', argument_bad_choice=(ValueError, "Argument `*[argument_name]*` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', "+\
 	"'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case insensitive)"))
-def color_space_option(option):
+def color_space_option(obj):
 	r"""
-	Contract to validate if a string is a valid Matplot lib colors space
+	Contract that validates if an object is a valid Matplotlib colors space. Valid options are :code:`None`, :code:`'binary'`, :code:`'Blues'`, :code:`'BuGn'`, :code:`'BuPu'`, :code:`'GnBu'`, :code:`'Greens'`,
+	:code:`'Greys'`, :code:`'Oranges'`, :code:`'OrRd'`, :code:`'PuBu'`, :code:`'PuBuGn'`, :code:`'PuRd'`, :code:`'Purples'`, :code:`'RdPu'`, :code:`'Reds'`, :code:`'YlGn'`, :code:`'YlGnBu'`, :code:`'YlOrBr`'
+	or :code:`'YlOrRd'`
 
-	:param	option: Color space, one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd'
-	:type	option: string
+	:param	obj: Object
+	:type	obj: any
 	:raises:
-	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not valid')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
-	 * :code:`RuntimeError ('Argument \`*[argument_name]*\` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds',
-	   'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd')`. The token :code:`'*[argument_name]*'` is replaced by the *name* of the argument the contract is attached to
+	 * RuntimeError (Argument \`*[argument_name]*\` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds',
+	   'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
 	exdesc = putil.pcontracts.get_exdesc()
-	if (option != None) and (not isinstance(option, str)):
+	if (obj != None) and (not isinstance(obj, str)):
 		raise ValueError(exdesc['argument_invalid'])
-	if (option == None) or (option and any([item.lower() == option.lower() for item in ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',\
+	if (obj == None) or (obj and any([item.lower() == obj.lower() for item in ['binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',\
 																					    'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']])):
 		return None
 	raise ValueError(exdesc['argument_bad_choice'])
 
 
-def _legend_position_validation(option):
-	""" Contract to validate if a string is a valid legend position """
-	if (option != None) and (not isinstance(option, str)):
+def _legend_position_validation(obj):
+	""" Validate if a string is a valid legend position """
+	if (obj != None) and (not isinstance(obj, str)):
 		return True
-	if (option == None) or (option and any([item.lower() == option.lower() for item in\
+	if (obj == None) or (obj and any([item.lower() == obj.lower() for item in\
 			['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER']])):
 		return False
 	return True
+
+
+###
+# Functions
+###
+def _first_label(label_list):
+	""" Find first non-blank label """
+	for label_index, label_obj in enumerate(label_list):
+		if (label_obj.get_text() is not None) and (label_obj.get_text().strip() != ''):
+			return label_index
+	return None
+
+
+def _get_yaxis_size(fig_obj, tick_labels, axis_label):
+	""" Compute Y axis height and width """
+	# Minimum of one line spacing between vertical ticks
+	axis_height = axis_width = 0
+	if (tick_labels is not None) and (len(tick_labels) > 0):
+		label_index = _first_label(tick_labels)
+		if label_index is not None:
+			label_height = _get_text_prop(fig_obj, tick_labels[label_index])['height']
+			axis_height = (2*len(tick_labels)-1)*label_height
+			axis_width = max([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+	if axis_label is not None:
+		axis_height = max(axis_height, _get_text_prop(fig_obj, axis_label)['height'])
+		axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
+	return axis_height, axis_width
+
+
+def _get_xaxis_size(fig_obj, tick_labels, axis_label):
+	""" Compute Y axis height and width """
+	# Minimum of one smallest label separation between horizontal ticks
+	axis_height = axis_width = 0
+	if (tick_labels is not None) and (len(tick_labels) > 0):
+		min_label_width = min([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+		axis_width = ((len(tick_labels)-1)*min_label_width)+sum([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+	if axis_label is not None:
+		axis_height = (axis_height+(1.5*_get_text_prop(fig_obj, axis_label)['height']))
+		axis_width = max(axis_width, _get_text_prop(fig_obj, axis_label)['width'])
+	return axis_height, axis_width
+
+
+def _process_ticks(locs, min_lim, max_lim, mant):
+	"""
+	Returns pretty-printed tick locations that are within the given bound
+	"""
+	locs = [float(loc) for loc in locs]
+	bounded_locs = [loc for loc in locs if ((loc >= min_lim) or (abs(loc-min_lim) <= 1e-14)) and ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))]
+	raw_labels = [putil.eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(putil.misc.smart_round(loc, mant)) for loc in bounded_locs]
+	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
+
+
+def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=False):	#pylint: disable=R0912,R0914,R0915
+	""" Calculates ticks 'intelligently', trying to calculate sane tick spacing """
+	# Handle 1-point series
+	if len(series) == 1:
+		series_min = series_max = series[0]
+		tick_spacing = putil.misc.smart_round(0.1*series[0], PRECISION)
+		tick_list = numpy.array([series[0]-tick_spacing, series[0], series[0]+tick_spacing])
+		tick_spacing = putil.misc.smart_round(0.1*series[0], PRECISION)
+		tight = tight_left = tight_right = log_axis = False
+	else:
+		if log_axis:
+			dec_start = int(math.log10(min(series)))
+			dec_stop = int(math.ceil(math.log10(max(series))))
+			tick_list = [10**num for num in range(dec_start, dec_stop+1)]
+			tight_left = False if (not tight) and (tick_list[0] >= min(series)) else True
+			tight_right = False if (not tight) and (tick_list[-1] <= max(series)) else True
+			tick_list = numpy.array(tick_list)
+		else:
+			# Try to find the tick spacing that will have the most number of data points on grid. Otherwise, place max_ticks uniformly distributed across the data rage
+			series_delta = putil.misc.smart_round(max(series)-min(series), PRECISION)
+			working_series = series[:].tolist()
+			tick_list = list()
+			num_ticks = SUGGESTED_MAX_TICKS
+			while (num_ticks >= MIN_TICKS) and (len(working_series) > 1):
+				data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
+				tick_spacing = putil.misc.gcd(data_spacing)
+				num_ticks = (series_delta/tick_spacing)+1
+				if (num_ticks >= MIN_TICKS) and (num_ticks <= SUGGESTED_MAX_TICKS):
+					tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()	#pylint: disable=E1103
+					break
+				# Remove elements that cause minimum spacing, to see if with those elements removed the number of tick marks can be withing the acceptable range
+				min_data_spacing = min(data_spacing)
+				# Account for fact that if minimum spacing is between last two elements, the last element cannot be removed (it is the end of the range), but rather the next-to-last has to be removed
+				if (data_spacing[-1] == min_data_spacing) and (len(working_series) > 2):
+					working_series = working_series[:-2]+[working_series[-1]]
+					data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
+				working_series = [working_series[0]]+[element for element, spacing in zip(working_series[1:], data_spacing) if spacing != min_data_spacing]
+			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), SUGGESTED_MAX_TICKS).tolist()	#pylint: disable=E1103
+			tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
+			# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
+			tight_left = False if (not tight) and (tick_list[0] >= series_min) else tight
+			tight_right = False if (not tight) and (tick_list[-1] <= series_max) else tight
+			tick_list = numpy.array(tick_list if tight else ([tick_list[0]-tick_spacing] if not tight_left else [])+tick_list+([tick_list[-1]+tick_spacing] if not tight_right else []))
+	# Scale series with minimum, maximum and delta as reference, pick scaling option that has the most compact representation
+	opt_min = _scale_ticks(tick_list, 'MIN')
+	opt_max = _scale_ticks(tick_list, 'MAX')
+	opt_delta = _scale_ticks(tick_list, 'DELTA')
+	opt = opt_min if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else (opt_max if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else opt_delta)
+	# Add extra room in logarithmic axis if Tight is True, but do not label marks (aesthetic decision)
+	if log_axis and not tight:
+		if not tight_left:
+			opt['min'] = putil.misc.smart_round(0.9*opt['loc'][0], PRECISION)
+			opt['loc'].insert(0, opt['min'])
+			opt['labels'].insert(0, '')
+		if not tight_right:
+			opt['max'] = putil.misc.smart_round(1.1*opt['loc'][-1], PRECISION)
+			opt['loc'].append(opt['max'])
+			opt['labels'].append('')
+	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['scale'], opt['unit'])
+
+
+def _scale_ticks(tick_list, mode):
+	""" Scale series taking the reference to be the series start, stop or delta """
+	mode = mode.strip().upper()
+	tick_min = tick_list[0]
+	tick_max = tick_list[-1]
+	tick_delta = tick_max-tick_min
+	tick_ref = tick_min if mode == 'MIN' else (tick_max if mode == 'MAX' else tick_delta)
+	(unit, scale) = putil.eng.peng_power(putil.eng.peng(tick_ref, 3))
+	# Move one engineering unit back if there are more ticks below 1.0 than above it
+	rollback = (sum((tick_list/scale) >= 1000) > sum((tick_list/scale) < 1000)) and (tick_list[-1]/scale < 10000)
+	scale = 1 if rollback else scale
+	unit = putil.eng.peng_suffix_math(unit, +1) if rollback else unit
+	tick_list = numpy.array([putil.misc.smart_round(element/scale, PRECISION) for element in tick_list])
+	tick_min = putil.misc.smart_round(tick_min/scale, PRECISION)
+	tick_max = putil.misc.smart_round(tick_max/scale, PRECISION)
+	loc, labels = _uniquify_tick_labels(tick_list, tick_min, tick_max)
+	count = len(''.join(labels))
+	return {'loc':loc, 'labels':labels, 'unit':unit, 'scale':scale, 'min':tick_min, 'max':tick_max, 'count':count}
+
+
+def _mantissa_digits(num):
+	""" Get number of digits in the mantissa """
+	snum = str(num)
+	return 0 if (snum.find('.') == -1) or str(float(int(num))) == snum else len(snum)-snum.find('.')-1
+
+
+def _uniquify_tick_labels(tick_list, tmin, tmax):
+	""" Calculate minimum tick mantissa given tick spacing """
+	# If minimum or maximum has a mantissa, at least preserve one digit
+	mant_min = 1 if max(_mantissa_digits(tick_list[0]), _mantissa_digits(tick_list[-1])) > 0 else 0
+	# Step 1: Look at two contiguous ticks and lower mantissa digits till they are no more right zeros
+	mant = 10
+	for mant in range(10, mant_min-1, -1):
+		if (str(putil.eng.peng_frac(putil.eng.peng(tick_list[-1], mant)))[-1] != '0') or (str(putil.eng.peng_frac(putil.eng.peng(tick_list[-2], mant)))[-1] != '0'):
+			break
+	# Step 2: Confirm labels are unique
+	unique_mant_found = False
+	while mant >= mant_min:
+		loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
+		if (sum([1 if labels[index] != labels[index+1] else 0 for index in range(0, len(labels[:-1]))]) == len(labels)-1) and \
+				(sum([1 if (putil.eng.peng_float(label) != 0) or ((putil.eng.peng_float(label) == 0) and (num == 0)) else 0 for num, label in zip(tick_list, labels)]) == len(labels)):
+			unique_mant_found = True
+			mant -= 1
+		else:
+			mant += 1
+			if unique_mant_found:
+				loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
+				break
+	return [putil.misc.smart_round(element, PRECISION) for element in loc], labels
+
+
+def _get_text_prop(fig, text_obj):
+	""" Return length of text in pixels """
+	renderer = fig.canvas.get_renderer()
+	bbox = text_obj.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
+	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
+
+
+@putil.pcontracts.contract(param_list='list(int|float)', offset='offset_range', color_space='color_space_option')
+def parameterized_color_space(param_list, offset=0, color_space='binary'):
+	"""
+	Computes a color space where lighter colors correspond to lower parameter values
+
+	:param	param_list:		parameter values
+	:type	param_list:		list
+	:param	offset:			offset of the first (lightest) color, has to be in the [0, 1] range
+	:type	offset:			number
+	:param	color_space:	`color pallete <http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_. One of  :code:`'binary'`, :code:`'Blues'`, :code:`'BuGn'`, :code:`'BuPu'`, :code:`'GnBu'`, :code:`'Greens'`,
+	 :code:`'Greys'`, :code:`'Oranges'`, :code:`'OrRd'`, :code:`'PuBu'`, :code:`'PuBuGn'`, :code:`'PuRd'`, :code:`'Purples'`, :code:`'RdPu'`, :code:`'Reds'`, :code:`'YlGn'`, :code:`'YlGnBu'`, :code:`'YlOrBr`' or :code:`'YlOrRd'`
+	 (case sensitive)
+	:type	color_space:	string
+	:rtype:					Matplotlib color
+
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+	.. Auto-generated exceptions documentation for putil.plot.parameterized_color_space
+
+	:raises:
+	 * RuntimeError (Argument `color_space` is not valid)
+
+	 * RuntimeError (Argument `offset` is not valid)
+
+	 * RuntimeError (Argument `param_list` is not valid)
+
+	 * TypeError (Argument `param_list` is empty)
+
+	 * ValueError (Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', ''GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or
+	   'YlOrRd' (case insensitive))
+
+	.. [[[end]]]
+	"""
+	color_space_name_list = ['binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
+	_exh = putil.exh.get_or_create_exh_obj()
+	_exh.add_exception(exname='par_list_empty', extype=TypeError, exmsg='Argument `param_list` is empty')
+	_exh.raise_exception_if(exname='par_list_empty', condition=len(param_list) == 0)
+	color_pallete_list = [plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.GnBu, plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,	#pylint: disable=E1101
+					   plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds, plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd]	#pylint: disable=E1101
+	color_dict = dict(zip(color_space_name_list, color_pallete_list))
+	return [color_dict[color_space](putil.misc.normalize(value, param_list, offset)) for value in param_list]	#pylint: disable=E1101
 
 
 ###
@@ -300,7 +517,7 @@ def _legend_position_validation(option):
 ###
 class BasicSource(object):	#pylint: disable=R0902,R0903
 	"""
-	Objects of this class hold a given data set intended for plotting. It is intended as a convenient way to plot manually-entered data or data coming from
+	Objects of this class hold a given data set intended for plotting. It is a convenient way to plot manually-entered data or data coming from
 	a source that does not export to a comma-separated values (CSV) file.
 
 	:param	indep_var:			independent variable vector
@@ -311,7 +528,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	:type	indep_min:			number or None
 	:param	indep_max:			maximum independent variable value
 	:type	indep_max:			number or None
-	:rtype:						:py:class:`putil.plot.BasicSource()` object
+	:rtype:						:py:class:`putil.plot.BasicSource` object
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.__init__
@@ -421,9 +638,9 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	# Managed attributes
 	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
 	"""
-	Minimum independent variable limit
+	Gets or sets the minimum independent variable limit
 
-	:type:		number or None, default is *None*
+	:type:		number or None, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.indep_min
@@ -441,9 +658,9 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
 	"""
-	Maximum independent variable limit
+	Gets or sets the maximum independent variable limit
 
-	:type:		number or None, default is *None*
+	:type:		number or None, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.indep_max
@@ -461,7 +678,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	indep_var = property(_get_indep_var, _set_indep_var, None, doc='Independent variable Numpy vector')
 	"""
-	Independent variable data
+	Gets or sets the independent variable data
 
 	:type:		increasing real Numpy vector
 
@@ -481,7 +698,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	dep_var = property(_get_dep_var, _set_dep_var, None, doc='Dependent variable Numpy vector')
 	"""
-	Dependent variable data
+	Gets or sets the dependent variable data
 
 	:type:		real Numpy vector
 
@@ -502,7 +719,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	r"""
 	Objects of this class hold a data set from a CSV file intended for plotting. The raw data from the file can be filtered and a callback function can be used for more general data pre-processing.
 
-	:param	file_name:			comma-separated file name
+	:param	file_name:			comma-separated values file name
 	:type	file_name:			string
 	:param	indep_col_label:	independent variable column label
 	:type	indep_col_label:	string (case insensitive)
@@ -518,7 +735,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	:type	fproc:				function pointer or None
 	:param	fproc_eargs:		data processing function extra arguments
 	:type	fproc_eargs:		dictionary or None
-	:rtype:						:py:class:`putil.plot.CsvSource()` object
+	:rtype:						:py:class:`putil.plot.CsvSource` object
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.__init__
@@ -777,7 +994,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 		self._get_dep_var_from_file()
 
 	def _get_indep_var_from_file(self):
-		""" Retrieve independent data variable from comma-separated file """
+		""" Retrieve independent data variable from comma-separated values file """
 		self._exh.add_exception(exname='empty', extype=ValueError, exmsg='Filtered independent variable is empty')
 		if (self._csv_obj is not None) and (self.indep_col_label is not None):
 			self._check_indep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
@@ -790,7 +1007,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			self._set_indep_var(data)	#pylint: disable=W0212
 
 	def _get_dep_var_from_file(self):
-		""" Retrieve dependent data variable from comma-separated file """
+		""" Retrieve dependent data variable from comma-separated values file """
 		self._exh.add_exception(exname='empty', extype=ValueError, exmsg='Filtered dependent variable is empty')
 		if (self._csv_obj is not None) and (self.dep_col_label is not None):
 			self._check_dep_col_label()	# When object is given all arguments at construction the column label checking cannot happen at property assignment because file data is not yet loaded
@@ -841,7 +1058,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			self._set_dep_var(dep_var)	#pylint: disable=W0212
 
 	def __str__(self):
-		""" Print comma-separated value source information """
+		""" Print comma-separated values source information """
 		ret = ''
 		ret += 'File name: {0}\n'.format(self.file_name)
 		ret += 'Data filter: {0}\n'.format(self.dfilter if self.dfilter is None else '')
@@ -869,7 +1086,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	file_name = property(_get_file_name, _set_file_name, doc='Comma-separated file name')
 	r"""
-	Comma-separated file from which data series is to be extracted. It is assumed that the first line of file contains unique headers for each column
+	Gets or sets the comma-separated values file from which data series is to be extracted. It is assumed that the first line of the file contains unique headers for each column
 
 	:type:		string
 
@@ -938,8 +1155,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
 	r"""
-	Data filter consisting of a series of individual filters. Each individual filter in turn consists of column name (dictionary key) and a column value (dictionary value). All rows which contain the specified value in the
-	specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified by each individual filter. For example, if the file name to be processed is:
+	Gets or sets the data filter; it consists of a series of individual filters. Each individual filter in turn consists of a column name (dictionary key) and a column value (dictionary value). All rows which contain the specified
+	value in the specified column are kept for that particular individual filter. The overall data set is the intersection of all the data sets specified by each individual filter. For example, if the file name to be processed is:
 
 	+------+-----+--------+
 	| Ctrl | Ref | Result |
@@ -964,7 +1181,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an exception because the data set specified by the `Ctrl` individual filter does not overlap with the data set specified by
 	the `Ref` individual filter.
 
-	:type:		dictionary, default is *None*
+	:type:		dictionary, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.dfilter
@@ -1001,7 +1218,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	indep_col_label = property(_get_indep_col_label, _set_indep_col_label, doc='Independent column label (column name)')
 	r"""
-	Independent variable column label (column name)
+	Gets or sets the independent variable column label (column name)
 
 	:type:	string
 
@@ -1042,7 +1259,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	dep_col_label = property(_get_dep_col_label, _set_dep_col_label, doc='Dependent column label (column name)')
 	r"""
-	Dependent variable column label (column name)
+	Gets or sets the dependent variable column label (column name)
 
 	:type:	string
 
@@ -1083,9 +1300,9 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
 	"""
-	Minimum independent variable limit
+	Gets or sets the minimum independent variable limit
 
-	:type:		number or None, default is *None*
+	:type:		number or None, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_min
@@ -1103,9 +1320,9 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
 	"""
-	Maximum independent variable limit
+	Gets or sets the maximum independent variable limit
 
-	:type:		number or None, default is *None*
+	:type:		number or None, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.indep_max
@@ -1123,8 +1340,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	fproc = property(_get_fproc, _set_fproc, doc='Processing function')
 	r"""
-	Data processing function pointer. The processing function is useful for "light" data massaging, like scaling, unit conversion, etc.; it is called after the data has been retrieved from the comma-separated value and\
-	the resulting filtered data set has been thresholded by **indep_var_min** and **dep_var_min** (if applicable).
+	Gets or sets the data processing function pointer. The processing function is useful for "light" data massaging, like scaling, unit conversion, etc.; it is called after the data has been retrieved from the comma-separated
+	values file and the resulting filtered data set has been bounded (if applicable).
 
 	The processing function is given two arguments, a Numpy vector containing the independent variable array (first argument) and a Numpy vector containing the dependent variable array (second argument). \
 	The expected return value is a two-element Numpy vector tuple, its first element being the processed independent variable array, and the second element being the processed dependent variable array. One valid processing \
@@ -1137,7 +1354,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			dep_var = dep_var-dep_var[0]	# Want to remove initial offset
 			return indep_var, dep_var	# Return value is a 2-element tuple
 
-	:type:	function pointer, default is *None*
+	:type:	function pointer, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.fproc
@@ -1173,17 +1390,10 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	fproc_eargs = property(_get_fproc_eargs, _set_fproc_eargs, doc='Processing function extra argument dictionary')
 	#pylint: disable=W1401
 	r"""
-	Extra arguments for the data processing function. The arguments are specified by key-value pairs of a dictionary, for each dictionary element the dictionary key specifies the argument name and the dictionary value
-	specifies the argument value. The extra parameters are passed by keyword so they must appear in the function definition explicitly or keyword variable argument collection must be used (\*\*kwargs, for example).
+	Gets or sets the extra arguments for the data processing function. The arguments are specified by key-value pairs of a dictionary, for each dictionary element the dictionary key specifies the argument name and the dictionary
+	value specifies the argument value. The extra parameters are passed by keyword so they must appear in the function definition explicitly or keyword variable argument collection must be used (:code:`**kwargs`, for example).
 
-	For example, if ``fproc_eargs={'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function is::
-
-		def my_proc_func(indep_var, dep_var, par1, par2):
-			print '2*5 = 10 = {0}'.format(2*par1)
-			print 'sum([1, 2, 3]) = 6 = {0}'.format(sum(par2))
-			return indep_var+(2*par1), dep_var+sum(par2)
-
-	:type:	dictionary, default is *None*
+	:type:	dictionary, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.fproc_eargs
@@ -1212,13 +1422,26 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * ValueError (Processed independent variable is empty)
 
 	.. [[[end]]]
+
+	For example, if ``fproc_eargs={'par1':5, 'par2':[1, 2, 3]}`` then a valid processing function is::
+
+		def my_proc_func(indep_var, dep_var, par1, par2):
+			print '2*5 = 10 = {0}'.format(2*par1)
+			print 'sum([1, 2, 3]) = 6 = {0}'.format(sum(par2))
+			return indep_var+(2*par1), dep_var+sum(par2)
 	"""	#pylint: disable=W0105
 
 	# indep_var is read only
 	indep_var = property(_get_indep_var, None, doc='Independent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
+	"""
+	Gets the independent variable Numpy vector
+	"""
 
 	# dep_var is read only
 	dep_var = property(_get_dep_var, None, doc='Dependent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
+	"""
+	Gets the dependent variable Numpy vector
+	"""
 
 
 class Series(object):	#pylint: disable=R0902,R0903
@@ -1226,19 +1449,19 @@ class Series(object):	#pylint: disable=R0902,R0903
 	Specifies a series within a panel
 
 	:param	data_source:	data source object
-	:type	data_source:	:py:class:`putil.plot.BasicSource()` object or :py:class:`putil.plot.CsvSource()` object or others conforming to the data source specification
-	:param	label:			series label, to be used in panel legend
+	:type	data_source:	:py:class:`putil.plot.BasicSource` *object or* :py:class:`putil.plot.CsvSource` *object or others conforming to the data source specification*
+	:param	label:			series label, to be used in the panel legend
 	:type	label:			string
 	:param	color:			series color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported.
 	:type	color:			polymorphic
-	:param	marker:			marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. *None* indicates no marker.
+	:param	marker:			marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. :code:`None` indicates no marker.
 	:type	marker:			string or None
-	:param	interp:			interpolation option, one of None (no interpolation) 'STRAIGHT' (straight line connects data points), 'STEP' (horizontal segments between data points), 'CUBIC' (cubic interpolation between \
-	data points) or 'LINREG' (linear regression based on data points). The interpolation option is case insensitive.
+	:param	interp:			interpolation option, one of :code:`None` (no interpolation) :code:`'STRAIGHT'` (straight line connects data points), :code:`'STEP'` (horizontal segments between data points), :code:`'CUBIC'` (cubic
+	 interpolation between data points) or :code:`'LINREG'` (linear regression based on data points). The interpolation option is case insensitive.
 	:type	interp:			string or None
-	:param	line_style:		line style.   All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. *None* indicates no line.
+	:param	line_style:		line style.   All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. :code:`None` indicates no line.
 	:type	line_style:		string or None
-	:param	secondary_axis:	secondary axis flag
+	:param	secondary_axis:	Flag that indicates whether the series belongs to the panel primary axis (False) or secondary axis (True)
 	:type	secondary_axis:	boolean
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
@@ -1540,10 +1763,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	data_source = property(_get_data_source, _set_data_source, doc='Data source')
 	"""
-	Data source object. The independent and dependent data sets are obtained once this attribute is set. To be a valid, a data source object must have an ``indep_var`` attribute that contains a Numpy vector of increasing real \
-	numbers and a ``dep_var`` attribute that contains a Numpy vector of real numbers.
+	Gets or sets the data source object. The independent and dependent data sets are obtained once this attribute is set. To be valid, a data source object must have an ``indep_var`` attribute that contains a Numpy vector of
+	increasing real numbers and a ``dep_var`` attribute that contains a Numpy vector of real numbers
 
-	:type:	:py:class:`putil.plot.BasicSource()` object, :py:class:`putil.plot.CsvSource()` object or other objects conforming to the data source specification
+	:type:	:py:class:`putil.plot.BasicSource` object, :py:class:`putil.plot.CsvSource` object or other objects conforming to the data source specification
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.data_source
@@ -1563,7 +1786,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	label = property(_get_label, _set_label, doc='Series label')
 	"""
-	Series label, to be used in the panel legend if the panel has more than one series.
+	Gets or sets the series label, to be used in the panel legend if the panel has more than one series
 
 	:type:	string
 
@@ -1577,9 +1800,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	color = property(_get_color, _set_color, doc='Series line and marker color')
 	"""
-	Series line and marker color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported.
+	Gets or sets the series line and marker color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported
 
-	:type:	polymorphic, default is *'k'* (black)
+	:type:	polymorphic, default is :code:`'k'` (black)
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.color
@@ -1595,9 +1818,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	marker = property(_get_marker, _set_marker, doc='Plot data point markers flag')
 	"""
-	Series marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. *None* indicates no marker.
+	Gets or sets the series marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. :code:`None` indicates no marker
 
-	:type: string or None, default is *'o'* (circle)
+	:type: string or None, default is :code:`'o'` (circle)
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.marker
@@ -1613,10 +1836,10 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	interp = property(_get_interp, _set_interp, doc='Series interpolation option, one of `STRAIGHT`, `CUBIC` or `LINREG` (case insensitive)')
 	"""
-	Interpolation option, one of *None* (no interpolation) 'STRAIGHT' (straight line connects data points), 'STEP' (horizontal segments betweend data points), 'CUBIC' (cubic interpolation between \
-	data points) or 'LINREG' (linear regression based on data points). The interpolation option is case insensitive.
+	Gets or sets the interpolation option, one of :code:`None` (no interpolation) :code:`'STRAIGHT'` (straight line connects data points), :code:`'STEP'` (horizontal segments between data points), :code:`'CUBIC'` (cubic
+	interpolation between data points) or :code:`'LINREG'` (linear regression based on data points). The interpolation option is case insensitive
 
-	:type:	string, default is *'CUBIC'*
+	:type:	string, default is :code:`'CUBIC'`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.interp
@@ -1636,9 +1859,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	line_style = property(_get_line_style, _set_line_style, doc='Series line style, one of `-`, `--`, `-.` or `:`')
 	"""
-	Line style. All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. *None* indicates no line.
+	Sets or gets the line style. All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. :code:`None` indicates no line
 
-	:type:	string or None, default is *'-'*
+	:type:	string or None, default is :code:`'-'`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.line_style
@@ -1656,9 +1879,9 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	secondary_axis = property(_get_secondary_axis, _set_secondary_axis, doc='Series secondary axis flag')
 	"""
-	Secondary axis flag. If true, the series belongs to the secondary (right) panel axis.
+	Sets or gets the secondary axis flag. If :code:`True`, the series belongs to the secondary (right) panel axis, if :code:`False` the series belongs to the primary (left) panel axis
 
-	:type:	boolean, default is *False*
+	:type:	boolean, default is False
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.secondary_axis
@@ -1674,8 +1897,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	Defines a panel within a figure
 
 	:param	series:					one or more data series
-	:type	series:					:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
-	:param	primary_axis_label:		primary axis label
+	:type	series:					:py:class:`putil.plot.Series` *object or list of* :py:class:`putil.plot.Series` *objects*
+	:param	primary_axis_label:		primary dependent axis label
 	:type	primary_axis_label:		string
 	:param	primary_axis_units:		primary dependent axis units
 	:type	primary_axis_units:		string
@@ -1683,11 +1906,11 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	:type	secondary_axis_label:	string
 	:param	secondary_axis_units:	secondary dependent axis units
 	:type	secondary_axis_units:	string
-	:param	log_dep_axis:			logarithmic dependent (primary and/or secondary) axis flag
+	:param	log_dep_axis:			Flag that indicates whether the dependent (primary and/or secondary) axis is linear (False) or logarithmic (True)
 	:type	log_dep_axis:			boolean
-	:param	legend_props:			legend properties. See :py:attr:`putil.plot.Panel.legend_props()`
+	:param	legend_props:			legend properties. See :py:attr:`putil.plot.Panel.legend_props`
 	:type	legend_props:			dictionary
-	:param	show_indep_axis:		display primary axis flag
+	:param	show_indep_axis:		Flag that indicates whether the independent axis should be displayed (True) or not (False)
 	:type	show_indep_axis:		boolean
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
@@ -1983,9 +2206,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	series = property(_get_series, _set_series, doc='Panel series')
 	"""
-	Panel series
+	Gets or sets the panel series
 
-	:type:	:py:class:`putil.plot.Series()` object or list of :py:class:`putil.plot.Series()` objects
+	:type:	:py:class:`putil.plot.Series` object or list of :py:class:`putil.plot.Series` objects
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.series
@@ -2003,9 +2226,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	primary_axis_label = property(_get_primary_axis_label, _set_primary_axis_label, doc='Panel primary axis label')
 	"""
-	Panel primary axis label
+	Gets or sets the panel primary dependent axis label
 
-	:type:	string default is *''*
+	:type:	string default is :code:`''`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.primary_axis_label
@@ -2017,9 +2240,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	secondary_axis_label = property(_get_secondary_axis_label, _set_secondary_axis_label, doc='Panel secondary axis label')
 	"""
-	Panel secondary axis label
+	Gets or sets the panel secondary dependent axis label
 
-	:type:	string, default is *''*
+	:type:	string, default is :code:`''`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.secondary_axis_label
@@ -2031,9 +2254,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	primary_axis_units = property(_get_primary_axis_units, _set_primary_axis_units, doc='Panel primary axis units')
 	"""
-	Panel primary axis units
+	Gets or sets the panel primary dependent axis units
 
-	:type:	string, default is *''*
+	:type:	string, default is :code:`''`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.primary_axis_units
@@ -2045,9 +2268,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	secondary_axis_units = property(_get_secondary_axis_units, _set_secondary_axis_units, doc='Panel secondary axis units')
 	"""
-	Panel secondary axis units
+	Gets or sets the panel secondary dependent axis units
 
-	:type:	string, default is *''*
+	:type:	string, default is :code:`''`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.secondary_axis_units
@@ -2059,9 +2282,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	log_dep_axis = property(_get_log_dep_axis, _set_log_dep_axis, doc='Panel logarithmic dependent axis flag')
 	"""
-	Panel logarithmic dependent (primary and/or secondary) axis flag. Any plotted axis (primary, secondary or both) uses a logarithmic scale when this flag is *True*.
+	Gets or sets the panel logarithmic dependent (primary and/or secondary) axis flag. This flag indicates whether the dependent (primary and/or secondary) axis is linear (:code:`False`) or logarithmic (:code:`True`)
 
-	:type:	boolean, default is *False*
+	:type:	boolean, default is False
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.log_dep_axis
@@ -2073,15 +2296,16 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	legend_props = property(_get_legend_props, _set_legend_props, doc='Panel legend box properties')
 	"""
-	Panel legend box properties. A dictionary that has properties (dictionary key) and their associated values (dictionary values). Currently supported properties are:
+	Gets or sets the panel legend box properties; this is a dictionary that has properties (dictionary key) and their associated values (dictionary values). Currently supported properties are:
 
-	* **pos** (*string*) -- legend box position, one of 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER' or 'CENTER' (case insensitive).
+	* **pos** (*string*) -- legend box position, one of :code:`'BEST'`, :code:`'UPPER RIGHT'`, :code:`'UPPER LEFT'`, :code:`'LOWER LEFT'`, :code:`'LOWER RIGHT'`, :code:`'RIGHT'`, :code:`'CENTER LEFT'`, :code:`'CENTER RIGHT'`,
+	  :code:`'LOWER CENTER'`, :code:`'UPPER CENTER'` or :code:`'CENTER'` (case insensitive)
 
 	* **cols** (integer) -- number of columns of the legend box
 
 	.. note:: No legend is shown if a panel has only one series in it
 
-	:type:	dictionary, default is *{'pos':'BEST', 'cols':1}*
+	:type:	dictionary, default is :code:`{'pos':'BEST', 'cols':1}`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.legend_props
@@ -2101,9 +2325,9 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	show_indep_axis = property(_get_show_indep_axis, _set_show_indep_axis, doc='Show independent axis flag')
 	"""
-	Show independent axis flag.
+	Gets or sets the independent axis flag. This flag indicates whether the independent axis should be displayed (:code:`True`) or not (:code:`False`)
 
-	:type:	boolean, default is *False*
+	:type:	boolean, default is False
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.show_indep_axis
@@ -2116,21 +2340,21 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 class Figure(object):	#pylint: disable=R0902
 	"""
-	Automagically generate presentation-quality plots
+	Generates presentation-quality plots
 
 	:param	panels:				one or more data panels
-	:type	panels:				:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.Panel()` objects
+	:type	panels:				:py:class:`putil.plot.Panel` *object or list of* :py:class:`putil.plot.Panel` *objects*
 	:param	indep_var_label:	independent variable label
 	:type	indep_var_label:	string
 	:param	indep_var_units:	independent variable units
 	:type	indep_var_units:	string
-	:param	fig_width:			hard copy plot width
-	:type	fig_width:			positive number
-	:param	fig_height:			hard copy plot height
-	:type	fig_height:			positive number
+	:param	fig_width:			hard copy plot width in inches
+	:type	fig_width:			number
+	:param	fig_height:			hard copy plot height in inches
+	:type	fig_height:			number
 	:param	title:				plot title
 	:type	title:				string
-	:param	log_indep_axis:		logarithmic independent axis flag
+	:param	log_indep_axis:		Flag that indicates whether the independent axis is linear (False) or logarithmic (True)
 	:type	log_indep_axis:		boolean
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
@@ -2160,8 +2384,8 @@ class Figure(object):	#pylint: disable=R0902
 	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
 
 	.. [[[end]]]
-	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be retrieved using \
-	:py:attr:`putil.plot.Figure.fig_width` and/or :py:attr:`putil.plot.Figure.fig_height` attributes.
+	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if the arguments **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be \
+	retrieved using the :py:attr:`putil.plot.Figure.fig_width` and/or :py:attr:`putil.plot.Figure.fig_height` attributes.
 	"""
 	def __init__(self, panels=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep_axis=False):	#pylint: disable=R0913
 		self._exh = putil.exh.get_or_create_exh_obj()
@@ -2311,7 +2535,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	def show(self):	#pylint: disable=R0201
 		"""
-		Displays figure
+		Displays the figure
 
 		.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 		.. Auto-generated exceptions documentation for putil.plot.Figure.show
@@ -2329,7 +2553,7 @@ class Figure(object):	#pylint: disable=R0902
 	@putil.pcontracts.contract(file_name='file_name')
 	def save(self, file_name):
 		"""
-		Saves figure in PNG format to a file
+		Saves the figure in PNG format to a file
 
 		:param	file_name:	File name
 		:type	file_name:	string
@@ -2379,9 +2603,9 @@ class Figure(object):	#pylint: disable=R0902
 
 	indep_var_label = property(_get_indep_var_label, _set_indep_var_label, doc='Figure independent axis label')
 	"""
-	Figure independent variable label
+	Gets or sets the figure independent variable label
 
-	:type:		string or None, default is *''*
+	:type: string or None, default is :code:`''`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.indep_var_label
@@ -2399,9 +2623,9 @@ class Figure(object):	#pylint: disable=R0902
 
 	indep_var_units = property(_get_indep_var_units, _set_indep_var_units, doc='Figure independent axis units')
 	"""
-	Figure independent variable units
+	Gets or sets the figure independent variable units
 
-	:type:		string or None, default is *''*
+	:type: string or None, default is :code:`''`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.indep_var_units
@@ -2419,9 +2643,9 @@ class Figure(object):	#pylint: disable=R0902
 
 	title = property(_get_title, _set_title, doc='Figure title')
 	"""
-	Figure title
+	Gets or sets the figure title
 
-	:type:		string or None, default is *''*
+	:type: string or None, default is :code:`''`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.title
@@ -2439,9 +2663,9 @@ class Figure(object):	#pylint: disable=R0902
 
 	log_indep_axis = property(_get_log_indep_axis, _set_log_indep_axis, doc='Figure log_indep_axis')
 	"""
-	Figure logarithmic independent axis flag
+	Gets or sets the figure logarithmic independent axis flag. This flag indicates whether the figure independent axis is linear (:code:`False`) or logarithmic (:code:`True`)
 
-	:type:		boolean, default is *False*
+	:type: boolean, default is False
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.log_indep_axis
@@ -2459,9 +2683,9 @@ class Figure(object):	#pylint: disable=R0902
 
 	fig_width = property(_get_fig_width, _set_fig_width, doc='Width of the hard copy plot')
 	"""
-	Width of the hard copy plot
+	Gets or sets the width (in inches) of the hard copy plot
 
-	:type:		positive number, float or integer
+	:type: positive number, float or integer
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.fig_width
@@ -2473,9 +2697,9 @@ class Figure(object):	#pylint: disable=R0902
 
 	fig_height = property(_get_fig_height, _set_fig_height, doc='height of the hard copy plot')
 	"""
-	Height of the hard copy plot
+	Gets or sets the height (in inches) of the hard copy plot
 
-	:type:		positive number, float or integer
+	:type: positive number, float or integer
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.fig_height
@@ -2487,9 +2711,9 @@ class Figure(object):	#pylint: disable=R0902
 
 	panels = property(_get_panels, _set_panels, doc='Figure panel(s)')
 	"""
-	Figure panel(s)
+	Gets or sets the figure panel(s)
 
-	:type:	:py:class:`putil.plot.Panel()` object or list of :py:class:`putil.plot.panel()` objects
+	:type: :py:class:`putil.plot.Panel` object or list of :py:class:`putil.plot.panel` objects
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.panels
@@ -2515,228 +2739,21 @@ class Figure(object):	#pylint: disable=R0902
 
 	fig = property(_get_fig, doc='Figure handle')
 	"""
-	Matplotlib figure handle. Useful if annotations or further customizations to the figure are needed.
+	Gets the Matplotlib figure handle. Useful if annotations or further customizations to the figure are needed
 
-	:type:		Matplotlib figure handle if figure is fully specified, otherwise None
+	:type: Matplotlib figure handle if figure is fully specified, otherwise None
 	"""	#pylint: disable=W0105
 
 	axes_list = property(_get_axes_list, doc='Matplotlib figure axes handle list')
 	"""
-	Matplotlib figure axes handle list. Useful if annotations or further customizations to the panel(s) are needed. Each panel has an entry in the list, which is sorted in the order the panels are
-	plotted (top to bottom). Each panel entry is a dictionary containing the following keys:
+	Gets the Matplotlib figure axes handle list. Useful if annotations or further customizations to the panel(s) are needed. Each panel has an entry in the list, which is sorted in the order the panels are
+	plotted (top to bottom). Each panel entry is a dictionary containing the following key-value pairs:
 
 	* **number** (*integer*) -- panel number, panel 0 is the top-most panel
 
-	* **primary** (*Matplotlib axis object*) -- axis handle for the primary axis, *None* if the figure has not primary axis
+	* **primary** (*Matplotlib axis object*) -- axis handle for the primary axis, :code:`None` if the figure has not primary axis
 
-	* **secondary** (*Matplotlib axis object*) -- axis handle for the secondary axis, *None* if the figure has not secondary axis
+	* **secondary** (*Matplotlib axis object*) -- axis handle for the secondary axis, :code:`None` if the figure has no secondary axis
 
 	:type: list
 	""" #pylint: disable=W0105
-
-
-def _first_label(label_list):
-	""" Find first non-blank label """
-	for label_index, label_obj in enumerate(label_list):
-		if (label_obj.get_text() is not None) and (label_obj.get_text().strip() != ''):
-			return label_index
-	return None
-
-
-def _get_yaxis_size(fig_obj, tick_labels, axis_label):
-	""" Compute Y axis height and width """
-	# Minimum of one line spacing between vertical ticks
-	axis_height = axis_width = 0
-	if (tick_labels is not None) and (len(tick_labels) > 0):
-		label_index = _first_label(tick_labels)
-		if label_index is not None:
-			label_height = _get_text_prop(fig_obj, tick_labels[label_index])['height']
-			axis_height = (2*len(tick_labels)-1)*label_height
-			axis_width = max([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
-	if axis_label is not None:
-		axis_height = max(axis_height, _get_text_prop(fig_obj, axis_label)['height'])
-		axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
-	return axis_height, axis_width
-
-
-def _get_xaxis_size(fig_obj, tick_labels, axis_label):
-	""" Compute Y axis height and width """
-	# Minimum of one smallest label separation between horizontal ticks
-	axis_height = axis_width = 0
-	if (tick_labels is not None) and (len(tick_labels) > 0):
-		min_label_width = min([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
-		axis_width = ((len(tick_labels)-1)*min_label_width)+sum([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
-	if axis_label is not None:
-		axis_height = (axis_height+(1.5*_get_text_prop(fig_obj, axis_label)['height']))
-		axis_width = max(axis_width, _get_text_prop(fig_obj, axis_label)['width'])
-	return axis_height, axis_width
-
-
-def _process_ticks(locs, min_lim, max_lim, mant):
-	"""
-	Returns pretty-printed tick locations that are within the given bound
-	"""
-	locs = [float(loc) for loc in locs]
-	bounded_locs = [loc for loc in locs if ((loc >= min_lim) or (abs(loc-min_lim) <= 1e-14)) and ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))]
-	raw_labels = [putil.eng.peng(float(loc), mant, rjust=False) if ((abs(loc) >= 1) or (loc == 0)) else str(putil.misc.smart_round(loc, mant)) for loc in bounded_locs]
-	return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
-
-
-def _intelligent_ticks(series, series_min, series_max, tight=True, log_axis=False):	#pylint: disable=R0912,R0914,R0915
-	""" Calculates ticks 'intelligently', trying to calculate sane tick spacing """
-	# Handle 1-point series
-	if len(series) == 1:
-		series_min = series_max = series[0]
-		tick_spacing = putil.misc.smart_round(0.1*series[0], PRECISION)
-		tick_list = numpy.array([series[0]-tick_spacing, series[0], series[0]+tick_spacing])
-		tick_spacing = putil.misc.smart_round(0.1*series[0], PRECISION)
-		tight = tight_left = tight_right = log_axis = False
-	else:
-		if log_axis:
-			dec_start = int(math.log10(min(series)))
-			dec_stop = int(math.ceil(math.log10(max(series))))
-			tick_list = [10**num for num in range(dec_start, dec_stop+1)]
-			tight_left = False if (not tight) and (tick_list[0] >= min(series)) else True
-			tight_right = False if (not tight) and (tick_list[-1] <= max(series)) else True
-			tick_list = numpy.array(tick_list)
-		else:
-			# Try to find the tick spacing that will have the most number of data points on grid. Otherwise, place max_ticks uniformely distributed across the data rage
-			series_delta = putil.misc.smart_round(max(series)-min(series), PRECISION)
-			working_series = series[:].tolist()
-			tick_list = list()
-			num_ticks = SUGGESTED_MAX_TICKS
-			while (num_ticks >= MIN_TICKS) and (len(working_series) > 1):
-				data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
-				tick_spacing = putil.misc.gcd(data_spacing)
-				num_ticks = (series_delta/tick_spacing)+1
-				if (num_ticks >= MIN_TICKS) and (num_ticks <= SUGGESTED_MAX_TICKS):
-					tick_list = numpy.linspace(putil.misc.smart_round(min(series), PRECISION), putil.misc.smart_round(max(series), PRECISION), num_ticks).tolist()	#pylint: disable=E1103
-					break
-				# Remove elements that cause minimum spacing, to see if with those elements removed the number of tick marks can be withing the acceptable range
-				min_data_spacing = min(data_spacing)
-				# Account for fact that if minimum spacing is between last two elements, the last element cannot be removed (it is the end of the range), but rather the next-to-last has to be removed
-				if (data_spacing[-1] == min_data_spacing) and (len(working_series) > 2):
-					working_series = working_series[:-2]+[working_series[-1]]
-					data_spacing = [putil.misc.smart_round(element, PRECISION) for element in numpy.diff(working_series)]
-				working_series = [working_series[0]]+[element for element, spacing in zip(working_series[1:], data_spacing) if spacing != min_data_spacing]
-			tick_list = tick_list if len(tick_list) > 0 else numpy.linspace(min(series), max(series), SUGGESTED_MAX_TICKS).tolist()	#pylint: disable=E1103
-			tick_spacing = putil.misc.smart_round(tick_list[1]-tick_list[0], PRECISION)
-			# Account for interpolations, whose curves might have values above or below the data points. Only add an extra tick, otherwise let curve go above/below panel
-			tight_left = False if (not tight) and (tick_list[0] >= series_min) else tight
-			tight_right = False if (not tight) and (tick_list[-1] <= series_max) else tight
-			tick_list = numpy.array(tick_list if tight else ([tick_list[0]-tick_spacing] if not tight_left else [])+tick_list+([tick_list[-1]+tick_spacing] if not tight_right else []))
-	# Scale series with minimum, maximum and delta as reference, pick scaling option that has the most compact representation
-	opt_min = _scale_ticks(tick_list, 'MIN')
-	opt_max = _scale_ticks(tick_list, 'MAX')
-	opt_delta = _scale_ticks(tick_list, 'DELTA')
-	opt = opt_min if (opt_min['count'] <= opt_max['count']) and (opt_min['count'] <= opt_delta['count']) else (opt_max if (opt_max['count'] <= opt_min['count']) and (opt_max['count'] <= opt_delta['count']) else opt_delta)
-	# Add extra room in logarithmic axis if Tight is True, but do not label marks (aesthetic decision)
-	if log_axis and not tight:
-		if not tight_left:
-			opt['min'] = putil.misc.smart_round(0.9*opt['loc'][0], PRECISION)
-			opt['loc'].insert(0, opt['min'])
-			opt['labels'].insert(0, '')
-		if not tight_right:
-			opt['max'] = putil.misc.smart_round(1.1*opt['loc'][-1], PRECISION)
-			opt['loc'].append(opt['max'])
-			opt['labels'].append('')
-	return (opt['loc'], opt['labels'], opt['min'], opt['max'], opt['scale'], opt['unit'])
-
-
-def _scale_ticks(tick_list, mode):
-	""" Scale series taking the reference to be the series start, stop or delta """
-	mode = mode.strip().upper()
-	tick_min = tick_list[0]
-	tick_max = tick_list[-1]
-	tick_delta = tick_max-tick_min
-	tick_ref = tick_min if mode == 'MIN' else (tick_max if mode == 'MAX' else tick_delta)
-	(unit, scale) = putil.eng.peng_power(putil.eng.peng(tick_ref, 3))
-	# Move one engineering unit back if there are more ticks below 1.0 than above it
-	rollback = (sum((tick_list/scale) >= 1000) > sum((tick_list/scale) < 1000)) and (tick_list[-1]/scale < 10000)
-	scale = 1 if rollback else scale
-	unit = putil.eng.peng_suffix_math(unit, +1) if rollback else unit
-	tick_list = numpy.array([putil.misc.smart_round(element/scale, PRECISION) for element in tick_list])
-	tick_min = putil.misc.smart_round(tick_min/scale, PRECISION)
-	tick_max = putil.misc.smart_round(tick_max/scale, PRECISION)
-	loc, labels = _uniquify_tick_labels(tick_list, tick_min, tick_max)
-	count = len(''.join(labels))
-	return {'loc':loc, 'labels':labels, 'unit':unit, 'scale':scale, 'min':tick_min, 'max':tick_max, 'count':count}
-
-
-def _mantissa_digits(num):
-	""" Get number of digits in the mantissa """
-	snum = str(num)
-	return 0 if (snum.find('.') == -1) or str(float(int(num))) == snum else len(snum)-snum.find('.')-1
-
-
-def _uniquify_tick_labels(tick_list, tmin, tmax):
-	""" Calculate minimum tick mantissa given tick spacing """
-	# If minimum or maximum has a mantissa, at least preserve one digit
-	mant_min = 1 if max(_mantissa_digits(tick_list[0]), _mantissa_digits(tick_list[-1])) > 0 else 0
-	# Step 1: Look at two contiguous ticks and lower mantissa digits till they are no more right zeros
-	mant = 10
-	for mant in range(10, mant_min-1, -1):
-		if (str(putil.eng.peng_frac(putil.eng.peng(tick_list[-1], mant)))[-1] != '0') or (str(putil.eng.peng_frac(putil.eng.peng(tick_list[-2], mant)))[-1] != '0'):
-			break
-	# Step 2: Confirm labels are unique
-	unique_mant_found = False
-	while mant >= mant_min:
-		loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
-		if (sum([1 if labels[index] != labels[index+1] else 0 for index in range(0, len(labels[:-1]))]) == len(labels)-1) and \
-				(sum([1 if (putil.eng.peng_float(label) != 0) or ((putil.eng.peng_float(label) == 0) and (num == 0)) else 0 for num, label in zip(tick_list, labels)]) == len(labels)):
-			unique_mant_found = True
-			mant -= 1
-		else:
-			mant += 1
-			if unique_mant_found:
-				loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
-				break
-	return [putil.misc.smart_round(element, PRECISION) for element in loc], labels
-
-
-def _get_text_prop(fig, text_obj):
-	""" Return length of text in pixels """
-	renderer = fig.canvas.get_renderer()
-	bbox = text_obj.get_window_extent(renderer=renderer).transformed(fig.dpi_scale_trans.inverted())
-	return {'width':bbox.width*fig.dpi, 'height':bbox.height*fig.dpi}
-
-
-@putil.pcontracts.contract(param_list='list(int|float)', offset='offset_range', color_space='color_space_option')
-def parameterized_color_space(param_list, offset=0, color_space='binary'):
-	"""
-	Computes a color space where lighter colors correspond to lower parameter values
-
-	:param	param_list:		parameter list
-	:type	param_list:		list of numbers (parameter values)
-	:param	offset:			offset of the first (lightest) color
-	:type	offset:			float between 0 and 1
-	:param	color_space:	`color pallete <http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_. One of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', \
-	'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case sensitive).
-	:type	color_space:	string
-	:rtype:					Matplotlib color
-
-	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-	.. Auto-generated exceptions documentation for putil.plot.parameterized_color_space
-
-	:raises:
-	 * RuntimeError (Argument `color_space` is not valid)
-
-	 * RuntimeError (Argument `offset` is not valid)
-
-	 * RuntimeError (Argument `param_list` is not valid)
-
-	 * TypeError (Argument `param_list` is empty)
-
-	 * ValueError (Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or
-	   'YlOrRd' (case insensitive))
-
-	.. [[[end]]]
-	"""
-	color_space_name_list = ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
-	_exh = putil.exh.get_or_create_exh_obj()
-	_exh.add_exception(exname='par_list_empty', extype=TypeError, exmsg='Argument `param_list` is empty')
-	_exh.raise_exception_if(exname='par_list_empty', condition=len(param_list) == 0)
-	color_pallete_list = [plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.gist_yarg, plt.cm.GnBu, plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,	#pylint: disable=E1101
-					   plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds, plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd]	#pylint: disable=E1101
-	color_dict = dict(zip(color_space_name_list, color_pallete_list))
-	return [color_dict[color_space](putil.misc.normalize(value, param_list, offset)) for value in param_list]	#pylint: disable=E1101

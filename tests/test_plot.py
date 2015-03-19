@@ -38,31 +38,31 @@ def compare_images(image_file_name1, image_file_name2):
 ###
 def test_real_num_contract():	#pylint: disable=W0232
 	""" Tests for RealNumber pseudo-type """
-	putil.test.assert_exception(putil.plot.real_num, {'num':'a'}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.real_num, {'num':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.real_num, {'num':False}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_num, {'obj':'a'}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_num, {'obj':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_num, {'obj':False}, ValueError, '[START CONTRACT MSG: real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.plot.real_num(1)
 	putil.plot.real_num(2.0)
 
 
 def test_positive_real_num_contract():	#pylint: disable=W0232
 	""" Tests for PositiveRealNumber pseudo-type """
-	putil.test.assert_exception(putil.plot.positive_real_num, {'num':'a'}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.positive_real_num, {'num':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.positive_real_num, {'num':False}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.positive_real_num, {'num':-1}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.positive_real_num, {'num':-2.0}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'obj':'a'}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'obj':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'obj':False}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'obj':-1}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.positive_real_num, {'obj':-2.0}, ValueError, '[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.plot.positive_real_num(1)
 	putil.plot.positive_real_num(2.0)
 
 
 def test_offset_range_contract():	#pylint: disable=W0232
 	""" Tests for PositiveRealNumber pseudo-type """
-	putil.test.assert_exception(putil.plot.offset_range, {'num':'a'}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.offset_range, {'num':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.offset_range, {'num':False}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.offset_range, {'num':-0.1}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.offset_range, {'num':-1.1}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'obj':'a'}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'obj':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'obj':False}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'obj':-0.1}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.offset_range, {'obj':-1.1}, ValueError, '[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.plot.offset_range(0)
 	putil.plot.offset_range(0.5)
 	putil.plot.offset_range(1)
@@ -77,11 +77,11 @@ def test_function_contract():	#pylint: disable=W0232
 
 def test_real_numpy_vector_contract():	#pylint: disable=W0232
 	""" Tests for RealNumpyVector pseudo-type """
-	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':'a'}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':numpy.array([])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':numpy.array([[1, 2, 3], [4, 5, 6]])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.real_numpy_vector, {'vector':numpy.array(['a', 'b'])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'obj':'a'}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'obj':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'obj':numpy.array([])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'obj':numpy.array([[1, 2, 3], [4, 5, 6]])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.real_numpy_vector, {'obj':numpy.array(['a', 'b'])}, ValueError, '[START CONTRACT MSG: real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.plot.real_numpy_vector(numpy.array([1, 2, 3]))
 	putil.plot.real_numpy_vector(numpy.array([10.0, 8.0, 2.0]))
 	putil.plot.real_numpy_vector(numpy.array([10.0]))
@@ -89,16 +89,16 @@ def test_real_numpy_vector_contract():	#pylint: disable=W0232
 
 def test_increasing_real_numpy_vector_contract():	#pylint: disable=W0232,C0103
 	""" Tests for IncreasingRealNumpyVector pseudo-type """
-	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':'a'}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([])}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([[1, 2, 3], [4, 5, 6]])},\
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'obj':'a'}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'obj':[1, 2, 3]}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'obj':numpy.array([])}, ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'obj':numpy.array([[1, 2, 3], [4, 5, 6]])},\
 		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array(['a', 'b'])},\
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'obj':numpy.array(['a', 'b'])},\
 		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([1, 0, -3])},\
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'obj':numpy.array([1, 0, -3])},\
 		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'vector':numpy.array([10.0, 8.0, 2.0])},\
+	putil.test.assert_exception(putil.plot.increasing_real_numpy_vector, {'obj':numpy.array([10.0, 8.0, 2.0])},\
 		 ValueError, '[START CONTRACT MSG: increasing_real_numpy_vector]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
 	putil.plot.increasing_real_numpy_vector(numpy.array([1, 2, 3]))
 	putil.plot.increasing_real_numpy_vector(numpy.array([10.0, 12.1, 12.5]))
@@ -107,8 +107,8 @@ def test_increasing_real_numpy_vector_contract():	#pylint: disable=W0232,C0103
 
 def test_interpolation_option_contract():	#pylint: disable=W0232,C0103
 	""" Tests for InterpolationOption pseudo-type """
-	putil.test.assert_exception(putil.plot.interpolation_option, {'option':5}, ValueError, '[START CONTRACT MSG: interpolation_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.interpolation_option, {'option':'x'}, ValueError,\
+	putil.test.assert_exception(putil.plot.interpolation_option, {'obj':5}, ValueError, '[START CONTRACT MSG: interpolation_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.interpolation_option, {'obj':'x'}, ValueError,\
 							 "[START CONTRACT MSG: interpolation_option]Argument `*[argument_name]*` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive)[STOP CONTRACT MSG]")
 	putil.plot.interpolation_option(None)
 	for item in ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']:
@@ -118,8 +118,8 @@ def test_interpolation_option_contract():	#pylint: disable=W0232,C0103
 
 def test_line_style_option_contract():	#pylint: disable=W0232
 	""" Tests for LineStyleOption pseudo-type """
-	putil.test.assert_exception(putil.plot.line_style_option, {'option':5}, ValueError, '[START CONTRACT MSG: line_style_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.line_style_option, {'option':'x'}, ValueError,\
+	putil.test.assert_exception(putil.plot.line_style_option, {'obj':5}, ValueError, '[START CONTRACT MSG: line_style_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.line_style_option, {'obj':'x'}, ValueError,\
 							 "[START CONTRACT MSG: line_style_option]Argument `*[argument_name]*` is not one of ['-', '--', '-.', ':'][STOP CONTRACT MSG]")
 	putil.plot.line_style_option(None)
 	for item in ['-', '--', '-.', ':']:
@@ -128,11 +128,11 @@ def test_line_style_option_contract():	#pylint: disable=W0232
 
 def test_color_space_option_contract():	#pylint: disable=W0232,C0103
 	""" Tests for LineStyleOption pseudo-type """
-	putil.test.assert_exception(putil.plot.color_space_option, {'option':5}, ValueError, '[START CONTRACT MSG: color_space_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-	putil.test.assert_exception(putil.plot.color_space_option, {'option':'x'}, ValueError,\
-							 "[START CONTRACT MSG: color_space_option]Argument `*[argument_name]*` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', "+\
+	putil.test.assert_exception(putil.plot.color_space_option, {'obj':5}, ValueError, '[START CONTRACT MSG: color_space_option]Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+	putil.test.assert_exception(putil.plot.color_space_option, {'obj':'x'}, ValueError,\
+							 "[START CONTRACT MSG: color_space_option]Argument `*[argument_name]*` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', "+\
 							 "'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or 'YlOrRd' (case insensitive)[STOP CONTRACT MSG]")
-	for item in ['binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']:
+	for item in ['binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']:
 		putil.plot.color_space_option(item)
 
 
@@ -917,7 +917,7 @@ class TestSeries(object):	#pylint: disable=W0232
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
+			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
 
 
@@ -1011,112 +1011,112 @@ class TestPanel(object):	#pylint: disable=W0232
 		vector = numpy.array([35e-6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([31.5, 35, 38.5], ['31.5', '35.0', '38.5'], 31.5, 38.5, 1e-6, 'u')
-		print obj
+		# print obj
 		# 1
 		# Scaling with more data samples after 1.0
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6], ['0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6'], 0.8, 1.6, 1, ' ')
-		print obj
+		# print obj
 		# 2
 		# Regular, should not have any scaling
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1, ' ')
-		print obj
+		# print obj
 		# 3
 		# Regular, should not have any scaling
 		vector = numpy.array([10, 20, 30, 40, 50, 60, 70])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([10, 20, 30, 40, 50, 60, 70], ['10', '20', '30', '40', '50', '60', '70'], 10, 70, 1, ' ')
-		print obj
+		# print obj
 		# 4
 		# Scaling
 		vector = numpy.array([1000, 2000, 3000, 4000, 5000, 6000, 7000])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([1, 2, 3, 4, 5, 6, 7], ['1', '2', '3', '4', '5', '6', '7'], 1, 7, 1e3, 'k')
-		print obj
+		# print obj
 		# 5
 		# Scaling
 		vector = numpy.array([200e6, 300e6, 400e6, 500e6, 600e6, 700e6, 800e6, 900e6, 1000e6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([200, 300, 400, 500, 600, 700, 800, 900, 1000], ['200', '300', '400', '500', '600', '700', '800', '900', '1k'], 200, 1000, 1e6, 'M')
-		print obj
+		# print obj
 		# 6
 		# No tick marks to place all data points on grid, space uniformely
 		vector = numpy.array([105, 107.7, 215, 400.2, 600, 700, 800, 810, 820, 830, 840, 850, 900, 905])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([105.0, 193.8888888889, 282.7777777778, 371.6666666667, 460.5555555556, 549.4444444444, 638.3333333333, 727.2222222222, 816.1111111111, 905.0],
 						   ['105', '194', '283', '372', '461', '549', '638', '727', '816', '905'], 105, 905, 1, ' ')
-		print obj
+		# print obj
 		# 7
 		# Ticks marks where some data points can be on grid
 		vector = numpy.array([10, 20, 30, 40, 41, 50, 60, 62, 70, 75.5, 80])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([10, 20, 30, 40, 50, 60, 70, 80], ['10', '20', '30', '40', '50', '60', '70', '80'], 10, 80, 1, ' ')
-		print obj
+		# print obj
 		# 8
 		# Tight = False
 		# One sample
 		vector = numpy.array([1e-9])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
 		assert obj == ([0.9, 1, 1.1], ['0.9', '1.0', '1.1'], 0.9, 1.1, 1e-9, 'n')
-		print obj
+		# print obj
 		# 9
 		# Scaling with more data samples after 1.0
 		vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
 		assert obj == ([0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7'], 0.7, 1.7, 1, ' ')
-		print obj
+		# print obj
 		# 10
 		# Scaling with more data samples before 1.0
 		vector = numpy.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=False)	#pylint: disable=W0212
 		assert obj == ([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2], ['0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0', '1.1', '1.2'], 0.2, 1.2, 1, ' ')
-		print obj
+		# print obj
 		# 11
 		# Regular, with some overshoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 7.5, tight=False)	#pylint: disable=W0212
 		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
-		print obj
+		# print obj
 		# 12
 		# Regular, with some undershoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, 0.1, max(vector), tight=False)	#pylint: disable=W0212
 		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
-		print obj
+		# print obj
 		# 13
 		# Regular, with large overshoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 20, tight=False)	#pylint: disable=W0212
 		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
-		print obj
+		# print obj
 		# 14
 		# Regular, with large undershoot
 		vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
 		obj = putil.plot._intelligent_ticks(vector, -10, max(vector), tight=False)	#pylint: disable=W0212
 		assert obj == ([0, 1, 2, 3, 4, 5, 6, 7, 8], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], 0, 8, 1, ' ')
-		print obj
+		# print obj
 		# 15
 		# Scaling, minimum as reference
 		vector = 1e9+(numpy.array([10, 20, 30, 40, 50, 60, 70, 80])*1e3)
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([1.00001, 1.00002, 1.00003, 1.00004, 1.00005, 1.00006, 1.00007, 1.00008], ['1.00001', '1.00002', '1.00003', '1.00004', '1.00005', '1.00006', '1.00007', '1.00008'], 1.00001, 1.00008, 1e9, 'G')
-		print obj
+		# print obj
 		# 16
 		# Scaling, delta as reference
 		vector = numpy.array([10.1e6, 20e6, 30e6, 40e6, 50e6, 60e6, 70e6, 80e6, 90e6, 100e6, 20.22e9])
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([10.1, 2255.6444444444, 4501.1888888889, 6746.7333333333, 8992.2777777778, 11237.8222222222, 13483.3666666667, 15728.9111111111, 17974.4555555556, 20220.0], \
 						   ['10.1', '2.3k', '4.5k', '6.7k', '9.0k', '11.2k', '13.5k', '15.7k', '18.0k', '20.2k'], 10.1, 20220.0, 1e6, 'M')
-		print obj
+		# print obj
 		# 17
 		# Scaling, maximum as reference
 		vector = (numpy.array([0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5])*1e12)
 		obj = putil.plot._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5], ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5'], 0.7, 1.5, 1e12, 'T')
-		print obj
+		# print obj
 		# 18
 		# Log axis
 		# Tight False
@@ -1129,20 +1129,20 @@ class TestPanel(object):	#pylint: disable=W0232
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, 500, max(vector), tight=False, log_axis=True)	#pylint: disable=W0212
 		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
-		print obj
+		# print obj
 		# 20
 		# Right side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, min(vector), 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
 		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
-		print obj
+		# print obj
 		# 21
 		# Both
 		# Right side
 		vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
 		obj = putil.plot._intelligent_ticks(vector, 500, 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
 		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
-		print obj
+		# print obj
 
 	def test_series(self):	#pylint: disable=C0103,R0201,W0621,R0914,R0915
 		""" Test that the panel dependent axis are correctly set """
@@ -1356,7 +1356,7 @@ class TestPanel(object):	#pylint: disable=W0232
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
+			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
 
 
@@ -1570,7 +1570,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-			print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
+			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
 
 ###
@@ -1594,7 +1594,7 @@ class TestParameterizedColorSpace(object):	#pylint: disable=W0232,R0903
 	def test_color_space_wrong_type(self):	#pylint: disable=C0103,R0201,W0621
 		""" Test for invalid offset parameter """
 		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':[1, 2], 'color_space':3}, RuntimeError, 'Argument `color_space` is not valid')
-		msg = "Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'gist_yarg', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' "+\
+		msg = "Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' "+\
 			"or 'YlOrRd' (case insensitive)"
 		putil.test.assert_exception(putil.plot.parameterized_color_space, {'param_list':[1, 2], 'color_space':'a'}, ValueError, msg)
 		# This should not raise an exception
