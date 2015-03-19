@@ -3,17 +3,15 @@
 # See LICENSE for details
 # pylint: disable=W0212,C0111
 
-import copy
-import pytest
+import copy, os, pytest
 
-import putil.exh
-import putil.exdoc
+import putil.exdoc, putil.exh
 
 
 def trace_module(no_print=False):
 	""" Trace pcsv module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		if pytest.main('-s -vv -x ../tests/test_pcsv.py'):
+		if pytest.main('-x '+os.path.abspath('../tests/test_pcsv.py')):
 			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'putil.pcsv.'

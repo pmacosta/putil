@@ -24,7 +24,7 @@ definitions of the custom contracts :py:func:`putil.pcontracts.file_name` and :p
 This is nearly identical to the way custom contracts are defined using the `PyContracts <https://andreacensi.github.io/contracts/>`_ library with two exceptions:
 
 1. To avoid repetition and errors, the exception messages defined with :py:func:`putil.pcontracts.new_contract` are available within the contract via the :py:func:`putil.pcontracts.get_exdesc` function.
-  
+
 2. A `PyContracts new contract <http://andreacensi.github.io/contracts/new_contract.html#new-contract>`_ can return :code:`False` or raise a :code:`ValueError` exception to indicate a contract breach, however a new contract
    specified via the :py:func:`putil.pcontracts.new_contract` decorator *has* to raise a :code:`ValueError` exception to indicate a contract breach.
 
@@ -36,12 +36,12 @@ contracts shown above and the exceptions they produce:
 ... def print_if_file_name_valid(name):
 ...    """ Sample function 1 """
 ...    print 'Valid file name: {0}'.format(name)
-... 
+...
 >>> @putil.pcontracts.contract(num=int, name='file_name_exists')
 ... def print_if_file_name_exists(num, name):
 ...    """ Sample function 2 """
 ...    print 'Valid file name: [{0}] {1}'.format(num, name)
-... 
+...
 >>> print_if_file_name_valid('some_file.txt')
 Valid file name: some_file.txt
 >>> print_if_file_name_valid('invalid_file_name.txt\0')

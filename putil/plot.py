@@ -472,7 +472,7 @@ def _get_text_prop(fig, text_obj):
 
 @putil.pcontracts.contract(param_list='list(int|float)', offset='offset_range', color_space='color_space_option')
 def parameterized_color_space(param_list, offset=0, color_space='binary'):
-	"""
+	r"""
 	Computes a color space where lighter colors correspond to lower parameter values
 
 	:param	param_list:		parameter values
@@ -489,15 +489,15 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
 	.. Auto-generated exceptions documentation for putil.plot.parameterized_color_space
 
 	:raises:
-	 * RuntimeError (Argument `color_space` is not valid)
+	 * RuntimeError (Argument \`color_space\` is not valid)
 
-	 * RuntimeError (Argument `offset` is not valid)
+	 * RuntimeError (Argument \`offset\` is not valid)
 
-	 * RuntimeError (Argument `param_list` is not valid)
+	 * RuntimeError (Argument \`param_list\` is not valid)
 
-	 * TypeError (Argument `param_list` is empty)
+	 * TypeError (Argument \`param_list\` is empty)
 
-	 * ValueError (Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', ''GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or
+	 * ValueError (Argument \`color_space\` is not one of 'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr' or
 	   'YlOrRd' (case insensitive))
 
 	.. [[[end]]]
@@ -516,7 +516,7 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
 # Classes
 ###
 class BasicSource(object):	#pylint: disable=R0902,R0903
-	"""
+	r"""
 	Objects of this class hold a given data set intended for plotting. It is a convenient way to plot manually-entered data or data coming from
 	a source that does not export to a comma-separated values (CSV) file.
 
@@ -534,19 +534,19 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 	.. Auto-generated exceptions documentation for putil.plot.BasicSource.__init__
 
 	:raises:
-	 * RuntimeError (Argument `dep_var` is not valid)
+	 * RuntimeError (Argument \`dep_var\` is not valid)
 
-	 * RuntimeError (Argument `indep_max` is not valid)
+	 * RuntimeError (Argument \`indep_max\` is not valid)
 
-	 * RuntimeError (Argument `indep_min` is not valid)
+	 * RuntimeError (Argument \`indep_min\` is not valid)
 
-	 * RuntimeError (Argument `indep_var` is not valid)
+	 * RuntimeError (Argument \`indep_var\` is not valid)
 
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
-	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
 
 	.. [[[end]]]
 	"""
@@ -637,7 +637,7 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	# Managed attributes
 	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
-	"""
+	r"""
 	Gets or sets the minimum independent variable limit
 
 	:type:		number or None, default is None
@@ -647,17 +647,17 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_min` is not valid)
+	 * RuntimeError (Argument \`indep_min\` is not valid)
 
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
-	"""
+	r"""
 	Gets or sets the maximum independent variable limit
 
 	:type:		number or None, default is None
@@ -667,17 +667,17 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_max` is not valid)
+	 * RuntimeError (Argument \`indep_max\` is not valid)
 
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	indep_var = property(_get_indep_var, _set_indep_var, None, doc='Independent variable Numpy vector')
-	"""
+	r"""
 	Gets or sets the independent variable data
 
 	:type:		increasing real Numpy vector
@@ -687,17 +687,17 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_var` is not valid)
+	 * RuntimeError (Argument \`indep_var\` is not valid)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
-	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	dep_var = property(_get_dep_var, _set_dep_var, None, doc='Dependent variable Numpy vector')
-	"""
+	r"""
 	Gets or sets the dependent variable data
 
 	:type:		real Numpy vector
@@ -707,9 +707,9 @@ class BasicSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `dep_var` is not valid)
+	 * RuntimeError (Argument \`dep_var\` is not valid)
 
-	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
@@ -741,33 +741,33 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	.. Auto-generated exceptions documentation for putil.plot.CsvSource.__init__
 
 	:raises:
-	 * IOError (File `*[file_name]*` could not be found)
+	 * IOError (File \`*[file_name]*\` could not be found)
 
-	 * RuntimeError (Argument `col` is not valid)
+	 * RuntimeError (Argument \`col\` is not valid)
 
-	 * RuntimeError (Argument `dep_col_label` is not valid)
+	 * RuntimeError (Argument \`dep_col_label\` is not valid)
 
-	 * RuntimeError (Argument `dep_var` is not valid)
+	 * RuntimeError (Argument \`dep_var\` is not valid)
 
-	 * RuntimeError (Argument `dfilter` is not valid)
+	 * RuntimeError (Argument \`dfilter\` is not valid)
 
-	 * RuntimeError (Argument `file_name` is not valid)
+	 * RuntimeError (Argument \`file_name\` is not valid)
 
-	 * RuntimeError (Argument `filtered` is not valid)
+	 * RuntimeError (Argument \`filtered\` is not valid)
 
-	 * RuntimeError (Argument `fproc_eargs` is not valid)
+	 * RuntimeError (Argument \`fproc_eargs\` is not valid)
 
-	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+	 * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Argument `fproc` is not valid)
+	 * RuntimeError (Argument \`fproc\` is not valid)
 
-	 * RuntimeError (Argument `indep_col_label` is not valid)
+	 * RuntimeError (Argument \`indep_col_label\` is not valid)
 
-	 * RuntimeError (Argument `indep_max` is not valid)
+	 * RuntimeError (Argument \`indep_max\` is not valid)
 
-	 * RuntimeError (Argument `indep_min` is not valid)
+	 * RuntimeError (Argument \`indep_min\` is not valid)
 
-	 * RuntimeError (Argument `indep_var` is not valid)
+	 * RuntimeError (Argument \`indep_var\` is not valid)
 
 	 * RuntimeError (Column headers are not unique)
 
@@ -775,24 +775,24 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * RuntimeError (File *[file_name]* is empty)
 
-	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
-	   ``\n`` Exception error: *[exception_error_message]*)
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: \`\`\n\`\` indep_var: *[indep_var_value]* \`\`\n\`\` dep_var: *[dep_var_value]* \`\`\n\`\` fproc_eargs:
+	   *[fproc_eargs_value]* \`\`\n\`\` Exception error: *[exception_error_message]*)
 
-	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+	 * TypeError (Argument \`fproc\` (function *[func_name]*) return value is not valid)
 
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
 
-	 * ValueError (Argument `dfilter` is empty)
+	 * ValueError (Argument \`dfilter\` is empty)
 
-	 * ValueError (Argument `fproc` (function *[func_name]*) does not have at least 2 arguments)
+	 * ValueError (Argument \`fproc\` (function *[func_name]*) does not have at least 2 arguments)
 
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
-	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
 
 	 * ValueError (Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
 
@@ -802,7 +802,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Column *[column_name]* not found in header)
 
-	 * ValueError (Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition)
+	 * ValueError (Extra argument \`*[arg_name]*\` not found in argument \`fproc\` (function *[func_name]*) definition)
 
 	 * ValueError (Filtered dependent variable is empty)
 
@@ -1095,21 +1095,21 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * IOError (File `*[file_name]*` could not be found)
+	 * IOError (File \`*[file_name]*\` could not be found)
 
-	 * RuntimeError (Argument `col` is not valid)
+	 * RuntimeError (Argument \`col\` is not valid)
 
-	 * RuntimeError (Argument `dep_var` is not valid)
+	 * RuntimeError (Argument \`dep_var\` is not valid)
 
-	 * RuntimeError (Argument `dfilter` is not valid)
+	 * RuntimeError (Argument \`dfilter\` is not valid)
 
-	 * RuntimeError (Argument `file_name` is not valid)
+	 * RuntimeError (Argument \`file_name\` is not valid)
 
-	 * RuntimeError (Argument `filtered` is not valid)
+	 * RuntimeError (Argument \`filtered\` is not valid)
 
-	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+	 * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Argument `indep_var` is not valid)
+	 * RuntimeError (Argument \`indep_var\` is not valid)
 
 	 * RuntimeError (Column headers are not unique)
 
@@ -1117,20 +1117,20 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	 * RuntimeError (File *[file_name]* is empty)
 
-	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
-	   ``\n`` Exception error: *[exception_error_message]*)
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: \`\`\n\`\` indep_var: *[indep_var_value]* \`\`\n\`\` dep_var: *[dep_var_value]* \`\`\n\`\` fproc_eargs:
+	   *[fproc_eargs_value]* \`\`\n\`\` Exception error: *[exception_error_message]*)
 
-	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+	 * TypeError (Argument \`fproc\` (function *[func_name]*) return value is not valid)
 
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
 
-	 * ValueError (Argument `dfilter` is empty)
+	 * ValueError (Argument \`dfilter\` is empty)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
-	 * ValueError (Arguments `indep_var` and `dep_var` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
 
 	 * ValueError (Column *[col_name]* (dependent column label) could not be found in comma-separated file *[file_name]* header)
 
@@ -1188,14 +1188,14 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `dfilter` is not valid)
+	 * RuntimeError (Argument \`dfilter\` is not valid)
 
-	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+	 * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
-	   ``\n`` Exception error: *[exception_error_message]*)
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: \`\`\n\`\` indep_var: *[indep_var_value]* \`\`\n\`\` dep_var: *[dep_var_value]* \`\`\n\`\` fproc_eargs:
+	   *[fproc_eargs_value]* \`\`\n\`\` Exception error: *[exception_error_message]*)
 
-	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+	 * TypeError (Argument \`fproc\` (function *[func_name]*) return value is not valid)
 
 	 * TypeError (Processed dependent variable is not valid)
 
@@ -1227,14 +1227,14 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+	 * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Argument `indep_col_label` is not valid)
+	 * RuntimeError (Argument \`indep_col_label\` is not valid)
 
-	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
-	   ``\n`` Exception error: *[exception_error_message]*)
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: \`\`\n\`\` indep_var: *[indep_var_value]* \`\`\n\`\` dep_var: *[dep_var_value]* \`\`\n\`\` fproc_eargs:
+	   *[fproc_eargs_value]* \`\`\n\`\` Exception error: *[exception_error_message]*)
 
-	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+	 * TypeError (Argument \`fproc\` (function *[func_name]*) return value is not valid)
 
 	 * TypeError (Processed dependent variable is not valid)
 
@@ -1268,14 +1268,14 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `dep_col_label` is not valid)
+	 * RuntimeError (Argument \`dep_col_label\` is not valid)
 
-	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+	 * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
-	   ``\n`` Exception error: *[exception_error_message]*)
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: \`\`\n\`\` indep_var: *[indep_var_value]* \`\`\n\`\` dep_var: *[dep_var_value]* \`\`\n\`\` fproc_eargs:
+	   *[fproc_eargs_value]* \`\`\n\`\` Exception error: *[exception_error_message]*)
 
-	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+	 * TypeError (Argument \`fproc\` (function *[func_name]*) return value is not valid)
 
 	 * TypeError (Processed dependent variable is not valid)
 
@@ -1299,7 +1299,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
-	"""
+	r"""
 	Gets or sets the minimum independent variable limit
 
 	:type:		number or None, default is None
@@ -1309,17 +1309,17 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_min` is not valid)
+	 * RuntimeError (Argument \`indep_min\` is not valid)
 
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
-	"""
+	r"""
 	Gets or sets the maximum independent variable limit
 
 	:type:		number or None, default is None
@@ -1329,11 +1329,11 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_max` is not valid)
+	 * RuntimeError (Argument \`indep_max\` is not valid)
 
-	 * ValueError (Argument `indep_min` is greater than argument `indep_max`)
+	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
 
-	 * ValueError (Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
@@ -1361,22 +1361,22 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+	 * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Argument `fproc` is not valid)
+	 * RuntimeError (Argument \`fproc\` is not valid)
 
-	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
-	   ``\n`` Exception error: *[exception_error_message]*)
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: \`\`\n\`\` indep_var: *[indep_var_value]* \`\`\n\`\` dep_var: *[dep_var_value]* \`\`\n\`\` fproc_eargs:
+	   *[fproc_eargs_value]* \`\`\n\`\` Exception error: *[exception_error_message]*)
 
-	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+	 * TypeError (Argument \`fproc\` (function *[func_name]*) return value is not valid)
 
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
 
-	 * ValueError (Argument `fproc` (function *[func_name]*) does not have at least 2 arguments)
+	 * ValueError (Argument \`fproc\` (function *[func_name]*) does not have at least 2 arguments)
 
-	 * ValueError (Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition)
+	 * ValueError (Extra argument \`*[arg_name]*\` not found in argument \`fproc\` (function *[func_name]*) definition)
 
 	 * ValueError (Processed dependent variable is empty)
 
@@ -1400,20 +1400,20 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `fproc_eargs` is not valid)
+	 * RuntimeError (Argument \`fproc_eargs\` is not valid)
 
-	 * RuntimeError (Argument `fproc` (function *[func_name]*) returned an illegal number of values)
+	 * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an illegal number of values)
 
-	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: ``\n`` indep_var: *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n`` fproc_eargs: *[fproc_eargs_value]*
-	   ``\n`` Exception error: *[exception_error_message]*)
+	 * RuntimeError (Processing function *[func_name]* raised an exception when called with the following arguments: \`\`\n\`\` indep_var: *[indep_var_value]* \`\`\n\`\` dep_var: *[dep_var_value]* \`\`\n\`\` fproc_eargs:
+	   *[fproc_eargs_value]* \`\`\n\`\` Exception error: *[exception_error_message]*)
 
-	 * TypeError (Argument `fproc` (function *[func_name]*) return value is not valid)
+	 * TypeError (Argument \`fproc\` (function *[func_name]*) return value is not valid)
 
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
 
-	 * ValueError (Extra argument `*[arg_name]*` not found in argument `fproc` (function *[func_name]*) definition)
+	 * ValueError (Extra argument \`*[arg_name]*\` not found in argument \`fproc\` (function *[func_name]*) definition)
 
 	 * ValueError (Processed dependent variable is empty)
 
@@ -1445,7 +1445,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 
 
 class Series(object):	#pylint: disable=R0902,R0903
-	"""
+	r"""
 	Specifies a series within a panel
 
 	:param	data_source:	data source object
@@ -1468,31 +1468,31 @@ class Series(object):	#pylint: disable=R0902,R0903
 	.. Auto-generated exceptions documentation for putil.plot.Series.__init__
 
 	:raises:
-	 * RuntimeError (Argument `color` is not valid)
+	 * RuntimeError (Argument \`color\` is not valid)
 
-	 * RuntimeError (Argument `data_source` does not have an `dep_var` attribute)
+	 * RuntimeError (Argument \`data_source\` does not have an \`dep_var\` attribute)
 
-	 * RuntimeError (Argument `data_source` does not have an `indep_var` attribute)
+	 * RuntimeError (Argument \`data_source\` does not have an \`indep_var\` attribute)
 
-	 * RuntimeError (Argument `data_source` is not fully specified)
+	 * RuntimeError (Argument \`data_source\` is not fully specified)
 
-	 * RuntimeError (Argument `interp` is not valid)
+	 * RuntimeError (Argument \`interp\` is not valid)
 
-	 * RuntimeError (Argument `label` is not valid)
+	 * RuntimeError (Argument \`label\` is not valid)
 
-	 * RuntimeError (Argument `line_style` is not valid)
+	 * RuntimeError (Argument \`line_style\` is not valid)
 
-	 * RuntimeError (Argument `marker` is not valid)
+	 * RuntimeError (Argument \`marker\` is not valid)
 
-	 * RuntimeError (Argument `secondary_axis` is not valid)
+	 * RuntimeError (Argument \`secondary_axis\` is not valid)
 
 	 * RuntimeError (Series options make it not plottable)
 
 	 * TypeError (Invalid color specification)
 
-	 * ValueError (Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
+	 * ValueError (Argument \`interp\` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
 
-	 * ValueError (Argument `line_style` is not one of ['-', '--', '-.', ':'])
+	 * ValueError (Argument \`line_style\` is not one of ['-', '--', '-.', ':'])
 
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 
@@ -1762,7 +1762,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 			)
 
 	data_source = property(_get_data_source, _set_data_source, doc='Data source')
-	"""
+	r"""
 	Gets or sets the data source object. The independent and dependent data sets are obtained once this attribute is set. To be valid, a data source object must have an ``indep_var`` attribute that contains a Numpy vector of
 	increasing real numbers and a ``dep_var`` attribute that contains a Numpy vector of real numbers
 
@@ -1773,11 +1773,11 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `data_source` does not have an `dep_var` attribute)
+	 * RuntimeError (Argument \`data_source\` does not have an \`dep_var\` attribute)
 
-	 * RuntimeError (Argument `data_source` does not have an `indep_var` attribute)
+	 * RuntimeError (Argument \`data_source\` does not have an \`indep_var\` attribute)
 
-	 * RuntimeError (Argument `data_source` is not fully specified)
+	 * RuntimeError (Argument \`data_source\` is not fully specified)
 
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 
@@ -1785,7 +1785,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	label = property(_get_label, _set_label, doc='Series label')
-	"""
+	r"""
 	Gets or sets the series label, to be used in the panel legend if the panel has more than one series
 
 	:type:	string
@@ -1793,13 +1793,13 @@ class Series(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.label
 
-	:raises: (when assigned) RuntimeError (Argument `label` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`label\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	color = property(_get_color, _set_color, doc='Series line and marker color')
-	"""
+	r"""
 	Gets or sets the series line and marker color. All `Matplotlib colors <http://matplotlib.org/api/colors_api.html>`_ are supported
 
 	:type:	polymorphic, default is :code:`'k'` (black)
@@ -1809,7 +1809,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `color` is not valid)
+	 * RuntimeError (Argument \`color\` is not valid)
 
 	 * TypeError (Invalid color specification)
 
@@ -1817,7 +1817,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	marker = property(_get_marker, _set_marker, doc='Plot data point markers flag')
-	"""
+	r"""
 	Gets or sets the series marker type. All `Matplotlib marker types <http://matplotlib.org/api/markers_api.html>`_ are supported. :code:`None` indicates no marker
 
 	:type: string or None, default is :code:`'o'` (circle)
@@ -1827,7 +1827,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `marker` is not valid)
+	 * RuntimeError (Argument \`marker\` is not valid)
 
 	 * RuntimeError (Series options make it not plottable)
 
@@ -1835,7 +1835,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	interp = property(_get_interp, _set_interp, doc='Series interpolation option, one of `STRAIGHT`, `CUBIC` or `LINREG` (case insensitive)')
-	"""
+	r"""
 	Gets or sets the interpolation option, one of :code:`None` (no interpolation) :code:`'STRAIGHT'` (straight line connects data points), :code:`'STEP'` (horizontal segments between data points), :code:`'CUBIC'` (cubic
 	interpolation between data points) or :code:`'LINREG'` (linear regression based on data points). The interpolation option is case insensitive
 
@@ -1846,11 +1846,11 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `interp` is not valid)
+	 * RuntimeError (Argument \`interp\` is not valid)
 
 	 * RuntimeError (Series options make it not plottable)
 
-	 * ValueError (Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
+	 * ValueError (Argument \`interp\` is not one of ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'] (case insensitive))
 
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 
@@ -1858,7 +1858,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	line_style = property(_get_line_style, _set_line_style, doc='Series line style, one of `-`, `--`, `-.` or `:`')
-	"""
+	r"""
 	Sets or gets the line style. All `Matplotlib line styles <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle>`_ are supported. :code:`None` indicates no line
 
 	:type:	string or None, default is :code:`'-'`
@@ -1868,17 +1868,17 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `line_style` is not valid)
+	 * RuntimeError (Argument \`line_style\` is not valid)
 
 	 * RuntimeError (Series options make it not plottable)
 
-	 * ValueError (Argument `line_style` is not one of ['-', '--', '-.', ':'])
+	 * ValueError (Argument \`line_style\` is not one of ['-', '--', '-.', ':'])
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	secondary_axis = property(_get_secondary_axis, _set_secondary_axis, doc='Series secondary axis flag')
-	"""
+	r"""
 	Sets or gets the secondary axis flag. If :code:`True`, the series belongs to the secondary (right) panel axis, if :code:`False` the series belongs to the primary (left) panel axis
 
 	:type:	boolean, default is False
@@ -1886,14 +1886,14 @@ class Series(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Series.secondary_axis
 
-	:raises: (when assigned) RuntimeError (Argument `secondary_axis` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`secondary_axis\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 
 class Panel(object):	#pylint: disable=R0902,R0903
-	"""
+	r"""
 	Defines a panel within a figure
 
 	:param	series:					one or more data series
@@ -1917,29 +1917,29 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. Auto-generated exceptions documentation for putil.plot.Panel.__init__
 
 	:raises:
-	 * RuntimeError (Argument `legend_props` is not valid)
+	 * RuntimeError (Argument \`legend_props\` is not valid)
 
-	 * RuntimeError (Argument `log_dep_axis` is not valid)
+	 * RuntimeError (Argument \`log_dep_axis\` is not valid)
 
-	 * RuntimeError (Argument `primary_axis_label` is not valid)
+	 * RuntimeError (Argument \`primary_axis_label\` is not valid)
 
-	 * RuntimeError (Argument `primary_axis_units` is not valid)
+	 * RuntimeError (Argument \`primary_axis_units\` is not valid)
 
-	 * RuntimeError (Argument `secondary_axis_label` is not valid)
+	 * RuntimeError (Argument \`secondary_axis_label\` is not valid)
 
-	 * RuntimeError (Argument `secondary_axis_units` is not valid)
+	 * RuntimeError (Argument \`secondary_axis_units\` is not valid)
 
-	 * RuntimeError (Argument `series` is not valid)
+	 * RuntimeError (Argument \`series\` is not valid)
 
-	 * RuntimeError (Argument `show_indep_axis` is not valid)
+	 * RuntimeError (Argument \`show_indep_axis\` is not valid)
 
-	 * RuntimeError (Legend property `cols` is not valid)
+	 * RuntimeError (Legend property \`cols\` is not valid)
 
 	 * RuntimeError (Series item *[number]* is not fully specified)
 
-	 * TypeError (Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive))
+	 * TypeError (Legend property \`pos\` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive))
 
-	 * ValueError (Illegal legend property `*[prop_name]*`)
+	 * ValueError (Illegal legend property \`*[prop_name]*\`)
 
 	 * ValueError (Series item *[number]* cannot be plotted in a logarithmic axis because it contains negative data points)
 
@@ -2205,7 +2205,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		return {'primary':None if not self._panel_has_primary_axis else axarr_prim, 'secondary':None if not self._panel_has_secondary_axis else axarr_sec}
 
 	series = property(_get_series, _set_series, doc='Panel series')
-	"""
+	r"""
 	Gets or sets the panel series
 
 	:type:	:py:class:`putil.plot.Series` object or list of :py:class:`putil.plot.Series` objects
@@ -2215,7 +2215,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `series` is not valid)
+	 * RuntimeError (Argument \`series\` is not valid)
 
 	 * RuntimeError (Series item *[number]* is not fully specified)
 
@@ -2225,7 +2225,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	primary_axis_label = property(_get_primary_axis_label, _set_primary_axis_label, doc='Panel primary axis label')
-	"""
+	r"""
 	Gets or sets the panel primary dependent axis label
 
 	:type:	string default is :code:`''`
@@ -2233,13 +2233,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.primary_axis_label
 
-	:raises: (when assigned) RuntimeError (Argument `primary_axis_label` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`primary_axis_label\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	secondary_axis_label = property(_get_secondary_axis_label, _set_secondary_axis_label, doc='Panel secondary axis label')
-	"""
+	r"""
 	Gets or sets the panel secondary dependent axis label
 
 	:type:	string, default is :code:`''`
@@ -2247,13 +2247,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.secondary_axis_label
 
-	:raises: (when assigned) RuntimeError (Argument `secondary_axis_label` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`secondary_axis_label\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	primary_axis_units = property(_get_primary_axis_units, _set_primary_axis_units, doc='Panel primary axis units')
-	"""
+	r"""
 	Gets or sets the panel primary dependent axis units
 
 	:type:	string, default is :code:`''`
@@ -2261,13 +2261,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.primary_axis_units
 
-	:raises: (when assigned) RuntimeError (Argument `primary_axis_units` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`primary_axis_units\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	secondary_axis_units = property(_get_secondary_axis_units, _set_secondary_axis_units, doc='Panel secondary axis units')
-	"""
+	r"""
 	Gets or sets the panel secondary dependent axis units
 
 	:type:	string, default is :code:`''`
@@ -2275,13 +2275,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.secondary_axis_units
 
-	:raises: (when assigned) RuntimeError (Argument `secondary_axis_units` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`secondary_axis_units\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	log_dep_axis = property(_get_log_dep_axis, _set_log_dep_axis, doc='Panel logarithmic dependent axis flag')
-	"""
+	r"""
 	Gets or sets the panel logarithmic dependent (primary and/or secondary) axis flag. This flag indicates whether the dependent (primary and/or secondary) axis is linear (:code:`False`) or logarithmic (:code:`True`)
 
 	:type:	boolean, default is False
@@ -2289,13 +2289,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.log_dep_axis
 
-	:raises: (when assigned) RuntimeError (Argument `log_dep_axis` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`log_dep_axis\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	legend_props = property(_get_legend_props, _set_legend_props, doc='Panel legend box properties')
-	"""
+	r"""
 	Gets or sets the panel legend box properties; this is a dictionary that has properties (dictionary key) and their associated values (dictionary values). Currently supported properties are:
 
 	* **pos** (*string*) -- legend box position, one of :code:`'BEST'`, :code:`'UPPER RIGHT'`, :code:`'UPPER LEFT'`, :code:`'LOWER LEFT'`, :code:`'LOWER RIGHT'`, :code:`'RIGHT'`, :code:`'CENTER LEFT'`, :code:`'CENTER RIGHT'`,
@@ -2312,19 +2312,19 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `legend_props` is not valid)
+	 * RuntimeError (Argument \`legend_props\` is not valid)
 
-	 * RuntimeError (Legend property `cols` is not valid)
+	 * RuntimeError (Legend property \`cols\` is not valid)
 
-	 * TypeError (Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive))
+	 * TypeError (Legend property \`pos\` is not one of ['BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive))
 
-	 * ValueError (Illegal legend property `*[prop_name]*`)
+	 * ValueError (Illegal legend property \`*[prop_name]*\`)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	show_indep_axis = property(_get_show_indep_axis, _set_show_indep_axis, doc='Show independent axis flag')
-	"""
+	r"""
 	Gets or sets the independent axis flag. This flag indicates whether the independent axis should be displayed (:code:`True`) or not (:code:`False`)
 
 	:type:	boolean, default is False
@@ -2332,14 +2332,14 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.show_indep_axis
 
-	:raises: (when assigned) RuntimeError (Argument `show_indep_axis` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`show_indep_axis\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 
 class Figure(object):	#pylint: disable=R0902
-	"""
+	r"""
 	Generates presentation-quality plots
 
 	:param	panels:				one or more data panels
@@ -2361,19 +2361,19 @@ class Figure(object):	#pylint: disable=R0902
 	.. Auto-generated exceptions documentation for putil.plot.Figure.__init__
 
 	:raises:
-	 * RuntimeError (Argument `fig_height` is not valid)
+	 * RuntimeError (Argument \`fig_height\` is not valid)
 
-	 * RuntimeError (Argument `fig_width` is not valid)
+	 * RuntimeError (Argument \`fig_width\` is not valid)
 
-	 * RuntimeError (Argument `indep_var_label` is not valid)
+	 * RuntimeError (Argument \`indep_var_label\` is not valid)
 
-	 * RuntimeError (Argument `indep_var_units` is not valid)
+	 * RuntimeError (Argument \`indep_var_units\` is not valid)
 
-	 * RuntimeError (Argument `log_indep_axis` is not valid)
+	 * RuntimeError (Argument \`log_indep_axis\` is not valid)
 
-	 * RuntimeError (Argument `panels` is not valid)
+	 * RuntimeError (Argument \`panels\` is not valid)
 
-	 * RuntimeError (Argument `title` is not valid)
+	 * RuntimeError (Argument \`title\` is not valid)
 
 	 * RuntimeError (Figure object is not fully specified)
 
@@ -2384,8 +2384,10 @@ class Figure(object):	#pylint: disable=R0902
 	 * ValueError (Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, series *[series_num]* contains negative independent data points)
 
 	.. [[[end]]]
+
 	.. note:: The appropriate figure dimensions so that no labels are obstructed are calculated and used if the arguments **fig_width** and/or **fig_height** are not specified. The calculated figure width and/or height can be \
-	retrieved using the :py:attr:`putil.plot.Figure.fig_width` and/or :py:attr:`putil.plot.Figure.fig_height` attributes.
+	 retrieved using the :py:attr:`putil.plot.Figure.fig_width` and/or :py:attr:`putil.plot.Figure.fig_height` attributes.
+
 	"""
 	def __init__(self, panels=None, indep_var_label='', indep_var_units='', fig_width=None, fig_height=None, title='', log_indep_axis=False):	#pylint: disable=R0913
 		self._exh = putil.exh.get_or_create_exh_obj()
@@ -2552,7 +2554,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	@putil.pcontracts.contract(file_name='file_name')
 	def save(self, file_name):
-		"""
+		r"""
 		Saves the figure in PNG format to a file
 
 		:param	file_name:	File name
@@ -2562,7 +2564,7 @@ class Figure(object):	#pylint: disable=R0902
 		.. Auto-generated exceptions documentation for putil.plot.Figure.save
 
 		:raises:
-		 * RuntimeError (Argument `file_name` is not valid)
+		 * RuntimeError (Argument \`file_name\` is not valid)
 
 		 * RuntimeError (Figure object is not fully specified)
 
@@ -2602,7 +2604,7 @@ class Figure(object):	#pylint: disable=R0902
 		return ret
 
 	indep_var_label = property(_get_indep_var_label, _set_indep_var_label, doc='Figure independent axis label')
-	"""
+	r"""
 	Gets or sets the figure independent variable label
 
 	:type: string or None, default is :code:`''`
@@ -2612,7 +2614,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_var_label` is not valid)
+	 * RuntimeError (Argument \`indep_var_label\` is not valid)
 
 	 * RuntimeError (Figure object is not fully specified)
 
@@ -2622,7 +2624,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""	#pylint: disable=W0105
 
 	indep_var_units = property(_get_indep_var_units, _set_indep_var_units, doc='Figure independent axis units')
-	"""
+	r"""
 	Gets or sets the figure independent variable units
 
 	:type: string or None, default is :code:`''`
@@ -2632,7 +2634,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `indep_var_units` is not valid)
+	 * RuntimeError (Argument \`indep_var_units\` is not valid)
 
 	 * RuntimeError (Figure object is not fully specified)
 
@@ -2642,7 +2644,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""	#pylint: disable=W0105
 
 	title = property(_get_title, _set_title, doc='Figure title')
-	"""
+	r"""
 	Gets or sets the figure title
 
 	:type: string or None, default is :code:`''`
@@ -2652,7 +2654,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `title` is not valid)
+	 * RuntimeError (Argument \`title\` is not valid)
 
 	 * RuntimeError (Figure object is not fully specified)
 
@@ -2662,7 +2664,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""	#pylint: disable=W0105
 
 	log_indep_axis = property(_get_log_indep_axis, _set_log_indep_axis, doc='Figure log_indep_axis')
-	"""
+	r"""
 	Gets or sets the figure logarithmic independent axis flag. This flag indicates whether the figure independent axis is linear (:code:`False`) or logarithmic (:code:`True`)
 
 	:type: boolean, default is False
@@ -2672,7 +2674,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `log_indep_axis` is not valid)
+	 * RuntimeError (Argument \`log_indep_axis\` is not valid)
 
 	 * RuntimeError (Figure object is not fully specified)
 
@@ -2682,7 +2684,7 @@ class Figure(object):	#pylint: disable=R0902
 	"""	#pylint: disable=W0105
 
 	fig_width = property(_get_fig_width, _set_fig_width, doc='Width of the hard copy plot')
-	"""
+	r"""
 	Gets or sets the width (in inches) of the hard copy plot
 
 	:type: positive number, float or integer
@@ -2690,13 +2692,13 @@ class Figure(object):	#pylint: disable=R0902
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.fig_width
 
-	:raises: (when assigned) RuntimeError (Argument `fig_width` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`fig_width\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	fig_height = property(_get_fig_height, _set_fig_height, doc='height of the hard copy plot')
-	"""
+	r"""
 	Gets or sets the height (in inches) of the hard copy plot
 
 	:type: positive number, float or integer
@@ -2704,13 +2706,13 @@ class Figure(object):	#pylint: disable=R0902
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Figure.fig_height
 
-	:raises: (when assigned) RuntimeError (Argument `fig_height` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`fig_height\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
 	panels = property(_get_panels, _set_panels, doc='Figure panel(s)')
-	"""
+	r"""
 	Gets or sets the figure panel(s)
 
 	:type: :py:class:`putil.plot.Panel` object or list of :py:class:`putil.plot.panel` objects
@@ -2720,11 +2722,11 @@ class Figure(object):	#pylint: disable=R0902
 
 	:raises: (when assigned)
 
-	 * RuntimeError (Argument `fig_height` is not valid)
+	 * RuntimeError (Argument \`fig_height\` is not valid)
 
-	 * RuntimeError (Argument `fig_width` is not valid)
+	 * RuntimeError (Argument \`fig_width\` is not valid)
 
-	 * RuntimeError (Argument `panels` is not valid)
+	 * RuntimeError (Argument \`panels\` is not valid)
 
 	 * RuntimeError (Figure object is not fully specified)
 

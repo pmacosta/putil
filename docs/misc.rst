@@ -7,7 +7,7 @@ misc module
 
 
 This module contains miscellaneous utility functions that can be applied in a variety of circumstances: there are context managers, membership functions (a certain argument is of a given type), numerical functions
-and string functions.
+and string functions
 
 ***********
 Interpreter

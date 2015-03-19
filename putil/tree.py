@@ -25,7 +25,7 @@ exobj_tree = trace_ex_tree.trace_module(no_print=True)
 # Classes
 ###
 class Tree(object):	#pylint: disable=R0903,R0902
-	"""
+	r"""
 	Provides basic `trie <http://wikipedia.org/wiki/Trie>`_ (radix tree) functionality
 
 	:param	node_separator: Single character used to separate nodes in the tree
@@ -35,7 +35,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 	.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for putil.tree.Tree.__init__
 
-	:raises: RuntimeError (Argument `node_separator` is not valid)
+	:raises: RuntimeError (Argument \`node_separator\` is not valid)
 
 	.. [[[end]]]
 	"""
@@ -255,11 +255,11 @@ class Tree(object):	#pylint: disable=R0903,R0902
 								condition=(not isinstance(name, str)) or (isinstance(name, str) and ((' ' in name) or any([element.strip() == '' for element in name.strip().split(self._node_separator)]))))
 
 	def add_nodes(self, nodes):
-		"""
+		r"""
 		Adds nodes to tree
 
 		:param	nodes: Node(s) to add with associated data. If there are several list items in the argument with the same node name the resulting node data is a list with items corresponding to the data of each entry in \
-		the argument with the same node name, in their order of appearance, in addition to any existing node data if the node is already present in the tree
+		 the argument with the same node name, in their order of appearance, in addition to any existing node data if the node is already present in the tree
 
 		:type	nodes: NodesWithData
 
@@ -267,7 +267,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.add_nodes
 
 		:raises:
-		 * RuntimeError (Argument `nodes` is not valid)
+		 * RuntimeError (Argument \`nodes\` is not valid)
 
 		 * ValueError (Illegal node name: *[node_name]*)
 
@@ -316,7 +316,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			self._db[name]['data'] += copy.deepcopy(data if isinstance(data, list) and data else (list() if isinstance(data, list) else [data]))
 
 	def collapse_subtree(self, name, recursive=True):
-		"""
+		r"""
 		Collapses a sub-tree; nodes that have a single child and no data are combined with their child as a single tree node
 
 		:param	name: Root of the sub-tree to collapse. See `NodeName`_ pseudo-type specification
@@ -328,9 +328,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.collapse_subtree
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
-		 * RuntimeError (Argument `recursive` is not valid)
+		 * RuntimeError (Argument \`recursive\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -366,7 +366,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._collapse_subtree(name, recursive)
 
 	def copy_subtree(self, source_node, dest_node):
-		"""
+		r"""
 		Copies a sub-tree from one sub-node to another. Data is added if some nodes of the source sub-tree exist in the destination sub-tree
 
 		:param	source_name: Root node of the sub-tree to copy from. See `NodeName`_ pseudo-type specification
@@ -378,9 +378,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.copy_subtree
 
 		:raises:
-		 * RuntimeError (Argument `dest_node` is not valid)
+		 * RuntimeError (Argument \`dest_node\` is not valid)
 
-		 * RuntimeError (Argument `source_node` is not valid)
+		 * RuntimeError (Argument \`source_node\` is not valid)
 
 		 * RuntimeError (Illegal root in destination node)
 
@@ -432,7 +432,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._db[parent]['children'] = sorted(self._db[parent]['children']+[dest_node])
 
 	def delete_prefix(self, name):
-		"""
+		r"""
 		Deletes hierarchy levels from all nodes in the tree
 
 		:param	nodes: Prefix to delete. See `NodeName`_ pseudo-type specification
@@ -442,9 +442,9 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.delete_prefix
 
 		:raises:
-		 * RuntimeError (Argument `name` is not a valid prefix)
+		 * RuntimeError (Argument \`name\` is not a valid prefix)
 
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		.. [[[end]]]
 
@@ -482,7 +482,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._delete_prefix(name)
 
 	def delete_subtree(self, nodes):
-		"""
+		r"""
 		Deletes nodes (and their sub-trees) from the tree
 
 		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
@@ -492,7 +492,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.delete_subtree
 
 		:raises:
-		 * RuntimeError (Argument `nodes` is not valid)
+		 * RuntimeError (Argument \`nodes\` is not valid)
 
 		 * RuntimeError (Node *[node_name]* not in tree)
 
@@ -521,7 +521,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._delete_subtree(nodes)
 
 	def flatten_subtree(self, name):
-		"""
+		r"""
 		Flattens sub-tree; nodes that have children and no data are merged with each child
 
 		:param	name: Ending hierarchy node whose sub-trees are to be flattened. See `NodeName`_ pseudo-type specification
@@ -531,7 +531,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.flatten_subtree
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -595,7 +595,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			del self._db[name]
 
 	def get_children(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Gets the children node names of a node
 
 		:param	name: Parent node name. See `NodeName`_ pseudo-type specification
@@ -606,7 +606,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.get_children
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -618,7 +618,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return sorted(self._db[name]['children'])
 
 	def get_data(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Gets the data associated with a node
 
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
@@ -629,7 +629,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.get_data
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -641,7 +641,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return self._db[name]['data']
 
 	def get_leafs(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Gets the sub-tree leaf node(s)
 
 		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type specification
@@ -652,7 +652,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.get_leafs
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -664,7 +664,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return [node for node in self._get_subtree(name) if self.is_leaf(node)]
 
 	def get_node(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Gets a tree node structure. The structure is a dictionary with the following keys:
 
 		 * **parent** (*NodeName*) Parent node name, :code:`''` if the node is the root node. See `NodeName`_ pseudo-type specification
@@ -681,7 +681,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.get_node
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -693,7 +693,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return self._db[name]
 
 	def get_node_children(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Gets the list of children structures of a node. See :py:meth:`putil.tree.Tree.get_node` for details about the structure
 
 		:param	name: Parent node name. See `NodeName`_ pseudo-type specification
@@ -704,7 +704,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.get_node_children
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -716,7 +716,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return [self._db[child] for child in self._db[name]['children']]
 
 	def get_node_parent(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Gets the parent structure of a node. See :py:meth:`putil.tree.Tree.get_node` for details about the structure
 
 		:param	name: Child node name. See `NodeName`_ pseudo-type specification
@@ -727,7 +727,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.get_node_parent
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -739,7 +739,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return self._db[self._db[name]['parent']] if not self.is_root(name) else dict()
 
 	def get_subtree(self, name):
-		"""
+		r"""
 		Gets all node names in a sub-tree
 
 		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type specification
@@ -750,7 +750,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.get_subtree
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -776,7 +776,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return self._get_subtree(name)
 
 	def is_root(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Tests if a node is the root node (node with no ancestors)
 
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
@@ -787,7 +787,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.is_root
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -799,7 +799,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return not self._db[name]['parent']
 
 	def in_tree(self, name):
-		"""
+		r"""
 		Tests if a node is in the tree
 
 		:param	name: Node name to search for. See `NodeName`_ pseudo-type specification
@@ -809,7 +809,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for putil.tree.Tree.in_tree
 
-		:raises: RuntimeError (Argument `name` is not valid)
+		:raises: RuntimeError (Argument \`name\` is not valid)
 
 		.. [[[end]]]
 		"""
@@ -818,7 +818,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return name in self._db
 
 	def is_leaf(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Tests if a node is a leaf node (node with no children)
 
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
@@ -829,7 +829,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.is_leaf
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -841,7 +841,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return not self._db[name]['children']
 
 	def make_root(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Makes a sub-node the root node of the tree. All nodes not belonging to the sub-tree are deleted
 
 		:param	name: New root node name. See `NodeName`_ pseudo-type specification
@@ -851,7 +851,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.make_root
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -886,7 +886,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 			self._root_hierarchy_length = len(self.root_name.split(self._node_separator))
 
 	def print_node(self, name):	#pylint: disable=C0111
-		"""
+		r"""
 		Prints node information (parent, children and data)
 
 		:param	name: Node name. See `NodeName`_ pseudo-type specification
@@ -896,7 +896,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.print_node
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -911,7 +911,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(name, node['parent'] if node['parent'] else None, ', '.join(children) if children else None, data if data else None)
 
 	def rename_node(self, name, new_name):
-		"""
+		r"""
 		Renames a tree node. It is typical to have a root node name with more than one hierarchy level after using :py:meth:`putil.tree.Tree.make_root`. In this instance the root node *can* be \
 		renamed as long as the new root name has the same or less hierarchy levels as the existing root name.
 
@@ -922,13 +922,13 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. Auto-generated exceptions documentation for putil.tree.Tree.rename_node
 
 		:raises:
-		 * RuntimeError (Argument `name` is not valid)
+		 * RuntimeError (Argument \`name\` is not valid)
 
-		 * RuntimeError (Argument `new_name` has an illegal root node)
+		 * RuntimeError (Argument \`new_name\` has an illegal root node)
 
-		 * RuntimeError (Argument `new_name` is an illegal root node name)
+		 * RuntimeError (Argument \`new_name\` is an illegal root node name)
 
-		 * RuntimeError (Argument `new_name` is not valid)
+		 * RuntimeError (Argument \`new_name\` is not valid)
 
 		 * RuntimeError (Node *[name]* not in tree)
 
@@ -973,7 +973,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		self._rename_node(name, new_name)
 
 	def search_tree(self, name):
-		"""
+		r"""
 		Searches tree for all nodes of a specific name
 
 		:param	name: Node name to search for. See `NodeName`_ pseudo-type specification
@@ -982,7 +982,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for putil.tree.Tree.search_tree
 
-		:raises: RuntimeError (Argument `name` is not valid)
+		:raises: RuntimeError (Argument \`name\` is not valid)
 
 		.. [[[end]]]
 

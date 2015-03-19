@@ -3,14 +3,15 @@
 # See LICENSE for details
 # pylint: disable=W0212,C0111
 
-import copy, pytest
+import copy, os, pytest
 
 import putil.exdoc, putil.exh
+
 
 def trace_module(no_print=True):
 	""" Trace eng module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		if pytest.main('-s -vv -x ../tests/test_eng.py'):
+		if pytest.main('-x '+os.path.abspath('../tests/test_eng.py')):
 			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'putil.eng.'

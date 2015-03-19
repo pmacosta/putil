@@ -1,0 +1,1 @@
+../.hooks/setup-git-hooks.sh

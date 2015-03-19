@@ -178,7 +178,7 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			raise RuntimeError('Argument `exclude` is not valid')
 		self._exclude = exclude
 
-	def get_sphinx_autodoc(self, depth=None, exclude=None, width=230, error=False):	#pylint: disable=R0201
+	def get_sphinx_autodoc(self, depth=None, exclude=None, width=220, error=False):	#pylint: disable=R0201
 		"""
 		Returns an exception list marked up in `reStructuredText`_ automatically determining callable name
 

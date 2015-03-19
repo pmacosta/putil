@@ -6,7 +6,7 @@ plot module
 
 
 
-This module can be used to create high-quality, presentation-ready X-Y graphs quickly and easily.
+This module can be used to create high-quality, presentation-ready X-Y graphs quickly and easily
 
 ***********
 Interpreter

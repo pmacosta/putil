@@ -13,7 +13,7 @@ cpwd=${PWD}
 
 # Default values for command line options
 rebuild=0
-modules=(pcsv tree plot)
+modules=(eng pcsv plot tree)
 
 # Read command line options
 while getopts "r --long rebuild" opt; do
