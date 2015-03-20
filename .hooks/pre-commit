@@ -1,13 +1,10 @@
 #!/bin/bash
-#
+
 # Called by "git commit" with no arguments.  The hook should
 # exit with non-zero status after issuing an appropriate message if
 # it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-commit".
 
-if git rev-parse --verify HEAD >/dev/null 2>&1
-then
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
 	#echo "pre-commit check against HEAD"
 	against=HEAD
 else
@@ -16,16 +13,20 @@ else
 	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
 fi
 
-#echo -e "\tChecking for non-ASCII file names"
-# If you want to allow non-ASCII filenames set this variable to true.
-allownonascii=$(git config --bool hooks.allownonascii)
-
+###
 # Redirect output to stderr.
+###
 exec 1>&2
 
+###
+# Check for non-ASCII file names
+###
+#echo -e "\tChecking for non-ASCII file names"
 # Cross platform projects tend to avoid non-ASCII filenames; prevent
 # them from being added to the repository. We exploit the fact that the
 # printable range starts at the space character and ends with tilde.
+# If you want to allow non-ASCII filenames set this variable to true.
+allownonascii=$(git config --bool hooks.allownonascii)
 if [ "$allownonascii" != "true" ] &&
 	# Note that the use of brackets around a tr range is ok here, (it's
 	# even required, for portability to Solaris 10's /usr/bin/tr), since
@@ -47,6 +48,10 @@ EOF
 	exit 1
 fi
 
+
+###
+# Check for trailing whitespace
+###
 #echo -e "\tChecking for trailing whitespace"
 # If there are whitespace errors, print the offending file names and fail.
 diff_output=$(git diff-index --check --cached $against --)
@@ -55,6 +60,32 @@ if [ "${diff_output}" != "" ]; then
 	exit 1
 fi
 
+
+###
+# Check for Python PEP8 compliance
+###
+#echo -e "\tValidating Python PEP8 compliance with Pylint"
+pkg_dir=$(git rev-parse --show-toplevel)
+python_files=$(git diff --name-only --cached *.py)
+pep8_output=""
+for file in ${python_files[@]}; do
+	file_output=$(pylint --rcfile=${pkg_dir}/.pylintrc -r n ${file})
+	if [ "${file_output}" != "" ]; then
+		pep8_output=${pep8_output}"\n"${file_output}
+	fi
+done
+if [ "${pep8_output}" != "" ]; then
+	echo -e "${pep8_output}"
+	exit 1
+fi
+#if [ "${python_files}" != "" ]; then
+#	echo -e "All Python files are PEP8 compliant"
+#fi
+
+
+###
+# Check for author congruence
+###
 #echo -e "\tValidating author name and email"
 # Check that e-mail and name match the e-mail and address of first commit
 first_commit_hash=$(git rev-list --max-parents=0 HEAD)

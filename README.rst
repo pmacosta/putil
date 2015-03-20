@@ -66,6 +66,19 @@ Contributing
 
 3. The :code:`${PUTIL_DIR}/sbin` directory contains all relevant scripts:
 
+   * build-tags.sh: builds `exhuberant ctags <http://ctags.sourceforge.net/>`_ file :code:`${PUTIL_DIR}/tags`
+
+	.. code-block:: bash
+
+		$ ${PUTIL_DIR}/sbin/build-tags.sh -h
+		build-tags.sh
+
+		Usage:
+		  build-tags.sh [-h]
+
+		Options:
+		  -h  Show this screen
+
    * coverage.sh: measures test coverage in a module
 
 	.. code-block:: bash

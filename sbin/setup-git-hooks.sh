@@ -8,4 +8,4 @@ while [ -h "$source" ]; do # resolve $source until the file is no longer a symli
 done
 dir="$( cd -P "$( dirname "$source" )" && pwd )"
 proj_dir=$(dirname ${dir})
-source ${proj_dir}/.hooks/make-links.sh
+source ${proj_dir}/.hooks/setup-git-hooks.sh
