@@ -62,15 +62,15 @@ Contributing
 
 .. code-block:: bash
 
-	$ ${PUTIL_DIR}/bin/setup-git-hooks.sh
+	$ ${PUTIL_DIR}/sbin/setup-git-hooks.sh
 
-3. The :code:`${PUTIL_DIR}/bin` directory contains all relevant scripts:
+3. The :code:`${PUTIL_DIR}/sbin` directory contains all relevant scripts:
 
    * coverage.sh: measures test coverage in a module
 
 	.. code-block:: bash
 
-		$ ${PUTIL_DIR}/bin/coverage.sh -h
+		$ ${PUTIL_DIR}/sbin/coverage.sh -h
 		coverage.sh
 
 		Usage:
@@ -83,7 +83,7 @@ Contributing
 
 	.. code-block:: bash
 
-		$ ${PUTIL_DIR}/bin/generate-docs.sh -h
+		$ ${PUTIL_DIR}/sbin/generate-docs.sh -h
 		generate-docs.sh
 
 		Usage:
@@ -97,7 +97,7 @@ Contributing
 
 	.. code-block:: bash
 
-		$ python ${PUTIL_DIR}/bin/gen_ref_images.py
+		$ python ${PUTIL_DIR}/sbin/gen_ref_images.py
 		Generating image [PUTIL_DIR]/tests/support/ref_images/series_marker_false_interp_straight_line_style_solid.png
 		...
 
@@ -105,7 +105,7 @@ Contributing
 
 	.. code-block:: bash
 
-		$ ${PUTIL_DIR}/bin/run-package-coverage.sh -h
+		$ ${PUTIL_DIR}/sbin/run-package-coverage.sh -h
 		run-package-coverage.sh
 
 		Usage:
@@ -118,7 +118,7 @@ Contributing
 
 	.. code-block:: bash
 
-		$ ${PUTIL_DIR}/bin/run-package-tests.sh -h
+		$ ${PUTIL_DIR}/sbin/run-package-tests.sh -h
 		run-package-tests.sh
 
 		Usage:
@@ -131,7 +131,7 @@ Contributing
 
 	.. code-block:: bash
 
-		$ ${PUTIL_DIR}/bin/test.sh -h
+		$ ${PUTIL_DIR}/sbin/test.sh -h
 		test.sh
 
 		Usage:
