@@ -1,7 +1,7 @@
 ﻿# setup.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0904
+# pylint: disable=C0111,R0904,W0201
 
 # Taken in large part from http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
 # With additional hint from http://oddbird.net/set-your-code-free-preso/
@@ -34,9 +34,11 @@ LONG_DESCRIPTION = read('README.rst', 'CHANGELOG.rst')
 # Classes
 ###
 class PyTest(TestCommand):
-	def __init__(self):
-		TestCommand.__init__(self)
-		self.test_args, self.test_suite = None, None
+	user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+	def initialize_options(self):
+		TestCommand.initialize_options(self)
+		self.pytest_args = []
 
 	def finalize_options(self):
 		TestCommand.finalize_options(self)
@@ -45,27 +47,41 @@ class PyTest(TestCommand):
 
 	def run_tests(self):
 		import pytest
-		errcode = pytest.main(self.test_args)
-		sys.exit(errcode)
+		errno = pytest.main(self.test_args)
+		sys.exit(errno)
 
 
 ###
 # Processing
 ###
+#	install_requires=['cogapp>=2.4',
+#	                  'funcsigs>=0.4',
+#	                  'matplotlib>=1.4.2',
+#	                  'numpy>=1.8.2',
+#	                  'PyContracts>=1.7.1',
+#	                  'pytest>=2.6.3',
+#	                  'scipy>=0.14.0'
+#	                 ],
 setup(
 	name='putil',
 	version='0.9',
 	url='http://github.com/pmacosta/putil/',
 	license='MIT',
 	author='Pablo Acosta-Serafini',
-	tests_require=['pytest'],
+	test_requires=[
+		           'cogapp',
+	               'funcsigs',
+	               'mock',
+	               'numpy',
+	               'PyContracts',
+	               'pytest>',
+	              ],
 	install_requires=['cogapp>=2.4',
 	                  'funcsigs>=0.4',
-	                  'matplotlib>=1.4.2',
 	                  'numpy>=1.8.2',
+	                  'mock>=1.0.1',
 	                  'PyContracts>=1.7.1',
 	                  'pytest>=2.6.3',
-	                  'scipy>=0.14.0'
 	                 ],
 	cmdclass={'test': PyTest},
 	author_email='pmacosta@yahoo.com',
@@ -74,7 +90,6 @@ setup(
 	packages=['putil'],
 	include_package_data=True,
 	platforms='any',
-	test_suite='sandman.test.test_sandman',
 	classifiers=[
 		         'Programming Language :: Python',
 		         'Programming Language :: Python :: 2.7',
@@ -87,6 +102,10 @@ setup(
 	             'Topic :: Software Development :: Libraries :: Python Modules',
 	            ],
 	extras_require={
-		'testing': ['pytest'],
+		'testing':[
+			       'mock',
+				   'PyContracts',
+			       'pytest'
+		          ],
 	}
 )

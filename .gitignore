@@ -13,5 +13,7 @@ tags
 *.swo
 *.rot
 *.pyc
+dist
+putil.egg-info
 docs/_build
 !docs/support/*.png
