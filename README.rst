@@ -9,7 +9,7 @@ This library provides a collection of utility modules to supplement the excellen
 
 * **eng**: this module provides engineering-related functions, mainly handling numbers represented in engineering notation, obtaining their constituent components and converting to and from regular floats
 
-* **exdoc**: this module can be used to automatically generate exceptions documentation marked up in `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ with the help of the :ref:`exh-module` and
+* **exdoc**: this module can be used to automatically generate exceptions documentation marked up in `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ with the help of the exh module and
   `cog <http://nedbatchelder.com/code/cog/>`_
 
 * **exh**: this module can be used to register exceptions and then conditionally raising them if a given condition is true
