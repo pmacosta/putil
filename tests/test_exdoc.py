@@ -1,24 +1,12 @@
 ﻿# test_exdoc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=W0212
+# pylint: disable=C0111,W0212
 
-"""
-putil.exdoc unit tests
-"""
+import imp, copy, mock, os, pytest, sys
 
-import imp
-import sys
-import mock
-import copy
-import pytest
+import exdoc_support_module_1, exdoc_support_module_3, exdoc_support_module_4, putil.exdoc, putil.exh, putil.test
 
-import putil.exh
-import putil.test
-import putil.exdoc
-import exdoc_support_module_1
-import exdoc_support_module_3
-import exdoc_support_module_4
 
 ###
 # Functions
@@ -96,9 +84,9 @@ def simple_exobj():	#pylint: disable=R0914
 	func1()
 	return exobj
 
-
-SEQ = [('../tests/support/exdoc_support_module_1.py+{0}', 69), ('../tests/support/exdoc_support_module_1.py+{0}', 102), ('../tests/support/exdoc_support_module_4.py+{0}', 23), \
-	   ('../tests/support/exdoc_support_module_1.py+{0}', 1000)]
+TEST_DIR = os.path.dirname(__file__)
+SEQ = [(os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 69), (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 102),
+	   (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_4.py+{0}'), 23), (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 1000)]
 class MockFCode(object):	#pylint: disable=R0903,C0111
 	def __init__(self):
 		text, line_no = SEQ.pop(0)

@@ -1,23 +1,11 @@
 ﻿# test_pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=W0212
+# pylint: disable=C0111,W0212
 
-"""
-putil.pintrospect unit tests
-"""
+import copy, inspect, mock, os, random, string, sys, types
 
-import os
-import sys
-import copy
-import mock
-import types
-import random
-import string
-import inspect
-
-import putil.test
-import putil.pinspect
+import putil.pinspect, putil.test
 
 
 def compare_str_outputs(obj, ref_list):
@@ -72,8 +60,10 @@ def test_is_special_method():
 
 def test_loaded_package_modules():
 	""" Test loaded_package_modules() function """
-	module_name_list = ['misc', 'pinspect', 'test']
-	modules_obj_list = set([sys.modules['putil']]+[sys.modules['putil.{0}'.format(module_name)] for module_name in module_name_list])
+	# Have to generate list dynamically because loaded modules depends on how test is run, i.e. ${PACKAGE_DIR}/sbin/test.sh pinspect produces different results than ${PACKAGE_DIR}/pytest -x -s
+	pkg_dir = os.path.split(os.path.dirname(__file__))[0]
+	module_name_list = [obj for name, obj in sys.modules.iteritems() if name.startswith('putil.') and (hasattr(obj, '__file__')) and (getattr(obj, '__file__').startswith(pkg_dir))]
+	modules_obj_list = set([sys.modules['putil']]+module_name_list)
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil.pinspect'])) == modules_obj_list
 

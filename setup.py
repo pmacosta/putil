@@ -46,7 +46,9 @@ class PyTest(TestCommand):
 		self.test_suite = True
 
 	def run_tests(self):
-		import pytest
+		import os, pytest
+		pkg_dir = os.path.dirname(__file__)
+		sys.path += [os.path.join(pkg_dir, 'sbin'), os.path.join(pkg_dir, 'tests/support')]
 		errno = pytest.main(self.test_args)
 		sys.exit(errno)
 
@@ -68,20 +70,16 @@ setup(
 	url='http://github.com/pmacosta/putil/',
 	license='MIT',
 	author='Pablo Acosta-Serafini',
-	test_requires=[
-		           'cogapp',
-	               'funcsigs',
+	tests_require=[
+				   'coverage',
 	               'mock',
-	               'numpy',
-	               'PyContracts',
-	               'pytest>',
+	               'pytest',
 	              ],
 	install_requires=['cogapp>=2.4',
 	                  'funcsigs>=0.4',
-	                  'numpy>=1.8.2',
 	                  'mock>=1.0.1',
+	                  'numpy>=1.8.2',
 	                  'PyContracts>=1.7.1',
-	                  'pytest>=2.6.3',
 	                 ],
 	cmdclass={'test': PyTest},
 	author_email='pmacosta@yahoo.com',

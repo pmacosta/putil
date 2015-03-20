@@ -5,9 +5,7 @@
 
 import decimal
 
-import putil.exh
-import putil.misc
-import putil.pcontracts
+import putil.exh, putil.misc, putil.pcontracts
 
 
 ###
@@ -35,36 +33,37 @@ _SUFFIX_POWER_DICT = dict([(key, float(10**value)) for key, value in _SUFFIX_TO_
 # Functions
 ###
 @putil.pcontracts.new_contract()
-def engineering_notation_number(snum):
+def engineering_notation_number(obj):
 	r"""
-	Contract that validates if a string is a number represented in engineering notation
+	Contract that validates if an object is a number represented in engineering notation
 
-	:param	snum: Number
-	:type	snum: EngineeringNotationNumber
+	:param	obj: Object
+	:type	obj: any
 	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the name of the argument the contract is attached to
 
 	:rtype: None
 	"""
 	try:
-		snum = snum.rstrip()
-		float(snum[:-1] if snum[-1] in _SUFFIX_TUPLE else snum)
+		obj = obj.rstrip()
+		float(obj[:-1] if obj[-1] in _SUFFIX_TUPLE else obj)
+		return None
 	except:
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 
 @putil.pcontracts.new_contract()
-def engineering_notation_suffix(suffix):
+def engineering_notation_suffix(obj):
 	r"""
-	Contract that validates if a character is an engineering notation suffix
+	Contract that validates if an object is an engineering notation suffix
 
-	:param	suffix: Suffix
-	:type	suffix: EngineerngNotationSuffix
+	:param	obj: Object
+	:type	obj: any
 	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the *name* of the argument the contract is attached to
 
 	:rtype: None
 	"""
 	try:
-		assert suffix in _SUFFIX_TUPLE
+		assert obj in _SUFFIX_TUPLE
 	except:
 		raise ValueError(putil.pcontracts.get_exdesc())
 

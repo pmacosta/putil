@@ -52,7 +52,6 @@ Miscellaneous
 =============
 
 .. autofunction:: putil.misc.Bundle
-.. autofunction:: putil.misc.delete_module
 .. autofunction:: putil.misc.flatten_list
 
 Numbers

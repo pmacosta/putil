@@ -6,18 +6,10 @@
 putil.plot unit tests
 """
 
-import mock
-import scipy
-import numpy
-import pytest
-import matplotlib
-import matplotlib.path
+import mock, matplotlib, matplotlib.path, numpy, pytest, scipy
 from scipy.misc import imread	#pylint: disable=E0611
 
-import putil.misc
-import putil.test
-import putil.plot
-import gen_ref_images
+import gen_ref_images, putil.misc, putil.plot, putil.test
 
 IMGTOL = 1e-3
 def compare_images(image_file_name1, image_file_name2):

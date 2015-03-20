@@ -5,7 +5,6 @@
 
 import os
 import re
-import sys
 import mock
 import numpy
 import pytest
@@ -15,9 +14,7 @@ import datetime
 import tempfile
 import fractions
 
-import putil.misc
-import putil.pcsv
-import putil.test
+import putil.misc, putil.test
 
 
 def test_ignored():
@@ -337,6 +334,7 @@ def test_quote_str():
 
 def test_strtype_item():
 	""" Test strtype_item() function """
+	import putil.pcsv	#pylint: disable=W0621
 	assert putil.misc.strtype_item(str) == 'str'
 	assert putil.misc.strtype_item('hello') == '"hello"'
 	assert putil.misc.strtype_item(5) == '5'
@@ -345,6 +343,7 @@ def test_strtype_item():
 
 def test_strtype():
 	""" Test strtype() function """
+	import putil.pcsv	#pylint: disable=W0621
 	assert putil.misc.strtype(str) == 'str'
 	assert putil.misc.strtype('hello') == '"hello"'
 	assert putil.misc.strtype(5) == '5'
@@ -361,13 +360,6 @@ def test_flatten_list():
 	assert putil.misc.flatten_list([1, [2, 3, 4], 5]) == [1, 2, 3, 4, 5]
 	assert putil.misc.flatten_list([1, [2, 3, [4, 5, 6]], 7]) == [1, 2, 3, 4, 5, 6, 7]
 	assert putil.misc.flatten_list([1, [2, 3, [4, [5, 6, 7], 8, 9]], [10, 11], 12]) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-
-
-def test_delete_module():
-	""" Test delete_module() function """
-	putil.test.assert_exception(putil.misc.delete_module, {'modname':'not_a_module'}, ValueError, 'Module not_a_module is not imported')
-	putil.misc.delete_module('putil.pcsv')
-	assert 'putil.pcsv' not in sys.modules
 
 
 def test_to_scientific_string():

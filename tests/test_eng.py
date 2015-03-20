@@ -7,8 +7,7 @@
 putil.eng unit tests
 """
 
-import putil.eng
-import putil.test
+import putil.test, putil.eng
 
 ###
 # Functions

@@ -3,18 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0212
 
-import sys
-import copy
-import pytest
-import contracts
-import functools
+import contracts, copy, functools, pytest, sys
 
-import putil.exh
-import putil.test
-import putil.pcontracts	#pylint: disable=W0611
+import putil.exh, putil.pcontracts, putil.test
 
-
-_ORIGINAL_CUSTOM_CONTRACTS = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
 
 def sample_func_global():
 	""" Global test function to test get_exdesc() function """
@@ -94,6 +86,7 @@ def test_parse_new_contract_args():
 
 def test_register_custom_contracts():
 	""" Test _register_custom_contracts() function """
+	original_custom_contracts = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
 	fobj = putil.pcontracts._register_custom_contracts
 	ftest = putil.test.assert_exception
 	key1 = 'contract_name'
@@ -129,11 +122,14 @@ def test_register_custom_contracts():
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract5', {'name':'mex5', 'msg':'msg5', 'type':ValueError})
 	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'test_contract5':{'mex5':{'num':0, 'msg':'msg5', 'type':ValueError, 'field':None}}}) == 0
-	putil.pcontracts._CUSTOM_CONTRACTS = dict()
+	#putil.pcontracts._CUSTOM_CONTRACTS = dict()
+	putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
 
 
 def test_new_contract():
 	""" Tests for new_contract decorator """
+	original_custom_contracts = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
+	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract()
 	def func1(name1):	#pylint: disable=C0111
 		return name1, putil.pcontracts.get_exdesc()
@@ -151,6 +147,7 @@ def test_new_contract():
 		return name3, putil.pcontracts.get_exdesc()
 	assert func3('def') == ('def', {'ex1':'[START CONTRACT MSG: func3]Medium message[STOP CONTRACT MSG]', 'ex2':'[START CONTRACT MSG: func3]Complex *[data]*[STOP CONTRACT MSG]'})
 	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, {'func3':{'ex1':{'num':0, 'msg':'Medium message', 'type':RuntimeError, 'field':None}, 'ex2':{'num':1, 'msg':'Complex *[data]*', 'type':TypeError, 'field':'data'}}}) == 0
+	putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
 
 
 ###
@@ -233,9 +230,10 @@ class TestCreateArgumentValuePairs(object):	#pylint: disable=W0232
 		assert orig_func(1, 2, kpar2=20) == {'ppar1':1, 'ppar2':2, 'kpar1':'a', 'kpar2':20}	#pylint: disable=E1124
 
 
-putil.pcontracts._CUSTOM_CONTRACTS = dict()
 def test_contract():	#pylint: disable=C0103,R0912
 	""" Test contract decorator """
+	original_custom_contracts = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
+	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract('Illegal number: *[number]*')
 	def not_zero(number):	#pylint: disable=C0111,W0612
 		exdesc = putil.pcontracts.get_exdesc()
@@ -308,11 +306,11 @@ def test_contract():	#pylint: disable=C0103,R0912
 	putil.test.assert_exception(func5, {'num':1.0, 'fudge':1.0}, RuntimeError, 'Argument `fudge` is not valid')
 	putil.exh.del_exh_obj()
 	putil.test.assert_exception(func6, {'fname':5}, contracts.interface.ContractSyntaxError, '')
+	putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
 
 
 def test_file_name_contract():
 	""" Test for file_name custom contract """
-	putil.pcontracts._CUSTOM_CONTRACTS = _ORIGINAL_CUSTOM_CONTRACTS
 	@putil.pcontracts.contract(sfn='file_name')
 	def func(sfn):
 		""" Sample function to test file_name custom contract """

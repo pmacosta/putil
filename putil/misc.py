@@ -631,24 +631,6 @@ def strframe(obj, extended=False):
 	return '\n'.join(ret)
 
 
-# From https://mail.python.org/pipermail/tutor/2006-August/048596.html
-def delete_module(modname):
-	""" Deletes a previously imported module
-
-	:param	modname: Module name
-	:type	modname: string
-	:raises: ValueError (Module *[modname]* is not imported)
-	"""
-	if modname not in sys.modules:
-		raise ValueError('Module {0} is not imported'.format(modname))
-	del sys.modules[modname]
-	for mod in sys.modules.values():
-		try:
-			delattr(mod, modname)
-		except AttributeError:
-			pass
-
-
 def quote_str(obj):
 	"""
 	Adds extra quotes to a string. If the argument is not a string it is returned unmodified
