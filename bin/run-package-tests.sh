@@ -1,4 +1,13 @@
 #!/bin/bash
+
+print_usage_message () {
+	echo -e "run-package-tests.sh\n" >&2
+	echo -e "Usage:" >&2
+	echo -e "  run-package-tests.sh [-h]\n" >&2
+	echo -e "Options:" >&2
+	echo -e "  -h  Show this screen" >&2
+}
+
 # Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
 source="${BASH_SOURCE[0]}"
 while [ -h "${source}" ]; do # resolve $source until the file is no longer a symlink
@@ -11,6 +20,27 @@ pkg_dir=$(dirname ${dir})
 src_dir=${pkg_dir}/putil
 cpwd=${PWD}
 
+# Read command line options
+while getopts ":h" opt; do
+	case ${opt} in
+		h)
+			print_usage_message
+			exit 0
+			;;
+		\?)
+			echo "run-package-tests.sh: invalid option" >&2
+			print_usage_message
+			exit 1
+			;;
+	esac
+done
+shift $((${OPTIND} - 1))
+if [ "$#" != 0 ]; then
+	echo "run-package-tests.sh: too many command line arguments" >&2
+	exit 1
+fi
+
+# Processing
 cd ${pkg_dir}/tests
 modules=(eng exdoc exh misc pinspect pcontracts pcsv plot "test" tree)
 for module in ${modules[@]}; do

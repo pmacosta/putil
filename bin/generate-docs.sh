@@ -1,4 +1,14 @@
 #!/bin/bash
+
+print_usage_message () {
+	echo -e "generate-docs.sh\n" >&2
+	echo -e "Usage:" >&2
+	echo -e "  generate-docs.sh [-h] [-r] [module-name]\n" >&2
+	echo -e "Options:" >&2
+	echo -e "  -h  Show this screen" >&2
+	echo -e "  -r  Rebuild exceptions documentation\n" >&2
+}
+
 # Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
 source="${BASH_SOURCE[0]}"
 while [ -h "${source}" ]; do # resolve $source until the file is no longer a symlink
@@ -16,13 +26,19 @@ rebuild=0
 modules=(eng pcsv plot tree)
 
 # Read command line options
-while getopts "r --long rebuild" opt; do
+while getopts ":rh" opt; do
 	case ${opt} in
-		r|rebuild)
+		r)
 			rebuild=1
 			;;
+		h)
+			print_usage_message
+			exit 0
+			;;
 		\?)
-			echo 'Invalid option: $OPTARG' >&2
+			echo "generate-docs.sh: invalid option" >&2
+			print_usage_message
+			exit 1
 			;;
 	esac
 done

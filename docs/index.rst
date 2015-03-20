@@ -68,17 +68,79 @@ Contributing
 
    * coverage.sh: measures test coverage in a module
 
+	.. code-block:: bash
+
+		$ ${PUTIL_DIR}/bin/coverage.sh -h
+		coverage.sh
+
+		Usage:
+		  coverage.sh [-h] [module-name]
+
+		Options:
+		  -h  Show this screen
+
    * generate-docs.sh: (re) builds the package documentation
+
+	.. code-block:: bash
+
+		$ ${PUTIL_DIR}/bin/generate-docs.sh -h
+		generate-docs.sh
+
+		Usage:
+		  generate-docs.sh [-h] [-r] [module-name]
+
+		Options:
+		  -h  Show this screen
+		  -r  Rebuild exceptions documentation
 
    * gen_ref_images.py: generates the plot module reference images needed for unit testing
 
+	.. code-block:: bash
+
+		$ python ${PUTIL_DIR}/bin/gen_ref_images.py
+		Generating image [PUTIL_DIR]/tests/support/ref_images/series_marker_false_interp_straight_line_style_solid.png
+		...
+
    * run-package-coverage.sh: measures test coverage for all modules in package
+
+	.. code-block:: bash
+
+		$ ${PUTIL_DIR}/bin/run-package-coverage.sh -h
+		run-package-coverage.sh
+
+		Usage:
+		  run-package-coverage.sh [-h]
+
+		Options:
+		  -h  Show this screen
 
    * run-package-tests.sh: runs unit tests for all modules in packages
 
+	.. code-block:: bash
+
+		$ ${PUTIL_DIR}/bin/run-package-tests.sh -h
+		run-package-tests.sh
+
+		Usage:
+		  run-package-tests.sh [-h]
+
+		Options:
+		  -h  Show this screen
+
    * test.sh: runs a module's unit tests
 
-4. Write a test which shows that the bug was fixed or that the feature works as expected
+	.. code-block:: bash
+
+		$ ${PUTIL_DIR}/bin/test.sh -h
+		test.sh
+
+		Usage:
+		  test.sh [-h] [module-name] [test-name]
+
+		Options:
+		  -h  Show this screen
+
+4. Write a unit test which shows that a bug was fixed or that a new feature or API works as expected
 
 Contents
 ========
