@@ -18,11 +18,15 @@ The module has been developed using Python 2.7, but in all likelihood the module
 Dependencies
 ************
 
+* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_
+
 * `matplotlib <http://matplotlib.org/>`_
+
+* `Numpy <http://www.numpy.org/>`_
 
 * `scipy <http://www.scipy.org/>`_
 
-* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_ (needed for Python 2.7, it is part of Python 3.x)
+* `PyContracts <https://andreacensi.github.io/contracts/>`_
 
 ***************
 Class hierarchy
