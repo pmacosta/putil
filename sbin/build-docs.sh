@@ -1,12 +1,13 @@
 #!/bin/bash
 
 print_usage_message () {
-	echo -e "generate-docs.sh\n" >&2
+	echo -e "build-docs.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  generate-docs.sh [-h] [-r] [module-name]\n" >&2
+	echo -e "  build-docs.sh [-h] [-r] [module-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
-	echo -e "  -r  Rebuild exceptions documentation\n" >&2
+	echo -e "  -r  Rebuild exceptions documentation. If no module name is given all" >&2
+	echo -e "      modules with auto-generated exceptions documentation are rebuilt\n" >&2
 }
 
 # Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
@@ -36,7 +37,7 @@ while getopts ":rh" opt; do
 			exit 0
 			;;
 		\?)
-			echo "generate-docs.sh: invalid option" >&2
+			echo "build-docs.sh: invalid option" >&2
 			print_usage_message
 			exit 1
 			;;

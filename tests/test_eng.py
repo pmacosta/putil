@@ -1,13 +1,10 @@
 ﻿# test_eng.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0302,W0212
-
-"""
-putil.eng unit tests
-"""
+# pylint: disable=C0111,C0302,W0212
 
 import putil.test, putil.eng
+
 
 ###
 # Functions

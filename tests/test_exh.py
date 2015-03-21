@@ -1,23 +1,16 @@
 ﻿# test_exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0302,W0212,W0640
+# pylint: disable=C0111,C0302,W0212,W0640
 
-"""
-putil.exh unit tests
-"""
+import copy, mock, pytest, re
 
-import re
-import copy
-import mock
-import pytest
-
-import putil.exh
-import putil.misc
-import putil.test
-import putil.pcontracts
+import putil.exh, putil.misc, putil.pcontracts, putil.test
 
 
+###
+# Tests
+###
 def test_star_exh_obj():
 	""" Test [get|set|del]_exh_obj() function """
 	putil.test.assert_exception(putil.exh.set_exh_obj, {'obj':5}, RuntimeError, 'Argument `obj` is not valid')

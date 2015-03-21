@@ -84,6 +84,7 @@ def simple_exobj():	#pylint: disable=R0914
 	func1()
 	return exobj
 
+
 TEST_DIR = os.path.dirname(__file__)
 SEQ = [(os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 69), (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 102),
 	   (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_4.py+{0}'), 23), (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 1000)]

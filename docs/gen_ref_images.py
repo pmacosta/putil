@@ -1,1 +1,1 @@
-../bin/gen_ref_images.py
+../sbin/gen_ref_images.py

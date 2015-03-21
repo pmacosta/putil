@@ -3,20 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0302,C0111
 
-import os
-import re
-import mock
-import numpy
-import pytest
-import struct
-import inspect
-import datetime
-import tempfile
-import fractions
+import datetime, fractions, inspect, mock, numpy, os, pytest, re, struct, tempfile
 
 import putil.misc, putil.test
 
 
+###
+# Tests
+###
 def test_ignored():
 	""" Test ignored context manager """
 	with tempfile.NamedTemporaryFile(delete=False) as fobj:
@@ -201,6 +195,7 @@ def test_smart_round():
 	assert putil.misc.smart_round(1.3333, 2) == 1.33
 	assert (putil.misc.smart_round(numpy.array([1.3333, 2.666666]), 2) == numpy.array([1.33, 2.67])).all()
 
+
 def test_isiterable():
 	""" Test isiterable() function """
 	assert putil.misc.isiterable([1, 2, 3]) == True
@@ -270,6 +265,7 @@ def test_ellapsed_time_string():
 	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2015, 1, 2, 1, 10, 3)) == '1 year, 1 day and 2 seconds'
 	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1, 1, 10, 1), datetime.datetime(2015, 1, 3, 1, 10, 3)) == '1 year, 2 days and 2 seconds'
 
+
 def test_tmp_file():
 	""" Test TmpFile context manager """
 	def write_data(file_handle):	#pylint: disable=C0111
@@ -297,6 +293,7 @@ def test_tmp_file():
 		assert line == ['Hello world!']
 		assert os.path.exists(file_name)
 	assert not os.path.exists(file_name)
+
 
 def test_strframe():
 	""" Test strframe() function """
@@ -393,6 +390,7 @@ def test_to_scientific_string():
 	assert putil.misc.to_scientific_string(-333) == '-3.33E+2'
 	assert putil.misc.to_scientific_string(-4567) == '-4.567E+3'
 	assert putil.misc.to_scientific_string(-4567.890) == '-4.56789E+3'
+
 
 def test_cidict():
 	""" Test CiDict class """

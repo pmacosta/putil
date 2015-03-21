@@ -1,5 +1,8 @@
 ﻿# my_module.py
-# pylint: disable=C0111,R0903
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,R0903,W0105
+
 
 ###
 # Exception tracing initialization code
@@ -10,7 +13,7 @@ import trace_my_module_2
 exobj_my_module = trace_my_module_2.trace_module()
 ]]]
 [[[end]]]
-"""	#pylint: disable=W0105
+"""
 
 import putil.exh
 
@@ -78,4 +81,4 @@ class MyClass(object):
 	   * RuntimeError (Attribute `value` not set)
 
 	.. [[[end]]]
-	"""	#pylint: disable=W0105
+	"""

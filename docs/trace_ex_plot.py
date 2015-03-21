@@ -1,4 +1,4 @@
-# trace_ex_tree
+# trace_ex_plot.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=W0212,C0111

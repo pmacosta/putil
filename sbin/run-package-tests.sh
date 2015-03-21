@@ -41,12 +41,6 @@ if [ "$#" != 0 ]; then
 fi
 
 # Processing
-cd ${pkg_dir}/tests
-modules=(eng exdoc exh misc pinspect pcontracts pcsv plot "test" tree)
-for module in ${modules[@]}; do
-	if ! py.test -s -vv -x test_$module.py; then
-		cd ${cpwd}
-		exit 1
-	fi
-done
+cd ${pkg_dir}
+py.test -x -s -vv
 cd ${cpwd}

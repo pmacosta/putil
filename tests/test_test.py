@@ -8,6 +8,9 @@ import pytest
 import putil.test
 
 
+###
+# Tests
+###
 def test_exception_type_str():
 	""" Test exception_type_str() function """
 	class MyException(Exception):
@@ -15,6 +18,7 @@ def test_exception_type_str():
 	assert putil.test.exception_type_str(RuntimeError) == 'RuntimeError'
 	assert putil.test.exception_type_str(Exception) == 'Exception'
 	assert putil.test.exception_type_str(MyException) == 'MyException'
+
 
 def test_assert_exception():
 	""" Test assert_exception() function """

@@ -1,16 +1,17 @@
 # test_plot.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-"""
-putil.plot unit tests
-"""
+# pylint: disable=C0111
 
 import mock, matplotlib, matplotlib.path, numpy, pytest, scipy
 from scipy.misc import imread	#pylint: disable=E0611
 
 import gen_ref_images, putil.misc, putil.plot, putil.test
 
+
+###
+# Helper functions
+###
 IMGTOL = 1e-3
 def compare_images(image_file_name1, image_file_name2):
 	""" Compare two images by calculating Manhattan and Zero norms """
@@ -25,8 +26,9 @@ def compare_images(image_file_name1, image_file_name2):
 		z_norm = scipy.linalg.norm(diff.ravel(), 0)		# Zero norm
 	return (m_norm, z_norm)
 
+
 ###
-# Contracts test
+# Contracts tests
 ###
 def test_real_num_contract():	#pylint: disable=W0232
 	""" Tests for RealNumber pseudo-type """
@@ -329,6 +331,7 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.dep_var
 		assert excinfo.value.message == "can't delete attribute"
+
 
 ###
 # Tests for CsvSource
@@ -690,6 +693,7 @@ def default_source():
 	""" Provides a default source to be used in teseting the putil.plot.Series() class """
 	return putil.plot.BasicSource(indep_var=numpy.array([5, 6, 7, 8]), dep_var=numpy.array([0, -10, 5, 4]))
 
+
 class TestSeries(object):	#pylint: disable=W0232
 	""" Tests for Series """
 	def test_data_source_wrong_type(self, default_source):	#pylint: disable=C0103,R0201,W0621
@@ -920,6 +924,7 @@ class TestSeries(object):	#pylint: disable=W0232
 def default_series(default_source):	#pylint: disable=W0621
 	""" Provides a default series object to be used in teseting the putil.plot.Panel() class """
 	return putil.plot.Series(data_source=default_source, label='test series')
+
 
 class TestPanel(object):	#pylint: disable=W0232
 	""" Tests for Series """
@@ -1360,6 +1365,7 @@ def default_panel(default_series):	#pylint: disable=W0621
 	""" Provides a default panel object to be used in teseting the putil.plot.Figure() class """
 	return putil.plot.Panel(series=default_series, primary_axis_label='Primary axis', primary_axis_units='A', secondary_axis_label='Secondary axis', secondary_axis_units='B')
 
+
 class TestFigure(object):	#pylint: disable=W0232,R0903
 	""" Tests for Figure """
 	def test_indep_var_label_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
@@ -1564,6 +1570,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
+
 
 ###
 # Tests for parameterized_color_space

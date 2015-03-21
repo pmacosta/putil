@@ -15,7 +15,7 @@ the following module
     :language: python
     :linenos:
     :tab-width: 3
-    :lines: 1,3-
+    :lines: 1,5-
 
 with
 
@@ -23,7 +23,7 @@ with
     :language: python
     :linenos:
     :tab-width: 3
-    :lines: 1,3-
+    :lines: 1,5-
 
 and 
 
@@ -31,7 +31,7 @@ and
     :language: python
     :linenos:
     :tab-width: 3
-    :lines: 1,3-
+    :lines: 1,5-
 
 produces an error when traced:
 
@@ -48,6 +48,7 @@ Static imports in enclosures are supported:
     :language: python
     :linenos:
     :tab-width: 3
+    :lines: 1,5-
 
 .. code-block:: python
 
@@ -77,6 +78,7 @@ The number in parenthesis indicates the line number in which the callable starts
     :language: python
     :linenos:
     :tab-width: 3
+    :lines: 1,5-
 
 .. code-block:: python
 

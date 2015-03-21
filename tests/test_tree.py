@@ -2,24 +2,15 @@
 # test_tree.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=W0212
+# pylint: disable=C0111,W0212
 
-"""
-putil.tree unit tests
-"""
+import copy, pytest
 
-import copy
-import pytest
-
-import putil.test
-import putil.tree
+import putil.test, putil.tree
 
 
 ###
-# Tests for pseudo-types
-###
-###
-# Tests for Tree
+# Fixtures
 ###
 @pytest.fixture
 def default_trees():	#pylint: disable=R0914
@@ -85,6 +76,9 @@ def default_trees():	#pylint: disable=R0914
 	return t1obj, t2obj, t3obj, t4obj
 
 
+###
+# Tests
+###
 class TestTreeNode(object):	#pylint: disable=W0232,R0904
 	""" Tests for CsvFile class """
 

@@ -1,5 +1,7 @@
 ﻿# trace_my_module_1.py
 # Option 1: use already written test bench
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
 # pylint: disable=C0111
 import copy, pytest, putil.exdoc
 def trace_module(no_print=True):

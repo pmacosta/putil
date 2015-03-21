@@ -1,6 +1,8 @@
-"""
-putil.plot library usage example
-"""
+# example_plot.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111
+
 
 def main():
 	"""

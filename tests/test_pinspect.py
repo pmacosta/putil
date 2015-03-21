@@ -8,6 +8,9 @@ import copy, inspect, mock, os, random, string, sys, types
 import putil.pinspect, putil.test
 
 
+###
+# Helper functions
+###
 def compare_str_outputs(obj, ref_list):
 	""" Produce helpful output when reference output does not match actual output """
 	ref_text = '\n'.join(ref_list)
@@ -29,6 +32,9 @@ def compare_str_outputs(obj, ref_list):
 	return ref_text
 
 
+###
+# Tests
+###
 def test_object_is_module():
 	""" Test object_is_module() function """
 	assert putil.pinspect.is_object_module(5) == False

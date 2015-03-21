@@ -1,19 +1,12 @@
 ﻿# test_pcsv.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0302
+# pylint: disable=C0111,C0302
 
-"""
-putil.pcsv unit tests
-"""
+import mock, pytest, tempfile
 
-import mock
-import pytest
-import tempfile
+import putil.misc, putil.pcsv, putil.test
 
-import putil.misc
-import putil.pcsv
-import putil.test
 
 ###
 # Tests for CsvFile
@@ -21,11 +14,14 @@ import putil.test
 def write_file_empty(file_handle):	#pylint: disable=C0111
 	file_handle.write('')
 
+
 def write_cols_not_unique(file_handle):	#pylint: disable=C0111
 	file_handle.write('Col1,Col2,Col3,Col1')
 
+
 def write_no_data(file_handle):	#pylint: disable=C0111
 	file_handle.write('Col1,Col2,Col3')
+
 
 def write_data_start_file(file_handle):	#pylint: disable=C0111
 	file_handle.write('Ctrl,Ref,Result\n')
@@ -35,6 +31,7 @@ def write_data_start_file(file_handle):	#pylint: disable=C0111
 	file_handle.write('2,5,40\n')
 	file_handle.write('3,5,50\n')
 
+
 def write_file(file_handle):	#pylint: disable=C0111
 	file_handle.write('Ctrl,Ref,Result\n')
 	file_handle.write('1,3,10\n')
@@ -42,6 +39,7 @@ def write_file(file_handle):	#pylint: disable=C0111
 	file_handle.write('2,4,30\n')
 	file_handle.write('2,5,40\n')
 	file_handle.write('3,5,50\n')
+
 
 class TestCsvFile(object):	#pylint: disable=W0232
 	""" Tests for CsvFile class """
@@ -253,6 +251,7 @@ def test_write_function_errors():	#pylint: disable=R0201
 		mock_make_dir.side_effect = ValueError('Test message')
 		with tempfile.NamedTemporaryFile(delete=False) as fobj:
 			putil.test.assert_exception(putil.pcsv.write, {'file_name':fobj.name, 'data':[['hello']]}, RuntimeError, 'File {0} could not be created: Test message'.format(fobj.name))
+
 
 def test_write_function_works():	#pylint: disable=R0201
 	""" Test if write() method behaves properly """

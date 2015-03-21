@@ -1,5 +1,7 @@
 ﻿# trace_my_module_2.py
 # Option 2: manually use all callables to document
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
 # pylint: disable=C0111,W0104
 import copy, my_module, putil.exdoc
 def trace_module(no_print=True):

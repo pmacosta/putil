@@ -8,11 +8,18 @@ import contracts, copy, functools, pytest, sys
 import putil.exh, putil.pcontracts, putil.test
 
 
+###
+# Fixtures
+###
 def sample_func_global():
 	""" Global test function to test get_exdesc() function """
 	tmp_global = putil.pcontracts.get_exdesc()
 	return tmp_global
 
+
+###
+# Tests
+###
 def test_get_exdesc():
 	""" Test get_exdesc() function """
 	def sample_func_local():

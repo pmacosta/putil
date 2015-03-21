@@ -12,6 +12,7 @@ This module can be used to handle comma-separated values (CSV) files and do ligh
     :language: python
     :linenos:
     :tab-width: 3
+    :lines: 1,5-
 
 ***********
 Interpreter

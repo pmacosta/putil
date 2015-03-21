@@ -19,6 +19,7 @@ For example, it is desired to auto-document the exceptions of a module ``my_modu
     :language: python
     :linenos:
     :tab-width: 3
+    :lines: 1-2,6-
 
 The context manager :py:class:`putil.exdoc.ExDocCxt` sets up the tracing environment and returns a :py:class:`putil.exdoc.ExDoc` object that can the be used in the documentation string of each callable to extract the exceptions
 documentation. In this example it is assumed that the tests are written using `pytest <http://pytest.org/>`_, but any test framework can be used. Another way to trace the module is to simply call all the functions, methods or
@@ -28,6 +29,7 @@ class properties that need to be documented. For example:
     :language: python
     :linenos:
     :tab-width: 3
+    :lines: 1-2,6-
 
 And the actual module ``my_module`` code is (before auto-documentation):
 
@@ -35,6 +37,7 @@ And the actual module ``my_module`` code is (before auto-documentation):
     :language: python
     :linenos:
     :tab-width: 3
+    :lines: 1,7-
 
 A simple shell script can be written to automate the cogging of the ``my_module.py`` file:
 
@@ -49,6 +52,7 @@ After the script is run and the auto-documentation generated, each callable has 
     :language: python
     :linenos:
     :tab-width: 3
+    :lines: 1,7-
 
 .. warning:: Due to the limited introspection capabilities of class properties, only properties defined using the `property <https://docs.python.org/2/library/functions.html#property>`_ built-in function can be documented with
 	:py:meth:`putil.exdoc.ExDoc.get_sphinx_autodoc`. Properties defined by other methods can still be auto-documented with :py:meth:`putil.exdoc.ExDoc.get_sphinx_doc` and explicitly providing the method/function name.

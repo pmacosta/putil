@@ -74,7 +74,7 @@ example_plot.py:
     :language: python
     :linenos:
     :tab-width: 3
-    :lines: 5-95
+    :lines: 7-95
 
 |
 
