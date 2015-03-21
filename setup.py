@@ -46,9 +46,10 @@ class PyTest(TestCommand):
 		self.test_suite = True
 
 	def run_tests(self):
-		import os, pytest
-		pkg_dir = os.path.dirname(__file__)
-		sys.path += [os.path.join(pkg_dir, 'sbin'), os.path.join(pkg_dir, 'tests/support')]
+		import pytest
+		#import os, pytest
+		#pkg_dir = os.path.dirname(__file__)
+		#sys.path += [os.path.join(pkg_dir, 'sbin'), os.path.join(pkg_dir, 'tests/support')]
 		errno = pytest.main(self.test_args)
 		sys.exit(errno)
 
@@ -56,14 +57,6 @@ class PyTest(TestCommand):
 ###
 # Processing
 ###
-#	install_requires=['cogapp>=2.4',
-#	                  'funcsigs>=0.4',
-#	                  'matplotlib>=1.4.2',
-#	                  'numpy>=1.8.2',
-#	                  'PyContracts>=1.7.1',
-#	                  'pytest>=2.6.3',
-#	                  'scipy>=0.14.0'
-#	                 ],
 setup(
 	name='putil',
 	version='0.9',
@@ -71,15 +64,15 @@ setup(
 	license='MIT',
 	author='Pablo Acosta-Serafini',
 	tests_require=[
-				   'coverage',
 	               'mock',
 	               'pytest',
 	              ],
 	install_requires=['cogapp>=2.4',
 	                  'funcsigs>=0.4',
-	                  'mock>=1.0.1',
+	                  'matplotlib>=1.4.2',
 	                  'numpy>=1.8.2',
 	                  'PyContracts>=1.7.1',
+	                  'scipy>=0.14.0'
 	                 ],
 	cmdclass={'test': PyTest},
 	author_email='pmacosta@yahoo.com',

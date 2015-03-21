@@ -57,20 +57,22 @@ Contributing
 
 1. The `repository <https://github.com/pmacosta/putil>`_ may be forked from GitHub; clone the forked repository recursively since the `Read the Docs theme <https://github.com/snide/sphinx_rtd_theme>`_ is a repository submodule:
 
-.. code-block:: bash
+	.. code-block:: bash
 
-	$ git clone --recursive https://github.com/[github-user-name]/putil.git
-	$ cd putil
-	$ export PUTIL_DIR=${PWD}
+		$ git clone --recursive https://github.com/[github-user-name]/putil.git
+		$ cd putil
+		$ export PUTIL_DIR=${PWD}
 
 2. Install the project's Git hooks. The pre-commit hooks do some minor consistency checks, namely trailing whitespace and `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance via Pylint. Assuming the directory to which
    the repository was cloned is in the :code:`$PUTIL_DIR` shell environment variable:
 
-.. code-block:: bash
+	.. code-block:: bash
 
-	$ ${PUTIL_DIR}/sbin/setup-git-hooks.sh
+		$ ${PUTIL_DIR}/sbin/setup-git-hooks.sh
 
-3. The :code:`${PUTIL_DIR}/sbin` directory contains all relevant scripts:
+3. Ensure that Python can find the package modules (update the :code:`PYTHONPATH` environment variable, or use `sys.paths() <https://docs.python.org/2/library/sys.html#sys.path>`_, etc.)
+
+4. The :code:`${PUTIL_DIR}/sbin` directory contains all relevant development scripts:
 
    * build-docs.sh: (re)builds the package documentation
 
@@ -160,7 +162,7 @@ Contributing
 		Options:
 		  -h  Show this screen
 
-4. Write a unit test which shows that a bug was fixed or that a new feature or API works as expected. Run the package tests to ensure that the bug fix or new feature does not have adverse side effects. If possible
+5. Write a unit test which shows that a bug was fixed or that a new feature or API works as expected. Run the package tests to ensure that the bug fix or new feature does not have adverse side effects. If possible
    achieve 100% test coverage of the contributed code
 
 License
