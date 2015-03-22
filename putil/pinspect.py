@@ -14,7 +14,7 @@ import putil.misc
 def _get_code_id(obj, file_name=None, offset=0):
 	""" Return unique identity tuple to individualize callable object """
 	if hasattr(obj, 'func_code') and (obj.func_code.co_filename != '<string>'):
-		return (obj.func_code.co_filename, obj.func_code.co_firstlineno)
+		return (os.path.realpath(obj.func_code.co_filename), obj.func_code.co_firstlineno)
 	elif file_name:
 		return (file_name, obj.func_code.co_firstlineno+offset)
 
@@ -298,7 +298,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		for key in sorted(self._callables_db.keys()):
 			ret.append('{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else ''))
 			if self._callables_db[key]['type'] == 'prop':
-				for attr in self._callables_db[key]['attr']:
+				for attr in sorted(self._callables_db[key]['attr']):
 					ret.append('   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr]))
 			elif self._callables_db[key].get('link', None):
 				for link_dict in self._callables_db[key]['link']:
@@ -316,7 +316,7 @@ class Callables(object):	#pylint: disable=R0903,R0902
 		Have to keep track of imports because technically class properties can be functions from other modules. Closure classes code is executed with recorded imports at top, a class object is created and then traced as "usual"
 		"""
 		# Read module file
-		module_file_name = '{0}.py'.format(os.path.splitext(obj.__file__)[0])
+		module_file_name = os.path.realpath('{0}.py'.format(os.path.splitext(obj.__file__)[0]))
 		with open(module_file_name, 'rb') as file_obj:
 			module_lines = file_obj.read().split('\n')
 		# Initialize mini-parser variables

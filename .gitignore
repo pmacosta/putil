@@ -1,6 +1,8 @@
 # putil .gitignore file
 tags
 .coverage
+.tox
+.pytest.restart
 *.cache
 *.pid
 *.ckt

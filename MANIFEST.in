@@ -1,8 +1,16 @@
+# This file
+include MANIFEST.in
+# Top-level build scripts
+include setup.py
+# Project information and meta-data
 include AUTHORS.rst
 include CHANGELOG.rst
 include LICENSE
 include MANIFEST.in
 include README.rst
-recursive-include docs/support *.py
-recursive-include tests/support *.py
-recursive-include docs *.rst
+# All documentation
+include docs *.rst
+include docs/support *.py *.csv *.png *.odg *.sh
+# All build and testing tools
+include tox.ini
+include tests/support/ref_images *.png

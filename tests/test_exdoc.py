@@ -5,7 +5,12 @@
 
 import imp, copy, mock, os, pytest, sys
 
-import exdoc_support_module_1, exdoc_support_module_3, exdoc_support_module_4, putil.exdoc, putil.exh, putil.test
+import putil.exdoc, putil.exh, putil.test
+# Add support module path relative to the test-bench file, to support testing in virtual environments or with installed packages
+TEST_DIR = os.path.dirname(__file__)
+SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
+sys.path.append(SUPPORT_DIR)
+import exdoc_support_module_1, exdoc_support_module_3, exdoc_support_module_4
 
 
 ###
@@ -85,7 +90,6 @@ def simple_exobj():	#pylint: disable=R0914
 	return exobj
 
 
-TEST_DIR = os.path.dirname(__file__)
 SEQ = [(os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 69), (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 102),
 	   (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_4.py+{0}'), 23), (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 1000)]
 class MockFCode(object):	#pylint: disable=R0903,C0111

@@ -7,6 +7,9 @@ import copy, inspect, mock, os, random, string, sys, types
 
 import putil.pinspect, putil.test
 
+TEST_DIR = os.path.dirname(__file__)
+SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
+sys.path.append(SUPPORT_DIR)
 
 ###
 # Helper functions
@@ -15,9 +18,13 @@ def compare_str_outputs(obj, ref_list):
 	""" Produce helpful output when reference output does not match actual output """
 	ref_text = '\n'.join(ref_list)
 	if str(obj) != ref_text:
-		print str(obj)
-		print '---[Differing lines]---'
 		actual_list = str(obj).split('\n')
+		for actual_line, ref_line in zip(actual_list, ref_list):
+			if actual_line != ref_line:
+				print '\033[{0}m{1}\033[0m <-> {2}'.format(31, actual_line, ref_line)
+			else:
+				print actual_line
+		print '---[Differing lines]---'
 		for actual_line, ref_line in zip(actual_list, ref_list):
 			if actual_line != ref_line:
 				print 'Actual line...: {0}'.format(actual_line)
@@ -66,8 +73,8 @@ def test_is_special_method():
 
 def test_loaded_package_modules():
 	""" Test loaded_package_modules() function """
-	# Have to generate list dynamically because loaded modules depends on how test is run, i.e. ${PACKAGE_DIR}/sbin/test.sh pinspect produces different results than ${PACKAGE_DIR}/pytest -x -s
-	pkg_dir = os.path.split(os.path.dirname(__file__))[0]
+	# Have to generate list dynamically because loaded modules depends on how test is run, i.e. ${PACKAGE_DIR}/sbin/test.sh pinspect produces different results than ${PACKAGE_DIR}/pytest -x -s or in virtualenvs
+	pkg_dir = os.path.dirname(sys.modules['putil'].__file__)
 	module_name_list = [obj for name, obj in sys.modules.iteritems() if name.startswith('putil.') and (hasattr(obj, '__file__')) and (getattr(obj, '__file__').startswith(pkg_dir))]
 	modules_obj_list = set([sys.modules['putil']]+module_name_list)
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list
@@ -118,9 +125,9 @@ def test_callables():	# pylint: disable=R0915
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.encprop: prop')
 	ref_list.append('   fget: pinspect_support_module_1.simple_property_generator.fget')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp: prop')
-	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter)')
 	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter)')
 	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter)')
+	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter)')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter): meth (120)')
 	ref_list.append('   fdel of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter): meth (109)')
@@ -136,22 +143,22 @@ def test_callables():	# pylint: disable=R0915
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func: meth (78)')
 	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state: prop (95)')
-	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func')
 	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func')
 	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func')
+	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure: class (52)')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.__init__: meth (54)')
 	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar: prop (57)')
-	ref_list.append('   fset: pinspect_support_module_2.setter_enclosing_func.setter_closure_func')
 	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar.fget_lambda')
+	ref_list.append('   fset: pinspect_support_module_2.setter_enclosing_func.setter_closure_func')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func: func (19)')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass: class (22)')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.__init__: meth (24)')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.get_obj: meth (28)')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.obj: prop (47)')
-	ref_list.append('   fset: pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj')
 	ref_list.append('   fdel: pinspect_support_module_3.deleter')
 	ref_list.append('   fget: pinspect_support_module_2.getter_func_for_closure_class')
+	ref_list.append('   fset: pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj: meth (32)')
 	ref_list.append('   fset of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
 	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method: meth (38)')
@@ -174,8 +181,8 @@ def test_callables():	# pylint: disable=R0915
 	ref_list.append('pinspect_support_module_2.SimpleClass.get_mobj: meth (21)')
 	ref_list.append('   fget of: pinspect_support_module_2.SimpleClass.mobj')
 	ref_list.append('pinspect_support_module_2.SimpleClass.mobj: prop (29)')
-	ref_list.append('   fset: pinspect_support_module_2.SimpleClass.set_mobj')
 	ref_list.append('   fget: pinspect_support_module_2.SimpleClass.get_mobj')
+	ref_list.append('   fset: pinspect_support_module_2.SimpleClass.set_mobj')
 	ref_list.append('pinspect_support_module_2.SimpleClass.set_mobj: meth (25)')
 	ref_list.append('   fset of: pinspect_support_module_2.SimpleClass.mobj')
 	ref_list.append('pinspect_support_module_2.getter_func_for_closure_class: func (32)')
@@ -313,8 +320,8 @@ def test_namespace_resolution():
 	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data: meth (24)')
 	ref_list.append('   fset of: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data')
 	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data: prop (27)')
-	ref_list.append('   fset: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data')
 	ref_list.append('   fget: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._get_data')
+	ref_list.append('   fset: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data')
 	ref_text = compare_str_outputs(obj, ref_list)
 	assert str(obj) == ref_text
 	import pinspect_support_module_6	#pylint: disable=F0401,W0612

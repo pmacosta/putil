@@ -41,7 +41,7 @@ And the actual module ``my_module`` code is (before auto-documentation):
 
 A simple shell script can be written to automate the cogging of the ``my_module.py`` file:
 
-.. literalinclude:: ./support/generate-docs.sh
+.. literalinclude:: ./support/build-docs.sh
     :language: bash
     :linenos:
     :tab-width: 3

@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import copy, inspect, sys
+import copy, inspect, os, sys
 
 import putil.misc, putil.pinspect
 
@@ -70,7 +70,7 @@ def _ex_type_str(extype):	#pylint: disable-msg=R0201
 
 def _get_code_id(frame_obj):
 	""" Get callable ID from frame object, separated so that it can be mocked in testing """
-	return (frame_obj.f_code.co_filename, frame_obj.f_code.co_firstlineno)
+	return (os.path.realpath(frame_obj.f_code.co_filename), frame_obj.f_code.co_firstlineno)
 
 
 def _valid_frame(fobj):

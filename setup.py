@@ -54,6 +54,24 @@ class PyTest(TestCommand):
 		sys.exit(errno)
 
 
+#class Tox(TestCommand):
+#	user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
+#
+#	def initialize_options(self):
+#		TestCommand.initialize_options(self)
+#		self.tox_args = None
+#
+#	def finalize_options(self):
+#		TestCommand.finalize_options(self)
+#		self.test_args = []
+#		self.test_suite = True
+#
+#	def run_tests(self):
+#		import shlex, tox
+#		errno = tox.cmdline(args=shlex.split(self.tox_args))
+#		sys.exit(errno)
+
+
 ###
 # Processing
 ###
@@ -64,22 +82,22 @@ setup(
 	license='MIT',
 	author='Pablo Acosta-Serafini',
 	tests_require=[
-	               'mock',
-	               'pytest',
+	               'mock>=1.0.1',
+	               'pytest>=2.6.3',
 	              ],
-	install_requires=['cogapp>=2.4',
+	install_requires=[#'cogapp>=2.4',
 	                  'funcsigs>=0.4',
-	                  'matplotlib>=1.4.2',
+	                  #'matplotlib>=1.4.2',
 	                  'numpy>=1.8.2',
 	                  'PyContracts>=1.7.1',
-	                  'scipy>=0.14.0'
+	                  #'scipy>=0.14.0'
 	                 ],
 	cmdclass={'test': PyTest},
 	author_email='pmacosta@yahoo.com',
 	description='This library provides a collection of utility modules to supplement the excellent Python standard library',
 	long_description=LONG_DESCRIPTION,
 	packages=['putil'],
-	include_package_data=True,
+	zip_safe=False,
 	platforms='any',
 	classifiers=[
 		         'Programming Language :: Python',
@@ -92,11 +110,4 @@ setup(
 	             'Operating System :: OS Independent',
 	             'Topic :: Software Development :: Libraries :: Python Modules',
 	            ],
-	extras_require={
-		'testing':[
-			       'mock',
-				   'PyContracts',
-			       'pytest'
-		          ],
-	}
 )
