@@ -227,6 +227,7 @@ def test_peng():	#pylint: disable=R0915
 	""" Test peng() function """
 	putil.test.assert_exception(putil.eng.peng, {'number':['5'], 'frac_length':3, 'rjust':True}, RuntimeError, 'Argument `number` is not valid')
 	putil.test.assert_exception(putil.eng.peng, {'number':5, 'frac_length':3.5, 'rjust':True}, RuntimeError, 'Argument `frac_length` is not valid')
+	putil.test.assert_exception(putil.eng.peng, {'number':5, 'frac_length':-2, 'rjust':True}, RuntimeError, 'Argument `frac_length` is not valid')
 	putil.test.assert_exception(putil.eng.peng, {'number':5, 'frac_length':3, 'rjust':'hello'}, RuntimeError, 'Argument `rjust` is not valid')
 	assert putil.eng.peng(3.0333333333, 1, False) == '3.0'
 	assert putil.eng.peng(0, 3, True) == '   0.000 '

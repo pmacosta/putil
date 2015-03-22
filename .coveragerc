@@ -1,0 +1,13 @@
+# .coveragerc to control coverage.py
+[run]
+include = putil/eng.py
+          putil/exdoc.py
+          putil/exdoc.py
+          putil/exh.py
+          putil/misc.py
+          putil/pinspect.py
+          putil/pcontracts.py
+          putil/pcsv.py
+          putil/plot.py
+          putil/test.py
+          putil/tree.py

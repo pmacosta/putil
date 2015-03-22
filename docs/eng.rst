@@ -64,6 +64,7 @@ Contracts
 
 .. autofunction:: putil.eng.engineering_notation_number
 .. autofunction:: putil.eng.engineering_notation_suffix
+.. autofunction:: putil.eng.pos_integer
 
 Functions
 =========

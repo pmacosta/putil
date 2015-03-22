@@ -68,6 +68,22 @@ def engineering_notation_suffix(obj):
 		raise ValueError(putil.pcontracts.get_exdesc())
 
 
+@putil.pcontracts.new_contract()
+def pos_integer(obj):
+	r"""
+	Contract that validates if an object is a positive integer
+
+	:param	obj: Object
+	:type	obj: any
+	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The token \*[argument_name]\* is replaced by the *name* of the argument the contract is attached to
+
+	:rtype: None
+	"""
+	if isinstance(obj, int) and (obj >= 0):
+		return None
+	raise ValueError(putil.pcontracts.get_exdesc())
+
+
 def _to_eng_tuple(number):
 	""" Returns a string version of the number where the exponent is a multiple of 3 """
 	mant, exp = putil.misc.to_scientific_tuple(str(number))
@@ -85,7 +101,7 @@ def _to_eng_string(number):
 	return '{0}E{1}{2}'.format(mant, '-' if exp < 0 else '+', abs(exp))
 
 
-@putil.pcontracts.contract(number='int|float', frac_length='int,>=0', rjust=bool)
+@putil.pcontracts.contract(number='int|float', frac_length='pos_integer', rjust=bool)
 def peng(number, frac_length, rjust=True):
 	r"""
 	Converts a number to engineering notation. The absolute value of the number (if it is not exactly zero) is bounded to the interval [1E-24, 1E+24)

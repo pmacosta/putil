@@ -2114,7 +2114,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
 		ret += 'Show independent axis: {0}\n'.format(self.show_indep_axis)
 		ret += 'Legend properties:\n'
-		for num, (key, value) in enumerate(self.legend_props.iteritems()):
+		for num, (key, value) in enumerate(sorted(self.legend_props.iteritems())):
 			ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props) else '')
 		return ret
 

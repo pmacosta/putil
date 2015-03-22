@@ -1294,8 +1294,8 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Logarithmic dependent axis: False\n'
 		ret += 'Show independent axis: False\n'
 		ret += 'Legend properties:\n'
-		ret += '   pos: BEST\n'
-		ret += '   cols: 1'
+		ret += '   cols: 1\n'
+		ret += '   pos: BEST'
 		assert str(obj) == ret
 		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts', show_indep_axis=True)
 		ret = 'Series 0:\n'
@@ -1315,8 +1315,8 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Logarithmic dependent axis: False\n'
 		ret += 'Show independent axis: True\n'
 		ret += 'Legend properties:\n'
-		ret += '   pos: BEST\n'
-		ret += '   cols: 1'
+		ret += '   cols: 1\n'
+		ret += '   pos: BEST'
 		assert str(obj) == ret
 
 	def test_cannot_delete_attributes(self, default_series):	#pylint: disable=C0103,R0201,W0621
@@ -1508,8 +1508,8 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += '   Logarithmic dependent axis: False\n'
 		ret += '   Show independent axis: False\n'
 		ret += '   Legend properties:\n'
-		ret += '      pos: BEST\n'
 		ret += '      cols: 1\n'
+		ret += '      pos: BEST\n'
 		ret += 'Independent variable label: Input\n'
 		ret += 'Independent variable units: Amps\n'
 		ret += 'Logarithmic independent axis: False\n'

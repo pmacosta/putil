@@ -87,10 +87,11 @@ setup(
 	              ],
 	install_requires=[#'cogapp>=2.4',
 	                  'funcsigs>=0.4',
-	                  #'matplotlib>=1.4.2',
+	                  'matplotlib>=1.4.2',
 	                  'numpy>=1.8.2',
+					  'Pillow>=2.7.0',
 	                  'PyContracts>=1.7.1',
-	                  #'scipy>=0.14.0'
+	                  'scipy>=0.14.0'
 	                 ],
 	cmdclass={'test': PyTest},
 	author_email='pmacosta@yahoo.com',
