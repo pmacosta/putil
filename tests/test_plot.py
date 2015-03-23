@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import mock, matplotlib, matplotlib.path, numpy, pytest, scipy
+import mock, matplotlib, matplotlib.path, numpy, os, pytest, scipy
 from scipy.misc import imread	#pylint: disable=E0611
 
 import gen_ref_images, putil.misc, putil.plot, putil.test
@@ -913,6 +913,10 @@ class TestSeries(object):	#pylint: disable=W0232
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
+			if not result:
+				print 'Images do not match'
+				print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
+				print 'Actual image: file://{0}'.format(os.path.realpath(test_file_name))
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
 

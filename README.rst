@@ -39,19 +39,6 @@ Documentation
 
 Available at `<http://my-docs.org/>`_
 
-Dependencies
-============
-
-* `cog`_ (helps generate automatic exceptions documentation)
-
-* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_
-
-* `PyContracts <https://andreacensi.github.io/contracts/>`_
-
-* `py.test`_ (unit test runner)
-
-* `Sphinx <http://sphinx-doc.org/>`_ (documentation)
-
 Contributing
 ============
 
@@ -77,9 +64,43 @@ Contributing
 		$ export PYTHONPATH=${PYTHONPATH}:${PUTIL_DIR}
 
    This is relevant only if it is desired to run unit tests, measure test coverage and/or (re)build the documentation using the cloned repository (and not a virtual environment). This option is attractive as it allows for faster
-   iterations, but final pre-commit validation should be done using the `tox <https://tox.readthedocs.org/>`_ flow (:code:`pkg-validate.sh` script, see below)
+   iterations, but final pre-commit validation should be done using the `Tox`_ flow (:code:`pkg-validate.sh` script, see below)
 
-4. The :code:`${PUTIL_DIR}/sbin` directory contains all relevant development scripts:
+4. Install the dependencies (if needed):
+
+    * `Cog`_ (helps generate automatic exceptions documentation)
+ 
+    * `Coverage <http://coverage.readthedocs.org/en/coverage-4.0a5/>`_ (measures unit test coverage)
+
+    * `Funcsigs <https://pypi.python.org/pypi/funcsigs>`_
+
+    * `Matplotlib <http://matplotlib.org/>`_
+
+    * `Mock <http://www.voidspace.org.uk/python/mock/>`_
+
+    * `Numpy <http://www.numpy.org/>`_
+
+    * `Pillow <https://python-pillow.github.io/>`_ (fork of the Python Image Library)
+
+    * `PyContracts <https://andreacensi.github.io/contracts/>`_
+
+    * `Py.test`_ (unit test runner)
+
+    * `Pytest-coverage <https://pypi.python.org/pypi/pytest-cov>`_
+
+    * `Scipy <http://www.scipy.org/>`_
+
+    * `Sphinx <http://sphinx-doc.org/>`_ (documentation)
+
+    * `Tox <https://tox.readthedocs.org/>`_
+
+
+5. Write a unit test which shows that a bug was fixed or that a new feature or API works as expected. Run the package tests to ensure that the bug fix or new feature does not have adverse side effects. If possible
+   achieve 100% test coverage of the contributed code. For a thorough code validation use the :code:`pkg-validate.sh` script (see below)
+
+6. Continuous integration is available via `Shippable <http://www.shippable.com/>`_
+
+7. The :code:`${PUTIL_DIR}/sbin` directory contains all relevant development scripts:
 
    * build-docs.sh: (re)builds the package documentation
 
@@ -181,9 +202,6 @@ Contributing
 		
 		Options:
 		  -h  Show this screen
-
-5. Write a unit test which shows that a bug was fixed or that a new feature or API works as expected. Run the package tests to ensure that the bug fix or new feature does not have adverse side effects. If possible
-   achieve 100% test coverage of the contributed code. For a thorough code validation use the :code:`pkg-validate.sh` script
 
 .. rubric:: Footnotes
 

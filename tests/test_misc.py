@@ -135,11 +135,13 @@ def test_make_dir(capsys):
 	""" Test make_dir() function """
 	def mock_os_makedir(file_path):	#pylint: disable=C0111
 		print file_path
+	home_dir = os.environ['HOME']
 	with mock.patch('os.makedirs', side_effect=mock_os_makedir):
-		putil.misc.make_dir('/home/pacosta/some_dir/some_file.ext')
+		file_name = os.path.join(home_dir, 'some_dir', 'some_file.ext')
+		putil.misc.make_dir(file_name)
 		stdout, _ = capsys.readouterr()
-		assert stdout == '/home/pacosta/some_dir\n'
-		putil.misc.make_dir('/some_file.ext')
+		assert stdout == os.path.dirname(file_name)+'\n'
+		putil.misc.make_dir(os.path.join(os.path.abspath(os.sep), 'some_file.ext'))
 		stdout, _ = capsys.readouterr()
 		assert stdout == ''
 
@@ -299,7 +301,7 @@ def test_strframe():
 	""" Test strframe() function """
 	def check_basic_frame(lines):
 		assert lines[0].startswith('\x1b[33mFrame object ID: 0x')
-		assert lines[1] == 'File name......: /home/pacosta/python/putil/tests/test_misc.py'
+		assert lines[1] == 'File name......: {0}'.format(os.path.realpath(__file__))
 		assert lines[2].startswith('Line number....: ')
 		assert lines[3] == 'Function name..: test_strframe'
 		assert lines[4] == r"Context........: ['\tfobj = inspect.stack()[0]\n']"

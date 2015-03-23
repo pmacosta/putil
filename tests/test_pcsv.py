@@ -45,7 +45,7 @@ class TestCsvFile(object):	#pylint: disable=W0232
 	""" Tests for CsvFile class """
 	def test_init_errors(self):	#pylint: disable=C0103,R0201
 		""" Test that the right exceptions are raised when wrong parameter is passed to argument file_name """
-		file_name = '/file/does/not/exist.csv'
+		file_name = os.path.join(os.path.abspath(os.sep), 'file', 'does', 'not', 'exists.csv')
 		func_pointers = [(RuntimeError, 'File {0} is empty', write_file_empty), (RuntimeError, 'Column headers are not unique', write_cols_not_unique), (RuntimeError, 'File {0} has no valid data', write_no_data)]
 		putil.test.assert_exception(putil.pcsv.CsvFile, {'file_name':5}, RuntimeError, 'Argument `file_name` is not valid')
 		putil.test.assert_exception(putil.pcsv.CsvFile, {'file_name':file_name}, IOError, 'File `{0}` could not be found'.format(file_name))
@@ -242,9 +242,10 @@ class TestCsvFile(object):	#pylint: disable=W0232
 
 def test_write_function_errors():	#pylint: disable=R0201
 	""" Test if write() function raises the right exceptions when its arguments are of the wrong type or are badly specified """
+	some_file_name = os.path.join(os.path.abspath(os.sep), 'some', 'file')
 	putil.test.assert_exception(putil.pcsv.write, {'file_name':5, 'data':[['Col1', 'Col2'], [1, 2]]}, RuntimeError, 'Argument `file_name` is not valid')
-	putil.test.assert_exception(putil.pcsv.write, {'file_name':'/some/file', 'data':[['Col1', 'Col2'], [1, 2]], 'append':'a'}, RuntimeError, 'Argument `append` is not valid')
-	putil.test.assert_exception(putil.pcsv.write, {'file_name':'/some/file', 'data':[['Col1', 'Col2'], [1, 2]]}, OSError, 'File /some/file could not be created: Permission denied')
+	putil.test.assert_exception(putil.pcsv.write, {'file_name':some_file_name, 'data':[['Col1', 'Col2'], [1, 2]], 'append':'a'}, RuntimeError, 'Argument `append` is not valid')
+	putil.test.assert_exception(putil.pcsv.write, {'file_name':some_file_name, 'data':[['Col1', 'Col2'], [1, 2]]}, OSError, 'File {0} could not be created: Permission denied'.format(some_file_name))
 	putil.test.assert_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[True, False]}, RuntimeError, 'Argument `data` is not valid')
 	putil.test.assert_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[[]]}, ValueError, 'There is no data to save to file')
 	with mock.patch('putil.misc.make_dir') as mock_make_dir:
