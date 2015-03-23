@@ -55,7 +55,7 @@ Dependencies
 Contributing
 ============
 
-1. The `repository <https://github.com/pmacosta/putil>`_ may be forked from GitHub; clone the forked repository recursively since the `Read the Docs theme <https://github.com/snide/sphinx_rtd_theme>`_ is a repository submodule [#f1]_:
+1. The `repository <https://bitbucket.org/pacosta/putil>`_ may be forked from Bitbucket; clone the forked repository recursively since the `Read the Docs theme <https://github.com/snide/sphinx_rtd_theme>`_ is a repository submodule [#f1]_:
 
 	.. code-block:: bash
 

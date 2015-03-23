@@ -18,5 +18,6 @@ tags
 dist
 putil.egg-info
 docs/_build
+shippable/
 !tests/support/ref_images/*.png
 !docs/support/*.png

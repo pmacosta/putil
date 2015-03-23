@@ -8,9 +8,12 @@ include CHANGELOG.rst
 include LICENSE
 include MANIFEST.in
 include README.rst
+include TODO.rst
 # All documentation
 include docs *.rst
 include docs/support *.py *.csv *.png *.odg *.sh
 # All build and testing tools
+include .coveragerc
+include shippable.yml
 include tox.ini
 include tests/support/ref_images *.png

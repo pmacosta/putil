@@ -1,0 +1,16 @@
+language: python
+build_image: shippableimages/ubuntu1204_python
+python:
+  - 2.7
+  
+install:
+  - pip install -r requirements.txt
+
+# Make folders for the reports
+before_script:
+  - mkdir -p shippable/testresults
+  - mkdir -p shippable/codecoverage
+
+script:
+  - py.test -s -vv --junitxml=shippable/testresults/pytest.xml
+  - py.test -x --cov-config .coveragerc --cov putil --cov-report xml
