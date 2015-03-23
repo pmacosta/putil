@@ -910,12 +910,16 @@ class TestSeries(object):	#pylint: disable=W0232
 		images_dict_list = gen_ref_images.unittest_series_images(mode='test', test_dir=str(tmpdir))
 		for images_dict in images_dict_list:
 			ref_file_name = images_dict['ref_file_name']
+			ref_ci_file_name = images_dict['ref_ci_file_name']
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-			if not result:
+			metrics_ci = compare_images(ref_ci_file_name, test_file_name)
+			result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
+			if (not result) and (not result_ci):
 				print 'Images do not match'
 				print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
+				print 'Reference CI image: file://{0}'.format(os.path.realpath(ref_ci_file_name))
 				print 'Actual image: file://{0}'.format(os.path.realpath(test_file_name))
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
@@ -978,16 +982,16 @@ class TestPanel(object):	#pylint: disable=W0232
 		obj = putil.plot.Panel(series=default_series)
 		assert obj.log_dep_axis == False
 
-	def test_show_indep_axis_wrong_type(self, default_series):	#pylint: disable=C0103,R0201,W0621
-		""" Test show_indep_axis data validation """
-		putil.test.assert_exception(putil.plot.Panel, {'series':default_series, 'show_indep_axis':5}, RuntimeError, 'Argument `show_indep_axis` is not valid')
+	def test_display_indep_axis_wrong_type(self, default_series):	#pylint: disable=C0103,R0201,W0621
+		""" Test display_indep_axis data validation """
+		putil.test.assert_exception(putil.plot.Panel, {'series':default_series, 'display_indep_axis':5}, RuntimeError, 'Argument `display_indep_axis` is not valid')
 		# These assignments should not raise an exception
-		obj = putil.plot.Panel(series=default_series, show_indep_axis=False)
-		assert obj.show_indep_axis == False
-		obj = putil.plot.Panel(series=default_series, show_indep_axis=True)
-		assert obj.show_indep_axis == True
+		obj = putil.plot.Panel(series=default_series, display_indep_axis=False)
+		assert obj.display_indep_axis == False
+		obj = putil.plot.Panel(series=default_series, display_indep_axis=True)
+		assert obj.display_indep_axis == True
 		obj = putil.plot.Panel(series=default_series)
-		assert obj.show_indep_axis == False
+		assert obj.display_indep_axis == False
 
 	def test_legend_props_wrong_type(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test legend_props data validation """
@@ -1296,12 +1300,12 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Secondary axis label: not specified\n'
 		ret += 'Secondary axis units: not specified\n'
 		ret += 'Logarithmic dependent axis: False\n'
-		ret += 'Show independent axis: False\n'
+		ret += 'Display independent axis: False\n'
 		ret += 'Legend properties:\n'
 		ret += '   cols: 1\n'
 		ret += '   pos: BEST'
 		assert str(obj) == ret
-		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts', show_indep_axis=True)
+		obj = putil.plot.Panel(series=default_series, primary_axis_label='Output', primary_axis_units='Volts', secondary_axis_label='Input', secondary_axis_units='Watts', display_indep_axis=True)
 		ret = 'Series 0:\n'
 		ret += '   Data source: putil.plot.BasicSource class object\n'
 		ret += '   Independent variable: [ 5, 6, 7, 8 ]\n'
@@ -1317,7 +1321,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		ret += 'Secondary axis label: Input\n'
 		ret += 'Secondary axis units: Watts\n'
 		ret += 'Logarithmic dependent axis: False\n'
-		ret += 'Show independent axis: True\n'
+		ret += 'Display independent axis: True\n'
 		ret += 'Legend properties:\n'
 		ret += '   cols: 1\n'
 		ret += '   pos: BEST'
@@ -1354,12 +1358,16 @@ class TestPanel(object):	#pylint: disable=W0232
 		images_dict_list = gen_ref_images.unittest_panel_images(mode='test', test_dir=str(tmpdir))
 		for images_dict in images_dict_list:
 			ref_file_name = images_dict['ref_file_name']
+			ref_ci_file_name = images_dict['ref_ci_file_name']
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-			if not result:
+			metrics_ci = compare_images(ref_ci_file_name, test_file_name)
+			result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
+			if (not result) and (not result_ci):
 				print 'Images do not match'
 				print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
+				print 'Reference CI image: file://{0}'.format(os.path.realpath(ref_ci_file_name))
 				print 'Actual image: file://{0}'.format(os.path.realpath(test_file_name))
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
@@ -1426,7 +1434,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		obj = putil.plot.Figure(panels=None)
 		assert obj.fig_width == None
 		obj = putil.plot.Figure(panels=default_panel)
-		assert obj.fig_width-6.08 < 1e-10
+		assert (obj.fig_width-6.08 < 1e-10) or (obj.fig_width-6.09 < 1e-10)	# CI images are 6.09
 		obj.fig_width = 5
 		assert obj.fig_width == 5
 
@@ -1470,12 +1478,13 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 
 	def test_specified_figure_size_too_small(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that method behaves correctly when requested figure size is too small """
+		# Regular test imags are 6.08, CI images are 6.09
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':200},\
-							  RuntimeError, 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+							  RuntimeError, 'Figure size is too small: minimum width = 6.0[8|9], minimum height 4.99')
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':200, 'fig_height':0.1},\
-							  RuntimeError, 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+							  RuntimeError, 'Figure size is too small: minimum width = 6.0[8|9], minimum height 4.99')
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':0.1},\
-							  RuntimeError, 'Figure size is too small: minimum width = 6.08, minimum height 4.99')
+							  RuntimeError, 'Figure size is too small: minimum width = 6.0[8|9], minimum height 4.99')
 
 	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that _complete() method behaves correctly """
@@ -1514,7 +1523,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += '   Secondary axis label: Secondary axis\n'
 		ret += '   Secondary axis units: B\n'
 		ret += '   Logarithmic dependent axis: False\n'
-		ret += '   Show independent axis: False\n'
+		ret += '   Display independent axis: False\n'
 		ret += '   Legend properties:\n'
 		ret += '      cols: 1\n'
 		ret += '      pos: BEST\n'
@@ -1522,9 +1531,11 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += 'Independent variable units: Amps\n'
 		ret += 'Logarithmic independent axis: False\n'
 		ret += 'Title: My graph\n'
+		ret_ci = ret + 'Figure width: 6.09\n'
 		ret += 'Figure width: 6.08\n'
+		ret_ci += 'Figure height: 4.99\n'
 		ret += 'Figure height: 4.99\n'
-		assert str(obj) == ret
+		assert (str(obj) == ret) or (str(obj) == ret_ci)
 
 	def test_cannot_delete_attributes(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that del method raises an exception on all class attributes """
@@ -1573,12 +1584,16 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		images_dict_list = gen_ref_images.unittest_figure_images(mode='test', test_dir=str(tmpdir))
 		for images_dict in images_dict_list:
 			ref_file_name = images_dict['ref_file_name']
+			ref_ci_file_name = images_dict['ref_ci_file_name']
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-			if not result:
+			metrics_ci = compare_images(ref_ci_file_name, test_file_name)
+			result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
+			if (not result) and (not result_ci):
 				print 'Images do not match'
 				print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
+				print 'Reference CI image: file://{0}'.format(os.path.realpath(ref_ci_file_name))
 				print 'Actual image: file://{0}'.format(os.path.realpath(test_file_name))
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result

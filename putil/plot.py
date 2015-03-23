@@ -1910,13 +1910,15 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	:type	log_dep_axis:			boolean
 	:param	legend_props:			legend properties. See :py:attr:`putil.plot.Panel.legend_props`
 	:type	legend_props:			dictionary
-	:param	show_indep_axis:		Flag that indicates whether the independent axis should be displayed (True) or not (False)
-	:type	show_indep_axis:		boolean
+	:param	display_indep_axis:		Flag that indicates whether the independent axis should be displayed (True) or not (False)
+	:type	display_indep_axis:		boolean
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=['putil.eng'])) ]]]
 	.. Auto-generated exceptions documentation for putil.plot.Panel.__init__
 
 	:raises:
+	 * RuntimeError (Argument \`display_indep_axis\` is not valid)
+
 	 * RuntimeError (Argument \`legend_props\` is not valid)
 
 	 * RuntimeError (Argument \`log_dep_axis\` is not valid)
@@ -1931,8 +1933,6 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	 * RuntimeError (Argument \`series\` is not valid)
 
-	 * RuntimeError (Argument \`show_indep_axis\` is not valid)
-
 	 * RuntimeError (Legend property \`cols\` is not valid)
 
 	 * RuntimeError (Series item *[number]* is not fully specified)
@@ -1945,12 +1945,12 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	.. [[[end]]]
 	"""
-	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=None, show_indep_axis=False):	#pylint: disable=W0102,R0913
+	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=None, display_indep_axis=False):	#pylint: disable=W0102,R0913
 		# Default arguments
 		legend_props = {'pos':'BEST', 'cols':1} if legend_props == None else legend_props
 		# Private attributes
 		self._exh = putil.exh.get_or_create_exh_obj()
-		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props, self._show_indep_axis = \
+		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props, self._display_indep_axis = \
 			None, None, None, None, None, None, False, {'pos':'BEST', 'cols':1}, None
 		# Private attributes
 		self._legend_pos_list = ['best', 'upper right', 'upper left', 'lower left', 'lower right', 'right', 'center left', 'center right', 'lower center', 'upper center', 'center']
@@ -1967,7 +1967,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self._set_secondary_axis_label(secondary_axis_label)
 		self._set_secondary_axis_units(secondary_axis_units)
 		self._set_legend_props(legend_props)
-		self._set_show_indep_axis(show_indep_axis)
+		self._set_display_indep_axis(display_indep_axis)
 
 	def _get_series(self):	#pylint: disable=C0111
 		return self._series
@@ -2067,12 +2067,12 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		if self._recalculate_series:
 			self._set_series(self._series)
 
-	def _get_show_indep_axis(self):	#pylint: disable=C0111
-		return self._show_indep_axis
+	def _get_display_indep_axis(self):	#pylint: disable=C0111
+		return self._display_indep_axis
 
-	@putil.pcontracts.contract(show_indep_axis='None|bool')
-	def _set_show_indep_axis(self, show_indep_axis):	#pylint: disable=C0111
-		self._show_indep_axis = show_indep_axis
+	@putil.pcontracts.contract(display_indep_axis='None|bool')
+	def _set_display_indep_axis(self, display_indep_axis):	#pylint: disable=C0111
+		self._display_indep_axis = display_indep_axis
 
 	def _get_legend_props(self):	#pylint: disable=C0111
 		return self._legend_props
@@ -2112,7 +2112,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		ret += 'Secondary axis label: {0}\n'.format(self.secondary_axis_label if self.secondary_axis_label not in ['', None] else 'not specified')
 		ret += 'Secondary axis units: {0}\n'.format(self.secondary_axis_units if self.secondary_axis_units not in ['', None] else 'not specified')
 		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
-		ret += 'Show independent axis: {0}\n'.format(self.show_indep_axis)
+		ret += 'Display independent axis: {0}\n'.format(self.display_indep_axis)
 		ret += 'Legend properties:\n'
 		for num, (key, value) in enumerate(sorted(self.legend_props.iteritems())):
 			ret += '   {0}: {1}{2}'.format(key, value, '\n' if num+1 < len(self.legend_props) else '')
@@ -2323,16 +2323,16 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
 
-	show_indep_axis = property(_get_show_indep_axis, _set_show_indep_axis, doc='Show independent axis flag')
+	display_indep_axis = property(_get_display_indep_axis, _set_display_indep_axis, doc='Show independent axis flag')
 	r"""
-	Gets or sets the independent axis flag. This flag indicates whether the independent axis should be displayed (:code:`True`) or not (:code:`False`)
+	Gets or sets the independent axis display flag. This flag indicates whether the independent axis should be displayed (:code:`True`) or not (:code:`False`)
 
 	:type:	boolean, default is False
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-	.. Auto-generated exceptions documentation for putil.plot.Panel.show_indep_axis
+	.. Auto-generated exceptions documentation for putil.plot.Panel.display_indep_axis
 
-	:raises: (when assigned) RuntimeError (Argument \`show_indep_axis\` is not valid)
+	:raises: (when assigned) RuntimeError (Argument \`display_indep_axis\` is not valid)
 
 	.. [[[end]]]
 	"""	#pylint: disable=W0105
@@ -2503,7 +2503,7 @@ class Figure(object):	#pylint: disable=R0902
 						 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
 			indep_axis_dict = {'log_indep':self.log_indep_axis, 'indep_var_min':indep_var_min, 'indep_var_max':indep_var_max, 'indep_var_locs':indep_var_locs,
 						 'indep_var_labels':indep_var_labels, 'indep_axis_label':self.indep_var_label, 'indep_axis_units':self.indep_var_units, 'indep_axis_unit_scale':indep_var_unit_scale}
-			panels_with_indep_axis_list = [num for num, panel_obj in enumerate(self.panels) if panel_obj.show_indep_axis is True]
+			panels_with_indep_axis_list = [num for num, panel_obj in enumerate(self.panels) if panel_obj.display_indep_axis is True]
 			panels_with_indep_axis_list = [num_panels-1] if len(panels_with_indep_axis_list) == 0 else panels_with_indep_axis_list
 			for num, (panel_obj, axarr) in enumerate(zip(self.panels, axes)):
 				panel_dict = panel_obj._draw_panel(axarr, indep_axis_dict, num in panels_with_indep_axis_list)	#pylint: disable=C0326,W0212

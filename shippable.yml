@@ -1,6 +1,13 @@
+# shippable.yml
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+
 language: python
 
-build_image: shippableimages/ubuntu1204_python
+# For gettind data off build
+# archive: true
+
+build_image: shippableimages/ubuntu1404_python
 
 python:
   - 2.7
@@ -9,6 +16,7 @@ python:
 before_install:
   - shippable_retry apt-get update
   - shippable_retry apt-get install -y libfreetype6-dev
+  - if [ ! -f /usr/include/ft2build.h ]; then ln -s /usr/include/freetype2/ft2build.h /usr/include/.; fi
   - shippable_retry apt-get install -y liblapack-dev
   - shippable_retry apt-get install -y libpng12-dev
   - shippable_retry apt-get install -y python-dev
@@ -16,17 +24,33 @@ before_install:
 
 install:
   - pip install -r requirements.txt --use-mirrors
-  - python setup.py sdist
-  - pip install dist/putil-0.9.tar.gz
 
 # Make folders for the reports
+# For gettind data off build:
+#  - mkdir -p shippable/images
+#  - ./sbin/gen_ref_images.py shippable/images
 before_script:
   - mkdir -p shippable/testresults
   - mkdir -p shippable/codecoverage
+  - pip freeze
+  - dpkg --status libfreetype6-dev
+  - dpkg --status liblapack-dev
+  - dpkg --status libpng12-dev
+  - dpkg --status python-dev
+  - dpkg --status gfortran
 
+#  - PYTHON_SITE_PACKAGES=/root/ve/lib/python${VIRTUALENV_PYTHON}/site-packages/
 script:
+  - python setup.py sdist
+  - pip install dist/putil-0.9.tar.gz
+  - PYTHON_SITE_PACKAGES=$($SHIPPABLE_REPO_DIR/sbin/get-site-packages-dir.py ${VIRTUALENV_PYTHON})
+  - echo "PYTHON_SITE_PACKAGES=${PYTHON_SITE_PACKAGES}"
+  - ./sbin/coverage-shippable-manager.py $PYTHON_SITE_PACKAGES
+  - cat $SHIPPABLE_REPO_DIR/.coveragerc_shippable
+  - ls ${PYTHON_SITE_PACKAGES}/putil/
+  - rm -rf tox.ini
   - py.test -s -vv --junitxml=shippable/testresults/pytest.xml
-  - py.test -x --cov-config .coveragerc --cov putil --cov-report xml
+  - py.test -x --cov-config $SHIPPABLE_REPO_DIR/.coveragerc_shippable --cov ${PYTHON_SITE_PACKAGES}/putil/ --cov-report xml
 
 notifications:
 

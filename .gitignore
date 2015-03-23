@@ -21,4 +21,5 @@ docs/_build
 shippable/
 vdisks/
 !tests/support/ref_images/*.png
+!tests/support/ref_images_ci/*.png
 !docs/support/*.png

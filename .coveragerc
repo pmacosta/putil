@@ -1,4 +1,4 @@
-# .coveragerc to control coverage.py during non-tox and continuous integration runs
+# .coveragerc to control coverage.during local runs
 [run]
 include = putil/eng.py
           putil/exdoc.py
@@ -11,6 +11,3 @@ include = putil/eng.py
           putil/plot.py
           putil/test.py
           putil/tree.py
-
-[xml]
-output = shippable/codecoverage/coverage.xml
