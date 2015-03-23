@@ -1357,6 +1357,10 @@ class TestPanel(object):	#pylint: disable=W0232
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
+			if not result:
+				print 'Images do not match'
+				print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
+				print 'Actual image: file://{0}'.format(os.path.realpath(test_file_name))
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
 
@@ -1572,6 +1576,10 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 			test_file_name = images_dict['test_file_name']
 			metrics = compare_images(ref_file_name, test_file_name)
 			result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
+			if not result:
+				print 'Images do not match'
+				print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
+				print 'Actual image: file://{0}'.format(os.path.realpath(test_file_name))
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(ref_file_name, test_file_name, result, metrics)
 			assert result
 

@@ -20,7 +20,7 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: di
 	""" Images for Series() class """
 	mode = 'ref' if mode is None else mode.lower()
 	ref_dir = os.path.join(os.path.dirname(__file__), 'support', 'ref_images')
-	test_dir = os.path.abspath('./test_images') if test_dir is None else test_dir
+	test_dir = os.path.abspath(os.path.join('.', os.path.abspath(os.sep), 'test_images')) if test_dir is None else test_dir
 	marker_list = [False, True]
 	interp_list = ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
 	line_style_list = ['-', '--', '-.', ':']
@@ -30,8 +30,9 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: di
 	output_list = list()
 	print
 	for marker, interp, line_style in comb_list:
-		ref_file_name = '{0}/series_marker_{1}_interp_{2}_line_style_{3}.png'.format(ref_dir, 'true' if marker else 'false', interp.lower(), line_style_desc[line_style])
-		test_file_name = '{0}/series_marker_{1}_interp_{2}_line_style_{3}.png'.format(test_dir, 'true' if marker else 'false', interp.lower(), line_style_desc[line_style])
+		image_name = 'series_marker_{0}_interp_{1}_line_style_{2}.png'.format('true' if marker else 'false', interp.lower(), line_style_desc[line_style])
+		ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
+		test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
 		output_list.append({'ref_file_name':ref_file_name, 'test_file_name':test_file_name})
 		print 'Generating image {0}'.format(ref_file_name if mode == 'ref' else test_file_name)
 		series1 = putil.plot.Series(
@@ -66,8 +67,8 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: di
 def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915
 	""" Images for Panel() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = os.path.abspath('../tests/support/ref_images/')
-	test_dir = os.path.abspath('./test_images') if test_dir is None else test_dir
+	ref_dir = os.path.join(os.path.dirname(__file__), 'support', 'ref_images')
+	test_dir = os.path.abspath(os.path.join('.', os.path.abspath(os.sep), 'test_images')) if test_dir is None else test_dir
 	axis_type_list = ['single', 'linear', 'log', 'filter']
 	series_in_axis = ['primary', 'secondary', 'both']
 	master_list = [axis_type_list, series_in_axis]
@@ -94,8 +95,9 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 	series8_obj = putil.plot.Series(data_source=ds8_obj, label='series 8', marker='o', interp='STRAIGHT', line_style='--', color='k', secondary_axis=True)
 	series9_obj = putil.plot.Series(data_source=ds9_obj, label='series 9', marker=None, interp='CUBIC', line_style='-', color='k')
 	for axis_type, in_axis in comb_list:
-		ref_file_name = '{0}/panel_{1}_axis_series_in_{2}_axis.png'.format(ref_dir, axis_type, in_axis)
-		test_file_name = '{0}/panel_{1}_axis_series_in_{2}_axis.png'.format(test_dir, axis_type, in_axis)
+		image_name = 'panel_{0}_axis_series_in_{1}_axis.png'.format(axis_type, in_axis)
+		ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
+		test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
 		if (axis_type != 'filter') or ((axis_type == 'filter') and (in_axis == 'primary')):
 			output_list.append({'ref_file_name':ref_file_name, 'test_file_name':test_file_name})
 			print 'Generating image {0}'.format(ref_file_name if mode == 'ref' else test_file_name)
@@ -153,8 +155,8 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R0914,R0915
 	""" Images for Figure() class """
 	mode = 'ref' if mode is None else mode.lower()
-	ref_dir = os.path.abspath('../tests/support/ref_images/')
-	test_dir = os.path.abspath('./test_images') if test_dir is None else test_dir
+	ref_dir = os.path.join(os.path.dirname(__file__), 'support', 'ref_images')
+	test_dir = os.path.abspath(os.path.join('.', os.path.abspath(os.sep), 'test_images')) if test_dir is None else test_dir
 	output_list = list()
 	ds1_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([1, 2, 3, 4]))
 	ds2_obj = putil.plot.BasicSource(indep_var=numpy.array([300, 400, 500, 600, 700]), dep_var=numpy.array([3, 4, 5, 6, 7]))
@@ -222,8 +224,9 @@ def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R09
 		panel1_flabel = 'yes' if panel1_obj.show_indep_axis else 'no'
 		panel2_flabel = 'yes' if panel2_obj.show_indep_axis else 'no'
 		panel4_flabel = 'yes' if panel4_obj.show_indep_axis else 'no'
-		ref_file_name = '{0}/figure_multiple_indep_axis_panel1_{1}_panel2_{2}_panel_{3}.png'.format(ref_dir, panel1_flabel, panel2_flabel, panel4_flabel)
-		test_file_name = '{0}/figure_multiple_indep_axis_panel1_{1}_panel2_{2}_panel_{3}.png'.format(test_dir, panel1_flabel, panel2_flabel, panel4_flabel)
+		image_name = 'figure_multiple_indep_axis_panel1_{0}_panel2_{1}_panel_{2}.png'.format(panel1_flabel, panel2_flabel, panel4_flabel)
+		ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
+		test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
 		fig_obj = putil.plot.Figure(
 			panels=[panel1_obj, panel2_obj, panel4_obj],
 			indep_var_label='Independent axis',

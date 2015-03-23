@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302
 
-import mock, pytest, tempfile
+import mock, os, pytest, tempfile
 
 import putil.misc, putil.pcsv, putil.test
 
@@ -172,20 +172,28 @@ class TestCsvFile(object):	#pylint: disable=W0232
 
 	def test_write_errors(self):	#pylint: disable=R0201
 		""" Test if write() method raises the right exceptions when its arguments are of the wrong type or are badly specified """
+		some_file_name = os.path.join(os.path.abspath(os.sep), 'some', 'file')
+		root_file = os.path.join(os.path.abspath(os.sep), 'test.csv')
+		def mock_make_dir(file_name):	#pylint: disable=C0111
+			if file_name == some_file_name:
+				raise OSError('File {0} could not be created'.format(some_file_name), 'Permission denied')
+			elif file_name == root_file:
+				raise IOError('File {0} could not be created'.format(some_file_name), 'Permission denied')
 		with putil.misc.TmpFile(write_file) as file_name:
 			obj = putil.pcsv.CsvFile(file_name=file_name)
 		putil.test.assert_exception(obj.write, {'file_name':5}, RuntimeError, 'Argument `file_name` is not valid')
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file', 'headers':'a'}, RuntimeError, 'Argument `headers` is not valid')
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file', 'append':'a'}, RuntimeError, 'Argument `append` is not valid')
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file', 'col':5}, RuntimeError, 'Argument `col` is not valid')
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file', 'col':['a', 5]}, RuntimeError, 'Argument `col` is not valid')
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file', 'filtered':5}, RuntimeError, 'Argument `filtered` is not valid')
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file', 'col':'NotACol'}, ValueError, 'Column NotACol not found in header')
+		putil.test.assert_exception(obj.write, {'file_name':some_file_name, 'headers':'a'}, RuntimeError, 'Argument `headers` is not valid')
+		putil.test.assert_exception(obj.write, {'file_name':some_file_name, 'append':'a'}, RuntimeError, 'Argument `append` is not valid')
+		putil.test.assert_exception(obj.write, {'file_name':some_file_name, 'col':5}, RuntimeError, 'Argument `col` is not valid')
+		putil.test.assert_exception(obj.write, {'file_name':some_file_name, 'col':['a', 5]}, RuntimeError, 'Argument `col` is not valid')
+		putil.test.assert_exception(obj.write, {'file_name':some_file_name, 'filtered':5}, RuntimeError, 'Argument `filtered` is not valid')
+		putil.test.assert_exception(obj.write, {'file_name':some_file_name, 'col':'NotACol'}, ValueError, 'Column NotACol not found in header')
 		obj.dfilter = {'Result':100}
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file', 'filtered':True}, ValueError, 'There is no data to save to file')
+		putil.test.assert_exception(obj.write, {'file_name':some_file_name, 'filtered':True}, ValueError, 'There is no data to save to file')
 		obj.reset_dfilter()
-		putil.test.assert_exception(obj.write, {'file_name':'/some/file'}, OSError, 'File /some/file could not be created: Permission denied')
-		putil.test.assert_exception(obj.write, {'file_name':'/test.csv'}, IOError, 'File /test.csv could not be created: Permission denied')
+		with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir):
+			putil.test.assert_exception(obj.write, {'file_name':some_file_name}, OSError, 'File {0} could not be created: Permission denied'.format(some_file_name))
+			putil.test.assert_exception(obj.write, {'file_name':root_file}, IOError, 'File {0} could not be created: Permission denied'.format(root_file))
 
 	def test_write_works(self):	#pylint: disable=R0201
 		""" Test if write() method behaves properly """
@@ -243,9 +251,13 @@ class TestCsvFile(object):	#pylint: disable=W0232
 def test_write_function_errors():	#pylint: disable=R0201
 	""" Test if write() function raises the right exceptions when its arguments are of the wrong type or are badly specified """
 	some_file_name = os.path.join(os.path.abspath(os.sep), 'some', 'file')
+	def mock_make_dir(file_name):	#pylint: disable=C0111
+		raise OSError('File {0} could not be created'.format(file_name), 'Permission denied')
+	some_file_name = os.path.join(os.path.abspath(os.sep), 'some', 'file')
 	putil.test.assert_exception(putil.pcsv.write, {'file_name':5, 'data':[['Col1', 'Col2'], [1, 2]]}, RuntimeError, 'Argument `file_name` is not valid')
 	putil.test.assert_exception(putil.pcsv.write, {'file_name':some_file_name, 'data':[['Col1', 'Col2'], [1, 2]], 'append':'a'}, RuntimeError, 'Argument `append` is not valid')
-	putil.test.assert_exception(putil.pcsv.write, {'file_name':some_file_name, 'data':[['Col1', 'Col2'], [1, 2]]}, OSError, 'File {0} could not be created: Permission denied'.format(some_file_name))
+	with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir):
+		putil.test.assert_exception(putil.pcsv.write, {'file_name':some_file_name, 'data':[['Col1', 'Col2'], [1, 2]]}, OSError, 'File {0} could not be created: Permission denied'.format(some_file_name))
 	putil.test.assert_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[True, False]}, RuntimeError, 'Argument `data` is not valid')
 	putil.test.assert_exception(putil.pcsv.write, {'file_name':'test.csv', 'data':[[]]}, ValueError, 'There is no data to save to file')
 	with mock.patch('putil.misc.make_dir') as mock_make_dir:
