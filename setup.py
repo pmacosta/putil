@@ -1,7 +1,7 @@
 ﻿# setup.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0904,W0201
+# pylint: disable=C0111,R0904,W0201,E1111
 
 # Taken in large part from http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
 # With additional hint from http://oddbird.net/set-your-code-free-preso/
@@ -54,22 +54,22 @@ class PyTest(TestCommand):
 		sys.exit(errno)
 
 
-#class Tox(TestCommand):
-#	user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
-#
-#	def initialize_options(self):
-#		TestCommand.initialize_options(self)
-#		self.tox_args = None
-#
-#	def finalize_options(self):
-#		TestCommand.finalize_options(self)
-#		self.test_args = []
-#		self.test_suite = True
-#
-#	def run_tests(self):
-#		import shlex, tox
-#		errno = tox.cmdline(args=shlex.split(self.tox_args))
-#		sys.exit(errno)
+class Tox(TestCommand):
+	user_options = [('tox-args=', 'a', 'Arguments to pass to tox')]
+
+	def initialize_options(self):
+		TestCommand.initialize_options(self)
+		self.tox_args = None
+
+	def finalize_options(self):
+		TestCommand.finalize_options(self)
+		self.test_args = []
+		self.test_suite = True
+
+	def run_tests(self):
+		import shlex, tox
+		errno = tox.cmdline(args=shlex.split(self.tox_args))
+		sys.exit(errno)
 
 
 ###
@@ -81,9 +81,11 @@ setup(
 	url='http://github.com/pmacosta/putil/',
 	license='MIT',
 	author='Pablo Acosta-Serafini',
-	tests_require=[
+	tests_require=['coverage>=3.7.1',
 	               'mock>=1.0.1',
 	               'pytest>=2.6.3',
+                   'pytest-cov>=1.8.0',
+	               'tox>=1.9.0',
 	              ],
 	install_requires=[#'cogapp>=2.4',
 	                  'funcsigs>=0.4',
@@ -91,7 +93,7 @@ setup(
 	                  'numpy>=1.8.2',
 					  'Pillow>=2.7.0',
 	                  'PyContracts>=1.7.1',
-	                  'scipy>=0.14.0'
+	                  'scipy>=0.14.0',
 	                 ],
 	cmdclass={'test': PyTest},
 	author_email='pmacosta@yahoo.com',

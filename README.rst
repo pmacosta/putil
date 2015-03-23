@@ -55,7 +55,7 @@ Dependencies
 Contributing
 ============
 
-1. The `repository <https://github.com/pmacosta/putil>`_ may be forked from GitHub; clone the forked repository recursively since the `Read the Docs theme <https://github.com/snide/sphinx_rtd_theme>`_ is a repository submodule:
+1. The `repository <https://github.com/pmacosta/putil>`_ may be forked from GitHub; clone the forked repository recursively since the `Read the Docs theme <https://github.com/snide/sphinx_rtd_theme>`_ is a repository submodule [#f1]_:
 
 	.. code-block:: bash
 
@@ -71,6 +71,13 @@ Contributing
 		$ ${PUTIL_DIR}/sbin/setup-git-hooks.sh
 
 3. Ensure that Python can find the package modules (update the :code:`PYTHONPATH` environment variable, or use `sys.paths() <https://docs.python.org/2/library/sys.html#sys.path>`_, etc.)
+
+   .. code-block:: bash
+
+		$ export PYTHONPATH=${PYTHONPATH}:${PUTIL_DIR}
+
+   This is relevant only if it is desired to run unit tests, measure test coverage and/or (re)build the documentation using the cloned repository (and not a virtual environment). This option is attractive as it allows for faster
+   iterations, but final pre-commit validation should be done using the `tox <https://tox.readthedocs.org/>`_ flow (:code:`pkg-validate.sh` script, see below)
 
 4. The :code:`${PUTIL_DIR}/sbin` directory contains all relevant development scripts:
 
@@ -102,7 +109,7 @@ Contributing
 		Options:
 		  -h  Show this screen
 
-   * coverage.sh: measures test coverage in a module
+   * coverage.sh: measures test coverage of a module
 
 	.. code-block:: bash
 
@@ -162,8 +169,25 @@ Contributing
 		Options:
 		  -h  Show this screen
 
+   * pkg-validate.sh: uses `tox <https://tox.readthedocs.org/>`_ to run the package unit tests, measure test coverage and build the documentation in virtual environments
+
+	.. code-block:: bash
+
+		$ ${PUTIL_DIR}/sbin/pkg-validate.sh -h
+		pkg-validate.sh
+		
+		Usage:
+		  pkg-validate.sh [-h]
+		
+		Options:
+		  -h  Show this screen
+
 5. Write a unit test which shows that a bug was fixed or that a new feature or API works as expected. Run the package tests to ensure that the bug fix or new feature does not have adverse side effects. If possible
-   achieve 100% test coverage of the contributed code
+   achieve 100% test coverage of the contributed code. For a thorough code validation use the :code:`pkg-validate.sh` script
+
+.. rubric:: Footnotes
+
+.. [#f1] All shell examples are for the `bash <https://www.gnu.org/software/bash/>`_ shell
 
 License
 =======
@@ -189,3 +213,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
