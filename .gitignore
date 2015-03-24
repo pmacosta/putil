@@ -19,5 +19,6 @@ dist
 putil.egg-info
 docs/_build
 shippable/
+vdisks/
 !tests/support/ref_images/*.png
 !docs/support/*.png
