@@ -1,4 +1,7 @@
 #!/bin/bash
+# run-package-tests.sh
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
 
 print_usage_message () {
 	echo -e "run-package-tests.sh\n" >&2

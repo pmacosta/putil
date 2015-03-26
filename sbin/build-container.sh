@@ -1,4 +1,7 @@
 #!/bin/bash
+# build-container.sh
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
 
 # Exit upon error
 set -e

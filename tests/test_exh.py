@@ -118,6 +118,7 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 			exobj.add_exception('total_exception_13', TypeError, 'Total exception #13')
 		def func14():	#pylint: disable=C0111,W0612
 			exobj.add_exception('total_exception_14', TypeError, 'Total exception #14')
+		exec compile("def func15(exobj):\n\texobj.add_exception('total_exception_15', TypeError, 'Total exception #15')", '<exec_function>', 'exec') in locals()	#pylint:disable=W0122
 		dobj = Class1(exobj)	#pylint: disable=W0612
 		dobj.value3 = 5
 		print dobj.value3
@@ -133,6 +134,7 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 		func12()
 		func13()
 		func14()
+		func15(exobj)	#pylint:disable=E0602
 		if not cdb:
 			assert False
 		for exname in cdb:
@@ -179,6 +181,9 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 			elif re.compile(r'\d+/total_exception_14').match(exname):
 				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func14')) \
 					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14')
+			elif re.compile(r'\d+/total_exception_15').match(exname):
+				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works')) \
+					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #15')
 			else:
 				assert False
 		# Test that function IDs are unique

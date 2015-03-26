@@ -1,4 +1,7 @@
 #!/bin/bash
+# build-tags.sh
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
 
 print_usage_message () {
 	echo -e "build-tags.sh\n" >&2

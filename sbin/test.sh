@@ -1,4 +1,7 @@
 #!/bin/bash
+# test.sh
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
 
 print_usage_message () {
 	echo -e "test.sh\n" >&2

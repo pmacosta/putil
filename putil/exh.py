@@ -161,7 +161,9 @@ class ExHandle(object):	#pylint: disable=R0902
 				skip_flag = False
 				continue
 			# Gobble up two frames if it is a decorator
-			if (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None):	# frame corresponds to a decorator
+			if fin == '<exec_function>':
+				continue
+			elif (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None):	# frame corresponds to a decorator
 				skip_flag = True
 				if not decorator_flag:
 					#name = prev_name = self._get_callable_full_name(fob, fun)

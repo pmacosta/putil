@@ -1,4 +1,7 @@
 #!/bin/bash
+# coverage.sh
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
 
 print_usage_message () {
 	echo -e "coverage.sh\n" >&2
@@ -46,7 +49,7 @@ fi
 
 # Argument validation
 module=$1
-file=../tests/test_${module}.py
+file=${pkg_dir}/tests/test_${module}.py
 if [ ! -f "${file}" ]; then
 	echo "coverage.sh: test bench for module ${module} could not be found"
 	exit 1
