@@ -15,6 +15,7 @@ def main(site_pkg_dir):
 	lines = []
 	lines.append('# .coveragerc_shippable to control coverage.py during Shippable CI runs')
 	lines.append('[run]')
+	lines.append('branch = True')
 	start_flag = True
 	for file_name in os.listdir(os.path.join(pkg_dir, 'putil')):
 		if file_name.endswith('.py') and (file_name != '__init__.py'):

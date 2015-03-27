@@ -19,6 +19,7 @@ def main(argv):
 		lines = []
 		lines.append('# .coveragerc_tox to control coverage.py during tox runs')
 		lines.append('[run]')
+		lines.append('branch = True')
 		start_flag = True
 		for file_name in os.listdir(os.path.join(pkg_dir, 'putil')):
 			if file_name.endswith('.py') and (file_name != '__init__.py'):

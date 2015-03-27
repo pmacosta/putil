@@ -1,5 +1,6 @@
 # .coveragerc to control coverage.during local runs
 [run]
+branch = True
 include = putil/eng.py
           putil/exdoc.py
           putil/exdoc.py
