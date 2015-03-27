@@ -121,7 +121,7 @@ class ExceptionAutoDocClass(object):	#pylint: disable=R0902,R0903
 	@temp.deleter
 	def temp(self):	#pylint: disable=R0201
 		""" Deleter method defined with decorator """
-		print 'Cannot delete attribute'
+		pass
 
 	value1 = property(exdoc_support_module_2.module_enclosing_func(10), _set_value1)
 

@@ -17,6 +17,7 @@ tags
 *.pyc
 dist
 putil.egg-info
+putil/htmlcov
 docs/_build
 shippable/
 vdisks/

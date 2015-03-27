@@ -11,7 +11,7 @@ import putil.exdoc, putil.exh
 def trace_module(no_print=True):
 	""" Trace plot module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		if pytest.main('-x '+os.path.abspath('../tests/test_plot.py')):
+		if pytest.main('-x '+os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', '..', 'tests', 'test_plot.py'))):
 			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		final_callable_names = tuple()

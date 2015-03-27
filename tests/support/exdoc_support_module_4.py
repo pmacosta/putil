@@ -27,4 +27,3 @@ def func(name):
 	exhobj = putil.exh.get_or_create_exh_obj()
 	exhobj.add_exception(exname='illegal_name', extype=TypeError, exmsg='Argument `name` is not valid')
 	exhobj.raise_exception_if(exname='illegal_name', condition=not isinstance(name, str))
-	print 'My name is {0}'.format(name)

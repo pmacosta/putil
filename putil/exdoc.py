@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import copy, os, sys, textwrap
+import bisect, copy, os, sys, textwrap
 
 import putil.exh, putil.misc, putil.tree
 
@@ -204,15 +204,9 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		index = frame.f_code.co_filename.rfind('+')
 		file_name = os.path.abspath(frame.f_code.co_filename[:index])
 		line_num = int(frame.f_code.co_filename[index+1:])
-		for item_num, callable_dict in enumerate(self._module_obj_db[file_name]):
-			if (item_num == len(self._module_obj_db[file_name])-1) and (callable_dict['line'] <= line_num):
-				name = callable_dict['name']
-				break
-			elif callable_dict['line'] > line_num:
-				break
-			name = callable_dict['name']
-		#else:
-		#	raise RuntimeError('Unable to determine callable name')
+		names = [callable_dict['name'] for callable_dict in self._module_obj_db[file_name]]
+		line_nums = [callable_dict['line'] for callable_dict in self._module_obj_db[file_name]]
+		name = names[bisect.bisect(line_nums, line_num)-1]
 		return self.get_sphinx_doc(name, depth=depth, exclude=exclude, width=width, error=error)
 
 	def get_sphinx_doc(self, name, depth=None, exclude=None, width=230, error=False):	#pylint: disable=R0912,R0913,R0914,R0915
@@ -296,8 +290,7 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		else:
 			exlist = sorted(list(set(callable_dict[callable_dict.keys()[0]]['exlist'])))
 			exoutput.extend(['\n{0}'.format(_format_msg(':raises: {0}'.format(exlist[0]), width))] if len(exlist) == 1 else ['\n:raises:']+[' * {0}\n'.format(_format_msg(exname, width, 3)) for exname in exlist])
-		if exoutput:
-			exoutput[-1] = exoutput[-1].rstrip() + '\n\n'
+		exoutput[-1] = exoutput[-1].rstrip() + '\n\n'
 		return ('\n'.join(exoutput)) if exoutput else ''
 
 	depth = property(_get_depth, _set_depth, None, doc='Call hierarchy depth')

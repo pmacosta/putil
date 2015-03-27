@@ -19,6 +19,8 @@ import putil.eng, putil.exh, putil.misc, putil.pcontracts, putil.pcsv
 ###
 """
 [[[cog
+import os, sys
+sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot
 exobj_plot = trace_ex_plot.trace_module(no_print=True)
 ]]]

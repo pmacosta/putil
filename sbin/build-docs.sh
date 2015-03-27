@@ -24,6 +24,7 @@ dir="$( cd -P "$( dirname "${source}" )" && pwd )"
 pkg_dir=$(dirname ${dir})
 src_dir=${pkg_dir}/putil
 cpwd=${PWD}
+export TRACER_DIR=${pkg_dir}/docs/support
 
 # Default values for command line options
 rebuild=0
@@ -75,4 +76,5 @@ fi
 
 cd ${pkg_dir}/docs
 make html
+export TRACER_DIR=""
 cd ${cpwd}

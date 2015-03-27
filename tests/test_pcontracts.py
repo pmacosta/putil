@@ -86,6 +86,7 @@ def test_parse_new_contract_args():
 	assert fobj((IOError, )) == [{'name':'default', 'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}]
 	assert fobj([TypeError, 'bcd']) == [{'name':'default', 'msg':'bcd', 'type':TypeError}]
 	assert fobj(['xyz', ValueError]) == [{'name':'default', 'msg':'xyz', 'type':ValueError}]
+	assert sorted(fobj(mycontract=('xyz', ValueError), othercontract=('abc', IOError))) == [{'name':'othercontract', 'msg':'abc', 'type':IOError}, {'name':'mycontract', 'msg':'xyz', 'type':ValueError}]
 	# Validate **kwargs
 	putil.test.assert_exception(fobj, {'a':45}, TypeError, 'Illegal custom contract exception definition')
 	assert fobj(char='Desc1', other=['a', ValueError]) == [{'name':'char', 'msg':'Desc1', 'type':RuntimeError}, {'name':'other', 'msg':'a', 'type':ValueError}]

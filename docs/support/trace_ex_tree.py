@@ -11,7 +11,7 @@ import putil.exdoc, putil.exh
 def trace_module(no_print=True):
 	""" Trace tree module exceptions """
 	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		if pytest.main('-x '+os.path.abspath('../tests/test_tree.py')):
+		if pytest.main('-x '+os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', '..', 'tests', 'test_tree.py'))):
 			raise RuntimeError('Tracing did not complete successfully')
 	if not no_print:
 		module_prefix = 'putil.tree.Tree.'

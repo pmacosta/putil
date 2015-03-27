@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import decimal, decorator, fractions, inspect, numpy, os, sys, tempfile, textwrap, time, types
+import decimal, decorator, fractions, inspect, numpy, os, tempfile, textwrap, time, types
 
 
 ###
@@ -823,7 +823,7 @@ class CiDict(dict):
 				raise
 			except ValueError:
 				raise
-		if kwargs is not None:
+		if kwargs:
 			_dict1.update(kwargs)
 		_dict2 = dict()
 		for key in _dict1.keys():

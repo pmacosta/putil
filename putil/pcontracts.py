@@ -79,7 +79,7 @@ def _format_arg(arg):
 		raise ValueError('Empty custom contract exception message')
 	if len(arg) == 1:
 		return {'msg':arg[0] if isinstance(arg[0], str) else 'Argument `*[argument_name]*` is not valid', 'type':arg[0] if putil.misc.isexception(arg[0]) else RuntimeError}
-	if len(arg) == 2:
+	else:	# len(arg) == 2
 		return {'msg':arg[0] if isinstance(arg[0], str) else arg[1], 'type':arg[0] if putil.misc.isexception(arg[0]) else arg[1]}
 
 
@@ -95,7 +95,7 @@ def _get_contract_exception_dict(contract_msg):
 		contract_name = contract_msg[:contract_msg.find(']')]
 		contract_msg = contract_msg[contract_msg.find(']')+1:contract_msg.find(stop_token)]
 		exdict = _CUSTOM_CONTRACTS[contract_name]
-		for exvalue in exdict.values():
+		for exvalue in exdict.values():	# pragma: no branch
 			if exvalue['msg'] == contract_msg:
 				return exvalue
 

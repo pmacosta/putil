@@ -15,7 +15,7 @@ def _get_code_id(obj, file_name=None, offset=0):
 	""" Return unique identity tuple to individualize callable object """
 	if hasattr(obj, 'func_code') and (obj.func_code.co_filename != '<string>'):
 		return (os.path.realpath(obj.func_code.co_filename), obj.func_code.co_firstlineno)
-	elif file_name:
+	else: # file_name:
 		return (file_name, obj.func_code.co_firstlineno+offset)
 
 
@@ -88,7 +88,7 @@ def _line_tokenizer(lines):	#pylint: disable=R0914,R0915
 			line_match = class_match or func_match or namespace_match or prop_match
 			yield num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, prop_match, prop_indent, prop_name, get_match, set_match, del_match, decorator_match,\
 				namespace_indent, namespace_match
-		elif multi_line_string:
+		else:
 			multi_line_string = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_string_line_num) else (not (delimiter in line)))	#pylint: disable=C0325
 			yield num_lines, line_num, line, False, False, 0, None, False, 0, None, False, 0, None, False, False, False, False, 0, False
 
@@ -230,8 +230,7 @@ def loaded_package_modules(module_obj, _rarg=None):
 	root_obj = sys.modules.get(root_name, None)
 	root_dir, modules_traced, modules_list = _rarg[0] if recursive else os.path.split(getattr(root_obj, '__file__'))[0], _rarg[1] if recursive else list(), _rarg[2] if recursive else list()
 	modules_traced.append(root_name)
-	if root_obj not in modules_list:
-		modules_list.append(root_obj)
+	modules_list.append(root_obj)
 	for module_obj, module_name in [(getattr(root_obj, module_name), module_name) for module_name in dir(root_obj)]:
 		if is_object_module(module_obj) and hasattr(module_obj, '__file__') and os.path.split(getattr(module_obj, '__file__'))[0].startswith(root_dir) and (module_name not in modules_traced):
 			modules_traced, modules_list = loaded_package_modules(module_obj, (root_dir, modules_traced, modules_list))

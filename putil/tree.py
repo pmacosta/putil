@@ -14,6 +14,8 @@ import putil.exh
 ###
 """
 [[[cog
+import os, sys
+sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_tree
 exobj_tree = trace_ex_tree.trace_module(no_print=True)
 ]]]

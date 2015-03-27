@@ -78,6 +78,7 @@ def test_loaded_package_modules():
 	module_name_list = [obj for name, obj in sys.modules.iteritems() if name.startswith('putil.') and (hasattr(obj, '__file__')) and (getattr(obj, '__file__').startswith(pkg_dir))]
 	modules_obj_list = set([sys.modules['putil']]+module_name_list)
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list
+	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil'])) == modules_obj_list		# Repetition on purpose, to test what happens with multiple calls
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil.pinspect'])) == modules_obj_list
 
 
@@ -212,6 +213,7 @@ def test_callables():	# pylint: disable=R0915
 			if not congruence_flag:
 				break
 	assert congruence_flag
+	obj.trace(sys.modules['pinspect_support_module_1'])	# Test repeated call, should not trace (confirmed by branch analysis)
 	# Test string and representation methods
 	assert repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3'], sys.modules['pinspect_support_module_4']])"
 	assert str(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == ref_text

@@ -57,5 +57,8 @@ fi
 
 # Processing
 cd ${src_dir}
-py.test --cov putil.${module} --cov-report term-missing ${file}
+echo -e "# .coverage_${module}\n[run]\ndata_file = ${pkg_dir}/putil/.coverage\nbranch = True\ninclude = ${pkg_dir}/putil/${module}.py\n[report]show_missing = True" > ${pkg_dir}/.coverage_${module}
+py.test -x -s -vv --cov-config ${pkg_dir}/.coverage_${module} --cov ${pkg_dir}/putil/ --cov-report html ${file}
+rm -rf ${pkg_dir}/.coverage_${module}
+rm -rf ${pkg_dir}/putil/.coverage
 cd ${cpwd}

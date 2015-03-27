@@ -13,6 +13,8 @@ import putil.exh, putil.misc, putil.pcontracts
 ###
 """
 [[[cog
+import os, sys
+sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_pcsv
 exobj = trace_ex_pcsv.trace_module(no_print=True)
 ]]]
@@ -353,7 +355,7 @@ class CsvFile(object):
 		if isinstance(col, str):
 			col_num = self._header_upper.index(col.upper())
 			return [[row[col_num]] for row in data]
-		elif isinstance(col, list):
+		else:	# isinstance(col, list):
 			col_list = col[:]
 			col_index_list = [self._header_upper.index(col.upper()) for col in col_list]
 			return [[row[index] for index in col_index_list] for row in data]

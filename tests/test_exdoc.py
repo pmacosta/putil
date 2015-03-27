@@ -10,7 +10,7 @@ import putil.exdoc, putil.exh, putil.test
 TEST_DIR = os.path.dirname(__file__)
 SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
 sys.path.append(SUPPORT_DIR)
-import exdoc_support_module_1, exdoc_support_module_3, exdoc_support_module_4
+import exdoc_support_module_1, exdoc_support_module_3, exdoc_support_module_4	#pylint: disable=F0401
 
 
 ###
@@ -55,14 +55,14 @@ def exdocobj():
 		obj.divide(5.2)
 		obj.multiply(5.2)
 		obj.value1 = 11
-		print obj.value1
+		obj.value1	#pylint: disable=W0104
 		obj.value2 = 33
-		print obj.value2
+		obj.value2	#pylint: disable=W0104
 		obj.value3 = 77
-		print obj.value3
+		obj.value3	#pylint: disable=W0104
 		del obj.value3
 		obj.temp = 10
-		print obj.temp
+		obj.temp	#pylint: disable=W0104
 		del obj.temp
 		exdoc_support_module_1.write()
 		multi_level_write()
@@ -158,7 +158,6 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		raise ValueError('General exception #1')
 	def mock_add_nodes3(self):	#pylint: disable=C0111,W0613
 		raise IOError('General exception #2')
-	print str(exdocobj._tobj)
 	assert str(exdocobj._tobj) == \
 		u'test_exdoc.exdocobj\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.ExceptionAutoDocClass.__init__ (*)\n'.encode('utf-8') + \
@@ -190,6 +189,18 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj1, '_no_print':True}, ValueError, 'General exception #1')
 	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes3):
 		putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj1, '_no_print':True}, IOError, 'General exception #2')
+	# Create exception tree where branching is right at root node
+	exobj = putil.exh.ExHandle()
+	exobj._ex_dict = {'root/leaf1':{'function':'root/leaf1', 'type':RuntimeError, 'msg': 'Exception 1'}, 'root/leaf2':{'function':'root.leaf2', 'type':IOError, 'msg': 'Exception 2'}}
+	exobj._callables_obj._callables_db = {'root':{'type':'func', 'code_id':('file', 50), 'attr':None, 'link':[]},
+									      'leaf1':{'type':'func', 'code_id':('file', 50), 'attr':None, 'link':[]},
+									      'leaf2':{'type':'func', 'code_id':('file', 60), 'attr':None, 'link':[]}}
+	exdocobj = putil.exdoc.ExDoc(exobj, _no_print=True, _empty=True)
+	exdocobj._build_ex_tree()
+	assert str(exdocobj._tobj) == \
+		u'root\n'.encode('utf-8') + \
+		u'├leaf1 (*)\n'.encode('utf-8') + \
+		u'└leaf2 (*)'.encode('utf-8')
 
 
 def test_get_sphinx_doc(exdocobj):	#pylint: disable=W0621
