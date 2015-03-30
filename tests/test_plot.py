@@ -1439,7 +1439,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		obj = putil.plot.Figure(panels=None)
 		assert obj.fig_width == None
 		obj = putil.plot.Figure(panels=default_panel)
-		assert (obj.fig_width-5.6 < 1e-10) or (obj.fig_width-5.6 < 1e-10)	# CI images are 6.09
+		assert (obj.fig_width-5.6 < 1e-10) or (obj.fig_width-5.61 < 1e-10)	# CI images are 6.09
 		obj.fig_width = 5
 		assert obj.fig_width == 5
 
@@ -1483,12 +1483,13 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 
 	def test_specified_figure_size_too_small(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that method behaves correctly when requested figure size is too small """
+		# Continuous integration image is 5.61in wide
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':200},\
-							  RuntimeError, 'Figure size is too small: minimum width = 5.6, minimum height 2.66')
+							  RuntimeError, 'Figure size is too small: minimum width = 5.6[1]*, minimum height 2.66')
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':200, 'fig_height':0.1},\
-							  RuntimeError, 'Figure size is too small: minimum width = 5.6, minimum height 2.66')
+							  RuntimeError, 'Figure size is too small: minimum width = 5.6[1]*, minimum height 2.66')
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':0.1},\
-							  RuntimeError, 'Figure size is too small: minimum width = 5.6, minimum height 2.66')
+							  RuntimeError, 'Figure size is too small: minimum width = 5.6[1]*, minimum height 2.66')
 
 	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that _complete() method behaves correctly """
@@ -1535,7 +1536,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += 'Independent variable units: Amps\n'
 		ret += 'Logarithmic independent axis: False\n'
 		ret += 'Title: My graph\n'
-		ret_ci = ret + 'Figure width: 6.09\n'
+		ret_ci = ret + 'Figure width: 5.61\n'
 		ret += 'Figure width: 5.6\n'
 		ret_ci += 'Figure height: 2.66\n'
 		ret += 'Figure height: 2.66\n'
