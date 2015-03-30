@@ -23,18 +23,6 @@ an exception with :py:meth:`putil.exh.ExHandle.add_exception` and conditionally 
 inside an :code:`if` block and incurs a slight performance penalty, using the :ref:`exh-module` allows for automatic documentation of the exceptions raised by any function, method or class property with the
 help of the :ref:`exdoc-module`.
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-None
-
 ***************************************
 Application programming interface (API)
 ***************************************

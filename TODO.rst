@@ -5,7 +5,15 @@
 
 * plot module:
 
-  + Use an abstract base class to derive BasicSource and CsVSource classes
+  + If ticks have fractional parts, make minimum mantissa 1 digit, even if integer castings of ticks are unique, unless the 1-digit mantissa of all the ticks are the same
+
+  + Make _complete() method a property that also does data validation
+
+  + Use an abstract base class to derive BasicSource and CsvSource classes
+
+  + Code panel iterator that iterates over panel series objects and figure iterator that iterates over figure panels
+
+  + Make series object have all the properties of source associated with series
 
   + Write MultiCsvSeriesPanel, with potentially this signature:
 

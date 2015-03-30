@@ -8,18 +8,6 @@ test module
 
 This module contains functions to aid in the unit testing of modules in the package (`py.test <http://www.pytest.org>`_-based)
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-None
-
 ***************************************
 Application programming interface (API)
 ***************************************

@@ -614,6 +614,11 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 		def fproc2(indep_var, dep_var, par1, par2):	#pylint: disable=C0111,W0613
 			return indep_var+par1, dep_var-par2
 		with putil.misc.TmpFile(write_csv_file) as file_name:
+			# No dfilter
+			obj = str(putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col3'))
+			ref = 'File name: {0}\nData filter: None\nIndependent column label: Col7\nDependent column label: Col3\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
+			ref += 'Independent variable minimum: -inf\nIndependent variable maximum: +inf\nIndependent variable: [ 1, 2, 3, 4, 5 ]\nDependent variable: [ 2, 4, 1, 5, 3 ]'
+			assert obj == ref
 			# dfilter
 			obj = str(putil.plot.CsvSource(file_name=file_name, dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3'))
 			ref = 'File name: {0}\nData filter: \n   Col1: 0\nIndependent column label: Col2\nDependent column label: Col3\nProcessing function: None\nProcessing function extra arguments: None\n'.format(file_name)
@@ -1434,7 +1439,7 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		obj = putil.plot.Figure(panels=None)
 		assert obj.fig_width == None
 		obj = putil.plot.Figure(panels=default_panel)
-		assert (obj.fig_width-6.08 < 1e-10) or (obj.fig_width-6.09 < 1e-10)	# CI images are 6.09
+		assert (obj.fig_width-5.6 < 1e-10) or (obj.fig_width-5.6 < 1e-10)	# CI images are 6.09
 		obj.fig_width = 5
 		assert obj.fig_width == 5
 
@@ -1478,13 +1483,12 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 
 	def test_specified_figure_size_too_small(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that method behaves correctly when requested figure size is too small """
-		# Regular test imags are 6.08, CI images are 6.09
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':200},\
-							  RuntimeError, 'Figure size is too small: minimum width = 6.0[8|9], minimum height 4.99')
+							  RuntimeError, 'Figure size is too small: minimum width = 5.6, minimum height 2.66')
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':200, 'fig_height':0.1},\
-							  RuntimeError, 'Figure size is too small: minimum width = 6.0[8|9], minimum height 4.99')
+							  RuntimeError, 'Figure size is too small: minimum width = 5.6, minimum height 2.66')
 		putil.test.assert_exception(putil.plot.Figure, {'panels':default_panel, 'indep_var_label':'Input', 'indep_var_units':'Amps', 'title':'My graph', 'fig_width':0.1, 'fig_height':0.1},\
-							  RuntimeError, 'Figure size is too small: minimum width = 6.0[8|9], minimum height 4.99')
+							  RuntimeError, 'Figure size is too small: minimum width = 5.6, minimum height 2.66')
 
 	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
 		""" Test that _complete() method behaves correctly """
@@ -1532,9 +1536,9 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 		ret += 'Logarithmic independent axis: False\n'
 		ret += 'Title: My graph\n'
 		ret_ci = ret + 'Figure width: 6.09\n'
-		ret += 'Figure width: 6.08\n'
-		ret_ci += 'Figure height: 4.99\n'
-		ret += 'Figure height: 4.99\n'
+		ret += 'Figure width: 5.6\n'
+		ret_ci += 'Figure height: 2.66\n'
+		ret += 'Figure height: 2.66\n'
 		assert (str(obj) == ret) or (str(obj) == ret_ci)
 
 	def test_cannot_delete_attributes(self, default_panel):	#pylint: disable=C0103,R0201,W0621

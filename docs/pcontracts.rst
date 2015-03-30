@@ -63,18 +63,6 @@ Traceback (most recent call last):
   ...
 IOError: File `/dev/null/some_file.txt` could not be found
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-`PyContracts <https://andreacensi.github.io/contracts/>`_
-
 ***************************************
 Application programming interface (API)
 ***************************************

@@ -8,20 +8,6 @@ tree module
 
 This module can be used to build, handle, process and search `tries <http://wikipedia.org/wiki/Trie>`_
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_
-
-* `PyContracts <https://andreacensi.github.io/contracts/>`_
-
 ***************************************
 Application programming interface (API)
 ***************************************

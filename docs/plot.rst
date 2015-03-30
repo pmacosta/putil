@@ -8,26 +8,6 @@ plot module
 
 This module can be used to create high-quality, presentation-ready X-Y graphs quickly and easily
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but in all likelihood the module will also work with Python 3.x provided that the external libraries have ports to the newer interpreter version.
-
-************
-Dependencies
-************
-
-* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_
-
-* `matplotlib <http://matplotlib.org/>`_
-
-* `Numpy <http://www.numpy.org/>`_
-
-* `scipy <http://www.scipy.org/>`_
-
-* `PyContracts <https://andreacensi.github.io/contracts/>`_
-
 ***************
 Class hierarchy
 ***************

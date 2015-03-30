@@ -59,18 +59,6 @@ After the script is run and the auto-documentation generated, each callable has 
 
 .. note:: Documentation strings have to be raw (for example, :code:`r""" Docstring """`) to properly display the documentation of exceptions with multi-line messages
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-Cog (`<http://nedbatchelder.com/code/cog/>`_) for inserting exception documentation automatically in source files
-
 ***************************************
 Application programming interface (API)
 ***************************************

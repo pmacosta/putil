@@ -27,6 +27,11 @@ This library provides a collection of utility modules to supplement the excellen
 
 * **tree**: this module can be used to build, handle, process and search `tries <http://wikipedia.org/wiki/Trie>`_
 
+Interpreter
+===========
+
+The package has been developed and tested with Python 2.7
+
 Installing
 ==========
 
@@ -37,7 +42,7 @@ Installing
 Documentation
 =============
 
-Available at `<http://my-docs.org/>`_
+Available at `Read the Docs <https://readthedocs.org/projects/putil/>`_
 
 Contributing
 ============
@@ -96,7 +101,7 @@ Contributing
 
 
 5. Write a unit test which shows that a bug was fixed or that a new feature or API works as expected. Run the package tests to ensure that the bug fix or new feature does not have adverse side effects. If possible
-   achieve 100% test coverage of the contributed code. For a thorough code validation use the :code:`pkg-validate.sh` script (see below)
+   achieve 100% code and branch coverage of the contribution. For a thorough code validation use the :code:`pkg-validate.sh` script (see below)
 
 6. Continuous integration is available via `Shippable <http://www.shippable.com/>`_. The Docker image used is `shippableimages/ubuntu1404_python <https://registry.hub.docker.com/u/shippableimages/ubuntu1404_python/>`_; it may
    be necessary to update the build image in the "Settings" tab of the Shippable putil repository page for the tests to pass (this image is already specified in the Shippable YML configuration file). In "Build image" select
@@ -149,7 +154,7 @@ Contributing
 
 	.. code-block:: bash
 
-		$ python ${PUTIL_DIR}/sbin/gen_ref_images.py
+		$ ${PUTIL_DIR}/sbin/gen_ref_images.py
 		Generating image [PUTIL_DIR]/tests/support/ref_images/series_marker_false_interp_straight_line_style_solid.png
 		...
 

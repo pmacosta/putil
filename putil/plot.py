@@ -318,28 +318,25 @@ def _get_yaxis_size(fig_obj, tick_labels, axis_label):
 	""" Compute Y axis height and width """
 	# Minimum of one line spacing between vertical ticks
 	axis_height = axis_width = 0
-	if (tick_labels is not None) and (len(tick_labels) > 0):
-		label_index = _first_label(tick_labels)
-		if label_index is not None:
-			label_height = _get_text_prop(fig_obj, tick_labels[label_index])['height']
-			axis_height = (2*len(tick_labels)-1)*label_height
-			axis_width = max([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
-	if axis_label is not None:
-		axis_height = max(axis_height, _get_text_prop(fig_obj, axis_label)['height'])
-		axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
+	label_index = _first_label(tick_labels)
+	if label_index:
+		label_height = _get_text_prop(fig_obj, tick_labels[label_index])['height']
+		axis_height = (2*len(tick_labels)-1)*label_height
+		axis_width = max([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+	# axis_label is a Text object, which is never None, it has the x, y coordinates and axis label text, even if is = ''
+	axis_height = max(axis_height, _get_text_prop(fig_obj, axis_label)['height'])
+	axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
 	return axis_height, axis_width
 
 
 def _get_xaxis_size(fig_obj, tick_labels, axis_label):
 	""" Compute Y axis height and width """
 	# Minimum of one smallest label separation between horizontal ticks
-	axis_height = axis_width = 0
-	if (tick_labels is not None) and (len(tick_labels) > 0):
-		min_label_width = min([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
-		axis_width = ((len(tick_labels)-1)*min_label_width)+sum([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
-	if axis_label is not None:
-		axis_height = (axis_height+(1.5*_get_text_prop(fig_obj, axis_label)['height']))
-		axis_width = max(axis_width, _get_text_prop(fig_obj, axis_label)['width'])
+	min_label_width = min([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+	axis_width = ((len(tick_labels)-1)*min_label_width)+sum([num for num in [_get_text_prop(fig_obj, tick)['width'] for tick in tick_labels] if isinstance(num, int) or isinstance(num, float)])
+	# axis_label is a Text object, which is never None, it has the x, y coordinates and axis label text, even if is = ''
+	axis_height = 1.5*_get_text_prop(fig_obj, axis_label)['height']
+	axis_width = max(axis_width, _get_text_prop(fig_obj, axis_label)['width'])
 	return axis_height, axis_width
 
 
@@ -1736,7 +1733,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		""" Draw series """
 		fplot = axarr.plot if (not log_indep) and (not log_dep) else (axarr.semilogx if log_indep and (not log_dep) else (axarr.loglog if (log_indep) and (log_dep) else axarr.semilogy))
 		# Plot line
-		if self.line_style is not None:
+		if self._linestyle_spec != '':
 			fplot(
 				self.scaled_indep_var if self.interp in ['STRAIGHT', 'STEP'] else self.scaled_interp_indep_var,
 				self.scaled_dep_var if self.interp in ['STRAIGHT', 'STEP'] else self.scaled_interp_dep_var,
@@ -1747,7 +1744,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 				label=self.label
 			)
 		# Plot markers
-		if self.marker != '':
+		if self._marker_spec != '':
 			fplot(
 				self.scaled_indep_var,
 				self.scaled_dep_var,
@@ -1948,8 +1945,6 @@ class Panel(object):	#pylint: disable=R0902,R0903
 	.. [[[end]]]
 	"""
 	def __init__(self, series=None, primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=None, display_indep_axis=False):	#pylint: disable=W0102,R0913
-		# Default arguments
-		legend_props = {'pos':'BEST', 'cols':1} if legend_props == None else legend_props
 		# Private attributes
 		self._exh = putil.exh.get_or_create_exh_obj()
 		self._series, self._primary_axis_label, self._secondary_axis_label, self._primary_axis_units, self._secondary_axis_units, self._log_dep_axis, self._recalculate_series, self._legend_props, self._display_indep_axis = \
@@ -2086,14 +2081,13 @@ class Panel(object):	#pylint: disable=R0902,R0903
 						  " 'LOWER CENTER', 'UPPER CENTER', 'CENTER'] (case insensitive)")
 		self._exh.add_exception(exname='invalid_legend_cols', extype=RuntimeError, exmsg='Legend property `cols` is not valid')
 		self._legend_props = legend_props if legend_props is not None else {'pos':'BEST', 'cols':1}
-		if self.legend_props is not None:
-			self._legend_props.setdefault('pos', 'BEST')
-			self._legend_props.setdefault('cols', 1)
-			for key, value in self.legend_props.iteritems():
-				self._exh.raise_exception_if(exname='invalid_legend_prop', condition=key not in self._legend_props_list, edata={'field':'prop_name', 'value':key})
-				self._exh.raise_exception_if(exname='illegal_legend_prop', condition=(key == 'pos') and _legend_position_validation(self.legend_props['pos']))
-				self._exh.raise_exception_if(exname='invalid_legend_cols', condition=((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)))
-			self._legend_props['pos'] = self._legend_props['pos'].upper()
+		self._legend_props.setdefault('pos', 'BEST')
+		self._legend_props.setdefault('cols', 1)
+		for key, value in self.legend_props.iteritems():
+			self._exh.raise_exception_if(exname='invalid_legend_prop', condition=key not in self._legend_props_list, edata={'field':'prop_name', 'value':key})
+			self._exh.raise_exception_if(exname='illegal_legend_prop', condition=(key == 'pos') and _legend_position_validation(self.legend_props['pos']))
+			self._exh.raise_exception_if(exname='invalid_legend_cols', condition=((key == 'cols') and (not isinstance(value, int))) or ((key == 'cols') and (isinstance(value, int) is True) and (value < 0)))
+		self._legend_props['pos'] = self._legend_props['pos'].upper()
 
 	def __str__(self):
 		"""
@@ -2158,8 +2152,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		flim((dep_min, dep_max), emit=True, auto=False)
 		fticks(tick_locs)
 		axis_obj.tick_params(axis='x' if axis_type.upper() == 'INDEP' else 'y', which='major', labelsize=AXIS_TICKS_FONT_SIZE)
-		if tick_labels is not None:
-			fticklabels(tick_labels)
+		fticklabels(tick_labels)
 		if (axis_label not in [None, '']) or (axis_units not in [None, '']):
 			axis_label = '' if axis_label is None else axis_label.strip()
 			unit_scale = '' if axis_scale is None else axis_scale.strip()
@@ -2185,7 +2178,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 			_, primary_labels = axarr_prim.get_legend_handles_labels() if self._panel_has_primary_axis else (None, list()) #pylint: disable=W0612
 			_, secondary_labels = axarr_sec.get_legend_handles_labels() if self._panel_has_secondary_axis else (None, list()) #pylint: disable=W0612
 			labels = [r'$\Leftarrow$'+label for label in primary_labels]+ [label+r'$\Rightarrow$' for label in secondary_labels] if (len(primary_labels) > 0) and (len(secondary_labels) > 0) else primary_labels+secondary_labels
-			if any([True if (label is not None) and (label != '') else False for label in labels]):
+			if any([bool(label) for label in labels]):
 				leg_artist = [series_obj._legend_artist(LEGEND_SCALE) for series_obj in self.series]	#pylint: disable=W0212
 				legend_axis = axarr_prim if self._panel_has_primary_axis else axarr_sec
 				legend_axis.legend(leg_artist, labels, ncol=self.legend_props['cols'] if 'cols' in self.legend_props else len(labels),
@@ -2305,7 +2298,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	* **cols** (integer) -- number of columns of the legend box
 
-	.. note:: No legend is shown if a panel has only one series in it
+	.. note:: No legend is shown if a panel has only one series in it or if no series has a label
 
 	:type:	dictionary, default is :code:`{'pos':'BEST', 'cols':1}`
 
@@ -2505,7 +2498,7 @@ class Figure(object):	#pylint: disable=R0902
 						 'indep_var_labels':None, 'indep_axis_label':None, 'indep_axis_units':None, 'indep_axis_unit_scale':None}
 			indep_axis_dict = {'log_indep':self.log_indep_axis, 'indep_var_min':indep_var_min, 'indep_var_max':indep_var_max, 'indep_var_locs':indep_var_locs,
 						 'indep_var_labels':indep_var_labels, 'indep_axis_label':self.indep_var_label, 'indep_axis_units':self.indep_var_units, 'indep_axis_unit_scale':indep_var_unit_scale}
-			panels_with_indep_axis_list = [num for num, panel_obj in enumerate(self.panels) if panel_obj.display_indep_axis is True]
+			panels_with_indep_axis_list = [num for num, panel_obj in enumerate(self.panels) if panel_obj.display_indep_axis]
 			panels_with_indep_axis_list = [num_panels-1] if len(panels_with_indep_axis_list) == 0 else panels_with_indep_axis_list
 			for num, (panel_obj, axarr) in enumerate(zip(self.panels, axes)):
 				panel_dict = panel_obj._draw_panel(axarr, indep_axis_dict, num in panels_with_indep_axis_list)	#pylint: disable=C0326,W0212

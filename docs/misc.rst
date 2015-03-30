@@ -9,18 +9,6 @@ misc module
 This module contains miscellaneous utility functions that can be applied in a variety of circumstances: there are context managers, membership functions (a certain argument is of a given type), numerical functions
 and string functions
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-None
-
 ***************************************
 Application programming interface (API)
 ***************************************

@@ -14,20 +14,6 @@ This module can be used to handle comma-separated values (CSV) files and do ligh
     :tab-width: 3
     :lines: 1,5-
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-* `funcsigs <https://pypi.python.org/pypi/funcsigs>`_
-
-* `PyContracts <https://andreacensi.github.io/contracts/>`_
-
 ***************************************
 Application programming interface (API)
 ***************************************

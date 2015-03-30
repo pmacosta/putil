@@ -102,18 +102,6 @@ The number in parenthesis indicates the line number in which the callable starts
 	python2_module._set_value: func (3)
 	   fset of: pinspect_example_3.my_func.MyClass.value
 
-***********
-Interpreter
-***********
-
-The module has been developed using Python 2.7, but it *should* also work with Python 3.x
-
-************
-Dependencies
-************
-
-None
-
 ***************************************
 Application programming interface (API)
 ***************************************
