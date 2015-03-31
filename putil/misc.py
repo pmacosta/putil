@@ -782,13 +782,19 @@ def to_scientific_tuple(number):
 	return (mant, exp)
 
 
-def to_scientific_string(number):
+def to_scientific_string(number, frac_length=None, exp_length=None, sign_always=False):
 	"""
 	Converts a number or a string representing a number to a string with the number expressed in scientific notation. Full precision is maintained if the number is represented as a string
 
 
 	:param	number: Number to convert
 	:type	number: number or string
+	:param	frac_length: Number of digits of fractional part, None indicates that the fractional part of the number should not be limited
+	:type	frac_length: integer or None
+	:param	exp_length: Number of digits of the exponent; the length of the exponent takes precedence if it is longer
+	:type	exp_length: integer or None
+	:param	sign_always: Flag that indicates whether the sign should always precede the number for both non-negative and negative numbers (True) or only for negative numbers (False)
+	:type	signa_always: boolean
 	:rtype: string
 
 	For example:
@@ -797,9 +803,21 @@ def to_scientific_string(number):
 		'3.33E+2'
 		>>> putil.misc.to_scientific_string(0.00101)
 		'1.01E-3'
+		>>> putil.misc.to_scientific_string(99.999, 1, 2, True)
+		'+1.0E+02'
+
 	"""
 	mant, exp = to_scientific_tuple(number)
-	return '{0}E{1}{2}'.format(mant, '-' if exp < 0 else '+', abs(exp))
+	fmant = float(mant)
+	sexp = abs(exp) if exp_length is None else '{0}'.format(abs(exp)).rjust(exp_length, '0')
+	if not frac_length:
+		return '{0}{1}E{2}{3}'.format('+' if sign_always and (fmant >= 0) else '', mant, '-' if exp < 0 else '+', sexp)
+	if fmant == int(fmant):
+		return '{0}{1}.{2}E{3}{4}'.format('+' if sign_always and (fmant >= 0) else '', mant, '0'*frac_length, '-' if exp < 0 else '+', sexp)
+	rounded_mant = round(fmant, frac_length)
+	if abs(rounded_mant) >= 10:
+		return to_scientific_string(rounded_mant*(10**exp), frac_length, exp_length, sign_always)
+	return '{0}{1}{2}E{3}{4}'.format('+' if sign_always and (fmant >= 0) else '', rounded_mant, '0'*(2+(1 if (fmant < 0) else 0)+frac_length-len(str(rounded_mant))), '-' if exp < 0 else '+', sexp)
 
 
 ###
