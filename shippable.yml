@@ -50,7 +50,7 @@ script:
   - echo "PYTHON_SITE_PACKAGES=${PYTHON_SITE_PACKAGES}"
   - ls ${PYTHON_SITE_PACKAGES}/putil/
   # Write coverage configuration file
-  - ./sbin/coverage-shippable-manager.py $PYTHON_SITE_PACKAGES
+  - ./sbin/coveragerc-manager.py 'shippable' 1 $PYTHON_SITE_PACKAGES
   - cat $SHIPPABLE_REPO_DIR/.coveragerc_shippable
   - rm -rf tox.ini
   # Run the tests

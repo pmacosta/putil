@@ -3,6 +3,8 @@
 
 * Clean up repository
 
+* Performance improvements
+
 * plot module:
 
   + If ticks have fractional parts, make minimum mantissa 1 digit, even if integer castings of ticks are unique, unless the 1-digit mantissa of all the ticks are the same

@@ -55,22 +55,31 @@ fi
 if [ ${rebuild} == 1 ]; then
 	echo 'Rebuilding exceptions documentation'
 	for module in ${modules[@]}; do
-		module_file="${src_dir}"/"${module}".py
-		if [ ! -f "${module_file}" ]; then
-			echo "Module ${module_file} not found"
+		if [ "${module}" == "plot" ]; then
+			module_dir=${src_dir}/plot
+			submodules=(basic_source csv_source figure functions panel series)
 		else
-			echo '   Processing module '${module_file}
-			if cog.py -e -x -o ${module_file}.tmp ${module_file}; then
-			       mv -f ${module_file}.tmp ${module_file}
-			       if cog.py -e -o ${module_file}.tmp ${module_file}; then
-					mv -f ${module_file}.tmp ${module_file}
-			       else
-					echo "Error generating exceptions documentation in module ${module_file}"
-			       fi
-		       else
-			       echo "Error deleting exceptions documentation in module ${module_file}"
-		       fi
+			module_dir=${src_dir}
+			submodules=(${module})
 		fi
+		for submodule in ${submodules[@]}; do
+			submodule_file="${module_dir}"/"${submodule}".py
+			if [ ! -f "${submodule_file}" ]; then
+				echo "Module ${submodule_file} not found"
+			else
+				echo '   Processing module '${submodule_file}
+				if cog.py -e -x -o ${submodule_file}.tmp ${submodule_file}; then
+				       mv -f ${submodule_file}.tmp ${submodule_file}
+				       if cog.py -e -o ${submodule_file}.tmp ${submodule_file}; then
+						mv -f ${submodule_file}.tmp ${submodule_file}
+				       else
+						echo "Error generating exceptions documentation in module ${submodule_file}"
+				       fi
+			       else
+				       echo "Error deleting exceptions documentation in module ${submodule_file}"
+			       fi
+			fi
+		done
 	done
 fi
 

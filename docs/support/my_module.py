@@ -27,7 +27,7 @@ def func(name):
 	.. [[[cog cog.out(exobj_my_module.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for my_module.func
 
-	:raises: TypeError (Argument `name` is not valid)
+	:raises: TypeError (Argument \`name\` is not valid)
 
 	.. [[[end]]]
 
@@ -74,11 +74,11 @@ class MyClass(object):
 	:raises:
 	 * When assigned
 
-	   * RuntimeError (Argument `value` is not valid)
+	   * RuntimeError (Argument \`value\` is not valid)
 
 	 * When retrieved
 
-	   * RuntimeError (Attribute `value` not set)
+	   * RuntimeError (Attribute \`value\` not set)
 
 	.. [[[end]]]
 	"""

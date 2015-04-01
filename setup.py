@@ -99,7 +99,7 @@ setup(
 	author_email='pmacosta@yahoo.com',
 	description='This library provides a collection of utility modules to supplement the excellent Python standard library',
 	long_description=LONG_DESCRIPTION,
-	packages=['putil'],
+	packages=['putil', 'putil.plot'],
 	zip_safe=False,
 	platforms='any',
 	classifiers=[

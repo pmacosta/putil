@@ -57,8 +57,8 @@ fi
 
 # Processing
 cd ${src_dir}
-echo -e "# .coverage_${module}\n[run]\ndata_file = ${pkg_dir}/putil/.coverage\nbranch = True\ninclude = ${pkg_dir}/putil/${module}.py\n[report]show_missing = True" > ${pkg_dir}/.coverage_${module}
-py.test -x -s -vv --cov-config ${pkg_dir}/.coverage_${module} --cov ${pkg_dir}/putil/ --cov-report html ${file}
-rm -rf ${pkg_dir}/.coverage_${module}
+${pkg_dir}/sbin/coveragerc-manager.py 'local' 1 ${pkg_dir} ${module}
+py.test -x -s -vv --cov-config ${pkg_dir}/.coveragerc_local --cov ${pkg_dir}/putil/ --cov-report html ${file}
+${pkg_dir}/sbin/coveragerc-manager.py 'local' 0 ${pkg_dir}
 rm -rf ${pkg_dir}/putil/.coverage
 cd ${cpwd}
