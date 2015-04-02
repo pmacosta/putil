@@ -75,7 +75,7 @@ class Timer(object):	#pylint: disable=R0903
 	r"""
 	Context manager for profiling blocks of code by calculating elapsed time between context manager entry and exit time points. Largely from `Huy Nguyen's blog <http://www.huyng.com/posts/python-performance-analysis/>`_.
 
-	:param	verbose: Flag that indicates whether the ellapsed time is printed upon exit (True) or not (False)
+	:param	verbose: Flag that indicates whether the elapsed time is printed upon exit (True) or not (False)
 	:type	verbose: boolean
 	:returns: :py:class:`putil.misc.Timer` context manager object
 	:raises: RuntimeError (Argument \`verbose\` is not valid)
@@ -479,7 +479,7 @@ def isiterable(obj):
 
 def pprint_vector(vector, limit=False, width=None, indent=0, eng=False, mant=3):	#pylint: disable=R0913,R0914
 	"""
-	Formats a list of numers (vector) or a Numpy vector for printing. If the argument **vector** is :code:`None` the string :code:`'None'` is returned
+	Formats a list of numbers (vector) or a Numpy vector for printing. If the argument **vector** is :code:`None` the string :code:`'None'` is returned
 
 	:param	vector: Vector to pretty print or None
 	:type	vector: list of numbers, Numpy vector or None
@@ -794,7 +794,7 @@ def to_scientific_string(number, frac_length=None, exp_length=None, sign_always=
 	:param	exp_length: Number of digits of the exponent; the length of the exponent takes precedence if it is longer
 	:type	exp_length: integer or None
 	:param	sign_always: Flag that indicates whether the sign should always precede the number for both non-negative and negative numbers (True) or only for negative numbers (False)
-	:type	signa_always: boolean
+	:type	sign_always: boolean
 	:rtype: string
 
 	For example:

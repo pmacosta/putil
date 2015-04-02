@@ -256,7 +256,6 @@ def contract(**contract_args):	#pylint: disable=R0912
 		except contracts.ContractSyntaxError:
 			raise
 		except contracts.ContractNotRespected as eobj:
-			#_, _, tbobj = sys.exc_info()
 			# Extract which function parameter triggered exception
 			param_dict = _create_argument_value_pairs(func, *args, **kwargs)
 			param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]	# re.search returns the string with quotes in it

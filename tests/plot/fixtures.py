@@ -18,7 +18,7 @@ def compare_images(image_file_name1, image_file_name2):
 	if img1.size != img2.size:
 		m_norm, z_norm = 2*[2*IMGTOL]
 	else:
-		diff = img1 - img2								# elementwise for scipy arrays
+		diff = img1 - img2								# element-wise for scipy arrays
 		m_norm = scipy.sum(numpy.abs(diff))				# Manhattan norm
 		z_norm = scipy.linalg.norm(diff.ravel(), 0)		# Zero norm
 	return (m_norm, z_norm)
@@ -32,11 +32,11 @@ def default_source():
 
 @pytest.fixture
 def default_series(default_source):	#pylint: disable=W0621
-	""" Provides a default series object to be used in teseting the putil.plot.Panel() class """
+	""" Provides a default series object to be used in testing the putil.plot.Panel() class """
 	return putil.plot.Series(data_source=default_source, label='test series')
 
 
 @pytest.fixture
 def default_panel(default_series):	#pylint: disable=W0621
-	""" Provides a default panel object to be used in teseting the putil.plot.Figure() class """
+	""" Provides a default panel object to be used in testing the putil.plot.Figure() class """
 	return putil.plot.Panel(series=default_series, primary_axis_label='Primary axis', primary_axis_units='A', secondary_axis_label='Secondary axis', secondary_axis_units='B')

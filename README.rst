@@ -47,7 +47,7 @@ Available at `Read the Docs <https://readthedocs.org/projects/putil/>`_
 Contributing
 ============
 
-1. The `repository <https://bitbucket.org/pacosta/putil>`_ may be forked from Bitbucket; clone the forked repository recursively since the `Read the Docs theme <https://github.com/snide/sphinx_rtd_theme>`_ is a repository submodule [#f1]_:
+1. The `repository <https://bitbucket.org/pacosta/putil>`_ may be forked from Bitbucket; clone the forked repository recursively since the `Read the Docs theme <https://github.com/snide/sphinx_rtd_theme>`_ is a repository sub-module [#f1]_:
 
 	.. code-block:: bash
 
@@ -124,7 +124,7 @@ Contributing
 			  -r  Rebuild exceptions documentation. If no module name is given all
 			      modules with auto-generated exceptions documentation are rebuilt
 
-   * build-tags.sh: builds the project's `exhuberant ctags <http://ctags.sourceforge.net/>`_ file :code:`${PUTIL_DIR}/tags`
+   * build-tags.sh: builds the project's `exuberant ctags <http://ctags.sourceforge.net/>`_ file :code:`${PUTIL_DIR}/tags`
 
 	.. code-block:: bash
 

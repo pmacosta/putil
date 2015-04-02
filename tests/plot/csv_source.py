@@ -67,7 +67,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 				assert obj.indep_max == param_value
 
 	def test_indep_min_greater_than_indep_max(self):	#pylint: disable=R0201,C0103
-		""" Test if object behaves correctly when indep_min and indep_max are incongrous """
+		""" Test if object behaves correctly when indep_min and indep_max are incongruous """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			# Assign indep_min first
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', indep_min=0.5)
@@ -145,7 +145,7 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			putil.test.assert_exception(putil.plot.CsvSource, {'file_name':file_name, 'indep_col_label':'Col2', 'dep_col_label':'Col5', 'dfilter':{'Col1':0}}, ValueError, 'Filtered dependent variable is empty')
 
 	def test_data_reversed(self):	#pylint: disable=R0201
-		""" Test if object behaves correctly when the independent dat is descending order """
+		""" Test if object behaves correctly when the independent data is descending order """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col6', dep_col_label='Col3', dfilter={'Col1':0})
 		assert (obj.indep_var == numpy.array([3, 4, 5])).all()

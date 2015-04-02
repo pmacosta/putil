@@ -1,8 +1,6 @@
 ﻿Task List
 =========
 
-* Clean up repository
-
 * Performance improvements
 
 * plot module:
@@ -37,7 +35,7 @@
 
 	* **file_name**: CSV file to extract series from
 
-	The :code:`file_name` argument, if given, is the default comma-separated values (CSV) file to extract series from. The :code:`series` argument is a list of dictionaries with the folowing structure:
+	The :code:`file_name` argument, if given, is the default comma-separated values (CSV) file to extract series from. The :code:`series` argument is a list of dictionaries with the following structure:
 
 	* **file_name**: CSV file to extract series from, overrides :code:`file_name` argument, default :code:`file_name`
 
@@ -47,7 +45,7 @@
 
 	* **dfilter**: same as :py:class:`putil.plot.Series` :code:`dfilter` argument
 
-	The idea is to mnimize code in situations where data is parameterized and the data for each parameter is in a separate CSV file with the same header, OR in situations where
+	The idea is to minimize code in situations where data is parameterized and the data for each parameter is in a separate CSV file with the same header, OR in situations where
 	the data is in one file but parameterized by one of the data columns. The colors and markers would be selected automatically. There could also be a MultiCsvSeriesPanel.add_series()
 	method to add more CsvSeries or BasicSeries objects.
 

@@ -249,7 +249,7 @@ def test_split_every():
 
 
 def test_ellapsed_time_string():
-	""" Test ellapsed_time_string() function """
+	""" Test elapsed_time_string() function """
 	assert putil.misc.elapsed_time_string(datetime.datetime(2015, 1, 1), datetime.datetime(2015, 1, 1)) == 'None'
 	putil.test.assert_exception(putil.misc.elapsed_time_string, {'start_time':datetime.datetime(2015, 2, 1), 'stop_time':datetime.datetime(2015, 1, 1)}, RuntimeError, 'Invalid time delta specification')
 	assert putil.misc.elapsed_time_string(datetime.datetime(2014, 1, 1), datetime.datetime(2015, 1, 1)) == '1 year'

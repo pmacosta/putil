@@ -14,7 +14,7 @@ import putil.test, putil.tree
 ###
 @pytest.fixture
 def default_trees():	#pylint: disable=R0914
-	""" Provides a default tree to be used in teseting the putil.tree.TreeNode() class """
+	""" Provides a default tree to be used in testing the putil.tree.TreeNode() class """
 	#
 	# Tree1				Tree2			Tree3		Tree4
 	# t1l1 (*)			t2l1 (*)		t3l1 (*)	root

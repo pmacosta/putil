@@ -277,9 +277,9 @@ def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R09
 def main(argv):
 	""" Main function, generate images """
 	if len(argv) == 0:
-		#unittest_series_images(mode='ref')
+		unittest_series_images(mode='ref')
 		unittest_panel_images(mode='ref')
-		#unittest_figure_images(mode='ref')
+		unittest_figure_images(mode='ref')
 	else:
 		ref_dir = os.path.join(os.path.dirname(os.path.realpath(os.path.dirname(__file__))), argv[0])
 		unittest_series_images(mode='ci', test_dir=ref_dir)

@@ -126,7 +126,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		assert obj.secondary_axis == False
 
 	def test_calculate_curve(self, default_source):	#pylint: disable=C0103,R0201,W0621
-		""" Test that interpolated curve is calculated when apropriate """
+		""" Test that interpolated curve is calculated when appropriate """
 		obj = putil.plot.Series(data_source=default_source, label='test', interp=None)
 		assert (obj.interp_indep_var, obj.interp_dep_var) == (None, None)
 		obj = putil.plot.Series(data_source=default_source, label='test', interp='STRAIGHT')
@@ -160,7 +160,7 @@ class TestSeries(object):	#pylint: disable=W0232
 		assert obj.scaled_interp_dep_var is not None
 
 	def test_plottable(self, default_source):	#pylint: disable=C0103,R0201,W0621
-		""" Test that object behaves properl when a series is not plottable """
+		""" Test that object behaves properly when a series is not plottable """
 		putil.test.assert_exception(putil.plot.Series, {'data_source':default_source, 'label':'test', 'marker':None, 'interp':None, 'line_style':None}, RuntimeError, 'Series options make it not plottable')
 		obj = putil.plot.Series(data_source=default_source, label='test', marker='o', interp='CUBIC', line_style=None)
 		with pytest.raises(RuntimeError) as excinfo:

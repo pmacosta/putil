@@ -5,7 +5,7 @@ pinspect module
 ###############
 
 
-..  can lead to erroneous results linking class properties and the modules of the propety actions (getter, deleter and/or setter). For example:
+
 
 This module supplements the excellent Python introspection capabilities. The class :py:class:`putil.pinspect.Callables` "traces" modules and produces a database of callables (functions, classes, methods and class properties) 
 and their attributes (callable type, file name, starting line number). Enclosed functions are supported, enclosed classes are also supported with the caveat that dynamic importing within enclosures is not supported. For example,

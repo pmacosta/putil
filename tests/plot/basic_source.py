@@ -56,7 +56,7 @@ class TestBasicSource(object):	#pylint: disable=W0232
 			assert obj.indep_max == param_value
 
 	def test_indep_min_greater_than_indep_max(self):	#pylint: disable=C0103,R0201
-		""" Test if object behaves correctly when indep_min and indep_max are incongrous """
+		""" Test if object behaves correctly when indep_min and indep_max are incongruous """
 		# Assign indep_min first
 		obj = putil.plot.BasicSource(indep_var=numpy.array([1, 2, 3]), dep_var=numpy.array([10, 20, 30]), indep_min=0.5)
 		with pytest.raises(ValueError) as excinfo:

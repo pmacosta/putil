@@ -4,7 +4,7 @@
 
 language: python
 
-# For gettind data off build
+# For getting data off build
 # archive: true
 
 build_image: shippableimages/ubuntu1404_python

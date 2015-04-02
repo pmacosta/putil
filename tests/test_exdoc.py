@@ -283,7 +283,6 @@ def test_get_sphinx_autodoc(exdocobj, exdocobj_single):	#pylint: disable=W0621
 		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_1.ExceptionAutoDocClass.multiply\n\n:raises: ValueError (Overflow)\n\n'
 		tstr = exdocobj_single.get_sphinx_autodoc()
 		assert tstr == '.. Auto-generated exceptions documentation for exdoc_support_module_4.func\n\n:raises: TypeError (Argument \\`name\\` is not valid)\n\n'
-		#putil.test.assert_exception(exdocobj.get_sphinx_autodoc, {}, RuntimeError, 'Unable to determine callable name')
 
 
 def test_copy_works(exdocobj):	#pylint: disable=W0621

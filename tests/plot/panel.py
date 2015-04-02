@@ -129,7 +129,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		assert obj == ([200, 300, 400, 500, 600, 700, 800, 900, 1000], ['200', '300', '400', '500', '600', '700', '800', '900', '1k'], 200, 1000, 1e6, 'M')
 		# print obj
 		# 6
-		# No tick marks to place all data points on grid, space uniformely
+		# No tick marks to place all data points on grid, space uniformly
 		vector = numpy.array([105, 107.7, 215, 400.2, 600, 700, 800, 810, 820, 830, 840, 850, 900, 905])
 		obj = putil.plot.functions._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([105.0, 193.8888888889, 282.7777777778, 371.6666666667, 460.5555555556, 549.4444444444, 638.3333333333, 727.2222222222, 816.1111111111, 905.0],

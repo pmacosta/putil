@@ -63,7 +63,7 @@ def del_exh_obj():
 		pass
 
 
-def _ex_type_str(extype):	#pylint: disable-msg=R0201
+def _ex_type_str(extype):	#pylint: disable=R0201
 	""" Returns a string corresponding to the exception type """
 	return str(extype)[str(extype).rfind('.')+1:str(extype).rfind("'")]
 
@@ -151,13 +151,9 @@ class ExHandle(object):	#pylint: disable=R0902
 		decorator_flag, skip_flag = False, False
 		prev_name = name = ''
 
-		#fstack = tuple([obj for obj in inspect.stack()][::-1])
-		#for num, (fob, fin, lin, fun, fuc, fui) in enumerate(fstack):
 		stack = inspect.stack()
 		for fob, fin, lin, fun, fuc, fui in reversed(stack[fnum:]):	#pylint: disable=W0631
-			# print putil.misc.pcolor('{0:3d}/{1:3d}'.format(num, len(fstack)), 'yellow')+' '+putil.misc.strframe((fob, fin, lin, fun, fuc, fui))
 			if skip_flag:
-				# print putil.misc.pcolor('Skipped', 'green')
 				skip_flag = False
 				continue
 			# Gobble up two frames if it is a decorator
@@ -166,19 +162,13 @@ class ExHandle(object):	#pylint: disable=R0902
 			elif (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None):	# frame corresponds to a decorator
 				skip_flag = True
 				if not decorator_flag:
-					#name = prev_name = self._get_callable_full_name(fob, fun)
 					name = prev_name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
-					# print putil.misc.pcolor('Decorator (frame used) -> {0}'.format(name), 'green')
 					ret.append(name)
 					decorator_flag = True
 			elif _valid_frame(fob):
-				#name = self._get_callable_full_name(fob, fun)
 				name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
 				if (decorator_flag and (name != prev_name)) or (not decorator_flag):
-					# print putil.misc.pcolor('Regular frame (frame used) -> {0}'.format(name), 'green')
 					ret.append(name)
-				# else:
-					# print putil.misc.pcolor('Chained decorator (extra frame)', 'green')
 				prev_name = name
 				decorator_flag = False
 		ret = self._callables_separator.join(ret)

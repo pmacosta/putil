@@ -172,7 +172,7 @@ def decfunc(func):
 	def wrapper(*args, **kwargs):
 		"""
 		Wrapper function that creates the argument dictionary and returns a ret_func, which in turn just returns the argument passed. This is for testing only, obviously
-		in an actual environment the dedcorator would return the original (called) function with the passed arguments
+		in an actual environment the decorator would return the original (called) function with the passed arguments
 		"""
 		return ret_func(putil.pcontracts._create_argument_value_pairs(func, *args, **kwargs))
 	return wrapper

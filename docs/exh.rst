@@ -18,7 +18,7 @@ This module can be used to register exceptions and then conditionally raising th
 		EXHOBJ.raise_exception_if(exname='illegal_name', condition=not isinstance(name, str))
 		# Main body of function
 
-When :code:`my_func()` gets called with anything but a string as an argument a :code:`TypeError` exception is raised with the mesage :code:`'Argument \`name\` is not valid'`. While adding/registering
+When :code:`my_func()` gets called with anything but a string as an argument a :code:`TypeError` exception is raised with the message :code:`'Argument \`name\` is not valid'`. While adding/registering
 an exception with :py:meth:`putil.exh.ExHandle.add_exception` and conditionally raising it with :py:meth:`putil.exh.ExHandle.raise_exception_if` takes the same number of lines of code as an exception raised
 inside an :code:`if` block and incurs a slight performance penalty, using the :ref:`exh-module` allows for automatic documentation of the exceptions raised by any function, method or class property with the
 help of the :ref:`exdoc-module`.
