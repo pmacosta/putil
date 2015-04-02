@@ -17,5 +17,6 @@ include requirements.txt
 include .coveragerc
 include shippable.yml
 include tox.ini
+recursive-include tests/plot *.py
 recursive-include tests/support/ref_images *.png
 recursive-include tests/support/ref_images_ci *.png

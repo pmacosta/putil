@@ -42,5 +42,5 @@ if [ "$#" != 0 ]; then
 	exit 1
 fi
 
-ctags -V --tag-relative -f $package_root/tags -R $package_root/${package_name}/*.py $package_root/tests/*.py
+ctags -V --tag-relative -f ${package_root}/tags -R ${package_root}/${package_name}/*.py ${package_root}/${package_name}/plot/*.py  ${package_root}/tests/*.py ${package_root}/tests/plot/*.py
 # */2 * * * * /proj/ad9625_e_expctl/sos_pacosta/pacosta/sim/bin/build_tags.sh &>/home/pacosta/log/cheetah_tags.log

@@ -9,8 +9,9 @@ print_usage_message () {
 	echo -e "  build-docs.sh [-h] [-r] [module-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
-	echo -e "  -r  Rebuild exceptions documentation. If no module name is given all" >&2
-	echo -e "      modules with auto-generated exceptions documentation are rebuilt\n" >&2
+	echo -e "  -r  Rebuild exceptions documentation. If no module name\n" >&2
+	echo -e "      is given all modules with auto-generated exceptions\n" >&2
+	echo -e "      documentation are rebuilt\n" >&2
 }
 
 # Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)

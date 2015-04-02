@@ -41,7 +41,8 @@ before_script:
 script:
   # Install package
   - python setup.py sdist
-  - pip install dist/putil-0.9.tar.gz
+  - PKG_VERSION=$(grep __version__ $SHIPPABLE_REPO_DIR/putil/__init__.py | sed -e "s/.*__version__ = '\(.*\)'/\1/g")
+  - pip install dist/putil-${PKG_VERSION}.tar.gz
   # Get images off build:
   # - mkdir -p shippable/images
   # - ./sbin/gen_ref_images.py shippable/images

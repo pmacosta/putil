@@ -77,8 +77,8 @@ class Tox(TestCommand):
 ###
 setup(
 	name='putil',
-	version='0.9',
-	url='http://github.com/pmacosta/putil/',
+	version='0.9.0.5',
+	url='http://bitbucket.org/pacosta/putil/',
 	license='MIT',
 	author='Pablo Acosta-Serafini',
 	tests_require=['coverage>=3.7.1',
