@@ -7,4 +7,5 @@ Pillow>=2.7.0
 PyContracts>=1.7.1
 pytest>=2.6.3
 pytest-cov>=1.8.0
+pytest-xdist>=1.8
 scipy>=0.14.0

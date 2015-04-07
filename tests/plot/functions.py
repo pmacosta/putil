@@ -3,8 +3,68 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+import pytest
+
 import putil.plot
 
+
+###
+# Test for DataSource
+###
+class TestDataSource(object):	#pylint: disable=R0903
+	""" Tests for abstract base class DataSource """
+	def test_compliance(self):	#pylint: disable=R0201,R0912
+		class Test1(putil.plot.DataSource):	#pylint: disable=W0223,R0903,W0612
+			pass
+		class Test2(putil.plot.DataSource):	#pylint: disable=W0223,R0903,W0612
+			def __str__(self):
+				pass
+		class Test3(putil.plot.DataSource):	#pylint: disable=W0223,R0903,W0612
+			def __str__(self):
+				pass
+			def _set_dep_var(self, dep_var):
+				pass
+		class Test4(putil.plot.DataSource):	#pylint: disable=W0223,R0903,W0612
+			def __str__(self):
+				pass
+			def _set_dep_var(self, dep_var):
+				pass
+			def _set_indep_var(self, indep_var):
+				pass
+		class Test5(putil.plot.DataSource):	#pylint: disable=W0223,R0903,W0612
+			def __str__(self):
+				pass
+			def _set_dep_var(self, dep_var):
+				pass
+			def _set_indep_var(self, indep_var):
+				pass
+			dep_var = property(None, _set_dep_var)
+		class Test6(putil.plot.DataSource):	#pylint: disable=W0223,R0903,W0612
+			def __str__(self):
+				pass
+			def _set_dep_var(self, dep_var):
+				pass
+			def _set_indep_var(self, indep_var):
+				pass
+			dep_var = property(None, _set_dep_var)
+			indep_var = property(None, _set_indep_var)
+		with pytest.raises(TypeError) as excinfo:
+			Test1()
+		assert excinfo.value.message == "Can't instantiate abstract class Test1 with abstract methods __str__, _set_dep_var, _set_indep_var, dep_var, indep_var"
+		with pytest.raises(TypeError) as excinfo:
+			Test2()
+		assert excinfo.value.message == "Can't instantiate abstract class Test2 with abstract methods _set_dep_var, _set_indep_var, dep_var, indep_var"
+		with pytest.raises(TypeError) as excinfo:
+			Test3()
+		assert excinfo.value.message == "Can't instantiate abstract class Test3 with abstract methods _set_indep_var, dep_var, indep_var"
+		with pytest.raises(TypeError) as excinfo:
+			Test4()
+		assert excinfo.value.message == "Can't instantiate abstract class Test4 with abstract methods dep_var, indep_var"
+		with pytest.raises(TypeError) as excinfo:
+			Test5()
+		assert excinfo.value.message == "Can't instantiate abstract class Test5 with abstract methods indep_var"
+		# This statement should raise no exception
+		Test6()
 
 ###
 # Tests for parameterized_color_space

@@ -1,9 +1,9 @@
 ﻿# pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111
+#pylint: disable=C0111,W0212
 
-import copy, funcsigs, inspect, os, re, sys, types
+import ast, copy, funcsigs, os, re, sys, types
 
 import putil.misc
 
@@ -11,12 +11,13 @@ import putil.misc
 ###
 # Functions
 ###
-def _get_code_id(obj, file_name=None, offset=0):
-	""" Return unique identity tuple to individualize callable object """
-	if hasattr(obj, 'func_code') and (obj.func_code.co_filename != '<string>'):
-		return (os.path.realpath(obj.func_code.co_filename), obj.func_code.co_firstlineno)
-	else: # file_name:
-		return (file_name, obj.func_code.co_firstlineno+offset)
+def _get_module_name_from_file_name(file_name):
+	""" Get module name from module file name """
+	for mobj in [item for item in sys.modules.values() if item and hasattr(item, '__file__')]:
+		if mobj.__file__.replace('.pyc', '.py') == file_name.replace('.pyc', '.py'):
+			module_name = mobj.__name__
+			return module_name
+	raise RuntimeError('Module could not be found')
 
 
 def _is_parg(arg):
@@ -27,77 +28,6 @@ def _is_parg(arg):
 def _is_kwarg(arg):
 	""" Returns True if arg argument is the name of a keyword variable argument (i.e. **kwargs) """
 	return (len(arg) > 2) and (arg[:2] == '**')
-
-
-def _line_tokenizer(lines):	#pylint: disable=R0914,R0915
-	""" Perform all matches on source file line """
-	docstring_start_regexp_1 = re.compile(r'^.*r?""".*')
-	docstring_start_regexp_2 = re.compile(r"^.*r?'''.*")
-	single_line_docstring_regexp_1 = re.compile(r'^.*r?""".*""".*$')
-	single_line_docstring_regexp_2 = re.compile(r"^.*r?'''.*'''.*$")
-	class_regexp = re.compile(r'^(\s*)class\s*(\w+)\s*[\(|\:]')
-	func_regexp = re.compile(r'^(\s*)def\s*(\w+)\s*\(')
-	prop_regexp = re.compile(r'^(\s*)(\w+)\s*=\s*property\(')
-	get_prop_regexp = re.compile(r'^(\s*)@(property|property\.getter)\s*$')
-	set_prop_regexp = re.compile(r'^(\s*)@(\w+)\.setter\s*$')
-	del_prop_regexp = re.compile(r'^(\s*)@(\w+)\.deleter\s*$')
-	decorator_regexp = re.compile(r'^(\s*)@(.+)')
-	import_regexp = re.compile(r'^(\s*)import\s+')
-	from_regexp = re.compile(r'^(\s*)from\s+')
-	multi_line_string, multi_line_string_line_num, cont_flag, cont_lines, cont_line_num = False, 0, False, [], 0
-	num_lines = len(lines)-1
-	for line_num, line in enumerate(lines, start=1):
-		# Multi line docstring support. LINE ORDER IS IMPORTANT!!!
-		docstring_start_1 = (docstring_start_regexp_1.match(line) != None) and (not single_line_docstring_regexp_1.match(line))
-		docstring_start_2 = (docstring_start_regexp_2.match(line) != None) and (not single_line_docstring_regexp_2.match(line))
-		docstring_start = docstring_start_1 or docstring_start_2
-		if docstring_start_1:
-			single_line_docstring_regexp = single_line_docstring_regexp_1
-			delimiter = '"""'
-		elif docstring_start_2:
-			single_line_docstring_regexp = single_line_docstring_regexp_2
-			delimiter = "'''"
-		multi_line_string_line_num = line_num if (not multi_line_string) and docstring_start else multi_line_string_line_num
-		#multi_line_string = docstring_start if not multi_line_string else multi_line_string
-		multi_line_string = docstring_start if not multi_line_string else multi_line_string
-		#
-		if not multi_line_string:
-			line = line.rstrip()
-			cont_line_num = line_num if not cont_lines else cont_line_num
-			if (line.endswith('\\') or line.endswith(',')) or cont_flag:
-				cont_flag = line.endswith('\\') or line.endswith(',')
-				line = line.strip() if cont_lines else line
-				cont_lines.append(line[:-1] if cont_flag and line.endswith('\\') else line)
-				if cont_flag:
-					continue
-			if cont_lines:
-				line = ''.join(cont_lines)
-				line_num = cont_line_num
-				cont_lines = []
-				cont_line_num = 0
-			class_match = class_regexp.match(line)
-			class_indent, class_name = class_match.groups() if class_match else (None, None)
-			func_match = func_regexp.match(line)
-			func_indent, func_name = func_match.groups() if func_match else (None, None)
-			prop_match = prop_regexp.match(line)
-			prop_indent, prop_name = prop_match.groups() if prop_match else (None, None)
-			get_match, set_match, del_match = get_prop_regexp.match(line), set_prop_regexp.match(line), del_prop_regexp.match(line)
-			decorator_match = decorator_regexp.match(line)
-			import_match, from_match = import_regexp.match(line), from_regexp.match(line)
-			namespace_indent, namespace_match = import_match.group(1) if import_match else (from_match.group(1) if from_match else None), import_match or from_match
-			line_match = class_match or func_match or namespace_match or prop_match
-			yield num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, prop_match, prop_indent, prop_name, get_match, set_match, del_match, decorator_match,\
-				namespace_indent, namespace_match
-		else:
-			multi_line_string = False if single_line_docstring_regexp.match(line) else (True if (line_num == multi_line_string_line_num) else (not (delimiter in line)))	#pylint: disable=C0325
-			yield num_lines, line_num, line, False, False, 0, None, False, 0, None, False, 0, None, False, False, False, False, 0, False
-
-
-def _private_props(obj):
-	""" Generator to yield private properties of object """
-	private_prop_regexp = re.compile('_[^_]+')
-	for obj_name in [obj_name for obj_name in dir(obj) if private_prop_regexp.match(obj_name) and (not callable(getattr(obj, obj_name))) and ('regexp' not in obj_name)]:
-		yield obj_name
 
 
 def get_function_args(func, no_self=False, no_varargs=False):
@@ -237,254 +167,259 @@ def loaded_package_modules(module_obj, _rarg=None):
 	return (modules_traced, modules_list) if recursive else modules_list
 
 
-def _replace_tabs(text):
-	""" Section 2.1.8 Indentation of Python 2.7.9 documentation:
-	First, tabs are replaced (from left to right) by one to eight spaces such that the total number of characters up to and including the replacement is a multiple of eight (this is intended to be the same rule as used by Unix).
-	A form feed character may be present at the start of the line; it will be ignored for the indentation calculations above. Form feed characters occurring elsewhere in the leading whitespace have an undefined effect
-	(for instance, they may reset the space count to zero)
-	"""
-	return -1 if text == None else text.lstrip('\f').expandtabs()
-
-
 ###
 # Classes
 ###
-class Callables(object):	#pylint: disable=R0903,R0902
+class Callables(object):	# pylint: disable=R0903
 	r"""
-	Generates a list of module callables (functions, classes, methods and class properties) and gets their attributes (callable type, file name, starting line number). Information from multiple modules can be stored in the
+	Generates a list of module callables (functions, classes, methods and class properties) and gets their attributes (callable type, file name, lines span). Information from multiple modules can be stored in the
 	callables database of the object by repeatedly calling :py:meth:`putil.pinspect.Callables.trace` with different module objects. A :py:class:`putil.pinspect.Callables` object retains knowledge of which modules have been traced
 	so repeated calls to :py:meth:`putil.pinspect.Callables.trace` with the *same* module object will *not* result in module re-traces (and the consequent performance hit).
 
-	Enclosed functions and classes are supported. Class property action functions (getter, deleter and setter) in a different module than the one in which the class is defined are also supported both in module classes as well
-	as in enclosed classes. For the latter only property action functions for which the module in which they are defined is imported via ``import`` or ``from [module name] import [...]`` are supported.
-
-	:param obj: Module object(s)
-	:type	obj: object or iterable of objects
-	:rtype: :py:class:`putil.pinspect.Callables` object
+	:param	file_names: File names containing the modules to trace
+	:type	file_names: list
 	:raises:
-	 * RuntimeError (Argument \`obj\` is not valid)
+	 * IOError (File *[file_name]* could not be found)
 
-	 * RuntimeError (Attribute \`*[attribute_name]*\` of property \`*[property_name]*\` not found in callable database)
+	 * RuntimeError (Argument \`file_names\` is not valid)
 	"""
-	def __init__(self, obj=None):
-		self._module_names, self._class_names, self._callables_db, self._reverse_callables_db, self._closure_class_obj_list = set(), set(), {}, {}, []
-		self._whitespace_regexp = re.compile(r'^(\s*)(\w*)')
-		self._namespece_regexp = re.compile(r"name '(\w+)' is not defined")
-		if obj:
-			self.trace(obj)
+	def __init__(self, file_names=None):
+		self._callables_db, self._reverse_callables_db, self._modules_dict = {}, {}, {}
+		self._file_names, self._module_names, self._class_names = [], [], []
+		if file_names:
+			self.trace(file_names)
+
+	def __add__(self, other):
+		"""
+		Merges two objects.
+
+		:raises: RuntimeError (Conflicting information between objects)
+
+		For example:
+
+			>>> import putil.eng, putil.exh, putil.pinspect, sys
+			>>> obj1 = putil.pinspect.Callables([sys.modules['putil.exh'].__file__])
+			>>> obj2 = putil.pinspect.Callables([sys.modules['putil.eng'].__file__])
+			>>> obj3 = putil.pinspect.Callables([
+			... sys.modules['putil.exh'].__file__,
+			... sys.modules['putil.eng'].__file__,
+			... ])
+			>>> obj1 == obj3
+			False
+			>>> obj1 == obj2
+			False
+			>>> obj1+obj2 == obj3
+			True
+
+		"""
+		self._check_intersection(other)
+		robj = Callables()
+		robj._callables_db = copy.deepcopy(self._callables_db)
+		robj._callables_db.update(copy.deepcopy(other._callables_db))
+		robj._reverse_callables_db = copy.deepcopy(self._reverse_callables_db)
+		robj._reverse_callables_db.update(copy.deepcopy(other._reverse_callables_db))
+		robj._modules_dict = copy.deepcopy(self._modules_dict)
+		robj._modules_dict.update(copy.deepcopy(other._modules_dict))
+		robj._module_names = list(set(self._module_names[:]+other._module_names[:]))
+		robj._class_names = list(set(self._class_names[:]+other._class_names[:]))
+		robj._file_names = list(set(self._file_names[:]+other._file_names[:]))
+		return robj
 
 	def __copy__(self):
+		"""
+		Copies object. For example:
+
+			>>> import copy, putil.exh, putil.pinspect, sys
+			>>> obj1 = putil.pinspect.Callables([sys.modules['putil.exh'].__file__])
+			>>> obj2 = copy.copy(obj1)
+			>>> obj1 == obj2
+			True
+
+		"""
 		cobj = Callables()
-		for prop_name in _private_props(self):
+		for prop_name in putil.misc._private_props(self):	#pylint: disable=W0212
 			setattr(cobj, prop_name, copy.deepcopy(getattr(self, prop_name)))
 		return cobj
 
 	def __eq__(self, other):
-		# _prop_dict is a class variable used to pass data between sub-functions in the trace operation, not material to determine if two objects are the same
-		return all([sorted(getattr(self, attr)) == sorted(getattr(other, attr)) for attr in _private_props(self) if attr != '_prop_dict'])
+		"""
+		Tests object equality. For example:
+
+			>>> import putil.eng, putil.exh, putil.pinspect, sys
+			>>> obj1 = putil.pinspect.Callables([sys.modules['putil.exh'].__file__])
+			>>> obj2 = putil.pinspect.Callables([sys.modules['putil.exh'].__file__])
+			>>> obj3 = putil.pinspect.Callables([sys.modules['putil.eng'].__file__])
+			>>> obj1 == obj2
+			True
+			>>> obj1 == obj3
+			False
+			>>> 5 == obj3
+			False
+
+		"""
+		return isinstance(other, Callables) and all([sorted(getattr(self, attr)) == sorted(getattr(other, attr)) for attr in putil.misc._private_props(self)])	#pylint: disable=W0212
+
+	def __iadd__(self, other):
+		"""
+		Merges an object into an existing object.
+
+		:raises: RuntimeError (Conflicting information between objects)
+
+		For example:
+
+			>>> import putil.eng, putil.exh, putil.pinspect, sys
+			>>> obj1 = putil.pinspect.Callables([sys.modules['putil.exh'].__file__])
+			>>> obj2 = putil.pinspect.Callables([sys.modules['putil.eng'].__file__])
+			>>> obj3 = putil.pinspect.Callables([
+			... sys.modules['putil.exh'].__file__,
+			... sys.modules['putil.eng'].__file__,
+			... ])
+			>>> obj1 == obj3
+			False
+			>>> obj1 == obj2
+			False
+			>>> obj1 += obj2
+			>>> obj1 == obj3
+			True
+
+		"""
+
+		self._check_intersection(other)
+		self._callables_db.update(copy.deepcopy(other._callables_db))
+		self._reverse_callables_db.update(copy.deepcopy(other._reverse_callables_db))
+		self._modules_dict.update(copy.deepcopy(other._modules_dict))
+		self._module_names = list(set(self._module_names+other._module_names[:]))
+		self._class_names = list(set(self._class_names+other._class_names[:]))
+		self._file_names = list(set(self._file_names+other._file_names[:]))
+		return self
 
 	def __repr__(self):
-		return 'putil.pinspect.Callables({0})'.format('[{0}]'.format(', '.join(["sys.modules['{0}']".format(module_name) for module_name in sorted(self._module_names)])) if self._module_names else '')
+		"""
+		Returns a string with the expression needed to re-create the object. For example:
+
+			>>> import putil.exh, putil.pinspect, sys
+			>>> obj1 = putil.pinspect.Callables([sys.modules['putil.exh'].__file__])
+			>>> repr(obj1)
+			"putil.pinspect.Callables(['putil/exh.py'])"
+			>>> exec "obj2="+repr(obj1)
+			>>> obj1 == obj2
+			True
+
+		"""
+		return 'putil.pinspect.Callables({0})'.format(sorted(self._file_names))
 
 	def __str__(self):
+		"""
+		Returns a string with a detailed description of the object's contents. For example:
+
+			>>> import pinspect_example_1, putil.pinspect, sys
+			>>> cobj = putil.pinspect.Callables([sys.modules['pinspect_example_1'].__file__])
+			>>> print str(cobj)
+			Modules:
+			   pinspect_example_1
+			Classes:
+			   pinspect_example_1.my_func.MyClass
+			pinspect_example_1.my_func: func (6-19)
+			pinspect_example_1.my_func.MyClass: class (8-19)
+			pinspect_example_1.my_func.MyClass.__init__: meth (14-15)
+			pinspect_example_1.my_func.MyClass._get_value: meth (16-17)
+			pinspect_example_1.my_func.MyClass.value: prop (18)
+			pinspect_example_1.print_name: func (20-21)
+
+		The numbers in parenthesis indicates the line number in which the callable starts and ends within the file it is defined in.
+		"""
 		ret = list()
-		ret.append('Modules:')
-		for module_name in sorted(self._module_names):
-			ret.append('   {0}'.format(module_name))
-		ret.append('Classes:')
-		for class_name in sorted(self._class_names):
-			ret.append('   {0}'.format(class_name))
-		for key in sorted(self._callables_db.keys()):
-			ret.append('{0}: {1}{2}'.format(key, self._callables_db[key]['type'], ' ({0})'.format(self._callables_db[key]['code_id'][1]) if self._callables_db[key]['code_id'] else ''))
-			if self._callables_db[key]['type'] == 'prop':
-				for attr in sorted(self._callables_db[key]['attr']):
-					ret.append('   {0}: {1}'.format(attr, self._callables_db[key]['attr'][attr]))
-			elif self._callables_db[key].get('link', None):
-				for link_dict in self._callables_db[key]['link']:
-					ret.append('   {0} of: {1}'.format(link_dict['action'], link_dict['prop']))
-		return '\n'.join(ret)
+		if self._module_names:
+			ret.append('Modules:')
+			for module_name in sorted(self._module_names):
+				ret.append('   {0}'.format(module_name))
+			if self._class_names:
+				ret.append('Classes:')
+				for class_name in sorted(self._class_names):
+					ret.append('   {0}'.format(class_name))
+			for entry in sorted(self._modules_dict):
+				for value in sorted(self._modules_dict[entry], key=lambda x: x['code_id'][1]):
+					start_line = value['code_id'][1]
+					stop_line = value['last_lineno']
+					line_text = ' ({0}-{1})'.format(start_line, stop_line) if start_line != stop_line else ' ({0})'.format(start_line)
+					ret.append('{0}: {1}{2}'.format(value['name'], value['type'], line_text))
+			return '\n'.join(ret)
+		else:
+			return ''
+
+	def _check_intersection(self, other):
+		""" Check that intersection of two objects is congruent, i.e. that they have identical information in the intersection """
+		props = ['_callables_db', '_reverse_callables_db', '_modules_dict']
+		for prop in props:
+			self_dict = getattr(self, prop)
+			other_dict = getattr(other, prop)
+			keys_self = set(self_dict.keys())
+			keys_other = set(other_dict.keys())
+			intersection = keys_self & keys_other
+			for key in intersection:
+				if self_dict[key] != other_dict[key]:
+					raise RuntimeError('Conflicting information between objects')
 
 	def _get_callables_db(self):
 		""" Getter for callables_db property """
 		return self._callables_db
 
-	def _get_closures(self, obj):	#pylint: disable=R0912,R0914,R0915
-		"""
-		Find closures within module.
-		Implement a mini-parser, finding "@", "def" or "class" start of lines while keeping track of indentation levels
-		Have to keep track of imports because technically class properties can be functions from other modules. Closure classes code is executed with recorded imports at top, a class object is created and then traced as "usual"
-		"""
-		# Read module file
-		module_file_name = os.path.realpath('{0}.py'.format(os.path.splitext(obj.__file__)[0]))
-		with open(module_file_name, 'rb') as file_obj:
-			module_lines = file_obj.read().split('\n')
-		# Initialize mini-parser variables
-		indent_stack, import_stack, decorator_num, attr_name, closure_class, closure_class_list = [{'level':0, 'prefix':obj.__name__, 'type':'module'}], [{'level':0, 'type':'module', 'line':None}], None, '', False, []
-		for num_lines, line_num, line, line_match, class_match, class_indent, class_name, func_match, func_indent, func_name, prop_match, prop_indent, prop_name, get_match, set_match, del_match, decorator_match,\
-				namespace_indent, namespace_match in _line_tokenizer(module_lines):
-			# To allow for nested decorators when a property is defined via a decorator, remember property decorator line and use that for the callable line number
-			attr_name = attr_name if attr_name else '(getter)' if get_match else ('(setter)' if set_match else ('(deleter)' if del_match else ''))
-			decorator_num = line_num if decorator_match and (decorator_num == None) else decorator_num
-			element_num = decorator_num if decorator_num else line_num
-			indent = len(_replace_tabs(class_indent if class_match else (func_indent if func_match else (prop_indent if prop_match else namespace_indent)))) if line_match else -1
-			if namespace_match:
-				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
-					import_stack.pop()
-				# Top-level imports are handled by including the whole module code before the extracted enclosed class, no need to add them to the enclosed class namespace
-				if indent:	# Top-level imports are handled by including the whole module code before the extracted enclosed class, no need to add them to the enclosed class namespace
-					import_stack.append({'level':indent, 'line':line.lstrip(), 'type':'not module'})
-			elif class_match or func_match or prop_match:
-				# Remove all blocks at the same level to find out the indentation "parent"
-				deindent = False
-				# Update callable stack
-				while (indent <= indent_stack[-1]['level']) and (indent_stack[-1]['type'] != 'module'):
-					deindent = True
-					indent_stack.pop()
-				# Update enclosed class namespace stack
-				while (indent < import_stack[-1]['level']) and (import_stack[-1]['type'] != 'module'):
-					import_stack.pop()
-				if class_match:
-					closure_class = indent_stack[-1]['type'] != 'module'
-					if closure_class and deindent:
-						self._process_enclosed_class(line, closure_class, closure_class_list, line_num, num_lines)
-					full_class_name = '{0}.{1}'.format(indent_stack[-1]['prefix'], class_name)
-					self._class_names.add(full_class_name)
-					if closure_class:
-						namespace_code = ['###', '# Start of enclosed class', '###']+[import_dict['line'] for import_dict in import_stack[1:]]
-						eval_line = 'tvar = {0}'.format(class_name)
-						closure_class_list.append({'file':module_file_name, 'name':full_class_name, 'code':[], 'namespace':module_lines+namespace_code, 'indent':indent, 'eval':eval_line, 'lineno':line_num})
-					self._callables_db[full_class_name] = {'type':'class', 'code_id':(module_file_name, line_num), 'attr':None, 'link':[]}
-					self._reverse_callables_db[(module_file_name, element_num)] = full_class_name
-				element_full_name = '{0}.{1}{2}'.format(indent_stack[-1]['prefix'], prop_name if prop_match else (class_name if class_name else func_name), attr_name)
-				if (prop_match or func_name) and (element_full_name not in self._callables_db):
-					self._callables_db[element_full_name] = {'type':'prop' if prop_match else ('meth' if indent_stack[-1]['type'] == 'class' else 'func'), 'code_id':(module_file_name, element_num), 'attr':None, 'link':[]}
-					self._reverse_callables_db[(module_file_name, element_num)] = element_full_name
-				indent_stack.append({'level':indent, 'prefix':element_full_name, 'type':'class' if class_name else 'func'})
-				# Reset property variables
-				decorator_num, attr_name = None, ''
-			closure_class = self._process_enclosed_class(line, closure_class, closure_class_list, line_num, num_lines)
-
-	def _get_prop_components(self, prop_name, prop_obj, closure_file_name=None, closure_offset=0):
-		""" Find getter, setter, deleter functions of a property """
-		attr_dict = {}
-		for attr_name, attr_obj in [(attr_name, getattr(prop_obj, attr_name)) for attr_name in ['fdel', 'fget', 'fset'] if hasattr(prop_obj, attr_name) and getattr(getattr(prop_obj, attr_name), '__call__', None)]:
-			if attr_obj.__name__ == '<lambda>':
-				func_name = '{0}.{1}_lambda'.format(prop_name, attr_name)
-			else:
-				if attr_obj.__module__  and (attr_obj.__module__ not in self._module_names):
-					self._trace_module(sys.modules[attr_obj.__module__])
-				# Get to the object of the actual, undecorated function
-				while getattr(attr_obj, '__wrapped__', None):
-					attr_obj = getattr(attr_obj, '__wrapped__')
-				attr_code_id = _get_code_id(attr_obj, closure_file_name, closure_offset)
-				if attr_code_id not in self._reverse_callables_db:
-					#for name in sorted(self._callables_db.keys()):
-					#	print '{0}: {1}'.format(name, self._callables_db[name])
-					#print 'Attribute `{0}` of property `{1}` is a closure, do not know how to deal with it\ncode_id: {2}'.format(attr_name, prop_name, attr_code_id)
-					raise RuntimeError('Attribute `{0}` of property `{1}` not found in callable database'.format(attr_name, prop_name))
-				func_name = self._reverse_callables_db[attr_code_id]
-				prop_dict = {'prop':prop_name, 'action':attr_name}
-				if prop_dict not in self._callables_db[func_name]['link']:
-					self._callables_db[func_name]['link'].append(prop_dict)
-			attr_dict[attr_name] = func_name	#pylint: disable=W0631
-		self._callables_db[prop_name]['attr'] = attr_dict if attr_dict else None
-
 	def _get_reverse_callables_db(self):
 		""" Getter for reverse_callables_db property """
 		return self._reverse_callables_db
 
-	def _process_enclosed_class(self, line, closure_class, closure_class_list, line_num, num_lines):	#pylint: disable=R0913
-		""" Process enclosed class: finish code snippet or add lines to enclosed class """
-		if closure_class:
-			line = _replace_tabs(line)
-			start_space, content = self._whitespace_regexp.match(line).groups()
-			for class_dict in closure_class_list:
-				start_space_length = len(start_space)
-				if class_dict['code'] and ((content and ((start_space_length <= class_dict['indent']) or (start_space_length == 0))) or ((line_num == num_lines) and (start_space_length > class_dict['indent']))):
-					if (line_num == num_lines) and (start_space_length > class_dict['indent']):
-						class_dict['code'].append(line[class_dict['indent']:])
-					class_dict['code'].append(class_dict['eval'])
-					self._closure_class_obj_list.append({'code':'\n'.join(class_dict['namespace']+class_dict['code']), 'file':class_dict['file'], 'name':class_dict['name'], 'lineno':class_dict['lineno']-len(class_dict['namespace'])})
-					closure_class_list.pop()
-				else:
-					# Remove base indentation from lines, as the code is going to be executed via exec, which would give an error if there is extra whitespace at the beginning of all lines
-					class_dict['code'].append(line[class_dict['indent']:])
-			closure_class = bool(closure_class_list)
-		return closure_class
+	def get_callable_from_line(self, module_file, lineno):
+		""" Get the callable that the line number belongs to """
+		module_name = _get_module_name_from_file_name(module_file)
+		if module_name not in self._modules_dict:
+			self.trace([module_file])
+		ret = None
+		for value in sorted(self._modules_dict[module_name], key=lambda x: x['code_id'][1]):
+			if value['code_id'][1] <= lineno <= value['last_lineno']:
+				ret = value['name']
+			elif value['code_id'][1] > lineno:
+				break
+		return ret if ret else module_name
 
-	def _trace_class(self, obj, closure_file_name=None, closure_name=None, closure_offset=0):
-		""" Trace class properties, methods have already been added to database by mini-parser """
-		class_name = closure_name if closure_name else '.'.join([obj.__module__, obj.__name__])
-		self._class_names.add(class_name)	# Classes are only traced once because modules are only traced once, no need to check if they are already traced
-		for prop_name, prop_obj in [('.'.join([class_name, prop_name]), prop_obj) for prop_name, prop_obj in inspect.getmembers(obj) if isinstance(prop_obj, property)]:
-			if prop_name not in self._callables_db:
-				self._callables_db[prop_name] = {'type':'prop', 'code_id':None, 'attr':None, 'link':[]}
-			self._get_prop_components(prop_name, prop_obj, closure_file_name, closure_offset)	# Find out which callables re the setter/getter/deleter of properties
-
-	def _trace_module(self, obj):	#pylint: disable=R0914
-		""" Generate a list of object callables (internal function, no argument validation)"""
-		if obj.__name__ not in self._module_names:
-			self._module_names.add(obj.__name__)
-			# Closures need to be recorded before class tracing because some class properties might use closures
-			self._get_closures(obj)
-			# "Standard" (non closure) class tracing
-			for class_obj in [class_obj for _, class_obj in inspect.getmembers(obj) if inspect.isclass(class_obj)]:
-				self._trace_class(class_obj)
-			# Closure class tracing, exec creates tvar variable which contains an unbound object of the closure class
-			for class_obj in self._closure_class_obj_list:
-				# The namespace recreating is inherently brittle because the imports can be conditional on variables, which affects the importing dynamically at runtime.
-				# The approach is to try with all the (potentially conditional) imports first and if there is an import error, remove the offending import and try again
-				error = True
-				lines_removed = 0
-				while error:
-					try:
-						#print '----'
-						#print class_obj['code']
-						#print '----'
-						exec class_obj['code'] in locals()	#pylint: disable=W0122
-						error = False
-					except ImportError as exobj:
-						module_name = exobj.message.split(' ')[-1]	#pylint: disable=E1101
-					except:
-						raise
-					if error:
-						# Remove "offending" import
-						new_code = []
-						in_class = False
-						lines = class_obj['code'].split('\n')
-						for line in lines[lines.index('# Start of enclosed class'):]:
-							in_class = line.startswith('class') if not in_class else in_class
-							namespace_line = line.startswith('import ') or line.startswith('from ') if not in_class else False
-							if namespace_line:
-								tokens = re.findall(r'[\w\.]+', line)
-								modules = tokens[1:] if tokens[0] == 'import' else [tokens[1]]
-								if module_name in modules:
-									lines_removed += 1
-									continue
-							new_code.append(line)
-						class_obj['code'] = '\n'.join(new_code)
-				self._trace_class(tvar, class_obj['file'], class_obj['name'], class_obj['lineno']-1+lines_removed)	#pylint: disable=E0602
-
-	def trace(self, obj):
+	def trace(self, file_names):
 		r"""
-		Generates a list of module callables (functions, classes, methods and class properties) and gets their attributes (callable type, file name, starting line number)
+		Generates a list of module callables (functions, classes, methods and class properties) and gets their attributes (callable type, file name, lines span)
 
-		:param obj: Module object(s)
-		:type	obj: object or iterable of objects
+		:param	file_names: File names containing the modules to trace
+		:type	file_names: list
 		:raises:
-		 * RuntimeError (Argument \`obj\` is not valid)
+		 * IOError (File *[file_name]* could not be found)
 
-		 * RuntimeError (Attribute \`*[attribute_name]*\` of property \`*[property_name]*\` not found in callable database)
-
+		 * RuntimeError (Argument \`file_names\` is not valid)
 		"""
-		if (obj == None) or (not (inspect.ismodule(obj) or putil.misc.isiterable(obj))):
-			raise RuntimeError('Argument `obj` is not valid')
-		for obj in obj if putil.misc.isiterable(obj) else [obj]:
-			if not inspect.ismodule(obj):
-				raise RuntimeError('Argument `obj` is not valid')
-			self._trace_module(obj)
+		if file_names and ((not isinstance(file_names, list)) or (isinstance(file_names, list) and any([not isinstance(item, str) for item in file_names]))):
+			raise RuntimeError('Argument `file_names` is not valid')
+		for file_name in file_names:
+			if not os.path.exists(file_name):
+				raise IOError('File {0} could not be found'.format(file_name))
+		file_names = [item.replace('.pyc', '.py') for item in file_names]
+		for file_name in file_names:
+			if file_name not in self._file_names:
+				module_name = _get_module_name_from_file_name(file_name)
+				with open(file_name, 'r') as fobj:
+					lines = fobj.readlines()
+				tree = ast.parse(''.join(lines))
+				aobj = _AstTreeScanner(file_name, lines)
+				aobj.visit(tree)
+				fake_node = putil.misc.Bundle(lineno=len(lines)+1, col_offset=-1)
+				aobj._close_callable(fake_node, force=True)
+				self._class_names += aobj._class_names[:]
+				self._module_names.append(module_name)
+				for name, item in aobj._callables_db.items():
+					self._callables_db[name] = item
+				for name, item in aobj._reverse_callables_db.items():
+					self._reverse_callables_db[name] = copy.deepcopy(item)
+				# Split into modules
+				self._modules_dict[module_name] = []
+				for entry in [item for item in self._callables_db.values() if item['name'].startswith('{0}.'.format(module_name))]:
+					self._modules_dict[module_name].append(entry)
+		self._file_names = list(set(self._file_names+[item.replace('.pyc', '.py') for item in file_names]))
 
-	# Managed attributes
 	callables_db = property(_get_callables_db, None, None, doc='Module(s) callables database')
 	"""
 	Returns the callables database
@@ -498,28 +433,15 @@ class Callables(object):	#pylint: disable=R0903,R0902
 
 	 * **callable properties** *(dictionary)* -- Dictionary value. The elements of this dictionary are:
 
-	  * **type** *(string)* -- :code:`'class'` for classes, :code:`'meth'` for methods, :code:`'func'` for functions or :code:`'prop'` for properties
+	  * **type** *(string)* -- :code:`'class'` for classes, :code:`'meth'` for methods, :code:`'func'` for functions or :code:`'prop'` for properties or class attributes
 
-	  * **code_id** *(tuple or None)* -- None if **type** is :code:`'prop'`, otherwise a tuple with the following elements:
+	  * **code_id** *(tuple or None)* -- A tuple with the following elements:
 
 	    * **file name** *(string)* -- the first element contains the file name where the callable can be found
 
 	    * **line number** *(integer)* -- the second element contains the line number in which the callable code starts (including decorators)
 
-	  * **attr** *(dictionary or None)* -- None if **type** is :code:`'class'`, :code:`'meth'`, :code:`'func'`, otherwise a dictionary with the following elements:
-
-	   * **fget** *(string or None)* -- Name of the getter function or method associated with the property (if any)
-
-	   * **fset** *(string or None)* -- Name of the setter function or method associated with the property (if any)
-
-	   * **fdel** *(string or None)* -- Name of the deleter function or method associated with the property (if any)
-
-	  * **link** *(dictionary or None)* -- None if callable is not the getter, setter or deleter of a property, otherwise a dictionary with the following elements:
-
-	   * **prop** *(string)* -- Property the callable is associated with
-
-	   * **action** *(string)* -- Property action the callable performs, one of :code:`'fget'`, :code:`'fset'` or :code:`'fdel'`
-
+	  * **last_lineno** *(integer)* -- line number in which the callable code ends (including blank lines)
 	"""
 	reverse_callables_db = property(_get_reverse_callables_db, None, None, doc='Reverse module(s) callables database')
 	"""
@@ -535,3 +457,107 @@ class Callables(object):	#pylint: disable=R0903,R0902
 	 * **full callable name** *(string)* -- Dictionary value. Elements in the callable path are separated by periods (:code:`'.'`). For example, method :code:`my_method()` from class :code:`MyClass` from module :code:`my_module`
 	   appears as :code:`'my_module.MyClass.my_method'`
 	"""
+
+
+class _AstTreeScanner(ast.NodeVisitor):	#pylint: disable=R0902
+	""" Get all callables from a given module """
+	def __init__(self, file_name, lines):
+		super(_AstTreeScanner, self).__init__()
+		self._lines = lines
+		self._wsregexp = re.compile(r'^(\s*).+')
+		self._file_name = file_name.replace('.pyc', '.py')
+		self._module = _get_module_name_from_file_name(file_name)
+		self._indent_stack = [{'level':0, 'type':'module', 'prefix':'', 'full_name':None}]
+		self._callables_db, self._reverse_callables_db = {}, {}
+		self._class_names = []
+		self._num_decorators = 0
+
+	def _close_callable(self, node, force=False):
+		""" Record last line number of callable """
+		if isinstance(node, ast.Expr) and isinstance(node.value, ast.Str) and (node.col_offset < 0):
+			return
+		try:
+			lineno = node.lineno
+		except:	#pylint: disable=W0702
+			return
+		if (not force) and self._callables_db:
+			element_full_name = self._indent_stack[-1]['full_name']
+			code_id = self._callables_db[element_full_name].get('code_id', None)
+			if code_id and (lineno <= code_id[1]+self._num_decorators+1) and (self._indent_stack[-1]['type'] != 'prop'):
+				return
+		indent = self._get_indent(node)
+		count = -1
+		while count >= -len(self._indent_stack):
+			element_full_name = self._indent_stack[count]['full_name']
+			stack_indent = self._indent_stack[count]['level']
+			if element_full_name and (not self._callables_db[element_full_name]['last_lineno']) and (force or (indent <= stack_indent) and (lineno-1 >= self._callables_db[element_full_name]['code_id'][1])):
+				self._callables_db[element_full_name]['last_lineno'] = lineno-1
+				self._num_decorators = 0
+			if indent > stack_indent:
+				break
+			count -= 1
+
+	def _get_indent(self, node):
+		""" Get indentation level """
+		lineno = node.lineno
+		if lineno > len(self._lines):
+			return -1
+		wsindent = self._wsregexp.match(self._lines[lineno-1])
+		return len(wsindent.group(1))
+
+	def _in_class(self, node):
+		""" Find if callable is function or method """
+		indent = self._get_indent(node)
+		for indent_dict in reversed(self._indent_stack):	# pragma: no branch
+			if (indent_dict['level'] < indent) or (indent_dict['type'] == 'module'):
+				return indent_dict['type'] == 'class'	# pylint: disable=W0631
+
+	def _pop_indent_stack(self, node, node_type=None, action=None):
+		indent = self._get_indent(node)
+		while ((indent <= self._indent_stack[-1]['level']) and (self._indent_stack[-1]['type'] != 'module')) or (self._indent_stack[-1]['type'] == 'prop'):
+			self._indent_stack.pop()
+		name = (node.targets[0].id if hasattr(node.targets[0], 'id') else node.targets[0].value.id) if node_type == 'prop' else node.name
+		element_full_name = '.'.join([self._module]+[indent_dict['prefix'] for indent_dict in self._indent_stack if indent_dict['type'] != 'module']+[name])+('({0})'.format(action) if action else '')
+		self._indent_stack.append({'level':indent, 'prefix':name, 'type':node_type, 'full_name':element_full_name})
+		return element_full_name
+
+	def generic_visit(self, node):
+		""" Generic node """
+		self._close_callable(node)
+		super(_AstTreeScanner, self).generic_visit(node)
+
+	def visit_Assign(self, node):	#pylint: disable=C0103
+		""" Assignment walker (to parse class properties defined via the property() function) """
+		self._close_callable(node)
+		# It may also be a class attribute that is not a property, record it anyway, no harm in doing so as it is not attached to a callable
+		if self._in_class(node):
+			element_full_name = self._pop_indent_stack(node, 'prop')
+			code_id = (self._file_name, node.lineno)
+			self._callables_db[element_full_name] = {'name':element_full_name, 'type':'prop', 'code_id':code_id, 'last_lineno':node.lineno}
+			self._reverse_callables_db[code_id] = element_full_name
+			# Get property actions
+			super(_AstTreeScanner, self).generic_visit(node)
+
+	def visit_ClassDef(self, node):	#pylint: disable=C0103
+		""" Class walker """
+		self._close_callable(node)
+		element_full_name = self._pop_indent_stack(node, 'class')
+		code_id = (self._file_name, node.lineno)
+		self._class_names.append(element_full_name)
+		self._callables_db[element_full_name] = {'name':element_full_name, 'type':'class', 'code_id':code_id, 'last_lineno':None}
+		self._reverse_callables_db[code_id] = element_full_name
+		self.generic_visit(node)
+
+	def visit_FunctionDef(self, node):	#pylint: disable=C0103
+		""" Function/method walker """
+		self._close_callable(node)
+		in_class = self._in_class(node)
+		decorator_list = [dobj.id if hasattr(dobj, 'id') else dobj.attr for dobj in node.decorator_list if hasattr(dobj, 'id') or hasattr(dobj, 'attr')]
+		self._num_decorators = len(decorator_list)
+		action = 'getter' if 'property' in decorator_list else ('setter' if 'setter' in decorator_list else ('deleter' if 'deleter' in decorator_list else None))
+		element_type = 'meth' if in_class else 'func'
+		element_full_name = self._pop_indent_stack(node, element_type, action=action)
+		code_id = (self._file_name, node.lineno)
+		self._callables_db[element_full_name] = {'name':element_full_name, 'type':element_type, 'code_id':code_id, 'last_lineno':None}
+		self._reverse_callables_db[code_id] = element_full_name
+		self.generic_visit(node)

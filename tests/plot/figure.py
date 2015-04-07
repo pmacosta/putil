@@ -14,7 +14,6 @@ from gen_ref_images import unittest_figure_images	#pylint: disable=F0401
 ###
 # Tests for Figure
 ###
-
 class TestFigure(object):	#pylint: disable=W0232,R0903
 	""" Tests for Figure """
 	def test_indep_var_label_wrong_type(self, default_panel):	#pylint: disable=C0103,R0201,W0621
@@ -120,11 +119,11 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 							  RuntimeError, 'Figure size is too small: minimum width = 5.6[1]*, minimum height 2.66')
 
 	def test_complete(self, default_panel):	#pylint: disable=C0103,R0201,W0621
-		""" Test that _complete() method behaves correctly """
+		""" Test that _complete property behaves correctly """
 		obj = putil.plot.Figure(panels=None)
-		assert obj._complete() == False	#pylint: disable=W0212
+		assert obj._complete == False	#pylint: disable=W0212
 		obj.panels = default_panel
-		assert obj._complete() == True	#pylint: disable=W0212
+		assert obj._complete == True	#pylint: disable=W0212
 		obj = putil.plot.Figure(panels=None)
 		putil.test.assert_exception(obj.show, {}, RuntimeError, 'Figure object is not fully specified')
 
@@ -209,6 +208,18 @@ class TestFigure(object):	#pylint: disable=W0232,R0903
 			obj.show()
 		out, _ = capsys.readouterr()
 		assert out == 'show called\n'
+
+	def test_iterator(self, default_panel):	#pylint: disable=C0103,R0201,W0621
+		""" Test that __iter__() method behaves correctly """
+		ds1_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([1, 2, 3, 4]))
+		series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', interp=None)
+		panel2 = putil.plot.Panel(series=series1_obj)
+		obj = putil.plot.Figure(panels=[default_panel, panel2])
+		for num, panel in enumerate(obj):
+			if num == 0:
+				assert panel == default_panel
+			if num == 1:
+				assert panel == panel2
 
 	def test_images(self, tmpdir):	#pylint: disable=C0103,R0201,W0621
 		""" Compare images to verify correct plotting of figure """

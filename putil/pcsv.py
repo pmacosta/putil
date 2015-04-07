@@ -136,7 +136,6 @@ def _number_failsafe(obj):
 		except:	#pylint: disable=W0702
 			return obj
 
-
 ###
 # Classes
 ###

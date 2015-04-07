@@ -1,23 +1,17 @@
-﻿Task List
-=========
+﻿To-do List
+==========
+
+* Test docstrings (if possible)
+
+* Python 3.x support
 
 * Performance improvements
 
 * plot module:
 
-  + If ticks have fractional parts, make minimum mantissa 1 digit, even if integer castings of ticks are unique, unless the 1-digit mantissa of all the ticks are the same
-
-  + Make _complete() method a property that also does data validation
-
-  + Use an abstract base class to derive BasicSource and CsvSource classes
-
-  + Code panel iterator that iterates over panel series objects and figure iterator that iterates over figure panels
-
-  + Make series object have all the properties of source associated with series
-
   + Write MultiCsvSeriesPanel, with potentially this signature:
 
-    .. code-block:: python 
+    .. code-block:: python
 
 		def __init__(self, indep_col_label, dep_col_label, indep_min, indep_max, fproc, fproc_eargs, file_name=None, series=None, interp='CUBIC', line_style='-', primary_axis_label='', primary_axis_units='', secondary_axis_label='', secondary_axis_units='', log_dep_axis=False, legend_props=None, display_indep_axis=False):
 
@@ -48,4 +42,3 @@
 	The idea is to minimize code in situations where data is parameterized and the data for each parameter is in a separate CSV file with the same header, OR in situations where
 	the data is in one file but parameterized by one of the data columns. The colors and markers would be selected automatically. There could also be a MultiCsvSeriesPanel.add_series()
 	method to add more CsvSeries or BasicSeries objects.
-

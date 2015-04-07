@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0302,C0111
 
-import datetime, fractions, inspect, mock, numpy, os, pytest, re, struct, tempfile
+import ast, datetime, fractions, inspect, mock, numpy, os, pytest, re, struct, tempfile
 
 import putil.misc, putil.test
 
@@ -436,3 +436,28 @@ def test_cidict():
 	with pytest.raises(ValueError) as excinfo:
 		putil.misc.CiDict(['Prop1', 'Prop2', 'Prop3', 'Prop4'])
 	assert excinfo.value.message == "dictionary update sequence element #0 has length 5; 2 is required"
+
+def test_pprint_ast_node():
+	""" Test pprint_ast_node() function """
+	putil.test.assert_exception(putil.misc.pprint_ast_node, {'node':5}, RuntimeError, 'Argument `node` is not valid')
+	ret = []
+	ret.append('class MyClass(object):')
+	ret.append('	def __init__(self, a, b):')
+	ret.append('		self._value = a+b')
+	ref = []
+	ref.append("Module(body=[")
+	ref.append("    ClassDef(name='MyClass', bases=[")
+	ref.append("        Name(id='object', ctx=Load(), lineno=1, col_offset=14),")
+	ref.append("      ], body=[")
+	ref.append("        FunctionDef(name='__init__', args=arguments(args=[")
+	ref.append("            Name(id='self', ctx=Param(), lineno=2, col_offset=14),")
+	ref.append("            Name(id='a', ctx=Param(), lineno=2, col_offset=20),")
+	ref.append("            Name(id='b', ctx=Param(), lineno=2, col_offset=23),")
+	ref.append("          ], vararg=None, kwarg=None, defaults=[]), body=[")
+	ref.append("            Assign(targets=[")
+	ref.append("                Attribute(value=Name(id='self', ctx=Load(), lineno=3, col_offset=2), attr='_value', ctx=Store(), lineno=3, col_offset=2),")
+	ref.append("              ], value=BinOp(left=Name(id='a', ctx=Load(), lineno=3, col_offset=16), op=Add(), right=Name(id='b', ctx=Load(), lineno=3, col_offset=18), lineno=3, col_offset=16), lineno=3, col_offset=2),")
+	ref.append("          ], decorator_list=[], lineno=2, col_offset=1),")
+	ref.append("      ], decorator_list=[], lineno=1, col_offset=0),")
+	ref.append("  ])")
+	assert putil.misc.pprint_ast_node(ast.parse('\n'.join(ret)), include_attributes=True) == '\n'.join(ref)

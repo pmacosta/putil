@@ -17,7 +17,7 @@ from .constants import AXIS_LABEL_FONT_SIZE, AXIS_TICKS_FONT_SIZE, LEGEND_SCALE
 ###
 """
 [[[cog
-import os, sys
+import os, sys, __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_panel
 exobj_plot = trace_ex_plot_panel.trace_module(no_print=True)
@@ -103,6 +103,12 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self._set_secondary_axis_units(secondary_axis_units)
 		self._set_legend_props(legend_props)
 		self._set_display_indep_axis(display_indep_axis)
+
+	def __iter__(self):
+		"""
+		Returns an iterator over the series object(s) in the panel
+		"""
+		return iter(self._series)
 
 	def _get_series(self):	#pylint: disable=C0111
 		return self._series
@@ -229,7 +235,7 @@ class Panel(object):	#pylint: disable=R0902,R0903
 
 	def __str__(self):
 		"""
-		Print panel information
+		Prints panel information
 		"""
 		ret = ''
 		if (self.series is None) or (len(self.series) == 0):
@@ -259,10 +265,10 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self._exh.add_exception(exname='no_log', extype=ValueError, exmsg='Series item *[number]* cannot be plotted in a logarithmic axis because it contains negative data points')
 		for num, obj in enumerate(self.series):
 			self._exh.raise_exception_if(exname='invalid_series', condition=type(obj) is not Series)
-			self._exh.raise_exception_if(exname='incomplete_series', condition=not obj._complete(), edata={'field':'number', 'value':num})	#pylint: disable=W0212
+			self._exh.raise_exception_if(exname='incomplete_series', condition=not obj._complete, edata={'field':'number', 'value':num})	#pylint: disable=W0212
 			self._exh.raise_exception_if(exname='no_log', condition=bool((min(obj.dep_var) <= 0) and self.log_dep_axis), edata={'field':'number', 'value':num})
 
-	def _complete(self):
+	def _get_complete(self):
 		""" Returns True if panel is fully specified, otherwise returns False """
 		return (self.series is not None) and (len(self.series) > 0)
 
@@ -336,6 +342,8 @@ class Panel(object):	#pylint: disable=R0902,R0903
 		self._setup_axis('INDEP', axarr_prim, indep_var_min, indep_var_max, indep_var_locs, indep_var_labels, indep_axis_label, indep_axis_units, indep_axis_unit_scale)
 		plt.setp(axarr_prim.get_xticklabels(), visible=print_indep_axis)
 		return {'primary':None if not self._panel_has_primary_axis else axarr_prim, 'secondary':None if not self._panel_has_secondary_axis else axarr_sec}
+
+	_complete = property(_get_complete)
 
 	series = property(_get_series, _set_series, doc='Panel series')
 	r"""

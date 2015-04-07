@@ -7,8 +7,10 @@ import numpy
 from collections import OrderedDict
 
 import putil.exh, putil.pcsv
+from putil.pcsv import csv_data_filter #pylint: disable=W0611
 from .constants import PRECISION
 from .contracts import _check_increasing_real_numpy_vector, _check_real_numpy_vector
+from .functions import DataSource
 
 
 ###
@@ -16,7 +18,7 @@ from .contracts import _check_increasing_real_numpy_vector, _check_real_numpy_ve
 ###
 """
 [[[cog
-import os, sys
+import os, sys, __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_csv_source
 exobj_plot = trace_ex_plot_csv_source.trace_module(no_print=True)
@@ -28,7 +30,7 @@ exobj_plot = trace_ex_plot_csv_source.trace_module(no_print=True)
 ###
 # Class
 ###
-class CsvSource(object):	#pylint: disable=R0902,R0903
+class CsvSource(DataSource):	#pylint: disable=R0902,R0903
 	r"""
 	Objects of this class hold a data set from a CSV file intended for plotting. The raw data from the file can be filtered and a callback function can be used for more general data pre-processing.
 
@@ -131,11 +133,12 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""
 	def __init__(self, file_name, indep_col_label, dep_col_label, dfilter=None, indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):	#pylint: disable=R0913
 		# Private attributes
+		super(CsvSource, self).__init__()
 		self._exh = putil.exh.get_or_create_exh_obj()
 		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
 		self._csv_obj, self._reverse_data = None, False
 		# Public attributes
-		self._indep_var, self._dep_var, self._indep_min, self._indep_max = None, None, None, None
+		self._indep_min, self._indep_max = None, None
 		self._file_name, self._dfilter, self._indep_col_label, self._dep_col_label, self._fproc, self._fproc_eargs = None, None, None, None, None, None
 		# Assignment of arguments to attributes
 		self._set_fproc(fproc)
@@ -160,7 +163,7 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	def _get_dfilter(self):	#pylint: disable=C0111
 		return self._dfilter
 
-	@putil.pcontracts.contract(dfilter='None|dict')
+	@putil.pcontracts.contract(dfilter='csv_data_filter')
 	def _set_dfilter(self, dfilter):	#pylint: disable=C0111
 		self._dfilter = dict([(key, value) for key, value in dfilter.items()]) if isinstance(dfilter, dict) else dfilter 	# putil.pcsv is case insensitive and all caps
 		self._apply_dfilter()
@@ -186,9 +189,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 		self._apply_dfilter()
 		self._process_data()
 
-	def _get_indep_var(self):	#pylint: disable=C0111
-		return self._indep_var	#pylint: disable=W0212
-
 	@putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
 	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
 		self._exh.add_exception(exname='same', extype=ValueError, exmsg='Arguments `indep_var` and `dep_var` must have the same number of elements')
@@ -196,9 +196,6 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)	#pylint: disable=W0212
 		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
 		self._update_dep_var()	#pylint: disable=W0212
-
-	def _get_dep_var(self):	#pylint: disable=C0111
-		return self._dep_var	#pylint: disable=W0212
 
 	@putil.pcontracts.contract(dep_var='real_numpy_vector')
 	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
@@ -236,14 +233,14 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			min_indexes = (self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0]))	#pylint: disable=W0212
 			max_indexes = (self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1]))	#pylint: disable=W0212
 			self._indep_var_indexes = numpy.where(min_indexes & max_indexes)	#pylint: disable=W0212
-			self._indep_var = self._raw_indep_var[self._indep_var_indexes]	#pylint: disable=W0212
+			super(CsvSource, self)._set_indep_var(self._raw_indep_var[self._indep_var_indexes])	#pylint: disable=W0212
 			self._exh.raise_exception_if(exname='empty', condition=len(self.indep_var) == 0)
 
 	def _update_dep_var(self):
 		""" Update dependent variable (if assigned) to match the independent variable range bounding """
 		self._dep_var = self._raw_dep_var	#pylint: disable=W0212
 		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):	#pylint: disable=W0212
-			self._dep_var = self._raw_dep_var[self._indep_var_indexes]	#pylint: disable=W0212
+			super(CsvSource, self)._set_dep_var(self._raw_dep_var[self._indep_var_indexes])	#pylint: disable=W0212
 
 	def _get_fproc(self):	#pylint: disable=C0111
 		return self._fproc
@@ -371,7 +368,9 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 			self._set_dep_var(dep_var)	#pylint: disable=W0212
 
 	def __str__(self):
-		""" Print comma-separated values source information """
+		"""
+		Prints source information
+		"""
 		ret = ''
 		ret += 'File name: {0}\n'.format(self.file_name)
 		ret += 'Data filter: {0}\n'.format(self.dfilter if self.dfilter is None else '')
@@ -389,13 +388,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 				ret += '   {0}: {1}\n'.format(key, value)
 		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)	#pylint: disable=W0212
 		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)	#pylint: disable=W0212
-		ret += 'Independent variable: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
-		ret += 'Dependent variable: {0}'.format(putil.misc.pprint_vector(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
+		ret += super(CsvSource, self).__str__()
 		return ret
-
-	def _complete(self):
-		""" Returns True if object is fully specified, otherwise returns False """
-		return (self.indep_var is not None) and (self.dep_var is not None)
 
 	file_name = property(_get_file_name, _set_file_name, doc='Comma-separated file name')
 	r"""
@@ -513,6 +507,8 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	 * TypeError (Processed dependent variable is not valid)
 
 	 * TypeError (Processed independent variable is not valid)
+
+	 * ValueError (Argument \`dfilter\` is empty)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-separated file *[file_name]* header)
 
@@ -745,13 +741,13 @@ class CsvSource(object):	#pylint: disable=R0902,R0903
 	"""	#pylint: disable=W0105
 
 	# indep_var is read only
-	indep_var = property(_get_indep_var, None, doc='Independent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
+	indep_var = property(DataSource._get_indep_var, None, doc='Independent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
 	"""
 	Gets the independent variable Numpy vector
 	"""
 
 	# dep_var is read only
-	dep_var = property(_get_dep_var, None, doc='Dependent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
+	dep_var = property(DataSource._get_dep_var, None, doc='Dependent variable Numpy vector (read only)')	#pylint: disable=W0212,E0602
 	"""
 	Gets the dependent variable Numpy vector
 	"""

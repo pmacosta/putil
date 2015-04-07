@@ -4,7 +4,7 @@
 # pylint: disable=C0111,C0302
 
 import math, numpy
-import matplotlib.pyplot as plt
+import abc, matplotlib.pyplot as plt
 
 import putil.eng, putil.misc, putil.pcontracts
 from .constants import PRECISION, MIN_TICKS, SUGGESTED_MAX_TICKS
@@ -15,13 +15,56 @@ from .constants import PRECISION, MIN_TICKS, SUGGESTED_MAX_TICKS
 ###
 """
 [[[cog
-import os, sys
+import os, sys, __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_functions
 exobj_plot = trace_ex_plot_functions.trace_module(no_print=True)
 ]]]
 [[[end]]]
 """	#pylint: disable=W0105
+
+###
+# Classes
+###
+class DataSource(object):	#pylint: disable=R0903,R0921
+	""" Abstract base class for plot data sources """
+	__metaclass__ = abc.ABCMeta
+	def __init__(self):
+		self._exh = putil.exh.get_or_create_exh_obj()
+		self._dep_var, self._indep_var = None, None
+
+	def _get_dep_var(self):	#pylint: disable=C0111
+		return self._dep_var	#pylint: disable=W0212
+
+	def _get_indep_var(self):	#pylint: disable=C0111
+		return self._indep_var	#pylint: disable=W0212
+
+	@abc.abstractmethod
+	def __str__(self):
+		ret = ''
+		ret += 'Independent variable: {0}\n'.format(putil.misc.pprint_vector(self.indep_var, width=50, indent=len('Independent variable: ')))	#pylint: disable=W0212
+		ret += 'Dependent variable: {0}'.format(putil.misc.pprint_vector(self.dep_var, width=50, indent=len('Dependent variable: ')))	#pylint: disable=W0212
+		return ret
+
+	@abc.abstractmethod
+	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
+		self._dep_var = dep_var
+
+	@abc.abstractmethod
+	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
+		self._indep_var = indep_var
+
+	def _get_complete(self):
+		""" Returns True if object is fully specified, otherwise returns False """
+		self._exh.add_exception(exname='num_elements', extype=ValueError, exmsg='Arguments `indep_var` and `dep_var` must have the same number of elements')
+		self._exh.raise_exception_if(exname='num_elements', condition=(self._dep_var is not None) and (self._indep_var is not None) and (len(self._dep_var) != len(self._indep_var)))	#pylint: disable=W0212
+		return (self.indep_var is not None) and (self.dep_var is not None)
+
+	indep_var = abc.abstractproperty(_get_indep_var, _set_indep_var, None, doc='Independent variable Numpy vector')
+
+	dep_var = abc.abstractproperty(_get_dep_var, _set_dep_var, None, doc='Dependent variable Numpy vector')
+
+	_complete = property(_get_complete, None, None, doc='Flag that indicates whether the series is plottable (True) or not (False)')
 
 
 ###
@@ -118,16 +161,18 @@ def _scale_ticks(tick_list, mode):
 	return {'loc':loc, 'labels':labels, 'unit':unit, 'scale':scale, 'min':tick_min, 'max':tick_max, 'count':count}
 
 
-def _mantissa_digits(num):
-	""" Get number of digits in the mantissa """
-	snum = str(num)
-	return 0 if (snum.find('.') == -1) or str(float(int(num))) == snum else len(snum)-snum.find('.')-1
+# Function used when ticks could have zero fractional part even when floats
+#def _mantissa_digits(num):
+#	""" Get number of digits in the mantissa """
+#	snum = str(num)
+#	return 0 if (snum.find('.') == -1) or str(float(int(num))) == snum else len(snum)-snum.find('.')-1
 
 
 def _uniquify_tick_labels(tick_list, tmin, tmax):
 	""" Calculate minimum tick mantissa given tick spacing """
 	# If minimum or maximum has a mantissa, at least preserve one digit
-	mant_min = 1 if max(_mantissa_digits(tick_list[0]), _mantissa_digits(tick_list[-1])) > 0 else 0
+	mant_min = 1 if any([float(item) != float(int(item)) for item in tick_list]) else 0
+	#mant_min = 1 if max(_mantissa_digits(tick_list[0]), _mantissa_digits(tick_list[-1])) > 0 else 0
 	# Step 1: Look at two contiguous ticks and lower mantissa digits till they are no more right zeros
 	mant = 10
 	for mant in range(10, mant_min-1, -1):

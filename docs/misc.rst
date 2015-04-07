@@ -19,7 +19,9 @@ Context managers
 .. autofunction:: putil.misc.ignored
 .. autoclass:: putil.misc.Timer
 	:members: elapsed_time
+	:show-inheritance:
 .. autoclass:: putil.misc.TmpFile
+	:show-inheritance:
 
 File
 ====
@@ -41,6 +43,7 @@ Miscellaneous
 
 .. autofunction:: putil.misc.Bundle
 .. autofunction:: putil.misc.flatten_list
+.. autofunction:: putil.misc.pprint_ast_node
 
 Numbers
 =======

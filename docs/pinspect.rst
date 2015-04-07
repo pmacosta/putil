@@ -8,14 +8,12 @@ pinspect module
 
 
 This module supplements the excellent Python introspection capabilities. The class :py:class:`putil.pinspect.Callables` "traces" modules and produces a database of callables (functions, classes, methods and class properties) 
-and their attributes (callable type, file name, starting line number). Enclosed functions are supported, enclosed classes are also supported with the caveat that dynamic importing within enclosures is not supported. For example,
-the following module
+and their attributes (callable type, file name, starting line number). Enclosed functions and classes are supported. For example:
 
 .. literalinclude:: ./support/pinspect_example_1.py
     :language: python
     :linenos:
     :tab-width: 3
-    :lines: 1,5-
 
 with
 
@@ -33,74 +31,26 @@ and
     :tab-width: 3
     :lines: 1,5-
 
-produces an error when traced:
+gives:
 
 .. code-block:: python
 
 	>>> import pinspect_example_1, putil.pinspect, sys
-	>>> cobj = putil.pinspect.Callables(sys.modules['pinspect_example_1'])
-	...
-	NameError: name 'version' is not defined
-
-Static imports in enclosures are supported:
-
-.. literalinclude:: ./support/pinspect_example_2.py
-    :language: python
-    :linenos:
-    :tab-width: 3
-    :lines: 1,5-
-
-.. code-block:: python
-
-	>>> import pinspect_example_2, putil.pinspect, sys
-	>>> cobj = putil.pinspect.Callables(sys.modules['pinspect_example_2'])
-	>>> print cobj
+	>>> cobj = putil.pinspect.Callables([sys.modules['pinspect_example_1'].__file__])
+	>>> print str(cobj)
 	Modules:
-	   pinspect_example_2
-	   python2_module
+	   pinspect_example_1
 	Classes:
-	   pinspect_example_2.my_func.MyClass
-	pinspect_example_2.my_func: func (4)
-	pinspect_example_2.my_func.MyClass: class (6)
-	pinspect_example_2.my_func.MyClass.__init__: meth (9)
-	pinspect_example_2.my_func.MyClass._get_value: meth (11)
-	   fget of: pinspect_example_2.my_func.MyClass.value
-	pinspect_example_2.my_func.MyClass.value: prop (13)
-	   fset: python2_module._set_value
-	   fget: pinspect_example_2.my_func.MyClass._get_value
-	pinspect_example_2.print_name: func (15)
-	python2_module._set_value: func (3)
-	   fset of: pinspect_example_2.my_func.MyClass.value
+	   pinspect_example_1.my_func.MyClass
+	pinspect_example_1.my_func: func (6-19)
+	pinspect_example_1.my_func.MyClass: class (8-19)
+	pinspect_example_1.my_func.MyClass.__init__: meth (14-15)
+	pinspect_example_1.my_func.MyClass._get_value: meth (16-17)
+	pinspect_example_1.my_func.MyClass.value: prop (18)
+	pinspect_example_1.print_name: func (20-21)
 
-The number in parenthesis indicates the line number in which the callable starts within the file it is defined in. Dynamic importing at the module level are also supported:
 
-.. literalinclude:: ./support/pinspect_example_3.py
-    :language: python
-    :linenos:
-    :tab-width: 3
-    :lines: 1,5-
-
-.. code-block:: python
-
-	>>> import pinspect_example_3, putil.pinspect, sys
-	>>> cobj = putil.pinspect.Callables(sys.modules['pinspect_example_3'])
-	>>> print cobj
-	Modules:
-	   pinspect_example_3
-	   python2_module
-	Classes:
-	   pinspect_example_3.my_func.MyClass
-	pinspect_example_3.my_func: func (9)
-	pinspect_example_3.my_func.MyClass: class (12)
-	pinspect_example_3.my_func.MyClass.__init__: meth (14)
-	pinspect_example_3.my_func.MyClass._get_value: meth (17)
-	   fget of: pinspect_example_3.my_func.MyClass.value
-	pinspect_example_3.my_func.MyClass.value: prop (19)
-	   fset: python2_module._set_value
-	   fget: pinspect_example_3.my_func.MyClass._get_value
-	pinspect_example_3.print_name: func (21)
-	python2_module._set_value: func (3)
-	   fset of: pinspect_example_3.my_func.MyClass.value
+The numbers in parenthesis indicates the line number in which the callable starts and ends within the file it is defined in.
 
 ***************************************
 Application programming interface (API)
@@ -120,7 +70,8 @@ Classes
 =======
 
 .. autoclass:: putil.pinspect.Callables
-	:members: trace, callables_db, reverse_callables_db
+	:members: trace, callables_db, reverse_callables_db, __add__, __copy__, __eq__, __iadd__, __repr__, __str__
+	:show-inheritance:
 
 *******
 License

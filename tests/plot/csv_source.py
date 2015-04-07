@@ -321,13 +321,13 @@ class TestCsvSource(object):	#pylint: disable=W0232,R0904
 			assert obj == ref
 
 	def test_complete(self):	#pylint: disable=R0201
-		""" Test that _complete() method behaves correctly """
+		""" Test that _complete property behaves correctly """
 		with putil.misc.TmpFile(write_csv_file) as file_name:
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', )
 			obj._indep_var = None	#pylint: disable=W0212
-			assert obj._complete() == False	#pylint: disable=W0212
+			assert obj._complete == False	#pylint: disable=W0212
 			obj = putil.plot.CsvSource(file_name=file_name, indep_col_label='Col7', dep_col_label='Col2', )
-			assert obj._complete() == True	#pylint: disable=W0212
+			assert obj._complete == True	#pylint: disable=W0212
 
 	def test_cannot_delete_attributes(self):	#pylint: disable=R0201
 		""" Test that del method raises an exception on all class attributes """

@@ -14,7 +14,7 @@ import putil.exh
 ###
 """
 [[[cog
-import os, sys
+import os, sys, __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_tree
 exobj_tree = trace_ex_tree.trace_module(no_print=True)
@@ -68,7 +68,7 @@ class Tree(object):	#pylint: disable=R0903,R0902
 
 			>>> import putil.tree
 			>>> tobj = putil.tree.Tree()
-			>>> tobj.add([
+			>>> tobj.add_nodes([
 			...		{'name':'root.branch1', 'data':5},
 			...		{'name':'root.branch2', 'data':list()},
 			...		{'name':'root.branch1.leaf1', 'data':list()},

@@ -3,13 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0212
 
-import copy, inspect, mock, os, random, string, sys, types
+import copy, os, pytest, sys, types
 
 import putil.pinspect, putil.test
 
 TEST_DIR = os.path.dirname(__file__)
 SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
 sys.path.append(SUPPORT_DIR)
+
 
 ###
 # Helper functions
@@ -40,7 +41,7 @@ def compare_str_outputs(obj, ref_list):
 
 
 ###
-# Tests
+# Tests for module functions
 ###
 def test_object_is_module():
 	""" Test object_is_module() function """
@@ -55,6 +56,12 @@ def test_get_module_name():
 	putil.test.assert_exception(putil.pinspect.get_module_name, {'module_obj':mock_module_obj}, RuntimeError, 'Module object `mock_module_obj` could not be found in loaded modules')
 	assert putil.pinspect.get_module_name(sys.modules['putil.pinspect']) == 'putil.pinspect'
 	assert putil.pinspect.get_module_name(sys.modules['putil']) == 'putil'
+
+
+def test_get_module_name_from_file_name():	#pylint: disable=C0103
+	""" Test _get_module_name_from_file_name() function """
+	putil.test.assert_exception(putil.pinspect._get_module_name_from_file_name, {'file_name':'_not_a_module'}, RuntimeError, 'Module could not be found')
+	assert putil.pinspect._get_module_name_from_file_name(sys.modules['putil.pinspect'].__file__) == 'putil.pinspect'
 
 
 def test_get_package_name():
@@ -82,253 +89,234 @@ def test_loaded_package_modules():
 	assert set(putil.pinspect.loaded_package_modules(sys.modules['putil.pinspect'])) == modules_obj_list
 
 
-def test_replace_tabs():
-	""" Test _replace_tabs() function """
-	assert putil.pinspect._replace_tabs('    def func()') == '    def func()'
-	for snum in range(0, 8):
-		assert putil.pinspect._replace_tabs((' '*snum)+'\tdef func()') == (' '*8)+'def func()'
-	assert putil.pinspect._replace_tabs('   \t   def func()') == (' '*8)+'   def func()'
-	assert putil.pinspect._replace_tabs('   \t  \t def func()') == (' '*16)+' def func()'
-	assert putil.pinspect._replace_tabs('\f   \t  \t def func()') == (' '*16)+' def func()'
+###
+# Test for classes
+###
+class TestCallables(object):	#pylint: disable=W0232,R0903
+	""" Test for Callables """
+	def test_callables_errors(self):	#pylint: disable=R0201,R0915
+		""" Test callables __init__ (and trace() function) data validation """
+		putil.test.assert_exception(putil.pinspect.Callables, {'file_names':5}, RuntimeError, 'Argument `file_names` is not valid')
+		putil.test.assert_exception(putil.pinspect.Callables, {'file_names':[5]}, RuntimeError, 'Argument `file_names` is not valid')
+		putil.test.assert_exception(putil.pinspect.Callables, {'file_names':['_not_a_file_']}, IOError, 'File _not_a_file_ could not be found')
 
+	def test_repr(self):	#pylint: disable=R0201
+		""" Test __repr__() function """
+		import exdoc_support_module_1, exdoc_support_module_1	#pylint: disable=F0401,W0612
+		file1 = sys.modules['exdoc_support_module_1'].__file__.replace('.pyc', '.py')
+		file2 = sys.modules['exdoc_support_module_2'].__file__.replace('.pyc', '.py')
+		xobj = putil.pinspect.Callables([file2])
+		xobj.trace([file1])
+		assert repr(xobj) == "putil.pinspect.Callables(['{0}', '{1}'])".format(file1, file2)
 
-def test_callables():	# pylint: disable=R0915
-	""" Test callables class """
-	def mock_get_code_id(obj, file_name=None, offset=0):	#pylint: disable=W0612,W0613
-		""" Mock function to trigger exception related to callable not found in database """
-		return (''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)), random.random())
-	obj = putil.pinspect.Callables()
-	assert obj.callables_db == dict()
-	assert obj.reverse_callables_db == dict()
-	putil.test.assert_exception(obj.trace, {'obj':None}, RuntimeError, 'Argument `obj` is not valid')
-	putil.test.assert_exception(obj.trace, {'obj':'not_an_object'}, RuntimeError, 'Argument `obj` is not valid')
-	sys.path.append(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), 'support'))
-	import pinspect_support_module_1	#pylint: disable=F0401,W0612
-	obj.trace(sys.modules['pinspect_support_module_1'])
-	ref_list = list()
-	ref_list.append('Modules:')
-	ref_list.append('   pinspect_support_module_1')
-	ref_list.append('   pinspect_support_module_2')
-	ref_list.append('   pinspect_support_module_3')
-	ref_list.append('   pinspect_support_module_4')
-	ref_list.append('Classes:')
-	ref_list.append('   pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators')
-	ref_list.append('   pinspect_support_module_1.ClassWithPropertyDefinedViaFunction')
-	ref_list.append('   pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure')
-	ref_list.append('   pinspect_support_module_1.class_enclosing_func.ClosureClass')
-	ref_list.append('   pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method.SubClosureClass')
-	ref_list.append('   pinspect_support_module_1.class_namespace_test_enclosing_func.NamespaceTestClosureClass')
-	ref_list.append('   pinspect_support_module_2.SimpleClass')
-	ref_list.append('   pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators: class (101)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__call__: meth (106)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.__init__: meth (103)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.encprop: prop')
-	ref_list.append('   fget: pinspect_support_module_1.simple_property_generator.fget')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp: prop')
-	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter)')
-	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter)')
-	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(deleter): meth (120)')
-	ref_list.append('   fdel of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(getter): meth (109)')
-	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp(setter): meth (114)')
-	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.temp')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction: class (73)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.__init__: meth (75)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func: meth (91)')
-	ref_list.append('   fdel of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func: meth (87)')
-	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func: meth (78)')
-	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaFunction.state: prop (95)')
-	ref_list.append('   fdel: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._deleter_func')
-	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._getter_func')
-	ref_list.append('   fset: pinspect_support_module_1.ClassWithPropertyDefinedViaFunction._setter_func')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure: class (52)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.__init__: meth (54)')
-	ref_list.append('pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar: prop (57)')
-	ref_list.append('   fget: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar.fget_lambda')
-	ref_list.append('   fset: pinspect_support_module_2.setter_enclosing_func.setter_closure_func')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func: func (19)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass: class (22)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.__init__: meth (24)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.get_obj: meth (28)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.obj: prop (47)')
-	ref_list.append('   fdel: pinspect_support_module_3.deleter')
-	ref_list.append('   fget: pinspect_support_module_2.getter_func_for_closure_class')
-	ref_list.append('   fset: pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.set_obj: meth (32)')
-	ref_list.append('   fset of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method: meth (38)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method.SubClosureClass: class (40)')
-	ref_list.append('pinspect_support_module_1.class_enclosing_func.ClosureClass.sub_enclosure_method.SubClosureClass.__init__: meth (42)')
-	ref_list.append('pinspect_support_module_1.class_namespace_test_enclosing_func: func (131)')
-	ref_list.append('pinspect_support_module_1.class_namespace_test_enclosing_func.NamespaceTestClosureClass: class (133)')
-	ref_list.append('pinspect_support_module_1.class_namespace_test_enclosing_func.NamespaceTestClosureClass.__init__: meth (136)')
-	ref_list.append('pinspect_support_module_1.class_namespace_test_enclosing_func.NamespaceTestClosureClass.nameprop: prop')
-	ref_list.append('   fget: pinspect_support_module_4.another_property_action_enclosing_function.fget')
-	ref_list.append('pinspect_support_module_1.dummy_decorator: func (60)')
-	ref_list.append('pinspect_support_module_1.module_enclosing_func: func (11)')
-	ref_list.append('pinspect_support_module_1.module_enclosing_func.module_closure_func: func (13)')
-	ref_list.append('pinspect_support_module_1.simple_property_generator: func (65)')
-	ref_list.append('pinspect_support_module_1.simple_property_generator.fget: func (67)')
-	ref_list.append('   fget of: pinspect_support_module_1.ClassWithPropertyDefinedViaDecorators.encprop')
-	ref_list.append('   fget of: pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass.encprop')
-	ref_list.append('pinspect_support_module_2.SimpleClass: class (15)')
-	ref_list.append('pinspect_support_module_2.SimpleClass.__init__: meth (17)')
-	ref_list.append('pinspect_support_module_2.SimpleClass.get_mobj: meth (21)')
-	ref_list.append('   fget of: pinspect_support_module_2.SimpleClass.mobj')
-	ref_list.append('pinspect_support_module_2.SimpleClass.mobj: prop (29)')
-	ref_list.append('   fget: pinspect_support_module_2.SimpleClass.get_mobj')
-	ref_list.append('   fset: pinspect_support_module_2.SimpleClass.set_mobj')
-	ref_list.append('pinspect_support_module_2.SimpleClass.set_mobj: meth (25)')
-	ref_list.append('   fset of: pinspect_support_module_2.SimpleClass.mobj')
-	ref_list.append('pinspect_support_module_2.getter_func_for_closure_class: func (32)')
-	ref_list.append('   fget of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
-	ref_list.append('pinspect_support_module_2.setter_enclosing_func: func (7)')
-	ref_list.append('pinspect_support_module_2.setter_enclosing_func.setter_closure_func: func (9)')
-	ref_list.append('   fset of: pinspect_support_module_1.ClassWithPropertyDefinedViaLambdaAndEnclosure.clsvar')
-	ref_list.append('pinspect_support_module_3.another_class_enclosing_func: func (12)')
-	ref_list.append('pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass: class (15)')
-	ref_list.append('pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass.__init__: meth (17)')
-	ref_list.append('pinspect_support_module_3.another_class_enclosing_func.FromImportClosureClass.encprop: prop')
-	ref_list.append('   fget: pinspect_support_module_1.simple_property_generator.fget')
-	ref_list.append('pinspect_support_module_3.another_property_action_enclosing_function: func (25)')
-	ref_list.append('pinspect_support_module_3.another_property_action_enclosing_function.fget: func (27)')
-	ref_list.append('pinspect_support_module_3.deleter: func (7)')
-	ref_list.append('   fdel of: pinspect_support_module_1.class_enclosing_func.ClosureClass.obj')
-	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function: func (16)')
-	ref_list.append('pinspect_support_module_4.another_property_action_enclosing_function.fget: func (18)')
-	ref_list.append('   fget of: pinspect_support_module_1.class_namespace_test_enclosing_func.NamespaceTestClosureClass.nameprop')
-	ref_text = compare_str_outputs(obj, ref_list)
-	assert str(obj) == ref_text
-	# Test that callables_db and reverse_callables_db are in sync
-	congruence_flag = True
-	for key, value in obj.callables_db.items():
-		if value['code_id']:
-			congruence_flag = obj.reverse_callables_db[value['code_id']] == key
-			if not congruence_flag:
-				break
-	assert congruence_flag
-	obj.trace(sys.modules['pinspect_support_module_1'])	# Test repeated call, should not trace (confirmed by branch analysis)
-	# Test string and representation methods
-	assert repr(obj) == "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3'], sys.modules['pinspect_support_module_4']])"
-	assert str(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == ref_text
-	assert repr(putil.pinspect.Callables([sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_1']])) == \
-				  "putil.pinspect.Callables([sys.modules['pinspect_support_module_1'], sys.modules['pinspect_support_module_2'], sys.modules['pinspect_support_module_3'], sys.modules['pinspect_support_module_4']])"
-	assert repr(putil.pinspect.Callables()) == "putil.pinspect.Callables()"
-	# Test multiple enclosed classes
-	obj = putil.pinspect.Callables()
-	import pinspect_support_module_7	#pylint: disable=F0401,W0612
-	obj.trace(sys.modules['pinspect_support_module_7'])
-	ref_list = list()
-	ref_list.append('Modules:')
-	ref_list.append('   pinspect_support_module_7')
-	ref_list.append('Classes:')
-	ref_list.append('   pinspect_support_module_7.test_enclosure_class.FinalClass')
-	ref_list.append('   pinspect_support_module_7.test_enclosure_class.MockFCode')
-	ref_list.append('   pinspect_support_module_7.test_enclosure_class.MockGetFrame')
-	ref_list.append('   pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method.SubClosureClass')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class: func (6)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.FinalClass: class (23)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.FinalClass.__init__: meth (24)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockFCode: class (7)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockFCode.__init__: meth (8)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame: class (10)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.__init__: meth (11)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method: meth (13)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method.SubClosureClass: class (16)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.MockGetFrame.sub_enclosure_method.SubClosureClass.__init__: meth (18)')
-	ref_list.append('pinspect_support_module_7.test_enclosure_class.mock_getframe: func (27)')
-	ref_text = compare_str_outputs(obj, ref_list)
-	assert str(obj) == ref_text
-	# Test enclosed class with inheritance
-	obj = putil.pinspect.Callables()
-	import pinspect_support_module_8	#pylint: disable=F0401,W0612
-	obj.trace(sys.modules['pinspect_support_module_8'])
-	ref_list = list()
-	ref_list.append('Modules:')
-	ref_list.append('   pinspect_support_module_8')
-	ref_list.append('Classes:')
-	ref_list.append('   pinspect_support_module_8.BaseClass')
-	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassA')
-	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassB')
-	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method.SubClassC')
-	ref_list.append('   pinspect_support_module_8.test_enclosure_derived_class.SubClassD')
-	ref_list.append('pinspect_support_module_8.BaseClass: class (6)')
-	ref_list.append('pinspect_support_module_8.BaseClass.__init__: meth (8)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class: func (11)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassA: class (13)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassA.__init__: meth (14)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB: class (18)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.__init__: meth (19)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method: meth (22)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method.SubClassC: class (26)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassB.sub_enclosure_method.SubClassC.__init__: meth (28)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassD: class (33)')
-	ref_list.append('pinspect_support_module_8.test_enclosure_derived_class.SubClassD.__init__: meth (34)')
-	ref_text = compare_str_outputs(obj, ref_list)
-	assert str(obj) == ref_text
+	def test_add(self):	#pylint: disable=R0201
+		""" Test __add__() and __radd__() functions """
+		obj1 = putil.pinspect.Callables()
+		obj1._callables_db = {'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
+		obj1._reverse_callables_db = {'rc1':5, 'rc2':7}
+		obj1._modules_dict = {'key1':'alpha', 'key2':'beta'}
+		obj1._file_names = ['hello']
+		obj1._module_names = ['this', 'is']
+		obj1._class_names = ['once', 'upon']
+		#
+		obj2 = putil.pinspect.Callables()
+		obj2._callables_db = {'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}}
+		obj2._reverse_callables_db = {'rc3':0, 'rc4':-1}
+		obj2._modules_dict = {'key3':'pi', 'key4':'gamma'}
+		obj2._file_names = ['world']
+		obj2._module_names = ['a', 'test']
+		obj2._class_names = ['a', 'time']
+		#
+		obj1._callables_db = {'call3':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
+		with pytest.raises(RuntimeError) as excinfo:
+			obj1+obj2	#pylint: disable=W0104
+		assert excinfo.value.message == 'Conflicting information between objects'
+		obj1._callables_db = {'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
+		#
+		obj2._reverse_callables_db = {'rc3':0, 'rc2':-1}
+		with pytest.raises(RuntimeError) as excinfo:
+			obj1+obj2	#pylint: disable=W0104
+		assert excinfo.value.message == 'Conflicting information between objects'
+		obj2._reverse_callables_db = {'rc3':0, 'rc4':-1}
+		#
+		obj2._modules_dict = {'key1':'pi', 'key4':'gamma'}
+		with pytest.raises(RuntimeError) as excinfo:
+			obj1+obj2	#pylint: disable=W0104
+		assert excinfo.value.message == 'Conflicting information between objects'
+		obj2._modules_dict = {'key3':'pi', 'key4':'gamma'}
+		# Test when intersection is the same
+		obj2._modules_dict = {'key1':'alpha', 'key4':'gamma'}
+		obj1+obj2	#pylint: disable=W0104
+		obj2._modules_dict = {'key3':'pi', 'key4':'gamma'}
 
-	# Test exception raised when callable is not found in database (mainly to cover potential edge cases not considered during development)
-	with mock.patch('putil.pinspect._get_code_id', side_effect=mock_get_code_id):
-		putil.test.assert_exception(putil.pinspect.Callables, {'obj':sys.modules['pinspect_support_module_2']}, RuntimeError, r'Attribute `([\w|\W]+)` of property `([\w|\W]+)` not found in callable database')
+		sobj = obj1+obj2
+		assert sorted(sobj._callables_db) == sorted({'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}, 'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}})
+		assert sorted(sobj._reverse_callables_db) == sorted({'rc1':5, 'rc2':7, 'rc3':0, 'rc4':-1})
+		assert sorted(sobj._modules_dict) == sorted({'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'})
+		assert sorted(sobj._file_names) == sorted(['hello', 'world'])
+		assert sorted(sobj._module_names) == sorted(['this', 'is', 'a', 'test'])
+		assert sorted(sobj._class_names) == sorted(['once', 'upon', 'a', 'time'])
+		#
+		obj1 += obj2
+		assert sorted(obj1._callables_db) == sorted({'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}, 'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}})
+		assert sorted(obj1._reverse_callables_db) == sorted({'rc1':5, 'rc2':7, 'rc3':0, 'rc4':-1})
+		assert sorted(obj1._modules_dict) == sorted({'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'})
+		assert sorted(obj1._file_names) == sorted(['hello', 'world'])
+		assert sorted(obj1._module_names) == sorted(['this', 'is', 'a', 'test'])
+		assert sorted(obj1._class_names) == sorted(['once', 'upon', 'a', 'time'])
 
+	def test_callables_works(self):	#pylint: disable=R0201,R0915
+		import exdoc_support_module_1	#pylint: disable=F0401,W0612
+		xobj = putil.pinspect.Callables([sys.modules['exdoc_support_module_1'].__file__])
+		ref = list()
+		ref.append('Modules:')
+		ref.append('   exdoc_support_module_1')
+		ref.append('Classes:')
+		ref.append('   exdoc_support_module_1.ExceptionAutoDocClass')
+		ref.append('exdoc_support_module_1._validate_arguments: func (15-20)')
+		ref.append('exdoc_support_module_1._write: func (21-25)')
+		ref.append('exdoc_support_module_1.write: func (26-33)')
+		ref.append('exdoc_support_module_1.read: func (34-39)')
+		ref.append('exdoc_support_module_1.probe: func (40-48)')
+		ref.append('exdoc_support_module_1.dummy_decorator: func (49-53)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass: class (54-130)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.__init__: meth (56-66)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass._del_value3: meth (67-70)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass._get_value3: meth (71-75)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass._set_value1: meth (76-80)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass._set_value2: meth (81-86)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass._set_value3: meth (87-91)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.add: meth (92-95)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.subtract: meth (96-99)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.multiply: meth (100-104)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.divide: meth (105-109)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.temp(getter): meth (110-114)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.temp(setter): meth (115-120)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.temp(deleter): meth (121-125)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.value1: prop (126)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.value2: prop (128)')
+		ref.append('exdoc_support_module_1.ExceptionAutoDocClass.value3: prop (130)')
+		ref_txt = '\n'.join(ref)
+		actual_txt = str(xobj)
+		assert actual_txt == ref_txt
+		import test_exdoc	#pylint: disable=F0401,W0612
+		xobj = putil.pinspect.Callables([sys.modules['test_exdoc'].__file__])
+		ref = list()
+		ref.append('Modules:')
+		ref.append('   test_exdoc')
+		ref.append('Classes:')
+		ref.append('   test_exdoc.MockFCode')
+		ref.append('   test_exdoc.MockGetFrame')
+		ref.append('test_exdoc.load_support_module: func (19-33)')
+		ref.append('test_exdoc.trace_error_class: func (34-42)')
+		ref.append('test_exdoc.exdocobj: func (43-73)')
+		ref.append('test_exdoc.exdocobj.multi_level_write: func (48-50)')
+		ref.append('test_exdoc.exdocobj_single: func (74-83)')
+		ref.append('test_exdoc.simple_exobj: func (84-93)')
+		ref.append('test_exdoc.simple_exobj.func1: func (88-89)')
+		ref.append('test_exdoc.MockFCode: class (96-101)')
+		ref.append('test_exdoc.MockFCode.__init__: meth (97-101)')
+		ref.append('test_exdoc.MockGetFrame: class (102-106)')
+		ref.append('test_exdoc.MockGetFrame.__init__: meth (103-106)')
+		ref.append('test_exdoc.mock_getframe: func (107-110)')
+		ref.append('test_exdoc.test_exdoc_errors: func (111-123)')
+		ref.append('test_exdoc.test_depth_property: func (124-134)')
+		ref.append('test_exdoc.test_exclude_property: func (135-145)')
+		ref.append('test_exdoc.test_build_ex_tree: func (146-212)')
+		ref.append('test_exdoc.test_build_ex_tree.func1: func (153-154)')
+		ref.append('test_exdoc.test_build_ex_tree.mock_add_nodes1: func (156-157)')
+		ref.append('test_exdoc.test_build_ex_tree.mock_add_nodes2: func (158-159)')
+		ref.append('test_exdoc.test_build_ex_tree.mock_add_nodes3: func (160-161)')
+		ref.append('test_exdoc.test_get_sphinx_doc: func (213-278)')
+		ref.append('test_exdoc.test_get_sphinx_autodoc: func (279-294)')
+		ref.append('test_exdoc.test_copy_works: func (295-307)')
+		ref.append('test_exdoc.test_exdoccxt_errors: func (308-318)')
+		ref.append('test_exdoc.test_exdoccxt_multiple: func (319-338)')
+		ref.append('test_exdoc.test_exdoccxt_multiple.func1: func (323-325)')
+		ref_txt = '\n'.join(ref)
+		actual_txt = str(xobj)
+		assert actual_txt == ref_txt
+		import pinspect_support_module_4	#pylint: disable=F0401,W0612
+		xobj = putil.pinspect.Callables([sys.modules['pinspect_support_module_4'].__file__])
+		ref = list()
+		ref.append('Modules:')
+		ref.append('   pinspect_support_module_4')
+		ref.append('pinspect_support_module_4.another_property_action_enclosing_function: func (16-21)')
+		ref.append('pinspect_support_module_4.another_property_action_enclosing_function.fget: func (18-20)')
+		ref_txt = '\n'.join(ref)
+		actual_txt = str(xobj)
+		assert actual_txt == ref_txt
+		# Test re-tries, should produce no action and raise no exception
+		xobj.trace([sys.modules['pinspect_support_module_4'].__file__])
 
-def test_copy():
-	""" Test __copy__() magic method """
-	source_obj = putil.pinspect.Callables()
-	import pinspect_support_module_1	#pylint: disable=F0401,W0612
-	source_obj.trace(sys.modules['pinspect_support_module_1'])
-	dest_obj = copy.copy(source_obj)
-	assert (source_obj._module_names == dest_obj._module_names) and (id(source_obj._module_names) != id(dest_obj._module_names))
-	assert (source_obj._class_names == dest_obj._class_names) and (id(source_obj._class_names) != id(dest_obj._class_names))
-	assert (source_obj._callables_db == dest_obj._callables_db) and (id(source_obj._callables_db) != id(dest_obj._callables_db))
-	assert (source_obj._reverse_callables_db == dest_obj._reverse_callables_db) and (id(source_obj._reverse_callables_db) != id(dest_obj._reverse_callables_db))
+	def test_empty_str(self): #pylint: disable=R0201
+		""" Test __str__() magic method when object is empty """
+		obj = putil.pinspect.Callables()
+		assert str(obj) == ''
 
+	def test_copy(self): #pylint: disable=R0201
+		""" Test __copy__() magic method """
+		source_obj = putil.pinspect.Callables()
+		import pinspect_support_module_1	#pylint: disable=F0401,W0612
+		source_obj.trace([sys.modules['pinspect_support_module_1'].__file__])
+		dest_obj = copy.copy(source_obj)
+		assert (source_obj._module_names == dest_obj._module_names) and (id(source_obj._module_names) != id(dest_obj._module_names))
+		assert (source_obj._class_names == dest_obj._class_names) and (id(source_obj._class_names) != id(dest_obj._class_names))
+		assert (source_obj._callables_db == dest_obj._callables_db) and (id(source_obj._callables_db) != id(dest_obj._callables_db))
+		assert (source_obj._reverse_callables_db == dest_obj._reverse_callables_db) and (id(source_obj._reverse_callables_db) != id(dest_obj._reverse_callables_db))
 
-def test_eq():
-	""" Test __eq__() magic method """
-	obj1 = putil.pinspect.Callables()
-	obj2 = putil.pinspect.Callables()
-	obj3 = putil.pinspect.Callables()
-	import pinspect_support_module_1	#pylint: disable=F0401,W0612
-	import pinspect_support_module_2	#pylint: disable=F0401,W0612
-	obj1.trace(sys.modules['pinspect_support_module_1'])
-	obj2.trace(sys.modules['pinspect_support_module_2'])
-	obj2.trace(sys.modules['pinspect_support_module_1'])
-	obj3.trace(sys.modules['putil.test'])
-	assert (obj1 == obj2) and (obj1 != obj3)
+	def test_eq(self): #pylint: disable=R0201
+		""" Test __eq__() magic method """
+		obj1 = putil.pinspect.Callables()
+		obj2 = putil.pinspect.Callables()
+		obj3 = putil.pinspect.Callables()
+		import pinspect_support_module_1	#pylint: disable=F0401,W0612
+		import pinspect_support_module_2	#pylint: disable=F0401,W0612
+		obj1.trace([sys.modules['pinspect_support_module_1'].__file__])
+		obj2.trace([sys.modules['pinspect_support_module_1'].__file__])
+		obj3.trace([sys.modules['putil.test'].__file__])
+		assert (obj1 == obj2) and (obj1 != obj3)
+		assert 5 != obj1
 
+	def test_callables_db(self): #pylint: disable=R0201
+		""" Test callables_db property """
+		import pinspect_support_module_4	#pylint: disable=F0401,W0612
+		xobj = putil.pinspect.Callables([sys.modules['pinspect_support_module_4'].__file__])
+		pkg_dir = os.path.dirname(__file__)
+		ref = {
+			'pinspect_support_module_4.another_property_action_enclosing_function': {
+				'code_id': (os.path.join(pkg_dir, 'support', 'pinspect_support_module_4.py'), 16),
+				'last_lineno': 21,
+				'name': 'pinspect_support_module_4.another_property_action_enclosing_function',
+				'type': 'func'
+			},
+			'pinspect_support_module_4.another_property_action_enclosing_function.fget': {
+				'code_id': (os.path.join(pkg_dir, 'support', 'pinspect_support_module_4.py'), 18),
+				'last_lineno': 20,
+				'name': 'pinspect_support_module_4.another_property_action_enclosing_function.fget',
+				'type': 'func'
+			}
+		}
+		assert sorted(xobj.callables_db) == sorted(ref)
+		ref = {
+			(os.path.join(pkg_dir, 'support', 'pinspect_support_module_4.py'), 16): 'pinspect_support_module_4.another_property_action_enclosing_function',
+			(os.path.join(pkg_dir, 'support', 'pinspect_support_module_4.py'), 18): 'pinspect_support_module_4.another_property_action_enclosing_function.fget',
+		}
+		assert sorted(xobj.reverse_callables_db) == sorted(ref)
 
-def test_namespace_resolution():
-	""" Test correct handling of import statements that cause errors """
-	import pinspect_support_module_5	#pylint: disable=F0401,W0612
-	obj = putil.pinspect.Callables()
-	obj.trace(sys.modules['pinspect_support_module_5'])
-	ref_list = list()
-	ref_list.append('Modules:')
-	ref_list.append('   pinspect_support_module_5')
-	ref_list.append('Classes:')
-	ref_list.append('   pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass')
-	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function: func (14)')
-	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass: class (16)')
-	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.__init__: meth (18)')
-	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._get_data: meth (21)')
-	ref_list.append('   fget of: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data')
-	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data: meth (24)')
-	ref_list.append('   fset of: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data')
-	ref_list.append('pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass.data: prop (27)')
-	ref_list.append('   fget: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._get_data')
-	ref_list.append('   fset: pinspect_support_module_5.namespace_test_enclosing_function.NamespaceTestClass._set_data')
-	ref_text = compare_str_outputs(obj, ref_list)
-	assert str(obj) == ref_text
-	import pinspect_support_module_6	#pylint: disable=F0401,W0612
-	obj = putil.pinspect.Callables()
-	putil.test.assert_exception(obj.trace, {'obj':sys.modules['pinspect_support_module_6']}, ValueError, 'math domain error')
+	def test_get_callable_from_line(self): #pylint: disable=R0201
+		""" Test get_callable_from_line() function """
+		xobj = putil.pinspect.Callables()
+		import pinspect_support_module_4	#pylint: disable=F0401,W0612
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 16) == 'pinspect_support_module_4.another_property_action_enclosing_function'
+		xobj = putil.pinspect.Callables([sys.modules['pinspect_support_module_4'].__file__])
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 16) == 'pinspect_support_module_4.another_property_action_enclosing_function'
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 17) == 'pinspect_support_module_4.another_property_action_enclosing_function'
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 21) == 'pinspect_support_module_4.another_property_action_enclosing_function'
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 18) == 'pinspect_support_module_4.another_property_action_enclosing_function.fget'
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 19) == 'pinspect_support_module_4.another_property_action_enclosing_function.fget'
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 20) == 'pinspect_support_module_4.another_property_action_enclosing_function.fget'
+		assert xobj.get_callable_from_line(sys.modules['pinspect_support_module_4'].__file__, 100) == 'pinspect_support_module_4'
 
 
 ##

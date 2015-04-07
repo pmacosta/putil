@@ -38,10 +38,9 @@ Functions
 Classes
 =======
 
-.. automodule:: putil.exh
-    :members: ExHandle
-    :undoc-members:
-    :show-inheritance:
+.. autoclass:: putil.exh.ExHandle
+    :members: add_exception, callables_db, callables_separator, exceptions_db, __add__, __copy__, __eq__, __iadd__, __str__
+	:show-inheritance:
 
 *******
 License

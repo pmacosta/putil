@@ -133,7 +133,7 @@ class TestPanel(object):	#pylint: disable=W0232
 		vector = numpy.array([105, 107.7, 215, 400.2, 600, 700, 800, 810, 820, 830, 840, 850, 900, 905])
 		obj = putil.plot.functions._intelligent_ticks(vector, min(vector), max(vector), tight=True)	#pylint: disable=W0212
 		assert obj == ([105.0, 193.8888888889, 282.7777777778, 371.6666666667, 460.5555555556, 549.4444444444, 638.3333333333, 727.2222222222, 816.1111111111, 905.0],
-						   ['105', '194', '283', '372', '461', '549', '638', '727', '816', '905'], 105, 905, 1, ' ')
+						   ['105.0', '193.9', '282.8', '371.7', '460.6', '549.4', '638.3', '727.2', '816.1', '905.0'], 105, 905, 1, ' ')
 		# print obj
 		# 7
 		# Ticks marks where some data points can be on grid
@@ -229,6 +229,23 @@ class TestPanel(object):	#pylint: disable=W0232
 		obj = putil.plot.functions._intelligent_ticks(vector, 500, 1e9, tight=False, log_axis=True)	#pylint: disable=W0212
 		assert obj == ([1, 10, 100, 1000, 10000, 100000], ['1', '10', '100', '1k', '10k', '100k'], 1, 100000, 1000, 'k')
 		# print obj
+
+	def test_iterator(self):	#pylint: disable=C0103,R0201,W0621,R0914,R0915
+		""" Test __iter__() method """
+		ds1_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300, 400]), dep_var=numpy.array([1, 2, 3, 4]))
+		ds2_obj = putil.plot.BasicSource(indep_var=numpy.array([300, 400, 500, 600, 700]), dep_var=numpy.array([3, 4, 5, 6, 7]))
+		ds3_obj = putil.plot.BasicSource(indep_var=numpy.array([100, 200, 300]), dep_var=numpy.array([20, 40, 50]))
+		series1_obj = putil.plot.Series(data_source=ds1_obj, label='series 1', interp=None)
+		series2_obj = putil.plot.Series(data_source=ds2_obj, label='series 2', interp=None)
+		series3_obj = putil.plot.Series(data_source=ds3_obj, label='series 3', interp=None, secondary_axis=True)
+		panel_obj = putil.plot.Panel(series=[series1_obj, series2_obj, series3_obj])
+		for num, series in enumerate(panel_obj):
+			if num == 0:
+				assert series == series1_obj
+			if num == 1:
+				assert series == series2_obj
+			if num == 2:
+				assert series == series3_obj
 
 	def test_series(self):	#pylint: disable=C0103,R0201,W0621,R0914,R0915
 		""" Test that the panel dependent axis are correctly set """
@@ -349,11 +366,11 @@ class TestPanel(object):	#pylint: disable=W0232
 		assert (panel_obj._secondary_dep_var_div, panel_obj._secondary_dep_var_unit_scale) == (None, None)	#pylint: disable=W0212
 
 	def test_complete(self, default_series):	#pylint: disable=C0103,R0201,W0621
-		""" Test that _complete() method behaves correctly """
+		""" Test that _complete property behaves correctly """
 		obj = putil.plot.Panel(series=None)
-		assert obj._complete() == False	#pylint: disable=W0212
+		assert obj._complete == False	#pylint: disable=W0212
 		obj.series = default_series
-		assert obj._complete() == True	#pylint: disable=W0212
+		assert obj._complete == True	#pylint: disable=W0212
 
 	def test_scale_series(self, default_series):	#pylint: disable=C0103,R0201,W0621
 		""" Test that series scaling function behaves correctly """

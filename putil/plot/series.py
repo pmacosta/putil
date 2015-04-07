@@ -18,7 +18,7 @@ from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
 ###
 """
 [[[cog
-import os, sys
+import os, sys, __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_series
 exobj_plot = trace_ex_plot_series.trace_module(no_print=True)
@@ -80,6 +80,8 @@ class Series(object):	#pylint: disable=R0902,R0903
 
 	 * ValueError (Argument \`line_style\` is not one of ['-', '--', '-.', ':'])
 
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
+
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 
 	.. [[[end]]]
@@ -119,7 +121,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 		if data_source is not None:
 			self._exh.raise_exception_if(exname='indep_var_attribute', condition='indep_var' not in dir(data_source))
 			self._exh.raise_exception_if(exname='dep_var_attribute', condition='dep_var' not in dir(data_source))
-			self._exh.raise_exception_if(exname='full_spec', condition=('_complete' in dir(data_source)) and (not data_source._complete()))	#pylint: disable=W0212
+			self._exh.raise_exception_if(exname='full_spec', condition=('_complete' in dir(data_source)) and (not data_source._complete))	#pylint: disable=W0212
 			self._data_source = data_source
 			self.indep_var = self.data_source.indep_var
 			self.dep_var = self.data_source.dep_var
@@ -261,7 +263,7 @@ class Series(object):	#pylint: disable=R0902,R0903
 			return 'matplotlib.path.Path object'
 		return str(self.marker)
 
-	def _complete(self):
+	def _get_complete(self):
 		""" Returns True if series is fully specified, otherwise returns False """
 		return self.data_source is not None
 
@@ -346,6 +348,8 @@ class Series(object):	#pylint: disable=R0902,R0903
 				label=self.label if self.line_style is None else None
 			)
 
+	_complete = property(_get_complete)
+
 	data_source = property(_get_data_source, _set_data_source, doc='Data source')
 	r"""
 	Gets or sets the data source object. The independent and dependent data sets are obtained once this attribute is set. To be valid, a data source object must have an ``indep_var`` attribute that contains a Numpy vector of
@@ -363,6 +367,8 @@ class Series(object):	#pylint: disable=R0902,R0903
 	 * RuntimeError (Argument \`data_source\` does not have an \`indep_var\` attribute)
 
 	 * RuntimeError (Argument \`data_source\` is not fully specified)
+
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
 
 	 * ValueError (At least 4 data points are needed for CUBIC interpolation)
 

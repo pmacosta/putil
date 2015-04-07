@@ -3,10 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,W0212,W0640
 
-import copy, mock, pytest, re
+import copy, itertools, mock, os, pytest, re, sys
 
-import putil.exh, putil.misc, putil.pcontracts, putil.test
-
+import putil.eng, putil.exh, putil.misc, putil.pcontracts, putil.test
+TEST_DIR = os.path.dirname(__file__)
+SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
+sys.path.append(SUPPORT_DIR)
+import exh_support_module1	#pylint: disable=F0401
 
 ###
 # Tests
@@ -41,19 +44,23 @@ def test_ex_type_str():
 def test_init_errors():
 	""" Test __init__() method errors """
 	putil.test.assert_exception(putil.exh.ExHandle, {'full_cname':5}, RuntimeError, 'Argument `full_cname` is not valid')
+	putil.test.assert_exception(putil.exh.ExHandle, {'exclude':5}, RuntimeError, 'Argument `exclude` is not valid')
+	putil.test.assert_exception(putil.exh.ExHandle, {'exclude':['p', 'a', 5, 'c']}, RuntimeError, 'Argument `exclude` is not valid')
 	exobj = putil.exh.ExHandle()
 	assert exobj._full_cname == False
-	exobj = putil.exh.ExHandle(False)
+	assert exobj._exclude == None
+	exobj = putil.exh.ExHandle(False, [])
 	assert exobj._full_cname == False
-	exobj = putil.exh.ExHandle(True)
+	assert exobj._exclude == []
+	exobj = putil.exh.ExHandle(True, None)
 	assert exobj._full_cname == True
+	assert exobj._exclude == None
+	exobj = putil.exh.ExHandle(exclude=['a', 'b'])
+	assert exobj._exclude == ['a', 'b']
 
 
 def test_add_exception_errors():
 	""" Test add_exception() function errors """
-	def mock_get_code_id(obj):	#pylint: disable=W0612,W0613
-		""" Return unique identity tuple to individualize callable object """
-		return None
 	for full_cname in [True, False]:
 		obj = putil.exh.ExHandle(full_cname)
 		putil.test.assert_exception(obj.add_exception, {'exname':5, 'extype':RuntimeError, 'exmsg':'Message'}, RuntimeError, 'Argument `exname` is not valid')
@@ -63,17 +70,15 @@ def test_add_exception_errors():
 		obj = putil.exh.ExHandle(full_cname)
 		obj.add_exception(exname='exception name', extype=RuntimeError, exmsg='exception message for exception #1')
 		obj.add_exception(exname='exception name', extype=TypeError, exmsg='exception message for exception #2')
-	# Test case where callable is not found in callable database
-	obj = putil.exh.ExHandle(True)
-	with mock.patch('putil.exh._get_code_id') as mock_get_code_id:
-		putil.test.assert_exception(obj.add_exception, {'exname':'exception name', 'extype':RuntimeError, 'exmsg':'exception message for exception #1'}, RuntimeError, \
-			r'Callable with call ID <([\w|\W|\s]+)> not found in reverse callables database')
 
 
 def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 	""" Test add_exception() function works """
-	for full_cname in [True, False]:
-		exobj = putil.exh.ExHandle(full_cname)
+	exobj = putil.exh.ExHandle(full_cname=True, exclude=['_pytest', 'test_exh'])
+	assert exobj.exceptions_db == []
+	#for full_cname, exclude in itertools.product([True], [['_pytest']]):
+	for full_cname, exclude in itertools.product([True, False], [None, ['_pytest', 'execnet'], ['_pytest', 'execnet', 'test_exh']]):
+		exobj = putil.exh.ExHandle(full_cname=full_cname, exclude=exclude)
 		def func1():	#pylint: disable=C0111,W0612
 			exobj.add_exception('first_exception', TypeError, 'This is the first exception')
 			print "Hello"
@@ -102,6 +107,12 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 			def value3(self):	#pylint: disable=C0111,R0201
 				self._exobj.add_exception('deleter_exception', TypeError, 'Delete function exception')
 				print 'Cannot delete attribute'
+			def _get_value4_int(self):
+				self._exobj.add_exception('dummy_exception', IOError, 'Pass-through exception')
+				return self._value
+			def _get_value4(self):
+				return self._get_value4_int()
+			value4 = property(_get_value4)
 		def func7():	#pylint: disable=C0111,W0612
 			exobj.add_exception('total_exception_7', TypeError, 'Total exception #7')
 		def func8():	#pylint: disable=C0111,W0612
@@ -135,57 +146,108 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 		func13()
 		func14()
 		func15(exobj)	#pylint:disable=E0602
+		exh_support_module1.func16(exobj)
+		if full_cname and (exclude == ['_pytest', 'execnet', 'test_exh']):
+			for item in exobj.exceptions_db:
+				print item['name'].replace('dynamic', '').replace('dynamic/', '').replace('__main__', '').replace('__main__/', '')
+				assert not item['name'].replace('dynamic/', '').replace('dynamic', '').replace('__main__/', '').replace('__main__', '') if item['data'] != 'TypeError (Total exception #16)' else 'exh_support_module1.func16'
+			continue
 		if not cdb:
 			assert False
 		for exname in cdb:
 			erec = cdb[exname]
-			if re.compile(r'\d+/first_exception').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func1')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception')
-			elif re.compile(r'\d+/second_exception').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func2')) \
-					and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception')
-			elif re.compile(r'\d+/third_exception').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func2')) \
-					and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception')
-			elif re.compile(r'\d+/setter_exception').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.Class1.value3(setter)')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception')
-			elif re.compile(r'\d+/getter_exception').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.Class1.value3(getter)')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception')
-			elif re.compile(r'\d+/deleter_exception').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.Class1.value3(deleter)')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception')
-			elif re.compile(r'\d+/total_exception_7').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func7')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7')
-			elif re.compile(r'\d+/total_exception_8').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func8')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8')
-			elif re.compile(r'\d+/total_exception_9').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func9')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9')
-			elif re.compile(r'\d+/total_exception_10').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func10')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10')
-			elif re.compile(r'\d+/total_exception_11').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func11')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11')
-			elif re.compile(r'\d+/total_exception_12').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func12')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12')
-			elif re.compile(r'\d+/total_exception_13').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func13')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13')
-			elif re.compile(r'\d+/total_exception_14').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works.func14')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14')
-			elif re.compile(r'\d+/total_exception_15').match(exname):
-				assert (erec['function'][0] == None if not full_cname else erec['function'][0].endswith('test_exh.test_add_exception_works')) \
-					and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #15')
+			if full_cname and exclude:
+				erec['function'][0] = erec['function'][0].replace('dynamic/', '').replace('__main__/', '')
+				if re.compile(r'\d+/first_exception').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func1') and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception')
+				elif re.compile(r'\d+/second_exception').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func2') and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception')
+				elif re.compile(r'\d+/third_exception').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func2') and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception')
+				elif re.compile(r'\d+/setter_exception').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.Class1.value3(setter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception')
+				elif re.compile(r'\d+/getter_exception').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.Class1.value3(getter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception')
+				elif re.compile(r'\d+/deleter_exception').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.Class1.value3(deleter)') and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception')
+				elif re.compile(r'\d+/total_exception_7').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func7') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7')
+				elif re.compile(r'\d+/total_exception_8').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func8') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8')
+				elif re.compile(r'\d+/total_exception_9').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func9') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9')
+				elif re.compile(r'\d+/total_exception_10').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func10') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10')
+				elif re.compile(r'\d+/total_exception_11').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func11') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11')
+				elif re.compile(r'\d+/total_exception_12').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func12') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12')
+				elif re.compile(r'\d+/total_exception_13').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func13') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13')
+				elif re.compile(r'\d+/total_exception_14').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.func14') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14')
+				elif re.compile(r'\d+/total_exception_15').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #15')
+				elif re.compile(r'\d+/total_exception_16').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/exh_support_module1.func16') and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #16')
+				elif re.compile(r'\d+/dummy_exception').match(exname):
+					assert (erec['function'][0] == 'test_exh.test_add_exception_works/test_exh.test_add_exception_works.Class1.value4(getter)') and (erec['type'] == IOError) and (erec['msg'] == 'Pass-through exception')
+				else:
+					assert False
 			else:
-				assert False
+				if re.compile(r'\d+/first_exception').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func1').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'This is the first exception')
+				elif re.compile(r'\d+/second_exception').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func2').match(erec['function'][0])) \
+						and (erec['type'] == ValueError) and (erec['msg'] == 'This is the second exception')
+				elif re.compile(r'\d+/third_exception').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func2').match(erec['function'][0])) \
+						and (erec['type'] == IOError) and (erec['msg'] == 'This is the third exception')
+				elif re.compile(r'\d+/setter_exception').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.Class1.value3\(setter\)').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Set function exception')
+				elif re.compile(r'\d+/getter_exception').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.Class1.value3\(getter\)').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Get function exception')
+				elif re.compile(r'\d+/deleter_exception').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.Class1.value3\(deleter\)').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Delete function exception')
+				elif re.compile(r'\d+/total_exception_7').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func7').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #7')
+				elif re.compile(r'\d+/total_exception_8').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func8').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #8')
+				elif re.compile(r'\d+/total_exception_9').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func9').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #9')
+				elif re.compile(r'\d+/total_exception_10').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func10').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #10')
+				elif re.compile(r'\d+/total_exception_11').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func11').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #11')
+				elif re.compile(r'\d+/total_exception_12').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func12').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #12')
+				elif re.compile(r'\d+/total_exception_13').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func13').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #13')
+				elif re.compile(r'\d+/total_exception_14').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.func14').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #14')
+				elif re.compile(r'\d+/total_exception_15').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #15')
+				elif re.compile(r'\d+/total_exception_16').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works/exh_support_module1.func16').match(erec['function'][0])) \
+						and (erec['type'] == TypeError) and (erec['msg'] == 'Total exception #16')
+				elif re.compile(r'\d+/dummy_exception').match(exname):
+					assert (erec['function'][0] == None if not full_cname else re.compile(r'.+/test_exh.test_add_exception_works.Class1.value4\(getter\)').match(erec['function'][0])) \
+						and (erec['type'] == IOError) and (erec['msg'] == 'Pass-through exception')
+				else:
+					assert False
 		# Test that function IDs are unique
 		repeated_found = False
 		exlist = []
@@ -200,6 +262,17 @@ def test_add_exception_works():	# pylint: disable=R0912,R0914,R0915
 			else:
 				exlist.append(exname.split('/')[0])
 		assert len(set(exlist)) == len(exlist)
+		# Test that exec code gets correctly flagged
+		assert exobj._get_callable_full_name(sys._getframe(0), '<module>', 1, '<module>', None, None) == 'dynamic'
+
+	def mock_get_code_id_from_obj(obj):	#pylint: disable=W0612,W0613
+		""" Return unique identity tuple to individualize callable object """
+		return None
+	assert putil.exh._get_code_id_from_obj(None) == None
+	# Test case where callable is dynamic and does not have a code ID
+	obj = putil.exh.ExHandle(True)
+	with mock.patch('putil.exh._get_code_id_from_obj', side_effect=mock_get_code_id_from_obj):
+		assert obj._get_callable_full_name(sys._getframe(0), '<module>', 1, 'test_add_exception_errors', None, None) == 'dynamic'
 
 
 def test_raise_exception():
@@ -317,7 +390,7 @@ def test_str():
 		func7(exobj)
 		func8(exobj)
 		# Actual tests
-		str_in = str(exobj).split('\n\n')
+		str_in = str(exobj).split('\n...\n')
 		str_out = list()
 		for str_element in str_in:
 			str_list = str_element.split('\n')
@@ -395,3 +468,71 @@ def test_multiple_paths_to_same_exception():	#pylint: disable=C0103
 	assert str_in[2].endswith(fstring.format('a' if str_in[1].endswith(fstring.format('b')) else 'b'))
 	assert str_in[3] == 'Type....: RuntimeError'
 	assert str_in[4] == 'Message.: This is the exception'
+
+def test_add():	#pylint: disable=C0103,R0915
+	""" Test __add__() function """
+	obj1 = putil.exh.ExHandle(_copy=True)
+	obj1._ex_dict = {'id1':5, 'ssid1':10}
+	obj1._callables_obj = putil.pinspect.Callables()
+	obj1._callables_obj._callables_db = {'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
+	obj1._callables_obj._reverse_callables_db = {'rc1':5, 'rc2':7}
+	obj1._callables_obj._modules_dict = {'key1':'alpha', 'key2':'beta'}
+	obj1._callables_obj._file_names = ['hello']
+	obj1._callables_obj._module_names = ['this', 'is']
+	obj1._callables_obj._class_names = ['once', 'upon']
+	#
+	obj2 = putil.exh.ExHandle(_copy=True)
+	obj2._ex_dict = {'id2':3, 'ssid2':1}
+	obj2._callables_obj = putil.pinspect.Callables()
+	obj2._callables_obj._callables_db = {'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}}
+	obj2._callables_obj._reverse_callables_db = {'rc3':0, 'rc4':-1}
+	obj2._callables_obj._modules_dict = {'key3':'pi', 'key4':'gamma'}
+	obj2._callables_obj._file_names = ['world']
+	obj2._callables_obj._module_names = ['a', 'test']
+	obj2._callables_obj._class_names = ['a', 'time']
+	#
+	sobj = obj1+obj2
+	assert sorted(sobj._ex_dict) == sorted({'id1':5, 'ssid1':10, 'id2':3, 'ssid2':1})
+	assert sorted(sobj._callables_obj._callables_db) == sorted({'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}, 'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}})
+	assert sorted(sobj._callables_obj._reverse_callables_db) == sorted({'rc1':5, 'rc2':7, 'rc3':0, 'rc4':-1})
+	assert sorted(sobj._callables_obj._modules_dict) == sorted({'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'})
+	assert sorted(sobj._callables_obj._file_names) == sorted(['hello', 'world'])
+	assert sorted(sobj._callables_obj._module_names) == sorted(['this', 'is', 'a', 'test'])
+	assert sorted(sobj._callables_obj._class_names) == sorted(['once', 'upon', 'a', 'time'])
+	#
+	obj1 += obj2
+	assert sorted(obj1._ex_dict) == sorted({'id1':5, 'ssid1':10, 'id2':3, 'ssid2':1})
+	assert sorted(obj1._callables_obj._callables_db) == sorted({'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}, 'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}})
+	assert sorted(obj1._callables_obj._reverse_callables_db) == sorted({'rc1':5, 'rc2':7, 'rc3':0, 'rc4':-1})
+	assert sorted(obj1._callables_obj._modules_dict) == sorted({'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'})
+	assert sorted(obj1._callables_obj._file_names) == sorted(['hello', 'world'])
+	assert sorted(obj1._callables_obj._module_names) == sorted(['this', 'is', 'a', 'test'])
+	assert sorted(obj1._callables_obj._class_names) == sorted(['once', 'upon', 'a', 'time'])
+	#
+	obj2._full_cname = True
+	with pytest.raises(RuntimeError) as excinfo:
+		obj1+obj2	#pylint: disable=W0104
+	assert excinfo.value.message == 'Incompatible exception handlers'
+	with pytest.raises(RuntimeError) as excinfo:
+		obj1 += obj2	#pylint: disable=W0104
+	assert excinfo.value.message == 'Incompatible exception handlers'
+	obj2._full_cname = False
+
+	obj2._exclude = ['_pytest']
+	with pytest.raises(RuntimeError) as excinfo:
+		obj1+obj2	#pylint: disable=W0104
+	assert excinfo.value.message == 'Incompatible exception handlers'
+	with pytest.raises(RuntimeError) as excinfo:
+		obj1 += obj2	#pylint: disable=W0104
+	assert excinfo.value.message == 'Incompatible exception handlers'
+	obj2._exclude = None
+
+
+def test_eq():	#pylint: disable=C0103,R0915
+	""" Test __eq__() function """
+	putil.exh.get_or_create_exh_obj()
+	putil.eng.peng(100, 3, True) # Trace some exceptions
+	obj1 = putil.exh.get_exh_obj()
+	obj2 = copy.copy(obj1)
+	assert obj1 == obj2
+	assert 5 != obj1

@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import bisect, copy, os, sys, textwrap
+import bisect, copy, os, sys, textwrap, __builtin__
 
 import putil.exh, putil.misc, putil.tree
 
@@ -28,7 +28,12 @@ def _format_msg(text, width, indent=0):
 ###
 class ExDocCxt(object):	#pylint: disable=R0903
 	""" Context manager to simplify exception tracing; it sets up the tracing environment and returns a :py:class:`putil.exdoc.ExDoc` object that can the be used in the documentation string of each callable to extract the
-	exceptions documentation with either :py:meth:`putil.exdoc.ExDoc.get_sphinx_doc` or :py:meth:`putil.exdoc.ExDoc.get_sphinx_autodoc`. For example:
+	exceptions documentation with either :py:meth:`putil.exdoc.ExDoc.get_sphinx_doc` or :py:meth:`putil.exdoc.ExDoc.get_sphinx_autodoc`.
+
+	:param	exclude: Module exclusion list. A particular callable in an otherwise fully qualified name is omitted if it belongs to a module in this list
+	:type	exclude: list
+
+	For example:
 
 		>>> with putil.exdoc.ExDocCxt() as exdoc_obj:
 		...     test_module()
@@ -37,9 +42,11 @@ class ExDocCxt(object):	#pylint: disable=R0903
 		:raises: [...]
 
 	"""
-	def __init__(self, _no_print=True):
-		putil.exh.get_or_create_exh_obj(True)
+	def __init__(self, _no_print=True, exclude=None):
+		putil.exh.get_or_create_exh_obj(full_cname=True, exclude=exclude)
 		self._exdoc_obj = putil.exdoc.ExDoc(exh_obj=putil.exh.get_exh_obj(), _empty=True, _no_print=_no_print)
+		setattr(__builtin__, '_EXDOC_EXCLUDE', exclude)
+		setattr(__builtin__, '_EXDOC_FULL_CNAME', True)
 
 	def __enter__(self):
 		return self._exdoc_obj
@@ -48,7 +55,16 @@ class ExDocCxt(object):	#pylint: disable=R0903
 		if exc_type is not None:
 			putil.exh.del_exh_obj()
 			return False
-		self._exdoc_obj._exh_obj = copy.copy(putil.exh.get_exh_obj())	#pylint: disable=W0212
+		if hasattr(__builtin__, '_EXH_LIST') and __builtin__._EXH_LIST:	#pylint: disable=E1101,W0212
+			exhobj = copy.copy(__builtin__._EXH_LIST[0])	#pylint: disable=E1101,W0212
+			for obj in __builtin__._EXH_LIST[1:]:	#pylint: disable=E1101,W0212
+				exhobj += obj
+			delattr(__builtin__, '_EXH_LIST')
+		else:
+			exhobj = putil.exh.get_exh_obj()
+		delattr(__builtin__, '_EXDOC_EXCLUDE')
+		delattr(__builtin__, '_EXDOC_FULL_CNAME')
+		self._exdoc_obj._exh_obj = copy.copy(exhobj)	#pylint: disable=W0212
 		putil.exh.del_exh_obj()
 		self._exdoc_obj._build_ex_tree()	#pylint: disable=W0212
 		self._exdoc_obj._build_module_db()	#pylint: disable=W0212
@@ -104,28 +120,13 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 	def _build_ex_tree(self):
 		""" Construct exception tree from trace """
 		# Load exception data into tree structure
-		cdb = self._exh_obj.callables_db
 		sep = self._exh_obj.callables_separator
 		data = self._exh_obj.exceptions_db
 		if not data:
 			raise RuntimeError('Exceptions database is empty')
-		unique_data = []
-		for ditem in data:
-			# Detect setter/getter/deleter functions of properties and re-name them, faster to do it before tree is built
-			new_name_list = []
-			for token in ditem['name'].split(sep):
-				if cdb[token]['link'] and (len(cdb[token]['link']) > 1):
-					raise RuntimeError('Functions performing actions for multiple properties not supported')
-				elif cdb[token]['link']:
-					new_name_list.append('{0}[{1}]'.format(cdb[token]['link'][0]['prop'], cdb[token]['link'][0]['action']))
-				else:
-					new_name_list.append(token)
-			ditem['name'] = sep.join(new_name_list)
-			unique_data.append(ditem)
-		# Actually build tree
 		self._tobj = putil.tree.Tree(sep)
 		try:
-			self._tobj.add_nodes(unique_data)
+			self._tobj.add_nodes(data)
 		except ValueError as eobj:
 			if str(eobj).startswith('Illegal node name'):
 				raise RuntimeError('Exceptions do not have a common callable')
@@ -145,11 +146,10 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 		""" Build database of module callables sorted by line number """
 		tdict = {}
 		for callable_name, callable_dict in self._exh_obj.callables_db.iteritems():
-			if callable_dict['code_id']:
-				file_name, line_no = callable_dict['code_id']
-				if file_name not in tdict:
-					tdict[file_name] = list()
-				tdict[file_name].append({'name':'{0}.__init__'.format(callable_name) if callable_dict['type'] == 'class' else callable_name, 'line':line_no})
+			file_name, line_no = callable_dict['code_id']
+			if file_name not in tdict:
+				tdict[file_name] = list()
+			tdict[file_name].append({'name':'{0}.__init__'.format(callable_name) if callable_dict['type'] == 'class' else callable_name, 'line':line_no})
 		for file_name in tdict.iterkeys():
 			self._module_obj_db[file_name] = sorted(tdict[file_name], key=lambda idict: idict['line'])
 
@@ -247,8 +247,8 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			callable_dict[name] = {'type':'regular', 'instances':instances}
 		else:
 			# Try to find property callable
-			for action in ['fget', 'fset', 'fdel']:
-				prop_name = '{0}[{1}]'.format(name, action)
+			for action in ['getter', 'setter', 'deleter']:
+				prop_name = '{0}({1})'.format(name, action)
 				instances = self._tobj.search_tree(prop_name)
 				if instances:
 					callable_dict[prop_name] = {'type':action, 'instances':instances}
@@ -275,14 +275,14 @@ class ExDoc(object):	#pylint: disable=R0902,R0903
 			if len(callable_dict) == 1:
 				callable_root = callable_dict.keys()[0]
 				action = callable_dict[callable_root]['type']
-				desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
+				desc = 'retrieved' if action == 'getter' else ('assigned' if action == 'setter' else 'deleted')
 				exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))
 				exoutput.extend(['\n{0}'.format(_format_msg(':raises: (when {0}) {1}'.format(desc, exlist[0]), width))] if len(exlist) == 1 else\
 					['\n:raises: (when {0})\n'.format(desc)]+[' * {0}\n'.format(_format_msg(exname, width, 3)) for exname in exlist])
 			else:
 				exoutput.append('\n:raises:')
-				for action in ['fset', 'fdel', 'fget']:
-					desc = 'retrieved' if action == 'fget' else ('assigned' if action == 'fset' else 'deleted')
+				for action in ['setter', 'deleter', 'getter']:
+					desc = 'retrieved' if action == 'getter' else ('assigned' if action == 'setter' else 'deleted')
 					for callable_root in callable_dict:
 						if callable_dict[callable_root]['type'] == action:
 							exlist = sorted(list(set(callable_dict[callable_root]['exlist'])))

@@ -160,12 +160,12 @@ class TestBasicSource(object):	#pylint: disable=W0232
 		assert excinfo.value.message == 'Arguments `indep_var` and `dep_var` must have the same number of elements'
 
 	def test_complete(self):	#pylint: disable=C0103,R0201
-		""" Test that _complete() method behaves correctly """
+		""" Test that _complete property behaves correctly """
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([100, 200, 300]), indep_min=0, indep_max=50)
 		obj._indep_var = None	#pylint: disable=W0212
-		assert obj._complete() == False	#pylint: disable=W0212
+		assert obj._complete == False	#pylint: disable=W0212
 		obj = putil.plot.BasicSource(indep_var=numpy.array([10, 20, 30]), dep_var=numpy.array([100, 200, 300]), indep_min=0, indep_max=50)
-		assert obj._complete() == True	#pylint: disable=W0212
+		assert obj._complete == True	#pylint: disable=W0212
 
 	def test_str(self):	#pylint: disable=C0103,R0201
 		""" Test that str behaves correctly """

@@ -3,17 +3,21 @@
 # See LICENSE for details
 # pylint: disable=W0212,C0111
 
-import copy, os, pytest
+import copy, datetime, os, pytest
 
 import putil.exdoc, putil.exh
 
 
 def trace_module(no_print=True):
 	""" Trace plot module exceptions """
-	with putil.exdoc.ExDocCxt() as exdoc_obj:
-		if pytest.main('-x -k TestParameterizedColorSpace '+os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', '..', 'tests', 'test_plot.py'))):
+	noption = os.environ.get('NOPTION', None)
+	start_time = datetime.datetime.now()
+	with putil.exdoc.ExDocCxt(exclude=['_pytest', 'execnet']) as exdoc_obj:
+		if pytest.main('-x {0}-k TestParameterizedColorSpace {1}'.format('{0} '.format(noption) if noption else '', os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'test_plot.py')))):
 			raise RuntimeError('Tracing did not complete successfully')
+	stop_time = datetime.datetime.now()
 	if not no_print:
+		print 'Auto-generatio of exceptions documentation time: {0}'.format(putil.misc.elapsed_time_string(start_time, stop_time))
 		module_prefix = 'putil.plot.functions.'
 		callable_names = (['parameterized_color_space'])
 		for callable_name in callable_names:

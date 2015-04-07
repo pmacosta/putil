@@ -3,9 +3,9 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0212
 
-import imp, copy, mock, os, pytest, sys
+import imp, copy, mock, os, pytest, sys, __builtin__
 
-import putil.exdoc, putil.exh, putil.test
+import putil.exdoc, putil.exh, putil.misc, putil.test
 # Add support module path relative to the test-bench file, to support testing in virtual environments or with installed packages
 TEST_DIR = os.path.dirname(__file__)
 SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
@@ -48,7 +48,7 @@ def exdocobj():
 	def multi_level_write():
 		""" Test that multiple calls to the same function with different hierarchy levels get correctly aggregated """
 		exdoc_support_module_1.write(True)
-	with putil.exdoc.ExDocCxt(_no_print=True) as exdoc_obj:
+	with putil.exdoc.ExDocCxt(_no_print=True, exclude=['_pytest']) as exdoc_obj:
 		obj = exdoc_support_module_1.ExceptionAutoDocClass(10)
 		obj.add(5)
 		obj.subtract(3)
@@ -69,6 +69,7 @@ def exdocobj():
 		exdoc_support_module_1.read()
 		exdoc_support_module_1.probe()
 	return exdoc_obj
+
 
 @pytest.fixture
 def exdocobj_single():
@@ -148,7 +149,7 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		with putil.exdoc.ExDocCxt():
 			pass
 	assert excinfo.value.message == 'Exceptions database is empty'
-	exobj1 = putil.exh.ExHandle(True)
+	exobj1 = putil.exh.ExHandle(full_cname=True)
 	def func1():	#pylint: disable=C0111,W0612
 		exobj1.add_exception('first_exception', TypeError, 'This is the first exception')
 	func1()
@@ -158,7 +159,7 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		raise ValueError('General exception #1')
 	def mock_add_nodes3(self):	#pylint: disable=C0111,W0613
 		raise IOError('General exception #2')
-	assert str(exdocobj._tobj) == \
+	ref = \
 		u'test_exdoc.exdocobj\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.ExceptionAutoDocClass.__init__ (*)\n'.encode('utf-8') + \
 		u'│├putil.tree.Tree.__init__ (*)\n'.encode('utf-8') + \
@@ -166,13 +167,13 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		u'│ └putil.tree.Tree._validate_nodes_with_data (*)\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.ExceptionAutoDocClass.divide (*)\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.ExceptionAutoDocClass.multiply (*)\n'.encode('utf-8') + \
-		u'├exdoc_support_module_1.ExceptionAutoDocClass.temp[fset] (*)\n'.encode('utf-8') + \
-		u'├exdoc_support_module_1.ExceptionAutoDocClass.value1[fget] (*)\n'.encode('utf-8') + \
-		u'├exdoc_support_module_1.ExceptionAutoDocClass.value1[fset] (*)\n'.encode('utf-8') + \
-		u'├exdoc_support_module_1.ExceptionAutoDocClass.value2[fset] (*)\n'.encode('utf-8') + \
-		u'├exdoc_support_module_1.ExceptionAutoDocClass.value3[fdel] (*)\n'.encode('utf-8') + \
-		u'├exdoc_support_module_1.ExceptionAutoDocClass.value3[fget] (*)\n'.encode('utf-8') + \
-		u'├exdoc_support_module_1.ExceptionAutoDocClass.value3[fset] (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.temp(setter) (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.value1(getter) (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.value1(setter) (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.value2(setter) (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.value3(deleter) (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.value3(getter) (*)\n'.encode('utf-8') + \
+		u'├exdoc_support_module_1.ExceptionAutoDocClass.value3(setter) (*)\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.probe (*)\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.read (*)\n'.encode('utf-8') + \
 		u'├exdoc_support_module_1.write (*)\n'.encode('utf-8') + \
@@ -180,9 +181,15 @@ def test_build_ex_tree(exdocobj):	#pylint: disable=W0621
 		u' └exdoc_support_module_1.write (*)\n'.encode('utf-8') + \
 		u'  └exdoc_support_module_1._write\n'.encode('utf-8') + \
 		u'   └exdoc_support_module_1._validate_arguments (*)'.encode('utf-8')
+	if str(exdocobj._tobj) != ref:
+		print putil.misc.pcolor('\nActual tree:', 'yellow')
+		print str(exdocobj._tobj)
+		print putil.misc.pcolor('Reference tree:', 'yellow')
+		print ref
+	assert str(exdocobj._tobj) == ref
 	trace_error_class()
-	exobj2 = putil.exh.get_exh_obj()
-	putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj2, '_no_print':True}, RuntimeError, 'Functions performing actions for multiple properties not supported')
+	#exobj2 = putil.exh.get_exh_obj()
+	#putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj2, '_no_print':True}, RuntimeError, 'Functions performing actions for multiple properties not supported')
 	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes1):
 		putil.test.assert_exception(putil.exdoc.ExDoc, {'exh_obj':exobj1, '_no_print':True}, RuntimeError, 'Exceptions do not have a common callable')
 	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes2):
@@ -307,3 +314,25 @@ def test_exdoccxt_errors():	#pylint: disable=W0621
 			raise IOError('This is bad')
 	assert excinfo.value.message == 'This is bad'
 	assert putil.exh.get_exh_obj() == None
+
+
+def test_exdoccxt_multiple():
+	""" Emulate multiple CPU tracing """
+	if putil.exh.get_exh_obj():
+		putil.exh.del_exh_obj()
+	def func1():	#pylint: disable=C0111,W0612
+		exobj = putil.exh.get_or_create_exh_obj(full_cname=True, exclude=['_pytest'])
+		exobj.add_exception('first_exception', TypeError, 'This is the first exception')
+	with putil.exdoc.ExDocCxt(_no_print=True, exclude=['_pytest']) as tobj:
+		exdoc_support_module_4.func('John')
+		obj1 = copy.copy(putil.exh.get_exh_obj())
+		putil.exh.del_exh_obj()
+		putil.exh.get_or_create_exh_obj(full_cname=True, exclude=['_pytest'])
+		func1()
+		obj2 = copy.copy(putil.exh.get_exh_obj())
+		setattr(__builtin__, '_EXH_LIST', [obj1, obj2])
+	assert tobj._exh_obj == obj1+obj2
+	assert not hasattr(__builtin__, '_EXH_LIST')
+	assert not hasattr(__builtin__, '_EXDOC_FULL_CNAME')
+	assert not hasattr(__builtin__, '_EXDOC_EXCLUDE')
+	assert not hasattr(__builtin__, '_EXH')

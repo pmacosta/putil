@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import decimal, decorator, fractions, inspect, numpy, os, tempfile, textwrap, time, types
+import ast, decimal, decorator, fractions, inspect, numpy, os, re, tempfile, textwrap, time, types
 
 
 ###
@@ -119,6 +119,13 @@ class Timer(object):	#pylint: disable=R0903
 ###
 # Functions
 ###
+def _private_props(obj):
+	""" Generator to yield private properties of object """
+	private_prop_regexp = re.compile('_[^_]+')
+	for obj_name in [obj_name for obj_name in dir(obj) if private_prop_regexp.match(obj_name) and (not callable(getattr(obj, obj_name))) and ('regexp' not in obj_name)]:
+		yield obj_name
+
+
 def pcolor(text, color, tab=0):
 	r"""
 	Returns a string that once printed is colorized
@@ -883,3 +890,39 @@ class Bundle(object):	#pylint: disable=R0903
 
 	def __str__(self):
 		return '\n'.join(['{0} = {1}'.format(key, self.__dict__[key]) for key in sorted(self.__dict__.iterkeys())])
+
+
+def pprint_ast_node(node, annotate_fields=True, include_attributes=False, indent='  '):
+	"""
+	Pretty print version of the `dump <https://docs.python.org/2/library/ast.html>`_ function of the AST module. From http://alexleone.blogspot.co.uk/2010/01/python-ast-pretty-printer.html
+
+	:param	node: root abstract syntax tree node
+	:type	node: AST object
+	:param	annotate_fields: Flag that indicates whether named and the values for fields are shown (True) or not (False); the latter is required if code is to be evaluated
+	:type	annotate_fields: boolean
+	:param	include_attributes: Flag that indicates whether line numbers and column offsets are to be dumped (True) or not (False)
+	:type	include_attributes: boolean
+	:param	indent: Characters to use for indenting output sub-nodes and structures
+	:type	indent: string
+	:rtype: string
+	:raises: RuntimeError (Argument \\`node\\` is not valid)
+	"""
+	def _format(node, level=0):	#pylint: disable=C0111
+		if isinstance(node, ast.AST):
+			fields = [(a, _format(b, level)) for a, b in ast.iter_fields(node)]
+			if include_attributes and node._attributes:	#pylint: disable=W0212
+				fields.extend([(a, _format(getattr(node, a), level)) for a in node._attributes])	#pylint: disable=W0212
+			return ''.join([node.__class__.__name__, '(', ', '.join(('%s=%s' % field for field in fields) if annotate_fields else (b for a, b in fields)), ')'])
+		elif isinstance(node, list):
+			lines = ['[']
+			lines.extend((indent * (level + 2) + _format(x, level + 2) + ',' for x in node))
+			if len(lines) > 1:
+				lines.append(indent * (level + 1) + ']')
+			else:
+				lines[-1] += ']'
+			return '\n'.join(lines)
+		return repr(node)
+
+	if not isinstance(node, ast.AST):
+		raise RuntimeError('Argument `node` is not valid')
+	return _format(node)

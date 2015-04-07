@@ -18,7 +18,7 @@ This library provides a collection of utility modules to supplement the excellen
 
 * **pcontracts**: This module is a thin wrapper around the `PyContracts <https://andreacensi.github.io/contracts/>`_ library that enables customization of the exception type raised and limited customization of the exception message
 
-* **pcsv**: this module can be used to handle comma-separated values (CSV) files and do lightweight processing on their data. For example
+* **pcsv**: this module can be used to handle comma-separated values (CSV) files and do lightweight processing on their data.
 
 * **plot**: this module can be used to create high-quality, presentation-ready X-Y graphs quickly and easily
 
@@ -94,6 +94,8 @@ Contributing
 
     * `Pytest-coverage <https://pypi.python.org/pypi/pytest-cov>`_
 
+    * `Pytest-xdist <https://pypi.python.org/pypi/pytest-xdist>`_ (optional, to speed up running test suite and automatic exceptions documentation)
+
     * `Scipy <http://www.scipy.org/>`_
 
     * `Sphinx <http://sphinx-doc.org/>`_ (documentation)
@@ -118,13 +120,14 @@ Contributing
 		build-docs.sh
 
 		Usage:
-		  build-docs.sh [-h] [-r] [module-name]
+		  build-docs.sh [-h] [-n num-cpus] [-r] [module-name]
 
 		Options:
 		  -h  Show this screen
 		  -r  Rebuild exceptions documentation. If no module name
 		      is given all modules with auto-generated exceptions
 		      documentation are rebuilt
+		  -n  Number of CPUs to use (greater than 2)
 
    * build-tags.sh: builds the project's `exuberant ctags <http://ctags.sourceforge.net/>`_ file :bash:`${PUTIL_DIR}/tags`
 
@@ -147,10 +150,11 @@ Contributing
 		coverage.sh
 
 		Usage:
-		  coverage.sh [-h] [module-name]
+		  coverage.sh [-h] [-n num-cpus] [module-name]
 
 		Options:
 		  -h  Show this screen
+		  -n  Number of CPUs to use (greater than 2)
 
    * gen_ref_images.py: (re)generates the plot module reference images needed for unit testing
 
@@ -181,10 +185,11 @@ Contributing
 		run-package-tests.sh
 
 		Usage:
-		  run-package-tests.sh [-h]
+		  run-package-tests.sh [-h] [-n num-cpus]
 
 		Options:
 		  -h  Show this screen
+		  -n  Number of CPUs to use (greater than 2)
 
    * test.sh: runs a module's unit tests
 
@@ -194,10 +199,11 @@ Contributing
 		test.sh
 
 		Usage:
-		  test.sh [-h] [module-name] [test-name]
+		  test.sh [-h] [-n num-cpus] [module-name] [test-name]
 
 		Options:
 		  -h  Show this screen
+		  -n  Number of CPUs to use (greater than 2)
 
    * pkg-validate.sh: uses `tox <https://tox.readthedocs.org/>`_ to run the package unit tests, measure test coverage and build the documentation in virtual environments
 

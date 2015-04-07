@@ -6,9 +6,10 @@
 print_usage_message () {
 	echo -e "coverage.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  coverage.sh [-h] [module-name]\n" >&2
+	echo -e "  coverage.sh [-h] [-n num-cpus] [module-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
+	echo -e "  -n  Number of CPUs to use (greater than 2)" >&2
 }
 
 # Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
@@ -24,11 +25,15 @@ src_dir=${pkg_dir}/putil
 cpwd=${PWD}
 
 # Read command line options
-while getopts ":h" opt; do
+num_cpus=""
+while getopts ":hn:" opt; do
 	case ${opt} in
 		h)
 			print_usage_message
 			exit 0
+			;;
+		n)
+			num_cpus=${OPTARG}
 			;;
 		\?)
 			echo "coverage.sh: invalid option" >&2
@@ -54,11 +59,25 @@ if [ ! -f "${file}" ]; then
 	echo "coverage.sh: test bench for module ${module} could not be found"
 	exit 1
 fi
+noption=""
+if [ "${num_cpus}" != "" ]; then
+	num_cpus=$(echo "${num_cpus}" | grep "^[2-9][0-9]*$")
+	if [ "${num_cpus}" == "" ]; then
+		echo "coverage.sh: number of CPUs has to be an intenger greater than 1"
+		exit 1
+	fi
+	if ! pip freeze | grep pytest-xdist; then
+		echo 'coverage.sh: pytest-xdist needs to be installed to use multiple CPUS'
+		exit 1
+	fi
+	noption="-n ${num_cpus}"
+fi
+
 
 # Processing
 cd ${src_dir}
 ${pkg_dir}/sbin/coveragerc-manager.py 'local' 1 ${pkg_dir} ${module}
-py.test -x -s -vv --cov-config ${pkg_dir}/.coveragerc_local --cov ${pkg_dir}/putil/ --cov-report html ${file}
+py.test -x -s -vv ${noption} --cov-config ${pkg_dir}/.coveragerc_local --cov ${pkg_dir}/putil/ --cov-report html ${file}
 ${pkg_dir}/sbin/coveragerc-manager.py 'local' 0 ${pkg_dir}
 rm -rf ${pkg_dir}/putil/.coverage
 cd ${cpwd}

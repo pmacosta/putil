@@ -108,10 +108,27 @@ Functions
 Classes
 =======
 
-.. automodule:: putil.plot
-    :members: BasicSource, CsvSource, Series, Panel, Figure
-    :undoc-members:
-    :show-inheritance:
+ .. autoclass:: putil.plot.BasicSource
+	:members: dep_var, indep_max, indep_min, indep_var, __str__
+	:show-inheritance:
+ .. autoclass:: putil.plot.CsvSource
+	:members: dep_col_label, dep_var, dfilter, file_name, fproc, fproc_eargs, indep_col_label, indep_max, indep_min, indep_var, __str__
+	:show-inheritance:
+ .. autoclass:: putil.plot.Series
+	:members: color, data_source, interp, label, line_style, marker, secondary_axis, __str__
+	:show-inheritance:
+ .. autoclass:: putil.plot.Panel
+	:members: display_indep_axis, legend_props, log_dep_axis, primary_axis_label, primary_axis_units, secondary_axis_label, secondary_axis_units, series, __str__, __iter__
+	:show-inheritance:
+ .. autoclass:: putil.plot.Figure
+	:members: axes_list, fig, fig_height, fig_width, indep_var_label, indep_var_units, log_indep_axis, panels, save, show, title, __str__, __iter__
+	:show-inheritance:
+
+.. .. automodule:: putil.plot
+..     :members: BasicSource, CsvSource, Series, Panel, Figure
+..     :undoc-members:
+..     :show-inheritance:
+.. 	:special-members:
 
 *******
 License

@@ -29,8 +29,15 @@ def func(name):
 
 	"""
 	exhobj = putil.exh.get_or_create_exh_obj()
-	exhobj.add_exception(exname='illegal_name', extype=TypeError, exmsg='Argument `name` is not valid')
-	exhobj.raise_exception_if(exname='illegal_name', condition=not isinstance(name, str))
+	exhobj.add_exception(
+		exname='illegal_name',
+		extype=TypeError,
+		exmsg='Argument `name` is not valid'
+	)
+	exhobj.raise_exception_if(
+		exname='illegal_name',
+		condition=not isinstance(name, str)
+	)
 	print 'My name is {0}'.format(name)
 
 class MyClass(object):
@@ -48,13 +55,27 @@ class MyClass(object):
 		self._value = None if not value else value
 
 	def _get_value(self):
-		self._exhobj.add_exception(exname='not_set', extype=RuntimeError, exmsg='Attribute `value` not set')
-		self._exhobj.raise_exception_if(exname='not_set', condition=not self._value)
+		self._exhobj.add_exception(
+			exname='not_set',
+			extype=RuntimeError,
+			exmsg='Attribute `value` not set'
+		)
+		self._exhobj.raise_exception_if(
+			exname='not_set',
+			condition=not self._value
+		)
 		return self._value
 
 	def _set_value(self, value):
-		self._exhobj.add_exception(exname='illegal', extype=RuntimeError, exmsg='Argument `value` is not valid')
-		self._exhobj.raise_exception_if(exname='illegal', condition=not isinstance(value, int))
+		self._exhobj.add_exception(
+			exname='illegal',
+			extype=RuntimeError,
+			exmsg='Argument `value` is not valid'
+		)
+		self._exhobj.raise_exception_if(
+			exname='illegal',
+			condition=not isinstance(value, int)
+		)
 		self._value = value
 
 	value = property(_get_value, _set_value)

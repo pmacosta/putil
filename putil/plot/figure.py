@@ -18,7 +18,7 @@ from .functions import _intelligent_ticks
 ###
 """
 [[[cog
-import os, sys
+import os, sys, __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_figure
 exobj_plot = trace_ex_plot_figure.trace_module(no_print=True)
@@ -138,6 +138,12 @@ class Figure(object):	#pylint: disable=R0902
 		self._set_fig_height(fig_height)
 		self._set_panels(panels)
 
+	def __iter__(self):
+		"""
+		Returns an iterator over the panel object(s) in the figure
+		"""
+		return iter(self._panels)
+
 	def _get_indep_var_label(self):	#pylint: disable=C0111
 		return self._indep_var_label
 
@@ -199,7 +205,7 @@ class Figure(object):	#pylint: disable=R0902
 		self._exh.add_exception(exname='panel_not_fully_specified', extype=TypeError, exmsg='Panel *[panel_num]* is not fully specified')
 		for num, obj in enumerate(self.panels):
 			self._exh.raise_exception_if(exname='invalid_panel', condition=type(obj) is not Panel)
-			self._exh.raise_exception_if(exname='panel_not_fully_specified', condition=not obj._complete(), edata={'field':'panel_num', 'value':num})	#pylint: disable=W0212
+			self._exh.raise_exception_if(exname='panel_not_fully_specified', condition=not obj._complete, edata={'field':'panel_num', 'value':num})	#pylint: disable=W0212
 
 	def _get_fig(self):	#pylint: disable=C0111
 		return self._fig
@@ -207,7 +213,7 @@ class Figure(object):	#pylint: disable=R0902
 	def _get_axes_list(self):	#pylint: disable=C0111
 		return self._axes_list
 
-	def _complete(self):
+	def _get_complete(self):
 		""" Returns True if figure is fully specified, otherwise returns False """
 		return (self.panels is not None) and (len(self.panels) > 0)
 
@@ -215,7 +221,7 @@ class Figure(object):	#pylint: disable=R0902
 		self._exh.add_exception(exname='log_axis', extype=ValueError, exmsg='Figure cannot cannot be plotted with a logarithmic independent axis because panel *[panel_num]*, '+\
 						  'series *[series_num]* contains negative independent data points')
 		self._exh.add_exception(exname='not_fully_specified', extype=RuntimeError, exmsg='Figure object is not fully specified')
-		if (self._complete()) and force_redraw:
+		if (self._complete) and force_redraw:
 			num_panels = len(self.panels)
 			plt.close('all')
 			# Create required number of panels
@@ -249,7 +255,7 @@ class Figure(object):	#pylint: disable=R0902
 			#self._fig.canvas.draw()
 			FigureCanvasAgg(self._fig).draw()	# Draw figure otherwise some bounding boxes return NaN
 			self._calculate_figure_size()
-		elif (not self._complete()) and (raise_exception):
+		elif (not self._complete) and (raise_exception):
 			self._exh.raise_exception_if(exname='not_fully_specified', condition=True)
 
 	def _calculate_figure_size(self):	#pylint: disable=R0201,R0914
@@ -309,7 +315,7 @@ class Figure(object):	#pylint: disable=R0902
 		.. [[[end]]]
 		"""
 		self._exh.add_exception(exname='fig_not_fully_specified', extype=RuntimeError, exmsg='Figure object is not fully specified')
-		self._exh.raise_exception_if(exname='fig_not_fully_specified', condition=not self._complete())
+		self._exh.raise_exception_if(exname='fig_not_fully_specified', condition=not self._complete)
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		self.fig.set_size_inches(self.fig_width, self.fig_height)
 		file_name = os.path.expanduser(file_name)	# Matplotlib seems to have a problem with ~/, expand it to $HOME
@@ -319,7 +325,7 @@ class Figure(object):	#pylint: disable=R0902
 
 	def __str__(self):
 		"""
-		Print figure information
+		Prints figure information
 		"""
 		ret = ''
 		if (self.panels is None) or (len(self.panels) == 0):
@@ -338,6 +344,8 @@ class Figure(object):	#pylint: disable=R0902
 		ret += 'Figure width: {0}\n'.format(self.fig_width)
 		ret += 'Figure height: {0}\n'.format(self.fig_height)
 		return ret
+
+	_complete = property(_get_complete)
 
 	indep_var_label = property(_get_indep_var_label, _set_indep_var_label, doc='Figure independent axis label')
 	r"""

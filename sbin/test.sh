@@ -6,9 +6,10 @@
 print_usage_message () {
 	echo -e "test.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  test.sh [-h] [module-name] [test-name]\n" >&2
+	echo -e "  test.sh [-h] [-n num-cpus] [module-name] [test-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
+	echo -e "  -n  Number of CPUs to use (greater than 2)" >&2
 }
 
 # Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
@@ -24,11 +25,15 @@ src_dir=${pkg_dir}/putil
 cpwd=${PWD}
 
 # Read command line options
-while getopts ":h" opt; do
+num_cpus=""
+while getopts ":hn:" opt; do
 	case ${opt} in
 		h)
 			print_usage_message
 			exit 0
+			;;
+		n)
+			num_cpus=${OPTARG}
 			;;
 		\?)
 			echo "test.sh: invalid option" >&2
@@ -54,6 +59,20 @@ if [ ! -f "${file}" ]; then
 	echo "test.sh: test bench for module ${module} could not be found"
 	exit 1
 fi
+noption=""
+if [ "${num_cpus}" != "" ]; then
+	num_cpus=$(echo "${num_cpus}" | grep "^[2-9][0-9]*$")
+	if [ "${num_cpus}" == "" ]; then
+		echo "test.sh: number of CPUs has to be an intenger greater than 1"
+		exit 1
+	fi
+	if ! pip freeze | grep pytest-xdist; then
+		echo 'test.sh: pytest-xdist needs to be installed to use multiple CPUS'
+		exit 1
+	fi
+	noption="-n ${num_cpus}"
+fi
+
 
 # Processing
 cd ${pkg_dir}/tests
@@ -61,5 +80,5 @@ sta=""
 if [ "${2}" != "" ]; then
 	sta="-k ${2}"
 fi
-py.test -s -vv -x ${sta} test_${1}.py
+py.test -s -vv -x ${noption} ${sta} test_${1}.py
 cd ${cpwd}

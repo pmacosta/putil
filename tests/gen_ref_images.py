@@ -8,7 +8,7 @@ import itertools, math, numpy, os, sys
 
 import putil.misc, putil.plot
 
-
+SCALE = 3
 def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: disable=R0914
 	""" Images for Series() class """
 	mode = 'ref' if mode is None else mode.lower()
@@ -49,8 +49,8 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):	#pylint: di
 			indep_var_label='Independent axis',
 			indep_var_units='',
 			log_indep_axis=False,
-			fig_width=8,
-			fig_height=6,
+			fig_width=SCALE*4,
+			fig_height=SCALE*3,
 			title='marker: {0}\ninterp: {1}\nline_style: {2}'.format(marker, interp, line_style)
 		)
 		if mode in ['ref', 'ci']:
@@ -145,8 +145,8 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 				indep_var_label='Independent axis',
 				indep_var_units='',
 				log_indep_axis=(axis_type == 'filter'),
-				fig_width=8,
-				fig_height=6,
+				fig_width=SCALE*4,
+				fig_height=SCALE*3,
 				title='Axis: {0}\nSeries in axis: {1}'.format(axis_type, series_in_axis)
 			)
 			if mode in ['ref', 'ci']:
@@ -172,8 +172,8 @@ def unittest_panel_images(mode=None, test_dir=None):	#pylint: disable=R0912,R091
 		indep_var_label='Independent axis',
 		indep_var_units='',
 		log_indep_axis=False,
-		fig_width=8,
-		fig_height=6,
+		fig_width=SCALE*4,
+		fig_height=SCALE*3,
 		title='Panel no legend'
 	)
 	fig_obj.save(ref_file_name if (mode in ['ref', 'ci']) else test_file_name)
@@ -230,8 +230,8 @@ def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R09
 	#		indep_var_label='Independent axis',
 	#		indep_var_units='',
 	#		log_indep_axis=False if axis_type == 'linear' else True,
-	#		fig_width=8,
-	#		fig_height=6,
+	#		fig_width=SCALE*4,
+	#		fig_height=SCALE*3,
 	#		title='{0} axis'.format(axis_type),
 	#	)
 	#	if mode in ['ref', 'ci']:
@@ -262,8 +262,8 @@ def unittest_figure_images(mode=None, test_dir=None):	#pylint: disable=R0912,R09
 			indep_var_label='Independent axis' if not num else '',
 			indep_var_units='',
 			log_indep_axis=False,
-			fig_width=8,
-			fig_height=15,
+			fig_width=SCALE*4,
+			fig_height=SCALE*3,
 			title='Multiple independent axis\nPanel 1 {0}, panel 2 {1}, panel 3 {2}'.format(panel1_flabel, panel2_flabel, 'yes by omission' if not num else panel4_flabel)
 		)
 		if mode in ['ref', 'ci']:
