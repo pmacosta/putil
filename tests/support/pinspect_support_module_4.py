@@ -5,17 +5,20 @@
 
 USAGE1 = """\
 	This is a test\
-	of a multi-line string """	#pylint: disable=C0103
+	of a multi-line string """
 
 USAGE2 = r"""
 	This is a test
-	of a raw multi-line string """	#pylint: disable=C0103
+	of a raw multi-line string """
 
-USAGE3 = r""" This is a test of a single-line string """	#pylint: disable=C0103
+USAGE3 = r""" This is a test of a single-line string """
 
-def another_property_action_enclosing_function():	#pylint: disable=C0103
-	""" Generator function to test namespace support for enclosed class properties """
+def another_property_action_enclosing_function():
+	"""
+	Generator function to test namespace support for enclosed class properties
+	"""
+	# pylint: disable=C0103,E0602
 	def fget(self):
 		""" Actual getter function """
-		return math.sqrt(self._value)	#pylint:disable=E0602
+		return math.sqrt(self._value)
 	return property(fget)

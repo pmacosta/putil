@@ -1,17 +1,33 @@
 ﻿# exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111
+# pylint: disable=C0111,E1101,R0201,R0914,W0212
 
-import copy, inspect, os, sys, __builtin__
+import copy
+import imp
+import inspect
+import os
+import sys
+import __builtin__
+from itertools import izip
 
-import putil.misc, putil.pinspect
+import putil.misc
+import putil.pinspect
 
+
+###
+# Global variables
+###
+_BREAK_LIST = ['_pytest']
+_INVALID_MODULES_LIST = [
+	os.path.join('putil', 'exh.py'),
+	os.path.join('putil', 'exdoc.py')
+]
 
 ###
 # Functions
 ###
-def _ex_type_str(extype):	#pylint: disable=R0201
+def _ex_type_str(extype):
 	""" Returns a string corresponding to the exception type """
 	return str(extype)[str(extype).rfind('.')+1:str(extype).rfind("'")]
 
@@ -24,21 +40,29 @@ def _get_class_obj(frame_obj):
 
 def _get_class_props_obj(class_obj):
 	""" Extract property objects from a class object """
-	return [(member_name, member_obj) for member_name, member_obj in inspect.getmembers(class_obj) if isinstance(member_obj, property)]
+	return [(member_name, member_obj)
+			for member_name, member_obj in inspect.getmembers(class_obj)
+			if isinstance(member_obj, property)]
 
 
 def _get_code_id_from_obj(obj):
 	""" Return unique identity tuple to individualize callable object """
+	# pylint: disable=W0702
 	try:
-		return (inspect.getfile(obj).replace('.pyc', 'py'), inspect.getsourcelines(obj)[1])
-	except:	#pylint: disable=W0702
+		return (inspect.getfile(obj).replace('.pyc', 'py'),
+			   inspect.getsourcelines(obj)[1])
+	except (TypeError, IOError):
+		# TypeError: getfile, object is a built-in module, class or function
+		# IOError: getsourcelines, code cannot be retrieved
 		return None
 
 
-def _valid_frame(fobj):
+def _invalid_frame(fobj):
 	""" Selects valid stack frame to process """
 	fin = fobj.f_code.co_filename
-	return not (fin.endswith(os.path.join('putil', 'exh.py')) or fin.endswith(os.path.join('putil', 'exdoc.py')) or fin.endswith(os.path.join('putil', 'check.py')) or (not os.path.isfile(fin)))
+	return (fin.endswith(_INVALID_MODULES_LIST[0]) or
+		   fin.endswith(_INVALID_MODULES_LIST[1]) or
+		   (not os.path.isfile(fin)))
 
 
 def del_exh_obj():
@@ -47,27 +71,38 @@ def del_exh_obj():
 	"""
 	try:
 		delattr(__builtin__, '_EXH')
-	except:	#pylint: disable=W0702
+	except AttributeError:
 		pass
 
 def get_exh_obj():
 	"""
 	Returns the global exception handler
 
-	:rtype: :py:class:`putil.exh.ExHandle` object if global exception handler is set, None otherwise
+	:rtype: :py:class:`putil.exh.ExHandle` object if global exception handler
+	 is set, None otherwise
 	"""
-	return __builtin__._EXH if hasattr(__builtin__, '_EXH') else None		#pylint: disable=W0212,E1101
+	return __builtin__._EXH if hasattr(__builtin__, '_EXH') else None
 
 
 def get_or_create_exh_obj(full_cname=False, exclude=None):
 	"""
-	Returns the global exception handler if it is set, otherwise creates a new global exception handler and returns it
+	Returns the global exception handler if it is set, otherwise creates a new
+	global exception handler and returns it
 
-	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (True) or not (False).
-	  There is a performance penalty if the flag is True as the call stack needs to be traced. This argument is only relevant if the global exception handler is not set and a new one is created
+	:param	full_cname: Flag that indicates whether fully qualified
+	 function/method/class property names are obtained for
+	 functions/methods/class properties that use the exception manager (True)
+	 or not (False).
+
+	 There is a performance penalty if the flag is True as the call stack needs
+	 to be traced. This argument is only relevant if the global exception
+	 handler is not set and a new one is created
 	:type	full_cname: boolean
 	:rtype: :py:class:`putil.exh.ExHandle` object
-	:raises: RuntimeError (Argument \\`full_cname\\` is not valid)
+	:raises:
+	 * RuntimeError (Argument \\`exclude\\` is not valid)
+
+	 * RuntimeError (Argument \\`full_cname\\` is not valid)
 	"""
 	if not hasattr(__builtin__, '_EXH'):
 		set_exh_obj(ExHandle(full_cname=full_cname, exclude=exclude))
@@ -91,33 +126,72 @@ def set_exh_obj(obj):
 ###
 # Classes
 ###
-class ExHandle(object):	#pylint: disable=R0902
+# In the second line of some examples, note that the function
+# putil.exh.get_or_create_exh_obj() is not used because if any other
+# module that registers exceptions is executed first in the doctest run,
+# the exception handler is going to be non-empty and the some of the
+# tests in the examples may fail because there is previous history.
+# Setting the global # exception handler to a new object makes the example
+# start with a clean global exception handler
+class ExHandle(object):
 	"""
 	Exception handler
 
-	:param	full_cname: Flag that indicates whether fully qualified function/method/class property names should be obtained for functions/methods/class properties that use the exception manager (True) or not (False).
-	  There is a performance penalty if the flag is True as the call stack needs to be traced
+	:param	full_cname: Flag that indicates whether fully qualified
+	 function/method/class property names are obtained for
+	 functions/methods/class properties that use the exception manager (True)
+	 or not (False).
+
+	 There is a performance penalty if the flag is True as the call stack needs
+	 to be traced
 	:type	full_cname: boolean
-	:param	exclude: Module exclusion list (only applicable if **full_cname** is True). A particular callable in an otherwise fully qualified name is omitted if it belongs to a module in this list
+	:param	exclude: Module exclusion list (only applicable if **full_cname**
+	 is True). The exceptions of a particular callable are omitted if it
+	 belongs to a module in this argument
 	:type	exclude: list
 	:rtype: :py:class:`putil.exh.ExHandle` object
 	:raises:
 	 * RuntimeError (Argument \\`exclude\\` is not valid)
 
 	 * RuntimeError (Argument \\`full_cname\\` is not valid)
+
+	 * ValueError (Source for module *[module_name]* could not be found)
 	"""
+	# pylint: disable=R0902
 	def __init__(self, full_cname=False, exclude=None, _copy=False):
 		if not isinstance(full_cname, bool):
 			raise RuntimeError('Argument `full_cname` is not valid')
-		if (exclude and (not isinstance(exclude, list))) or (isinstance(exclude, list) and any([not isinstance(item, str) for item in exclude])):
+		if ((exclude and (not isinstance(exclude, list))) or
+		   (isinstance(exclude, list) and
+	       any([not isinstance(item, str) for item in exclude]))):
 			raise RuntimeError('Argument `exclude` is not valid')
 		self._ex_dict = {}
 		self._callables_separator = '/'
 		self._full_cname = full_cname
 		self._exclude = exclude
+		self._exclude_list = []
 		self._callables_obj = None
+		self._call_path_cache = {}
 		if not _copy:
 			self._callables_obj = putil.pinspect.Callables()
+			if exclude:
+				mod_files = []
+				for mod in exclude:
+					mdir = None
+					for token in mod.split('.'):
+						try:
+							mfile, mdir, _ = imp.find_module(
+								token,
+								[mdir] if mdir else None
+							)
+						except ImportError:
+							raise ValueError(
+								'Source for module {0} could not be found'.format(mod)
+							)
+					if mfile:
+						mod_files.append(mfile.name.replace('.pyc', '.py'))
+						mfile.close()
+				self._exclude_list = mod_files
 
 	def __add__(self, other):
 		"""
@@ -128,7 +202,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		For example:
 
 			>>> import copy, putil.exh, putil.eng, putil.tree
-			>>> exhobj = putil.exh.get_or_create_exh_obj()
+			>>> exhobj = putil.exh.set_exh_obj(putil.exh.ExHandle())
 			>>> putil.eng.peng(100, 3, True)
 			' 100.000 '
 			>>> tobj = putil.tree.Tree().add_nodes([{'name':'a', 'data':5}])
@@ -150,12 +224,18 @@ class ExHandle(object):	#pylint: disable=R0902
 			True
 
 		"""
-		if (self._full_cname != other._full_cname) or (self._exclude != other._exclude):	#pylint: disable=W0212
+		if ((self._full_cname != other._full_cname) or
+		   (self._exclude != other._exclude)):
 			raise RuntimeError('Incompatible exception handlers')
-		robj = ExHandle(full_cname=self._full_cname, exclude=self._exclude, _copy=True)
-		robj._ex_dict = copy.deepcopy(self._ex_dict)	#pylint: disable=W0212
-		robj._ex_dict.update(copy.deepcopy(other._ex_dict))	#pylint: disable=W0212
-		robj._callables_obj = copy.copy(self._callables_obj)+copy.copy(other._callables_obj)	#pylint: disable=W0212
+		robj = ExHandle(
+			full_cname=self._full_cname,
+			exclude=self._exclude,
+			_copy=True
+		)
+		robj._ex_dict = copy.deepcopy(self._ex_dict)
+		robj._ex_dict.update(copy.deepcopy(other._ex_dict))
+		robj._callables_obj = (copy.copy(self._callables_obj)+
+							  copy.copy(other._callables_obj))
 		return robj
 
 	def __copy__(self):
@@ -163,7 +243,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		Copies object. For example:
 
 			>>> import copy, putil.exh, putil.eng
-			>>> exhobj = putil.exh.get_or_create_exh_obj()
+			>>> exhobj = putil.exh.set_exh_obj(putil.exh.ExHandle())
 			>>> putil.eng.peng(100, 3, True)
 			' 100.000 '
 			>>> obj1 = putil.exh.get_exh_obj()
@@ -172,9 +252,14 @@ class ExHandle(object):	#pylint: disable=R0902
 			True
 
 		"""
-		cobj = ExHandle(full_cname=self._full_cname, exclude=self._exclude, _copy=True)
-		cobj._ex_dict = copy.deepcopy(self._ex_dict)	#pylint: disable=W0212
-		cobj._callables_obj = copy.copy(self._callables_obj)	#pylint: disable=W0212
+		cobj = ExHandle(
+			full_cname=self._full_cname,
+			exclude=self._exclude,
+			_copy=True
+		)
+		cobj._ex_dict = copy.deepcopy(self._ex_dict)
+		cobj._exclude_list = self._exclude_list[:]
+		cobj._callables_obj = copy.copy(self._callables_obj)
 		return cobj
 
 	def __eq__(self, other):
@@ -182,7 +267,7 @@ class ExHandle(object):	#pylint: disable=R0902
 		Tests object equality. For example:
 
 			>>> import copy, putil.exh, putil.eng
-			>>> exhobj = putil.exh.get_or_create_exh_obj()
+			>>> exhobj = putil.exh.set_exh_obj(putil.exh.ExHandle())
 			>>> putil.eng.peng(100, 3, True)
 			' 100.000 '
 			>>> obj1 = putil.exh.get_exh_obj()
@@ -193,19 +278,21 @@ class ExHandle(object):	#pylint: disable=R0902
 			False
 
 		"""
-		return isinstance(other, ExHandle) and (sorted(self._ex_dict) == sorted(other._ex_dict)) and (self._callables_obj == other._callables_obj)	#pylint: disable=W0212
+		return (isinstance(other, ExHandle) and
+			   (sorted(self._ex_dict) == sorted(other._ex_dict)) and
+			   (self._callables_obj == other._callables_obj))
 
 
 	def __iadd__(self, other):
 		"""
 		Merges an object into an existing object.
 
-		:raises: RuntimeError (Conflicting information between objects)
+		:raises: RuntimeError (Incompatible exception handlers)
 
 		For example:
 
 			>>> import copy, putil.exh, putil.eng, putil.tree
-			>>> exhobj = putil.exh.get_or_create_exh_obj()
+			>>> exhobj = putil.exh.set_exh_obj(putil.exh.ExHandle())
 			>>> putil.eng.peng(100, 3, True)
 			' 100.000 '
 			>>> tobj = putil.tree.Tree().add_nodes([{'name':'a', 'data':5}])
@@ -228,116 +315,186 @@ class ExHandle(object):	#pylint: disable=R0902
 			True
 
 		"""
-		if (self._full_cname != other._full_cname) or (self._exclude != other._exclude):	#pylint: disable=W0212
+		if ((self._full_cname != other._full_cname) or
+		   (self._exclude != other._exclude)):
 			raise RuntimeError('Incompatible exception handlers')
-		self._ex_dict.update(copy.deepcopy(other._ex_dict))	#pylint: disable=W0212
-		self._callables_obj += copy.copy(other._callables_obj)	#pylint: disable=W0212
+		self._ex_dict.update(copy.deepcopy(other._ex_dict))
+		self._callables_obj += copy.copy(other._callables_obj)
 		return self
+
+	def __nonzero__(self):
+		"""
+		Returns :code:`False` if exception handler does not have any exception
+		defined, :code:`True` otherwise. For example:
+
+			>>> import putil.exh
+			>>> obj = putil.exh.ExHandle()
+			>>> if obj:
+			...     print 'Boolean test returned: True'
+			... else:
+			...     print 'Boolean test returned: False'
+			Boolean test returned: False
+			>>> def my_func(exhobj):
+			...     exhobj.add_exception('test', RuntimeError, 'Message')
+			>>> my_func(obj)
+			>>> if obj:
+			...     print 'Boolean test returned: True'
+			... else:
+			...     print 'Boolean test returned: False'
+			Boolean test returned: True
+		"""
+		return bool(self._ex_dict)
 
 	def __str__(self):
 		"""
-		Returns a string with a detailed description of the object's contents. For example:
+		Returns a string with a detailed description of the object's contents.
+		For example:
 
-			>>> import putil.exh, putil.eng
-			>>> exhobj = putil.exh.get_or_create_exh_obj()
-			>>> putil.eng.peng(100, 3, True)
-			>>> print str(putil.exh.get_exh_obj())
-			Name....: 139834899098160/contract_peng_frac_length_0
+			>>> import docs.support.exh_example
+			>>> docs.support.exh_example.my_func('Tom')
+			My name is Tom
+			>>> print str(docs.support.exh_example.EXHOBJ) #doctest: +ELLIPSIS
+			Name    : .../illegal_name
 			Function: None
-			Type....: RuntimeError
-			Message.: Argument `frac_length` is not valid
-			...
-			Name....: 139834899098160/contract_peng_number_0
-			Function: None
-			Type....: RuntimeError
-			Message.: Argument `number` is not valid
-			...
-			Name....: 139834899098160/contract_peng_rjust_0
-			Function: None
-			Type....: RuntimeError
-			Message.: Argument `rjust` is not valid
+			Type    : TypeError
+			Message : Argument `name` is not valid
 
 		"""
 		ret = []
 		for key in sorted(self._ex_dict.keys()):
-			rstr = 'Name....: {0}\n'.format(key)
+			rstr = 'Name    : {0}\n'.format(key)
 			for fnum, func_name in enumerate(sorted(self._ex_dict[key]['function'])):
 				rstr += '{0}{1}\n'.format('Function: ' if fnum == 0 else ' '*10, func_name)
-			ret.append(rstr+'Type....: {0}\nMessage.: {1}'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg']))
-		return '\n...\n'.join(ret)
+			ret.append(rstr+'Type    : {0}\nMessage : {1}'.format(
+				_ex_type_str(self._ex_dict[key]['type']),
+				self._ex_dict[key]['msg']
+			))
+		return '\n\n'.join(ret)
 
-	def _format_msg(self, msg, edata):	#pylint: disable=R0201
+	def _format_msg(self, msg, edata):
 		""" Substitute parameters in exception message """
 		edata = edata if isinstance(edata, list) else [edata]
 		for field in edata:
 			if '*[{0}]*'.format(field['field']) not in msg:
-				raise RuntimeError('Field {0} not in exception message'.format(field['field']))
-			msg = msg.replace('*[{0}]*'.format(field['field']), '{0}').format(field['value'])
+				raise RuntimeError(
+					'Field {0} not in exception message'.format(field['field'])
+				)
+			msg = msg.replace(
+				'*[{0}]*'.format(field['field']), '{0}'
+			).format(field['value'])
 		return msg
 
 	def _get_callables_db(self):
 		""" Returns database of callables """
 		return self._callables_obj.callables_db
 
-	def _get_callable_path(self):	#pylint: disable=R0201,R0914
+	def _get_callable_path(self):
 		""" Get fully qualified calling function name """
-		# If full_cname is False, then the only thing that matters is to return the ID of the calling function as fast as possible. If full_cname is True, the full calling path has to be calculated because multiple
-		# callables can call the same callable, thus the ID does not uniquely identify the callable path
+		# pylint: disable=R0912,R0915,W0631
+		# If full_cname is False, then the only thing that matters is to return
+		# the ID of the calling function as fast as possible. If full_cname is
+		# True, the full calling path has to be calculated because multiple
+		# callables can call the same callable, thus the ID does not uniquely
+		# identify the callable path
 		fnum = 0
-		cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
-		while not _valid_frame(cache_frame):
+		frame = sys._getframe(fnum)
+		while _invalid_frame(frame):
 			fnum += 1
-			cache_frame = sys._getframe(fnum)	#pylint: disable=W0212
-		cache_key = id(cache_frame.f_code)	#pylint: disable=W0631
+			frame = sys._getframe(fnum)
+		callable_id = id(frame.f_code)
 		if not self._full_cname:
-			return cache_key, None
-
-		# Filter stack to omit frames that are part of the exception handling module, argument validation, or top level (tracing) module
-		# Stack frame -> (frame object [0], filename [1], line number of current line [2], function name [3], list of lines of context from source code [4], index of current line within list [5])
-		# Class initializations appear as: filename = '<string>', function name = '__init__', list of lines of context from source code = None, index of current line within list = None
-		ret = list()
-		decorator_flag, skip_flag = False, False
-		prev_name = name = ''
-		stack = inspect.stack()
-		for fob, fin, lin, fun, fuc, fui in reversed(stack[fnum:]):	#pylint: disable=W0631
-			if skip_flag:
-				skip_flag = False
-				continue
+			return callable_id, None
+		# Filter stack to omit frames that are part of the exception handling
+		# module, argument validation, or top level (tracing) module
+		# Stack frame -> (frame object [0], filename [1], line number of
+		# current line [2], function name [3], list of lines of context from
+		# source code [4], index of current line within list [5])
+		# Classes initialization appear as: filename = '<string>', function
+		# name = '__init__', list of lines of context from source code = None,
+		# index of current line within list = None
+		stack, call_path = [], []
+		fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
+		uobj, ufin = self._unwrap_obj(frame, fun)
+		if ufin in self._exclude_list:
+			return callable_id, None
+		tokens = frame.f_code.co_filename.split(os.sep)
+		while not any([
+				token.startswith(item)
+				for token in tokens
+				for item in _BREAK_LIST]):
 			# Gobble up two frames if it is a decorator
-			if (fin == '<string>') and (lin == 2) and (fuc == None) and (fui == None):	# frame corresponds to a decorator
-				skip_flag = True
-				if not decorator_flag:
-					name = prev_name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
-					if (not self._exclude) or (self._exclude and (name not in self._exclude) and (not any([name.startswith('{0}.'.format(item)) for item in self._exclude]))):
-						ret.append(name)
-					decorator_flag = True
-			else:
-				name = self._get_callable_full_name(fob, fin, lin, fun, fuc, fui)
-				if ((decorator_flag and (name != prev_name)) or (not decorator_flag)) and \
-				   ((not self._exclude) or (self._exclude and (name not in self._exclude) and (not any([name.startswith('{0}.'.format(item)) for item in self._exclude])))):
-					ret.append(name)
-				prev_name = name
-				decorator_flag = False
-		ret = self._callables_separator.join(ret)
-		return cache_key, ret
+			# 3rd tuple element indicates whether the frame corresponds to a
+			# frame in a decorator
+			if (fin, lin, fuc, fui) == ('<string>', 2, None, None):
+				stack.pop()
+				call_path.pop()
+				if stack:
+					stack[-1][3] = True
+			stack.append([frame, fin, uobj, False])
+			call_path.append(id(frame))
+			fnum += 1
+			try:
+				frame = sys._getframe(fnum)
+			except ValueError:
+				# Got to top of stack
+				break
+			fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
+			uobj, ufin = self._unwrap_obj(frame, fun)
+			if ufin in self._exclude_list:
+				return callable_id, None
+			tokens = frame.f_code.co_filename.split(os.sep)
+		# Return cached value, otherwise get full callable path
+		call_path = tuple(call_path)
+		try:
+			return self._call_path_cache[call_path]
+		except KeyError:
+			stack.reverse()
+			idv = [item[3] for item in stack]
+			ret = [
+				self._get_callable_full_name(fob, fin, uobj)
+				for fob, fin, uobj, _ in stack
+			]
+			for num, (nme, prv_nme, in_deco) in enumerate(izip(ret[1:], ret, idv[1:])):
+				if in_deco and (nme == prv_nme):
+					ret.pop(num)
+			ret = self._callables_separator.join(ret)
+			self._call_path_cache[call_path] = (callable_id, ret)
+			return callable_id, ret
 
-	def _get_callable_full_name(self, fob, fin, lin, fun, fuc, fui):	#pylint: disable=R0913,W0613
-		""" Get full path [module, class (if applicable) and function name] of callable """
-		func_obj = None
+	def _unwrap_obj(self, fobj, fun):
+		""" Unwrap decorators """
+		try:
+			prev_func_obj, next_func_obj = (
+				fobj.f_globals[fun],
+				getattr(fobj.f_globals[fun], '__wrapped__', None)
+			)
+			while next_func_obj:
+				prev_func_obj, next_func_obj = (
+					next_func_obj,
+					getattr(next_func_obj, '__wrapped__', None)
+				)
+			return (prev_func_obj, inspect.getfile(prev_func_obj).replace('.pyc', 'py'))
+		except	(KeyError, AttributeError, TypeError):
+			# KeyErrror: fun not in fobj.f_globals
+			# AttributeError: fobj.f_globals does not have a __wrapped__ attribute
+			# TypeError: pref_func_obj does not have a file associated with it
+			return None, None
+
+	def _get_callable_full_name(self, fob, fin, uobj):
+		"""
+		Get full path [module, class (if applicable) and function name]
+		of callable
+		"""
 		# Check if object is a class property
-		prop_name = self._property_search(fob)
-		if prop_name:
-			return prop_name
+		name = self._property_search(fob)
+		if name:
+			return name
 		if os.path.isfile(fin):
 			return self._callables_obj.get_callable_from_line(fin, fob.f_lineno)
-		if fun in fob.f_globals:
-			func_obj = fob.f_globals[fun]
-			while getattr(func_obj, '__wrapped__', None):
-				func_obj = getattr(func_obj, '__wrapped__')
-			code_id = _get_code_id_from_obj(func_obj)	# pylint: disable=W0212
-			if code_id:
-				self._get_module_name(fob, func_obj)
-				return self._callables_obj.reverse_callables_db[code_id]
+		code_id = _get_code_id_from_obj(uobj)
+		if code_id:
+			self._callables_obj.trace([code_id[0]])
+			return self._callables_obj.reverse_callables_db[code_id]
 		return 'dynamic'
 
 	def _get_callables_separator(self):
@@ -351,34 +508,52 @@ class ExHandle(object):	#pylint: disable=R0902
 			raise ValueError('Exception name {0} not found'.format(name))
 		return self._ex_dict[exname]
 
-	def _get_exceptions_db(self):	#pylint: disable-msg=R0201
-		""" Returns a list of dictionaries suitable to be used with putil.tree module """
+	def _get_exceptions_db(self):
+		"""
+		Returns a list of dictionaries suitable to be used with
+		putil.tree module
+		"""
 		if not self._full_cname:
-			return [{'name':self._ex_dict[key]['function'] if self._full_cname else key, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])} for key in self._ex_dict.keys()]
+			return [
+				{
+					'name':self._ex_dict[key]['function']
+						  if self._full_cname else
+						  key,
+					'data':'{0} ({1})'.format(
+						_ex_type_str(self._ex_dict[key]['type']),
+						self._ex_dict[key]['msg']
+					)
+				} for key in self._ex_dict.keys()
+			]
 		ret = []
 		for key in self._ex_dict.keys():
 			for func_name in self._ex_dict[key]['function']:
-				ret.append({'name':func_name, 'data':'{0} ({1})'.format(_ex_type_str(self._ex_dict[key]['type']), self._ex_dict[key]['msg'])})
+				ret.append(
+					{
+						'name':func_name,
+						'data':'{0} ({1})'.format(
+							_ex_type_str(self._ex_dict[key]['type']),
+							self._ex_dict[key]['msg']
+						)
+					}
+				)
 		return ret
 
-	def _get_ex_data(self, name=None):	#pylint: disable=R0201
+	def _get_ex_data(self, name=None):
 		""" Returns hierarchical function name """
 		func_id, func_name = self._get_callable_path()
-		ex_name = ''.join([str(func_id), self._callables_separator if name is not None else '', name if name is not None else ''])
+		ex_name = ''.join([
+			str(func_id),
+			self._callables_separator if name is not None else '',
+			name if name is not None else ''
+		])
 		return {'func_name':func_name, 'ex_name':ex_name}
 
-	def _get_module_name(self, frame_obj, func_obj):
-		""" Get module name and optionally trace it """
-		code = frame_obj.f_code
-		scontext = frame_obj.f_locals.get('self', None)
-		# Module name
-		module = inspect.getmodule(code)
-		module_name = module.__name__ if module else (scontext.__module__ if scontext else sys.modules[func_obj.__module__].__name__)
-		self._callables_obj.trace([sys.modules[module_name].__file__])
-		return module_name
-
-	def _get_prop_actions(self, prop_obj):	#pylint: disable=R0201
-		""" Extract property action objects (deleter, setter, getter) from a class object """
+	def _get_prop_actions(self, prop_obj):
+		"""
+		Extract property action objects (deleter, setter, getter)
+		from a class object
+		"""
 		prop_dict = {'fdel':None, 'fget':None, 'fset':None}
 		for action in prop_dict.keys():
 			action_obj = getattr(prop_obj, action)
@@ -387,7 +562,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		return prop_dict
 
 	def _property_search(self, fobj):
-		""" Check if object is a class property and if so return full name, otherwise return None """
+		"""
+		Check if object is a class property and if so return full name,
+		otherwise return None
+		"""
 		class_obj = _get_class_obj(fobj)
 		if not class_obj:
 			return
@@ -395,47 +573,70 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not class_props:
 			return
 		class_file = inspect.getfile(class_obj).replace('.pyc', '.py')
-		class_name = self._callables_obj.get_callable_from_line(class_file, inspect.getsourcelines(class_obj)[1])
+		class_name = self._callables_obj.get_callable_from_line(
+			class_file,
+			inspect.getsourcelines(class_obj)[1]
+		)
 		prop_actions_dicts = {}
 		for prop_name, prop_obj in class_props:
 			prop_actions_dicts[prop_name] = self._get_prop_actions(prop_obj)
 		func_id = id(fobj.f_code)
+		desc_dict = {
+			'fget':'getter',
+			'fset':'setter',
+			'fdel':'deleter',
+		}
 		for prop_name, prop_actions_dict in prop_actions_dicts.items():
 			for action_name, action_id in prop_actions_dict.items():
 				if action_id == func_id:
 					prop_name = '.'.join([class_name, prop_name])
-					return '{0}({1})'.format(prop_name, 'setter' if action_name == 'fset' else ('getter' if action_name == 'fget' else 'deleter'))
+					return '{0}({1})'.format(
+						prop_name, desc_dict[action_name]
+					)
 
 	def _raise_exception(self, eobj, edata=None):
 		""" Raise exception by name """
 		_, _, tbobj = sys.exc_info()
 		if edata:
-			raise eobj['type'], eobj['type'](self._format_msg(eobj['msg'], edata)), tbobj
+			emsg = eobj['type'](self._format_msg(eobj['msg'], edata))
+			raise eobj['type'], emsg, tbobj
 		else:
 			raise eobj['type'], eobj['type'](eobj['msg']), tbobj
 
-	def _validate_edata(self, edata):	#pylint: disable=R0201
+	def _validate_edata(self, edata):
 		""" Validate edata argument of raise_exception_if method """
-		if edata == None:
+		if edata is None:
 			return True
 		if not (isinstance(edata, dict) or putil.misc.isiterable(edata)):
 			return False
 		edata = [edata] if isinstance(edata, dict) else edata
 		for edict in edata:
-			if (not isinstance(edict, dict)) or (isinstance(edict, dict) and (('field' not in edict) or ('field' in edict and (not isinstance(edict['field'], str))) or ('value' not in edict))):
+			if ((not isinstance(edict, dict)) or
+			   (isinstance(edict, dict) and
+			   (('field' not in edict) or
+			   ('field' in edict and (not isinstance(edict['field'], str))) or
+	           ('value' not in edict)))):
 				return False
 		return True
 
-	def add_exception(self, exname, extype, exmsg):	#pylint: disable=R0913,R0914
+	def add_exception(self, exname, extype, exmsg):
 		r"""
 		Adds an exception to the handler
 
-		:param	exname: Exception name; has to be unique within the namespace, duplicates are eliminated
+		:param	exname: Exception name; has to be unique within the namespace,
+		 duplicates are eliminated
 		:type	exname: string
-		:param	extype: Exception type; *must* be derived from the `Exception <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_ class
+		:param	extype: Exception type; *must* be derived from the `Exception
+		 <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_
+		 class
 		:type	extype: Exception type object, i.e. RuntimeError, TypeError, etc.
-		:param	exmsg: Exception message; it can contain fields to be replaced when the exception is raised via :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with the characters :code:`'\*['` and ends with the \
-		 characters :code:`']\*'`, the field name follows the same rules as variable names and is between these two sets of characters. For example, :code:`\*[file_name]\*` defines the :code:`file_name` field
+		:param	exmsg: Exception message; it can contain fields to be replaced
+		 when the exception is raised via
+		 :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with
+		 the characters :code:`'\*['` and ends with the characters
+		 :code:`']\*'`, the field name follows the same rules as variable names
+		 and is between these two sets of characters. For example,
+		 :code:`\*[file_name]\*` defines the :code:`file_name` field
 		:type	exmsg: string
 		:raises:
 		 * RuntimeError (Argument \`exmsg\` is not valid)
@@ -444,6 +645,7 @@ class ExHandle(object):	#pylint: disable=R0902
 
 		 * RuntimeError (Argument \`extype\` is not valid)
 		"""
+		# pylint: disable=R0913
 		if not isinstance(exname, str):
 			raise RuntimeError('Argument `exname` is not valid')
 		if not str(extype).startswith("<type 'exceptions."):
@@ -451,7 +653,10 @@ class ExHandle(object):	#pylint: disable=R0902
 		if not isinstance(exmsg, str):
 			raise RuntimeError('Argument `exmsg` is not valid')
 		ex_data = self._get_ex_data(exname)
-		entry = self._ex_dict.get(ex_data['ex_name'], {'function':[], 'type':extype, 'msg':exmsg})
+		entry = self._ex_dict.get(
+			ex_data['ex_name'],
+			{'function':[], 'type':extype, 'msg':exmsg}
+		)
 		entry['function'].append(ex_data['func_name'])
 		self._ex_dict[ex_data['ex_name']] = entry
 
@@ -461,13 +666,19 @@ class ExHandle(object):	#pylint: disable=R0902
 
 		:param	exname: Exception name
 		:type	exname: string
-		:param condition: Flag that indicates whether the exception should be raised *(True)* or not *(False)*
+		:param condition: Flag that indicates whether the exception is
+		 raised *(True)* or not *(False)*
 		:type  condition: boolean
-		:param edata: Replacement values for fields in the exception message (see :py:meth:`putil.exh.ExHandle.add_exception` for how to define fields). Each dictionary can have only these two keys:
+		:param edata: Replacement values for fields in the exception message
+		 (see :py:meth:`putil.exh.ExHandle.add_exception` for how to define
+		 fields). Each dictionary entry can only have these two keys:
 
 		 * **field** *(string)* -- Field name
 
-		 * **value** *(any)* -- Field value, to be converted into a string with the `format <https://docs.python.org/2/library/stdtypes.html#str.format>`_ string method
+		 * **value** *(any)* -- Field value, to be converted into a string with
+		   the `format
+		   <https://docs.python.org/2/library/stdtypes.html#str.format>`_ string
+		   method
 
 		:type  edata: dictionary or iterable of dictionaries
 		:raises:
@@ -476,6 +687,11 @@ class ExHandle(object):	#pylint: disable=R0902
 		 * RuntimeError (Argument \\`edata\\` is not valid)
 
 		 * RuntimeError (Argument \\`exname\\` is not valid)
+
+		 * RuntimeError (Field *[field_name]* not in exception message)
+
+		 * ValueError (Exception name *[name]* not found')
+
 		"""
 		if not isinstance(exname, str):
 			raise RuntimeError('Argument `exname` is not valid')
@@ -488,25 +704,55 @@ class ExHandle(object):	#pylint: disable=R0902
 			self._raise_exception(eobj, edata)
 
 	# Managed attributes
-	callables_db = property(_get_callables_db, None, None, doc='Dictionary of callables')
+	callables_db = property(
+		_get_callables_db,
+		doc='Dictionary of callables'
+	)
 	"""
-	Returns the callables database of the modules using the exception handler, as reported by :py:meth:`putil.pinspect.Callables.callables_db`
+	Returns the callables database of the modules using the exception handler,
+	as reported by :py:meth:`putil.pinspect.Callables.callables_db`
 	"""
 
-	callables_separator = property(_get_callables_separator, None, None, doc='Callable separator character')
+	callables_separator = property(
+		_get_callables_separator,
+		doc='Callable separator character'
+	)
 	"""
-	Returns the character (:code:`'/'`) used to separate the sub-parts of fully qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and **name** key of :py:meth:`putil.exh.ExHandle.exceptions_db`
+	Returns the character (:code:`'/'`) used to separate the sub-parts of fully
+	qualified function names in :py:meth:`putil.exh.ExHandle.callables_db` and
+	**name** key in :py:meth:`putil.exh.ExHandle.exceptions_db`
 	"""
 
-	exceptions_db = property(_get_exceptions_db, None, None, doc='Formatted exceptions')
+	exceptions_db = property(
+		_get_exceptions_db,
+		doc='Formatted exceptions'
+	)
 	"""
-	Returns the exceptions database. This database is a list of dictionaries that contain the following keys:
+	Returns the exceptions database. This database is a list of dictionaries
+	that contain the following keys:
 
-	 * **name** *(string)* -- Exception name of the form :code:`'callable_identifier/exception_name'`. The contents of *callable_identifier* depend on the value of the argument **full_cname** used to
-	   create the exception handler. If **full_cname** is True, *callable_identifier* is the fully qualified callable name as it appears in the callables database (:py:meth:`putil.exh.ExHandle.callables_db`).
-	   If **full_cname** is False, then *callable_identifier* is a decimal string representation of the callable's code identifier as reported by the `id() <https://docs.python.org/2/library/functions.html#id>`_
-	   function. *exception_name* is the name of the exception provided when it was defined in :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
+	 * **name** *(string)* -- Exception name of the form
+	   :code:`'[callable_identifier]/[exception_name]'`. The contents of
+	   :code:`[callable_identifier]` depend on the value of the argument
+	   **full_cname** used to create the exception handler.
 
-	 * **data** *(string)* -- Text of the form :code:`'exception_type (exception_message)'` where *exception_type* and *exception_message* are the exception type and exception message, respectively, given when the exception was
-	   defined by :py:meth:`putil.exh.ExHandle.add_exception` (**extype** and **exmsg** arguments)
+	   If **full_cname** is True, :code:`[callable_identifier]` is the fully
+	   qualified callable name as it appears in the callables database
+	   (:py:meth:`putil.exh.ExHandle.callables_db`).
+
+	   If **full_cname** is False, then :code:`[callable_identifier]` is a decimal
+	   string representation of the callable's code identifier as reported by
+	   the `id() <https://docs.python.org/2/library/functions.html#id>`_
+	   function.
+
+	   In either case :code:`[exception_name]` is the name of the exception
+	   provided when it was defined in
+	   :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
+
+	 * **data** *(string)* -- Text of the form :code:`'[exception_type]
+	   ([exception_message])'` where :code:`[exception_type]` and
+	   :code:`[exception_message]` are the exception type and exception
+	   message, respectively, given when the exception was defined by
+	   :py:meth:`putil.exh.ExHandle.add_exception` (**extype** and
+	   **exmsg** arguments)
 	"""

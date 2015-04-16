@@ -1,11 +1,12 @@
 # basic_source.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302
+# pylint: disable=C0111,C0302,W0105,W0212
 
 import numpy
 
-import putil.exh, putil.pcontracts
+import putil.exh
+import putil.pcontracts
 from .constants import PRECISION
 from .functions import DataSource
 
@@ -21,15 +22,16 @@ import trace_ex_plot_basic_source
 exobj_plot = trace_ex_plot_basic_source.trace_module(no_print=True)
 ]]]
 [[[end]]]
-"""	#pylint: disable=W0105
+"""
 
 
 ###
 # Class
 ###
-class BasicSource(DataSource):	#pylint: disable=R0902,R0903
+class BasicSource(DataSource):
 	r"""
-	Objects of this class hold a given data set intended for plotting. It is a convenient way to plot manually-entered data or data coming from
+	Objects of this class hold a given data set intended for plotting. It is a
+	convenient way to plot manually-entered data or data coming from
 	a source that does not export to a comma-separated values (CSV) file.
 
 	:param	indep_var:			independent variable vector
@@ -42,8 +44,9 @@ class BasicSource(DataSource):	#pylint: disable=R0902,R0903
 	:type	indep_max:			number or None
 	:rtype:						:py:class:`putil.plot.BasicSource` object
 
-	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-	.. Auto-generated exceptions documentation for putil.plot.basic_source.BasicSource.__init__
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
+	.. Auto-generated exceptions documentation for
+	.. putil.plot.basic_source.BasicSource.__init__
 
 	:raises:
 	 * RuntimeError (Argument \`dep_var\` is not valid)
@@ -54,23 +57,33 @@ class BasicSource(DataSource):	#pylint: disable=R0902,R0903
 
 	 * RuntimeError (Argument \`indep_var\` is not valid)
 
-	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
+	 * ValueError (Argument \`indep_min\` is greater than argument
+	   \`indep_max\`)
 
-	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after
+	   \`indep_min\`/\`indep_max\` range bounding)
 
-	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
+	   number of elements)
 
 	.. [[[end]]]
 	"""
+	# pylint: disable=R0902,R0903
 	def __init__(self, indep_var, dep_var, indep_min=None, indep_max=None):
 		# Private attributes
 		super(BasicSource, self).__init__()
 		self._exh = putil.exh.get_or_create_exh_obj()
-		self._raw_indep_var, self._raw_dep_var, self._indep_var_indexes, self._min_indep_var_index, self._max_indep_var_index = None, None, None, None, None
+		self._raw_indep_var = None
+		self._raw_dep_var = None
+		self._indep_var_indexes = None
+		self._min_indep_var_index = None
+		self._max_indep_var_index = None
 		# Public attributes
 		self._indep_min, self._indep_max = None, None
 		# Assignment of arguments to attributes
-		# Assign minimum and maximum first so as not to trigger unnecessary tresholding if the dependent and independent variables are already assigned
+		# Assign minimum and maximum first so as not to trigger unnecessary
+		# thresholding if the dependent and independent variables are
+		# already assigned
 		self._set_indep_min(indep_min)
 		self._set_indep_max(indep_max)
 		self._set_indep_var(indep_var)
@@ -78,142 +91,273 @@ class BasicSource(DataSource):	#pylint: disable=R0902,R0903
 
 	def __str__(self):
 		"""
-		Prints source information
+		Prints source information. For example:
+
+		.. =[=cog
+		.. import docs.support.incfile
+		.. docs.support.incfile.incfile('plot_example_4.py', cog)
+		.. =]=
+		.. code-block:: python
+
+		    # plot_example_4.py
+		    import numpy, putil.plot
+
+		    def create_basic_source():
+		        obj = putil.plot.BasicSource(
+		            indep_var=numpy.array([1, 2, 3, 4]),
+		            dep_var=numpy.array([1, -10, 10, 5]),
+		            indep_min=2, indep_max=3
+		        )
+		        return obj
+
+		.. =[=end=]=
+
+		.. code-block:: python
+
+			>>> import docs.support.plot_example_4
+			>>> obj = docs.support.plot_example_4.create_basic_source()
+			>>> print obj
+			Independent variable minimum: 2
+			Independent variable maximum: 3
+			Independent variable: [ 2, 3 ]
+			Dependent variable: [ -10, 10 ]
 		"""
 		ret = ''
-		ret += 'Independent variable minimum: {0}\n'.format('-inf' if self.indep_min is None else self.indep_min)	#pylint: disable=W0212
-		ret += 'Independent variable maximum: {0}\n'.format('+inf' if self.indep_max is None else self.indep_max)	#pylint: disable=W0212
+		ret += 'Independent variable minimum: {0}\n'.format(
+			'-inf' if self.indep_min is None else self.indep_min
+		)
+		ret += 'Independent variable maximum: {0}\n'.format(
+			'+inf' if self.indep_max is None else self.indep_max
+		)
 		ret += super(BasicSource, self).__str__()
 		return ret
 
-	def _get_indep_max(self):	#pylint: disable=C0111
-		return self._indep_max	#pylint: disable=W0212
+	def _get_indep_max(self):
+		return self._indep_max
 
-	def _get_indep_min(self):	#pylint: disable=C0111
-		return self._indep_min	#pylint: disable=W0212
+	def _get_indep_min(self):
+		return self._indep_min
 
 	@putil.pcontracts.contract(dep_var='real_numpy_vector')
-	def _set_dep_var(self, dep_var):	#pylint: disable=C0111
-		self._exh.add_exception(exname='num_elements', extype=ValueError, exmsg='Arguments `indep_var` and `dep_var` must have the same number of elements')
-		self._exh.raise_exception_if(exname='num_elements', condition=(dep_var is not None) and (self._raw_indep_var is not None) and (len(self._raw_indep_var) != len(dep_var)))	#pylint: disable=W0212
-		self._raw_dep_var = putil.misc.smart_round(dep_var, PRECISION)	#pylint: disable=W0212
-		self._update_dep_var()	#pylint: disable=W0212
+	def _set_dep_var(self, dep_var):
+		self._exh.add_exception(
+			exname='num_elements',
+			extype=ValueError,
+			exmsg='Arguments `indep_var` and `dep_var` must have'
+			      ' the same number of elements'
+		)
+		self._exh.raise_exception_if(
+			exname='num_elements',
+			condition=(dep_var is not None) and
+			          (self._raw_indep_var is not None) and
+			          (len(self._raw_indep_var) != len(dep_var)))
+		self._raw_dep_var = putil.eng.round_mantissa(dep_var, PRECISION)
+		self._update_dep_var()
 
 	@putil.pcontracts.contract(indep_max='real_num')
-	def _set_indep_max(self, indep_max):	#pylint: disable=C0111
-		self._exh.add_exception(exname='min_max', extype=ValueError, exmsg='Argument `indep_min` is greater than argument `indep_max`')
-		self._exh.raise_exception_if(exname='min_max', condition=(self.indep_min is not None) and (indep_max is not None) and (indep_max < self.indep_min))
-		self._indep_max = putil.misc.smart_round(indep_max, PRECISION) if not isinstance(indep_max, int) else indep_max	#pylint: disable=W0212
-		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
-		self._update_dep_var()	#pylint: disable=W0212
+	def _set_indep_max(self, indep_max):
+		self._exh.add_exception(
+			exname='min_max',
+			extype=ValueError,
+			exmsg='Argument `indep_min` is greater than argument `indep_max`'
+		)
+		self._exh.raise_exception_if(
+			exname='min_max',
+			condition=(self.indep_min is not None) and
+			          (indep_max is not None) and
+			          (indep_max < self.indep_min)
+		)
+		self._indep_max = (putil.eng.round_mantissa(indep_max, PRECISION)
+			              if not isinstance(indep_max, int) else
+						  indep_max)
+		# Apply minimum and maximum range bounding and assign it
+		# to self._indep_var and thus this is what self.indep_var returns
+		self._update_indep_var()
+		self._update_dep_var()
 
 	@putil.pcontracts.contract(indep_min='real_num')
-	def _set_indep_min(self, indep_min):	#pylint: disable=C0111
-		self._exh.add_exception(exname='min_max', extype=ValueError, exmsg='Argument `indep_min` is greater than argument `indep_max`')
-		self._exh.raise_exception_if(exname='min_max', condition=(self.indep_max is not None) and (indep_min is not None) and (self.indep_max < indep_min))
-		self._indep_min = putil.misc.smart_round(indep_min, PRECISION) if not isinstance(indep_min, int) else indep_min	#pylint: disable=W0212
-		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
-		self._update_dep_var()	#pylint: disable=W0212
+	def _set_indep_min(self, indep_min):
+		self._exh.add_exception(
+			exname='min_max',
+			extype=ValueError,
+			exmsg='Argument `indep_min` is greater than argument `indep_max`'
+		)
+		self._exh.raise_exception_if(
+			exname='min_max',
+			condition=(self.indep_max is not None) and
+			          (indep_min is not None) and
+			          (self.indep_max < indep_min)
+		)
+		self._indep_min = (putil.eng.round_mantissa(indep_min, PRECISION)
+			              if not isinstance(indep_min, int) else
+						  indep_min)
+		# Apply minimum and maximum range bounding and assign it to
+		# self._indep_var and thus this is what self.indep_var returns
+		self._update_indep_var()
+		self._update_dep_var()
 
 	@putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
-	def _set_indep_var(self, indep_var):	#pylint: disable=C0111
-		self._exh.add_exception(exname='num_elements', extype=ValueError, exmsg='Arguments `indep_var` and `dep_var` must have the same number of elements')
-		self._exh.raise_exception_if(exname='num_elements', condition=(indep_var is not None) and (self._raw_dep_var is not None) and (len(self._raw_dep_var) != len(indep_var)))	#pylint: disable=W0212
-		self._raw_indep_var = putil.misc.smart_round(indep_var, PRECISION)	#pylint: disable=W0212
-		self._update_indep_var()	# Apply minimum and maximum range bounding and assign it to self._indep_var and thus this is what self.indep_var returns	#pylint: disable=W0212
-		self._update_dep_var()	#pylint: disable=W0212
+	def _set_indep_var(self, indep_var):
+		self._exh.add_exception(
+			exname='num_elements',
+			extype=ValueError,
+			exmsg='Arguments `indep_var` and `dep_var` must have the '
+			      'same number of elements'
+		)
+		self._exh.raise_exception_if(
+			exname='num_elements',
+			condition=(indep_var is not None) and
+			          (self._raw_dep_var is not None) and
+			          (len(self._raw_dep_var) != len(indep_var)))
+		self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
+		# Apply minimum and maximum range bounding and assign it to
+		# self._indep_var and thus this is what self.indep_var returns
+		self._update_indep_var()
+		self._update_dep_var()
 
 	def _update_dep_var(self):
-		""" Update dependent variable (if assigned) to match the independent variable range bounding """
-		self._dep_var = self._raw_dep_var	#pylint: disable=W0212
-		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):	#pylint: disable=W0212
-			super(BasicSource, self)._set_dep_var(self._raw_dep_var[self._indep_var_indexes])	#pylint: disable=W0212
+		"""
+		Update dependent variable (if assigned) to match the independent
+		variable range bounding
+		"""
+		self._dep_var = self._raw_dep_var
+		if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
+			super(BasicSource, self)._set_dep_var(
+				self._raw_dep_var[self._indep_var_indexes]
+			)
 
 	def _update_indep_var(self):
-		""" Update independent variable according to its minimum and maximum limits """
-		self._exh.add_exception(exname='empty', extype=ValueError, exmsg='Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding')
-		if self._raw_indep_var is not None:	#pylint: disable=W0212
-			min_indexes = (self._raw_indep_var >= (self.indep_min if self.indep_min is not None else self._raw_indep_var[0]))	#pylint: disable=W0212
-			max_indexes = (self._raw_indep_var <= (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1]))	#pylint: disable=W0212
-			self._indep_var_indexes = numpy.where(min_indexes & max_indexes)	#pylint: disable=W0212
-			super(BasicSource, self)._set_indep_var(self._raw_indep_var[self._indep_var_indexes])	#pylint: disable=W0212
-			self._exh.raise_exception_if(exname='empty', condition=len(self.indep_var) == 0)
+		"""
+		Update independent variable according to its minimum and maximum limits
+		"""
+		self._exh.add_exception(
+			exname='empty',
+			extype=ValueError,
+			exmsg='Argument `indep_var` is empty after `indep_min`/`indep_max`'
+			      ' range bounding'
+		)
+		if self._raw_indep_var is not None:
+			min_indexes = (self._raw_indep_var >= (
+				self.indep_min if self.indep_min is not None else self._raw_indep_var[0])
+			)
+			max_indexes = (self._raw_indep_var <= (
+				self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])
+			)
+			self._indep_var_indexes = numpy.where(min_indexes & max_indexes)
+			super(BasicSource, self)._set_indep_var(
+				self._raw_indep_var[self._indep_var_indexes]
+			)
+			self._exh.raise_exception_if(
+				exname='empty',
+				condition=len(self.indep_var) == 0
+			)
 
 	# Managed attributes
-	indep_min = property(_get_indep_min, _set_indep_min, None, doc='Minimum of independent variable')
+	indep_min = property(
+		_get_indep_min,
+		_set_indep_min,
+		None,
+		doc='Minimum of independent variable'
+	)
 	r"""
 	Gets or sets the minimum independent variable limit
 
 	:type:		number or None, default is None
 
-	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-	.. Auto-generated exceptions documentation for putil.plot.basic_source.BasicSource.indep_min
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
+	.. Auto-generated exceptions documentation for
+	.. putil.plot.basic_source.BasicSource.indep_min
 
 	:raises: (when assigned)
 
 	 * RuntimeError (Argument \`indep_min\` is not valid)
 
-	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
+	 * ValueError (Argument \`indep_min\` is greater than argument
+	   \`indep_max\`)
 
-	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after
+	   \`indep_min\`/\`indep_max\` range bounding)
 
 	.. [[[end]]]
-	"""	#pylint: disable=W0105
+	"""
 
-	indep_max = property(_get_indep_max, _set_indep_max, None, doc='Maximum of independent variable')
+	indep_max = property(
+		_get_indep_max,
+		_set_indep_max,
+		None,
+		doc='Maximum of independent variable'
+	)
 	r"""
 	Gets or sets the maximum independent variable limit
 
 	:type:		number or None, default is None
 
-	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-	.. Auto-generated exceptions documentation for putil.plot.basic_source.BasicSource.indep_max
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
+	.. Auto-generated exceptions documentation for
+	.. putil.plot.basic_source.BasicSource.indep_max
 
 	:raises: (when assigned)
 
 	 * RuntimeError (Argument \`indep_max\` is not valid)
 
-	 * ValueError (Argument \`indep_min\` is greater than argument \`indep_max\`)
+	 * ValueError (Argument \`indep_min\` is greater than argument
+	   \`indep_max\`)
 
-	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after
+	   \`indep_min\`/\`indep_max\` range bounding)
 
 	.. [[[end]]]
-	"""	#pylint: disable=W0105
+	"""
 
-	indep_var = property(DataSource._get_indep_var, _set_indep_var, None, doc='Independent variable Numpy vector')
+	indep_var = property(
+		DataSource._get_indep_var,
+		_set_indep_var,
+		None,
+		doc='Independent variable Numpy vector'
+	)
 	r"""
 	Gets or sets the independent variable data
 
 	:type:		increasing real Numpy vector
 
-	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-	.. Auto-generated exceptions documentation for putil.plot.basic_source.BasicSource.indep_var
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
+	.. Auto-generated exceptions documentation for
+	.. putil.plot.basic_source.BasicSource.indep_var
 
 	:raises: (when assigned)
 
 	 * RuntimeError (Argument \`indep_var\` is not valid)
 
-	 * ValueError (Argument \`indep_var\` is empty after \`indep_min\`/\`indep_max\` range bounding)
+	 * ValueError (Argument \`indep_var\` is empty after
+	   \`indep_min\`/\`indep_max\` range bounding)
 
-	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
+	   number of elements)
 
 	.. [[[end]]]
-	"""	#pylint: disable=W0105
+	"""
 
-	dep_var = property(DataSource._get_dep_var, _set_dep_var, None, doc='Dependent variable Numpy vector')
+	dep_var = property(
+		DataSource._get_dep_var,
+		_set_dep_var,
+		None,
+		doc='Dependent variable Numpy vector'
+	)
 	r"""
 	Gets or sets the dependent variable data
 
 	:type:		real Numpy vector
 
-	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-	.. Auto-generated exceptions documentation for putil.plot.basic_source.BasicSource.dep_var
+	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
+	.. Auto-generated exceptions documentation for
+	.. putil.plot.basic_source.BasicSource.dep_var
 
 	:raises: (when assigned)
 
 	 * RuntimeError (Argument \`dep_var\` is not valid)
 
-	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same number of elements)
+	 * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
+	   number of elements)
 
 	.. [[[end]]]
-	"""	#pylint: disable=W0105
+	"""

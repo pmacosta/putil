@@ -3,6 +3,8 @@
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 
+set -e
+
 print_usage_message () {
 	echo -e "pkg-validate.sh\n" >&2
 	echo -e "Usage:" >&2
@@ -23,6 +25,8 @@ dir="$( cd -P "$( dirname "${source}" )" && pwd )"
 pkg_dir=$(dirname ${dir})
 src_dir=${pkg_dir}/putil
 cpwd=${PWD}
+
+source ${pkg_dir}/sbin/functions.sh
 
 # Read command line options
 num_cpus=""
@@ -49,23 +53,25 @@ if [ "$#" != 0 ]; then
 fi
 
 # Argument validation
-export NOPTION=""
+noption=""
 if [ "${num_cpus}" != "" ]; then
 	num_cpus=$(echo "${num_cpus}" | grep "^[2-9][0-9]*$")
 	if [ "${num_cpus}" == "" ]; then
-		echo "pkg-validate.sh: number of CPUs has to be an intenger greater than 1"
+		echo "test.sh: number of CPUs has to be an intenger greater than 1"
 		exit 1
 	fi
-	if ! pip freeze | grep pytest-xdist; then
-		echo 'pkg-validate.sh: pytest-xdist needs to be installed to use multiple CPUS'
+	if ! pip freeze | grep -q pytest-xdist; then
+		echo 'test.sh: pytest-xdist needs to be installed to use multiple CPUS'
 		exit 1
 	fi
-	export NOPTION="-n ${num_cpus}"
+	noption="-n ${num_cpus}"
 fi
+
 
 # Processing
 cd ${pkg_dir}
-tox -e py27
+${pkg_dir}/sbin/test.sh ${noption} -d
+${pkg_dir}/sbin/test.sh ${noption} -c
+print_banner "Testing documentation"
 tox -e docs
-export NOPTION=""
 cd ${cpwd}

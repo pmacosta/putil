@@ -1,18 +1,19 @@
+.. pcsv.rst
+.. Copyright (c) 2013-2015 Pablo Acosta-Serafini
+.. See LICENSE for details
 .. _pcsv-module:
 
 ###########
 pcsv module
 ###########
 
-
-
-This module can be used to handle comma-separated values (CSV) files and do lightweight processing on their data. For example:
+This module can be used to handle comma-separated values (CSV) files and do
+lightweight processing of their data. For example:
 
 .. literalinclude:: ./support/pcsv_example.py
     :language: python
-    :linenos:
-    :tab-width: 3
-    :lines: 1,5-
+    :tab-width: 4
+    :lines: 1,6-
 
 ***************************************
 Application programming interface (API)
@@ -21,17 +22,26 @@ Application programming interface (API)
 Pseudo-types
 ============
 
+.. _DataFilter:
+
 DataFilter
 ----------
 
-The data filter is a *dictionary* whose elements are sub-filters with the following structure:
+The data filter is a dictionary whose elements are sub-filters with the
+following structure:
 
-* **column name** *(string)* -- Dictionary key. Column to filter (as it appears in the comma-separated values file header)
+* **column name** *(string)* -- Dictionary key. Column to filter (as it appears
+  in the comma-separated values file header)
 
-* **value** *(list of strings or numbers, or string or number)* -- Dictionary value. Column value to filter if a string or number, column values to filter if a list of strings or numbers
+* **value** *(list of strings or numbers, or string or number)* -- Dictionary
+  value. Column value to filter if a string or number, column values to filter
+  if a list of strings or numbers
 
-If a data filter sub-filter is a column value all rows which contain the specified value in the specified column are kept for that particular individual filter. \
-The overall data set is the intersection of all the data sets specified by each individual filter. For example, if the file to be processed is:
+If a data filter sub-filter is a column value all rows which contain the
+specified value in the specified column are kept for that particular
+individual filter. The overall data set is the intersection of all the data
+sets specified by each individual filter. For example, if the file to be
+processed is:
 
 +------+-----+--------+
 | Ctrl | Ref | Result |
@@ -47,7 +57,8 @@ The overall data set is the intersection of all the data sets specified by each 
 |    3 |   5 |     50 |
 +------+-----+--------+
 
-Then the filter specification ``dfilter = {'Ctrl':2, 'Ref':5}`` would result in the following filtered data set:
+Then the filter specification ``dfilter = {'Ctrl':2, 'Ref':5}`` would result
+in the following filtered data set:
 
 +------+-----+--------+
 | Ctrl | Ref | Result |
@@ -55,11 +66,15 @@ Then the filter specification ``dfilter = {'Ctrl':2, 'Ref':5}`` would result in 
 |    2 |   5 |     40 |
 +------+-----+--------+
 
-However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would result in an empty list because the data set specified by the `Ctrl` individual filter does not overlap with the data set \
-specified by the `Ref` individual filter.
+However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would
+result in an empty list because the data set specified by the `Ctrl`
+individual filter does not overlap with the data set specified by the `Ref`
+individual filter.
 
-If a data filter sub-filter is a list, the items of the list represent all the values to be kept for a particular column (strings or numbers). So for example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` \
-would result in the following filtered data set:
+If a data filter sub-filter is a list, the items of the list represent all
+the values to be kept for a particular column (strings or numbers). So for
+example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would result in the following
+filtered data set:
 
 +------+-----+--------+
 | Ctrl | Ref | Result |

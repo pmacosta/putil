@@ -1,12 +1,14 @@
+.. test.rst
+.. Copyright (c) 2013-2015 Pablo Acosta-Serafini
+.. See LICENSE for details
 .. _test-module:
 
 ###########
 test module
 ###########
 
-
-
-This module contains functions to aid in the unit testing of modules in the package (`py.test <http://www.pytest.org>`_-based)
+This module contains functions to aid in the unit testing of modules in the
+package (`py.test <http://www.pytest.org>`_-based)
 
 ***************************************
 Application programming interface (API)

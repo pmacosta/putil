@@ -4,9 +4,13 @@
 # pylint: disable=C0111,W0212
 
 
-def namespace_test_enclosing_error_function():	#pylint: disable=C0103
-	""" Enclosing function to test namespace resolution when non-import errors are encountered """
-	class NamespaceTestClass(object):	#pylint: disable=R0903,W0612
+def namespace_test_enclosing_error_function():
+	"""
+	Enclosing function to test namespace resolution when non-import errors
+	are encountered
+	"""
+	# pylint: disable=C0103,R0903,W0612
+	class NamespaceTestClass(object):
 		""" Enclosed class to test namespace resolution error handling """
 		import math
 		value = math.sqrt(-1)

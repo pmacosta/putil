@@ -1,1 +1,1 @@
-../tests/gen_ref_images.py
+../tests/plot/gen_ref_images.py

@@ -3,11 +3,11 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0611
 
-from plot.contracts import TestContracts
-from plot.basic_source import TestBasicSource
-from plot.csv_source import TestCsvSource
-from plot.series import TestSeries
-from plot.panel import TestPanel
-from plot.figure import TestFigure
-from plot.functions import TestParameterizedColorSpace, TestDataSource
-from plot.fixtures import default_panel, default_series, default_source
+from tests.plot.ccontracts import TestContracts
+from tests.plot.basic_source import TestBasicSource
+from tests.plot.csv_source import TestCsvSource
+from tests.plot.series import TestSeries
+from tests.plot.panel import TestPanel
+from tests.plot.figure import TestFigure
+from tests.plot.functions import TestParameterizedColorSpace, TestDataSource
+from tests.plot.fixtures import default_panel, default_series, default_source

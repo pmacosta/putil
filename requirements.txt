@@ -1,3 +1,4 @@
+cogapp>=2.4
 coverage>=3.7.1
 funcsigs>=0.4
 matplotlib>=1.4.2

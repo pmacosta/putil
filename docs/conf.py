@@ -32,7 +32,8 @@ extensions = [
 #   'sphinx.ext.viewcode',
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
-	'sphinxcontrib.inlinesyntaxhighlight'
+    'sphinxcontrib.inlinesyntaxhighlight',
+    'sphinx.ext.doctest'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -247,7 +248,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'Putil library', u'src Documentation',
-   u'Pablo Acosta-Serafini', 'Putil library', 'One line description of project.',
+   u'Pablo Acosta-Serafini', 'Putil library', 'Collection of utility modules to supplement the Python standard library',
    'Miscellaneous'),
 ]
 
@@ -270,7 +271,7 @@ texinfo_documents = [
 epub_title = u'Putil library'
 epub_author = u'Pablo Acosta-Serafini'
 epub_publisher = u'Pablo Acosta-Serafini'
-epub_copyright = u'2013, Pablo Acosta-Serafini'
+epub_copyright = u'2013-2015, Pablo Acosta-Serafini'
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'src'

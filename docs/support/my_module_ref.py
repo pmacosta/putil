@@ -1,16 +1,17 @@
-﻿# my_module_original.py
+﻿# my_module_ref.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,R0903,W0105
-
 
 ###
 # Exception tracing initialization code
 ###
 """
 [[[cog
-import trace_my_module_2
-exobj_my_module = trace_my_module_2.trace_module()
+import os, sys
+sys.path.append(os.environ['TRACER_DIR'])
+import trace_my_module_1
+exobj = trace_my_module_1.trace_module(no_print=True)
 ]]]
 [[[end]]]
 """
@@ -18,13 +19,18 @@ exobj_my_module = trace_my_module_2.trace_module()
 import putil.exh
 
 def func(name):
-	"""
+	r"""
 	Prints your name
 
 	:param   name: Name to print
 	:type name: string
 
-	.. [[[cog cog.out(exobj_my_module.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc(width=69))]]]
+	.. Auto-generated exceptions documentation for
+	.. docs.support.my_module.func
+
+	:raises: TypeError (Argument \`name\` is not valid)
+
 	.. [[[end]]]
 
 	"""
@@ -38,7 +44,7 @@ def func(name):
 		exname='illegal_name',
 		condition=not isinstance(name, str)
 	)
-	print 'My name is {0}'.format(name)
+	return 'My name is {0}'.format(name)
 
 class MyClass(object):
 	"""
@@ -47,7 +53,7 @@ class MyClass(object):
 	:param	value: value
 	:type	value: integer
 
-	.. [[[cog cog.out(exobj_my_module.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc(width=69))]]]
 	.. [[[end]]]
 	"""
 	def __init__(self, value=None):
@@ -79,12 +85,24 @@ class MyClass(object):
 		self._value = value
 
 	value = property(_get_value, _set_value)
-	"""
+	r"""
 	Sets or returns a value
 
 	:type:	integer
 	:rtype:	integer or None
 
-	.. [[[cog cog.out(exobj_my_module.get_sphinx_autodoc()) ]]]
+	.. [[[cog cog.out(exobj.get_sphinx_autodoc(width=69))]]]
+	.. Auto-generated exceptions documentation for
+	.. docs.support.my_module.MyClass.value
+
+	:raises:
+	 * When assigned
+
+	   * RuntimeError (Argument \`value\` is not valid)
+
+	 * When retrieved
+
+	   * RuntimeError (Attribute \`value\` not set)
+
 	.. [[[end]]]
 	"""

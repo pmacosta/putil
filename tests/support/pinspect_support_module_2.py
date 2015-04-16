@@ -30,5 +30,8 @@ class SimpleClass(object):
 
 
 def getter_func_for_closure_class(self):
-	""" Getter function to test if enclosed class detection works with property action functions in different files """
+	"""
+	Getter function to test if enclosed class detection works with property
+	action functions in different files
+	"""
 	return self.mobj

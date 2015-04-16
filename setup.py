@@ -3,8 +3,9 @@
 # See LICENSE for details
 # pylint: disable=C0111,R0904,W0201,E1111
 
-# Taken in large part from http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
-# With additional hint from http://oddbird.net/set-your-code-free-preso/
+# Taken in large part from
+# http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
+# With additional hints from http://oddbird.net/set-your-code-free-preso/
 from __future__ import print_function
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
@@ -49,7 +50,10 @@ class PyTest(TestCommand):
 		import pytest
 		#import os, pytest
 		#pkg_dir = os.path.dirname(__file__)
-		#sys.path += [os.path.join(pkg_dir, 'sbin'), os.path.join(pkg_dir, 'tests/support')]
+		#sys.path += [
+		#	os.path.join(pkg_dir, 'sbin'),
+		#	os.path.join(pkg_dir, 'tests/support')
+		#]
 		errno = pytest.main(self.test_args)
 		sys.exit(errno)
 
@@ -81,7 +85,8 @@ setup(
 	url='http://bitbucket.org/pacosta/putil/',
 	license='MIT',
 	author='Pablo Acosta-Serafini',
-	tests_require=['coverage>=3.7.1',
+	tests_require=['cogapp>=2.4',
+	               'coverage>=3.7.1',
 	               'mock>=1.0.1',
 	               'pytest>=2.6.3',
 	               'pytest-cov>=1.8.0',
@@ -96,11 +101,20 @@ setup(
 	                  'PyContracts>=1.7.1',
 	                  'scipy>=0.15.1',
 	                 ],
-	cmdclass={'test': PyTest},
+	cmdclass={'tests': PyTest},
 	author_email='pmacosta@yahoo.com',
-	description='This library provides a collection of utility modules to supplement the excellent Python standard library',
+	description=('This library provides a collection of utility modules to '
+				 'supplement the Python standard library'),
+	include_package_data=True,
 	long_description=LONG_DESCRIPTION,
-	packages=['putil', 'putil.plot'],
+	packages=['putil', 'putil.plot', 'tests', 'docs'],
+	package_data={'':[
+		'tests/support/*.py',
+		'tests/support/plot/*.py',
+		'tests/support/ref_images/*.png',
+		'tests/support/ref_images_ci/*.png',
+		'docs/support/*.py'
+	]},
 	zip_safe=False,
 	platforms='any',
 	classifiers=[

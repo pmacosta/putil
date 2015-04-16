@@ -1,23 +1,25 @@
-# example_plot.py
+# plot_example_1.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111
 
+import numpy, os, putil.plot, sys
 
-def main():
+def main(file_name):
 	"""
 	Example of how to use the putil.plot library
 	to generate presentation-quality plots
 	"""
-	import numpy
-	import putil.plot
 	###
 	# Series definition (Series class)
 	###
-	# Extract data from a comma-separated (csv) file using the CsvSource class
+	# Extract data from a comma-separated (csv)
+	# file using the CsvSource class
+	wdir = os.path.dirname(__file__)
+	csv_file = os.path.join(wdir, 'data.csv')
 	series1_obj = [putil.plot.Series(
 		data_source=putil.plot.CsvSource(
-			file_name='data.csv',
+			file_name=csv_file,
 			dfilter={'value1':1},
 			indep_col_label='value2',
 			dep_col_label='value3',
@@ -94,13 +96,14 @@ def main():
 		title='Library putil.plot Example'
 	)
 	# Save figure
-	fig_obj.save('./example_plot.png')
+	output_file_name = os.path.join(wdir, file_name)
+	print 'Saving image to file {0}'.format(output_file_name)
+	fig_obj.save(output_file_name)
 
-def series1_proc_func(indep_var, dep_var, xoffset):	#pylint: disable=W0613
-	"""
-	Process data 1 series
-	"""
+def series1_proc_func(indep_var, dep_var, xoffset):
+	""" Process data 1 series """
+	# pylint: disable=W0613
 	return (indep_var*1e-3)-xoffset, dep_var
 
 if __name__ == '__main__':
-	main()
+	main(sys.argv[1] if len(sys.argv) > 1 else 'plot_example_1.png')

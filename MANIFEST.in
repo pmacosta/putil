@@ -1,7 +1,13 @@
+# MANIFEST.in
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+
 # This file
 include MANIFEST.in
+
 # Top-level build scripts
 include setup.py
+
 # Project information and meta-data
 include AUTHORS.rst
 include CHANGELOG.rst
@@ -9,14 +15,17 @@ include LICENSE
 include MANIFEST.in
 include README.rst
 include TODO.rst
+
 # All documentation
 recursive-include docs *.rst
 recursive-include docs/support *.py *.csv *.png *.odg *.sh
+
 # All build and testing tools
 include requirements.txt
 include .coveragerc
 include shippable.yml
 include tox.ini
 recursive-include tests/plot *.py
+recursive-include tests/support *.py
 recursive-include tests/support/ref_images *.png
 recursive-include tests/support/ref_images_ci *.png

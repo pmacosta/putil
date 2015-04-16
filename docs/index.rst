@@ -1,6 +1,7 @@
+.. index.rst
+.. Copyright (c) 2013-2015 Pablo Acosta-Serafini
+.. See LICENSE for details
 .. _index:
-
-
 
 .. include:: ../README.rst
 

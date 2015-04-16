@@ -1,7 +1,7 @@
 ﻿# test_test.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=W0212,C0111
+# pylint: disable=C0111,W0212
 
 import pytest
 
@@ -30,9 +30,19 @@ def test_assert_exception():
 	putil.test.assert_exception(func1, {'par1':1}, RuntimeError, 'Exception 1')
 	with pytest.raises(AssertionError):
 		putil.test.assert_exception(func1, {'par1':0}, RuntimeError, 'Exception 1')
-	putil.test.assert_exception(func1, {'par1':2}, ValueError, r'The number \d+ is invalid')
+	putil.test.assert_exception(
+		func1,
+		{'par1':2},
+		ValueError,
+		r'The number \d+ is invalid'
+	)
 	with pytest.raises(AssertionError):
 		putil.test.assert_exception(func1, {'par1':1}, IOError, 'Exception 5')
 	with pytest.raises(AssertionError):
-		putil.test.assert_exception(func1, {'par1':2}, ValueError, 'Exception message is wrong')
+		putil.test.assert_exception(
+			func1,
+			{'par1':2},
+			ValueError,
+			'Exception message is wrong'
+		)
 
