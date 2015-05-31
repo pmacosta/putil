@@ -1,14 +1,16 @@
 # eng.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,W0105
+# pylint: disable=C0111,W0105,W0611
 
 import decimal
 import numpy
 import textwrap
 
 import putil.exh
-import putil.pcontracts
+from putil.ptypes import (engineering_notation_number,
+						 engineering_notation_suffix,
+						 non_negative_integer)
 
 
 ###
@@ -36,7 +38,6 @@ _POWER_TO_SUFFIX_DICT = {
 _SUFFIX_TO_POWER_DICT = dict(
 	[(value, key) for key, value in _POWER_TO_SUFFIX_DICT.iteritems()]
 )
-_SUFFIX_TUPLE = tuple(_SUFFIX_TO_POWER_DICT.keys())
 _SUFFIX_POWER_DICT = dict(
 	[(key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.iteritems()]
 )
@@ -45,67 +46,6 @@ _SUFFIX_POWER_DICT = dict(
 ###
 # Functions
 ###
-@putil.pcontracts.new_contract()
-def engineering_notation_number(obj):
-	r"""
-	Validates if an object is a number represented in engineering notation
-
-	:param	obj: Object
-	:type	obj: any
-	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-	 token \*[argument_name]\* is replaced by the name of the argument the
-	 contract is attached to
-
-	:rtype: None
-	"""
-	try:
-		obj = obj.rstrip()
-		float(obj[:-1] if obj[-1] in _SUFFIX_TUPLE else obj)
-		return None
-	except (AttributeError, IndexError, ValueError):
-		# AttributeError: obj.rstrip(), object could not be a string
-		# IndexError: obj[-1], when an empty string
-		# ValueError: float(), when not a string representing a number
-		raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
-def engineering_notation_suffix(obj):
-	r"""
-	Validates if an object is an engineering notation suffix
-
-	:param	obj: Object
-	:type	obj: any
-	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-	 token \*[argument_name]\* is replaced by the *name* of the argument the
-	 contract is attached to
-
-	:rtype: None
-	"""
-	try:
-		assert obj in _SUFFIX_TUPLE
-	except AssertionError:
-		raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
-def pos_integer(obj):
-	r"""
-	Validates if an object is a positive integer
-
-	:param	obj: Object
-	:type	obj: any
-	:raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-	 token \*[argument_name]\* is replaced by the *name* of the argument the
-	 contract is attached to
-
-	:rtype: None
-	"""
-	if isinstance(obj, int) and (obj >= 0):
-		return None
-	raise ValueError(putil.pcontracts.get_exdesc())
-
-
 def _to_eng_tuple(number):
 	"""
 	Returns a string version of the number where the exponent is a
@@ -131,7 +71,7 @@ def _to_eng_string(number):
 
 @putil.pcontracts.contract(
 	number='int|float',
-	frac_length='pos_integer',
+	frac_length='non_negative_integer',
 	rjust=bool
 )
 def peng(number, frac_length, rjust=True):
@@ -143,7 +83,7 @@ def peng(number, frac_length, rjust=True):
 	:param	number: Number to convert
 	:type	number: number
 	:param	frac_length: Number of digits of fractional part
-	:type	frac_length: integer
+	:type	frac_length: :ref:`NonNegativeInteger`
 	:param	rjust: Flag that indicates whether the number is
 	 right-justified (True) or not (False)
 	:type	rjust: boolean
@@ -257,7 +197,7 @@ def peng_float(snum):
 	in engineering notation
 
 	:param	snum: Number
-	:type	snum: EngineeringNotationNumber
+	:type	snum: :ref:`EngineeringNotationNumber`
 	:rtype: string
 
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -287,7 +227,7 @@ def peng_frac(snum):
 	Returns the fractional part of a number represented in engineering notation
 
 	:param	snum: Number
-	:type	snum: EngineeringNotationNumber
+	:type	snum: :ref:`EngineeringNotationNumber`
 	:rtype: integer
 
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -317,7 +257,7 @@ def peng_int(snum):
 	Returns the integer part of a number represented in engineering notation
 
 	:param snum: Number
-	:type	snum: EngineeringNotationNumber
+	:type	snum: :ref:`EngineeringNotationNumber`
 	:rtype: integer
 
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -343,7 +283,7 @@ def peng_mant(snum):
 	Returns the mantissa of a number represented in engineering notation
 
 	:param	snum: Number
-	:type	snum: EngineeringNotationNumber
+	:type	snum: :ref:`EngineeringNotationNumber`
 	:rtype: float
 
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -373,7 +313,7 @@ def peng_power(snum):
 	lists the correspondence between suffix and floating point exponent.
 
 	:param	snum: Number
-	:type	snum: EngineeringNotationNumber
+	:type	snum: :ref:`EngineeringNotationNumber`
 	:rtype: tuple
 
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -400,7 +340,7 @@ def peng_suffix(snum):
 	Returns the suffix of a number represented in engineering notation
 
 	:param	snum: Number
-	:type	snum: EngineeringNotationNumber
+	:type	snum: :ref:`EngineeringNotationNumber`
 	:rtype: string
 
 	.. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -428,7 +368,7 @@ def peng_suffix_math(suffix, offset):
 	number of suffixes
 
 	:param	suffix: Engineering suffix
-	:type	suffix: EngineeringNotationSuffix
+	:type	suffix: :ref:`EngineeringNotationSuffix`
 	:param	offset: Engineering suffix offset
 	:type	offset: integer
 	:rtype: string

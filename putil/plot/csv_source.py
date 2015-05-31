@@ -10,9 +10,8 @@ import putil.exh
 import putil.pcsv
 from putil.pcsv import csv_data_filter
 from .constants import PRECISION
-from .ccontracts import (_check_increasing_real_numpy_vector,
+from .functions import (DataSource, _check_increasing_real_numpy_vector,
                         _check_real_numpy_vector)
-from .functions import DataSource
 
 
 ###
@@ -38,21 +37,21 @@ class CsvSource(DataSource):
 	plotting. The raw data from the file can be filtered and a callback
 	function can be used for more general data pre-processing.
 
-	:param	file_name:			comma-separated values file name
-	:type	file_name:			string
+	:param	fname:				comma-separated values file name
+	:type	fname:				:ref:`FileNameExists`
 	:param	indep_col_label:	independent variable column label
-	:type	indep_col_label:	string (case insensitive)
+	:type	indep_col_label:	case insensitive string
 	:param	dep_col_label:		dependent variable column label
-	:type	dep_col_label:		string (case insensitive)
-	:param	dfilter:			data filter. See :ref:`DataFilter` pseudo-type
+	:type	dep_col_label:		case insensitive string
+	:param	dfilter:			data filter
 	 specification
-	:type	dfilter:			DataFilter
+	:type	dfilter:			:ref:`CsvDataFilter`
 	:param	indep_min:			minimum independent variable value
-	:type	indep_min:			number or None
+	:type	indep_min:			:ref:`RealNum` *or None*
 	:param	indep_max:			maximum independent variable value
-	:type	indep_max:			number or None
+	:type	indep_max:			:ref:`RealNum` *or None*
 	:param	fproc:				data processing function
-	:type	fproc:				function pointer or None
+	:type	fproc:				:ref:`Function`
 	:param	fproc_eargs:		data processing function extra arguments
 	:type	fproc_eargs:		dictionary or None
 	:rtype:						:py:class:`putil.plot.CsvSource` object
@@ -62,7 +61,7 @@ class CsvSource(DataSource):
 	.. putil.plot.csv_source.CsvSource.__init__
 
 	:raises:
-	 * IOError (File \`*[file_name]*\` could not be found)
+	 * IOError (File \`*[fname]*\` could not be found)
 
 	 * RuntimeError (Argument \`col\` is not valid)
 
@@ -72,7 +71,7 @@ class CsvSource(DataSource):
 
 	 * RuntimeError (Argument \`dfilter\` is not valid)
 
-	 * RuntimeError (Argument \`file_name\` is not valid)
+	 * RuntimeError (Argument \`fname\` is not valid)
 
 	 * RuntimeError (Argument \`filtered\` is not valid)
 
@@ -93,9 +92,9 @@ class CsvSource(DataSource):
 
 	 * RuntimeError (Column headers are not unique)
 
-	 * RuntimeError (File *[file_name]* has no valid data)
+	 * RuntimeError (File *[fname]* has no valid data)
 
-	 * RuntimeError (File *[file_name]* is empty)
+	 * RuntimeError (File *[fname]* is empty)
 
 	 * RuntimeError (Processing function *[func_name]* raised an exception
 	   when called with the following arguments: ``\n`` indep_var:
@@ -125,13 +124,13 @@ class CsvSource(DataSource):
 	   number of elements)
 
 	 * ValueError (Column *[col_name]* (dependent column label) could not be
-	   found in comma-separated file *[file_name]* header)
+	   found in comma-separated file *[fname]* header)
 
 	 * ValueError (Column *[col_name]* (independent column label) could not be
-	   found in comma-separated file *[file_name]* header)
+	   found in comma-separated file *[fname]* header)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-
-	   separated file *[file_name]* header)
+	   separated file *[fname]* header)
 
 	 * ValueError (Column *[column_name]* not found in header)
 
@@ -152,7 +151,7 @@ class CsvSource(DataSource):
 	.. [[[end]]]
 	"""
 	# pylint: disable=R0902,R0903,R0913
-	def __init__(self, file_name, indep_col_label, dep_col_label, dfilter=None,
+	def __init__(self, fname, indep_col_label, dep_col_label, dfilter=None,
 				 indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):
 		# Private attributes
 		super(CsvSource, self).__init__()
@@ -163,7 +162,7 @@ class CsvSource(DataSource):
 		self._csv_obj, self._reverse_data = None, False
 		# Public attributes
 		self._indep_min, self._indep_max = None, None
-		self._file_name, self._dfilter, self._indep_col_label = None, None, None
+		self._fname, self._dfilter, self._indep_col_label = None, None, None
 		self._dep_col_label, self._fproc, self._fproc_eargs = None, None, None
 		# Assignment of arguments to attributes
 		self._set_fproc(fproc)
@@ -173,15 +172,15 @@ class CsvSource(DataSource):
 		self._set_dep_col_label(dep_col_label)
 		self._set_indep_min(indep_min)
 		self._set_indep_max(indep_max)
-		self._set_file_name(file_name)
+		self._set_fname(fname)
 
-	def _get_file_name(self):
-		return self._file_name
+	def _get_fname(self):
+		return self._fname
 
-	@putil.pcontracts.contract(file_name='file_name_exists')
-	def _set_file_name(self, file_name):
-		self._file_name = file_name
-		self._csv_obj = putil.pcsv.CsvFile(file_name)
+	@putil.pcontracts.contract(fname='file_name_exists')
+	def _set_fname(self, fname):
+		self._fname = fname
+		self._csv_obj = putil.pcsv.CsvFile(fname)
 		self._apply_dfilter()	# This also gets indep_var and dep_var from file
 		self._process_data()
 
@@ -405,7 +404,7 @@ class CsvSource(DataSource):
 			exname='label',
 			extype=ValueError,
 			exmsg='Column *[col_name]* (independent column label) could not'
-				  ' be found in comma-separated file *[file_name]* header'
+				  ' be found in comma-separated file *[fname]* header'
 		)
 		self._exh.raise_exception_if(
 			exname='label',
@@ -414,7 +413,7 @@ class CsvSource(DataSource):
 					  (self.indep_col_label not in self._csv_obj.header),
 			edata=[
 				{'field':'col_name', 'value':self.indep_col_label},
-				{'field':'file_name', 'value':self.file_name}
+				{'field':'fname', 'value':self.fname}
 			]
 		)
 
@@ -427,7 +426,7 @@ class CsvSource(DataSource):
 			exname='label',
 			extype=ValueError,
 			exmsg='Column *[col_name]* (dependent column label) could not be'
-				  ' found in comma-separated file *[file_name]* header'
+				  ' found in comma-separated file *[fname]* header'
 		)
 		self._exh.raise_exception_if(
 			exname='label',
@@ -436,7 +435,7 @@ class CsvSource(DataSource):
 					  (self.dep_col_label not in self._csv_obj.header),
 			edata=[
 				{'field':'col_name', 'value':self.dep_col_label},
-				{'field':'file_name', 'value':self.file_name}
+				{'field':'fname', 'value':self.fname}
 			]
 		)
 
@@ -449,7 +448,7 @@ class CsvSource(DataSource):
 			exname='dfilter',
 			extype=ValueError,
 			exmsg='Column *[col_name]* in data filter not found '
-				  'in comma-separated file *[file_name]* header'
+				  'in comma-separated file *[fname]* header'
 		)
 		if (self._csv_obj is not None) and (self.dfilter is not None):
 			for key in self.dfilter:
@@ -458,7 +457,7 @@ class CsvSource(DataSource):
 					condition=key not in self._csv_obj.header,
 					edata=[
 						{'field':'col_name', 'value':key},
-						{'field':'file_name', 'value':self.file_name}
+						{'field':'fname', 'value':self.fname}
 					]
 				)
 
@@ -699,9 +698,9 @@ class CsvSource(DataSource):
 		        return indep_var, dep_var
 
 		    def create_csv_source():
-		        with putil.misc.TmpFile(write_csv_file) as file_name:
+		        with putil.misc.TmpFile(write_csv_file) as fname:
 		            obj = putil.plot.CsvSource(
-		                file_name=file_name,
+		                fname=fname,
 		                indep_col_label='Col1',
 		                dep_col_label='Col2',
 		                indep_min=2E-12,
@@ -729,7 +728,7 @@ class CsvSource(DataSource):
 
 		"""
 		ret = ''
-		ret += 'File name: {0}\n'.format(self.file_name)
+		ret += 'File name: {0}\n'.format(self.fname)
 		ret += 'Data filter: {0}\n'.format(
 			self.dfilter if self.dfilter is None else ''
 		)
@@ -761,9 +760,9 @@ class CsvSource(DataSource):
 		ret += super(CsvSource, self).__str__()
 		return ret
 
-	file_name = property(
-		_get_file_name,
-		_set_file_name,
+	fname = property(
+		_get_fname,
+		_set_fname,
 		doc='Comma-separated file name'
 	)
 	r"""
@@ -775,11 +774,11 @@ class CsvSource(DataSource):
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for
-	.. putil.plot.csv_source.CsvSource.file_name
+	.. putil.plot.csv_source.CsvSource.fname
 
 	:raises: (when assigned)
 
-	 * IOError (File \`*[file_name]*\` could not be found)
+	 * IOError (File \`*[fname]*\` could not be found)
 
 	 * RuntimeError (Argument \`col\` is not valid)
 
@@ -787,7 +786,7 @@ class CsvSource(DataSource):
 
 	 * RuntimeError (Argument \`dfilter\` is not valid)
 
-	 * RuntimeError (Argument \`file_name\` is not valid)
+	 * RuntimeError (Argument \`fname\` is not valid)
 
 	 * RuntimeError (Argument \`filtered\` is not valid)
 
@@ -798,9 +797,9 @@ class CsvSource(DataSource):
 
 	 * RuntimeError (Column headers are not unique)
 
-	 * RuntimeError (File *[file_name]* has no valid data)
+	 * RuntimeError (File *[fname]* has no valid data)
 
-	 * RuntimeError (File *[file_name]* is empty)
+	 * RuntimeError (File *[fname]* is empty)
 
 	 * RuntimeError (Processing function *[func_name]* raised an exception
 	   when called with the following arguments: ``\n`` indep_var:
@@ -824,13 +823,13 @@ class CsvSource(DataSource):
 	   number of elements)
 
 	 * ValueError (Column *[col_name]* (dependent column label) could not be
-	   found in comma-separated file *[file_name]* header)
+	   found in comma-separated file *[fname]* header)
 
 	 * ValueError (Column *[col_name]* (independent column label) could not be
-	   found in comma-separated file *[file_name]* header)
+	   found in comma-separated file *[fname]* header)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-
-	   separated file *[file_name]* header)
+	   separated file *[fname]* header)
 
 	 * ValueError (Column *[column_name]* not found in header)
 
@@ -850,9 +849,9 @@ class CsvSource(DataSource):
 
 	dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
 	r"""
-	Gets or sets the data filter; see :ref:`DataFilter` pseudo-type specification
+	Gets or sets the data filter
 
-	:type: DataFilter
+	:type: :ref:`CsvDataFilter`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for
@@ -881,7 +880,7 @@ class CsvSource(DataSource):
 	 * ValueError (Argument \`dfilter\` is empty)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-
-	   separated file *[file_name]* header)
+	   separated file *[fname]* header)
 
 	 * ValueError (Filtered dependent variable is empty)
 
@@ -932,10 +931,10 @@ class CsvSource(DataSource):
 	 * TypeError (Processed independent variable is not valid)
 
 	 * ValueError (Column *[col_name]* (independent column label) could not be
-	   found in comma-separated file *[file_name]* header)
+	   found in comma-separated file *[fname]* header)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-
-	   separated file *[file_name]* header)
+	   separated file *[fname]* header)
 
 	 * ValueError (Filtered dependent variable is empty)
 
@@ -986,10 +985,10 @@ class CsvSource(DataSource):
 	 * TypeError (Processed independent variable is not valid)
 
 	 * ValueError (Column *[col_name]* (dependent column label) could not be
-	   found in comma-separated file *[file_name]* header)
+	   found in comma-separated file *[fname]* header)
 
 	 * ValueError (Column *[col_name]* in data filter not found in comma-
-	   separated file *[file_name]* header)
+	   separated file *[fname]* header)
 
 	 * ValueError (Filtered dependent variable is empty)
 
@@ -1013,7 +1012,7 @@ class CsvSource(DataSource):
 	r"""
 	Gets or sets the minimum independent variable limit
 
-	:type:		number or None, default is None
+	:type: :ref:`RealNum`, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for
@@ -1040,7 +1039,7 @@ class CsvSource(DataSource):
 	r"""
 	Gets or sets the maximum independent variable limit
 
-	:type:		number or None, default is None
+	:type: :ref:`RealNum`, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for
@@ -1096,7 +1095,7 @@ class CsvSource(DataSource):
 
 	.. =[=end=]=
 
-	:type:	function pointer, default is None
+	:type: :ref:`Function`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for
@@ -1214,9 +1213,9 @@ class CsvSource(DataSource):
 	        return (indep_var/1E-12)+(2*par1), dep_var+sum(par2)
 
 	    def create_csv_source():
-	        with putil.misc.TmpFile(write_csv_file) as file_name:
+	        with putil.misc.TmpFile(write_csv_file) as fname:
 	            obj = putil.plot.CsvSource(
-	                file_name=file_name,
+	                fname=fname,
 	                indep_col_label='Col1',
 	                dep_col_label='Col2',
 	                fproc=proc_func2,

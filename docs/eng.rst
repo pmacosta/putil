@@ -66,44 +66,9 @@ This module provides engineering-related functions including:
 		... )
 		'+1.0E+02'
 
-***************************************
-Application programming interface (API)
-***************************************
-
-Pseudo-types
-============
-
-EngineeringNotationNumber
--------------------------
-
-String with a number represented in engineering notation. Optional leading
-whitespace can precede the mantissa; optional whitespace can also follow the
-engineering suffix. An optional sign (+ or -) can precede the mantissa after
-the leading whitespace. The suffix must be one of :code:`'y'`, :code:`'z'`,
-:code:`'a'`, :code:`'f'`, :code:`'p'`, :code:`'n'`, :code:`'u'`, :code:`'m'`,
-:code:`' '` (space), :code:`'k'`, :code:`'M'`, :code:`'G'`, :code:`'T'`,
-:code:`'P'`, :code:`'E'`, :code:`'Z'` or :code:`'Y'`.
-:py:func:`putil.eng.peng` lists the correspondence between suffix and floating
-point exponent.
-
-EngineeringNotationSuffix
--------------------------
-
-A single character string, one  of :code:`'y'`, :code:`'z'`, :code:`'a'`,
-:code:`'f'`, :code:`'p'`, :code:`'n'`, :code:`'u'`, :code:`'m'`,
-:code:`' '` (space), :code:`'k'`, :code:`'M'`, :code:`'G'`, :code:`'T'`,
-:code:`'P'`, :code:`'E'`, :code:`'Z'` or :code:`'Y'`. :py:func:`putil.eng.peng`
-lists the correspondence between suffix and floating point exponent.
-
-Contracts
-=========
-
-.. autofunction:: putil.eng.engineering_notation_number
-.. autofunction:: putil.eng.engineering_notation_suffix
-.. autofunction:: putil.eng.pos_integer
-
+*********
 Functions
-=========
+*********
 
 .. autofunction:: putil.eng.peng
 .. autofunction:: putil.eng.peng_float

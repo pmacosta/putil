@@ -76,12 +76,12 @@ def print_city_name(city_name):
 	return 'City: {0}'.format(city_name)
 
 @putil.pcontracts.new_contract((
-	IOError, 'File `*[file_name]*` not found'
+	IOError, 'File `*[fname]*` not found'
 ))
-def custom_contract12(file_name):
-	if not os.path.exists(file_name):
+def custom_contract12(fname):
+	if not os.path.exists(fname):
 		raise ValueError(putil.pcontracts.get_exdesc())
 
-@putil.pcontracts.contract(file_name='custom_contract12')
-def print_file_name(file_name):
-	print 'File name to find: {0}'.format(file_name)
+@putil.pcontracts.contract(fname='custom_contract12')
+def print_fname(fname):
+	print 'File name to find: {0}'.format(fname)

@@ -3,29 +3,26 @@
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 
+source $(dirname "${BASH_SOURCE[0]}")/functions.sh
+
 print_usage_message () {
 	echo -e "test.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  test.sh [-h] [-n num-cpus] [-c] [-d] [module-name] [test-name]\n" >&2
+	echo -e "  test.sh -h" >&2
+	echo -e "  test.sh -d [-n num-cpus]" >&2
+	echo -e "  test.sh -c [-n num-cpus] [module-name]" >&2
+	echo -e "  test.sh [-n num-cpus] [module-name] [test-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
-	echo -e "  -c  Measure test coverage ([test-name] illegal)" >&2
-	echo -e "  -d  Verify doctests ([module-name] and [test-name] illegal)" >&2
-	echo -e "  -n  Number of CPUs to use (greater than 2)" >&2
+	echo -e "  -c  Measure test coverage" >&2
+	echo -e "  -d  Verify doctests" >&2
+	echo -e "  -n  Number of CPUs to use default: 1]" >&2
 	echo -e "" >&2
-	echo -e "If no module name is given all package modules are processed." >&2
-	echo -e "Coverage and doctest verification are mutually exclusive." >&2
+	echo -e "If no module name is given all package modules" \
+		"are processed" >&2
 }
 
-# Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
-source="${BASH_SOURCE[0]}"
-while [ -h "${source}" ]; do # resolve $source until the file is no longer a symlink
-	dir="$( cd -P "$( dirname "${source}" )" && pwd )"
-	source="$(readlink "${source}")"
-	[[ ${source} != /* ]] && source="$dir/$source" # if $source was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-dir="$( cd -P "$( dirname "${source}" )" && pwd )"
-pkg_dir=$(dirname ${dir})
+pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 src_dir=${pkg_dir}/putil
 cpwd=${PWD}
 
@@ -82,51 +79,85 @@ if [ "$#" -gt 0 ]; then
 	module=$1
 	file=${pkg_dir}/tests/test_${module}.py
 	if [ ! -f "${file}" ]; then
-		echo "test.sh: test bench for module ${module} could not be found"
+		echo "test.sh: test bench for module ${module}"\
+		     "could not be found"
 		exit 1
 	fi
-	module="test_${module}.py"
+	fmodule="test_${module}.py"
 fi
+
 koption=""
 if [ "$#" == 2 ]; then
 	koption="-k $2"
 fi
-noption=""
-if [ "${num_cpus}" != "" ]; then
-	num_cpus=$(echo "${num_cpus}" | grep "^[2-9][0-9]*$")
-	if [ "${num_cpus}" == "" ]; then
-		echo "test.sh: number of CPUs has to be an intenger greater than 1"
-		exit 1
-	fi
-	if ! pip freeze | grep -q pytest-xdist; then
-		echo 'test.sh: pytest-xdist needs to be installed to use multiple CPUS'
-		exit 1
-	fi
-	noption="-n ${num_cpus}"
+
+noption=$(validate_num_cpus "test.sh" "${num_cpus}")
+if [ $? != 0 ]; then
+	exit 1
 fi
+
+fmodules=""
+if [ "${fmodule}" == "" ] && [ "${doctest}" == 0 ] && [ "${coverage}" == 0 ]; then
+	modules=(eng exdoc exh misc pcontracts pcsv pinspect plot ptypes "test" tree)
+	for module in ${modules[@]}; do
+		fmodules+="test_${module}.py "
+	done
+elif [ "${fmodule}" != "" ]; then
+	fmodules=(${fmodule})
+fi
+
+cd ${pkg_dir}
+
 poptions=""
+tox_pkg_dir=".tox/py27/lib/python2.7/site-packages/putil/"
 if [ "${doctest}" == 1 ]; then
 	print_banner "Doctests"
-	poptions="--doctest-glob='*.rst' ${pkg_dir}/.tox/py27/lib/python2.7/site-packages/docs"
-	tox -- ${noption} ${koption} ${poptions} ${module}
+	# Run doctests in Sphinx files
+	poptions="
+		--doctest-glob='*.rst'
+		${pkg_dir}/.tox/py27/lib/python2.7/site-packages/docs
+	"
+	tox -- ${noption} ${koption} ${poptions}
+	# Run embedded doctests in Python modules
 	ecode=$?
 	if [ "${ecode}" == 0 ]; then
-		poptions="--doctest-modules ${pkg_dir}/.tox/py27/lib/python2.7/site-packages/putil/"
-		tox -- ${noption} ${koption} ${poptions} ${module}
+		poptions="
+			--doctest-modules
+			${pkg_dir}/${tox_pkg_dir}
+		"
+		tox -- ${noption} ${koption} ${poptions}
 	fi
 elif [ "${coverage}" == 0 ]; then
 	print_banner "Unit tests"
 	poptions="-x -s -vv"
-	tox -- ${noption} ${koption} ${poptions} ${module}
+	for fmodule in ${fmodules[@]}; do
+		tox -- ${noption} ${koption} ${poptions} ${fmodule}
+		if [ "$?" != 0 ]; then
+			break
+		fi
+	done
 else
 	print_banner "Coverage"
 	rtype="term"
-	if [ "${module}" != "" ]; then
-		poptions="-x -s -vv --cov-config ${pkg_dir}/.coveragerc_tox --cov ${pkg_dir}/.tox/py27/lib/python2.7/site-packages/putil/ --cov-report html"
+	if [ "${fmodules}" != "" ]; then
+		poptions="
+			-x -s -vv --cov-config ${pkg_dir}/.coveragerc_tox
+			--cov ${pkg_dir}/${tox_pkg_dir} --cov-report html
+		"
+		for fmodule in ${fmodules[@]}; do
+			tox -- ${noption} ${koption} ${poptions} ${fmodule}
+			if [ "$?" != 0 ]; then
+				break
+			fi
+
+		done
 	else
-		poptions="--cov-config ${pkg_dir}/.coveragerc_tox --cov ${pkg_dir}/.tox/py27/lib/python2.7/site-packages/putil/ --cov-report term"
+		poptions="
+			--cov-config ${pkg_dir}/.coveragerc_tox
+			--cov ${pkg_dir}/${tox_pkg_dir} --cov-report term
+		"
+		tox -- ${noption} ${koption} ${poptions}
 	fi
-	tox -- ${noption} ${koption} ${poptions} ${module}
 fi
 ecode=$?
 cd ${cpwd}

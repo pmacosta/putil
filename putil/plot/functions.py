@@ -425,18 +425,10 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
 
 	:param	param_list:		parameter values
 	:type	param_list:		list
-	:param	offset:			offset of the first (lightest) color, has to be in
-	 the [0, 1] range
-	:type	offset:			number
-	:param	color_space:	`color pallette
-	 <http://arnaud.ensae.net/Rressources/RColorBrewer.pdf>`_. One of
-	 :code:`'binary'`, :code:`'Blues'`, :code:`'BuGn'`, :code:`'BuPu'`,
-	 :code:`'GnBu'`, :code:`'Greens'`, :code:`'Greys'`, :code:`'Oranges'`,
-	 :code:`'OrRd'`, :code:`'PuBu'`, :code:`'PuBuGn'`, :code:`'PuRd'`,
-	 :code:`'Purples'`, :code:`'RdPu'`, :code:`'Reds'`, :code:`'YlGn'`,
-	 :code:`'YlGnBu'`, :code:`'YlOrBr`' or :code:`'YlOrRd'`
-	 (case sensitive)
-	:type	color_space:	string
+	:param	offset:			offset of the first (lightest) color
+	:type	offset:			:ref:`OffsetRange`
+	:param	color_space:	color palette (case sensitive)
+	:type	color_space:	:ref:`ColorSpaceOption`
 	:rtype:					Matplotlib color
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
@@ -486,3 +478,26 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
 		color_dict[color_space](putil.misc.normalize(value, param_list, offset))
 		for value in param_list
 	]
+
+
+def _check_real_numpy_vector(obj):
+	if ((type(obj) == numpy.ndarray) and
+	   (len(obj.shape) == 1) and (obj.shape[0] > 0) and
+	   ((obj.dtype.type == numpy.array([0]).dtype.type) or
+	   (obj.dtype.type == numpy.array([0.0]).dtype.type))):
+		return False
+	return True
+
+
+def _check_increasing_real_numpy_vector(obj):
+	# pylint: disable=C0103
+	if ((type(obj) != numpy.ndarray) or ((type(obj) == numpy.ndarray) and
+	   ((len(obj.shape) > 1) or ((len(obj.shape) == 1) and
+	   (obj.shape[0] == 0))))):
+		return True
+	if (((obj.dtype.type == numpy.array([0]).dtype.type) or
+	   (obj.dtype.type == numpy.array([0.0]).dtype.type)) and
+	   ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and
+	   (not min(numpy.diff(obj)) <= 0)))):
+		return False
+	return True

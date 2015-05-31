@@ -23,9 +23,9 @@ def proc_func1(indep_var, dep_var):
 	return indep_var, dep_var
 
 def create_csv_source():
-	with putil.misc.TmpFile(write_csv_file) as file_name:
+	with putil.misc.TmpFile(write_csv_file) as fname:
 		obj = putil.plot.CsvSource(
-			file_name=file_name,
+			fname=fname,
 			indep_col_label='Col1',
 			dep_col_label='Col2',
 			indep_min=2E-12,

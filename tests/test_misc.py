@@ -168,13 +168,6 @@ def test_per():
 	assert all([test == ref for test, ref in ttuple])
 
 
-def test_isexception():
-	""" Test isexception() function """
-	assert not putil.misc.isexception(str)
-	assert not putil.misc.isexception(3)
-	assert putil.misc.isexception(RuntimeError)
-
-
 def test_bundle():
 	""" Test Bundle class """
 	obj = putil.misc.Bundle()
@@ -204,10 +197,10 @@ def test_make_dir(capsys):
 		print file_path
 	home_dir = os.environ['HOME']
 	with mock.patch('os.makedirs', side_effect=mock_os_makedir):
-		file_name = os.path.join(home_dir, 'some_dir', 'some_file.ext')
-		putil.misc.make_dir(file_name)
+		fname = os.path.join(home_dir, 'some_dir', 'some_file.ext')
+		putil.misc.make_dir(fname)
 		stdout, _ = capsys.readouterr()
-		assert stdout == os.path.dirname(file_name)+'\n'
+		assert stdout == os.path.dirname(fname)+'\n'
 		putil.misc.make_dir(os.path.join(os.path.abspath(os.sep), 'some_file.ext'))
 		stdout, _ = capsys.readouterr()
 		assert stdout == ''
@@ -371,27 +364,27 @@ def test_tmp_file():
 		file_handle.write('Hello world!')
 	# Test argument validation
 	with pytest.raises(RuntimeError) as excinfo:
-		with putil.misc.TmpFile(5) as file_name:
+		with putil.misc.TmpFile(5) as fname:
 			pass
 	assert excinfo.value.message == 'Argument `fpointer` is not valid'
 	# Test behavior when no function pointer is given
-	with putil.misc.TmpFile() as file_name:
-		assert isinstance(file_name, str) and (len(file_name) > 0)
-		assert os.path.exists(file_name)
-	assert not os.path.exists(file_name)
+	with putil.misc.TmpFile() as fname:
+		assert isinstance(fname, str) and (len(fname) > 0)
+		assert os.path.exists(fname)
+	assert not os.path.exists(fname)
 	# Test that exceptions within the with statement are re-raised
 	with pytest.raises(OSError) as excinfo:
-		with putil.misc.TmpFile(write_data) as file_name:
+		with putil.misc.TmpFile(write_data) as fname:
 			raise OSError('No data')
 	assert excinfo.value.message == 'No data'
-	assert not os.path.exists(file_name)
+	assert not os.path.exists(fname)
 	# Test behaviour under "normal" circumstances
-	with putil.misc.TmpFile(write_data) as file_name:
-		with open(file_name, 'r') as fobj:
+	with putil.misc.TmpFile(write_data) as fname:
+		with open(fname, 'r') as fobj:
 			line = fobj.readlines()
 		assert line == ['Hello world!']
-		assert os.path.exists(file_name)
-	assert not os.path.exists(file_name)
+		assert os.path.exists(fname)
+	assert not os.path.exists(fname)
 
 
 def test_strframe():
@@ -568,7 +561,7 @@ def test_private_props():
 	assert sorted(list(putil.misc.private_props(obj))) == [
 		'_callables_db',
 		'_class_names',
-		'_file_names',
+		'_fnames',
 		'_module_names',
 		'_modules_dict',
 		'_reverse_callables_db'

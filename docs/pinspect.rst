@@ -55,20 +55,18 @@ gives:
 The numbers in parenthesis indicate the line number in which the callable
 starts and ends within the file it is defined in.
 
-***************************************
-Application programming interface (API)
-***************************************
-
+*********
 Functions
-=========
+*********
 
 .. autofunction:: putil.pinspect.get_function_args
 .. autofunction:: putil.pinspect.get_module_name
 .. autofunction:: putil.pinspect.is_object_module
 .. autofunction:: putil.pinspect.is_special_method
 
+*******
 Classes
-=======
+*******
 
 .. autoclass:: putil.pinspect.Callables
 	:members: trace, callables_db, reverse_callables_db, __add__, __copy__,

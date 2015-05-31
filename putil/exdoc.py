@@ -215,17 +215,17 @@ class ExDoc(object):
 		""" Build database of module callables sorted by line number """
 		tdict = {}
 		for callable_name, callable_dict in self._exh_obj.callables_db.iteritems():
-			file_name, line_no = callable_dict['code_id']
-			if file_name not in tdict:
-				tdict[file_name] = list()
+			fname, line_no = callable_dict['code_id']
+			if fname not in tdict:
+				tdict[fname] = list()
 			if callable_dict['type'] == 'class':
 				cname = '{0}.__init__'.format(callable_name)
 			else:
 				cname = callable_name
-			tdict[file_name].append({'name':cname, 'line':line_no})
-		for file_name in tdict.iterkeys():
-			self._module_obj_db[file_name] = sorted(
-				tdict[file_name],
+			tdict[fname].append({'name':cname, 'line':line_no})
+		for fname in tdict.iterkeys():
+			self._module_obj_db[fname] = sorted(
+				tdict[fname],
 				key=lambda idict: idict['line']
 			)
 
@@ -294,9 +294,9 @@ class ExDoc(object):
 		# pylint: disable=R0201
 		frame = sys._getframe(1)
 		index = frame.f_code.co_filename.rfind('+')
-		file_name = os.path.abspath(frame.f_code.co_filename[:index])
+		fname = os.path.abspath(frame.f_code.co_filename[:index])
 		line_num = int(frame.f_code.co_filename[index+1:])
-		module_db = self._module_obj_db[file_name]
+		module_db = self._module_obj_db[fname]
 		names = [callable_dict['name'] for callable_dict in module_db]
 		line_nums = [callable_dict['line'] for callable_dict in module_db]
 		name = names[bisect.bisect(line_nums, line_num)-1]

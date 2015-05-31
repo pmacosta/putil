@@ -42,6 +42,7 @@ def main(args=None):
 	]
 	# Processing
 	olist = []
+	errors = False
 	for fdir in fdirs:
 		flist = [
 			item
@@ -73,13 +74,19 @@ def main(args=None):
 				   (flines[0] != '\xef\xbb\xbf{0}'.format(name_line))):
 					olist.append(fname)
 					print 'File {0} does not have a standard header'.format(fname)
+					errors = True
 				copyright_lines = [
-					'{0} Copyright (c) 2013-2015 Pablo Acosta-Serafini'.format(fdict[ext]),
+					'{0} Copyright (c) 2013-2015 '
+					'Pablo Acosta-Serafini'.format(fdict[ext]),
 					'{0} See LICENSE for details'.format(fdict[ext])
 				]
 				if flines[1:3] != copyright_lines:
-					print 'File {0} does not have a standard copyright notice'.format(fname)
 					olist.append(fname)
+					print ('File {0} does not have a standard '
+						  'copyright notice'.format(fname))
+					errors = True
+	if not errors:
+		print 'All files compliant'
 	if editor and olist:
 		if editor:
 			olist = sorted(list(set(olist)))

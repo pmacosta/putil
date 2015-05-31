@@ -35,13 +35,13 @@ class BasicSource(DataSource):
 	a source that does not export to a comma-separated values (CSV) file.
 
 	:param	indep_var:			independent variable vector
-	:type	indep_var:			increasing real Numpy vector
+	:type	indep_var:			:ref:`IncreasingRealNumpyVector`
 	:param	dep_var:			dependent variable vector
-	:type	dep_var:			real Numpy vector
+	:type	dep_var:			:ref:`RealNumpyVector`
 	:param	indep_min:			minimum independent variable value
-	:type	indep_min:			number or None
+	:type	indep_min:			:ref:`RealNum` *or None*
 	:param	indep_max:			maximum independent variable value
-	:type	indep_max:			number or None
+	:type	indep_max:			:ref:`RealNum` *or None*
 	:rtype:						:py:class:`putil.plot.BasicSource` object
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
@@ -262,7 +262,7 @@ class BasicSource(DataSource):
 	r"""
 	Gets or sets the minimum independent variable limit
 
-	:type:		number or None, default is None
+	:type: :ref:`RealNum`, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
 	.. Auto-generated exceptions documentation for
@@ -290,7 +290,7 @@ class BasicSource(DataSource):
 	r"""
 	Gets or sets the maximum independent variable limit
 
-	:type:		number or None, default is None
+	:type: :ref:`RealNum`, default is None
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
 	.. Auto-generated exceptions documentation for
@@ -318,7 +318,7 @@ class BasicSource(DataSource):
 	r"""
 	Gets or sets the independent variable data
 
-	:type:		increasing real Numpy vector
+	:type: :ref:`IncreasingRealNumpyVector`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
 	.. Auto-generated exceptions documentation for
@@ -346,7 +346,7 @@ class BasicSource(DataSource):
 	r"""
 	Gets or sets the dependent variable data
 
-	:type:		real Numpy vector
+	:type: :ref:`RealNumpyVector`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
 	.. Auto-generated exceptions documentation for

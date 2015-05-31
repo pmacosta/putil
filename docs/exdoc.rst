@@ -75,12 +75,9 @@ a `reStructuredText`_ marked-up ``:raises:`` section:
 	:py:meth:`putil.exdoc.ExDoc.get_sphinx_doc` and explicitly providing the
 	method/function name.
 
-***************************************
-Application programming interface (API)
-***************************************
-
+*******
 Classes
-=======
+*******
 
 .. automodule:: putil.exdoc
     :members: ExDoc, ExDocCxt

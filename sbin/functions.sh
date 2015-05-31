@@ -3,6 +3,27 @@
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 
+# Find directory where script is
+# from http://stackoverflow.com/questions/59895/
+# can-a-bash-script-tell-what-directory-its-stored-in)
+# BASH_SOURCE[0] is the pathname of the currently executing function or script
+# -h True if file exists and is a symbolic link
+# cd -P does not follow symbolic links
+current_dir() {
+	local sdir="$1"
+	local udir=""
+	# Resolve ${sdir} until the file is no longer a symlink
+	while [ -h "${sdir}" ]; do
+		udir="$(cd -P "$(dirname "${sdir}")" && pwd)"
+		sdir="$(readlink "${sdir}")"
+		# If ${sdir} was a relative symlink, we need to resolve it
+		# relative to the path where the symlink file was located
+		[[ ${sdir} != /* ]] && {sdir}="$udir/${sdir}"
+	done
+	udir="$(cd -P "$(dirname "${sdir}")" && pwd)"
+	echo ${udir}
+}
+
 print_banner () {
 	local slength=${#1}
 	local line="+-"
@@ -20,7 +41,8 @@ print_banner () {
 	echo -e "${cyan}${bold}${line}${reset}"
 }
 
-# Mostly From https://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds-in-bash
+# Mostly From https://stackoverflow.com/questions/12199631/
+# convert-seconds-to-hours-minutes-seconds-in-bash
 show_time () {
 	num=$1
 	local sec=0
@@ -48,7 +70,9 @@ show_time () {
 	local ret="Ellapsed time: "
 	if [ "${day}" != 0 ]; then
 		ret="${ret} ${day}d"
-		if [ "${hour}" != 0 ] || [ "${min}" != 0 ] || [ "${sec}" != 0 ]; then
+		if [ "${hour}" != 0 ] || \
+		   [ "${min}" != 0 ] || \
+		   [ "${sec}" != 0 ]; then
 			ret="${ret}, "
 		fi
 	fi
@@ -68,4 +92,29 @@ show_time () {
 		ret="${ret} ${sec}s"
 	fi
 	echo -e "\n${ret}\n"
+}
+
+validate_num_cpus () {
+	local script_name=$1
+	local num_cpus=$2
+	if [ "${num_cpus}" == "" ]; then
+		echo ""
+		return 0
+	fi
+	if echo "${num_cpus}" | grep -q "^[1-9][0-9]*$"; then
+		num_cpus=$(echo "${num_cpus}" | grep "^[1-9][0-9]*$")
+	else
+		num_cpus=""
+	fi
+	if [ "${num_cpus}" == "" ]; then
+		echo "${script_name}: number of CPUs has to be"\
+		     "an intenger greater than 0" >&2
+		return 1
+	fi
+	if ! pip freeze | grep -q pytest-xdist; then
+		echo "${script_name}"': pytest-xdist needs to be installed'\
+		     'to use multiple CPUS' >&2
+		return 1
+	fi
+	echo "-n ${num_cpus}"
 }

@@ -10,12 +10,9 @@ test module
 This module contains functions to aid in the unit testing of modules in the
 package (`py.test <http://www.pytest.org>`_-based)
 
-***************************************
-Application programming interface (API)
-***************************************
-
+*********
 Functions
-=========
+*********
 
 .. autofunction:: putil.test.assert_exception
 .. autofunction:: putil.test.exception_type_str

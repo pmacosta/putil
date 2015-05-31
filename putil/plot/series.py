@@ -54,11 +54,11 @@ class Series(object):
 	 (cubic interpolation between data points) or 'LINREG' (linear
 	 regression based on data points). The interpolation option is case
 	 insensitive.
-	:type	interp:			string or None
+	:type	interp:			:ref:`InterpolationOption`
 	:param	line_style:		line style.   All `Matplotlib line styles
 	 <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.
 	 set_linestyle>`_ are supported. None indicates no line.
-	:type	line_style:		string or None
+	:type	line_style:		:ref:`LineStyleOption`
 	:param	secondary_axis:	Flag that indicates whether the series belongs to
 	 the panel primary axis (False) or secondary axis (True)
 	:type	secondary_axis:	boolean
@@ -668,7 +668,7 @@ class Series(object):
 	regression based on data points). The interpolation option is case
 	insensitive
 
-	:type:	string, default is 'CUBIC'
+	:type:	:ref:`InterpolationOption`, default is 'CUBIC'
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for
@@ -696,7 +696,7 @@ class Series(object):
 	<http://matplotlib.org/api/artist_api.html#matplotlib.lines.
 	Line2D.set_linestyle>`_ are supported. None indicates no line
 
-	:type:	string or None, default is '-'
+	:type:	:ref:`LineStyleOption`, default is '-'
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for

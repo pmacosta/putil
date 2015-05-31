@@ -6,16 +6,9 @@
 # Exit upon error
 set -e
 
-# Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ]; do # resolve $source until the file is no longer a symlink
-	dir="$( cd -P "$( dirname "$source" )" && pwd )"
-	source="$(readlink "$source")"
-	[[ $source != /* ]] && source="$dir/$source" # if $source was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-dir="$( cd -P "$( dirname "$source" )" && pwd )"
-package_root=$(dirname ${dir})
-package_name=$(basename ${package_root})
+source $(dirname "${BASH_SOURCE[0]}")/functions.sh
+
+pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 
 exit_if_not_root () {
 	if [ ${EUID} -ne 0 ]; then
@@ -27,14 +20,20 @@ exit_if_not_root () {
 print_usage_message () {
 	echo -e "build-container.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  build-container.sh [-h] [stable|testing] [docker-user-name]\n" >&2
+	echo -e "  build-container.sh -h" >&2
+	echo -e "  build-container.sh [stable|testing] [docker-user-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
 }
 
 get_debian_distro_name () {
-	local name=$(curl $1 2> /dev/null | grep "<title>Debian" | sed -r -e 's/.*&ldquo;(.*)&rdquo;.*/\1/g')
-	# Sub-shell spawned, if an error occurs the sub-shell is exited so have to check result is valid
+	local name=$(
+		curl $1 2> /dev/null |
+		grep "<title>Debian" |
+		sed -r -e 's/.*&ldquo;(.*)&rdquo;.*/\1/g'
+	)
+	# Sub-shell spawned, if an error occurs the sub-shell is exited so have to
+	# check result is valid
 	local word_count=$(echo ${name} | wc -w)
 	if [ ${word_count} -gt 1 ]; then
 		return 1
@@ -45,9 +44,13 @@ get_debian_distro_name () {
 get_all_distro_names () {
 	# global stable_distro_name, testing_distro_name
 	echo 'Obtaining names of stable, testing and current distributions'
-	stable_distro_name=$(get_debian_distro_name https://www.debian.org/releases/stable/)
+	stable_distro_name=$(
+		get_debian_distro_name https://www.debian.org/releases/stable/
+	)
 	echo -e "\tstable: ${stable_distro_name}"
-	testing_distro_name=$(get_debian_distro_name https://www.debian.org/releases/testing/)
+	testing_distro_name=$(
+		get_debian_distro_name https://www.debian.org/releases/testing/
+	)
 	echo -e "\ttesting: ${testing_distro_name}"
 }
 
@@ -95,13 +98,14 @@ get_system () {
 	echo -e "Installing base distribution"
 	rm -rf ${wdir}
 	mkdir -p ${wdir}
-	debootstrap --variant=minbase ${working_release} ${wdir} http://ftp.us.debian.org/debian
+	debootstrap --variant=minbase ${working_release} ${wdir} \
+		http://ftp.us.debian.org/debian
 }
 
 configure_system () {
-	cp ${package_root}/sbin/.build-container-chroot.sh ${wdir}/root/.
-	cp ${package_root}/dist/* ${wdir}/root/.
-	cp -r ${package_root}/tests ${wdir}/root/.
+	cp ${pkg_dir}/sbin/.build-container-chroot.sh ${wdir}/root/.
+	cp ${pkg_dir}/dist/* ${wdir}/root/.
+	cp -r ${pkg_dir}/tests ${wdir}/root/.
 	chroot ${wdir} /root/.build-container-chroot.sh $1 $2
 }
 
@@ -110,7 +114,11 @@ create_image () {
 	local cwd=${PWD}
 	cd ${HOME}/vdisks/chroot/
 	#if docker images | grep ${working_release}; then
-	#	image_id=$(docker images | grep ${working_release} | sed -r "s/.*${working_release}\s+\w+\s+(\w+)\s+.*/\1/g")
+	#	image_id=$(
+	#		docker images |
+	#	   	grep ${working_release} |
+	#	   	sed -r "s/.*${working_release}\s+\w+\s+(\w+)\s+.*/\1/g"
+	#	)
 	#	echo "Removing existing image ${image_id}"
 	#	docker rmi -f ${image_id}
 	#fi

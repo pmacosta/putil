@@ -5,28 +5,21 @@
 
 set -e
 
+source $(dirname "${BASH_SOURCE[0]}")/functions.sh
+
 print_usage_message () {
 	echo -e "pkg-validate.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  pkg-validate.sh [-h] [-n num-cpus]\n" >&2
+	echo -e "  pkg-validate.sh -h" >&2
+	echo -e "  pkg-validate.sh [-n num-cpus]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
-	echo -e "  -n  Number of CPUs to use (greater than 2)" >&2
+	echo -e "  -n  Number of CPUs to use [default: 1]" >&2
 }
 
-# Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
-source="${BASH_SOURCE[0]}"
-while [ -h "${source}" ]; do # resolve $source until the file is no longer a symlink
-	dir="$( cd -P "$( dirname "${source}" )" && pwd )"
-	source="$(readlink "${source}")"
-	[[ ${source} != /* ]] && source="$dir/$source" # if $source was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-dir="$( cd -P "$( dirname "${source}" )" && pwd )"
-pkg_dir=$(dirname ${dir})
+pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 src_dir=${pkg_dir}/putil
 cpwd=${PWD}
-
-source ${pkg_dir}/sbin/functions.sh
 
 # Read command line options
 num_cpus=""
@@ -53,20 +46,10 @@ if [ "$#" != 0 ]; then
 fi
 
 # Argument validation
-noption=""
-if [ "${num_cpus}" != "" ]; then
-	num_cpus=$(echo "${num_cpus}" | grep "^[2-9][0-9]*$")
-	if [ "${num_cpus}" == "" ]; then
-		echo "test.sh: number of CPUs has to be an intenger greater than 1"
-		exit 1
-	fi
-	if ! pip freeze | grep -q pytest-xdist; then
-		echo 'test.sh: pytest-xdist needs to be installed to use multiple CPUS'
-		exit 1
-	fi
-	noption="-n ${num_cpus}"
+noption=$(validate_num_cpus "pkg-validate.sh" "${num_cpus}")
+if [ $? != 0 ]; then
+	exit 1
 fi
-
 
 # Processing
 cd ${pkg_dir}
@@ -74,4 +57,8 @@ ${pkg_dir}/sbin/test.sh ${noption} -d
 ${pkg_dir}/sbin/test.sh ${noption} -c
 print_banner "Testing documentation"
 tox -e docs
+print_banner "Verifying Pylint annotations"
+${pkg_dir}/sbin/pylint-cleaner.py
+print_banner "Verifying files standard compliance"
+${pkg_dir}/sbin/check-files-compliance.py
 cd ${cpwd}

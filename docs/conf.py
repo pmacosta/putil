@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=C0103,C0111,R0913,W0611,W0613,W0622
 #
 # src documentation build configuration file, created by
 # sphinx-quickstart on Thu Oct 24 06:41:33 2013.
@@ -18,7 +19,6 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('/home/pacosta/python/psf/src/'))
 
 # -- General configuration ------------------------------------------------
 
@@ -247,9 +247,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'Putil library', u'src Documentation',
-   u'Pablo Acosta-Serafini', 'Putil library', 'Collection of utility modules to supplement the Python standard library',
-   'Miscellaneous'),
+  (
+	'index',
+	'Putil library',
+	u'src Documentation',
+	u'Pablo Acosta-Serafini',
+	'Putil library',
+	'Collection of utility modules to supplement the Python standard library',
+	'Miscellaneous'
+  ),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -276,10 +282,10 @@ epub_copyright = u'2013-2015, Pablo Acosta-Serafini'
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'src'
 
-# The HTML theme for the epub output. Since the default themes are not optimized
-# for small screen space, using the same theme for HTML and epub output is
-# usually not wise. This defaults to 'epub', a theme designed to save visual
-# space.
+# The HTML theme for the epub output. Since the default themes are not
+# optimized for small screen space, using the same theme for HTML and epub
+# output is usually not wise. This defaults to 'epub', a theme designed to
+# save visual space.
 #epub_theme = 'epub'
 
 # The language of the text. It defaults to the language option
@@ -335,15 +341,16 @@ epub_copyright = u'2013-2015, Pablo Acosta-Serafini'
 #epub_use_index = True
 
 # Remove private parameters in class constructor
-def skip_private_parameter(app,what,name,obj,options,signature,return_annotation):
-	if ((what=='class') or (what=='method') or (what=='function')) and (signature!=None) and (len(signature)>2):
+def skip_private_parameter(app, what, name, obj, options, signature, rannot):
+	if (((what == 'class') or (what == 'method') or (what == 'function')) and
+	   (signature is not None) and (len(signature) > 2)):
 		args = [token.strip() for token in signature[1:-1].split(',')]
-		proc_args = [token for token in args if token[0]!='_']
+		proc_args = [token for token in args if token[0] != '_']
 		new_signature = '('+', '.join(proc_args)+')'
-		return (new_signature,return_annotation)
+		return (new_signature, rannot)
 	return
 
 def setup(app):
-	app.connect('autodoc-process-signature',skip_private_parameter)
+	app.connect('autodoc-process-signature', skip_private_parameter)
 
 autodoc_member_order = 'bysource'

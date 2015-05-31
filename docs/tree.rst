@@ -10,46 +10,9 @@ tree module
 This module can be used to build, handle, process and search
 `tries <http://wikipedia.org/wiki/Trie>`_
 
-***************************************
-Application programming interface (API)
-***************************************
-
-Pseudo-types
-============
-
-NodeName
---------
-
-A tree node name is a string where hierarchy levels are denoted by node
-separator characters (:code:`'.'` by default). Node names cannot contain
-spaces, empty hierarchy levels, start or end with a node separator character.
-
-For this example tree::
-
-	root
-	├branch1
-	│├leaf1
-	│└leaf2
-	└branch2
-
-The node names are ``'root'``, ``'root.branch1'``, ``'root.branch1.leaf1'``,
-``'root.branch1.leaf2'`` and ``'root.branch2'``.
-
-NodesWithData
--------------
-
-Dictionary or list of dictionaries. Each dictionary must contain exactly two
-keys:
-
-* **name** (*NodeName*) Node name. See `NodeName`_ pseudo-type specification
-
-* **data** (*any*) node data
-
-The node data should be an empty list to create a node without data, for
-example: :code:`{'name':'a.b.c', 'data':list()}`
-
+*******
 Classes
-=======
+*******
 
 .. autoclass:: putil.tree.Tree
     :members: add_nodes, collapse_subtree, copy_subtree, delete_prefix,

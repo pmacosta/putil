@@ -77,8 +77,8 @@ def test_exdoc_doccode():
 	)
 	proc.communicate()
 	# Read reference
-	ref_file_name = os.path.join(script_dir, 'my_module_ref.py')
-	with open(ref_file_name, 'r') as fobj:
+	ref_fname = os.path.join(script_dir, 'my_module_ref.py')
+	with open(ref_fname, 'r') as fobj:
 		ref_text = fobj.readlines()
 	# Read generated output
 	with open(output_file, 'r') as fobj:
@@ -242,23 +242,23 @@ def test_plot_doccode():
 		stderr=subprocess.STDOUT
 	)
 	proc.communicate()
-	test_file_name = os.path.join(script_dir, output_file)
-	ref_file_name = os.path.join(script_dir, 'plot_example_1.png')
-	metrics = compare_images(ref_file_name, test_file_name)
+	test_fname = os.path.join(script_dir, output_file)
+	ref_fname = os.path.join(script_dir, 'plot_example_1.png')
+	metrics = compare_images(ref_fname, test_fname)
 	result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-	ref_ci_file_name = os.path.join(script_dir, 'plot_example_1_ci.png')
-	metrics_ci = compare_images(ref_ci_file_name, test_file_name)
+	ref_ci_fname = os.path.join(script_dir, 'plot_example_1_ci.png')
+	metrics_ci = compare_images(ref_ci_fname, test_fname)
 	result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
 	if (not result) and (not result_ci):
 		print 'Images do not match'
-		print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
+		print 'Reference image: file://{0}'.format(os.path.realpath(ref_fname))
 		print 'Reference CI image: file://{0}'.format(
-			os.path.realpath(ref_ci_file_name)
+			os.path.realpath(ref_ci_fname)
 		)
-		print 'Actual image: file://{0}'.format(os.path.realpath(test_file_name))
+		print 'Actual image: file://{0}'.format(os.path.realpath(test_fname))
 	if result or result_ci:
 		with putil.misc.ignored(OSError):
-			os.remove(test_file_name)
+			os.remove(test_fname)
 	assert result or result_ci
 	# Test ABC example
 	import numpy, docs.support.plot_example_2

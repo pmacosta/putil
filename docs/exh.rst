@@ -36,20 +36,18 @@ takes the same number of lines of code as an exception raised inside an
 by any function, method or class property with the help of the
 :ref:`exdoc-module`.
 
-***************************************
-Application programming interface (API)
-***************************************
-
+*********
 Functions
-=========
+*********
 
 .. autofunction:: putil.exh.get_exh_obj
 .. autofunction:: putil.exh.get_or_create_exh_obj
 .. autofunction:: putil.exh.del_exh_obj
 .. autofunction:: putil.exh.set_exh_obj
 
+*******
 Classes
-=======
+*******
 
 .. autoclass:: putil.exh.ExHandle
 	:members: add_exception, callables_db, callables_separator, exceptions_db,

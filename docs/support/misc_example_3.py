@@ -9,7 +9,7 @@ def write_data(file_handle):
 	file_handle.write('Hello world!')
 
 def show_tmpfile():
-	with putil.misc.TmpFile(write_data) as file_name:
-		with open(file_name, 'r') as fobj:
+	with putil.misc.TmpFile(write_data) as fname:
+		with open(fname, 'r') as fobj:
 			lines = fobj.readlines()
 	print '\n'.join(lines)

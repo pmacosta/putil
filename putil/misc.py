@@ -1,7 +1,7 @@
 ﻿# misc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0903
+# pylint: disable=C0111,R0903,W0611
 
 import ast
 import decorator
@@ -88,7 +88,6 @@ class TmpFile(object):
 	 <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_
 	 function.
 	:type	fpointer: function object or None
-	:type	fpointer: function pointer
 	:returns:	temporary file name
 	:raises:	RuntimeError (Argument \`fpointer\` is not valid)
 
@@ -107,8 +106,8 @@ class TmpFile(object):
 	        file_handle.write('Hello world!')
 
 	    def show_tmpfile():
-	        with putil.misc.TmpFile(write_data) as file_name:
-	            with open(file_name, 'r') as fobj:
+	        with putil.misc.TmpFile(write_data) as fname:
+	            with open(fname, 'r') as fobj:
 	                lines = fobj.readlines()
 	        print '\n'.join(lines)
 
@@ -126,19 +125,19 @@ class TmpFile(object):
 		   (not isinstance(fpointer, types.FunctionType)) and
 		   (not isinstance(fpointer, types.LambdaType))):
 			raise RuntimeError('Argument `fpointer` is not valid')
-		self._file_name = None
+		self._fname = None
 		self._fpointer = fpointer
 
 	def __enter__(self):
 		with tempfile.NamedTemporaryFile(delete=False) as fobj:
-			self._file_name = fobj.name
+			self._fname = fobj.name
 			if self._fpointer:
 				self._fpointer(fobj)
-		return self._file_name
+		return self._fname
 
 	def __exit__(self, exc_type, exc_value, exc_tb):
 		with ignored(OSError):
-			os.remove(self._file_name)
+			os.remove(self._fname)
 		if exc_type is not None:
 			return False
 
@@ -453,20 +452,24 @@ def per(arga, argb, prec=10):
 		return numpy.round(numpy.where(arga == argb, 0, lim_num), prec)
 
 
-def make_dir(file_name):
+def make_dir(fname):
 	"""
-	Creates the directory of a fully qualified file name if it does not exist.
+	Creates the directory of a fully qualified file name if it does not exist
+
+	:param  fname: File name
+	:type	fname: string
+
 	Equivalent to these Bash shell commands:
 
 	.. code-block:: bash
 
-		$ dir=$(dirname ${file_name})
+		$ dir=$(dirname ${fname})
 		$ mkdir -p ${dir}
 
-	:param	file_name: Fully qualified file name
-	:type	file_name: string
+	:param	fname: Fully qualified file name
+	:type	fname: string
 	"""
-	file_path, file_name = os.path.split(os.path.abspath(file_name))
+	file_path, fname = os.path.split(os.path.abspath(fname))
 	if os.path.exists(file_path) is False:
 		os.makedirs(file_path)
 
@@ -861,17 +864,6 @@ def flatten_list(lobj):
 		else:
 			ret.append(item)
 	return ret
-
-
-def isexception(obj):
-	"""
-	Tests if the argument is an exception object
-
-	:param	obj: Object
-	:type	obj: any
-	:rtype: boolean
-	"""
-	return False if not inspect.isclass(obj) else issubclass(obj, Exception)
 
 
 ###

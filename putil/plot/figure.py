@@ -109,9 +109,9 @@ class Figure(object):
 	:param	indep_var_units:	independent variable units
 	:type	indep_var_units:	string
 	:param	fig_width:			hard copy plot width in inches
-	:type	fig_width:			number
+	:type	fig_width:			:ref:`PositiveRealNum`
 	:param	fig_height:			hard copy plot height in inches
-	:type	fig_height:			number
+	:type	fig_height:			:ref:`PositiveRealNum`
 	:param	title:				plot title
 	:type	title:				string
 	:param	log_indep_axis:		Flag that indicates whether the independent
@@ -592,20 +592,20 @@ class Figure(object):
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		plt.show()
 
-	@putil.pcontracts.contract(file_name='file_name')
-	def save(self, file_name):
+	@putil.pcontracts.contract(fname='file_name')
+	def save(self, fname):
 		r"""
 		Saves the figure in PNG format to a file
 
-		:param	file_name:	File name
-		:type	file_name:	string
+		:param	fname:	File name
+		:type	fname:	:ref:`FileName`
 
 		.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
 		.. putil.plot.figure.Figure.save
 
 		:raises:
-		 * RuntimeError (Argument \`file_name\` is not valid)
+		 * RuntimeError (Argument \`fname\` is not valid)
 
 		 * RuntimeError (Figure object is not fully specified)
 
@@ -627,9 +627,9 @@ class Figure(object):
 		self._draw(force_redraw=self._fig is None, raise_exception=True)
 		self.fig.set_size_inches(self.fig_width, self.fig_height)
 		# Matplotlib seems to have a problem with ~/, expand it to $HOME
-		file_name = os.path.expanduser(file_name)
-		putil.misc.make_dir(file_name)
-		self._fig.savefig(file_name, bbox_inches='tight', dpi=self._fig.dpi)
+		fname = os.path.expanduser(fname)
+		putil.misc.make_dir(fname)
+		self._fig.savefig(fname, bbox_inches='tight', dpi=self._fig.dpi)
 		plt.close('all')
 
 	def __str__(self):
@@ -827,7 +827,7 @@ class Figure(object):
 	r"""
 	Gets or sets the width (in inches) of the hard copy plot
 
-	:type: positive number, float or integer
+	:type: :ref:`PositiveRealNum`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for
@@ -847,7 +847,7 @@ class Figure(object):
 	r"""
 	Gets or sets the height (in inches) of the hard copy plot
 
-	:type: positive number, float or integer
+	:type: :ref:`PositiveRealNum`
 
 	.. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
 	.. Auto-generated exceptions documentation for

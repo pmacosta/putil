@@ -815,3 +815,10 @@ def test_enable_disable_contracts():
 		RuntimeError,
 		'Argument `number` is not valid'
 	)
+
+
+def test_isexception():
+	""" Test _isexception() function """
+	assert not putil.pcontracts._isexception(str)
+	assert not putil.pcontracts._isexception(3)
+	assert putil.pcontracts._isexception(RuntimeError)

@@ -5,16 +5,20 @@
 
 set -e
 
+source $(dirname "${BASH_SOURCE[0]}")/functions.sh
+
 print_usage_message () {
 	echo -e "build-docs.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  build-docs.sh [-h] [-n num-cpus] [-r] [module-name]\n" >&2
+	echo -e "  build-docs.sh -h" >&2
+	echo -e "  build-docs.sh -r [-n num-cpus] [module-name]" >&2
+	echo -e "  build-docs.sh [module-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
 	echo -e "  -r  Rebuild exceptions documentation. If no module name" >&2
 	echo -e "      is given all modules with auto-generated exceptions" >&2
 	echo -e "      documentation are rebuilt" >&2
-	echo -e "  -n  Number of CPUs to use (greater than 2)" >&2
+	echo -e "  -n  Number of CPUs to use [default: 1]" >&2
 }
 
 finish() {
@@ -25,20 +29,11 @@ finish() {
 }
 trap finish EXIT
 
-# Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
-source="${BASH_SOURCE[0]}"
-while [ -h "${source}" ]; do # resolve $source until the file is no longer a symlink
-	dir="$( cd -P "$( dirname "${source}" )" && pwd )"
-	source="$(readlink "${source}")"
-	[[ ${source} != /* ]] && source="$dir/$source" # if $source was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-dir="$( cd -P "$( dirname "${source}" )" && pwd )"
-pkg_dir=$(dirname ${dir})
+pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 src_dir=${pkg_dir}/putil
 cpwd=${PWD}
 export TRACER_DIR=${pkg_dir}/docs/support
-
-source ${pkg_dir}/sbin/functions.sh
+plot_submodules=(basic_source csv_source figure functions panel series)
 
 # Default values for command line options
 rebuild=0
@@ -70,98 +65,98 @@ if [ "$#" != 0 ]; then
 fi
 
 # Argument validation
-export NOPTION=""
-if [ "${num_cpus}" != "" ]; then
-	num_cpus=$(echo "${num_cpus}" | grep "^[2-9][0-9]*$")
-	if [ "${num_cpus}" == "" ]; then
-		echo "build-docs.sh: number of CPUs has to be an intenger greater than 1"
-		exit 1
-	fi
-	if ! pip freeze | grep -q pytest-xdist; then
-		echo "build-docs.sh: pytest-xdist needs to be installed to use multiple CPUS"
-		exit 1
-	fi
-	export NOPTION="-n ${num_cpus}"
+export NOPTION=$(validate_num_cpus "build-docs.sh" "${num_cpus}")
+if [ $? != 0 ]; then
+	exit 1
 fi
 
+if [ "${NOPTION}" != "" ] && [ ${rebuild} == 0 ]; then
+	echo "build-docs.sh: multiple CPUs not allowed" >&2
+	exit 1
+fi
 
 if [ ${rebuild} == 1 ]; then
 	echo "Are you sure [Y/N]? "
 	read -s -n 1 answer
-	if [ "${answer^^}" == "Y" ]; then
-		echo "Rebuilding exceptions documentation"
-		start_time=$(date +%s)
-		for module in ${modules[@]}; do
-			if [ "${module}" == "plot" ]; then
-				module_dir=${src_dir}/plot
-				submodules=(basic_source csv_source figure functions panel series)
-			else
-				module_dir=${src_dir}
-				submodules=(${module})
-			fi
-			for submodule in ${submodules[@]}; do
-				submodule_file="${module_dir}"/"${submodule}".py
-				if [ ! -f "${submodule_file}" ]; then
-					echo "Module ${submodule_file} not found"
-					exit 1
-				else
-					echo "   Processing module ${submodule_file}"
-					if cog.py -e -x -o ${submodule_file}.tmp ${submodule_file}; then
-						mv -f ${submodule_file}.tmp ${submodule_file}
-						if cog.py -e -o ${submodule_file}.tmp ${submodule_file}; then
-							mv -f ${submodule_file}.tmp ${submodule_file}
-						else
-							echo "Error generating exceptions documentation in module ${submodule_file}"
-							exit 1
-						fi
-					else
-						echo "Error deleting exceptions documentation in module ${submodule_file}"
-						exit 1
-					fi
-				fi
-			done
-		done
-		stop_time=$(date +%s)
-		ellapsed_time=$((stop_time-start_time))
-		show_time ${ellapsed_time}
-	else
+	if [ "${answer^^}" != "Y" ]; then
 		exit 0
 	fi
 fi
 
-echo "Inserting files into docstrings"
 if [ ${rebuild} == 1 ]; then
-	modules=(misc pcontracts)
-else
-	modules=(misc pcontracts plot tree)
+	echo "Rebuilding exceptions documentation"
+	start_time=$(date +%s)
+	for module in ${modules[@]}; do
+		if [ "${module}" == "plot" ]; then
+			module_dir=${src_dir}/plot
+			submodules=${plot_submodules}
+		else
+			module_dir=${src_dir}
+			submodules=(${module})
+		fi
+		for submodule in ${submodules[@]}; do
+			smf="${module_dir}"/"${submodule}".py
+			if [ ! -f "${smf}" ]; then
+				echo "Module ${smf} not found"
+				exit 1
+			fi
+			echo "   Processing module ${smf}"
+			if cog.py -e -x -o ${smf}.tmp ${smf}; then
+				mv -f ${smf}.tmp ${smf}
+				if cog.py -e -o ${smf}.tmp ${smf}; then
+					mv -f ${smf}.tmp ${smf}
+				else
+					echo "Error generating exceptions"\
+					     "documentation in module"\
+					     "${smf}"
+					exit 1
+				fi
+			else
+				echo "Error deleting exceptions documentation"\
+				     "in module ${smf}"
+				exit 1
+			fi
+		done
+	done
+	stop_time=$(date +%s)
+	ellapsed_time=$((stop_time-start_time))
+	show_time ${ellapsed_time}
 fi
+
+echo "Inserting files into docstrings"
+modules=(misc pcontracts plot tree)
 for module in ${modules[@]}; do
 	if [ "${module}" == "plot" ]; then
 		module_dir=${src_dir}/plot
-		submodules=(basic_source csv_source figure functions panel series)
+		submodules=${plot_submodules}
 	else
 		module_dir=${src_dir}
 		submodules=(${module})
 	fi
 	for submodule in ${submodules[@]}; do
-		submodule_file="${module_dir}"/"${submodule}".py
-		if [ ! -f "${submodule_file}" ]; then
-			echo "Module ${submodule_file} not found"
+		smf="${module_dir}"/"${submodule}".py
+		if [ ! -f "${smf}" ]; then
+			echo "Module ${smf} not found"
 			exit 1
-		elif grep -q "incfile.incfile" ${submodule_file}; then
-			echo "   Processing module ${submodule_file}"
-			if cog.py --markers='=[=cog =]= =[=end=]=' -e -x -o ${submodule_file}.tmp ${submodule_file}; then
-				mv -f ${submodule_file}.tmp ${submodule_file}
-				if cog.py --markers='=[=cog =]= =[=end=]=' -e -o ${submodule_file}.tmp ${submodule_file}; then
-					mv -f ${submodule_file}.tmp ${submodule_file}
-				else
-					echo "Error inserting files in docstrings in module ${submodule_file}"
-					exit 1
-				fi
+		elif ! grep -q "incfile.incfile" ${smf}; then
+			continue
+		fi
+		echo "   Processing module ${smf}"
+		if cog.py --markers='=[=cog =]= =[=end=]=' \
+		   -e -x -o ${smf}.tmp ${smf}; then
+			mv -f ${smf}.tmp ${smf}
+			if cog.py --markers='=[=cog =]= =[=end=]=' \
+			   -e -o ${smf}.tmp ${smf}; then
+				mv -f ${smf}.tmp ${smf}
 			else
-				echo "Error deleting insertion of files in docstrings in module ${submodule_file}"
+				echo "Error inserting files in docstrings"\
+			             "in module ${smf}"
 				exit 1
 			fi
+		else
+			echo "Error deleting insertion of files in"\
+			     "docstrings in module ${smf}"
+			exit 1
 		fi
 	done
 done

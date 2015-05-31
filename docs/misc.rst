@@ -12,12 +12,9 @@ variety of circumstances; there are context managers, membership functions
 (test if an argument is of a given type), numerical functions and string
 functions
 
-***************************************
-Application programming interface (API)
-***************************************
-
+****************
 Context managers
-================
+****************
 
 .. autofunction:: putil.misc.ignored
 .. autoclass:: putil.misc.Timer
@@ -26,39 +23,43 @@ Context managers
 .. autoclass:: putil.misc.TmpFile
 	:show-inheritance:
 
+****
 File
-====
+****
 
 .. autofunction:: putil.misc.make_dir
 
+**********
 Membership
-==========
+**********
 
 .. autofunction:: putil.misc.isalpha
-.. autofunction:: putil.misc.isexception
 .. autofunction:: putil.misc.ishex
 .. autofunction:: putil.misc.isiterable
 .. autofunction:: putil.misc.isnumber
 .. autofunction:: putil.misc.isreal
 
+*************
 Miscellaneous
-=============
+*************
 
 .. autofunction:: putil.misc.Bundle
 .. autofunction:: putil.misc.flatten_list
 .. autofunction:: putil.misc.pprint_ast_node
 .. autofunction:: putil.misc.private_props
 
+*******
 Numbers
-=======
+*******
 
 .. autofunction:: putil.misc.gcd
 .. autofunction:: putil.misc.normalize
 .. autofunction:: putil.misc.per
 .. autofunction:: putil.misc.pgcd
 
+******
 String
-======
+******
 
 .. autofunction:: putil.misc.binary_string_to_octal_string
 .. autofunction:: putil.misc.char_to_decimal

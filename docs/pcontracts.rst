@@ -23,19 +23,19 @@ library. By default a :code:`RuntimeError` exception with the message
 custom contract specifies a different exception (the token
 :code:`*[argument_name]*` is replaced by the argument name the contract is
 attached to). For example, the definitions of the custom contracts
-:py:func:`putil.pcontracts.file_name` and
-:py:func:`putil.pcontracts.file_name_exists` are:
+:py:func:`putil.ptypes.file_name` and
+:py:func:`putil.ptypes.file_name_exists` are:
 
 
-.. literalinclude:: ../putil/pcontracts.py
+.. literalinclude:: ../putil/ptypes.py
     :language: python
     :tab-width: 4
-    :lines: 693-718
+    :lines: 385-410
 
-.. literalinclude:: ../putil/pcontracts.py
+.. literalinclude:: ../putil/ptypes.py
     :language: python
     :tab-width: 4
-    :lines: 721-
+    :lines: 413-452
 
 This is nearly identical to the way custom contracts are defined using the
 `PyContracts <https://andreacensi.github.io/contracts/>`_ library with two
@@ -64,48 +64,40 @@ contracts shown above and the exceptions they produce:
 
 >>> import os
 >>> from docs.support.pcontracts_example_1 import *
->>> print_if_file_name_valid('some_file.txt')
+>>> print_if_fname_valid('some_file.txt')
 Valid file name: some_file.txt
->>> print_if_file_name_valid('invalid_file_name.txt\0')
+>>> print_if_fname_valid('invalid_fname.txt\0')
 Traceback (most recent call last):
     ...
 RuntimeError: Argument `name` is not valid
->>> file_name = os.path.join('..', 'docs', 'pcontracts.rst')	#doctest: +ELLIPSIS
->>> print_if_file_name_exists(10, file_name)
+>>> fname = os.path.join('..', 'docs', 'pcontracts.rst')	#doctest: +ELLIPSIS
+>>> print_if_fname_exists(10, fname)
 Valid file name: [10] ...pcontracts.rst
->>> print_if_file_name_exists('hello', file_name)
+>>> print_if_fname_exists('hello', fname)
 Traceback (most recent call last):
     ...
 RuntimeError: Argument `num` is not valid
->>> print_if_file_name_exists(5, 'another_invalid_file_name.txt\0')
+>>> print_if_fname_exists(5, 'another_invalid_fname.txt\0')
 Traceback (most recent call last):
     ...
 RuntimeError: Argument `name` is not valid
->>> print_if_file_name_exists(5, '/dev/null/some_file.txt')
+>>> print_if_fname_exists(5, '/dev/null/some_file.txt')
 Traceback (most recent call last):
     ...
 IOError: File `/dev/null/some_file.txt` could not be found
 
-***************************************
-Application programming interface (API)
-***************************************
-
-Contracts
-=========
-
-.. autofunction:: putil.pcontracts.file_name
-.. autofunction:: putil.pcontracts.file_name_exists
-
+*********
 Functions
-=========
+*********
 
 .. autofunction:: putil.pcontracts.all_disabled
 .. autofunction:: putil.pcontracts.disable_all
 .. autofunction:: putil.pcontracts.enable_all
 .. autofunction:: putil.pcontracts.get_exdesc
 
+**********
 Decorators
-==========
+**********
 
 .. autofunction:: putil.pcontracts.contract
 .. autofunction:: putil.pcontracts.new_contract

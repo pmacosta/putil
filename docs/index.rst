@@ -9,7 +9,6 @@ Contents
 ========
 
 .. toctree::
-	:maxdepth: 2
 
 	eng
 	exdoc
@@ -19,6 +18,7 @@ Contents
 	pcontracts
 	pinspect
 	plot
+	ptypes
 	test
 	tree
 

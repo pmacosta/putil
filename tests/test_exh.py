@@ -645,7 +645,7 @@ def test_raise_exception():
 		exobj.add_exception(
 			'my_exception2',
 			IOError,
-			'This is an exception with a *[file_name]* field'
+			'This is an exception with a *[fname]* field'
 		)
 		exobj.raise_exception_if(
 			'my_exception1',
@@ -655,7 +655,7 @@ def test_raise_exception():
 		exobj.raise_exception_if(
 			'my_exception2',
 			cond2,
-			edata={'field':'file_name', 'value':'my_file.txt'}
+			edata={'field':'fname', 'value':'my_file.txt'}
 		)
 		if cond3:
 			exobj.raise_exception_if('my_exception3', False)
@@ -767,7 +767,7 @@ def test_raise_exception():
 		if exname.endswith('/test_exh.test_raise_exception.func3.my_exception2'):
 			assert erec['function'].endswith('test_exh.test_raise_exception.func3')
 			assert erec['type'] == IOError
-			assert erec['msg'] == 'This is an exception with a *[file_name]* field'
+			assert erec['msg'] == 'This is an exception with a *[fname]* field'
 
 
 def test_exceptions_db():
@@ -1024,7 +1024,7 @@ def test_add():
 	}
 	obj1._callables_obj._reverse_callables_db = {'rc1':5, 'rc2':7}
 	obj1._callables_obj._modules_dict = {'key1':'alpha', 'key2':'beta'}
-	obj1._callables_obj._file_names = ['hello']
+	obj1._callables_obj._fnames = ['hello']
 	obj1._callables_obj._module_names = ['this', 'is']
 	obj1._callables_obj._class_names = ['once', 'upon']
 	#
@@ -1037,7 +1037,7 @@ def test_add():
 	}
 	obj2._callables_obj._reverse_callables_db = {'rc3':0, 'rc4':-1}
 	obj2._callables_obj._modules_dict = {'key3':'pi', 'key4':'gamma'}
-	obj2._callables_obj._file_names = ['world']
+	obj2._callables_obj._fnames = ['world']
 	obj2._callables_obj._module_names = ['a', 'test']
 	obj2._callables_obj._class_names = ['a', 'time']
 	#
@@ -1057,7 +1057,7 @@ def test_add():
 	assert sorted(sobj._callables_obj._modules_dict) == sorted(
 		{'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'}
 	)
-	assert sorted(sobj._callables_obj._file_names) == sorted(['hello', 'world'])
+	assert sorted(sobj._callables_obj._fnames) == sorted(['hello', 'world'])
 	assert sorted(sobj._callables_obj._module_names) == sorted(
 		['this', 'is', 'a', 'test']
 	)
@@ -1081,7 +1081,7 @@ def test_add():
 	assert sorted(obj1._callables_obj._modules_dict) == sorted(
 		{'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'}
 	)
-	assert sorted(obj1._callables_obj._file_names) == sorted(['hello', 'world'])
+	assert sorted(obj1._callables_obj._fnames) == sorted(['hello', 'world'])
 	assert sorted(obj1._callables_obj._module_names) == sorted(
 		['this', 'is', 'a', 'test']
 	)

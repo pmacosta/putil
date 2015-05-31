@@ -636,7 +636,7 @@ class ExHandle(object):
 		 the characters :code:`'\*['` and ends with the characters
 		 :code:`']\*'`, the field name follows the same rules as variable names
 		 and is between these two sets of characters. For example,
-		 :code:`\*[file_name]\*` defines the :code:`file_name` field
+		 :code:`\*[fname]\*` defines the :code:`fname` field
 		:type	exmsg: string
 		:raises:
 		 * RuntimeError (Argument \`exmsg\` is not valid)

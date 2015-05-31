@@ -3,24 +3,19 @@
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 
+source $(dirname "${BASH_SOURCE[0]}")/functions.sh
+
 print_usage_message () {
 	echo -e "build-tags.sh\n" >&2
 	echo -e "Usage:" >&2
-	echo -e "  build-tags.sh [-h]\n" >&2
+	echo -e "  build-tags.sh -h" >&2
+	echo -e "  build-tags.sh\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
 }
 
-# Find directory where script is (from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ]; do # resolve $source until the file is no longer a symlink
-	dir="$( cd -P "$( dirname "$source" )" && pwd )"
-	source="$(readlink "$source")"
-	[[ $source != /* ]] && source="$dir/$source" # if $source was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-dir="$( cd -P "$( dirname "$source" )" && pwd )"
-package_root=$(dirname ${dir})
-package_name=$(basename ${package_root})
+pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
+pkg_name=$(basename ${pkg_dir})
 
 # Read command line options
 while getopts ":h" opt; do
@@ -42,5 +37,9 @@ if [ "$#" != 0 ]; then
 	exit 1
 fi
 
-ctags -V --tag-relative -f ${package_root}/tags -R ${package_root}/${package_name}/*.py ${package_root}/${package_name}/plot/*.py  ${package_root}/tests/*.py ${package_root}/tests/plot/*.py
-# */2 * * * * /proj/ad9625_e_expctl/sos_pacosta/pacosta/sim/bin/build_tags.sh &>/home/pacosta/log/cheetah_tags.log
+ctags -V --tag-relative \
+      -f ${pkg_dir}/tags \
+      -R ${pkg_dir}/${pkg_name}/*.py \
+         ${pkg_dir}/${pkg_name}/plot/*.py \
+	 ${pkg_dir}/tests/*.py \
+	 ${pkg_dir}/tests/plot/*.py

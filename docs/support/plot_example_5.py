@@ -17,9 +17,9 @@ def proc_func2(indep_var, dep_var, par1, par2):
 	return (indep_var/1E-12)+(2*par1), dep_var+sum(par2)
 
 def create_csv_source():
-	with putil.misc.TmpFile(write_csv_file) as file_name:
+	with putil.misc.TmpFile(write_csv_file) as fname:
 		obj = putil.plot.CsvSource(
-			file_name=file_name,
+			fname=fname,
 			indep_col_label='Col1',
 			dep_col_label='Col2',
 			fproc=proc_func2,

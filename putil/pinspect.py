@@ -17,12 +17,12 @@ import putil.misc
 ###
 # Functions
 ###
-def _get_module_name_from_file_name(file_name):
+def _get_module_name_from_fname(fname):
 	""" Get module name from module file name """
 	for mobj in [item
 				 for item in sys.modules.values()
 				 if item and hasattr(item, '__file__')]:
-		if mobj.__file__.replace('.pyc', '.py') == file_name.replace('.pyc', '.py'):
+		if mobj.__file__.replace('.pyc', '.py') == fname.replace('.pyc', '.py'):
 			module_name = mobj.__name__
 			return module_name
 	raise RuntimeError('Module could not be found')
@@ -165,23 +165,23 @@ class Callables(object):
 	:py:meth:`putil.pinspect.Callables.trace` with the *same* module object
 	will *not* result in module re-traces (and the consequent performance hit).
 
-	:param	file_names: File names of the modules to trace
-	:type	file_names: list
+	:param	fnames: File names of the modules to trace
+	:type	fnames: list
 	:raises:
-	 * IOError (File *[file_name]* could not be found)
+	 * IOError (File *[fname]* could not be found)
 
-	 * RuntimeError (Argument \`file_names\` is not valid)
+	 * RuntimeError (Argument \`fnames\` is not valid)
 	"""
 	# pylint: disable=R0903
-	def __init__(self, file_names=None):
+	def __init__(self, fnames=None):
 		self._callables_db = {}
 		self._reverse_callables_db = {}
 		self._modules_dict = {}
-		self._file_names = []
+		self._fnames = []
 		self._module_names = []
 		self._class_names = []
-		if file_names:
-			self.trace(file_names)
+		if fnames:
+			self.trace(fnames)
 
 	def __add__(self, other):
 		"""
@@ -220,7 +220,7 @@ class Callables(object):
 		robj._modules_dict.update(copy.deepcopy(other._modules_dict))
 		robj._module_names = list(set(self._module_names[:]+other._module_names[:]))
 		robj._class_names = list(set(self._class_names[:]+other._class_names[:]))
-		robj._file_names = list(set(self._file_names[:]+other._file_names[:]))
+		robj._fnames = list(set(self._fnames[:]+other._fnames[:]))
 		return robj
 
 	def __copy__(self):
@@ -303,7 +303,7 @@ class Callables(object):
 		self._modules_dict.update(copy.deepcopy(other._modules_dict))
 		self._module_names = list(set(self._module_names+other._module_names[:]))
 		self._class_names = list(set(self._class_names+other._class_names[:]))
-		self._file_names = list(set(self._file_names+other._file_names[:]))
+		self._fnames = list(set(self._fnames+other._fnames[:]))
 		return self
 
 	def __nonzero__(self):
@@ -344,7 +344,7 @@ class Callables(object):
 			True
 
 		"""
-		return 'putil.pinspect.Callables({0})'.format(sorted(self._file_names))
+		return 'putil.pinspect.Callables({0})'.format(sorted(self._fnames))
 
 	def __str__(self):
 		"""
@@ -427,7 +427,7 @@ class Callables(object):
 
 	def get_callable_from_line(self, module_file, lineno):
 		""" Get the callable that the line number belongs to """
-		module_name = _get_module_name_from_file_name(module_file)
+		module_name = _get_module_name_from_fname(module_file)
 		if module_name not in self._modules_dict:
 			self.trace([module_file])
 		ret = None
@@ -439,34 +439,34 @@ class Callables(object):
 				break
 		return ret if ret else module_name
 
-	def trace(self, file_names):
+	def trace(self, fnames):
 		r"""
 		Generates a list of module callables (functions, classes, methods and
 		class properties) and gets their attributes (callable type, file name,
 		lines span)
 
-		:param	file_names: File names of the modules to trace
-		:type	file_names: list
+		:param	fnames: File names of the modules to trace
+		:type	fnames: list
 		:raises:
-		 * IOError (File *[file_name]* could not be found)
+		 * IOError (File *[fname]* could not be found)
 
-		 * RuntimeError (Argument \`file_names\` is not valid)
+		 * RuntimeError (Argument \`fnames\` is not valid)
 		"""
-		if file_names and (not isinstance(file_names, list)):
-			raise RuntimeError('Argument `file_names` is not valid')
-		if file_names and any([not isinstance(item, str) for item in file_names]):
-			raise RuntimeError('Argument `file_names` is not valid')
-		for file_name in file_names:
-			if not os.path.exists(file_name):
-				raise IOError('File {0} could not be found'.format(file_name))
-		file_names = [item.replace('.pyc', '.py') for item in file_names]
-		for file_name in file_names:
-			if file_name not in self._file_names:
-				module_name = _get_module_name_from_file_name(file_name)
-				with open(file_name, 'r') as fobj:
+		if fnames and (not isinstance(fnames, list)):
+			raise RuntimeError('Argument `fnames` is not valid')
+		if fnames and any([not isinstance(item, str) for item in fnames]):
+			raise RuntimeError('Argument `fnames` is not valid')
+		for fname in fnames:
+			if not os.path.exists(fname):
+				raise IOError('File {0} could not be found'.format(fname))
+		fnames = [item.replace('.pyc', '.py') for item in fnames]
+		for fname in fnames:
+			if fname not in self._fnames:
+				module_name = _get_module_name_from_fname(fname)
+				with open(fname, 'r') as fobj:
 					lines = fobj.readlines()
 				tree = ast.parse(''.join(lines))
-				aobj = _AstTreeScanner(file_name, lines)
+				aobj = _AstTreeScanner(fname, lines)
 				aobj.visit(tree)
 				fake_node = putil.misc.Bundle(lineno=len(lines)+1, col_offset=-1)
 				aobj._close_callable(fake_node, force=True)
@@ -483,8 +483,8 @@ class Callables(object):
 						if item['name'].startswith('{0}.'.format(module_name))
 				]:
 					self._modules_dict[module_name].append(entry)
-		self._file_names = list(set(
-			self._file_names+[item.replace('.pyc', '.py') for item in file_names]
+		self._fnames = list(set(
+			self._fnames+[item.replace('.pyc', '.py') for item in fnames]
 		))
 
 	callables_db = property(
@@ -550,12 +550,12 @@ class Callables(object):
 class _AstTreeScanner(ast.NodeVisitor):
 	""" Get all callables from a given module """
 	# pylint: disable=R0902
-	def __init__(self, file_name, lines):
+	def __init__(self, fname, lines):
 		super(_AstTreeScanner, self).__init__()
 		self._lines = lines
 		self._wsregexp = re.compile(r'^(\s*).+')
-		self._file_name = file_name.replace('.pyc', '.py')
-		self._module = _get_module_name_from_file_name(file_name)
+		self._fname = fname.replace('.pyc', '.py')
+		self._module = _get_module_name_from_fname(fname)
 		self._indent_stack = [{
 			'level':0,
 			'type':'module',
@@ -653,7 +653,7 @@ class _AstTreeScanner(ast.NodeVisitor):
 		# anyway, no harm in doing so as it is not attached to a callable
 		if self._in_class(node):
 			element_full_name = self._pop_indent_stack(node, 'prop')
-			code_id = (self._file_name, node.lineno)
+			code_id = (self._fname, node.lineno)
 			self._callables_db[element_full_name] = {
 				'name':element_full_name,
 				'type':'prop',
@@ -668,7 +668,7 @@ class _AstTreeScanner(ast.NodeVisitor):
 		""" Class walker """
 		self._close_callable(node)
 		element_full_name = self._pop_indent_stack(node, 'class')
-		code_id = (self._file_name, node.lineno)
+		code_id = (self._fname, node.lineno)
 		self._class_names.append(element_full_name)
 		self._callables_db[element_full_name] = {
 			'name':element_full_name,
@@ -694,7 +694,7 @@ class _AstTreeScanner(ast.NodeVisitor):
 				 ('deleter' if 'deleter' in decorator_list else None)))
 		element_type = 'meth' if in_class else 'func'
 		element_full_name = self._pop_indent_stack(node, element_type, action=action)
-		code_id = (self._file_name, node.lineno)
+		code_id = (self._fname, node.lineno)
 		self._callables_db[element_full_name] = {
 			'name':element_full_name,
 			'type':element_type,

@@ -51,6 +51,9 @@ Python standard library. The modules provided are:
 * **plot**: create high-quality, presentation-ready X-Y graphs quickly and
   easily
 
+* **ptypes**: several pseudo-type definitions which can be enforced
+  and/or validated with custom contracts defined using the pcontracts module
+
 * **test**: functions to aid in the unit testing of modules in the package
   (`py.test <http://www.pytest.org>`_-based)
 
@@ -174,14 +177,16 @@ Contributing
 		    build-docs.sh
 
 		    Usage:
-		      build-docs.sh [-h] [-n num-cpus] [-r] [module-name]
+		      build-docs.sh -h
+		      build-docs.sh -r [-n num-cpus] [module-name]
+		      build-docs.sh [module-name]
 
 		    Options:
 		      -h  Show this screen
 		      -r  Rebuild exceptions documentation. If no module name
 		          is given all modules with auto-generated exceptions
 		          documentation are rebuilt
-		      -n  Number of CPUs to use (greater than 2)
+		      -n  Number of CPUs to use [default: 1]
 
 
 		.. [[[end]]]
@@ -198,7 +203,8 @@ Contributing
 		    build-tags.sh
 
 		    Usage:
-		      build-tags.sh [-h]
+		      build-tags.sh -h
+		      build-tags.sh
 
 		    Options:
 		      -h  Show this screen
@@ -225,16 +231,18 @@ Contributing
 		    test.sh
 
 		    Usage:
-		      test.sh [-h] [-n num-cpus] [-c] [-d] [module-name] [test-name]
+		      test.sh -h
+		      test.sh -d [-n num-cpus]
+		      test.sh -c [-n num-cpus] [module-name]
+		      test.sh [-n num-cpus] [module-name] [test-name]
 
 		    Options:
 		      -h  Show this screen
-		      -c  Measure test coverage ([test-name] illegal)
-		      -d  Verify doctests ([module-name] and [test-name] illegal)
-		      -n  Number of CPUs to use (greater than 2)
+		      -c  Measure test coverage
+		      -d  Verify doctests
+		      -n  Number of CPUs to use default: 1]
 
-		    If no module name is given all package modules are processed.
-		    Coverage and doctest verification are mutually exclusive.
+		    If no module name is given all package modules are processed
 
 
 		.. [[[end]]]
@@ -251,11 +259,12 @@ Contributing
 		    pkg-validate.sh
 
 		    Usage:
-		      pkg-validate.sh [-h] [-n num-cpus]
+		      pkg-validate.sh -h
+		      pkg-validate.sh [-n num-cpus]
 
 		    Options:
 		      -h  Show this screen
-		      -n  Number of CPUs to use (greater than 2)
+		      -n  Number of CPUs to use [default: 1]
 
 
 		.. [[[end]]]

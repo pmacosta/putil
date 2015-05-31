@@ -5,7 +5,7 @@
 
 import numpy, os, putil.plot, sys
 
-def main(file_name):
+def main(fname):
 	"""
 	Example of how to use the putil.plot library
 	to generate presentation-quality plots
@@ -19,7 +19,7 @@ def main(file_name):
 	csv_file = os.path.join(wdir, 'data.csv')
 	series1_obj = [putil.plot.Series(
 		data_source=putil.plot.CsvSource(
-			file_name=csv_file,
+			fname=csv_file,
 			dfilter={'value1':1},
 			indep_col_label='value2',
 			dep_col_label='value3',
@@ -96,9 +96,9 @@ def main(file_name):
 		title='Library putil.plot Example'
 	)
 	# Save figure
-	output_file_name = os.path.join(wdir, file_name)
-	print 'Saving image to file {0}'.format(output_file_name)
-	fig_obj.save(output_file_name)
+	output_fname = os.path.join(wdir, fname)
+	print 'Saving image to file {0}'.format(output_fname)
+	fig_obj.save(output_fname)
 
 def series1_proc_func(indep_var, dep_var, xoffset):
 	""" Process data 1 series """

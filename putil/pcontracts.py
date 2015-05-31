@@ -7,11 +7,9 @@ import contracts
 import decorator
 import funcsigs
 import inspect
-import os
 import re
 
 import putil.exh
-import putil.misc
 
 
 ###
@@ -23,6 +21,17 @@ _CUSTOM_CONTRACTS = dict()
 ###
 # Functions
 ###
+def _isexception(obj):
+	"""
+	Tests if the argument is an exception object
+
+	:param	obj: Object
+	:type	obj: any
+	:rtype: boolean
+	"""
+	return False if not inspect.isclass(obj) else issubclass(obj, Exception)
+
+
 def all_disabled():
 	"""
 	Wraps PyContracts `all_disabled()
@@ -79,7 +88,7 @@ def enable_all():
 
 def _format_arg(arg):
 	""" Validate one exception specification contract tuple/list """
-	if (not (isinstance(arg, str) or putil.misc.isexception(arg) or
+	if (not (isinstance(arg, str) or _isexception(arg) or
 	   isinstance(arg, tuple) or isinstance(arg, list))):
 		raise TypeError('Illegal custom contract exception definition')
 	if ((isinstance(arg, tuple) or isinstance(arg, list)) and
@@ -89,16 +98,16 @@ def _format_arg(arg):
 		raise ValueError('Empty custom contract exception message')
 	if isinstance(arg, str):
 		return {'msg':arg, 'type':RuntimeError}
-	if putil.misc.isexception(arg):
+	if _isexception(arg):
 		return {'msg':'Argument `*[argument_name]*` is not valid', 'type':arg}
 	if ((len(arg) == 1) and
 	   (not isinstance(arg[0], str)) and
-	   (not putil.misc.isexception(arg[0]))):
+	   (not _isexception(arg[0]))):
 		raise TypeError('Illegal custom contract exception definition')
 	if ((len(arg) == 2) and
 	   (not ((isinstance(arg[0], str) and
-	   putil.misc.isexception(arg[1])) or
-	   (isinstance(arg[1], str) and putil.misc.isexception(arg[0]))))):
+	   _isexception(arg[1])) or
+	   (isinstance(arg[1], str) and _isexception(arg[0]))))):
 		raise TypeError('Illegal custom contract exception definition')
 	if (len(arg) == 1) and isinstance(arg[0], str) and (len(arg[0]) == 0):
 		raise ValueError('Empty custom contract exception message')
@@ -109,12 +118,12 @@ def _format_arg(arg):
 		return {
 			'msg':arg[0] if isinstance(arg[0], str) else
 			'Argument `*[argument_name]*` is not valid',
-			'type':arg[0] if putil.misc.isexception(arg[0]) else RuntimeError
+			'type':arg[0] if _isexception(arg[0]) else RuntimeError
 		}
 	else:	# len(arg) == 2
 		return {
 			'msg':arg[0] if isinstance(arg[0], str) else arg[1],
-			'type':arg[0] if putil.misc.isexception(arg[0]) else arg[1]
+			'type':arg[0] if _isexception(arg[0]) else arg[1]
 		}
 
 
@@ -642,24 +651,24 @@ def new_contract(*args, **kwargs):
 	.. code-block:: python
 
 	    @putil.pcontracts.new_contract((
-	        IOError, 'File `*[file_name]*` not found'
+	        IOError, 'File `*[fname]*` not found'
 	    ))
-	    def custom_contract12(file_name):
-	        if not os.path.exists(file_name):
+	    def custom_contract12(fname):
+	        if not os.path.exists(fname):
 	            raise ValueError(putil.pcontracts.get_exdesc())
 
-	    @putil.pcontracts.contract(file_name='custom_contract12')
-	    def print_file_name(file_name):
-	        print 'File name to find: {0}'.format(file_name)
+	    @putil.pcontracts.contract(fname='custom_contract12')
+	    def print_fname(fname):
+	        print 'File name to find: {0}'.format(fname)
 
 	.. =[=end=]=
 
 	.. code-block:: python
 
 		>>> import os
-		>>> from docs.support.pcontracts_example_3 import print_file_name
-		>>> file_name = os.path.join(os.sep, 'dev', 'null', '_not_a_file_')
-		>>> print print_file_name(file_name)	#doctest: +ELLIPSIS
+		>>> from docs.support.pcontracts_example_3 import print_fname
+		>>> fname = os.path.join(os.sep, 'dev', 'null', '_not_a_file_')
+		>>> print print_fname(fname)	#doctest: +ELLIPSIS
 		Traceback (most recent call last):
 		    ...
 		IOError: File `/dev/null/_not_a_file_` not found
@@ -684,76 +693,3 @@ def new_contract(*args, **kwargs):
 		# Apply PyContracts decorator
 		return contracts.new_contract(func)
 	return wrapper
-
-
-###
-# Custom contracts
-###
-@new_contract()
-def file_name(obj):
-	r"""
-	Validates if an object is a legal name for a file
-	(i.e. does not have extraneous characters, etc.)
-
-	:param	obj: Object
-	:type	obj: any
-	:raises: RuntimeError (Argument \`*[argument_name]*\` is not
-	 valid). The token \*[argument_name]\* is replaced by the name
-	 of the argument the contract is attached to
-	:rtype: None
-	"""
-	msg = get_exdesc()
-	# Check that argument is a string
-	if not isinstance(obj, str):
-		raise ValueError(msg)
-	# If file exists, argument is a valid file name, otherwise test
-	# if file # can be created. User may not have permission to
-	# write file, but call to os.access should not fail if the file
-	# name is correct
-	try:
-		if not os.path.exists(obj):
-			os.access(obj, os.W_OK)
-	except TypeError:
-		raise ValueError(msg)
-
-
-@new_contract(
-	argument_invalid='Argument `*[argument_name]*` is not valid',
-	file_not_found=(
-		IOError,
-		'File `*[file_name]*` could not be found'
-	)
-)
-def file_name_exists(obj):
-	r"""
-	Validates if an object is a legal name for a file
-	(i.e. does not have extraneous characters, etc.) *and* that the
-	file exists
-
-	:param	obj: Object
-	:type	obj: any
-	:raises:
-	 * IOError (File \`*[file_name]*\` could not be found). The
-	   token \*[file_name]\* is replaced by the *value* of the
-	   argument the contract is attached to
-
-	 * RuntimeError (Argument \`*[argument_name]*\` is not valid).
-	   The token \*[argument_name]\* is replaced by the name of
-	   the argument the contract is attached to
-
-	:rtype: None
-	"""
-	exdesc = get_exdesc()
-	msg = exdesc['argument_invalid']
-	# Check that argument is a string
-	if not isinstance(obj, str):
-		raise ValueError(msg)
-	# Check that file name is valid
-	try:
-		os.path.exists(obj)
-	except TypeError:
-		raise ValueError(msg)
-	# Check that file exists
-	if not os.path.exists(obj):
-		msg = exdesc['file_not_found']
-		raise ValueError(msg)

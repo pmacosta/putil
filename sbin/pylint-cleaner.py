@@ -10,7 +10,7 @@ import re
 
 def main():
 	""" Processing """
-	# pylint: disable=R0914
+	# pylint: disable=R0912,R0914
 	source_files = []
 	for sdir in ['putil', 'docs', 'tests']:
 		for root, _, filenames in os.walk(sdir):
@@ -18,6 +18,7 @@ def main():
 				source_files.append(os.path.join(root, filename))
 	soline = re.compile(r'^\s*#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)')
 	token_regexp = re.compile(r'(.*)#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)')
+	errors = False
 	for source_file in source_files:
 		with open(source_file, 'r') as fname:
 			input_lines = fname.readlines()
@@ -32,6 +33,7 @@ def main():
 					header = True
 					print 'File {0}'.format(source_file)
 				print '   Line {0} (EOL)'.format(num+1)
+				errors = True
 			if token_match:
 				indent = token_match.groups()[0]
 				tokens = sorted(token_match.groups()[1].rstrip().split(','))
@@ -40,6 +42,7 @@ def main():
 						header = True
 						print 'File {0}'.format(source_file)
 					print '   Line {0} (repeated)'.format(num+1)
+					errors = True
 				file_tokens.extend(tokens)
 				output_lines.append(
 					'{0}# pylint: disable={1}\n'.format(indent, ','.join(tokens))
@@ -49,6 +52,8 @@ def main():
 		with open(source_file, 'w') as fname:
 			for output_line in output_lines:
 				fname.write(output_line)
+	if not errors:
+		print 'All files compliant'
 
 if __name__ == '__main__':
 	main()

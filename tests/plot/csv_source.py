@@ -25,13 +25,13 @@ class TestCsvSource(object):
 	""" Tests for CsvSource """
 	def test_indep_min_type(self):
 		""" Tests indep_min type validation """
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# __init__ path
 			# Wrong types
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'indep_min':'a'
@@ -42,7 +42,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'indep_min':False
@@ -52,13 +52,13 @@ class TestCsvSource(object):
 			)
 			# Valid values, these should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				indep_min=1
 			)
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				indep_min=2.0
@@ -66,7 +66,7 @@ class TestCsvSource(object):
 			# Managed attribute path
 			# Wrong types
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				indep_min=2.0
@@ -82,13 +82,13 @@ class TestCsvSource(object):
 
 	def test_indep_max_type(self):
 		""" Tests indep_max type validation """
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# __init__ path
 			# Wrong types
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'indep_max':'a'
@@ -99,7 +99,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'indep_max':False
@@ -109,13 +109,13 @@ class TestCsvSource(object):
 			)
 			# Valid values, these should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				indep_max=1
 			)
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				indep_max=2.0
@@ -140,10 +140,10 @@ class TestCsvSource(object):
 		Test if object behaves correctly when indep_min and indep_max
 		are incongruous
 		"""
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# Assign indep_min first
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				indep_min=0.5
@@ -154,7 +154,7 @@ class TestCsvSource(object):
 											 'than argument `indep_max`')
 			# Assign indep_max first
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				indep_max=10
@@ -164,49 +164,49 @@ class TestCsvSource(object):
 			assert excinfo.value.message == ('Argument `indep_min` is greater '
 											 'than argument `indep_max`')
 
-	def test_file_name_wrong_type(self):
-		""" Test if object behaves correctly when file_name is not valid """
+	def test_fname_wrong_type(self):
+		""" Test if object behaves correctly when fname is not valid """
 		# This assignment should raise an exception
 		putil.test.assert_exception(
 			putil.plot.CsvSource,
-			{'file_name':5, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
+			{'fname':5, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
 			RuntimeError,
-			'Argument `file_name` is not valid'
+			'Argument `fname` is not valid'
 		)
 		putil.test.assert_exception(
 			putil.plot.CsvSource,
-			{'file_name':None, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
+			{'fname':None, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
 			RuntimeError,
-			'Argument `file_name` is not valid'
+			'Argument `fname` is not valid'
 		)
 
 	def test_file_does_not_exist(self):
 		""" Test if object behaves correctly when CSV file does not exist """
-		file_name = 'nonexistent_file_name.csv'
+		fname = 'nonexistent_fname.csv'
 		putil.test.assert_exception(
 			putil.plot.CsvSource,
-			{'file_name':file_name, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
+			{'fname':fname, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
 			IOError,
-			'File `{0}` could not be found'.format(file_name)
+			'File `{0}` could not be found'.format(fname)
 		)
 
 	def test_file_exists(self):
 		""" Test if object behaves correctly when CSV file exists """
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2'
 			)
 
 	def test_data_filter_wrong_type(self):
 		""" Test if object behaves correctly when dfilter is not valid """
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# This assignment should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'dfilter':5},
@@ -215,7 +215,7 @@ class TestCsvSource(object):
 			)
 			# This assignment should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				dfilter=None
@@ -226,22 +226,22 @@ class TestCsvSource(object):
 		Test if object behaves correctly when data filter and file name
 		are given
 		"""
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# This assignment should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'dfilter':{'Col99':500}
 				},
 				ValueError,
 				'Column Col99 in data filter not found in '
-				'comma-separated file {0} header'.format(file_name)
+				'comma-separated file {0} header'.format(fname)
 			)
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				dfilter={'Col1':0}
@@ -251,12 +251,12 @@ class TestCsvSource(object):
 		"""
 		Test if object behaves correctly when indep_col_label is not valid
 		"""
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# These assignments should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':None,
 					'dep_col_label':'Col2'
 				},
@@ -266,7 +266,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':5,
 					'dep_col_label':'Col2'
 				},
@@ -276,17 +276,17 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col99',
 					'dep_col_label':'Col2'
 				},
 				ValueError,
 				'Column Col99 (independent column label) could not be found '
-				'in comma-separated file {0} header'.format(file_name)
+				'in comma-separated file {0} header'.format(fname)
 			)
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				dfilter={'Col1':0}
@@ -296,12 +296,12 @@ class TestCsvSource(object):
 		"""
 		Test if object behaves correctly when dep_col_label is not valid
 		"""
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# This assignment should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':None
 				},
@@ -311,7 +311,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':5
 				},
@@ -321,17 +321,17 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col99'
 				},
 				ValueError,
 				'Column Col99 (dependent column label) could not be found in '
-				'comma-separated file {0} header'.format(file_name)
+				'comma-separated file {0} header'.format(fname)
 			)
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col3'
 			)
@@ -341,11 +341,11 @@ class TestCsvSource(object):
 		Test if object behaves correctly when the independent variable is empty
 		after data filter is applied
 		"""
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':10}
@@ -359,11 +359,11 @@ class TestCsvSource(object):
 		Test if object behaves correctly when the dependent variable is empty
 		after data filter is applied
 		"""
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col5', 'dfilter':{'Col1':0}
 				},
@@ -376,9 +376,9 @@ class TestCsvSource(object):
 		Test if object behaves correctly when the independent data is
 		descending order
 		"""
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col6',
 				dep_col_label='Col3',
 				dfilter={'Col1':0}
@@ -394,12 +394,12 @@ class TestCsvSource(object):
 			return numpy.array([1]), numpy.array([1])
 		def fproc3(*args, **kwargs):
 			return numpy.array([1, 2, 3, 4, 5]), numpy.array([1, 2, 3, 1, 2])
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# These assignments should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'fproc':5
@@ -410,7 +410,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'fproc':fproc1
@@ -421,13 +421,13 @@ class TestCsvSource(object):
 			)
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				fproc=fproc2
 			)
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				fproc=fproc3
@@ -466,12 +466,12 @@ class TestCsvSource(object):
 			raise RuntimeError('Test exception message #1')
 		def fproc14(indep_var, dep_var, par1=None):
 			raise RuntimeError('Test exception message #2')
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# These assignments should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -483,7 +483,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -496,7 +496,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -508,7 +508,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -520,7 +520,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -532,7 +532,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -544,7 +544,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -556,7 +556,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -568,7 +568,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -580,7 +580,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -600,7 +600,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -619,7 +619,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -631,7 +631,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col2',
 					'dep_col_label':'Col3',
 					'dfilter':{'Col1':0},
@@ -642,14 +642,14 @@ class TestCsvSource(object):
 			)
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col2',
 				dep_col_label='Col3',
 				dfilter={'Col1':0},
 				fproc=fproc3
 			)
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col2',
 				dep_col_label='Col3',
 				dfilter={'Col1':0},
@@ -658,12 +658,12 @@ class TestCsvSource(object):
 
 	def test_fproc_eargs_wrong_type(self):
 		""" Test if object behaves correctly when fprog_eargs is not valid """
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# This assignment should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'fproc_eargs':5
@@ -673,13 +673,13 @@ class TestCsvSource(object):
 			)
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				fproc_eargs=None
 			)
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				fproc_eargs={'arg1':23}
@@ -696,12 +696,12 @@ class TestCsvSource(object):
 			return [numpy.array([1, 2]), numpy.array([1, 2])]
 		def fproc3(indep_var, dep_var, **kwargs):
 			return [numpy.array([1, 2]), numpy.array([1, 2])]
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# These assignments should raise an exception
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'fproc':fproc1,
@@ -714,7 +714,7 @@ class TestCsvSource(object):
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
-					'file_name':file_name,
+					'fname':fname,
 					'indep_col_label':'Col7',
 					'dep_col_label':'Col2',
 					'fproc':fproc2,
@@ -726,7 +726,7 @@ class TestCsvSource(object):
 			)
 			# These assignments should not raise an exception
 			putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2',
 				fproc=fproc3,
@@ -740,9 +740,9 @@ class TestCsvSource(object):
 		"""
 		def fproc1(indep_var, dep_var, indep_offset, dep_offset):
 			return indep_var+indep_offset, dep_var+dep_offset
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col2',
 				dep_col_label='Col3',
 				dfilter={'Col1':0},
@@ -758,10 +758,10 @@ class TestCsvSource(object):
 			return indep_var*1e-3, dep_var+1
 		def fproc2(indep_var, dep_var, par1, par2):
 			return indep_var+par1, dep_var-par2
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			# No dfilter
 			obj = str(putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col3')
 			 )
@@ -775,12 +775,12 @@ class TestCsvSource(object):
 				'Independent variable minimum: -inf\n'
 				'Independent variable maximum: +inf\n'
 				'Independent variable: [ 1, 2, 3, 4, 5 ]\n'
-				'Dependent variable: [ 2, 4, 1, 5, 3 ]'.format(file_name)
+				'Dependent variable: [ 2, 4, 1, 5, 3 ]'.format(fname)
 			)
 			assert obj == ref
 			# dfilter
 			obj = str(putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				dfilter={'Col1':0}, indep_col_label='Col2', dep_col_label='Col3')
 			 )
 			ref = (
@@ -794,12 +794,12 @@ class TestCsvSource(object):
 				'Independent variable minimum: -inf\n'
 				'Independent variable maximum: +inf\n'
 				'Independent variable: [ 1, 2, 3 ]\n'
-				'Dependent variable: [ 2, 4, 1 ]'.format(file_name)
+				'Dependent variable: [ 2, 4, 1 ]'.format(fname)
 			)
 			assert obj == ref
 			# fproc
 			obj = str(putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				dfilter={'Col1':0},
 				indep_col_label='Col2',
 				dep_col_label='Col3',
@@ -818,12 +818,12 @@ class TestCsvSource(object):
 				'Independent variable minimum: 0.002\n'
 				'Independent variable maximum: 200\n'
 				'Independent variable: [ 0.002, 0.003 ]\n'
-				'Dependent variable: [ 5, 2 ]'.format(file_name)
+				'Dependent variable: [ 5, 2 ]'.format(fname)
 			)
 			assert obj == ref
 			# fproc_eargs
 			obj = str(putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				dfilter={'Col1':0},
 				indep_col_label='Col2',
 				dep_col_label='Col3',
@@ -845,12 +845,12 @@ class TestCsvSource(object):
 				'Independent variable minimum: -2\n'
 				'Independent variable maximum: 200\n'
 				'Independent variable: [ 4, 5, 6 ]\n'
-				'Dependent variable: [ -2, 0, -3 ]'.format(file_name)
+				'Dependent variable: [ -2, 0, -3 ]'.format(fname)
 			)
 			assert obj == ref
 			# indep_min set
 			obj = str(putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				dfilter={'Col1':0},
 				indep_col_label='Col2',
 				dep_col_label='Col3',
@@ -870,12 +870,12 @@ class TestCsvSource(object):
 				'Independent variable minimum: -2\n'
 				'Independent variable maximum: +inf\n'
 				'Independent variable: [ 4, 5, 6 ]\n'
-				'Dependent variable: [ -2, 0, -3 ]'.format(file_name)
+				'Dependent variable: [ -2, 0, -3 ]'.format(fname)
 			)
 			assert obj == ref
 			# indep_max set
 			obj = str(putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				dfilter={'Col1':0},
 				indep_col_label='Col2',
 				dep_col_label='Col3',
@@ -896,22 +896,22 @@ class TestCsvSource(object):
 				'Independent variable minimum: -2\n'
 				'Independent variable maximum: 200\n'
 				'Independent variable: [ 4, 5, 6 ]\n'
-				'Dependent variable: [ -2, 0, -3 ]'.format(file_name)
+				'Dependent variable: [ -2, 0, -3 ]'.format(fname)
 			)
 			assert obj == ref
 
 	def test_complete(self):
 		""" Test that _complete property behaves correctly """
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2'
 			)
 			obj._indep_var = None
 			assert not obj._complete
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2'
 			)
@@ -919,14 +919,14 @@ class TestCsvSource(object):
 
 	def test_cannot_delete_attributes(self):
 		""" Test that del method raises an exception on all class attributes """
-		with putil.misc.TmpFile(write_csv_file) as file_name:
+		with putil.misc.TmpFile(write_csv_file) as fname:
 			obj = putil.plot.CsvSource(
-				file_name=file_name,
+				fname=fname,
 				indep_col_label='Col7',
 				dep_col_label='Col2'
 			)
 			with pytest.raises(AttributeError) as excinfo:
-				del obj.file_name
+				del obj.fname
 			assert excinfo.value.message == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.dfilter

@@ -75,16 +75,16 @@ def test_get_module_name():
 	assert putil.pinspect.get_module_name(sys.modules['putil']) == 'putil'
 
 
-def test_get_module_name_from_file_name():
-	""" Test _get_module_name_from_file_name() function """
+def test_get_module_name_from_fname():
+	""" Test _get_module_name_from_fname() function """
 	putil.test.assert_exception(
-		putil.pinspect._get_module_name_from_file_name,
-		{'file_name':'_not_a_module'},
+		putil.pinspect._get_module_name_from_fname,
+		{'fname':'_not_a_module'},
 		RuntimeError,
 		'Module could not be found'
 	)
 	ref = 'putil.pinspect'
-	assert putil.pinspect._get_module_name_from_file_name(
+	assert putil.pinspect._get_module_name_from_fname(
 		sys.modules[ref].__file__
 	) == ref
 
@@ -105,19 +105,19 @@ class TestCallables(object):
 		""" Test callables __init__ (and trace() function) data validation """
 		putil.test.assert_exception(
 			putil.pinspect.Callables,
-			{'file_names':5},
+			{'fnames':5},
 			RuntimeError,
-			'Argument `file_names` is not valid'
+			'Argument `fnames` is not valid'
 		)
 		putil.test.assert_exception(
 			putil.pinspect.Callables,
-			{'file_names':[5]},
+			{'fnames':[5]},
 			RuntimeError,
-			'Argument `file_names` is not valid'
+			'Argument `fnames` is not valid'
 		)
 		putil.test.assert_exception(
 			putil.pinspect.Callables,
-			{'file_names':['_not_a_file_']},
+			{'fnames':['_not_a_file_']},
 			IOError,
 			'File _not_a_file_ could not be found'
 		)
@@ -142,7 +142,7 @@ class TestCallables(object):
 		obj1._callables_db = {'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
 		obj1._reverse_callables_db = {'rc1':'5', 'rc2':'7'}
 		obj1._modules_dict = {'key1':{'entry':'alpha'}, 'key2':{'entry':'beta'}}
-		obj1._file_names = ['hello']
+		obj1._fnames = ['hello']
 		obj1._module_names = ['this', 'is']
 		obj1._class_names = ['once', 'upon']
 		#
@@ -150,7 +150,7 @@ class TestCallables(object):
 		obj2._callables_db = {'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}}
 		obj2._reverse_callables_db = {'rc3':'0', 'rc4':'1'}
 		obj2._modules_dict = {'key3':{'entry':'pi'}, 'key4':{'entry':'gamma'}}
-		obj2._file_names = ['world']
+		obj2._fnames = ['world']
 		obj2._module_names = ['a', 'test']
 		obj2._class_names = ['a', 'time']
 		#
@@ -194,7 +194,7 @@ class TestCallables(object):
 			'key3':{'entry':'pi'},
 			'key4':{'entry':'gamma'}
 		})
-		assert sorted(sobj._file_names) == sorted(['hello', 'world'])
+		assert sorted(sobj._fnames) == sorted(['hello', 'world'])
 		assert sorted(sobj._module_names) == sorted(['this', 'is', 'a', 'test'])
 		assert sorted(sobj._class_names) == sorted(['once', 'upon', 'a', 'time'])
 		#
@@ -217,7 +217,7 @@ class TestCallables(object):
 			'key3':{'entry':'pi'},
 			'key4':{'entry':'gamma'}
 		})
-		assert sorted(obj1._file_names) == sorted(['hello', 'world'])
+		assert sorted(obj1._fnames) == sorted(['hello', 'world'])
 		assert sorted(obj1._module_names) == sorted(['this', 'is', 'a', 'test'])
 		assert sorted(obj1._class_names) == sorted(['once', 'upon', 'a', 'time'])
 
@@ -429,31 +429,31 @@ class TestCallables(object):
 		""" Test get_callable_from_line() function """
 		xobj = putil.pinspect.Callables()
 		import tests.support.pinspect_support_module_4
-		file_name = sys.modules['tests.support.pinspect_support_module_4'].__file__
+		fname = sys.modules['tests.support.pinspect_support_module_4'].__file__
 		ref = ('tests.support.pinspect_support_module_4.'
 			  'another_property_action_enclosing_function')
-		assert xobj.get_callable_from_line(file_name, 16) == ref
-		xobj = putil.pinspect.Callables([file_name])
+		assert xobj.get_callable_from_line(fname, 16) == ref
+		xobj = putil.pinspect.Callables([fname])
 		ref = ('tests.support.pinspect_support_module_4.'
 			  'another_property_action_enclosing_function')
-		assert xobj.get_callable_from_line(file_name, 16) == ref
+		assert xobj.get_callable_from_line(fname, 16) == ref
 		ref = ('tests.support.pinspect_support_module_4.'
 			  'another_property_action_enclosing_function')
-		assert xobj.get_callable_from_line(file_name, 17) == ref
+		assert xobj.get_callable_from_line(fname, 17) == ref
 		ref = ('tests.support.pinspect_support_module_4.'
 			  'another_property_action_enclosing_function')
-		assert xobj.get_callable_from_line(file_name, 24) == ref
+		assert xobj.get_callable_from_line(fname, 24) == ref
 		ref = ('tests.support.pinspect_support_module_4.'
 			  'another_property_action_enclosing_function.fget')
-		assert xobj.get_callable_from_line(file_name, 21) == ref
+		assert xobj.get_callable_from_line(fname, 21) == ref
 		ref = ('tests.support.pinspect_support_module_4.'
 			  'another_property_action_enclosing_function.fget')
-		assert xobj.get_callable_from_line(file_name, 22) == ref
+		assert xobj.get_callable_from_line(fname, 22) == ref
 		ref = ('tests.support.pinspect_support_module_4.'
 			  'another_property_action_enclosing_function.fget')
-		assert xobj.get_callable_from_line(file_name, 23) == ref
+		assert xobj.get_callable_from_line(fname, 23) == ref
 		ref = 'tests.support.pinspect_support_module_4'
-		assert xobj.get_callable_from_line(file_name, 100) == ref
+		assert xobj.get_callable_from_line(fname, 100) == ref
 
 
 ##

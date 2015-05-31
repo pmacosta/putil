@@ -412,8 +412,7 @@ class Tree(object):
 		 each entry in the argument with the same node name, in their order of
 		 appearance, in addition to any existing node data if the node is
 		 already present in the tree
-
-		:type	nodes: NodesWithData
+		:type	nodes: :ref:`NodesWithData`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -511,9 +510,8 @@ class Tree(object):
 		Collapses a sub-tree; nodes that have a single child and no data are
 		combined with their child as a single tree node
 
-		:param	name: Root of the sub-tree to collapse. See `NodeName`_
-		 pseudo-type specification
-		:type	name: NodeName
+		:param	name: Root of the sub-tree to collapse
+		:type	name: :ref:`NodeName`
 		:param	recursive: Flag that indicates whether the collapse operation
 		 is performed on the whole sub-tree (True) or whether it stops upon
 		 reaching the first node where the collapsing condition is not
@@ -585,12 +583,10 @@ class Tree(object):
 		Copies a sub-tree from one sub-node to another. Data is added if some
 		nodes of the source sub-tree exist in the destination sub-tree
 
-		:param	source_name: Root node of the sub-tree to copy from. See
-		 `NodeName`_ pseudo-type specification
-		:type	source_name: NodeName
-		:param	dest_name: Root node of the sub-tree to copy to. See
-		 `NodeName`_ pseudo-type specification
-		:type	dest_name: NodeName
+		:param	source_name: Root node of the sub-tree to copy from
+		:type	source_name: :ref:`NodeName`
+		:param	dest_name: Root node of the sub-tree to copy to
+		:type	dest_name: :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -692,8 +688,8 @@ class Tree(object):
 		r"""
 		Deletes hierarchy levels from all nodes in the tree
 
-		:param	nodes: Prefix to delete. See `NodeName`_ pseudo-type specification
-		:type	nodes: NodeName
+		:param	nodes: Prefix to delete
+		:type	nodes: :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -761,8 +757,8 @@ class Tree(object):
 		r"""
 		Deletes nodes (and their sub-trees) from the tree
 
-		:param	nodes: Node(s) to delete. See `NodeName`_ pseudo-type specification
-		:type	nodes: NodeName or list of NodeNames
+		:param	nodes: Node(s) to delete
+		:type	nodes: :ref:`NodeName` or list of :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -811,8 +807,8 @@ class Tree(object):
 		with each child
 
 		:param	name: Ending hierarchy node whose sub-trees are to be
-		 flattened. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
+		 flattened
+		:type	name: :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -895,9 +891,9 @@ class Tree(object):
 		r"""
 		Gets the children node names of a node
 
-		:param	name: Parent node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
-		:rtype: list of NodeNames
+		:param	name: Parent node name
+		:type	name: :ref:`NodeName`
+		:rtype: list of :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -926,8 +922,8 @@ class Tree(object):
 		r"""
 		Gets the data associated with a node
 
-		:param	name: Node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeNames
+		:param	name: Node name
+		:type	name: :ref:`NodeName`
 		:rtype: any type or list of objects of any type
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -957,10 +953,9 @@ class Tree(object):
 		r"""
 		Gets the sub-tree leaf node(s)
 
-		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type
-		 specification
-		:type	name: NodeName
-		:rtype: list of NodeNames
+		:param	name: Sub-tree root node name
+		:type	name: :ref:`NodeName`
+		:rtype: list of :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -990,11 +985,11 @@ class Tree(object):
 		Gets a tree node structure. The structure is a dictionary with the
 		following keys:
 
-		 * **parent** (*NodeName*) Parent node name, :code:`''` if the node is
-		   the root node. See `NodeName`_ pseudo-type specification
+		 * **parent** (*:ref:`NodeName`*) Parent node name, :code:`''` if the
+		   node is the root node
 
-		 * **children** (*list of NodeNames*) Children node names, an empty
-		   list if node is a leaf. See `NodeName`_ pseudo-type specification
+		 * **children** (*list of :ref:`NodeName`*) Children node names, an
+		   empty list if node is a leaf
 
 		 * **data** (*list*) Node data, an empty list if node contains no data
 
@@ -1030,8 +1025,8 @@ class Tree(object):
 		Gets the list of children structures of a node. See
 		:py:meth:`putil.tree.Tree.get_node` for details about the structure
 
-		:param	name: Parent node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
+		:param	name: Parent node name
+		:type	name: :ref:`NodeName`
 		:rtype: list
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1062,8 +1057,8 @@ class Tree(object):
 		Gets the parent structure of a node. See
 		:py:meth:`putil.tree.Tree.get_node` for details about the structure
 
-		:param	name: Child node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
+		:param	name: Child node name
+		:type	name: :ref:`NodeName`
 		:rtype: dictionary
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1095,10 +1090,9 @@ class Tree(object):
 		r"""
 		Gets all node names in a sub-tree
 
-		:param	name: Sub-tree root node name. See `NodeName`_ pseudo-type
-		 specification
-		:type	name: NodeName
-		:rtype: list of NodeNames
+		:param	name: Sub-tree root node name
+		:type	name: :ref:`NodeName`
+		:rtype: list of :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -1146,8 +1140,8 @@ class Tree(object):
 		r"""
 		Tests if a node is the root node (node with no ancestors)
 
-		:param	name: Node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
+		:param	name: Node name
+		:type	name: :ref:`NodeName`
 		:rtype: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1176,9 +1170,8 @@ class Tree(object):
 		r"""
 		Tests if a node is in the tree
 
-		:param	name: Node name to search for. See `NodeName`_ pseudo-type
-		 specification
-		:type	name: NodeName
+		:param	name: Node name to search for
+		:type	name: :ref:`NodeName`
 		:rtype	data: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1203,8 +1196,8 @@ class Tree(object):
 		r"""
 		Tests if a node is a leaf node (node with no children)
 
-		:param	name: Node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
+		:param	name: Node name
+		:type	name: :ref:`NodeName`
 		:rtype: boolean
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1234,8 +1227,8 @@ class Tree(object):
 		Makes a sub-node the root node of the tree. All nodes not belonging to
 		the sub-tree are deleted
 
-		:param	name: New root node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
+		:param	name: New root node name
+		:type	name: :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -1290,8 +1283,8 @@ class Tree(object):
 		r"""
 		Prints node information (parent, children and data)
 
-		:param	name: Node name. See `NodeName`_ pseudo-type specification
-		:type	name: NodeName
+		:param	name: Node name
+		:type	name: :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -1356,9 +1349,8 @@ class Tree(object):
 		*can* be renamed as long as the new root name has the same or less
 		hierarchy levels as the existing root name.
 
-		:param	name: Node name to rename. See `NodeName`_ pseudo-type
-		 specification
-		:type	name: NodeName
+		:param	name: Node name to rename
+		:type	name: :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -1463,9 +1455,8 @@ class Tree(object):
 		r"""
 		Searches tree for all nodes with a specific name
 
-		:param	name: Node name to search for. See `NodeName`_ pseudo-type
-		 specification
-		:type	name: NodeName
+		:param	name: Node name to search for
+		:type	name: :ref:`NodeName`
 
 		.. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
 		.. Auto-generated exceptions documentation for
@@ -1515,10 +1506,9 @@ class Tree(object):
 	# Managed attributes
 	nodes = property(_get_nodes, doc='Tree nodes')
 	"""
-	Gets the name of all tree nodes, :code:`None` if the tree is empty.
-	See `NodeName`_ pseudo-type specification
+	Gets the name of all tree nodes, :code:`None` if the tree is empty
 
-	:rtype: list of NodeNames or None
+	:rtype: list of :ref:`NodeName` or None
 	"""
 
 	node_separator = property(_get_node_separator, doc='Node separator')
@@ -1540,8 +1530,7 @@ class Tree(object):
 	root_name = property(_get_root_name, doc='Tree root node name')
 	"""
 	Gets the tree root node name, :code:`None` if the
-	:py:class:`putil.tree.Tree` object has no nodes. See
-	`NodeName`_ pseudo-type specification
+	:py:class:`putil.tree.Tree` object has no nodes.
 
-	:rtype: NodeName or None
+	:rtype: :ref:`NodeName` or None
 	"""

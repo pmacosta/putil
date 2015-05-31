@@ -1148,3 +1148,13 @@ class TestPanel(object):
 		assert not obj
 		obj.series = default_series
 		assert obj
+
+	def test_legend_position_validation(self):
+		""" Tests for _legend_position_validation() pseudo-type """
+		assert putil.plot.panel._legend_position_validation(5)
+		assert putil.plot.panel._legend_position_validation('x')
+		for item in [
+				None, 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT',
+				'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',
+				'LOWER CENTER', 'UPPER CENTER', 'CENTER']:
+			assert not putil.plot.panel._legend_position_validation(item)

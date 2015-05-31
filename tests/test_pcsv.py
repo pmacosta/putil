@@ -58,10 +58,10 @@ class TestCsvFile(object):
 	def test_init_errors(self):
 		"""
 		Test that the right exceptions are raised when wrong parameter is
-		passed to argument file_name
+		passed to argument fname
 		"""
 		# pylint: disable=C0103
-		file_name = os.path.join(
+		fname = os.path.join(
 			os.path.abspath(os.sep),
 			'file',
 			'does',
@@ -75,27 +75,27 @@ class TestCsvFile(object):
 		]
 		putil.test.assert_exception(
 			putil.pcsv.CsvFile,
-			{'file_name':5},
+			{'fname':5},
 			RuntimeError,
-			'Argument `file_name` is not valid'
+			'Argument `fname` is not valid'
 		)
 		putil.test.assert_exception(
 			putil.pcsv.CsvFile,
-			{'file_name':file_name},
+			{'fname':fname},
 			IOError,
-			'File `{0}` could not be found'.format(file_name)
+			'File `{0}` could not be found'.format(fname)
 		)
 		for extype, exmsg, fobj in func_pointers:
 			with pytest.raises(extype) as excinfo:
-				with putil.misc.TmpFile(fobj) as file_name:
-					putil.pcsv.CsvFile(file_name=file_name)
-			ref = (exmsg.format(file_name) if '{0}' in exmsg else exmsg)
+				with putil.misc.TmpFile(fobj) as fname:
+					putil.pcsv.CsvFile(fname=fname)
+			ref = (exmsg.format(fname) if '{0}' in exmsg else exmsg)
 			assert excinfo.value.message == ref
 
 	def test_data_start(self):
 		""" Test if the right row is picked for the data start """
-		with putil.misc.TmpFile(write_data_start_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_data_start_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 		assert obj.data() == [[2, None, 30], [2, 5, 40], [3, 5, 50]]
 
 	def test_dfilter_errors(self):
@@ -104,50 +104,50 @@ class TestCsvFile(object):
 		the wrong type or some columns in the filter specification are not
 		present in CSV file header
 		"""
-		with putil.misc.TmpFile(write_file) as file_name:
+		with putil.misc.TmpFile(write_file) as fname:
 			putil.test.assert_exception(
 				putil.pcsv.CsvFile,
-				{'file_name':file_name, 'dfilter':'a'},
+				{'fname':fname, 'dfilter':'a'},
 				RuntimeError,
 				'Argument `dfilter` is not valid'
 			)
 			putil.test.assert_exception(
 				putil.pcsv.CsvFile,
-				{'file_name':file_name, 'dfilter':dict()},
+				{'fname':fname, 'dfilter':dict()},
 				ValueError,
 				'Argument `dfilter` is empty'
 			)
 			putil.test.assert_exception(
 				putil.pcsv.CsvFile,
-				{'file_name':file_name, 'dfilter':{5:10}},
+				{'fname':fname, 'dfilter':{5:10}},
 				RuntimeError,
 				'Argument `dfilter` is not valid'
 			)
 			putil.test.assert_exception(
 				putil.pcsv.CsvFile,
-				{'file_name':file_name, 'dfilter':{'aaa':5}},
+				{'fname':fname, 'dfilter':{'aaa':5}},
 				ValueError,
 				'Column aaa not found in header'
 			)
 			putil.test.assert_exception(
 				putil.pcsv.CsvFile,
-				{'file_name':file_name, 'dfilter':{'a':{'xx':2}}},
+				{'fname':fname, 'dfilter':{'a':{'xx':2}}},
 				RuntimeError,
 				'Argument `dfilter` is not valid'
 			)
 			putil.test.assert_exception(
 				putil.pcsv.CsvFile,
-				{'file_name':file_name, 'dfilter':{'a':[3, {'xx':2}]}},
+				{'fname':fname, 'dfilter':{'a':[3, {'xx':2}]}},
 				RuntimeError,
 				'Argument `dfilter` is not valid'
 			)
 
 	def test_dfilter_works(self):
 		""" Test if data filtering works """
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 			assert obj.dfilter is None
-			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Ctrl':2, 'Ref':5})
+			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Ctrl':2, 'Ref':5})
 		assert obj.data(filtered=True) == [[2, 5, 40]]
 		obj.dfilter = {'Ctrl':[2, 3], 'Ref':5}
 		assert obj.data(filtered=True) == [[2, 5, 40], [3, 5, 50]]
@@ -158,8 +158,8 @@ class TestCsvFile(object):
 		obj.dfilter = None
 		assert obj.dfilter is None
 		# Test filtering by strings
-		with putil.misc.TmpFile(write_str_cols_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Ctrl':'low'})
+		with putil.misc.TmpFile(write_str_cols_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Ctrl':'low'})
 			assert obj.data(filtered=True) == [['low', 30]]
 			obj.add_dfilter({'Ctrl':'nom'})
 			assert obj.data(filtered=True) == [['nom', 10], ['low', 30]]
@@ -168,8 +168,8 @@ class TestCsvFile(object):
 
 	def test_reset_dfilter_works(self):
 		""" Test if data filter reset works """
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Ctrl':2, 'Ref':5})
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Ctrl':2, 'Ref':5})
 		assert obj.data(filtered=True) == [[2, 5, 40]]
 		obj.reset_dfilter()
 		assert obj.dfilter is None
@@ -182,8 +182,8 @@ class TestCsvFile(object):
 		wrong type or some columns in the filter specification are not present
 		in CSV file header
 		"""
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 		putil.test.assert_exception(
 			obj.add_dfilter,
 			{'dfilter':'a'},
@@ -218,8 +218,8 @@ class TestCsvFile(object):
 	def test_add_dfilter_works(self):
 		""" Test if adding filters to existing data filtering works """
 		# No previous filter
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 			obj.add_dfilter(None)
 			ref = [[1, 3, 10], [1, 4, 20], [2, 4, 30], [2, 5, 40], [3, 5, 50]]
 			assert obj.data(filtered=True) == ref
@@ -230,7 +230,7 @@ class TestCsvFile(object):
 			obj.add_dfilter({'Result':20})
 			assert obj.data(filtered=True) == [[1, 4, 20]]
 			# Two single elements
-			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
+			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Result':20})
 			assert obj.data(filtered=True) == [[1, 4, 20]]
 			obj.add_dfilter({'Result':40})
 			assert obj.data(filtered=True) == [[1, 4, 20], [2, 5, 40]]
@@ -253,14 +253,14 @@ class TestCsvFile(object):
 
 	def test_header_works(self):
 		""" Test if header attribute works """
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 		assert obj.header == ['Ctrl', 'Ref', 'Result']
 
 	def test_data_errors(self):
 		""" Test if data() method raises the right exceptions """
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Result':20})
 		putil.test.assert_exception(
 			obj.data,
 			{'col':5},
@@ -292,8 +292,8 @@ class TestCsvFile(object):
 
 	def test_data_works(self):
 		""" Test if data() method behaves properly """
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Result':20})
 		ref = [[1, 3, 10], [1, 4, 20], [2, 4, 30], [2, 5, 40], [3, 5, 50]]
 		assert obj.data() == ref
 		assert obj.data(filtered=True) == [[1, 4, 20]]
@@ -308,67 +308,67 @@ class TestCsvFile(object):
 		Test if write() method raises the right exceptions when its arguments
 		are of the wrong type or are badly specified
 		"""
-		some_file_name = os.path.join(os.path.abspath(os.sep), 'some', 'file')
+		some_fname = os.path.join(os.path.abspath(os.sep), 'some', 'file')
 		root_file = os.path.join(os.path.abspath(os.sep), 'test.csv')
-		def mock_make_dir(file_name):
-			if file_name == some_file_name:
+		def mock_make_dir(fname):
+			if fname == some_fname:
 				raise OSError(
-					'File {0} could not be created'.format(some_file_name),
+					'File {0} could not be created'.format(some_fname),
 					'Permission denied'
 				)
-			elif file_name == root_file:
+			elif fname == root_file:
 				raise IOError(
-					'File {0} could not be created'.format(some_file_name),
+					'File {0} could not be created'.format(some_fname),
 					'Permission denied'
 				)
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':5},
+			{'fname':5},
 			RuntimeError,
-			'Argument `file_name` is not valid'
+			'Argument `fname` is not valid'
 		)
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':some_file_name, 'headers':'a'},
+			{'fname':some_fname, 'headers':'a'},
 			RuntimeError,
 			'Argument `headers` is not valid'
 		)
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':some_file_name, 'append':'a'},
+			{'fname':some_fname, 'append':'a'},
 			RuntimeError,
 			'Argument `append` is not valid'
 		)
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':some_file_name, 'col':5},
+			{'fname':some_fname, 'col':5},
 			RuntimeError,
 			'Argument `col` is not valid'
 		)
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':some_file_name, 'col':['a', 5]},
+			{'fname':some_fname, 'col':['a', 5]},
 			RuntimeError,
 			'Argument `col` is not valid'
 		)
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':some_file_name, 'filtered':5},
+			{'fname':some_fname, 'filtered':5},
 			RuntimeError,
 			'Argument `filtered` is not valid'
 		)
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':some_file_name, 'col':'NotACol'},
+			{'fname':some_fname, 'col':'NotACol'},
 			ValueError,
 			'Column NotACol not found in header'
 		)
 		obj.dfilter = {'Result':100}
 		putil.test.assert_exception(
 			obj.write,
-			{'file_name':some_file_name, 'filtered':True},
+			{'fname':some_fname, 'filtered':True},
 			ValueError,
 			'There is no data to save to file'
 		)
@@ -376,31 +376,31 @@ class TestCsvFile(object):
 		with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir):
 			putil.test.assert_exception(
 				obj.write,
-				{'file_name':some_file_name},
+				{'fname':some_fname},
 				OSError,
-				'File {0} could not be created: Permission denied'.format(some_file_name)
+				'File {0} could not be created: Permission denied'.format(some_fname)
 			)
 			putil.test.assert_exception(
 				obj.write,
-				{'file_name':root_file},
+				{'fname':root_file},
 				IOError,
 				'File {0} could not be created: Permission denied'.format(root_file)
 			)
 
 	def test_write_works(self):
 		""" Test if write() method behaves properly """
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 		with tempfile.NamedTemporaryFile() as fwobj:
-			file_name = fwobj.name
-			obj.write(file_name=file_name, col='Result', filtered=True, append=False)
-			with open(file_name, 'r') as frobj:
+			fname = fwobj.name
+			obj.write(fname=fname, col='Result', filtered=True, append=False)
+			with open(fname, 'r') as frobj:
 				written_data = frobj.read()
 		assert written_data == 'Result\r\n10\r\n20\r\n30\r\n40\r\n50\r\n'
 		with tempfile.NamedTemporaryFile() as fwobj:
-			file_name = fwobj.name
-			obj.write(file_name=file_name, append=False)
-			with open(file_name, 'r') as frobj:
+			fname = fwobj.name
+			obj.write(fname=fname, append=False)
+			with open(fname, 'r') as frobj:
 				written_data = frobj.read()
 		ref = (
 			'Ctrl,Ref,Result\r\n'
@@ -412,25 +412,25 @@ class TestCsvFile(object):
 		)
 		assert written_data == ref
 		with tempfile.NamedTemporaryFile() as fwobj:
-			file_name = fwobj.name
+			fname = fwobj.name
 			obj.write(
-				file_name=file_name,
+				fname=fname,
 				col=['Ctrl', 'Result'],
 				filtered=True,
 				headers=False,
 				append=False
 			)
-			with open(file_name, 'r') as frobj:
+			with open(fname, 'r') as frobj:
 				written_data = frobj.read()
 		assert written_data == '1,10\r\n1,20\r\n2,30\r\n2,40\r\n3,50\r\n'
 		with tempfile.NamedTemporaryFile() as fwobj:
-			file_name = fwobj.name
+			fname = fwobj.name
 			obj.reset_dfilter()
 			obj.dfilter = {'Result':[10, 30]}
-			obj.write(file_name=file_name, filtered=True, headers=True, append=False)
+			obj.write(fname=fname, filtered=True, headers=True, append=False)
 			obj.dfilter = {'Result':[20, 50]}
-			obj.write(file_name=file_name, filtered=True, headers=False, append=True)
-			with open(file_name, 'r') as frobj:
+			obj.write(fname=fname, filtered=True, headers=False, append=True)
+			with open(fname, 'r') as frobj:
 				written_data = frobj.read()
 		ref = (
 			'Ctrl,Ref,Result\r\n'
@@ -440,20 +440,20 @@ class TestCsvFile(object):
 		    '3,5,50\r\n'
 		)
 		assert written_data == ref
-		with putil.misc.TmpFile(write_data_start_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name)
+		with putil.misc.TmpFile(write_data_start_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname)
 			with tempfile.NamedTemporaryFile() as fwobj:
-				file_name = fwobj.name
-				obj.write(file_name=file_name)
-				with open(file_name, 'r') as frobj:
+				fname = fwobj.name
+				obj.write(fname=fname)
+				with open(fname, 'r') as frobj:
 					written_data = frobj.read()
 		ref = "Ctrl,Ref,Result\r\n2,'',30\r\n2,5,40\r\n3,5,50\r\n"
 		assert written_data == ref
 
 	def test_cannot_delete_attributes(self):
 		""" Test that del method raises an exception on all class attributes """
-		with putil.misc.TmpFile(write_file) as file_name:
-			obj = putil.pcsv.CsvFile(file_name=file_name, dfilter={'Result':20})
+		with putil.misc.TmpFile(write_file) as fname:
+			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Result':20})
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.header
 		assert excinfo.value.message == "can't delete attribute"
@@ -467,23 +467,23 @@ def test_write_function_errors():
 	Test if write() function raises the right exceptions when its arguments
 	are of the wrong type or are badly specified
 	"""
-	some_file_name = os.path.join(os.path.abspath(os.sep), 'some', 'file')
-	def mock_make_dir(file_name):
+	some_fname = os.path.join(os.path.abspath(os.sep), 'some', 'file')
+	def mock_make_dir(fname):
 		raise OSError(
-			'File {0} could not be created'.format(file_name),
+			'File {0} could not be created'.format(fname),
 			'Permission denied'
 		)
-	some_file_name = os.path.join(os.path.abspath(os.sep), 'some', 'file')
+	some_fname = os.path.join(os.path.abspath(os.sep), 'some', 'file')
 	putil.test.assert_exception(
 		putil.pcsv.write,
-		{'file_name':5, 'data':[['Col1', 'Col2'], [1, 2]]},
+		{'fname':5, 'data':[['Col1', 'Col2'], [1, 2]]},
 		RuntimeError,
-		'Argument `file_name` is not valid'
+		'Argument `fname` is not valid'
 	)
 	putil.test.assert_exception(
 		putil.pcsv.write,
 		{
-			'file_name':some_file_name,
+			'fname':some_fname,
 			'data':[['Col1', 'Col2'], [1, 2]],
 			'append':'a'
 		},
@@ -493,19 +493,19 @@ def test_write_function_errors():
 	with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir):
 		putil.test.assert_exception(
 			putil.pcsv.write,
-			{'file_name':some_file_name, 'data':[['Col1', 'Col2'], [1, 2]]},
+			{'fname':some_fname, 'data':[['Col1', 'Col2'], [1, 2]]},
 			OSError,
-			'File {0} could not be created: Permission denied'.format(some_file_name)
+			'File {0} could not be created: Permission denied'.format(some_fname)
 		)
 	putil.test.assert_exception(
 		putil.pcsv.write,
-		{'file_name':'test.csv', 'data':[True, False]},
+		{'fname':'test.csv', 'data':[True, False]},
 		RuntimeError,
 		'Argument `data` is not valid'
 	)
 	putil.test.assert_exception(
 		putil.pcsv.write,
-		{'file_name':'test.csv', 'data':[[]]},
+		{'fname':'test.csv', 'data':[[]]},
 		ValueError,
 		'There is no data to save to file'
 	)
@@ -514,23 +514,23 @@ def test_write_function_errors():
 def test_write_function_works():
 	""" Test if write() method behaves properly """
 	with tempfile.NamedTemporaryFile() as fwobj:
-		file_name = fwobj.name
+		fname = fwobj.name
 		putil.pcsv.write(
-			file_name,
+			fname,
 			[['Input', 'Output'], [1, 2], [3, 4]],
 			append=False
 		)
-		with open(file_name, 'r') as frobj:
+		with open(fname, 'r') as frobj:
 			written_data = frobj.read()
 	assert written_data == 'Input,Output\r\n1,2\r\n3,4\r\n'
 	with tempfile.NamedTemporaryFile() as fwobj:
-		file_name = fwobj.name
+		fname = fwobj.name
 		putil.pcsv.write(
-			file_name,
+			fname,
 			[['Input', 'Output'], [1, 2], [3, 4]],
 			append=False
 		)
-		putil.pcsv.write(file_name, [[5.0, 10]], append=True)
-		with open(file_name, 'r') as frobj:
+		putil.pcsv.write(fname, [[5.0, 10]], append=True)
+		with open(fname, 'r') as frobj:
 			written_data = frobj.read()
 	assert written_data == 'Input,Output\r\n1,2\r\n3,4\r\n5.0,10\r\n'
