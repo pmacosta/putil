@@ -10,7 +10,8 @@ language: python
 build_image: shippableimages/ubuntu1404_python
 
 python:
-  - 2.7
+  - "2.7"
+  - "3.4"
 
 # Install Matplotlib pre-requisites that do not get pip-installed
 before_install:
@@ -19,48 +20,69 @@ before_install:
   - if [ ! -f /usr/include/ft2build.h ]; then ln -s /usr/include/freetype2/ft2build.h /usr/include/.; fi
   - shippable_retry sudo apt-get install -y liblapack-dev
   - shippable_retry sudo apt-get install -y libpng12-dev
-  - shippable_retry sudo apt-get install -y python-dev
   - shippable_retry sudo apt-get install -y gfortran
+  - shippable_retry sudo apt-get install -y libatlas-dev
+  - shippable_retry sudo apt-get install -y libatlas-base-dev
+  - shippable_retry sudo apt-get install -y libatlas3gf-base
+  - shippable_retry sudo apt-get install -y python-dev
+  #- shippable_retry sudo apt-get install -y python3-dev
+  #- shippable_retry sudo apt-get install -y python3-pip
+  #- shippable_retry sudo apt-get install -y python3-pytest
 
 install:
-  - pip install -r requirements.txt --use-mirrors
+  - export PYTHON_SITE_PACKAGES=/root/ve/lib/python"${VIRTUALENV_PYTHON}"/site-packages
+  - echo "PYTHON_SITE_PACKAGES=${PYTHON_SITE_PACKAGES}"
+  #- export PIPCMD=pip2
+  #- if [ "${VIRTUALENV_PYTHON}" != "2.7" ]; then export PIPCMD=pip3; fi
+  - export PIPCMD=pip
+  - echo "PIPCMD=${PIPCMD}"
+  #- export PYTHONPATH=${PYTHONPATH}:${PYTHON_SITE_PACKAGES}:${PYTHON_SITE_PACKAGES}/putil:${PYTHON_SITE_PACKAGES}/putil/plot:${PYTHON_SITE_PACKAGES}/tests:${PYTHON_SITE_PACKAGES}/tests/support:${PYTHON_SITE_PACKAGES}/docs:${PYTHON_SITE_PACKAGES}/docs/support
+  #- echo "PYTHONPATH=${PYTHONPATH}"
+  - $PIPCMD install --verbose --install-option="--prefix=/root/ve" --upgrade --force-reinstall -r requirements.txt
+  #- export PYTESTCMD="py.test-${VIRTUALENV_PYTHON}"
+  #- if [ "${VIRTUALENV_PYTHON}" != "2.7" ]; then export PYTESTCMD=py.test-${VIRTUALENV_PYTHON}; fi
+  - export PYTESTCMD=py.test
+  - echo "PYTESTCMD=${PYTESTCMD}"
+  #- find / -name 'py.test*' -print
+  - INTERP=py"${VIRTUALENV_PYTHON//./}"
+  - echo "INTERP=${INTERP}"
 
 before_script:
   # Make folders for the reports
   - mkdir -p shippable/testresults
   - mkdir -p shippable/codecoverage
   # Report version numbers for all dependencies
-  - pip freeze
+  - $PIPCMD freeze
   - dpkg --status libfreetype6-dev
   - dpkg --status liblapack-dev
   - dpkg --status libpng12-dev
   - dpkg --status python-dev
   - dpkg --status gfortran
 
-#  - PYTHON_SITE_PACKAGES=/root/ve/lib/python${VIRTUALENV_PYTHON}/site-packages/
 script:
   # Install package
-  - python setup.py sdist
+  - $SHIPPABLE_PYTHON setup.py sdist
   - PKG_VERSION=$(grep __version__ $SHIPPABLE_REPO_DIR/putil/__init__.py | sed -e "s/.*__version__ = '\(.*\)'/\1/g")
-  - pip install dist/putil-${PKG_VERSION}.tar.gz
+  - $PIPCMD install --verbose --install-option="--prefix=/root/ve" --upgrade --no-deps --force-reinstall dist/putil-${PKG_VERSION}.tar.gz
+  #- find / -name 'pcontracts.py' -print
+  #- ls ${PYTHON_SITE_PACKAGES}/putil
+  #- ls ${PYTHON_SITE_PACKAGES}/tests
+  #- ls ${PYTHON_SITE_PACKAGES}/docs
   # Get images off build:
   # - mkdir -p shippable/images
-  # - python ${SHIPPABLE_REPO_DIR}/docs/support/plot_example_1.py ${SHIPPABLE_REPO_DIR}/shippable/images/test_image.png
+  # - $SHIPPABLE_PYTHON ${SHIPPABLE_REPO_DIR}/docs/support/plot_example_1.py ${SHIPPABLE_REPO_DIR}/shippable/images/test_image.png
   # - ./sbin/gen_ref_images.py shippable/images
   # Find where build installs Python packages
-  - PYTHON_SITE_PACKAGES=$($SHIPPABLE_REPO_DIR/sbin/get-site-packages-dir.py ${VIRTUALENV_PYTHON})
-  - echo "PYTHON_SITE_PACKAGES=${PYTHON_SITE_PACKAGES}"
-  - ls ${PYTHON_SITE_PACKAGES}/putil/
   # Write coverage configuration file
-  - ./sbin/coveragerc-manager.py 'shippable' 1 ${PYTHON_SITE_PACKAGES}
-  - cat ${SHIPPABLE_REPO_DIR}/.coveragerc_shippable
+  - $SHIPPABLE_PYTHON ./sbin/coveragerc-manager.py 'shippable' 1 ${INTERP} ${PYTHON_SITE_PACKAGES}
+  - cat ${SHIPPABLE_REPO_DIR}/.coveragerc_shippable_${INTERP}
   - rm -rf tox.ini
   # Run the tests (change to tests sub-directory to mimic Tox conditions)
   - cd ${PYTHON_SITE_PACKAGES}/tests
-  - py.test -s -vv --junitxml=${SHIPPABLE_REPO_DIR}/shippable/testresults/pytest.xml
-  - py.test --doctest-modules ${PYTHON_SITE_PACKAGES}/putil
-  - py.test --doctest-glob='*.rst' ${PYTHON_SITE_PACKAGES}/docs
-  - py.test -x --cov-config ${SHIPPABLE_REPO_DIR}/.coveragerc_shippable --cov ${PYTHON_SITE_PACKAGES}/putil --cov-report xml
+  - $PYTESTCMD -s -vv --junitxml=${SHIPPABLE_REPO_DIR}/shippable/testresults/pytest.xml
+  - $PYTESTCMD --doctest-modules ${PYTHON_SITE_PACKAGES}/putil
+  - $PYTESTCMD --doctest-glob='*.rst' ${PYTHON_SITE_PACKAGES}/docs
+  - $PYTESTCMD -x --cov-config ${SHIPPABLE_REPO_DIR}/.coveragerc_shippable_${INTERP} --cov ${PYTHON_SITE_PACKAGES}/putil --cov-report xml
 
 notifications:
   on_success: change

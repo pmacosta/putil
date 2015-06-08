@@ -1,15 +1,24 @@
 ﻿# pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0912,R0914
+# pylint: disable=C0111,E0611,F0401,R0912,R0914
 
+from __future__ import print_function
 import contracts
 import decorator
-import funcsigs
+try:	# pragma: no cover
+	from funcsigs import signature, Parameter
+except ImportError:	# pragma: no cover
+	from inspect import signature, Parameter
 import inspect
 import re
+import sys
 
 import putil.exh
+if sys.version_info.major == 2:	# pragma: no cover
+	from putil.compat2 import _raise_exception
+else:	# pragma: no cover
+	from putil.compat3 import _raise_exception
 
 
 ###
@@ -53,14 +62,14 @@ def _create_argument_value_pairs(func, *args, **kwargs):
 	"""
 	# Capture parameters that have been explicitly specified in function call
 	try:
-		arg_dict = funcsigs.signature(func).bind_partial(*args, **kwargs).arguments
+		arg_dict = signature(func).bind_partial(*args, **kwargs).arguments
 	except TypeError:
 		return dict()
 	# Capture parameters that have not been explicitly specified
 	# but have default values
-	arguments = funcsigs.signature(func).parameters
+	arguments = signature(func).parameters
 	for arg_name in arguments:
-		if ((arguments[arg_name].default != funcsigs.Parameter.empty) and
+		if ((arguments[arg_name].default != Parameter.empty) and
 		   (arguments[arg_name].name not in arg_dict)):
 			arg_dict[arguments[arg_name].name] = arguments[arg_name].default
 	return arg_dict
@@ -226,7 +235,7 @@ def get_exdesc():
 		)
 	# Return function attribute created by new contract decorator
 	exdesc = getattr(fobj, 'exdesc')
-	return exdesc if len(exdesc) > 1 else exdesc[exdesc.keys()[0]]
+	return exdesc if len(exdesc) > 1 else exdesc[list(exdesc.keys())[0]]
 
 
 def _get_num_contracts(contracts_list, param_name):
@@ -261,11 +270,11 @@ def _parse_new_contract_args(*args, **kwargs):
 	if (len(args) > 1) or ((len(args) == 1) and (len(kwargs) > 0)):
 		raise TypeError('Illegal custom contract exception definition')
 	elif len(args) == 1:
-		return [dict([('name', 'default')]+_format_arg(args[0]).items())]
+		return [dict([('name', 'default')]+list(_format_arg(args[0]).items()))]
 	# Process kwargs
 	return [
-		dict([('name', name)]+_format_arg(kwargs[name]).items())
-		for name in sorted(kwargs.keys())
+		dict([('name', name)]+list(_format_arg(kwargs[name]).items()))
+		for name in sorted(list(kwargs.keys()))
 	]
 
 
@@ -288,7 +297,7 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 	if (isinstance(contract_exceptions, list) and
 	   any([not isinstance(key, str)
 			for item in contract_exceptions
-			for key in item.iterkeys()])):
+			for key in item.keys()])):
 		raise TypeError('Contract exception definition is of the wrong type')
 	# Validate individual exception definitions
 	if (isinstance(contract_exceptions, list) and
@@ -377,7 +386,7 @@ def contract(**contract_args):
 			return func(*args, **kwargs)
 		exhobj = putil.exh.get_exh_obj()
 		if exhobj is not None:
-			for param_name, param_contract in contract_args.iteritems():
+			for param_name, param_contract in contract_args.items():
 				# param_name=param_value, as in num='str|float'
 				contracts_dicts = list()
 				# Create dictionary of custom contracts
@@ -440,7 +449,7 @@ def contract(**contract_args):
 					param_name if exdict['field'] == 'argument_name' else
 					'{0}'.format(param_dict[param_name])
 				)
-				raise exception_type(exception_message)
+				_raise_exception(exception_type(exception_message))
 	return wrapper
 
 
@@ -486,7 +495,7 @@ def new_contract(*args, **kwargs):
 
 	.. =[=cog
 	.. import docs.support.incfile
-	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '8-16')
+	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '9-17')
 	.. =]=
 	.. code-block:: python
 
@@ -509,7 +518,7 @@ def new_contract(*args, **kwargs):
 
 	.. =[=cog
 	.. import docs.support.incfile
-	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '18-29')
+	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '19-30')
 	.. =]=
 	.. code-block:: python
 
@@ -533,7 +542,7 @@ def new_contract(*args, **kwargs):
 
 	.. =[=cog
 	.. import docs.support.incfile
-	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '31-39')
+	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '32-40')
 	.. =]=
 	.. code-block:: python
 
@@ -555,11 +564,11 @@ def new_contract(*args, **kwargs):
 
 	.. =[=cog
 	.. import docs.support.incfile
-	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '41-57')
+	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '42-58')
 	.. =]=
 	.. code-block:: python
 
-	    @putil.pcontracts.new_contract((IOError, 'File could not be opened'))
+	    @putil.pcontracts.new_contract((OSError, 'File could not be opened'))
 	    def custom_contract7(arg):
 	        if not arg:
 	            raise ValueError(putil.pcontracts.get_exdesc())
@@ -584,7 +593,7 @@ def new_contract(*args, **kwargs):
 
 	.. =[=cog
 	.. import docs.support.incfile
-	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '59-64')
+	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '60-65')
 	.. =]=
 	.. code-block:: python
 
@@ -614,7 +623,7 @@ def new_contract(*args, **kwargs):
 
 	.. =[=cog
 	.. import docs.support.incfile
-	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '66-76')
+	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '67-77')
 	.. =]=
 	.. code-block:: python
 
@@ -634,10 +643,11 @@ def new_contract(*args, **kwargs):
 
 	.. code-block:: python
 
+		>>> from __future__ import print_function
 		>>> from docs.support.pcontracts_example_3 import print_city_name
-		>>> print print_city_name('Omaha')
+		>>> print(print_city_name('Omaha'))
 		City: Omaha
-		>>> print print_city_name(5)	#doctest: +ELLIPSIS
+		>>> print(print_city_name(5))	#doctest: +ELLIPSIS
 		Traceback (most recent call last):
 		    ...
 		TypeError: Argument `city_name` has to be a string
@@ -646,12 +656,12 @@ def new_contract(*args, **kwargs):
 
 	.. =[=cog
 	.. import docs.support.incfile
-	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '78-')
+	.. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '79-')
 	.. =]=
 	.. code-block:: python
 
 	    @putil.pcontracts.new_contract((
-	        IOError, 'File `*[fname]*` not found'
+	        OSError, 'File `*[fname]*` not found'
 	    ))
 	    def custom_contract12(fname):
 	        if not os.path.exists(fname):
@@ -659,19 +669,20 @@ def new_contract(*args, **kwargs):
 
 	    @putil.pcontracts.contract(fname='custom_contract12')
 	    def print_fname(fname):
-	        print 'File name to find: {0}'.format(fname)
+	        print('File name to find: {0}'.format(fname))
 
 	.. =[=end=]=
 
 	.. code-block:: python
 
+		>>> from __future__ import print_function
 		>>> import os
 		>>> from docs.support.pcontracts_example_3 import print_fname
 		>>> fname = os.path.join(os.sep, 'dev', 'null', '_not_a_file_')
-		>>> print print_fname(fname)	#doctest: +ELLIPSIS
+		>>> print(print_fname(fname))	#doctest: +ELLIPSIS
 		Traceback (most recent call last):
 		    ...
-		IOError: File `/dev/null/_not_a_file_` not found
+		OSError: File `/dev/null/_not_a_file_` not found
 
 	"""
 	def wrapper(func):

@@ -1,21 +1,37 @@
 ﻿# test.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111
+# pylint: disable=C0111,E0611,F0401
 
 import pytest
 import re
+import sys
+
+if sys.version_info.major == 2:	# pragma: no cover
+	from putil.compat2 import _ex_type_str, _get_ex_msg
+else:	# pragma: no cover
+	from putil.compat3 import _ex_type_str, _get_ex_msg
 
 
 ###
 # Functions
 ###
-def exception_type_str(extype):
+def comp_list_of_dicts(list1, list2):
+	""" Compare list of dictionaries """
+	return all([item in list1 for item in list2])
+
+
+def get_exmsg(obj):	# pragma: no cover
+	""" Return exception message """
+	return _get_ex_msg(obj)
+
+
+def exception_type_str(exobj):
 	"""
 	Returns an exception type string
 
-	:param	extype: Exception
-	:type	extype: type
+	:param	exobj: Exception
+	:type	exobj: type (Python 2) or class (Python 3)
 	:rtype: string
 
 	For example:
@@ -24,7 +40,7 @@ def exception_type_str(extype):
 		>>> exception_type_str(RuntimeError)
 		'RuntimeError'
 	"""
-	return str(extype).split('.')[-1][:-2]
+	return _ex_type_str(exobj)
 
 
 def assert_exception(obj, args, extype, exmsg):
@@ -66,18 +82,20 @@ def assert_exception(obj, args, extype, exmsg):
 		with pytest.raises(extype) as excinfo:
 			obj(**args)
 	except Exception as eobj:
-		if eobj.message == 'DID NOT RAISE':
+		actmsg = get_exmsg(eobj)
+		if actmsg == 'DID NOT RAISE':
 			raise AssertionError
 		eobj_extype = repr(eobj)[:repr(eobj).find('(')]
 		assert '{0} ({1})'.format(
 			eobj_extype,
-			eobj.message
+			actmsg
 		) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
+	actmsg = get_exmsg(excinfo)
 	if ((exception_type_str(excinfo.type) == exception_type_str(extype)) and
-	   ((excinfo.value.message == exmsg) or regexp.match(excinfo.value.message))):
+	   ((actmsg == exmsg) or regexp.match(actmsg))):
 		assert True
 	else:
 		assert '{0} ({1})'.format(
 			exception_type_str(excinfo.type),
-			excinfo.value.message
+			actmsg
 		) == '{0} ({1})'.format(exception_type_str(extype), exmsg)

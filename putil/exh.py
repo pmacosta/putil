@@ -1,15 +1,20 @@
 ﻿# exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E1101,R0201,R0914,W0212
+# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0201,R0914,W0122,W0212,W0613
 
 import copy
 import imp
 import inspect
 import os
 import sys
-import __builtin__
-from itertools import izip
+if sys.version_info.major == 2:	# pragma: no cover
+	import __builtin__
+	from putil.compat2 import _ex_type_str, _get_ex_msg, _get_func_code, _rwtb
+else:	# pragma: no cover
+	import builtins as __builtin__
+	from putil.compat3 import _ex_type_str, _get_ex_msg, _get_func_code, _rwtb
+
 
 import putil.misc
 import putil.pinspect
@@ -27,11 +32,6 @@ _INVALID_MODULES_LIST = [
 ###
 # Functions
 ###
-def _ex_type_str(extype):
-	""" Returns a string corresponding to the exception type """
-	return str(extype)[str(extype).rfind('.')+1:str(extype).rfind("'")]
-
-
 def _get_class_obj(frame_obj):
 	""" Extract class object from a frame object """
 	scontext = frame_obj.f_locals.get('self', None)
@@ -51,9 +51,9 @@ def _get_code_id_from_obj(obj):
 	try:
 		return (inspect.getfile(obj).replace('.pyc', 'py'),
 			   inspect.getsourcelines(obj)[1])
-	except (TypeError, IOError):
+	except (TypeError, OSError):
 		# TypeError: getfile, object is a built-in module, class or function
-		# IOError: getsourcelines, code cannot be retrieved
+		# OSError: getsourcelines, code cannot be retrieved
 		return None
 
 
@@ -157,7 +157,7 @@ class ExHandle(object):
 
 	 * ValueError (Source for module *[module_name]* could not be found)
 	"""
-	# pylint: disable=R0902
+	# pylint: disable=R0902,W0703
 	def __init__(self, full_cname=False, exclude=None, _copy=False):
 		if not isinstance(full_cname, bool):
 			raise RuntimeError('Argument `full_cname` is not valid')
@@ -322,25 +322,50 @@ class ExHandle(object):
 		self._callables_obj += copy.copy(other._callables_obj)
 		return self
 
-	def __nonzero__(self):
+	def __nonzero__(self):	# pragma: no cover
 		"""
 		Returns :code:`False` if exception handler does not have any exception
 		defined, :code:`True` otherwise. For example:
 
+			>>> from __future__ import print_function
 			>>> import putil.exh
 			>>> obj = putil.exh.ExHandle()
 			>>> if obj:
-			...     print 'Boolean test returned: True'
+			...     print('Boolean test returned: True')
 			... else:
-			...     print 'Boolean test returned: False'
+			...     print('Boolean test returned: False')
 			Boolean test returned: False
 			>>> def my_func(exhobj):
 			...     exhobj.add_exception('test', RuntimeError, 'Message')
 			>>> my_func(obj)
 			>>> if obj:
-			...     print 'Boolean test returned: True'
+			...     print('Boolean test returned: True')
 			... else:
-			...     print 'Boolean test returned: False'
+			...     print('Boolean test returned: False')
+			Boolean test returned: True
+		"""
+		return bool(self._ex_dict)
+
+	def __bool__(self):	# pragma: no cover
+		"""
+		Returns :code:`False` if exception handler does not have any exception
+		defined, :code:`True` otherwise. For example:
+
+			>>> from __future__ import print_function
+			>>> import putil.exh
+			>>> obj = putil.exh.ExHandle()
+			>>> if obj:
+			...     print('Boolean test returned: True')
+			... else:
+			...     print('Boolean test returned: False')
+			Boolean test returned: False
+			>>> def my_func(exhobj):
+			...     exhobj.add_exception('test', RuntimeError, 'Message')
+			>>> my_func(obj)
+			>>> if obj:
+			...     print('Boolean test returned: True')
+			... else:
+			...     print('Boolean test returned: False')
 			Boolean test returned: True
 		"""
 		return bool(self._ex_dict)
@@ -350,10 +375,11 @@ class ExHandle(object):
 		Returns a string with a detailed description of the object's contents.
 		For example:
 
+			>>> from __future__ import print_function
 			>>> import docs.support.exh_example
 			>>> docs.support.exh_example.my_func('Tom')
 			My name is Tom
-			>>> print str(docs.support.exh_example.EXHOBJ) #doctest: +ELLIPSIS
+			>>> print(str(docs.support.exh_example.EXHOBJ)) #doctest: +ELLIPSIS
 			Name    : .../illegal_name
 			Function: None
 			Type    : TypeError
@@ -454,7 +480,7 @@ class ExHandle(object):
 				self._get_callable_full_name(fob, fin, uobj)
 				for fob, fin, uobj, _ in stack
 			]
-			for num, (nme, prv_nme, in_deco) in enumerate(izip(ret[1:], ret, idv[1:])):
+			for num, (nme, prv_nme, in_deco) in enumerate(zip(ret[1:], ret, idv[1:])):
 				if in_deco and (nme == prv_nme):
 					ret.pop(num)
 			ret = self._callables_separator.join(ret)
@@ -558,7 +584,7 @@ class ExHandle(object):
 		for action in prop_dict.keys():
 			action_obj = getattr(prop_obj, action)
 			if action_obj:
-				prop_dict[action] = id(action_obj.func_code)
+				prop_dict[action] = id(_get_func_code(action_obj))
 		return prop_dict
 
 	def _property_search(self, fobj):
@@ -598,10 +624,10 @@ class ExHandle(object):
 		""" Raise exception by name """
 		_, _, tbobj = sys.exc_info()
 		if edata:
-			emsg = eobj['type'](self._format_msg(eobj['msg'], edata))
-			raise eobj['type'], emsg, tbobj
+			emsg = self._format_msg(eobj['msg'], edata)
+			_rwtb(eobj['type'], emsg, tbobj)
 		else:
-			raise eobj['type'], eobj['type'](eobj['msg']), tbobj
+			_rwtb(eobj['type'], eobj['msg'], tbobj)
 
 	def _validate_edata(self, edata):
 		""" Validate edata argument of raise_exception_if method """
@@ -648,10 +674,16 @@ class ExHandle(object):
 		# pylint: disable=R0913
 		if not isinstance(exname, str):
 			raise RuntimeError('Argument `exname` is not valid')
-		if not str(extype).startswith("<type 'exceptions."):
-			raise RuntimeError('Argument `extype` is not valid')
 		if not isinstance(exmsg, str):
 			raise RuntimeError('Argument `exmsg` is not valid')
+		msg = ''
+		try:
+			raise extype(exmsg)
+		except Exception as eobj:
+			msg = _get_ex_msg(eobj)
+		#if not str(extype).startswith("<type 'exceptions."):
+		if msg != exmsg:
+			raise RuntimeError('Argument `extype` is not valid')
 		ex_data = self._get_ex_data(exname)
 		entry = self._ex_dict.get(
 			ex_data['ex_name'],

@@ -1,24 +1,30 @@
 # csv_source.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,R0201,R0904,R0912,R0914,W0212,W0232,W0613
+# pylint: disable=C0103,C0111,E0611,F0401
+# pylint: disable=R0201,R0904,R0912,R0914,W0212,W0232,W0613
 
 import numpy
 import pytest
+import sys
 
 import putil.test
+if sys.version_info.major == 2:
+	from putil.compat2 import _write
+else:
+	from putil.compat3 import _write
 
 
 ###
 # Tests for CsvSource
 ###
 def write_csv_file(file_handle):
-	file_handle.write('Col1,Col2,Col3,Col4,Col5,Col6,Col7,Col8\n')
-	file_handle.write('0,1,2,3,,5,1,7\n')
-	file_handle.write('0,2,4,5,,4,2,6\n')
-	file_handle.write('0,3,1,8,,3,3,5\n')
-	file_handle.write('1,1,5,7,8,0,4,4\n')
-	file_handle.write('1,2,3,7,9,7,5,3\n')
+	_write(file_handle, 'Col1,Col2,Col3,Col4,Col5,Col6,Col7,Col8\n')
+	_write(file_handle, '0,1,2,3,,5,1,7\n')
+	_write(file_handle, '0,2,4,5,,4,2,6\n')
+	_write(file_handle, '0,3,1,8,,3,3,5\n')
+	_write(file_handle, '1,1,5,7,8,0,4,4\n')
+	_write(file_handle, '1,2,3,7,9,7,5,3\n')
 
 
 class TestCsvSource(object):
@@ -74,7 +80,10 @@ class TestCsvSource(object):
 			for param_value in ['a', False]:
 				with pytest.raises(RuntimeError) as excinfo:
 					obj.indep_min = param_value
-				assert excinfo.value.message == 'Argument `indep_min` is not valid'
+				assert (
+					putil.test.get_exmsg(excinfo) ==
+					'Argument `indep_min` is not valid'
+				)
 			# Valid values, these should not raise an exception
 			for param_value in [1, 2.0]:
 				obj.indep_min = param_value
@@ -129,7 +138,10 @@ class TestCsvSource(object):
 			for param_value in ['a', False]:
 				with pytest.raises(RuntimeError) as excinfo:
 					obj.indep_max = param_value
-				assert excinfo.value.message == 'Argument `indep_max` is not valid'
+				assert (
+					putil.test.get_exmsg(excinfo) ==
+					'Argument `indep_max` is not valid'
+				)
 			# Valid values, these should not raise an exception
 			for param_value in [1, 2.0]:
 				obj.indep_max = param_value
@@ -150,8 +162,11 @@ class TestCsvSource(object):
 			)
 			with pytest.raises(ValueError) as excinfo:
 				obj.indep_max = 0
-			assert excinfo.value.message == ('Argument `indep_min` is greater '
-											 'than argument `indep_max`')
+			assert (
+				putil.test.get_exmsg(excinfo) ==
+				('Argument `indep_min` is greater '
+				 'than argument `indep_max`')
+			)
 			# Assign indep_max first
 			obj = putil.plot.CsvSource(
 				fname=fname,
@@ -161,8 +176,11 @@ class TestCsvSource(object):
 			)
 			with pytest.raises(ValueError) as excinfo:
 				obj.indep_min = 50
-			assert excinfo.value.message == ('Argument `indep_min` is greater '
-											 'than argument `indep_max`')
+			assert (
+				putil.test.get_exmsg(excinfo) ==
+				('Argument `indep_min` is greater '
+				 'than argument `indep_max`')
+			)
 
 	def test_fname_wrong_type(self):
 		""" Test if object behaves correctly when fname is not valid """
@@ -186,7 +204,7 @@ class TestCsvSource(object):
 		putil.test.assert_exception(
 			putil.plot.CsvSource,
 			{'fname':fname, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
-			IOError,
+			OSError,
 			'File `{0}` could not be found'.format(fname)
 		)
 
@@ -590,13 +608,16 @@ class TestCsvSource(object):
 				'Processed independent and dependent variables are of '
 				'different length'
 			)
-			msg = 'Processing function fproc13 raised an exception when ' \
-				  'called with the following arguments:\n'
-			msg += 'indep_var: [ 1, 2, 3 ]\n'
-			msg += 'dep_var: [ 1, 2, 3 ]\n'
-			msg += 'fproc_eargs: \n'
-			msg += '   par1: 13\n'
-			msg += 'Exception error: Test exception message #1'
+			msg = (
+				'Processing function fproc13 raised an exception when '
+					'called with the following arguments:\n'
+				'indep_var: [ 1.0, 2.0, 3.0 ]\n'
+				'dep_var: [ 1.0, 2.0, 3.0 ]\n'
+				'fproc_eargs: \n'
+				'   par1: 13\n'
+				'Exception error: Test exception message #1'
+			)
+
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
@@ -610,12 +631,14 @@ class TestCsvSource(object):
 				RuntimeError,
 				msg
 			)
-			msg = 'Processing function fproc14 raised an exception when ' \
-				   'called with the following arguments:\n'
-			msg += 'indep_var: [ 1, 2, 3 ]\n'
-			msg += 'dep_var: [ 1, 2, 3 ]\n'
-			msg += 'fproc_eargs: None\n'
-			msg += 'Exception error: Test exception message #2'
+			msg = (
+				'Processing function fproc14 raised an exception when '
+					'called with the following arguments:\n'
+				'indep_var: [ 1.0, 2.0, 3.0 ]\n'
+				'dep_var: [ 1.0, 2.0, 3.0 ]\n'
+				'fproc_eargs: None\n'
+				'Exception error: Test exception message #2'
+			)
 			putil.test.assert_exception(
 				putil.plot.CsvSource,
 				{
@@ -774,8 +797,8 @@ class TestCsvSource(object):
 				'Processing function extra arguments: None\n'
 				'Independent variable minimum: -inf\n'
 				'Independent variable maximum: +inf\n'
-				'Independent variable: [ 1, 2, 3, 4, 5 ]\n'
-				'Dependent variable: [ 2, 4, 1, 5, 3 ]'.format(fname)
+				'Independent variable: [ 1.0, 2.0, 3.0, 4.0, 5.0 ]\n'
+				'Dependent variable: [ 2.0, 4.0, 1.0, 5.0, 3.0 ]'.format(fname)
 			)
 			assert obj == ref
 			# dfilter
@@ -793,8 +816,8 @@ class TestCsvSource(object):
 				'Processing function extra arguments: None\n'
 				'Independent variable minimum: -inf\n'
 				'Independent variable maximum: +inf\n'
-				'Independent variable: [ 1, 2, 3 ]\n'
-				'Dependent variable: [ 2, 4, 1 ]'.format(fname)
+				'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+				'Dependent variable: [ 2.0, 4.0, 1.0 ]'.format(fname)
 			)
 			assert obj == ref
 			# fproc
@@ -818,7 +841,7 @@ class TestCsvSource(object):
 				'Independent variable minimum: 0.002\n'
 				'Independent variable maximum: 200\n'
 				'Independent variable: [ 0.002, 0.003 ]\n'
-				'Dependent variable: [ 5, 2 ]'.format(fname)
+				'Dependent variable: [ 5.0, 2.0 ]'.format(fname)
 			)
 			assert obj == ref
 			# fproc_eargs
@@ -844,8 +867,8 @@ class TestCsvSource(object):
 				'   par2: 4\n'
 				'Independent variable minimum: -2\n'
 				'Independent variable maximum: 200\n'
-				'Independent variable: [ 4, 5, 6 ]\n'
-				'Dependent variable: [ -2, 0, -3 ]'.format(fname)
+				'Independent variable: [ 4.0, 5.0, 6.0 ]\n'
+				'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(fname)
 			)
 			assert obj == ref
 			# indep_min set
@@ -869,8 +892,8 @@ class TestCsvSource(object):
 				'   par2: 4\n'
 				'Independent variable minimum: -2\n'
 				'Independent variable maximum: +inf\n'
-				'Independent variable: [ 4, 5, 6 ]\n'
-				'Dependent variable: [ -2, 0, -3 ]'.format(fname)
+				'Independent variable: [ 4.0, 5.0, 6.0 ]\n'
+				'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(fname)
 			)
 			assert obj == ref
 			# indep_max set
@@ -895,8 +918,8 @@ class TestCsvSource(object):
 				'   par2: 4\n'
 				'Independent variable minimum: -2\n'
 				'Independent variable maximum: 200\n'
-				'Independent variable: [ 4, 5, 6 ]\n'
-				'Dependent variable: [ -2, 0, -3 ]'.format(fname)
+				'Independent variable: [ 4.0, 5.0, 6.0 ]\n'
+				'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(fname)
 			)
 			assert obj == ref
 
@@ -927,31 +950,31 @@ class TestCsvSource(object):
 			)
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.fname
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.dfilter
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_col_label
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.dep_col_label
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.fproc
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.fproc_eargs
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_min
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_max
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.indep_var
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 			with pytest.raises(AttributeError) as excinfo:
 				del obj.dep_var
-			assert excinfo.value.message == "can't delete attribute"
+			assert putil.test.get_exmsg(excinfo) == "can't delete attribute"

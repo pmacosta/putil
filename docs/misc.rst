@@ -66,6 +66,4 @@ String
 .. autofunction:: putil.misc.elapsed_time_string
 .. autofunction:: putil.misc.pcolor
 .. autofunction:: putil.misc.quote_str
-.. autofunction:: putil.misc.strtype
-.. autofunction:: putil.misc.strtype_item
 .. autofunction:: putil.misc.strframe

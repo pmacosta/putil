@@ -1,12 +1,16 @@
 ﻿# conftest.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E1101,W0212
+# pylint: disable=C0111,E1101,E1103,F0401,W0212
 
 import os
 import pickle
 import pytest
-import __builtin__
+import sys
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 
 import putil.exh
 
@@ -68,8 +72,9 @@ def exhobj(request):
 			)
 	request.addfinalizer(fin)
 	if xdist_run: # sub-process
+		modname = '__builtin__' if sys.version_info.major == 2 else 'builtins'
 		if not hasattr(request.module, '__builtin__'):
-			setattr(request.module, '__builtin__', __import__('__builtin__'))
+			setattr(request.module, '__builtin__', __import__(modname))
 		exclude = (pickle.loads(request.config.slaveinput['exclude'])
 				  if 'exclude' in request.config.slaveinput else
 				  None)

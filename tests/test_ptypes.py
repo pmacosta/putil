@@ -4,6 +4,7 @@
 # pylint: disable=C0103,C0111
 
 import numpy
+import sys
 
 import putil.ptypes
 import putil.test
@@ -111,6 +112,7 @@ def test_real_num_contract():
 	putil.ptypes.real_num(1)
 	putil.ptypes.real_num(2.0)
 
+
 def test_positive_real_num_contract():
 	""" Tests for PositiveRealNumber pseudo-type """
 	putil.test.assert_exception(
@@ -150,6 +152,7 @@ def test_positive_real_num_contract():
 	)
 	putil.ptypes.positive_real_num(1)
 	putil.ptypes.positive_real_num(2.0)
+
 
 def test_offset_range_contract():
 	""" Tests for PositiveRealNumber pseudo-type """
@@ -192,6 +195,7 @@ def test_offset_range_contract():
 	putil.ptypes.offset_range(0.5)
 	putil.ptypes.offset_range(1)
 
+
 def test_function_contract():
 	""" Tests for Function pseudo-type """
 	def func1():
@@ -205,6 +209,7 @@ def test_function_contract():
 	)
 	putil.ptypes.function(func1)
 	putil.ptypes.function(None)
+
 
 def test_real_numpy_vector_contract():
 	""" Tests for RealNumpyVector pseudo-type """
@@ -246,6 +251,7 @@ def test_real_numpy_vector_contract():
 	putil.ptypes.real_numpy_vector(numpy.array([1, 2, 3]))
 	putil.ptypes.real_numpy_vector(numpy.array([10.0, 8.0, 2.0]))
 	putil.ptypes.real_numpy_vector(numpy.array([10.0]))
+
 
 def test_increasing_real_numpy_vector_contract():
 	""" Tests for IncreasingRealNumpyVector pseudo-type """
@@ -302,6 +308,7 @@ def test_increasing_real_numpy_vector_contract():
 	putil.ptypes.increasing_real_numpy_vector(numpy.array([10.0, 12.1, 12.5]))
 	putil.ptypes.increasing_real_numpy_vector(numpy.array([10.0]))
 
+
 def test_interpolation_option_contract():
 	""" Tests for InterpolationOption pseudo-type """
 	putil.test.assert_exception(
@@ -324,6 +331,7 @@ def test_interpolation_option_contract():
 		putil.ptypes.interpolation_option(item)
 		putil.ptypes.interpolation_option(item.lower())
 
+
 def test_line_style_option_contract():
 	""" Tests for LineStyleOption pseudo-type """
 	putil.test.assert_exception(
@@ -344,6 +352,7 @@ def test_line_style_option_contract():
 	putil.ptypes.line_style_option(None)
 	for item in ['-', '--', '-.', ':']:
 		putil.ptypes.line_style_option(item)
+
 
 def test_color_space_option_contract():
 	""" Tests for LineStyleOption pseudo-type """
@@ -418,3 +427,55 @@ def test_csv_data_filter_contract():
 	)
 	putil.ptypes.csv_data_filter(None)
 	putil.ptypes.csv_data_filter({'x':5})
+
+
+def test_file_name_contract():
+	""" Test for file_name custom contract """
+	@putil.pcontracts.contract(sfn='file_name')
+	def func(sfn):
+		""" Sample function to test file_name custom contract """
+		return sfn
+	putil.test.assert_exception(
+		func,
+		{'sfn':3},
+		RuntimeError,
+		'Argument `sfn` is not valid'
+	)
+	putil.test.assert_exception(
+		func,
+		{'sfn':'test\0'},
+		RuntimeError,
+		'Argument `sfn` is not valid'
+	)
+	func('some_file.txt')
+	# Test with Python executable (should be portable across systems), file
+	# should be valid although not having permissions to write it
+	func(sys.executable)
+
+
+def test_file_name_exists_contract():
+	""" Test for file_name_exists custom contract """
+	@putil.pcontracts.contract(sfn='file_name_exists')
+	def func(sfn):
+		""" Sample function to test file_name_exists custom contract """
+		return sfn
+	putil.test.assert_exception(
+		func,
+		{'sfn':3},
+		RuntimeError,
+		'Argument `sfn` is not valid'
+	)
+	putil.test.assert_exception(
+		func,
+		{'sfn':'test\0'},
+		RuntimeError,
+		'Argument `sfn` is not valid'
+	)
+	putil.test.assert_exception(
+		func,
+		{'sfn':'_file_does_not_exist'},
+		OSError,
+		'File `_file_does_not_exist` could not be found'
+	)
+	# Test with Python executable (should be portable across systems)
+	func(sys.executable)

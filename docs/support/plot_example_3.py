@@ -3,15 +3,21 @@
 # See LICENSE for details
 # pylint: disable=C0111,R0903
 
-import putil.misc, putil.pcsv
+import putil.misc, putil.pcsv, sys
+
+def cwrite(fobj, data):
+	if sys.version_info.major == 2:
+		fobj.write(data)
+	else:
+		fobj.write(bytes(data, 'ascii'))
 
 def write_csv_file(file_handle):
-	file_handle.write('Col1,Col2\n')
-	file_handle.write('0E-12,10\n')
-	file_handle.write('1E-12,0\n')
-	file_handle.write('2E-12,20\n')
-	file_handle.write('3E-12,-10\n')
-	file_handle.write('4E-12,30\n')
+	cwrite(file_handle, 'Col1,Col2\n')
+	cwrite(file_handle, '0E-12,10\n')
+	cwrite(file_handle, '1E-12,0\n')
+	cwrite(file_handle, '2E-12,20\n')
+	cwrite(file_handle, '3E-12,-10\n')
+	cwrite(file_handle, '4E-12,30\n')
 
 # indep_var is a Numpy vector, in this example  time,
 # in seconds. dep_var is a Numpy vector

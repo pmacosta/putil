@@ -37,7 +37,7 @@ def test_assert_exception():
 		r'The number \d+ is invalid'
 	)
 	with pytest.raises(AssertionError):
-		putil.test.assert_exception(func1, {'par1':1}, IOError, 'Exception 5')
+		putil.test.assert_exception(func1, {'par1':1}, OSError, 'Exception 5')
 	with pytest.raises(AssertionError):
 		putil.test.assert_exception(
 			func1,

@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+from __future__ import print_function
 import numpy, putil.plot
 
 def panel_iterator_example(no_print):
@@ -34,8 +35,8 @@ def panel_iterator_example(no_print):
 	)
 	if not no_print:
 		for num, series in enumerate(panel):
-			print 'Series {0}:'.format(num+1)
-			print series
-			print
+			print('Series {0}:'.format(num+1))
+			print(series)
+			print('')
 	else:
 		return panel

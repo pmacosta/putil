@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,F0401,R0201,R0903,W0201,W0212,W0232,W0621
 
+from __future__ import print_function
 import matplotlib
 import numpy
 import os
@@ -383,8 +384,8 @@ class TestSeries(object):
 				marker=marker_dict['value']
 			)
 			ret = (
-				'Independent variable: [ 5, 6, 7, 8 ]\n'
-				'Dependent variable: [ 0, -10, 5, 4 ]\n'
+				'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+				'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
 				'Label: test\n'
 				'Color: k\n'
 				'Marker: {0}\n'
@@ -393,11 +394,11 @@ class TestSeries(object):
 				'Secondary axis: False'.format(marker_dict['string'])
 			)
 			if str(obj) != ret:
-				print 'Object:'
-				print str(obj)
-				print
-				print 'Comparison:'
-				print ret
+				print('Object:')
+				print(str(obj))
+				print('')
+				print('Comparison:')
+				print(ret)
 			assert str(obj) == ret
 
 	def test_cannot_delete_attributes(self, default_source):
@@ -405,25 +406,25 @@ class TestSeries(object):
 		obj = putil.plot.Series(data_source=default_source, label='test')
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.data_source
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.label
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.color
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.marker
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.interp
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.line_style
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.secondary_axis
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 
 	def test_images(self, tmpdir):
 		""" Compare images to verify correct plotting of series """
@@ -438,16 +439,16 @@ class TestSeries(object):
 			metrics_ci = compare_images(ref_ci_file_name, test_file_name)
 			result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
 			if (not result) and (not result_ci):
-				print 'Images do not match'
-				print 'Reference image: file://{0}'.format(
+				print('Images do not match')
+				print('Reference image: file://{0}'.format(
 					os.path.realpath(ref_file_name)
-				)
-				print 'Reference CI image: file://{0}'.format(
+				))
+				print('Reference CI image: file://{0}'.format(
 					os.path.realpath(ref_ci_file_name)
-				)
-				print 'Actual image: file://{0}'.format(
+				))
+				print('Actual image: file://{0}'.format(
 					os.path.realpath(test_file_name)
-				)
+				))
 			# print 'Comparison: {0} with {1} -> {2} {3}'.format(
 			# 	ref_file_name,
 			# 	test_file_name,

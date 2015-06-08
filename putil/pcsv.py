@@ -4,7 +4,7 @@
 # pylint: disable=C0111,W0105,W0611
 
 import csv
-from itertools import izip
+import sys
 
 import putil.exh
 import putil.misc
@@ -54,7 +54,7 @@ def write(fname, data, append=True):
 	.. Auto-generated exceptions documentation for putil.pcsv.write
 
 	:raises:
-	 * IOError (File *[fname]* could not be created: *[reason]*)
+	 * OSError (File *[fname]* could not be created: *[reason]*)
 
 	 * OSError (File *[fname]* could not be created: *[reason]*)
 
@@ -80,7 +80,7 @@ def _write_int(fname, data, append=True):
 	)
 	_exh.add_exception(
 		exname='file_could_not_be_created_io',
-		extype=IOError,
+		extype=OSError,
 		exmsg='File *[fname]* could not be created: *[reason]*'
 	)
 	_exh.add_exception(
@@ -94,7 +94,7 @@ def _write_int(fname, data, append=True):
 	)
 	try:
 		putil.misc.make_dir(fname)
-		file_handle = open(fname, 'wb' if append is False else 'ab')
+		file_handle = open(fname, 'w' if append is False else 'a')
 		csv_handle = csv.writer(file_handle, delimiter=',')
 		for row in data:
 			csv_handle.writerow(row)
@@ -108,7 +108,7 @@ def _write_int(fname, data, append=True):
 				{'field':'reason', 'value':eobj.strerror}
 			]
 		)
-	except OSError as eobj:
+	except OSError as eobj:	# pragma: no cover
 		_exh.raise_exception_if(
 			exname='file_could_not_be_created_os',
 			condition=True,
@@ -157,7 +157,7 @@ class CsvFile(object):
 	.. putil.pcsv.CsvFile.__init__
 
 	:raises:
-	 * IOError (File \`*[fname]*\` could not be found)
+	 * OSError (File \`*[fname]*\` could not be found)
 
 	 * RuntimeError (Argument \`dfilter\` is not valid)
 
@@ -266,7 +266,7 @@ class CsvFile(object):
 			self._fdata = [
 				row for row in self._data
 				if all([row[col_num] in col_value
-				for col_num, col_value in izip(col_nums, col_values)])
+				for col_num, col_value in zip(col_nums, col_values)])
 			]
 			self._dfilter = dfilter
 
@@ -390,7 +390,7 @@ class CsvFile(object):
 		.. putil.pcsv.CsvFile.write
 
 		:raises:
-		 * IOError (File *[fname]* could not be created: *[reason]*)
+		 * OSError (File *[fname]* could not be created: *[reason]*)
 
 		 * OSError (File *[fname]* could not be created: *[reason]*)
 

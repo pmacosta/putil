@@ -16,7 +16,11 @@ from .functions import DataSource
 ###
 """
 [[[cog
-import os, sys, __builtin__
+import os, sys
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_basic_source
 exobj_plot = trace_ex_plot_basic_source.trace_module(no_print=True)
@@ -114,13 +118,14 @@ class BasicSource(DataSource):
 
 		.. code-block:: python
 
+			>>> from __future__ import print_function
 			>>> import docs.support.plot_example_4
 			>>> obj = docs.support.plot_example_4.create_basic_source()
-			>>> print obj
+			>>> print(obj)
 			Independent variable minimum: 2
 			Independent variable maximum: 3
-			Independent variable: [ 2, 3 ]
-			Dependent variable: [ -10, 10 ]
+			Independent variable: [ 2.0, 3.0 ]
+			Dependent variable: [ -10.0, 10.0 ]
 		"""
 		ret = ''
 		ret += 'Independent variable minimum: {0}\n'.format(

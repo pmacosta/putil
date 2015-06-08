@@ -167,40 +167,40 @@ class TestTreeNode(object):
 			])
 			return tobj
 		tobj = create_tree()
-		assert str(tobj) == (u'root\n'
-							 u'├branch1 (*)\n'
-							 u'│├leaf1\n'
-							 u'││└subleaf1 (*)\n'
-							 u'│└leaf2 (*)\n'
-							 u'│ └subleaf2\n'
-							 u'└branch2').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '├branch1 (*)\n'
+							 '│├leaf1\n'
+							 '││└subleaf1 (*)\n'
+							 '│└leaf2 (*)\n'
+							 '│ └subleaf2\n'
+							 '└branch2')
 		tobj.collapse_subtree('root+branch1')
-		assert str(tobj) == (u'root\n'
-							 u'├branch1 (*)\n'
-							 u'│├leaf1+subleaf1 (*)\n'
-						     u'│└leaf2 (*)\n'
-						     u'│ └subleaf2\n'
-						     u'└branch2').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '├branch1 (*)\n'
+							 '│├leaf1+subleaf1 (*)\n'
+						     '│└leaf2 (*)\n'
+						     '│ └subleaf2\n'
+						     '└branch2')
 		tobj = create_tree()
 		tobj.copy_subtree('root+branch1', 'root+branch3')
-		assert str(tobj) == (u'root\n'
-							 u'├branch1 (*)\n'
-							 u'│├leaf1\n'
-						     u'││└subleaf1 (*)\n'
-						     u'│└leaf2 (*)\n'
-						     u'│ └subleaf2\n'
-						     u'├branch2\n'
-						     u'└branch3 (*)\n'
-						     u' ├leaf1\n'
-						     u' │└subleaf1 (*)\n'
-						     u' └leaf2 (*)\n'
-						     u'  └subleaf2').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '├branch1 (*)\n'
+							 '│├leaf1\n'
+						     '││└subleaf1 (*)\n'
+						     '│└leaf2 (*)\n'
+						     '│ └subleaf2\n'
+						     '├branch2\n'
+						     '└branch3 (*)\n'
+						     ' ├leaf1\n'
+						     ' │└subleaf1 (*)\n'
+						     ' └leaf2 (*)\n'
+						     '  └subleaf2')
 		tobj = create_tree()
 		tobj.delete_subtree(['root+branch1+leaf1', 'root+branch2'])
-		assert str(tobj) == (u'root\n'
-							 u'└branch1 (*)\n'
-							 u' └leaf2 (*)\n'
-							 u'  └subleaf2').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '└branch1 (*)\n'
+							 ' └leaf2 (*)\n'
+							 '  └subleaf2')
 		tobj = create_tree()
 		tobj.add_nodes([{'name':'root+branch1+leaf1+subleaf2', 'data':list()},
 			{'name':'root+branch2+leaf1', 'data':'loren ipsum'},
@@ -208,27 +208,27 @@ class TestTreeNode(object):
 			{'name':'root+branch2+leaf1+another_subleaf2', 'data':list()}
 		])
 		tobj.flatten_subtree('root+branch1+leaf1')
-		assert str(tobj) == (u'root\n'
-							 u'├branch1 (*)\n'
-							 u'│├leaf1+subleaf1 (*)\n'
-							 u'│├leaf1+subleaf2\n'
-							 u'│└leaf2 (*)\n'
-							 u'│ └subleaf2\n'
-							 u'└branch2\n'
-							 u' └leaf1 (*)\n'
-							 u'  ├another_subleaf1\n'
-							 u'  └another_subleaf2').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '├branch1 (*)\n'
+							 '│├leaf1+subleaf1 (*)\n'
+							 '│├leaf1+subleaf2\n'
+							 '│└leaf2 (*)\n'
+							 '│ └subleaf2\n'
+							 '└branch2\n'
+							 ' └leaf1 (*)\n'
+							 '  ├another_subleaf1\n'
+							 '  └another_subleaf2')
 		tobj.flatten_subtree('root+branch2+leaf1')
-		assert str(tobj) == (u'root\n'
-							 u'├branch1 (*)\n'
-							 u'│├leaf1+subleaf1 (*)\n'
-							 u'│├leaf1+subleaf2\n'
-							 u'│└leaf2 (*)\n'
-							 u'│ └subleaf2\n'
-							 u'└branch2\n'
-							 u' └leaf1 (*)\n'
-							 u'  ├another_subleaf1\n'
-							 u'  └another_subleaf2').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '├branch1 (*)\n'
+							 '│├leaf1+subleaf1 (*)\n'
+							 '│├leaf1+subleaf2\n'
+							 '│└leaf2 (*)\n'
+							 '│ └subleaf2\n'
+							 '└branch2\n'
+							 ' └leaf1 (*)\n'
+							 '  ├another_subleaf1\n'
+							 '  └another_subleaf2')
 		tobj = create_tree()
 		assert sorted(tobj.get_subtree('root+branch1')) == sorted([
 			'root+branch1',
@@ -239,20 +239,20 @@ class TestTreeNode(object):
 		])
 		tobj = create_tree()
 		tobj.make_root('root+branch1')
-		assert str(tobj) == (u'root+branch1 (*)\n'
-							 u'├leaf1\n'
-							 u'│└subleaf1 (*)\n'
-							 u'└leaf2 (*)\n'
-							 u' └subleaf2').encode('utf-8')
+		assert str(tobj) == ('root+branch1 (*)\n'
+							 '├leaf1\n'
+							 '│└subleaf1 (*)\n'
+							 '└leaf2 (*)\n'
+							 ' └subleaf2')
 		tobj = create_tree()
 		tobj.rename_node('root+branch1+leaf1', 'root+branch1+mapleleaf1')
-		assert str(tobj) == (u'root\n'
-							 u'├branch1 (*)\n'
-							 u'│├leaf2 (*)\n'
-							 u'││└subleaf2\n'
-							 u'│└mapleleaf1\n'
-							 u'│ └subleaf1 (*)\n'
-							 u'└branch2').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '├branch1 (*)\n'
+							 '│├leaf2 (*)\n'
+							 '││└subleaf2\n'
+							 '│└mapleleaf1\n'
+							 '│ └subleaf1 (*)\n'
+							 '└branch2')
 
 	def test_errors_for_single_node_function(self):
 		"""
@@ -458,32 +458,32 @@ class TestTreeNode(object):
 		#    └l4b2b1 (*)
 		#     └l5b2b1b1
 		t1obj.collapse_subtree(t1obj.root_name)
-		assert str(t1obj) == (u'l0.l1 (*)\n'
-							  u'└l2\n'
-							  u' ├l3b1\n'
-							  u' │├l4b1b1.l5b1b1b1\n'
-							  u' ││├l6b1b1b1b1\n'
-							  u' ││└l6b1b1b1b2\n'
-							  u' │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n'
-							  u' └l3b2.l4b2b1 (*)\n'
-							  u'  └l5b2b1b1').encode('utf-8')
+		assert str(t1obj) == ('l0.l1 (*)\n'
+							  '└l2\n'
+							  ' ├l3b1\n'
+							  ' │├l4b1b1.l5b1b1b1\n'
+							  ' ││├l6b1b1b1b1\n'
+							  ' ││└l6b1b1b1b2\n'
+							  ' │└l5b1b1.l5b1b1b2.l6b1b1b2b1.l7b1b1b2b1b1\n'
+							  ' └l3b2.l4b2b1 (*)\n'
+							  '  └l5b2b1b1')
 		assert t1obj.get_data('l0.l1') == ['hello']
 		assert t1obj.get_data('l0.l1.l2.l3b2.l4b2b1') == [5]
 		tobj = create_tree()
 		tobj.collapse_subtree(tobj.root_name, False)
-		assert str(tobj) == (u'hello/world/root\n'
-							 u'├anode (*)\n'
-							 u'├bnode\n'
-							 u'│└anode\n'
-							 u'└cnode\n'
-							 u' └anode\n'
-							 u'  └leaf').encode('utf-8')
+		assert str(tobj) == ('hello/world/root\n'
+							 '├anode (*)\n'
+							 '├bnode\n'
+							 '│└anode\n'
+							 '└cnode\n'
+							 ' └anode\n'
+							 '  └leaf')
 		tobj = create_tree()
 		tobj.collapse_subtree(tobj.root_name, True)
-		assert str(tobj) == (u'hello/world/root\n'
-							 u'├anode (*)\n'
-							 u'├bnode/anode\n'
-							 u'└cnode/anode/leaf').encode('utf-8')
+		assert str(tobj) == ('hello/world/root\n'
+							 '├anode (*)\n'
+							 '├bnode/anode\n'
+							 '└cnode/anode/leaf')
 
 	def test_copy_subtree_errors(self):
 		""" Test that copy_subtree() method raises the right exceptions """
@@ -548,18 +548,18 @@ class TestTreeNode(object):
         #                   └leaf2 (*)
         #                    └subleaf2
 		# Test tree relationship
-		assert str(tree4) == (u'root\n'
-							  u'├branch1 (*)\n'
-							  u'│├leaf1\n'
-							  u'││└subleaf1 (*)\n'
-							  u'│└leaf2 (*)\n'
-							  u'│ └subleaf2\n'
-							  u'└branch2\n'
-							  u' └branch3 (*)\n'
-							  u'  ├leaf1\n'
-							  u'  │└subleaf1 (*)\n'
-							  u'  └leaf2 (*)\n'
-							  u'   └subleaf2').encode('utf-8')
+		assert str(tree4) == ('root\n'
+							  '├branch1 (*)\n'
+							  '│├leaf1\n'
+							  '││└subleaf1 (*)\n'
+							  '│└leaf2 (*)\n'
+							  '│ └subleaf2\n'
+							  '└branch2\n'
+							  ' └branch3 (*)\n'
+							  '  ├leaf1\n'
+							  '  │└subleaf1 (*)\n'
+							  '  └leaf2 (*)\n'
+							  '   └subleaf2')
 		# Test that there are no pointers between source and destination data
 		assert (id(tree4.get_data('root.branch1')) !=
 			   id(tree4.get_data('root.branch2.branch3')))
@@ -629,10 +629,10 @@ class TestTreeNode(object):
 		tree1.delete_subtree('t1l1.t1l2b2')
 		tree1.delete_subtree('t1l1.t1l2b1.t1l3b1b')
 		tree2.delete_subtree('t2l1')
-		assert str(tree1) == (u't1l1 (*)\n'
-							  u'└t1l2b1 (*)\n'
-							  u' ├t1l3b1a (*)\n'
-							  u' └t1l3b1c (*)').encode('utf-8')
+		assert str(tree1) == ('t1l1 (*)\n'
+							  '└t1l2b1 (*)\n'
+							  ' ├t1l3b1a (*)\n'
+							  ' └t1l3b1c (*)')
 		assert str(tree2) == ''
 		assert tree2.root_name is None
 		tree2.add_nodes([
@@ -652,28 +652,28 @@ class TestTreeNode(object):
 		])
 		odata = copy.deepcopy(tree4.get_data('root.branch1.leaf1.subleaf1'))
 		tree4.flatten_subtree('root.branch1.leaf1')
-		assert str(tree4) == (u'root\n'
-							  u'├branch1 (*)\n'
-							  u'│├leaf1.subleaf1 (*)\n'
-							  u'│├leaf1.subleaf2\n'
-							  u'│└leaf2 (*)\n'
-							  u'│ └subleaf2\n'
-							  u'└branch2\n'
-							  u' └leaf1 (*)\n'
-							  u'  ├another_subleaf1\n'
-							  u'  └another_subleaf2').encode('utf-8')
+		assert str(tree4) == ('root\n'
+							  '├branch1 (*)\n'
+							  '│├leaf1.subleaf1 (*)\n'
+							  '│├leaf1.subleaf2\n'
+							  '│└leaf2 (*)\n'
+							  '│ └subleaf2\n'
+							  '└branch2\n'
+							  ' └leaf1 (*)\n'
+							  '  ├another_subleaf1\n'
+							  '  └another_subleaf2')
 		assert tree4.get_data('root.branch1.leaf1.subleaf1') == odata
 		tree4.flatten_subtree('root.branch2.leaf1')
-		assert str(tree4) == (u'root\n'
-							  u'├branch1 (*)\n'
-							  u'│├leaf1.subleaf1 (*)\n'
-							  u'│├leaf1.subleaf2\n'
-							  u'│└leaf2 (*)\n'
-							  u'│ └subleaf2\n'
-							  u'└branch2\n'
-							  u' └leaf1 (*)\n'
-							  u'  ├another_subleaf1\n'
-							  u'  └another_subleaf2').encode('utf-8')
+		assert str(tree4) == ('root\n'
+							  '├branch1 (*)\n'
+							  '│├leaf1.subleaf1 (*)\n'
+							  '│├leaf1.subleaf2\n'
+							  '│└leaf2 (*)\n'
+							  '│ └subleaf2\n'
+							  '└branch2\n'
+							  ' └leaf1 (*)\n'
+							  '  ├another_subleaf1\n'
+							  '  └another_subleaf2')
 
 	def test_get_children_works(self, default_trees):
 		""" Test that get_children() method works """
@@ -885,21 +885,21 @@ class TestTreeNode(object):
 		#	└branch2
 		_, _, _, tree4 = default_trees
 		tree4.make_root('root')
-		assert str(tree4) == (u'root\n'
-							  u'├branch1 (*)\n'
-							  u'│├leaf1\n'
-							  u'││└subleaf1 (*)\n'
-							  u'│└leaf2 (*)\n'
-							  u'│ └subleaf2\n'
-							  u'└branch2').encode('utf-8')
+		assert str(tree4) == ('root\n'
+							  '├branch1 (*)\n'
+							  '│├leaf1\n'
+							  '││└subleaf1 (*)\n'
+							  '│└leaf2 (*)\n'
+							  '│ └subleaf2\n'
+							  '└branch2')
 		tree4.make_root('root.branch1')
-		assert str(tree4) == (u'root.branch1 (*)\n'
-							  u'├leaf1\n'
-							  u'│└subleaf1 (*)\n'
-							  u'└leaf2 (*)\n'
-							  u' └subleaf2').encode('utf-8')
+		assert str(tree4) == ('root.branch1 (*)\n'
+							  '├leaf1\n'
+							  '│└subleaf1 (*)\n'
+							  '└leaf2 (*)\n'
+							  ' └subleaf2')
 		tree4.make_root('root.branch1.leaf2.subleaf2')
-		assert str(tree4) == u'root.branch1.leaf2.subleaf2'.encode('utf-8')
+		assert str(tree4) == 'root.branch1.leaf2.subleaf2'
 
 	def test_print_node_works(self, default_trees):
 		""" Test that the method print_node() works as expected """
@@ -992,21 +992,21 @@ class TestTreeNode(object):
 		""" Test that the method rename_node() works as expected """
 		_, _, _, tree4 = default_trees
 		tree4.rename_node('root.branch1.leaf1', 'root.branch1.mapleleaf1')
-		assert str(tree4) == (u'root\n'
-							  u'├branch1 (*)\n'
-							  u'│├leaf2 (*)\n'
-							  u'││└subleaf2\n'
-							  u'│└mapleleaf1\n'
-							  u'│ └subleaf1 (*)\n'
-							  u'└branch2').encode('utf-8')
+		assert str(tree4) == ('root\n'
+							  '├branch1 (*)\n'
+							  '│├leaf2 (*)\n'
+							  '││└subleaf2\n'
+							  '│└mapleleaf1\n'
+							  '│ └subleaf1 (*)\n'
+							  '└branch2')
 		tree4.rename_node('root', 'dummy')
-		assert str(tree4) == (u'dummy\n'
-							  u'├branch1 (*)\n'
-							  u'│├leaf2 (*)\n'
-							  u'││└subleaf2\n'
-							  u'│└mapleleaf1\n'
-							  u'│ └subleaf1 (*)\n'
-							  u'└branch2').encode('utf-8')
+		assert str(tree4) == ('dummy\n'
+							  '├branch1 (*)\n'
+							  '│├leaf2 (*)\n'
+							  '││└subleaf2\n'
+							  '│└mapleleaf1\n'
+							  '│ └subleaf1 (*)\n'
+							  '└branch2')
 		tobj = putil.tree.Tree()
 		tobj.add_nodes([
 			{'name':'dummy.levels.root.branch1', 'data':list()},
@@ -1018,13 +1018,13 @@ class TestTreeNode(object):
 		])
 		tobj.make_root('dummy.levels.root')
 		tobj.rename_node('dummy.levels.root', 'top')
-		assert str(tobj) == (u'top\n'
-							 u'├branch1\n'
-							 u'│├leaf1\n'
-							 u'││└subleaf1 (*)\n'
-							 u'│└leaf2 (*)\n'
-							 u'│ └subleaf2\n'
-							 u'└branch2').encode('utf-8')
+		assert str(tobj) == ('top\n'
+							 '├branch1\n'
+							 '│├leaf1\n'
+							 '││└subleaf1 (*)\n'
+							 '│└leaf2 (*)\n'
+							 '│ └subleaf2\n'
+							 '└branch2')
 
 	def test_root_node_works(self, default_trees):
 		""" Test that root_node property works """
@@ -1054,13 +1054,13 @@ class TestTreeNode(object):
 		tree1, _, _, _ = default_trees
 		with pytest.raises(AttributeError) as excinfo:
 			del tree1.root_node
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del tree1.root_name
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del tree1.node_separator
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 
 	def test_str_works(self, default_trees):
 		""" Test that ppstr method works """
@@ -1072,43 +1072,43 @@ class TestTreeNode(object):
 			{'name':'t1l1.t1l2b1.t1l3b1c.leaf2.leaf3', 'data':list()},
 			{'name':'t1l1.t1l2b1.t1l3b1c.leaf2.subleaf4', 'data':list()}
 		])
-		assert str(tree1) == (u't1l1 (*)\n'
-							  u'├t1l2b1 (*)\n'
-							  u'│├t1l3b1a (*)\n'
-							  u'││└leaf1\n'
-							  u'│├t1l3b1b (*)\n'
-							  u'│└t1l3b1c (*)\n'
-							  u'│ └leaf2\n'
-							  u'│  ├leaf3\n'
-							  u'│  └subleaf4\n'
-							  u'└t1l2b2 (*)\n'
-							  u' ├t1l3b2a (*)\n'
-							  u' ├t1l3b2b (*)\n'
-							  u' └t1l3b2c (*)').encode('utf-8')
-		assert str(tree2) == (u't2l1 (*)\n'
-							  u'├t2l2b1 (*)\n'
-							  u'│├t2l3b1a (*)\n'
-							  u'│├t2l3b1b (*)\n'
-							  u'│└t2l3b1c (*)\n'
-							  u'└t2l2b2 (*)\n'
-							  u' ├t2l3b2a (*)\n'
-							  u' ├t2l3b2b (*)\n'
-							  u' └t2l3b2c (*)').encode('utf-8')
-		assert str(tree3) == u't3l1 (*)'.encode('utf-8')
+		assert str(tree1) == ('t1l1 (*)\n'
+							  '├t1l2b1 (*)\n'
+							  '│├t1l3b1a (*)\n'
+							  '││└leaf1\n'
+							  '│├t1l3b1b (*)\n'
+							  '│└t1l3b1c (*)\n'
+							  '│ └leaf2\n'
+							  '│  ├leaf3\n'
+							  '│  └subleaf4\n'
+							  '└t1l2b2 (*)\n'
+							  ' ├t1l3b2a (*)\n'
+							  ' ├t1l3b2b (*)\n'
+							  ' └t1l3b2c (*)')
+		assert str(tree2) == ('t2l1 (*)\n'
+							  '├t2l2b1 (*)\n'
+							  '│├t2l3b1a (*)\n'
+							  '│├t2l3b1b (*)\n'
+							  '│└t2l3b1c (*)\n'
+							  '└t2l2b2 (*)\n'
+							  ' ├t2l3b2a (*)\n'
+							  ' ├t2l3b2b (*)\n'
+							  ' └t2l3b2c (*)')
+		assert str(tree3) == 't3l1 (*)'
 		tree3.add_nodes({'name':'t3l1.leaf1', 'data':list()})
-		assert str(tree3) == u't3l1 (*)\n└leaf1'.encode('utf-8')
+		assert str(tree3) == 't3l1 (*)\n└leaf1'
 		tree3.add_nodes({'name':'t3l1.leaf2', 'data':list()})
-		assert str(tree3) == u't3l1 (*)\n├leaf1\n└leaf2'.encode('utf-8')
+		assert str(tree3) == 't3l1 (*)\n├leaf1\n└leaf2'
 
 	def test_get_node_parent_works(self, default_trees):
 		""" Test that get_node_parent method works """
 		tree1, _, _, _ = default_trees
 		assert tree1.get_node_parent('t1l1') == dict()
-		assert cmp(tree1.get_node_parent('t1l1.t1l2b1'), {
+		assert tree1.get_node_parent('t1l1.t1l2b1') == {
 			'parent':'',
 			'children':['t1l1.t1l2b1', 't1l1.t1l2b2'],
 			'data':['Tree 1, level 1']
-		}) == 0
+		}
 
 	def test_private_get_children_works(self, default_trees):
 		""" Test _get_children method works """
@@ -1237,13 +1237,13 @@ class TestTreeNode(object):
 		)
 		tobj.collapse_subtree(tobj.root_name, recursive=False)
 		tobj.delete_prefix('hello/world')
-		assert str(tobj) == (u'root\n'
-							 u'├anode (*)\n'
-							 u'├bnode\n'
-							 u'│└anode\n'
-							 u'└cnode\n'
-							 u' └anode\n'
-							 u'  └leaf').encode('utf-8')
+		assert str(tobj) == ('root\n'
+							 '├anode (*)\n'
+							 '├bnode\n'
+							 '│└anode\n'
+							 '└cnode\n'
+							 ' └anode\n'
+							 '  └leaf')
 
 	def test_copy_works(self, default_trees):
 		""" Test __copy__() method """

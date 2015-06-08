@@ -19,7 +19,11 @@ from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
 ###
 """
 [[[cog
-import os, sys, __builtin__
+import os, sys
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_series
 exobj_plot = trace_ex_plot_series.trace_module(no_print=True)

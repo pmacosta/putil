@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,W0212,W0640
 
+from __future__ import print_function
 import putil.exh
 
 EXHOBJ = putil.exh.ExHandle()
@@ -18,4 +19,4 @@ def my_func(name):
 		exname='illegal_name',
 		condition=not isinstance(name, str)
 	)
-	print 'My name is {0}'.format(name)
+	print('My name is {0}'.format(name))

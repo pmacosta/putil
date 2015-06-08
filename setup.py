@@ -79,6 +79,20 @@ class Tox(TestCommand):
 ###
 # Processing
 ###
+INSTALL_REQUIRES = [
+	'decorator>=3.4.2',
+	'matplotlib>=1.4.3',
+	'numpy>=1.9.2',
+	'Pillow>=2.7.0',
+	'PyContracts>=1.7.6',
+	'scipy>=0.15.1',
+]
+if sys.version_info.major == 2:
+	INSTALL_REQUIRES.append(
+		[
+			'funcsigs>=0.4',
+		]
+	)
 setup(
 	name='putil',
 	version='0.9.0.5',
@@ -93,14 +107,7 @@ setup(
 	               'pytest-xdist>=1.8',
 	               'tox>=1.9.0',
 	              ],
-	install_requires=[#'cogapp>=2.4',
-	                  'funcsigs>=0.4',
-	                  'matplotlib>=1.4.3',
-	                  'numpy>=1.9.2',
-					  'Pillow>=2.7.0',
-	                  'PyContracts>=1.7.1',
-	                  'scipy>=0.15.1',
-	                 ],
+	install_requires=INSTALL_REQUIRES,
 	cmdclass={'tests': PyTest},
 	author_email='pmacosta@yahoo.com',
 	description=('This library provides a collection of utility modules to '
@@ -119,7 +126,6 @@ setup(
 	platforms='any',
 	classifiers=[
 		         'Programming Language :: Python',
-		         'Programming Language :: Python :: 2.7',
 	             'Development Status :: 4 - Beta',
 	             'Natural Language :: English',
 	             'Environment :: Web Environment',

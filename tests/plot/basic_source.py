@@ -56,7 +56,7 @@ class TestBasicSource(object):
 		for param_value in ['a', False]:
 			with pytest.raises(RuntimeError) as excinfo:
 				obj.indep_min = param_value
-			assert excinfo.value.message == 'Argument `indep_min` is not valid'
+			assert putil.test.get_exmsg(excinfo) == 'Argument `indep_min` is not valid'
 		# Valid values, these should not raise an exception
 		for param_value in [1, 2.0]:
 			obj.indep_min = param_value
@@ -102,7 +102,7 @@ class TestBasicSource(object):
 		for param_value in ['a', False]:
 			with pytest.raises(RuntimeError) as excinfo:
 				obj.indep_max = param_value
-			assert excinfo.value.message == 'Argument `indep_max` is not valid'
+			assert putil.test.get_exmsg(excinfo) == 'Argument `indep_max` is not valid'
 		# Valid values, these should not raise an exception
 		for param_value in [1, 2.0]:
 			obj.indep_max = param_value
@@ -121,7 +121,7 @@ class TestBasicSource(object):
 
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_max = 0
-		assert excinfo.value.message == ('Argument `indep_min` is greater '
+		assert putil.test.get_exmsg(excinfo) == ('Argument `indep_min` is greater '
 										 'than argument `indep_max`')
 		# Assign indep_max first
 		obj = putil.plot.BasicSource(
@@ -131,7 +131,7 @@ class TestBasicSource(object):
 		obj.indep_max = 40
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_min = 50
-		assert excinfo.value.message == ('Argument `indep_min` is greater '
+		assert putil.test.get_exmsg(excinfo) == ('Argument `indep_min` is greater '
 										 'than argument `indep_max`')
 
 	def test_indep_var_type(self):
@@ -184,8 +184,11 @@ class TestBasicSource(object):
 		)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_min = 45
-		assert excinfo.value.message == ('Argument `indep_var` is empty after '
-										 '`indep_min`/`indep_max` range bounding')
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			('Argument `indep_var` is empty after '
+			 '`indep_min`/`indep_max` range bounding')
+		)
 		# Assign indep_max via attribute
 		obj = putil.plot.BasicSource(
 			indep_var=numpy.array([1, 2, 3]),
@@ -193,8 +196,11 @@ class TestBasicSource(object):
 		)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_max = 0
-		assert excinfo.value.message == ('Argument `indep_var` is empty after '
-										 '`indep_min`/`indep_max` range bounding')
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			('Argument `indep_var` is empty after '
+			 '`indep_min`/`indep_max` range bounding')
+		)
 		# Assign both indep_min and indep_max via __init__ path
 		putil.test.assert_exception(
 			putil.plot.BasicSource,
@@ -215,14 +221,14 @@ class TestBasicSource(object):
 		assert (obj.indep_var == numpy.array([1, 2, 3])).all()
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.indep_var = None
-		assert excinfo.value.message == 'Argument `indep_var` is not valid'
+		assert putil.test.get_exmsg(excinfo) == 'Argument `indep_var` is not valid'
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.indep_var = 'a'
-		assert excinfo.value.message == 'Argument `indep_var` is not valid'
+		assert putil.test.get_exmsg(excinfo) == 'Argument `indep_var` is not valid'
 		# Non monotonically increasing vector
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.indep_var = numpy.array([1.0, 2.0, 0.0, 3.0])
-		assert excinfo.value.message == 'Argument `indep_var` is not valid'
+		assert putil.test.get_exmsg(excinfo) == 'Argument `indep_var` is not valid'
 		# Valid values, these should not raise any exception
 		obj.indep_var = numpy.array([4.0, 5.0, 6.0])
 		assert (obj.indep_var == numpy.array([4.0, 5.0, 6.0])).all()
@@ -267,11 +273,11 @@ class TestBasicSource(object):
 		# Wrong type
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.dep_var = 'a'
-		assert excinfo.value.message == 'Argument `dep_var` is not valid'
+		assert putil.test.get_exmsg(excinfo) == 'Argument `dep_var` is not valid'
 		# Empty vector
 		with pytest.raises(RuntimeError) as excinfo:
 			obj.dep_var = numpy.array([])
-		assert excinfo.value.message == 'Argument `dep_var` is not valid'
+		assert putil.test.get_exmsg(excinfo) == 'Argument `dep_var` is not valid'
 		# Valid values, these should not raise any exception
 		obj.dep_var = numpy.array([1, 2, 3])
 		assert (obj.dep_var == numpy.array([1, 2, 3])).all()
@@ -311,8 +317,11 @@ class TestBasicSource(object):
 			indep_max=50)
 		with pytest.raises(ValueError) as excinfo:
 			obj.dep_var = numpy.array([100, 200, 300])
-		assert excinfo.value.message == ('Arguments `indep_var` and `dep_var` '
-										 'must have the same number of elements')
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			('Arguments `indep_var` and `dep_var` '
+			 'must have the same number of elements')
+		)
 		# dep_var set first
 		obj = putil.plot.BasicSource(
 			indep_var=numpy.array([10, 20, 30]),
@@ -322,9 +331,11 @@ class TestBasicSource(object):
 		)
 		with pytest.raises(ValueError) as excinfo:
 			obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
-		assert excinfo.value.message == ('Arguments `indep_var` and `dep_var` '
-										 'must have the same number of elements')
-
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			('Arguments `indep_var` and `dep_var` '
+			 'must have the same number of elements')
+		)
 	def test_complete(self):
 		""" Test that _complete property behaves correctly """
 		obj = putil.plot.BasicSource(
@@ -354,8 +365,8 @@ class TestBasicSource(object):
 		)
 		ref = ('Independent variable minimum: -10\n'
 			   'Independent variable maximum: 20.0\n'
-			   'Independent variable: [ 1, 2, 3 ]\n'
-			   'Dependent variable: [ 10, 20, 30 ]')
+			   'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+			   'Dependent variable: [ 10.0, 20.0, 30.0 ]')
 		assert obj == ref
 		# indep_min not set
 		obj = str(putil.plot.BasicSource(
@@ -365,8 +376,8 @@ class TestBasicSource(object):
 		)
 		ref = ('Independent variable minimum: -inf\n'
 			   'Independent variable maximum: 20.0\n'
-			   'Independent variable: [ 1, 2, 3 ]\n'
-			   'Dependent variable: [ 10, 20, 30 ]')
+			   'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+			   'Dependent variable: [ 10.0, 20.0, 30.0 ]')
 		assert obj == ref
 		# indep_max not set
 		obj = str(putil.plot.BasicSource(
@@ -376,8 +387,8 @@ class TestBasicSource(object):
 		)
 		ref = ('Independent variable minimum: -10\n'
 			   'Independent variable maximum: +inf\n'
-			   'Independent variable: [ 1, 2, 3 ]\n'
-			   'Dependent variable: [ 10, 20, 30 ]')
+			   'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+			   'Dependent variable: [ 10.0, 20.0, 30.0 ]')
 		assert obj == ref
 		# indep_min and indep_max not set
 		obj = str(putil.plot.BasicSource(
@@ -386,8 +397,8 @@ class TestBasicSource(object):
 		)
 		ref = ('Independent variable minimum: -inf\n'
 			   'Independent variable maximum: +inf\n'
-			   'Independent variable: [ 1, 2, 3 ]\n'
-			   'Dependent variable: [ 10, 20, 30 ]')
+			   'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+			   'Dependent variable: [ 10.0, 20.0, 30.0 ]')
 		assert obj == ref
 
 	def test_cannot_delete_attributes(self):
@@ -398,13 +409,13 @@ class TestBasicSource(object):
 		)
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_min
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_max
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_var
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.dep_var
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"

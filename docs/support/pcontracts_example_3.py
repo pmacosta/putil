@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0613,W0702
 
+from __future__ import print_function
 import os, putil.pcontracts
 
 @putil.pcontracts.new_contract(ex1=(RuntimeError, 'Invalid name'))
@@ -38,7 +39,7 @@ def custom_contract6(arg):
 	if not arg:
 		raise ValueError(putil.pcontracts.get_exdesc())
 
-@putil.pcontracts.new_contract((IOError, 'File could not be opened'))
+@putil.pcontracts.new_contract((OSError, 'File could not be opened'))
 def custom_contract7(arg):
 	if not arg:
 		raise ValueError(putil.pcontracts.get_exdesc())
@@ -76,7 +77,7 @@ def print_city_name(city_name):
 	return 'City: {0}'.format(city_name)
 
 @putil.pcontracts.new_contract((
-	IOError, 'File `*[fname]*` not found'
+	OSError, 'File `*[fname]*` not found'
 ))
 def custom_contract12(fname):
 	if not os.path.exists(fname):
@@ -84,4 +85,4 @@ def custom_contract12(fname):
 
 @putil.pcontracts.contract(fname='custom_contract12')
 def print_fname(fname):
-	print 'File name to find: {0}'.format(fname)
+	print('File name to find: {0}'.format(fname))

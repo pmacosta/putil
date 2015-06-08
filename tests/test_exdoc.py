@@ -3,13 +3,18 @@
 # See LICENSE for details
 # pylint: disable=C0111,F0401,R0903,W0104,W0212,W0612,W0613,W0621
 
+from __future__ import print_function
 import imp
 import copy
 import mock
 import os
 import pytest
 import sys
-import __builtin__
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
+	import importlib
 
 import putil.exdoc
 import putil.exh
@@ -184,7 +189,7 @@ def test_depth_property(simple_exobj):
 	assert obj.depth == 5
 	with pytest.raises(AttributeError) as excinfo:
 		del obj.depth
-	assert excinfo.value.message == "can't delete attribute"
+	assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 
 
 def test_exclude_property(simple_exobj):
@@ -195,7 +200,7 @@ def test_exclude_property(simple_exobj):
 	assert obj.exclude == ['a', 'b']
 	with pytest.raises(AttributeError) as excinfo:
 		del obj.exclude
-	assert excinfo.value.message == "can't delete attribute"
+	assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 
 
 def test_build_ex_tree(exdocobj):
@@ -203,7 +208,7 @@ def test_build_ex_tree(exdocobj):
 	with pytest.raises(RuntimeError) as excinfo:
 		with putil.exdoc.ExDocCxt():
 			pass
-	assert excinfo.value.message == 'Exceptions database is empty'
+	assert putil.test.get_exmsg(excinfo) == 'Exceptions database is empty'
 	exobj1 = putil.exh.ExHandle(full_cname=True)
 	def func1():
 		exobj1.add_exception(
@@ -217,36 +222,36 @@ def test_build_ex_tree(exdocobj):
 	def mock_add_nodes2(self):
 		raise ValueError('General exception #1')
 	def mock_add_nodes3(self):
-		raise IOError('General exception #2')
+		raise OSError('General exception #2')
 	ref = (
-		u'tests.test_exdoc.exdocobj\n'
-		u'├mod.ExceptionAutoDocClass.__init__ (*)\n'
-		u'│├putil.tree.Tree.__init__ (*)\n'
-		u'│└putil.tree.Tree.add_nodes (*)\n'
-		u'│ └putil.tree.Tree._validate_nodes_with_data (*)\n'
-		u'├mod.ExceptionAutoDocClass.divide (*)\n'
-		u'├mod.ExceptionAutoDocClass.multiply (*)\n'
-		u'├mod.ExceptionAutoDocClass.temp(setter) (*)\n'
-		u'├mod.ExceptionAutoDocClass.value1(getter) (*)\n'
-		u'├mod.ExceptionAutoDocClass.value1(setter) (*)\n'
-		u'├mod.ExceptionAutoDocClass.value2(setter) (*)\n'
-		u'├mod.ExceptionAutoDocClass.value3(deleter) (*)\n'
-		u'├mod.ExceptionAutoDocClass.value3(getter) (*)\n'
-		u'├mod.ExceptionAutoDocClass.value3(setter) (*)\n'
-		u'├mod.probe (*)\n'
-		u'├mod.read (*)\n'
-		u'├mod.write (*)\n'
-		u'└tests.test_exdoc.exdocobj.multi_level_write\n'
-		u' └mod.write (*)\n'
-		u'  └mod._write\n'
-		u'   └mod._validate_arguments (*)'
-	).encode('utf-8')
+		'tests.test_exdoc.exdocobj\n'
+		'├mod.ExceptionAutoDocClass.__init__ (*)\n'
+		'│├putil.tree.Tree.__init__ (*)\n'
+		'│└putil.tree.Tree.add_nodes (*)\n'
+		'│ └putil.tree.Tree._validate_nodes_with_data (*)\n'
+		'├mod.ExceptionAutoDocClass.divide (*)\n'
+		'├mod.ExceptionAutoDocClass.multiply (*)\n'
+		'├mod.ExceptionAutoDocClass.temp(setter) (*)\n'
+		'├mod.ExceptionAutoDocClass.value1(getter) (*)\n'
+		'├mod.ExceptionAutoDocClass.value1(setter) (*)\n'
+		'├mod.ExceptionAutoDocClass.value2(setter) (*)\n'
+		'├mod.ExceptionAutoDocClass.value3(deleter) (*)\n'
+		'├mod.ExceptionAutoDocClass.value3(getter) (*)\n'
+		'├mod.ExceptionAutoDocClass.value3(setter) (*)\n'
+		'├mod.probe (*)\n'
+		'├mod.read (*)\n'
+		'├mod.write (*)\n'
+		'└tests.test_exdoc.exdocobj.multi_level_write\n'
+		' └mod.write (*)\n'
+		'  └mod._write\n'
+		'   └mod._validate_arguments (*)'
+	)
 	ref = ref.replace('mod.', 'tests.support.exdoc_support_module_1.')
 	if str(exdocobj._tobj) != ref:
-		print putil.misc.pcolor('\nActual tree:', 'yellow')
-		print str(exdocobj._tobj)
-		print putil.misc.pcolor('Reference tree:', 'yellow')
-		print ref
+		print(putil.misc.pcolor('\nActual tree:', 'yellow'))
+		print(str(exdocobj._tobj))
+		print(putil.misc.pcolor('Reference tree:', 'yellow'))
+		print(ref)
 	assert str(exdocobj._tobj) == ref
 	trace_error_class()
 	with mock.patch('putil.tree.Tree.add_nodes', side_effect=mock_add_nodes1):
@@ -267,7 +272,7 @@ def test_build_ex_tree(exdocobj):
 		putil.test.assert_exception(
 			putil.exdoc.ExDoc,
 			{'exh_obj':exobj1, '_no_print':True},
-			IOError,
+			OSError,
 			'General exception #2'
 		)
 	# Create exception tree where branching is right at root node
@@ -280,7 +285,7 @@ def test_build_ex_tree(exdocobj):
 		},
 		'root/leaf2':{
 			'function':'root.leaf2',
-			'type':IOError,
+			'type':OSError,
 			'msg': 'Exception 2'
 		}
 	}
@@ -292,10 +297,10 @@ def test_build_ex_tree(exdocobj):
 	exdocobj = putil.exdoc.ExDoc(exobj, _no_print=True, _empty=True)
 	exdocobj._build_ex_tree()
 	assert str(exdocobj._tobj) == (
-		u'root\n'
-		u'├leaf1 (*)\n'
-		u'└leaf2 (*)'
-	).encode('utf-8')
+		'root\n'
+		'├leaf1 (*)\n'
+		'└leaf2 (*)'
+	)
 
 
 def test_get_sphinx_doc(exdocobj):
@@ -583,7 +588,7 @@ def test_get_sphinx_doc(exdocobj):
 		'.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
 		'value2\n\n'
 		':raises: (when assigned)\n\n'
-		' * IOError (Argument \\`value2\\` is not a file)\n\n'
+		' * OSError (Argument \\`value2\\` is not a file)\n\n'
 		' * TypeError (Argument \\`value2\\` is not valid)\n\n'
 	)
 	putil.exdoc._MINWIDTH = 16
@@ -605,7 +610,7 @@ def test_get_sphinx_doc(exdocobj):
 		'\n'
 		':raises: (when assigned)\n'
 		'\n'
-		' * IOError\n'
+		' * OSError\n'
 		'   (Argument\n'
 		'   \\`value2\\` is\n'
 		'   not a file)\n'
@@ -624,7 +629,10 @@ def test_get_sphinx_autodoc(exdocobj, exdocobj_single):
 	mobj = sys.modules['putil.exdoc']
 	delattr(mobj, 'sys')
 	del sys.modules['sys']
-	nsys = imp.load_module('sys_patched', *imp.find_module('sys'))
+	if sys.version_info.major == 2:
+		nsys = imp.load_module('sys_patched', *imp.find_module('sys'))
+	else:
+		nsys = importlib.import_module('sys')
 	setattr(mobj, 'sys', nsys)
 	with mock.patch('putil.exdoc.sys._getframe', side_effect=mock_getframe):
 		tstr = exdocobj.get_sphinx_autodoc()
@@ -642,6 +650,24 @@ def test_get_sphinx_autodoc(exdocobj, exdocobj_single):
 			'.. tests.support.exdoc_support_module_4.func\n\n'
 			':raises: TypeError (Argument \\`name\\` is not valid)\n\n'
 		)
+	#else:
+	#	print(dir(putil.exdoc.sys))
+	#	with mock.patch('putil.exdoc.sys._getframe', new_callable=teto):
+	#		tstr = exdocobj.get_sphinx_autodoc()
+	#		assert tstr == ''
+	#		tstr = exdocobj.get_sphinx_autodoc()
+	#		assert tstr == (
+	#			'.. Auto-generated exceptions documentation for\n'
+	#			'.. tests.support.exdoc_support_module_1.'
+	#			'ExceptionAutoDocClass.multiply\n\n'
+	#			':raises: ValueError (Overflow)\n\n'
+	#		)
+	#		tstr = exdocobj_single.get_sphinx_autodoc()
+	#		assert tstr == (
+	#			'.. Auto-generated exceptions documentation for\n'
+	#			'.. tests.support.exdoc_support_module_4.func\n\n'
+	#			':raises: TypeError (Argument \\`name\\` is not valid)\n\n'
+	#		)
 
 
 def test_copy_works(exdocobj):
@@ -663,10 +689,10 @@ def test_exdoccxt_errors():
 	""" Test that ExDocCxt context manager correctly handles exceptions """
 	if putil.exh.get_exh_obj():
 		putil.exh.del_exh_obj()
-	with pytest.raises(IOError) as excinfo:
+	with pytest.raises(OSError) as excinfo:
 		with putil.exdoc.ExDocCxt(True):
-			raise IOError('This is bad')
-	assert excinfo.value.message == 'This is bad'
+			raise OSError('This is bad')
+	assert putil.test.get_exmsg(excinfo) == 'This is bad'
 	assert putil.exh.get_exh_obj() is None
 
 

@@ -18,7 +18,11 @@ from putil.ptypes import (engineering_notation_number,
 ###
 """
 [[[cog
-import os, sys, __builtin__
+import os, sys
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_eng
 exobj_eng = trace_ex_eng.trace_module(no_print=True)
@@ -36,10 +40,10 @@ _POWER_TO_SUFFIX_DICT = {
 	  3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'
 }
 _SUFFIX_TO_POWER_DICT = dict(
-	[(value, key) for key, value in _POWER_TO_SUFFIX_DICT.iteritems()]
+	[(value, key) for key, value in _POWER_TO_SUFFIX_DICT.items()]
 )
 _SUFFIX_POWER_DICT = dict(
-	[(key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.iteritems()]
+	[(key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.items()]
 )
 
 
@@ -540,13 +544,21 @@ def to_scientific_string(
 			sexp
 		)
 	rounded_mant = round(fmant, frac_length)
-	if abs(rounded_mant) >= 10:
-		return to_scientific_string(
-			rounded_mant*(10**exp),
-			frac_length,
-			exp_length,
-			sign_always
-		)
+	# Avoid infinite recursion when rounded mantissa is _exactly_ 10
+	#if abs(rounded_mant) > 10:
+	#	return to_scientific_string(
+	#		rounded_mant*(10**exp),
+	#		exp_length,
+	#		sign_always
+	#	)
+	if abs(rounded_mant) == 10:
+		fmant = -1.0 if number < 0 else 1.0
+		rounded_mant = fmant
+		frac_length = 1
+		exp = exp+1
+		sexp = (abs(exp)
+			   if exp_length is None else
+			   '{0}'.format(abs(exp)).rjust(exp_length, '0'))
 	return '{0}{1}{2}E{3}{4}'.format(
 		'+' if sign_always and (fmant >= 0) else '',
 		rounded_mant,
@@ -586,33 +598,38 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
 
 	For example:
 
+		>>> from __future__ import print_function
 		>>> import putil.eng
 		>>> header = 'Vector: '
 		>>> data = [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9]
-		>>> print header+putil.eng.pprint_vector(
-		...     data,
-		...     width=30,
-		...     eng=True,
-		...     frac_length=1,
-		...     limit=True,
-		...     indent=len(header)
+		>>> print(
+		...     header+putil.eng.pprint_vector(
+		...         data,
+		...         width=30,
+		...         eng=True,
+		...         frac_length=1,
+		...         limit=True,
+		...         indent=len(header)
+		...     )
 		... )
 		Vector: [    1.0m,   20.0u,  300.0M,
 		                     ...
 		           700.0 ,    8.0 ,    9.0  ]
-		>>> print header+putil.eng.pprint_vector(
-		...     data,
-		...     width=30,
-		...     eng=True,
-		...     frac_length=0,
-		...     indent=len(header)
+		>>> print(
+		...     header+putil.eng.pprint_vector(
+		...         data,
+		...         width=30,
+		...         eng=True,
+		...         frac_length=0,
+		...         indent=len(header)
+		...     )
 		... )
 		Vector: [    1m,   20u,  300M,    4p,
 		             5k,   -6n,  700 ,    8 ,
 		             9  ]
-		>>> print putil.eng.pprint_vector(data, eng=True, frac_length=0)
+		>>> print(putil.eng.pprint_vector(data, eng=True, frac_length=0))
 		[    1m,   20u,  300M,    4p,    5k,   -6n,  700 ,    8 ,    9  ]
-		>>> print putil.eng.pprint_vector(data, limit=True)
+		>>> print(putil.eng.pprint_vector(data, limit=True))
 		[ 0.001, 2e-05, 300000000.0, ..., 700, 8, 9 ]
 
 	"""

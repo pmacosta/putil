@@ -19,7 +19,11 @@ from .functions import (DataSource, _check_increasing_real_numpy_vector,
 ###
 """
 [[[cog
-import os, sys, __builtin__
+import os, sys
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_csv_source
 exobj_plot = trace_ex_plot_csv_source.trace_module(no_print=True)
@@ -61,7 +65,7 @@ class CsvSource(DataSource):
 	.. putil.plot.csv_source.CsvSource.__init__
 
 	:raises:
-	 * IOError (File \`*[fname]*\` could not be found)
+	 * OSError (File \`*[fname]*\` could not be found)
 
 	 * RuntimeError (Argument \`col\` is not valid)
 
@@ -678,15 +682,21 @@ class CsvSource(DataSource):
 		.. code-block:: python
 
 		    # plot_example_3.py
-		    import putil.misc, putil.pcsv
+		    import putil.misc, putil.pcsv, sys
+
+		    def cwrite(fobj, data):
+		        if sys.version_info.major == 2:
+		            fobj.write(data)
+		        else:
+		            fobj.write(bytes(data, 'ascii'))
 
 		    def write_csv_file(file_handle):
-		        file_handle.write('Col1,Col2\n')
-		        file_handle.write('0E-12,10\n')
-		        file_handle.write('1E-12,0\n')
-		        file_handle.write('2E-12,20\n')
-		        file_handle.write('3E-12,-10\n')
-		        file_handle.write('4E-12,30\n')
+		        cwrite(file_handle, 'Col1,Col2\n')
+		        cwrite(file_handle, '0E-12,10\n')
+		        cwrite(file_handle, '1E-12,0\n')
+		        cwrite(file_handle, '2E-12,20\n')
+		        cwrite(file_handle, '3E-12,-10\n')
+		        cwrite(file_handle, '4E-12,30\n')
 
 		    # indep_var is a Numpy vector, in this example  time,
 		    # in seconds. dep_var is a Numpy vector
@@ -712,9 +722,10 @@ class CsvSource(DataSource):
 
 		.. code-block:: python
 
+			>>> from __future__ import print_function
 			>>> import docs.support.plot_example_3
 			>>> obj = docs.support.plot_example_3.create_csv_source()
-			>>> print obj	#doctest: +ELLIPSIS
+			>>> print(obj)	#doctest: +ELLIPSIS
 			File name: ...
 			Data filter: None
 			Independent column label: Col1
@@ -724,7 +735,7 @@ class CsvSource(DataSource):
 			Independent variable minimum: 2e-12
 			Independent variable maximum: +inf
 			Independent variable: [ 2.0, 3.0, 4.0 ]
-			Dependent variable: [ 0, -30, 10 ]
+			Dependent variable: [ 0.0, -30.0, 10.0 ]
 
 		"""
 		ret = ''
@@ -734,7 +745,7 @@ class CsvSource(DataSource):
 		)
 		if self.dfilter is not None:
 			odfilter = OrderedDict(sorted(self.dfilter.items(), key=lambda t: t[0]))
-			for key, value in odfilter.iteritems():
+			for key, value in odfilter.items():
 				ret += '   {0}: {1}\n'.format(key, value)
 		ret += 'Independent column label: {0}\n'.format(self.indep_col_label)
 		ret += 'Dependent column label: {0}\n'.format(self.dep_col_label)
@@ -749,7 +760,7 @@ class CsvSource(DataSource):
 				self.fproc_eargs.items(),
 				key=lambda t: t[0]
 			))
-			for key, value in ofproc_eargs.iteritems():
+			for key, value in ofproc_eargs.items():
 				ret += '   {0}: {1}\n'.format(key, value)
 		ret += 'Independent variable minimum: {0}\n'.format(
 			'-inf' if self.indep_min is None else self.indep_min
@@ -778,7 +789,7 @@ class CsvSource(DataSource):
 
 	:raises: (when assigned)
 
-	 * IOError (File \`*[fname]*\` could not be found)
+	 * OSError (File \`*[fname]*\` could not be found)
 
 	 * RuntimeError (Argument \`col\` is not valid)
 
@@ -1084,14 +1095,14 @@ class CsvSource(DataSource):
 	.. =]=
 	.. code-block:: python
 
+	        cwrite(file_handle, '0E-12,10\n')
+	        cwrite(file_handle, '1E-12,0\n')
+	        cwrite(file_handle, '2E-12,20\n')
+	        cwrite(file_handle, '3E-12,-10\n')
+	        cwrite(file_handle, '4E-12,30\n')
+
 	    # indep_var is a Numpy vector, in this example  time,
 	    # in seconds. dep_var is a Numpy vector
-	    def proc_func1(indep_var, dep_var):
-	        # Scale time to pico-seconds
-	        indep_var = indep_var/1e-12
-	        # Remove offset
-	        dep_var = dep_var-dep_var[0]
-	        return indep_var, dep_var
 
 	.. =[=end=]=
 
@@ -1199,15 +1210,19 @@ class CsvSource(DataSource):
 	.. code-block:: python
 
 	    # plot_example_5.py
-	    import putil.misc, putil.pcsv
+	    import putil.misc, putil.pcsv, sys
+	    if sys.version_info.major == 2:
+	        from putil.compat2 import _write
+	    else:
+	        from putil.compat3 import _write
 
 	    def write_csv_file(file_handle):
-	        file_handle.write('Col1,Col2\n')
-	        file_handle.write('0E-12,10\n')
-	        file_handle.write('1E-12,0\n')
-	        file_handle.write('2E-12,20\n')
-	        file_handle.write('3E-12,-10\n')
-	        file_handle.write('4E-12,30\n')
+	        _write(file_handle, 'Col1,Col2\n')
+	        _write(file_handle, '0E-12,10\n')
+	        _write(file_handle, '1E-12,0\n')
+	        _write(file_handle, '2E-12,20\n')
+	        _write(file_handle, '3E-12,-10\n')
+	        _write(file_handle, '4E-12,30\n')
 
 	    def proc_func2(indep_var, dep_var, par1, par2):
 	        return (indep_var/1E-12)+(2*par1), dep_var+sum(par2)
@@ -1227,9 +1242,10 @@ class CsvSource(DataSource):
 
 	.. code-block:: python
 
+		>>> from __future__ import print_function
 		>>> import docs.support.plot_example_5
 		>>> obj = docs.support.plot_example_5.create_csv_source()
-		>>> print obj	#doctest: +ELLIPSIS
+		>>> print(obj)	#doctest: +ELLIPSIS
 		File name: ...
 		Data filter: None
 		Independent column label: Col1

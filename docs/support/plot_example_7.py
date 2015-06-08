@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+from __future__ import print_function
 import numpy, putil.plot
 
 def figure_iterator_example(no_print):
@@ -46,8 +47,8 @@ def figure_iterator_example(no_print):
 	)
 	if not no_print:
 		for num, panel in enumerate(figure):
-			print 'Panel {0}:'.format(num+1)
-			print panel
-			print
+			print('Panel {0}:'.format(num+1))
+			print(panel)
+			print('')
 	else:
 		return figure

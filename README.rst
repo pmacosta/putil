@@ -63,7 +63,7 @@ Python standard library. The modules provided are:
 Interpreter
 ===========
 
-The package has been developed and tested with Python 2.7
+The package has been developed and tested with Python 2.7 and Python 3.4
 
 Installing
 ==========
@@ -147,6 +147,8 @@ Contributing
     * `Sphinx <http://sphinx-doc.org/>`_
 
     * `Tox <https://tox.readthedocs.org/>`_
+
+
 
 5. Write a unit test which shows that a bug was fixed or that a new feature
    or API works as expected. Run the package tests to ensure that the bug fix
@@ -232,15 +234,16 @@ Contributing
 
 		    Usage:
 		      test.sh -h
-		      test.sh -d [-n num-cpus]
-		      test.sh -c [-n num-cpus] [module-name]
-		      test.sh [-n num-cpus] [module-name] [test-name]
+		      test.sh -d [-e env] [-n num-cpus]
+		      test.sh -c [-e env] [-n num-cpus] [module-name]
+		      test.sh [-e env] [-n num-cpus] [module-name] [test-name]
 
 		    Options:
 		      -h  Show this screen
 		      -c  Measure test coverage
 		      -d  Verify doctests
-		      -n  Number of CPUs to use default: 1]
+		      -e  Interpreter version [default: PY27|py34]
+		      -n  Number of CPUs to use [default: 1]
 
 		    If no module name is given all package modules are processed
 
@@ -260,10 +263,11 @@ Contributing
 
 		    Usage:
 		      pkg-validate.sh -h
-		      pkg-validate.sh [-n num-cpus]
+		      pkg-validate.sh [-n num-cpus] [-e env]
 
 		    Options:
 		      -h  Show this screen
+		      -e  Interpreter version [default: PY27|py34]
 		      -n  Number of CPUs to use [default: 1]
 
 

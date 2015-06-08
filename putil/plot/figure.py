@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,R0201,R0914,W0105,W0212
 
+from __future__ import print_function
 import numpy
 import os
 import matplotlib.pyplot as plt
@@ -21,7 +22,11 @@ from .functions import _intelligent_ticks
 ###
 """
 [[[cog
-import os, sys, __builtin__
+import os, sys
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_figure
 exobj_plot = trace_ex_plot_figure.trace_module(no_print=True)
@@ -187,6 +192,7 @@ class Figure(object):
 		.. code-block:: python
 
 		    # plot_example_7.py
+		    from __future__ import print_function
 		    import numpy, putil.plot
 
 		    def figure_iterator_example(no_print):
@@ -230,9 +236,9 @@ class Figure(object):
 		        )
 		        if not no_print:
 		            for num, panel in enumerate(figure):
-		                print 'Panel {0}:'.format(num+1)
-		                print panel
-		                print
+		                print('Panel {0}:'.format(num+1))
+		                print(panel)
+		                print('')
 		        else:
 		            return figure
 
@@ -244,8 +250,8 @@ class Figure(object):
 			>>> mod.figure_iterator_example(False)
 			Panel 1:
 			Series 0:
-			   Independent variable: [ 1, 2, 3, 4 ]
-			   Dependent variable: [ 1, -10, 10, 5 ]
+			   Independent variable: [ 1.0, 2.0, 3.0, 4.0 ]
+			   Dependent variable: [ 1.0, -10.0, 10.0, 5.0 ]
 			   Label: Goals
 			   Color: k
 			   Marker: o
@@ -264,8 +270,8 @@ class Figure(object):
 			<BLANKLINE>
 			Panel 2:
 			Series 0:
-			   Independent variable: [ 100, 200, 300, 400 ]
-			   Dependent variable: [ 50, 75, 100, 125 ]
+			   Independent variable: [ 100.0, 200.0, 300.0, 400.0 ]
+			   Dependent variable: [ 50.0, 75.0, 100.0, 125.0 ]
 			   Label: Saves
 			   Color: b
 			   Marker: None
@@ -286,7 +292,14 @@ class Figure(object):
         """
 		return iter(self._panels)
 
-	def __nonzero__(self):
+	def __nonzero__(self):	# pragma: no cover
+		"""
+		Returns :code:`True` if the figure has at least a panel associated with
+		it, :code:`False` otherwise
+		"""
+		return self._panels is not None
+
+	def __bool__(self):	# pragma: no cover
 		"""
 		Returns :code:`True` if the figure has at least a panel associated with
 		it, :code:`False` otherwise
@@ -558,10 +571,10 @@ class Figure(object):
 		)
 		self._exh.raise_exception_if(
 			exname='fig_small',
-			condition=((self.fig_width is not None) and
+			condition=bool(((self.fig_width is not None) and
 					  (self.fig_width < min_fig_width)) or
 					  ((self.fig_height is not None) and
-					  (self.fig_height < min_fig_height)),
+					  (self.fig_height < min_fig_height))),
 			edata=[
 				{'field':'min_width', 'value':min_fig_width},
 				{'field':'min_height', 'value':min_fig_height}
@@ -636,12 +649,13 @@ class Figure(object):
 		r"""
 		Prints figure information. For example:
 
+			>>> from __future__ import print_function
 			>>> import docs.support.plot_example_7 as mod
-			>>> print mod.figure_iterator_example(True)	#doctest: +ELLIPSIS
+			>>> print(mod.figure_iterator_example(True))	#doctest: +ELLIPSIS
 			Panel 0:
 			   Series 0:
-			      Independent variable: [ 1, 2, 3, 4 ]
-			      Dependent variable: [ 1, -10, 10, 5 ]
+			      Independent variable: [ 1.0, 2.0, 3.0, 4.0 ]
+			      Dependent variable: [ 1.0, -10.0, 10.0, 5.0 ]
 			      Label: Goals
 			      Color: k
 			      Marker: o
@@ -659,8 +673,8 @@ class Figure(object):
 			      pos: BEST
 			Panel 1:
 			   Series 0:
-			      Independent variable: [ 100, 200, 300, 400 ]
-			      Dependent variable: [ 50, 75, 100, 125 ]
+			      Independent variable: [ 100.0, 200.0, 300.0, 400.0 ]
+			      Dependent variable: [ 50.0, 75.0, 100.0, 125.0 ]
 			      Label: Saves
 			      Color: b
 			      Marker: None

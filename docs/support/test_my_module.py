@@ -20,7 +20,7 @@ def test_my_class():
 	obj = docs.support.my_module.MyClass()
 	with pytest.raises(RuntimeError) as excinfo:
 		obj.value
-	assert excinfo.value.message == 'Attribute `value` not set'
+	assert putil.test.get_exmsg(excinfo) == 'Attribute `value` not set'
 	with pytest.raises(RuntimeError) as excinfo:
 		obj.value = 'a'
-	assert excinfo.value.message == 'Argument `value` is not valid'
+	assert putil.test.get_exmsg(excinfo) == 'Argument `value` is not valid'

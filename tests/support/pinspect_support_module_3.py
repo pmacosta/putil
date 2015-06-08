@@ -4,13 +4,16 @@
 # pylint: disable=C0111,W0212
 
 
+from __future__ import print_function
+
+
 def deleter(self):
 	"""
 	Getter function to test if enclosed class detection works with property
 	action functions in different files
 	"""
 	# pylint: disable=W0613
-	print 'Deleter action'
+	print('Deleter action')
 
 
 def another_class_enclosing_func():

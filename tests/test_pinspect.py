@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,F0401,R0201,R0903,R0913,R0915,W0104,W0212,W0232,W0612,W0613
 
+from __future__ import print_function
 import copy
 import os
 import pytest
@@ -25,24 +26,24 @@ def compare_str_outputs(obj, ref_list):
 		actual_list = str(obj).split('\n')
 		for actual_line, ref_line in zip(actual_list, ref_list):
 			if actual_line != ref_line:
-				print '\033[{0}m{1}\033[0m <-> {2}'.format(31, actual_line, ref_line)
+				print('\033[{0}m{1}\033[0m <-> {2}'.format(31, actual_line, ref_line))
 			else:
-				print actual_line
-		print '---[Differing lines]---'
+				print(actual_line)
+		print('---[Differing lines]---')
 		for actual_line, ref_line in zip(actual_list, ref_list):
 			if actual_line != ref_line:
-				print 'Actual line...: {0}'.format(actual_line)
-				print 'Reference line: {0}'.format(ref_line)
+				print('Actual line...: {0}'.format(actual_line))
+				print('Reference line: {0}'.format(ref_line))
 				break
-		print '-----------------------'
+		print('-----------------------')
 		if len(actual_list) != len(ref_list):
-			print '{0} longer than {1}'.format(
+			print('{0} longer than {1}'.format(
 				'Actual' if len(actual_list) > len(ref_list) else 'Reference',
 				'reference' if len(actual_list) > len(ref_list) else 'actual'
-			)
+			))
 			print_list = actual_list if len(actual_list) > len(ref_list) else ref_list
-			print print_list[min([len(actual_list), len(ref_list)]):]
-			print '-----------------------'
+			print(print_list[min([len(actual_list), len(ref_list)]):])
+			print('-----------------------')
 	return ref_text
 
 
@@ -118,7 +119,7 @@ class TestCallables(object):
 		putil.test.assert_exception(
 			putil.pinspect.Callables,
 			{'fnames':['_not_a_file_']},
-			IOError,
+			OSError,
 			'File _not_a_file_ could not be found'
 		)
 
@@ -157,19 +158,28 @@ class TestCallables(object):
 		obj1._callables_db = {'call3':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
 		with pytest.raises(RuntimeError) as excinfo:
 			obj1+obj2
-		assert excinfo.value.message == 'Conflicting information between objects'
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			'Conflicting information between objects'
+		)
 		obj1._callables_db = {'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
 		#
 		obj2._reverse_callables_db = {'rc3':'5', 'rc2':'-1'}
 		with pytest.raises(RuntimeError) as excinfo:
 			obj1+obj2
-		assert excinfo.value.message == 'Conflicting information between objects'
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			'Conflicting information between objects'
+		)
 		obj2._reverse_callables_db = {'rc3':'0', 'rc4':'-1'}
 		#
 		obj2._modules_dict = {'key1':{'entry':'pi'}, 'key4':{'entry':'gamma'}}
 		with pytest.raises(RuntimeError) as excinfo:
 			obj1+obj2
-		assert excinfo.value.message == 'Conflicting information between objects'
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			'Conflicting information between objects'
+		)
 		obj2._modules_dict = {'key3':{'entry':'pi'}, 'key4':{'entry':'gamma'}}
 		# Test when intersection is the same
 		obj2._modules_dict = {'key1':{'entry':'alpha'}, 'key4':{'entry':'gamma'}}
@@ -286,37 +296,37 @@ class TestCallables(object):
 		ref.append('Classes:')
 		ref.append('   tests.test_exdoc.MockFCode')
 		ref.append('   tests.test_exdoc.MockGetFrame')
-		ref.append('tests.test_exdoc.load_support_module: func (26-40)')
-		ref.append('tests.test_exdoc.trace_error_class: func (41-49)')
-		ref.append('tests.test_exdoc.exdocobj: func (50-83)')
-		ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (55-60)')
-		ref.append('tests.test_exdoc.exdocobj_single: func (84-93)')
-		ref.append('tests.test_exdoc.simple_exobj: func (94-108)')
-		ref.append('tests.test_exdoc.simple_exobj.func1: func (99-104)')
-		ref.append('tests.test_exdoc.MockFCode: class (116-121)')
-		ref.append('tests.test_exdoc.MockFCode.__init__: meth (117-121)')
-		ref.append('tests.test_exdoc.MockGetFrame: class (122-126)')
-		ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (123-126)')
-		ref.append('tests.test_exdoc.mock_getframe: func (127-130)')
-		ref.append('tests.test_exdoc.test_exdoc_errors: func (131-178)')
-		ref.append('tests.test_exdoc.test_depth_property: func (179-189)')
-		ref.append('tests.test_exdoc.test_exclude_property: func (190-200)')
-		ref.append('tests.test_exdoc.test_build_ex_tree: func (201-300)')
-		ref.append('tests.test_exdoc.test_build_ex_tree.func1: func (208-213)')
+		ref.append('tests.test_exdoc.load_support_module: func (31-45)')
+		ref.append('tests.test_exdoc.trace_error_class: func (46-54)')
+		ref.append('tests.test_exdoc.exdocobj: func (55-88)')
+		ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (60-65)')
+		ref.append('tests.test_exdoc.exdocobj_single: func (89-98)')
+		ref.append('tests.test_exdoc.simple_exobj: func (99-113)')
+		ref.append('tests.test_exdoc.simple_exobj.func1: func (104-109)')
+		ref.append('tests.test_exdoc.MockFCode: class (121-126)')
+		ref.append('tests.test_exdoc.MockFCode.__init__: meth (122-126)')
+		ref.append('tests.test_exdoc.MockGetFrame: class (127-131)')
+		ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (128-131)')
+		ref.append('tests.test_exdoc.mock_getframe: func (132-135)')
+		ref.append('tests.test_exdoc.test_exdoc_errors: func (136-183)')
+		ref.append('tests.test_exdoc.test_depth_property: func (184-194)')
+		ref.append('tests.test_exdoc.test_exclude_property: func (195-205)')
+		ref.append('tests.test_exdoc.test_build_ex_tree: func (206-305)')
+		ref.append('tests.test_exdoc.test_build_ex_tree.func1: func (213-218)')
 		ref.append('tests.test_exdoc.test_build_ex_tree.mock_add_nodes1:'
-			       ' func (215-216)')
+			       ' func (220-221)')
 		ref.append('tests.test_exdoc.test_build_ex_tree.mock_add_nodes2:'
-			       ' func (217-218)')
+			       ' func (222-223)')
 		ref.append('tests.test_exdoc.test_build_ex_tree.mock_add_nodes3:'
-			       ' func (219-220)')
-		ref.append('tests.test_exdoc.test_get_sphinx_doc: func (301-621)')
-		ref.append('tests.test_exdoc.test_get_sphinx_autodoc: func (622-646)')
-		ref.append('tests.test_exdoc.test_copy_works: func (647-661)')
-		ref.append('tests.test_exdoc.test_exdoccxt_errors: func (662-672)')
-		ref.append('tests.test_exdoc.test_exdoccxt_multiple: func (673-705)')
-		ref.append('tests.test_exdoc.test_exdoccxt_multiple.func1: func (675-681)')
+			       ' func (224-225)')
+		ref.append('tests.test_exdoc.test_get_sphinx_doc: func (306-626)')
+		ref.append('tests.test_exdoc.test_get_sphinx_autodoc: func (627-672)')
+		ref.append('tests.test_exdoc.test_copy_works: func (673-687)')
+		ref.append('tests.test_exdoc.test_exdoccxt_errors: func (688-698)')
+		ref.append('tests.test_exdoc.test_exdoccxt_multiple: func (699-731)')
+		ref.append('tests.test_exdoc.test_exdoccxt_multiple.func1: func (701-707)')
 		ref.append('tests.test_exdoc.test_exdoccxt_multiple.test_trace: '
-				   'func (682-695)')
+				   'func (708-721)')
 		ref_txt = '\n'.join(ref)
 		actual_txt = str(xobj)
 		assert actual_txt == ref_txt

@@ -3,8 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,R0914,W0212,W0640
 
+from __future__ import print_function
 import os
 import subprocess
+import sys
 
 import putil.misc
 import putil.test
@@ -16,7 +18,12 @@ def test_exdoc_doccode():
 		""" Remove py.test header """
 		actual_text = []
 		off_header = False
-		for line in stdout.split('\n'):
+		lines = (
+			stdout.split('\n')
+			if sys.version_info.major == 2 else
+			stdout.decode('ascii').split('\n')
+		)
+		for line in lines:
 			off_header = line.startswith('Callable:') or off_header
 			if off_header:
 				actual_text.append(line)
@@ -105,10 +112,10 @@ def test_pcontracts_doccode():
 		                                          custom_contract_b)
 	@putil.pcontracts.contract(name='custom_contract_a')
 	def funca(name):
-		print 'My name is {0}'.format(name)
+		print('My name is {0}'.format(name))
 	@putil.pcontracts.contract(name='custom_contract_b')
 	def funcb(name):
-		print 'My name is {0}'.format(name)
+		print('My name is {0}'.format(name))
 	putil.test.assert_exception(
 		funca,
 		{'name':''},
@@ -193,7 +200,7 @@ def test_pcontracts_doccode():
 	putil.test.assert_exception(
 		func7,
 		{'name':''},
-		IOError,
+		OSError,
 		'File could not be opened'
 	)
 	assert func7('John') == 'John'
@@ -250,12 +257,12 @@ def test_plot_doccode():
 	metrics_ci = compare_images(ref_ci_fname, test_fname)
 	result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
 	if (not result) and (not result_ci):
-		print 'Images do not match'
-		print 'Reference image: file://{0}'.format(os.path.realpath(ref_fname))
-		print 'Reference CI image: file://{0}'.format(
+		print('Images do not match')
+		print('Reference image: file://{0}'.format(os.path.realpath(ref_fname)))
+		print('Reference CI image: file://{0}'.format(
 			os.path.realpath(ref_ci_fname)
-		)
-		print 'Actual image: file://{0}'.format(os.path.realpath(test_fname))
+		))
+		print('Actual image: file://{0}'.format(os.path.realpath(test_fname)))
 	if result or result_ci:
 		with putil.misc.ignored(OSError):
 			os.remove(test_fname)

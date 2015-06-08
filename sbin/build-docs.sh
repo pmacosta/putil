@@ -27,13 +27,13 @@ finish() {
 	export SUPPORT_DIR=""
 	cd ${cpwd}
 }
-trap finish EXIT
+trap finish EXIT ERR SIGINT
 
 pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 src_dir=${pkg_dir}/putil
 cpwd=${PWD}
 export TRACER_DIR=${pkg_dir}/docs/support
-plot_submodules=(basic_source csv_source figure functions panel series)
+plot_submodules=(basic_source csv_source figure "functions" panel series)
 
 # Default values for command line options
 rebuild=0
@@ -89,7 +89,7 @@ if [ ${rebuild} == 1 ]; then
 	for module in ${modules[@]}; do
 		if [ "${module}" == "plot" ]; then
 			module_dir=${src_dir}/plot
-			submodules=${plot_submodules}
+			submodules=(${plot_submodules[@]})
 		else
 			module_dir=${src_dir}
 			submodules=(${module})
@@ -128,7 +128,7 @@ modules=(misc pcontracts plot tree)
 for module in ${modules[@]}; do
 	if [ "${module}" == "plot" ]; then
 		module_dir=${src_dir}/plot
-		submodules=${plot_submodules}
+		submodules=(${plot_submodules[@]})
 	else
 		module_dir=${src_dir}
 		submodules=(${module})

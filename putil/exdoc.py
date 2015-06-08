@@ -1,19 +1,25 @@
 ﻿# exdoc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E1101,R0903,W0105,W0212
+# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0903,W0105,W0122,W0212,W0611,W0613
 
+from __future__ import print_function
 import bisect
 import copy
 import os
 import sys
 import textwrap
-import __builtin__
+if sys.version_info.major == 2:	# pragma: no cover
+	import __builtin__
+	from putil.compat2 import _rwtb
+else:	# pragma: no cover
+	import builtins as __builtin__
+	from putil.compat3 import _rwtb
+
 
 import putil.exh
 import putil.misc
 import putil.tree
-
 
 ###
 # Global variables
@@ -55,10 +61,11 @@ class ExDocCxt(object):
 
 	For example:
 
+		>>> from __future__ import print_function
 		>>> import putil.eng, putil.exdoc
 		>>> with putil.exdoc.ExDocCxt() as exdoc_obj:
 		...     value = putil.eng.peng(1e6, 3, False)
-		>>> print exdoc_obj.get_sphinx_doc('putil.eng.peng')
+		>>> print(exdoc_obj.get_sphinx_doc('putil.eng.peng'))
 		.. Auto-generated exceptions documentation for putil.eng.peng
 		<BLANKLINE>
 		:raises:
@@ -214,7 +221,7 @@ class ExDoc(object):
 	def _build_module_db(self):
 		""" Build database of module callables sorted by line number """
 		tdict = {}
-		for callable_name, callable_dict in self._exh_obj.callables_db.iteritems():
+		for callable_name, callable_dict in self._exh_obj.callables_db.items():
 			fname, line_no = callable_dict['code_id']
 			if fname not in tdict:
 				tdict[fname] = list()
@@ -223,7 +230,7 @@ class ExDoc(object):
 			else:
 				cname = callable_name
 			tdict[fname].append({'name':cname, 'line':line_no})
-		for fname in tdict.iterkeys():
+		for fname in tdict.keys():
 			self._module_obj_db[fname] = sorted(
 				tdict[fname],
 				key=lambda idict: idict['line']
@@ -240,7 +247,7 @@ class ExDoc(object):
 	def _print_ex_tree(self):
 		""" Prints exception tree """
 		if not self._no_print:
-			print str(self._tobj)
+			print(str(self._tobj).encode('utf-8'))
 
 	def _set_depth(self, depth):
 		""" Depth setter """
@@ -403,7 +410,7 @@ class ExDoc(object):
 		}
 		if prop:
 			if len(callable_dict) == 1:
-				callable_root = callable_dict.keys()[0]
+				callable_root = list(callable_dict.keys())[0]
 				action = callable_dict[callable_root]['type']
 				desc = desc_dict[action]
 				exlist = sorted(
@@ -441,7 +448,9 @@ class ExDoc(object):
 									5)) for name in exlist]
 							)
 		else:
-			exlist = sorted(list(set(callable_dict[callable_dict.keys()[0]]['exlist'])))
+			exlist = sorted(
+				list(set(callable_dict[list(callable_dict.keys())[0]]['exlist']))
+			)
 			if len(exlist) == 1:
 				exoutput.extend(
 					['\n{0}'.format(_format_msg(

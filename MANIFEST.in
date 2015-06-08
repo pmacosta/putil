@@ -22,7 +22,6 @@ recursive-include docs/support *.py *.csv *.png *.odg *.sh
 
 # All build and testing tools
 include requirements.txt
-include .coveragerc
 include shippable.yml
 include tox.ini
 recursive-include tests/plot *.py

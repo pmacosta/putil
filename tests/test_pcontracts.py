@@ -1,7 +1,7 @@
 ﻿# test_pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,E1121,W0212,W0232,W0612,W0613
+# pylint: disable=C0103,C0111,E1121,W0212,W0232,W0611,W0612,W0613
 
 import contracts
 import copy
@@ -134,19 +134,25 @@ def test_format_arg_errors():
 def test_format_arg_works():
 	""" Test _format_arg() function """
 	fobj = putil.pcontracts._format_arg
-	assert cmp(fobj('Message'), {'msg':'Message', 'type':RuntimeError}) == 0
-	assert cmp(
-		fobj(IOError),
-		{'msg':'Argument `*[argument_name]*` is not valid', 'type':IOError}
-	) == 0
-	assert cmp(
-		fobj((ValueError, 'Description 1')),
+	assert (
+		fobj('Message') ==
+		{'msg':'Message', 'type':RuntimeError}
+	)
+	assert (
+		fobj(OSError) ==
+		{
+			'msg':'Argument `*[argument_name]*` is not valid',
+			'type':OSError
+		}
+	)
+	assert (
+		fobj((ValueError, 'Description 1')) ==
 		{'msg':'Description 1', 'type':ValueError}
-	) == 0
-	assert cmp(
-		fobj(('Description 2', TypeError)),
+	)
+	assert (
+		fobj(('Description 2', TypeError)) ==
 		{'msg':'Description 2', 'type':TypeError}
-	) == 0
+	)
 
 
 def test_parse_new_contract_args():
@@ -155,13 +161,22 @@ def test_parse_new_contract_args():
 	# Validate *args
 	with pytest.raises(TypeError) as excinfo:
 		fobj('Desc1', file_not_found='Desc2')
-	assert excinfo.value.message == 'Illegal custom contract exception definition'
+	assert (
+		putil.test.get_exmsg(excinfo) ==
+		'Illegal custom contract exception definition'
+	)
 	with pytest.raises(TypeError) as excinfo:
 		fobj('Desc1', 'Desc2')
-	assert excinfo.value.message == 'Illegal custom contract exception definition'
+	assert (
+		putil.test.get_exmsg(excinfo) ==
+		'Illegal custom contract exception definition'
+	)
 	with pytest.raises(TypeError) as excinfo:
 		fobj(5)
-	assert excinfo.value.message == 'Illegal custom contract exception definition'
+	assert (
+		putil.test.get_exmsg(excinfo) ==
+		'Illegal custom contract exception definition'
+	)
 	# Normal behavior
 	assert fobj() == [{
 		'name':'argument_invalid',
@@ -173,16 +188,16 @@ def test_parse_new_contract_args():
 		'msg':'Desc',
 		'type':RuntimeError
 	}]
-	assert fobj(IOError) == [{
+	assert fobj(OSError) == [{
 		'name':'default',
 		'msg':'Argument `*[argument_name]*` is not valid',
-		'type':IOError
+		'type':OSError
 	}]
 	assert fobj(('a', )) == [{'name':'default', 'msg':'a', 'type':RuntimeError}]
-	assert fobj((IOError, )) == [{
+	assert fobj((OSError, )) == [{
 		'name':'default',
 		'msg':'Argument `*[argument_name]*` is not valid',
-		'type':IOError
+		'type':OSError
 	}]
 	assert fobj([TypeError, 'bcd']) == [{
 		'name':'default',
@@ -194,13 +209,16 @@ def test_parse_new_contract_args():
 		'msg':'xyz',
 		'type':ValueError
 	}]
-	assert sorted(fobj(
-		mycontract=('xyz', ValueError),
-		othercontract=('abc', IOError))
-		) == [
-			{'name':'othercontract', 'msg':'abc', 'type':IOError},
+	assert putil.test.comp_list_of_dicts(
+		fobj(
+			mycontract=('xyz', ValueError),
+			othercontract=('abc', OSError)
+		),
+		[
+			{'name':'othercontract', 'msg':'abc', 'type':OSError},
 			{'name':'mycontract', 'msg':'xyz', 'type':ValueError}
-	]
+		]
+	)
 	# Validate **kwargs
 	putil.test.assert_exception(
 		fobj,
@@ -208,10 +226,14 @@ def test_parse_new_contract_args():
 		TypeError,
 		'Illegal custom contract exception definition'
 	)
-	assert fobj(char='Desc1', other=['a', ValueError]) == [
+	ref = [
 		{'name':'char', 'msg':'Desc1', 'type':RuntimeError},
 		{'name':'other', 'msg':'a', 'type':ValueError}
 	]
+	assert putil.test.comp_list_of_dicts(
+		ref,
+		fobj(char='Desc1', other=['a', ValueError])
+	)
 
 
 def test_register_custom_contracts():
@@ -302,22 +324,23 @@ def test_register_custom_contracts():
 	# Test homogenization of exception definitions
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract1', 'my description')
-	assert cmp(
-		putil.pcontracts._CUSTOM_CONTRACTS,
+	assert (
+		putil.pcontracts._CUSTOM_CONTRACTS ==
 		{'test_contract1':{'default':{
 			'num':0,
 			'msg':'my description',
 			'type':RuntimeError,
-			'field':None}}}
-	) == 0
+			'field':None}}
+		}
+	)
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj(
 		'test_contract2',
 		[{'name':'mex1', 'msg':'msg1', 'type':ValueError},
 		 {'name':'mex2', 'msg':'msg2 *[token_name]* hello world'}]
 	)
-	assert cmp(
-		putil.pcontracts._CUSTOM_CONTRACTS,
+	assert (
+		putil.pcontracts._CUSTOM_CONTRACTS ==
 		{'test_contract2':{
 			'mex1':{'num':0, 'msg':'msg1', 'type':ValueError, 'field':None},
 			'mex2':{
@@ -325,15 +348,16 @@ def test_register_custom_contracts():
 				'msg':'msg2 *[token_name]* hello world',
 				'type':RuntimeError,
 				'field':'token_name'}}
-	}) == 0
+	   }
+	)
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract3', [{'name':'mex1', 'msg':'msg1', 'type':ValueError}])
 	fobj(
 		'test_contract4',
 		[{'name':'mex2', 'msg':'msg2 *[token_name]* hello world'}]
 	)
-	assert cmp(
-		putil.pcontracts._CUSTOM_CONTRACTS,
+	assert (
+		putil.pcontracts._CUSTOM_CONTRACTS ==
 		{'test_contract3':{'mex1':
 					{
 						'num':0,
@@ -350,17 +374,19 @@ def test_register_custom_contracts():
 						'field':'token_name'
 					}
 				}
-   }) == 0
+	   }
+	)
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	fobj('test_contract5', {'name':'mex5', 'msg':'msg5', 'type':ValueError})
-	assert cmp(
-		putil.pcontracts._CUSTOM_CONTRACTS,
+	assert (
+		putil.pcontracts._CUSTOM_CONTRACTS ==
 		{'test_contract5':{'mex5':{
 			'num':0,
 			'msg':'msg5',
 			'type':ValueError,
 			'field':None
-	}}}) == 0
+		}}}
+	)
 	#putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
 
@@ -388,7 +414,7 @@ def test_new_contract():
 			}
 		}
 	}
-	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, ref) == 0
+	assert putil.pcontracts._CUSTOM_CONTRACTS == ref
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract('Simple message')
 	def func2(name2):
@@ -408,7 +434,7 @@ def test_new_contract():
 			}
 		}
 	}
-	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, ref) == 0
+	assert putil.pcontracts._CUSTOM_CONTRACTS == ref
 	putil.pcontracts._CUSTOM_CONTRACTS = dict()
 	@putil.pcontracts.new_contract(
 		ex1='Medium message',
@@ -440,7 +466,7 @@ def test_new_contract():
 			}
 		}
 	}
-	assert cmp(putil.pcontracts._CUSTOM_CONTRACTS, ref) == 0
+	assert putil.pcontracts._CUSTOM_CONTRACTS == ref
 	putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
 
 
@@ -582,7 +608,7 @@ def test_contract():
 		return True
 	@putil.pcontracts.new_contract(
 		wrong_file_name='The argument *[argument_name]* is wrong',
-		file_not_found=(IOError, 'File name `*[file_name]*` not found')
+		file_not_found=(OSError, 'File name `*[file_name]*` not found')
 	)
 	def file_name_valid(name):
 		exdesc = putil.pcontracts.get_exdesc()
@@ -637,7 +663,7 @@ def test_contract():
 	putil.test.assert_exception(
 		func3,
 		{'fname':'b', 'fnumber':5, 'flag':False},
-		IOError,
+		OSError,
 		'File name `b` not found'
 	)
 	putil.test.assert_exception(
@@ -648,7 +674,12 @@ def test_contract():
 	)
 	with pytest.raises(TypeError) as excinfo:
 		func2(2, 5, 10)
-	assert excinfo.value.message == 'func2() takes exactly 1 argument (3 given)'
+	ref = (
+		'func2() takes exactly 1 argument (3 given)'
+		if sys.version_info.major == 2 else
+		'func2() takes 1 positional argument but 3 were given'
+	)
+	assert putil.test.get_exmsg(excinfo) == ref
 	assert func1(5) == 5
 	assert func2(10) == 10
 	assert func3('hello', 'world', False) == ('hello', 'world')
@@ -687,7 +718,7 @@ def test_contract():
 		},
 		{
 			'name':'contract_func4_fname_0',
-			'type':IOError,
+			'type':OSError,
 			'msg':'File name `*[file_name]*` not found'
 		},
 		{
@@ -696,7 +727,7 @@ def test_contract():
 			'msg':'The argument fname is wrong'
 		}
 	]
-	assert sorted(pexlist) == sorted(ref)
+	assert putil.test.comp_list_of_dicts(pexlist, ref)
 	putil.test.assert_exception(
 		func4,
 		{'fname':'a', 'fnumber':5},
@@ -706,7 +737,7 @@ def test_contract():
 	putil.test.assert_exception(
 		func4,
 		{'fname':'b', 'fnumber':5},
-		IOError,
+		OSError,
 		'File name `b` not found'
 	)
 	putil.test.assert_exception(
@@ -735,58 +766,6 @@ def test_contract():
 		''
 	)
 	putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
-
-
-def test_file_name_contract():
-	""" Test for file_name custom contract """
-	@putil.pcontracts.contract(sfn='file_name')
-	def func(sfn):
-		""" Sample function to test file_name custom contract """
-		return sfn
-	putil.test.assert_exception(
-		func,
-		{'sfn':3},
-		RuntimeError,
-		'Argument `sfn` is not valid'
-	)
-	putil.test.assert_exception(
-		func,
-		{'sfn':'test\0'},
-		RuntimeError,
-		'Argument `sfn` is not valid'
-	)
-	func('some_file.txt')
-	# Test with Python executable (should be portable across systems), file
-	# should be valid although not having permissions to write it
-	func(sys.executable)
-
-
-def test_file_name_exists_contract():
-	""" Test for file_name_exists custom contract """
-	@putil.pcontracts.contract(sfn='file_name_exists')
-	def func(sfn):
-		""" Sample function to test file_name_exists custom contract """
-		return sfn
-	putil.test.assert_exception(
-		func,
-		{'sfn':3},
-		RuntimeError,
-		'Argument `sfn` is not valid'
-	)
-	putil.test.assert_exception(
-		func,
-		{'sfn':'test\0'},
-		RuntimeError,
-		'Argument `sfn` is not valid'
-	)
-	putil.test.assert_exception(
-		func,
-		{'sfn':'_file_does_not_exist'},
-		IOError,
-		'File `_file_does_not_exist` could not be found'
-	)
-	# Test with Python executable (should be portable across systems)
-	func(sys.executable)
 
 
 def test_enable_disable_contracts():

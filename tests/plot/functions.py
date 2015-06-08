@@ -51,33 +51,38 @@ class TestDataSource(object):
 			indep_var = property(None, _set_indep_var)
 		with pytest.raises(TypeError) as excinfo:
 			Test1()
-		assert excinfo.value.message == (
-			"Can't instantiate abstract class Test1 with abstract methods "
-			"__str__, _set_dep_var, _set_indep_var, dep_var, indep_var"
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			("Can't instantiate abstract class Test1 with abstract methods "
+			"__str__, _set_dep_var, _set_indep_var, dep_var, indep_var")
 		)
 		with pytest.raises(TypeError) as excinfo:
 			Test2()
-		assert excinfo.value.message == (
-			"Can't instantiate abstract class Test2 with abstract methods "
-			"_set_dep_var, _set_indep_var, dep_var, indep_var"
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			("Can't instantiate abstract class Test2 with abstract methods "
+			"_set_dep_var, _set_indep_var, dep_var, indep_var")
 		)
 		with pytest.raises(TypeError) as excinfo:
 			Test3()
-		assert excinfo.value.message == (
-			"Can't instantiate abstract class Test3 with abstract methods "
-			"_set_indep_var, dep_var, indep_var"
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			("Can't instantiate abstract class Test3 with abstract methods "
+			"_set_indep_var, dep_var, indep_var")
 		)
 		with pytest.raises(TypeError) as excinfo:
 			Test4()
-		assert excinfo.value.message == (
-			"Can't instantiate abstract class Test4 with abstract methods "
-			"dep_var, indep_var"
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			("Can't instantiate abstract class Test4 with abstract methods "
+			"dep_var, indep_var")
 		)
 		with pytest.raises(TypeError) as excinfo:
 			Test5()
-		assert excinfo.value.message == (
-			"Can't instantiate abstract class "
-			"Test5 with abstract methods indep_var"
+		assert (
+			putil.test.get_exmsg(excinfo) ==
+			("Can't instantiate abstract class "
+			"Test5 with abstract methods indep_var")
 		)
 		# This statement should raise no exception
 		Test6()

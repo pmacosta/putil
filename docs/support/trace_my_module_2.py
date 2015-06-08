@@ -7,6 +7,7 @@
 # Option 2: manually use all callables to document
 ###
 
+from __future__ import print_function
 import copy, putil.exdoc, docs.support.my_module
 
 def trace_module(no_print=True):
@@ -26,9 +27,9 @@ def trace_module(no_print=True):
 		callable_names = ['func', 'MyClass.value']
 		for callable_name in callable_names:
 			callable_name = module_prefix+callable_name
-			print '\nCallable: {0}'.format(callable_name)
-			print exdoc_obj.get_sphinx_doc(callable_name, width=70)
-			print '\n'
+			print('\nCallable: {0}'.format(callable_name))
+			print(exdoc_obj.get_sphinx_doc(callable_name, width=70))
+			print('\n')
 	return copy.copy(exdoc_obj)
 
 if __name__ == '__main__':

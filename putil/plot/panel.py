@@ -18,7 +18,11 @@ from .constants import AXIS_LABEL_FONT_SIZE, AXIS_TICKS_FONT_SIZE, LEGEND_SCALE
 ###
 """
 [[[cog
-import os, sys, __builtin__
+import os, sys
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_panel
 exobj_plot = trace_ex_plot_panel.trace_module(no_print=True)
@@ -173,6 +177,7 @@ class Panel(object):
 		.. code-block:: python
 
 		    # plot_example_6.py
+		    from __future__ import print_function
 		    import numpy, putil.plot
 
 		    def panel_iterator_example(no_print):
@@ -204,9 +209,9 @@ class Panel(object):
 		        )
 		        if not no_print:
 		            for num, series in enumerate(panel):
-		                print 'Series {0}:'.format(num+1)
-		                print series
-		                print
+		                print('Series {0}:'.format(num+1))
+		                print(series)
+		                print('')
 		        else:
 		            return panel
 
@@ -217,8 +222,8 @@ class Panel(object):
 			>>> import docs.support.plot_example_6 as mod
 			>>> mod.panel_iterator_example(False)
 			Series 1:
-			Independent variable: [ 1, 2, 3, 4 ]
-			Dependent variable: [ 1, -10, 10, 5 ]
+			Independent variable: [ 1.0, 2.0, 3.0, 4.0 ]
+			Dependent variable: [ 1.0, -10.0, 10.0, 5.0 ]
 			Label: Goals
 			Color: k
 			Marker: o
@@ -227,8 +232,8 @@ class Panel(object):
 			Secondary axis: False
 			<BLANKLINE>
 			Series 2:
-			Independent variable: [ 100, 200, 300, 400 ]
-			Dependent variable: [ 50, 75, 100, 125 ]
+			Independent variable: [ 100.0, 200.0, 300.0, 400.0 ]
+			Dependent variable: [ 50.0, 75.0, 100.0, 125.0 ]
 			Label: Saves
 			Color: b
 			Marker: None
@@ -240,7 +245,14 @@ class Panel(object):
 		"""
 		return iter(self._series)
 
-	def __nonzero__(self):
+	def __nonzero__(self):	# pragma: no cover
+		"""
+		Returns :code:`True` if the panel has at least a series associated
+		with it, :code:`False` otherwise
+		"""
+		return self._series is not None
+
+	def __bool__(self):	# pragma: no cover
 		"""
 		Returns :code:`True` if the panel has at least a series associated
 		with it, :code:`False` otherwise
@@ -548,7 +560,7 @@ class Panel(object):
 							 {'pos':'BEST', 'cols':1})
 		self._legend_props.setdefault('pos', 'BEST')
 		self._legend_props.setdefault('cols', 1)
-		for key, value in self.legend_props.iteritems():
+		for key, value in self.legend_props.items():
 			self._exh.raise_exception_if(
 				exname='invalid_legend_prop',
 				condition=key not in self._legend_props_list,
@@ -574,11 +586,12 @@ class Panel(object):
 
 		.. code-block:: python
 
+			>>> from __future__ import print_function
 			>>> import docs.support.plot_example_6 as mod
-			>>> print mod.panel_iterator_example(True)
+			>>> print(mod.panel_iterator_example(True))
 			Series 0:
-			   Independent variable: [ 1, 2, 3, 4 ]
-			   Dependent variable: [ 1, -10, 10, 5 ]
+			   Independent variable: [ 1.0, 2.0, 3.0, 4.0 ]
+			   Dependent variable: [ 1.0, -10.0, 10.0, 5.0 ]
 			   Label: Goals
 			   Color: k
 			   Marker: o
@@ -586,8 +599,8 @@ class Panel(object):
 			   Line style: -
 			   Secondary axis: False
 			Series 1:
-			   Independent variable: [ 100, 200, 300, 400 ]
-			   Dependent variable: [ 50, 75, 100, 125 ]
+			   Independent variable: [ 100.0, 200.0, 300.0, 400.0 ]
+			   Dependent variable: [ 50.0, 75.0, 100.0, 125.0 ]
 			   Label: Saves
 			   Color: b
 			   Marker: None
@@ -638,7 +651,7 @@ class Panel(object):
 		ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
 		ret += 'Display independent axis: {0}\n'.format(self.display_indep_axis)
 		ret += 'Legend properties:\n'
-		for num, (key, value) in enumerate(sorted(self.legend_props.iteritems())):
+		for num, (key, value) in enumerate(sorted(list(self.legend_props.items()))):
 			ret += '   {0}: {1}{2}'.format(
 				key, value, '\n' if num+1 < len(self.legend_props) else ''
 			)

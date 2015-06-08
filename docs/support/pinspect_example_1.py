@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,R0903,W0212,W0611,W0612
 
+from __future__ import print_function
 import math
 
 def my_func(version):
@@ -23,4 +24,4 @@ def my_func(version):
 		value = property(_get_value, pm._set_value, None, 'Value property')
 
 def print_name(name):
-	print 'My name is {0}, and sqrt(2) = {1}'.format(name, math.sqrt(2))
+	print('My name is {0}, and sqrt(2) = {1}'.format(name, math.sqrt(2)))

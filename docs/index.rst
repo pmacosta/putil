@@ -3,13 +3,14 @@
 .. See LICENSE for details
 .. _index:
 
-.. include:: ../README.rst
+.. include:: ./README.rst
 
 Contents
 ========
 
 .. toctree::
 
+	README
 	eng
 	exdoc
 	exh

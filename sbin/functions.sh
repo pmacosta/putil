@@ -41,6 +41,13 @@ print_banner () {
 	echo -e "${cyan}${bold}${line}${reset}"
 }
 
+print_green_line () {
+	local green="\e[1;32m"
+	local bold="\033[1m"
+	local reset="\033[0m"
+	echo -e "${green}${bold}$1${reset}"
+}
+
 # Mostly From https://stackoverflow.com/questions/12199631/
 # convert-seconds-to-hours-minutes-seconds-in-bash
 show_time () {

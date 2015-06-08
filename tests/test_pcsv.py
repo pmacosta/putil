@@ -1,56 +1,61 @@
 ﻿# test_pcsv.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,R0201,W0232
+# pylint: disable=C0111,C0302,E0611,F0401,R0201,W0232
 
 import mock
 import os
 import pytest
+import sys
 import tempfile
 
 import putil.misc
 import putil.pcsv
 import putil.test
+if sys.version_info.major == 2:
+	from putil.compat2 import _read, _write
+else:
+	from putil.compat3 import _read, _write
 
 
 ###
 # Tests for CsvFile
 ###
 def write_file_empty(file_handle):
-	file_handle.write('')
+	_write(file_handle, '')
 
 
 def write_cols_not_unique(file_handle):
-	file_handle.write('Col1,Col2,Col3,Col1')
+	_write(file_handle, 'Col1,Col2,Col3,Col1')
 
 
 def write_no_data(file_handle):
-	file_handle.write('Col1,Col2,Col3')
+	_write(file_handle, 'Col1,Col2,Col3')
 
 
 def write_data_start_file(file_handle):
-	file_handle.write('Ctrl,Ref,Result\n')
-	file_handle.write('"a","+inf","real"\n')
-	file_handle.write('"b","c","d"\n')
-	file_handle.write('2,"",30\n')
-	file_handle.write('2,5,40\n')
-	file_handle.write('3,5,50\n')
+	_write(file_handle, 'Ctrl,Ref,Result\n')
+	_write(file_handle, '"a","+inf","real"\n')
+	_write(file_handle, '"b","c","d"\n')
+	_write(file_handle, '2,"",30\n')
+	_write(file_handle, '2,5,40\n')
+	_write(file_handle, '3,5,50\n')
 
 
 def write_file(file_handle):
-	file_handle.write('Ctrl,Ref,Result\n')
-	file_handle.write('1,3,10\n')
-	file_handle.write('1,4,20\n')
-	file_handle.write('2,4,30\n')
-	file_handle.write('2,5,40\n')
-	file_handle.write('3,5,50\n')
+	_write(file_handle, 'Ctrl,Ref,Result\n')
+	_write(file_handle, '1,3,10\n')
+	_write(file_handle, '1,4,20\n')
+	_write(file_handle, '2,4,30\n')
+	_write(file_handle, '2,5,40\n')
+	_write(file_handle, '3,5,50\n')
 
 
 def write_str_cols_file(file_handle):
-	file_handle.write('Ctrl,Ref\n')
-	file_handle.write('"nom",10\n')
-	file_handle.write('"high",20\n')
-	file_handle.write('"low",30\n')
+	_write(file_handle, 'Ctrl,Ref\n')
+	_write(file_handle, '"nom",10\n')
+	_write(file_handle, '"high",20\n')
+	_write(file_handle, '"low",30\n')
 
 
 class TestCsvFile(object):
@@ -82,7 +87,7 @@ class TestCsvFile(object):
 		putil.test.assert_exception(
 			putil.pcsv.CsvFile,
 			{'fname':fname},
-			IOError,
+			OSError,
 			'File `{0}` could not be found'.format(fname)
 		)
 		for extype, exmsg, fobj in func_pointers:
@@ -90,7 +95,7 @@ class TestCsvFile(object):
 				with putil.misc.TmpFile(fobj) as fname:
 					putil.pcsv.CsvFile(fname=fname)
 			ref = (exmsg.format(fname) if '{0}' in exmsg else exmsg)
-			assert excinfo.value.message == ref
+			assert putil.test.get_exmsg(excinfo) == ref
 
 	def test_data_start(self):
 		""" Test if the right row is picked for the data start """
@@ -312,12 +317,12 @@ class TestCsvFile(object):
 		root_file = os.path.join(os.path.abspath(os.sep), 'test.csv')
 		def mock_make_dir(fname):
 			if fname == some_fname:
-				raise OSError(
+				raise IOError(
 					'File {0} could not be created'.format(some_fname),
 					'Permission denied'
 				)
 			elif fname == root_file:
-				raise IOError(
+				raise OSError(
 					'File {0} could not be created'.format(some_fname),
 					'Permission denied'
 				)
@@ -383,7 +388,7 @@ class TestCsvFile(object):
 			putil.test.assert_exception(
 				obj.write,
 				{'fname':root_file},
-				IOError,
+				OSError,
 				'File {0} could not be created: Permission denied'.format(root_file)
 			)
 
@@ -394,14 +399,12 @@ class TestCsvFile(object):
 		with tempfile.NamedTemporaryFile() as fwobj:
 			fname = fwobj.name
 			obj.write(fname=fname, col='Result', filtered=True, append=False)
-			with open(fname, 'r') as frobj:
-				written_data = frobj.read()
+			written_data = _read(fname)
 		assert written_data == 'Result\r\n10\r\n20\r\n30\r\n40\r\n50\r\n'
 		with tempfile.NamedTemporaryFile() as fwobj:
 			fname = fwobj.name
 			obj.write(fname=fname, append=False)
-			with open(fname, 'r') as frobj:
-				written_data = frobj.read()
+			written_data = _read(fname)
 		ref = (
 			'Ctrl,Ref,Result\r\n'
 			'1,3,10\r\n'
@@ -420,8 +423,7 @@ class TestCsvFile(object):
 				headers=False,
 				append=False
 			)
-			with open(fname, 'r') as frobj:
-				written_data = frobj.read()
+			written_data = _read(fname)
 		assert written_data == '1,10\r\n1,20\r\n2,30\r\n2,40\r\n3,50\r\n'
 		with tempfile.NamedTemporaryFile() as fwobj:
 			fname = fwobj.name
@@ -430,8 +432,7 @@ class TestCsvFile(object):
 			obj.write(fname=fname, filtered=True, headers=True, append=False)
 			obj.dfilter = {'Result':[20, 50]}
 			obj.write(fname=fname, filtered=True, headers=False, append=True)
-			with open(fname, 'r') as frobj:
-				written_data = frobj.read()
+			written_data = _read(fname)
 		ref = (
 			'Ctrl,Ref,Result\r\n'
 		    '1,3,10\r\n'
@@ -445,8 +446,7 @@ class TestCsvFile(object):
 			with tempfile.NamedTemporaryFile() as fwobj:
 				fname = fwobj.name
 				obj.write(fname=fname)
-				with open(fname, 'r') as frobj:
-					written_data = frobj.read()
+				written_data = _read(fname)
 		ref = "Ctrl,Ref,Result\r\n2,'',30\r\n2,5,40\r\n3,5,50\r\n"
 		assert written_data == ref
 
@@ -456,10 +456,10 @@ class TestCsvFile(object):
 			obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Result':20})
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.header
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.dfilter
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 
 
 def test_write_function_errors():
@@ -468,7 +468,12 @@ def test_write_function_errors():
 	are of the wrong type or are badly specified
 	"""
 	some_fname = os.path.join(os.path.abspath(os.sep), 'some', 'file')
-	def mock_make_dir(fname):
+	def mock_make_dir_io(fname):
+		raise IOError(
+			'File {0} could not be created'.format(fname),
+			'Permission denied'
+		)
+	def mock_make_dir_os(fname):
 		raise OSError(
 			'File {0} could not be created'.format(fname),
 			'Permission denied'
@@ -490,7 +495,14 @@ def test_write_function_errors():
 		RuntimeError,
 		'Argument `append` is not valid'
 	)
-	with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir):
+	with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir_io):
+		putil.test.assert_exception(
+			putil.pcsv.write,
+			{'fname':some_fname, 'data':[['Col1', 'Col2'], [1, 2]]},
+			OSError,
+			'File {0} could not be created: Permission denied'.format(some_fname)
+		)
+	with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir_os):
 		putil.test.assert_exception(
 			putil.pcsv.write,
 			{'fname':some_fname, 'data':[['Col1', 'Col2'], [1, 2]]},
@@ -520,8 +532,7 @@ def test_write_function_works():
 			[['Input', 'Output'], [1, 2], [3, 4]],
 			append=False
 		)
-		with open(fname, 'r') as frobj:
-			written_data = frobj.read()
+		written_data = _read(fname)
 	assert written_data == 'Input,Output\r\n1,2\r\n3,4\r\n'
 	with tempfile.NamedTemporaryFile() as fwobj:
 		fname = fwobj.name
@@ -531,6 +542,5 @@ def test_write_function_works():
 			append=False
 		)
 		putil.pcsv.write(fname, [[5.0, 10]], append=True)
-		with open(fname, 'r') as frobj:
-			written_data = frobj.read()
+		written_data = _read(fname)
 	assert written_data == 'Input,Output\r\n1,2\r\n3,4\r\n5.0,10\r\n'

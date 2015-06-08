@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,R0201,R0903,W0212,W0621
 
+from __future__ import print_function
 import putil.exh
 import tests.support.pinspect_support_module_2
 import putil.pcontracts
@@ -120,7 +121,7 @@ class ClassWithPropertyDefinedViaFunction(object):
 
 	def _deleter_func(self):
 		""" Deleter method with property defined via property() function """
-		print 'Cannot delete attribute'
+		print('Cannot delete attribute')
 
 	state = property(
 		_getter_func,
@@ -158,7 +159,7 @@ class ClassWithPropertyDefinedViaDecorators(object):
 	@temp.deleter
 	def temp(self):
 		""" Deleter method defined with decorator """
-		print 'Cannot delete attribute'
+		print('Cannot delete attribute')
 
 	encprop = simple_property_generator()
 

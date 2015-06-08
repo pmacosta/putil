@@ -4,8 +4,8 @@
 # See LICENSE for details
 # pylint: disable=C0111,R0913,W0105,W0212
 
-import itertools
 import copy
+import sys
 
 import putil.exh
 
@@ -15,7 +15,10 @@ import putil.exh
 ###
 """
 [[[cog
-import os, sys, __builtin__
+if sys.version_info.major == 2:
+	import __builtin__
+else:
+	import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_tree
 exobj_tree = trace_ex_tree.trace_module(no_print=True)
@@ -49,9 +52,10 @@ class Tree(object):
 		self._db = dict()
 		self._root = None
 		self._root_hierarchy_length = None
-		self._vertical = unichr(0x2502)
-		self._vertical_and_right = unichr(0x251C)
-		self._up_and_right = unichr(0x2514)
+		ufunc = unichr if sys.version_info.major == 2 else chr
+		self._vertical = ufunc(0x2502)
+		self._vertical_and_right = ufunc(0x251C)
+		self._up_and_right = ufunc(0x2514)
 		self._exh = putil.exh.get_or_create_exh_obj()
 		self._exh.add_exception(
 			exname='illegal_node_separator',
@@ -74,34 +78,58 @@ class Tree(object):
 		cobj._exh = self._exh
 		return cobj
 
-	def __nonzero__(self):
+	def __nonzero__(self):	# pragma: no cover
 		"""
 		Returns :code:`False` if tree object has no nodes, :code:`True`
 		otherwise. For example:
 
+			>>> from __future__ import print_function
 			>>> import putil.tree
 			>>> tobj = putil.tree.Tree()
 			>>> if tobj:
-			...     print 'Boolean test returned: True'
+			...     print('Boolean test returned: True')
 			... else:
-			...     print 'Boolean test returned: False'
+			...     print('Boolean test returned: False')
 			Boolean test returned: False
 			>>> tobj.add_nodes([{'name':'root.branch1', 'data':5}])
 			>>> if tobj:
-			...     print 'Boolean test returned: True'
+			...     print('Boolean test returned: True')
 			... else:
-			...     print 'Boolean test returned: False'
+			...     print('Boolean test returned: False')
+			Boolean test returned: True
+		"""
+		return bool(self._db)
+
+	def __bool__(self):	# pragma: no cover
+		"""
+		Returns :code:`False` if tree object has no nodes, :code:`True`
+		otherwise. For example:
+
+			>>> from __future__ import print_function
+			>>> import putil.tree
+			>>> tobj = putil.tree.Tree()
+			>>> if tobj:
+			...     print('Boolean test returned: True')
+			... else:
+			...     print('Boolean test returned: False')
+			Boolean test returned: False
+			>>> tobj.add_nodes([{'name':'root.branch1', 'data':5}])
+			>>> if tobj:
+			...     print('Boolean test returned: True')
+			... else:
+			...     print('Boolean test returned: False')
 			Boolean test returned: True
 		"""
 		return bool(self._db)
 
 	def __str__(self):
-		u"""
+		"""
 		Returns a string with the tree 'pretty printed' as a
 		character-based structure. Only node names are shown,
 		nodes with data are marked with an asterisk (:code:`*`).
 		For example:
 
+			>>> from __future__ import print_function
 			>>> import putil.tree
 			>>> tobj = putil.tree.Tree()
 			>>> tobj.add_nodes([
@@ -110,7 +138,7 @@ class Tree(object):
 			...     {'name':'root.branch1.leaf1', 'data':list()},
 			...     {'name':'root.branch1.leaf2', 'data':'Hello world!'}
 			... ])
-			>>> print str(tobj).decode('utf8')
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -119,13 +147,14 @@ class Tree(object):
 
 		:rtype: Unicode string
 		"""
-		return '' if not self._db else self._prt(
+		ret = '' if not self._db else self._prt(
 			name=self.root_name,
 			lparent=-1,
 			sep='',
 			pre1='',
 			pre2=''
-		).encode('utf-8')
+		)
+		return ret.encode('utf-8') if sys.version_info.major == 2 else ret
 
 	def _collapse_subtree(self, name, recursive=True):
 		""" Collapse a sub-tree """
@@ -165,7 +194,7 @@ class Tree(object):
 			self.root_name+
 			self._node_separator+
 			self._node_separator.join(hierarchy[:num+1])
-			for num in xrange(len(hierarchy))
+			for num in range(len(hierarchy))
 		])
 		for parent, child in [
 				(child[:child.rfind(self._node_separator)], child)
@@ -178,7 +207,7 @@ class Tree(object):
 		lname = len(name)+1
 		self._root = self._root[lname:]
 		self._root_hierarchy_length = len(self.root_name.split(self._node_separator))
-		for key, value in self._db.items():
+		for key, value in list(self._db.items()):
 			value['parent'] = (value['parent'][lname:]
 							  if value['parent'] else
 							  value['parent'])
@@ -220,7 +249,7 @@ class Tree(object):
 		tokens1 = [item.strip() for item in node1.split(self.node_separator)]
 		tokens2 = [item.strip() for item in node2.split(self.node_separator)]
 		ret = []
-		for token1, token2 in itertools.izip(tokens1, tokens2):
+		for token1, token2 in zip(tokens1, tokens2):
 			if token1 == token2:
 				ret.append(token1)
 			else:
@@ -292,7 +321,7 @@ class Tree(object):
 		dmark = ' (*)' if self._db[name]['data'] else ''
 		return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, nname, dmark)]+[
 			self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2)
-			for child, p1, p2, schar in itertools.izip(children, plist1, plist2, slist)
+			for child, p1, p2, schar in zip(children, plist1, plist2, slist)
 		])
 
 	def _rename_node(self, name, new_name):
@@ -453,9 +482,10 @@ class Tree(object):
 
 		.. code-block:: python
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -532,9 +562,10 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -543,7 +574,7 @@ class Tree(object):
 			│ └subleaf2
 			└branch2
 			>>> tobj.collapse_subtree('root.branch1')
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
@@ -605,9 +636,10 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -616,7 +648,7 @@ class Tree(object):
 			│ └subleaf2
 			└branch2
 			>>> tobj.copy_subtree('root.branch1', 'root.branch3')
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -704,6 +736,7 @@ class Tree(object):
 
 		For example:
 
+			>>> from __future__ import print_function
 			>>> import putil.tree
 			>>> tobj = putil.tree.Tree('/')
 			>>> tobj.add_nodes([
@@ -715,7 +748,7 @@ class Tree(object):
 			...     {'name':'hello/world/root/cnode/anode/leaf', 'data':True}
 			... ])
 			>>> tobj.collapse_subtree('hello', recursive=False)
-			>>> print tobj
+			>>> print(tobj)
 			hello/world/root
 			├anode (*)
 			├bnode (*)
@@ -724,7 +757,7 @@ class Tree(object):
 			 └anode
 			  └leaf (*)
 			>>> tobj.delete_prefix('hello/world')
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├anode (*)
 			├bnode (*)
@@ -773,9 +806,10 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -784,7 +818,7 @@ class Tree(object):
 			│ └subleaf2
 			└branch2
 			>>> tobj.delete_subtree(['root.branch1.leaf1', 'root.branch2'])
-			>>> print tobj
+			>>> print(tobj)
 			root
 			└branch1 (*)
 			 └leaf2 (*)
@@ -823,6 +857,7 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
 			>>> tobj.add_nodes([
@@ -831,7 +866,7 @@ class Tree(object):
 			...     {'name':'root.branch2.leaf1.another_subleaf1', 'data':[]},
 			...     {'name':'root.branch2.leaf1.another_subleaf2', 'data':[]}
 			... ])
-			>>> print str(tobj)
+			>>> print(str(tobj))
 			root
 			├branch1 (*)
 			│├leaf1
@@ -844,7 +879,7 @@ class Tree(object):
 			  ├another_subleaf1
 			  └another_subleaf2
 			>>> tobj.flatten_subtree('root.branch1.leaf1')
-			>>> print str(tobj)
+			>>> print(str(tobj))
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
@@ -856,7 +891,7 @@ class Tree(object):
 			  ├another_subleaf1
 			  └another_subleaf2
 			>>> tobj.flatten_subtree('root.branch2.leaf1')
-			>>> print str(tobj)
+			>>> print(str(tobj))
 			root
 			├branch1 (*)
 			│├leaf1.subleaf1 (*)
@@ -1107,9 +1142,10 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example, pprint
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -1243,9 +1279,10 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -1254,7 +1291,7 @@ class Tree(object):
 			│ └subleaf2
 			└branch2
 			>>> tobj.make_root('root.branch1')
-			>>> print tobj
+			>>> print(tobj)
 			root.branch1 (*)
 			├leaf1
 			│└subleaf1 (*)
@@ -1299,9 +1336,10 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -1309,7 +1347,7 @@ class Tree(object):
 			│└leaf2 (*)
 			│ └subleaf2
 			└branch2
-			>>> print tobj.print_node('root.branch1')
+			>>> print(tobj.print_node('root.branch1'))
 			Name: root.branch1
 			Parent: root
 			Children: leaf1, leaf2
@@ -1373,9 +1411,10 @@ class Tree(object):
 
 		Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
 
+			>>> from __future__ import print_function
 			>>> import docs.support.tree_example
 			>>> tobj = docs.support.tree_example.create_tree()
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf1
@@ -1387,7 +1426,7 @@ class Tree(object):
 			...     'root.branch1.leaf1',
 			...     'root.branch1.mapleleaf1'
 			... )
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├branch1 (*)
 			│├leaf2 (*)
@@ -1468,6 +1507,7 @@ class Tree(object):
 
 		For example:
 
+			>>> from __future__ import print_function
 			>>> import pprint, putil.tree
 			>>> tobj = putil.tree.Tree('/')
 			>>> tobj.add_nodes([
@@ -1478,7 +1518,7 @@ class Tree(object):
 			...     {'name':'root/bnode/anode', 'data':['a', 'b', 'c']},
 			...     {'name':'root/cnode/anode/leaf', 'data':True}
 			... ])
-			>>> print tobj
+			>>> print(tobj)
 			root
 			├anode (*)
 			├bnode

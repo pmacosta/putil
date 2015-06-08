@@ -368,7 +368,7 @@ def csv_data_filter(obj):
 		raise ValueError(exdesc['argument_invalid'])
 	if not len(obj):
 		raise ValueError(exdesc['argument_empty'])
-	if any([not isinstance(col_name, str) for col_name in obj.iterkeys()]):
+	if any([not isinstance(col_name, str) for col_name in obj.keys()]):
 		raise ValueError(exdesc['argument_invalid'])
 	for col_name, col_value in obj.items():	# pragma: no branch
 		if ((not isinstance(obj[col_name], list)) and
@@ -413,7 +413,7 @@ def file_name(obj):
 @putil.pcontracts.new_contract(
 	argument_invalid='Argument `*[argument_name]*` is not valid',
 	file_not_found=(
-		IOError,
+		OSError,
 		'File `*[file_name]*` could not be found'
 	)
 )
@@ -426,7 +426,7 @@ def file_name_exists(obj):
 	:param	obj: Object
 	:type	obj: any
 	:raises:
-	 * IOError (File \`*[file_name]*\` could not be found). The
+	 * OSError (File \`*[file_name]*\` could not be found). The
 	   token \*[file_name]\* is replaced by the *value* of the
 	   argument the contract is attached to
 

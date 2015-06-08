@@ -3,7 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import numpy, os, putil.plot, sys
+from __future__ import print_function
+import numpy
+import os
+import sys
+
+import putil.plot
+
 
 def main(fname):
 	"""
@@ -97,7 +103,7 @@ def main(fname):
 	)
 	# Save figure
 	output_fname = os.path.join(wdir, fname)
-	print 'Saving image to file {0}'.format(output_fname)
+	print('Saving image to file {0}'.format(output_fname))
 	fig_obj.save(output_fname)
 
 def series1_proc_func(indep_var, dep_var, xoffset):

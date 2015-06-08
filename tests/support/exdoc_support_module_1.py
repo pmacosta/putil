@@ -131,7 +131,7 @@ class ExceptionAutoDocClass(object):
 		)
 		self._exobj.add_exception(
 			exname='illegal_value2_2',
-			extype=IOError,
+			extype=OSError,
 			exmsg='Argument `value2` is not a file'
 		)
 		self._value2 = value

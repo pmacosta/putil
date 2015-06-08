@@ -1,17 +1,24 @@
 ﻿# pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,W0212
+# pylint: disable=C0103,C0111,E0611,F0401,W0212,W0631
 
 import ast
 import copy
-import funcsigs
+try:	# pragma: no cover
+	from funcsigs import signature
+except ImportError:	# pragma: no cover
+	from inspect import signature
 import os
 import re
 import sys
 import types
 
 import putil.misc
+if sys.version_info.major == 2:	# pragma: no cover
+	from putil.compat2 import _unicode_char
+else:	# pragma: no cover
+	from putil.compat3 import _unicode_char
 
 
 ###
@@ -80,7 +87,7 @@ def get_function_args(func, no_self=False, no_varargs=False):
 		... )
 		('self', 'value')
 	"""
-	par_dict = funcsigs.signature(func).parameters
+	par_dict = signature(func).parameters
 	args = [
 		'{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL
 		else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par)
@@ -168,7 +175,7 @@ class Callables(object):
 	:param	fnames: File names of the modules to trace
 	:type	fnames: list
 	:raises:
-	 * IOError (File *[fname]* could not be found)
+	 * OSError (File *[fname]* could not be found)
 
 	 * RuntimeError (Argument \`fnames\` is not valid)
 	"""
@@ -306,27 +313,49 @@ class Callables(object):
 		self._fnames = list(set(self._fnames+other._fnames[:]))
 		return self
 
-	def __nonzero__(self):
+	def __nonzero__(self):	# pragma: no cover
 		"""
 		Returns :code:`False` if no modules have been traced, :code:`True`
 		otherwise. For example:
 
+			>>> from __future__ import print_function
 			>>> import putil.eng, putil.pinspect, sys
 			>>> obj = putil.pinspect.Callables()
 			>>> if obj:
-			...     print 'Boolean test returned: True'
+			...     print('Boolean test returned: True')
 			... else:
-			...     print 'Boolean test returned: False'
+			...     print('Boolean test returned: False')
 			Boolean test returned: False
 			>>> obj.trace([sys.modules['putil.eng'].__file__])
 			>>> if obj:
-			...     print 'Boolean test returned: True'
+			...     print('Boolean test returned: True')
 			... else:
-			...     print 'Boolean test returned: False'
+			...     print('Boolean test returned: False')
 			Boolean test returned: True
 		"""
 		return bool(self._module_names)
 
+	def __bool__(self):	# pragma: no cover
+		"""
+		Returns :code:`False` if no modules have been traced, :code:`True`
+		otherwise. For example:
+
+			>>> from __future__ import print_function
+			>>> import putil.eng, putil.pinspect, sys
+			>>> obj = putil.pinspect.Callables()
+			>>> if obj:
+			...     print('Boolean test returned: True')
+			... else:
+			...     print('Boolean test returned: False')
+			Boolean test returned: False
+			>>> obj.trace([sys.modules['putil.eng'].__file__])
+			>>> if obj:
+			...     print('Boolean test returned: True')
+			... else:
+			...     print('Boolean test returned: False')
+			Boolean test returned: True
+		"""
+		return bool(self._module_names)
 
 	def __repr__(self):
 		"""
@@ -339,7 +368,7 @@ class Callables(object):
 			... )
 			>>> repr(obj1)	#doctest: +ELLIPSIS
 			"putil.pinspect.Callables(['.../exh.py'])"
-			>>> exec "obj2="+repr(obj1)
+			>>> exec("obj2="+repr(obj1))
 			>>> obj1 == obj2
 			True
 
@@ -351,22 +380,23 @@ class Callables(object):
 		Returns a string with a detailed description of the object's contents.
 		For example:
 
+			>>> from __future__ import print_function
 			>>> import putil.pinspect, os, sys
 			>>> import docs.support.pinspect_example_1
 			>>> cobj = putil.pinspect.Callables([
 			...     sys.modules['docs.support.pinspect_example_1'].__file__
 			... ])
-			>>> print cobj	#doctest: +ELLIPSIS
+			>>> print(cobj)	#doctest: +ELLIPSIS
 			Modules:
 			   ...pinspect_example_1
 			Classes:
 			   ...pinspect_example_1.my_func.MyClass
-			...pinspect_example_1.my_func: func (8-24)
-			...pinspect_example_1.my_func.MyClass: class (10-24)
-			...pinspect_example_1.my_func.MyClass.__init__: meth (17-19)
-			...pinspect_example_1.my_func.MyClass._get_value: meth (20-22)
-			...pinspect_example_1.my_func.MyClass.value: prop (23-24)
-			...pinspect_example_1.print_name: func (25-26)
+			...pinspect_example_1.my_func: func (9-25)
+			...pinspect_example_1.my_func.MyClass: class (11-25)
+			...pinspect_example_1.my_func.MyClass.__init__: meth (18-20)
+			...pinspect_example_1.my_func.MyClass._get_value: meth (21-23)
+			...pinspect_example_1.my_func.MyClass.value: prop (24-25)
+			...pinspect_example_1.print_name: func (26-27)
 
 		The numbers in parenthesis indicate the line number in which the
 		callable starts and ends within the file it is defined in.
@@ -410,7 +440,7 @@ class Callables(object):
 				if ((type(self_dict[key]) != type(other_dict[key])) or
 				   ((type(self_dict[key]) == type(other_dict[key])) and
 				   ((isinstance(self_dict[key], list) and
-				   (sorted(self_dict[key]) != sorted(other_dict[key]))) or
+				   (not all([item in self_dict[key] for item in other_dict[key]]))) or
 				   (isinstance(self_dict[key], dict) and
 				   (set(self_dict[key].items()) != set(other_dict[key].items()))) or
 				   (isinstance(self_dict[key], str) and
@@ -448,7 +478,7 @@ class Callables(object):
 		:param	fnames: File names of the modules to trace
 		:type	fnames: list
 		:raises:
-		 * IOError (File *[fname]* could not be found)
+		 * OSError (File *[fname]* could not be found)
 
 		 * RuntimeError (Argument \`fnames\` is not valid)
 		"""
@@ -458,13 +488,20 @@ class Callables(object):
 			raise RuntimeError('Argument `fnames` is not valid')
 		for fname in fnames:
 			if not os.path.exists(fname):
-				raise IOError('File {0} could not be found'.format(fname))
+				raise OSError('File {0} could not be found'.format(fname))
 		fnames = [item.replace('.pyc', '.py') for item in fnames]
 		for fname in fnames:
 			if fname not in self._fnames:
 				module_name = _get_module_name_from_fname(fname)
 				with open(fname, 'r') as fobj:
 					lines = fobj.readlines()
+				# Eliminate all Unicode characters till the first ASCII
+				# character is found in first line of file, to deal with
+				# Unicode-encoded source files
+				for num, char in enumerate(lines[0]):	# pragma: no cover
+					if not _unicode_char(char):
+						break
+				lines[0] = lines[0][num:]
 				tree = ast.parse(''.join(lines))
 				aobj = _AstTreeScanner(fname, lines)
 				aobj.visit(tree)
@@ -608,7 +645,6 @@ class _AstTreeScanner(ast.NodeVisitor):
 
 	def _in_class(self, node):
 		""" Find if callable is function or method """
-		# pylint: disable=W0631
 		indent = self._get_indent(node)
 		for indent_dict in reversed(self._indent_stack):	# pragma: no branch
 			if (indent_dict['level'] < indent) or (indent_dict['type'] == 'module'):

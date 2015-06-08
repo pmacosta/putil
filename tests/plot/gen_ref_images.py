@@ -4,6 +4,7 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,R0912,R0914,R0915
 
+from __future__ import print_function
 import itertools
 import math
 import numpy
@@ -50,7 +51,7 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):
 	master_list = [marker_list, interp_list, line_style_list]
 	comb_list = itertools.product(*master_list)	# pylint: disable-msg=W0142
 	output_list = list()
-	print
+	print('')
 	for marker, interp, line_style in comb_list:
 		#if (not marker) and (not line_style):
 		#	continue
@@ -67,9 +68,9 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):
 			'ref_ci_file_name':ref_ci_file_name,
 			'test_file_name':test_file_name
 		})
-		print 'Generating image {0}'.format(
+		print('Generating image {0}'.format(
 			ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-		)
+		))
 		series1 = putil.plot.Series(
 			data_source=putil.plot.BasicSource(
 				indep_var=numpy.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
@@ -275,9 +276,9 @@ def unittest_panel_images(mode=None, test_dir=None):
 				'ref_ci_file_name':ref_ci_file_name,
 				'test_file_name':test_file_name
 			})
-			print 'Generating image {0}'.format(
+			print('Generating image {0}'.format(
 				ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-			)
+			))
 		if axis_type == 'linear':
 			if series_in_axis == 'both':
 				series_obj = [series1_obj, series2_obj, series3_obj, series4_obj]
@@ -343,9 +344,9 @@ def unittest_panel_images(mode=None, test_dir=None):
 	ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
 	ref_ci_file_name = os.path.realpath(os.path.join(ref_ci_dir, image_name))
 	test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
-	print 'Generating image {0}'.format(
+	print('Generating image {0}'.format(
 		ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-	)
+	))
 	series_obj = [seriesA_obj, seriesB_obj]
 	panel_obj = putil.plot.Panel(
 		series=series_obj,
@@ -488,9 +489,9 @@ def unittest_figure_images(mode=None, test_dir=None):
 			'ref_ci_file_name':ref_ci_file_name,
 			'test_file_name':test_file_name
 		})
-		print 'Generating image {0}'.format(
+		print('Generating image {0}'.format(
 			ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-		)
+		))
 		fig_obj.save(ref_file_name if (mode in ['ref', 'ci']) else test_file_name)
 	return output_list
 

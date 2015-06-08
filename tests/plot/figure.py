@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,F0401,R0201,W0212,W0621
 
+from __future__ import print_function
 import matplotlib
 import mock
 import numpy
@@ -258,8 +259,8 @@ class TestFigure(object):
 		ret = (
 			'Panel 0:\n'
 			'   Series 0:\n'
-			'      Independent variable: [ 5, 6, 7, 8 ]\n'
-			'      Dependent variable: [ 0, -10, 5, 4 ]\n'
+			'      Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+			'      Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
 			'      Label: test series\n'
 			'      Color: k\n'
 			'      Marker: o\n'
@@ -284,6 +285,7 @@ class TestFigure(object):
 		ret += 'Figure width: 5.6\n'
 		ret_ci += 'Figure height: 2.66\n'
 		ret += 'Figure height: 2.66\n'
+
 		assert (str(obj) == ret) or (str(obj) == ret_ci)
 
 	def test_cannot_delete_attributes(self, default_panel):
@@ -291,39 +293,39 @@ class TestFigure(object):
 		obj = putil.plot.Figure(panels=default_panel)
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.panels
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_var_label
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_var_units
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.title
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.log_indep_axis
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.fig_width
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.fig_height
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.fig
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.axes_list
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 		with pytest.raises(AttributeError) as excinfo:
 			del obj.indep_axis_scale
-		assert excinfo.value.message == "can't delete attribute"
+		assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 
 	def test_show(self, default_panel, capsys):
 		""" Test that show() method behaves correctly """
 		def mock_show():
-			print 'show called'
+			print('show called')
 		obj = putil.plot.Figure(panels=default_panel)
 		with mock.patch('putil.plot.figure.plt.show', side_effect=mock_show):
 			obj.show()
@@ -362,14 +364,16 @@ class TestFigure(object):
 			metrics_ci = compare_images(ref_ci_file_name, test_file_name)
 			result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
 			if (not result) and (not result_ci):
-				print 'Images do not match'
-				print 'Reference image: file://{0}'.format(os.path.realpath(ref_file_name))
-				print 'Reference CI image: file://{0}'.format(
+				print('Images do not match')
+				print('Reference image: file://{0}'.format(
+					os.path.realpath(ref_file_name)
+				))
+				print('Reference CI image: file://{0}'.format(
 					os.path.realpath(ref_ci_file_name)
-				)
-				print 'Actual image: file://{0}'.format(
+				))
+				print('Actual image: file://{0}'.format(
 					os.path.realpath(test_file_name)
-				)
+				))
 			#print 'Comparison: {0} with {1} -> {2} {3}'.format(
 			#	ref_file_name,
 			#	test_file_name,

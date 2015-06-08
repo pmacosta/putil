@@ -1,8 +1,9 @@
 ﻿# test_misc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0302,E0611,E1101,W0621
+# pylint: disable=C0103,C0111,C0302,E0611,E1101,F0401,R0915,W0621
 
+from __future__ import print_function
 import ast
 import datetime
 import inspect
@@ -11,12 +12,17 @@ import os
 import pytest
 import re
 import struct
+import sys
 import tempfile
 from fractions import Fraction
 from numpy import array
 
 import putil.misc
 import putil.test
+if sys.version_info.major == 2:
+	from putil.compat2 import _write
+else:
+	from putil.compat3 import _write
 
 
 ###
@@ -47,19 +53,19 @@ def test_timer(capsys):
 	with pytest.raises(RuntimeError) as excinfo:
 		with putil.misc.Timer(5):
 			pass
-	assert excinfo.value.message == 'Argument `verbose` is not valid'
+	assert putil.test.get_exmsg(excinfo) == 'Argument `verbose` is not valid'
 	# Test that exceptions within the with statement are re-raised
 	with pytest.raises(RuntimeError) as excinfo:
 		with putil.misc.Timer():
 			raise RuntimeError('Error in code')
-	assert excinfo.value.message == 'Error in code'
+	assert putil.test.get_exmsg(excinfo) == 'Error in code'
 	# Test normal operation
 	with putil.misc.Timer() as tobj:
-		sum(xrange(100))
+		sum(range(100))
 	assert isinstance(tobj.elapsed_time, float) and (tobj.elapsed_time > 0)
 	tregexp = re.compile(r'Elapsed time: [\d|\.]+\[msec\]')
 	with putil.misc.Timer(verbose=True) as tobj:
-		sum(xrange(100))
+		sum(range(100))
 	out, _ = capsys.readouterr()
 	assert tregexp.match(out)
 
@@ -99,12 +105,23 @@ def test_pcolor():
 
 def test_binary_string_to_octal_string():
 	""" Test binary_string_to_octal_string() function """
-	ref = (
-		'\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0'
-		'\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
-	)
 	obj = putil.misc.binary_string_to_octal_string
-	assert obj(''.join([struct.pack('h', num) for num in range(1, 15)])) == ref
+	if sys.version_info.major == 2:
+		ref = (
+			'\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0'
+			'\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
+		)
+		assert obj(
+			''.join([struct.pack('h', num) for num in range(1, 15)])
+		) == ref
+	else:
+		ref = (
+			r'\o1\0\o2\0\o3\0\o4\0\o5\0\o6\0\a\0'
+			r'\b\0\t\0\n\0\v\0\f\0\r\0\o16\0'
+		)
+		assert obj(
+			''.join([struct.pack('h', num).decode('ascii') for num in range(1, 15)])
+		) == ref
 
 
 def test_char_string_to_decimal_string():
@@ -178,8 +195,11 @@ def test_bundle():
 	assert len(obj) == 2
 	del obj.var1
 	with pytest.raises(AttributeError) as excinfo:
-		print obj.var1
-	assert excinfo.value.message == "'Bundle' object has no attribute 'var1'"
+		print(obj.var1)
+	assert (
+		putil.test.get_exmsg(excinfo) ==
+		"'Bundle' object has no attribute 'var1'"
+	)
 	assert obj.var2 == 20
 	assert len(obj) == 1
 	obj = putil.misc.Bundle(var3=30, var4=40, var5=50)
@@ -194,7 +214,7 @@ def test_bundle():
 def test_make_dir(capsys):
 	""" Test make_dir() function """
 	def mock_os_makedir(file_path):
-		print file_path
+		print(file_path)
 	home_dir = os.environ['HOME']
 	with mock.patch('os.makedirs', side_effect=mock_os_makedir):
 		fname = os.path.join(home_dir, 'some_dir', 'some_file.ext')
@@ -361,12 +381,12 @@ def test_ellapsed_time_string():
 def test_tmp_file():
 	""" Test TmpFile context manager """
 	def write_data(file_handle):
-		file_handle.write('Hello world!')
+		_write(file_handle, 'Hello world!')
 	# Test argument validation
 	with pytest.raises(RuntimeError) as excinfo:
 		with putil.misc.TmpFile(5) as fname:
 			pass
-	assert excinfo.value.message == 'Argument `fpointer` is not valid'
+	assert putil.test.get_exmsg(excinfo) == 'Argument `fpointer` is not valid'
 	# Test behavior when no function pointer is given
 	with putil.misc.TmpFile() as fname:
 		assert isinstance(fname, str) and (len(fname) > 0)
@@ -376,7 +396,7 @@ def test_tmp_file():
 	with pytest.raises(OSError) as excinfo:
 		with putil.misc.TmpFile(write_data) as fname:
 			raise OSError('No data')
-	assert excinfo.value.message == 'No data'
+	assert putil.test.get_exmsg(excinfo) == 'No data'
 	assert not os.path.exists(fname)
 	# Test behaviour under "normal" circumstances
 	with putil.misc.TmpFile(write_data) as fname:
@@ -413,12 +433,16 @@ def test_strframe():
 		'<code object test_strframe at 0x'
 	)
 	assert lines[9].startswith('f_globals......: {')
-	assert lines[10] == 'f_lasti........: 356'
+	assert lines[10].startswith('f_lasti........: ')
 	assert lines[11].startswith('f_lineno.......: ')
 	assert lines[12].startswith('f_locals.......: {')
-	assert lines[13] == 'f_restricted...: False'
-	assert lines[14].startswith('f_trace........: ')
-	assert len(lines) == 15
+	if sys.version_info.major == 2:
+		assert lines[13] == 'f_restricted...: False'
+		assert lines[14].startswith('f_trace........: ')
+		assert len(lines) == 15
+	else:
+		assert lines[13].startswith('f_trace........: ')
+		assert len(lines) == 14
 
 
 def test_quote_str():
@@ -426,37 +450,6 @@ def test_quote_str():
 	assert putil.misc.quote_str(5) == 5
 	assert putil.misc.quote_str('Hello!') == '"Hello!"'
 	assert putil.misc.quote_str('He said "hello!"') == "'He said \"hello!\"'"
-
-
-def test_strtype_item():
-	""" Test strtype_item() function """
-	import putil.pcsv
-	assert putil.misc.strtype_item(str) == 'str'
-	assert putil.misc.strtype_item('hello') == '"hello"'
-	assert putil.misc.strtype_item(5) == '5'
-	assert putil.misc.strtype_item(putil.pcsv.CsvFile) == 'putil.pcsv.CsvFile'
-
-
-def test_strtype():
-	""" Test strtype() function """
-	import putil.pcsv
-	assert putil.misc.strtype(str) == 'str'
-	assert putil.misc.strtype('hello') == '"hello"'
-	assert putil.misc.strtype(5) == '5'
-	assert putil.misc.strtype(putil.pcsv.CsvFile) == 'putil.pcsv.CsvFile'
-	ref = '[str, 5, putil.pcsv.CsvFile]'
-	assert putil.misc.strtype([str, 5, putil.pcsv.CsvFile]) == ref
-	ref = 'set(5, str, putil.pcsv.CsvFile)'
-	assert putil.misc.strtype(set([str, 5, putil.pcsv.CsvFile])) == ref
-	ref = '(str, 5, putil.pcsv.CsvFile)'
-	assert putil.misc.strtype((str, 5, putil.pcsv.CsvFile)) == ref
-	ref = (
-		'{"class":putil.pcsv.CsvFile, "file":str,'
-		' "line":5, "name":"some_file.txt"}'
-	)
-	assert putil.misc.strtype(
-		{'file':str, 'name':'some_file.txt', 'line':5, 'class':putil.pcsv.CsvFile}
-	) == ref
 
 
 def test_flatten_list():
@@ -485,11 +478,13 @@ def test_cidict():
 	assert obj == {'aa':10, 'bb':20, 'cc':30}
 	with pytest.raises(TypeError) as excinfo:
 		putil.misc.CiDict(zip(['aa', 'bb', [1, 2]], [10, 20, 30]))
-	assert excinfo.value.message == "unhashable type: 'list'"
+	assert putil.test.get_exmsg(excinfo) == "unhashable type: 'list'"
 	with pytest.raises(ValueError) as excinfo:
 		putil.misc.CiDict(['Prop1', 'Prop2', 'Prop3', 'Prop4'])
-	assert excinfo.value.message == ("dictionary update sequence "
-	                                 "element #0 has length 5; 2 is required")
+	assert putil.test.get_exmsg(excinfo) == (
+		"dictionary update sequence "
+		"element #0 has length 5; 2 is required"
+	)
 
 def test_pprint_ast_node():
 	""" Test pprint_ast_node() function """
@@ -503,56 +498,102 @@ def test_pprint_ast_node():
 	ret.append('class MyClass(object):')
 	ret.append('	def __init__(self, a, b):')
 	ret.append('		self._value = a+b')
-	ref = []
-	ref.append("Module(body=[")
-	ref.append("    ClassDef(name='MyClass', bases=[")
-	ref.append("        Name(id='object', ctx=Load(), lineno=1, col_offset=14),")
-	ref.append("      ], body=[")
-	ref.append("        FunctionDef(name='__init__', args=arguments(args=[")
-	ref.append("            Name(id='self', ctx=Param(), lineno=2, "
+	ref2 = []
+	ref2.append("Module(body=[")
+	ref2.append("    ClassDef(name='MyClass', bases=[")
+	ref2.append("        Name(id='object', ctx=Load(), lineno=1, col_offset=14),")
+	ref2.append("      ], body=[")
+	ref2.append("        FunctionDef(name='__init__', args=arguments(args=[")
+	ref2.append("            Name(id='self', ctx=Param(), lineno=2, "
 			   "col_offset=14),")
-	ref.append("            Name(id='a', ctx=Param(), lineno=2, col_offset=20),")
-	ref.append("            Name(id='b', ctx=Param(), lineno=2, col_offset=23),")
-	ref.append("          ], vararg=None, kwarg=None, defaults=[]), body=[")
-	ref.append("            Assign(targets=[")
-	ref.append("                Attribute(value=Name(id='self', ctx=Load(), "
+	ref2.append("            Name(id='a', ctx=Param(), lineno=2, col_offset=20),")
+	ref2.append("            Name(id='b', ctx=Param(), lineno=2, col_offset=23),")
+	ref2.append("          ], vararg=None, kwarg=None, defaults=[]), body=[")
+	ref2.append("            Assign(targets=[")
+	ref2.append("                Attribute(value=Name(id='self', ctx=Load(), "
 			   "lineno=3, col_offset=2), attr='_value', ctx=Store(), lineno=3, "
 			   "col_offset=2),")
-	ref.append("              ], value=BinOp(left=Name(id='a', ctx=Load(), "
+	ref2.append("              ], value=BinOp(left=Name(id='a', ctx=Load(), "
 			   "lineno=3, col_offset=16), op=Add(), right=Name(id='b', "
 			   "ctx=Load(), lineno=3, col_offset=18), lineno=3, col_offset=16),"
 			   " lineno=3, col_offset=2),")
-	ref.append("          ], decorator_list=[], lineno=2, col_offset=1),")
-	ref.append("      ], decorator_list=[], lineno=1, col_offset=0),")
-	ref.append("  ])")
+	ref2.append("          ], decorator_list=[], lineno=2, col_offset=1),")
+	ref2.append("      ], decorator_list=[], lineno=1, col_offset=0),")
+	ref2.append("  ])")
+
+	ref3 = []
+	ref3.append("Module(body=[")
+	ref3.append("    ClassDef(name='MyClass', bases=[")
+	ref3.append("        Name(id='object', ctx=Load(), lineno=1, col_offset=14),")
+	ref3.append("      ], keywords=[], starargs=None, kwargs=None, body=[")
+	ref3.append("        FunctionDef(name='__init__', args=arguments(args=[")
+	ref3.append("            arg(arg='self', annotation=None, lineno=2, "
+			    "col_offset=14),")
+	ref3.append("            arg(arg='a', annotation=None, lineno=2, "
+			    "col_offset=20),")
+	ref3.append("            arg(arg='b', annotation=None, lineno=2, "
+			    "col_offset=23),")
+	ref3.append("          ], vararg=None, kwonlyargs=[], kw_defaults=[], "
+			    "kwarg=None, defaults=[]), body=[")
+	ref3.append("            Assign(targets=[")
+	ref3.append("                Attribute(value=Name(id='self', ctx=Load(), "
+			    "lineno=3, col_offset=2), attr='_value', ctx=Store(), "
+			    "lineno=3, col_offset=7),")
+	ref3.append("              ], value=BinOp(left=Name(id='a', ctx=Load(), "
+			    "lineno=3, col_offset=16), op=Add(), right=Name(id='b', "
+			    "ctx=Load(), lineno=3, col_offset=18), lineno=3, "
+			    "col_offset=16), lineno=3, col_offset=2),")
+	ref3.append("          ], decorator_list=[], returns=None, lineno=2, "
+			    "col_offset=1),")
+	ref3.append("      ], decorator_list=[], lineno=1, col_offset=0),")
+	ref3.append("  ])")
+
 	assert putil.misc.pprint_ast_node(
 		ast.parse('\n'.join(ret)),
 		include_attributes=True,
 		annotate_fields=True
-	) == '\n'.join(ref)
-	ref = []
-	ref.append("Module([")
-	ref.append("    ClassDef('MyClass', [")
-	ref.append("        Name('object', Load(), 1, 14),")
-	ref.append("      ], [")
-	ref.append("        FunctionDef('__init__', arguments([")
-	ref.append("            Name('self', Param(), 2, 14),")
-	ref.append("            Name('a', Param(), 2, 20),")
-	ref.append("            Name('b', Param(), 2, 23),")
-	ref.append("          ], None, None, []), [")
-	ref.append("            Assign([")
-	ref.append("                Attribute(Name('self', Load(), 3, 2), "
+	) == '\n'.join(ref2 if sys.version_info.major == 2 else ref3)
+	ref2 = []
+	ref2.append("Module([")
+	ref2.append("    ClassDef('MyClass', [")
+	ref2.append("        Name('object', Load(), 1, 14),")
+	ref2.append("      ], [")
+	ref2.append("        FunctionDef('__init__', arguments([")
+	ref2.append("            Name('self', Param(), 2, 14),")
+	ref2.append("            Name('a', Param(), 2, 20),")
+	ref2.append("            Name('b', Param(), 2, 23),")
+	ref2.append("          ], None, None, []), [")
+	ref2.append("            Assign([")
+	ref2.append("                Attribute(Name('self', Load(), 3, 2), "
 			   "'_value', Store(), 3, 2),")
-	ref.append("              ], BinOp(Name('a', Load(), 3, 16), Add(), "
+	ref2.append("              ], BinOp(Name('a', Load(), 3, 16), Add(), "
 			   "Name('b', Load(), 3, 18), 3, 16), 3, 2),")
-	ref.append("          ], [], 2, 1),")
-	ref.append("      ], [], 1, 0),")
-	ref.append("  ])")
+	ref2.append("          ], [], 2, 1),")
+	ref2.append("      ], [], 1, 0),")
+	ref2.append("  ])")
+	ref3 = []
+	ref3.append("Module([")
+	ref3.append("    ClassDef('MyClass', [")
+	ref3.append("        Name('object', Load(), 1, 14),")
+	ref3.append("      ], [], None, None, [")
+	ref3.append("        FunctionDef('__init__', arguments([")
+	ref3.append("            arg('self', None, 2, 14),")
+	ref3.append("            arg('a', None, 2, 20),")
+	ref3.append("            arg('b', None, 2, 23),")
+	ref3.append("          ], None, [], [], None, []), [")
+	ref3.append("            Assign([")
+	ref3.append("                Attribute(Name('self', Load(), 3, 2), "
+			    "'_value', Store(), 3, 7),")
+	ref3.append("              ], BinOp(Name('a', Load(), 3, 16), Add(), "
+			    "Name('b', Load(), 3, 18), 3, 16), 3, 2),")
+	ref3.append("          ], [], None, 2, 1),")
+	ref3.append("      ], [], 1, 0),")
+	ref3.append("  ])")
 	assert putil.misc.pprint_ast_node(
 		ast.parse('\n'.join(ret)),
 		include_attributes=True,
 		annotate_fields=False
-	) == '\n'.join(ref)
+	) == '\n'.join(ref2 if sys.version_info.major == 2 else ref3)
 
 
 def test_private_props():

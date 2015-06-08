@@ -36,16 +36,19 @@ This module provides engineering-related functions including:
 
 	.. doctest::
 
+		>>> from __future__ import print_function
 		>>> import putil.eng
 		>>> header = 'Vector: '
 		>>> data = [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9]
-		>>> print header+putil.eng.pprint_vector(
-		...     data,
-		...     width=30,
-		...     eng=True,
-		...     frac_length=1,
-		...     limit=True,
-		...     indent=len(header)
+		>>> print(
+		...     header+putil.eng.pprint_vector(
+		...         data,
+		...         width=30,
+		...         eng=True,
+		...         frac_length=1,
+		...         limit=True,
+		...         indent=len(header)
+		...     )
 		... )
 		Vector: [    1.0m,   20.0u,  300.0M,
 		                     ...
@@ -82,29 +85,3 @@ Functions
 .. autofunction:: putil.eng.round_mantissa
 .. autofunction:: putil.eng.to_scientific_string
 .. autofunction:: putil.eng.to_scientific_tuple
-
-*******
-License
-*******
-
-The MIT License (MIT)
-
-Copyright (c) 2013-2015 Pablo Acosta-Serafini
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
