@@ -10,14 +10,14 @@ import putil.exh
 # Module functions
 ###
 def mydecorator(func):
-	""" Dummy decorator """
-	return func
+    """ Dummy decorator """
+    return func
 
 
 @mydecorator
 def func16(exobj):
-	exobj.add_exception('total_exception_16', TypeError, 'Total exception #16')
+    exobj.add_exception('total_exception_16', TypeError, 'Total exception #16')
 
 def simple_exception():
-	exobj = putil.exh.get_exh_obj()
-	exobj.add_exception('total_exception_16', TypeError, 'Total exception #16')
+    exobj = putil.exh.get_exh_obj()
+    exobj.add_exception('total_exception_16', TypeError, 'Total exception #16')

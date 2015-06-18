@@ -9,14 +9,14 @@ import putil.exh
 EXHOBJ = putil.exh.ExHandle()
 
 def my_func(name):
-	""" Sample function """
-	EXHOBJ.add_exception(
-		exname='illegal_name',
-		extype=TypeError,
-		exmsg='Argument `name` is not valid'
-	)
-	EXHOBJ.raise_exception_if(
-		exname='illegal_name',
-		condition=not isinstance(name, str)
-	)
-	print('My name is {0}'.format(name))
+    """ Sample function """
+    EXHOBJ.add_exception(
+        exname='illegal_name',
+        extype=TypeError,
+        exmsg='Argument `name` is not valid'
+    )
+    EXHOBJ.raise_exception_if(
+        exname='illegal_name',
+        condition=not isinstance(name, str)
+    )
+    print('My name is {0}'.format(name))

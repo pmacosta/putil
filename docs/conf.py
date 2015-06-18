@@ -248,13 +248,13 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   (
-	'index',
-	'Putil library',
-	u'src Documentation',
-	u'Pablo Acosta-Serafini',
-	'Putil library',
-	'Collection of utility modules to supplement the Python standard library',
-	'Miscellaneous'
+    'index',
+    'Putil library',
+    u'src Documentation',
+    u'Pablo Acosta-Serafini',
+    'Putil library',
+    'Collection of utility modules to supplement the Python standard library',
+    'Miscellaneous'
   ),
 ]
 
@@ -342,15 +342,15 @@ epub_copyright = u'2013-2015, Pablo Acosta-Serafini'
 
 # Remove private parameters in class constructor
 def skip_private_parameter(app, what, name, obj, options, signature, rannot):
-	if (((what == 'class') or (what == 'method') or (what == 'function')) and
-	   (signature is not None) and (len(signature) > 2)):
-		args = [token.strip() for token in signature[1:-1].split(',')]
-		proc_args = [token for token in args if token[0] != '_']
-		new_signature = '('+', '.join(proc_args)+')'
-		return (new_signature, rannot)
-	return
+    if (((what == 'class') or (what == 'method') or (what == 'function')) and
+       (signature is not None) and (len(signature) > 2)):
+        args = [token.strip() for token in signature[1:-1].split(',')]
+        proc_args = [token for token in args if token[0] != '_']
+        new_signature = '('+', '.join(proc_args)+')'
+        return (new_signature, rannot)
+    return
 
 def setup(app):
-	app.connect('autodoc-process-signature', skip_private_parameter)
+    app.connect('autodoc-process-signature', skip_private_parameter)
 
 autodoc_member_order = 'bysource'

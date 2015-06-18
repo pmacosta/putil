@@ -7,14 +7,14 @@ from __future__ import print_function
 import putil.misc
 
 def timer(num_tries, fpointer):
-	with putil.misc.Timer() as tobj:
-		for _ in range(num_tries):
-			fpointer()
-	print('Time per call: {0} seconds'.format(
-		tobj.elapsed_time/(2.0*num_tries)
-	))
+    with putil.misc.Timer() as tobj:
+        for _ in range(num_tries):
+            fpointer()
+    print('Time per call: {0} seconds'.format(
+        tobj.elapsed_time/(2.0*num_tries)
+    ))
 
 def sample_func():
-	count = 0
-	for num in range(0, count):
-		count += num
+    count = 0
+    for num in range(0, count):
+        count += num

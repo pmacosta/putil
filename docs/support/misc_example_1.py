@@ -7,21 +7,21 @@ from __future__ import print_function
 import os, putil.misc
 
 def ignored_example():
-	file_name = 'somefile.tmp'
-	open(file_name, 'w').close()
-	print('File {0} exists? {1}'.format(
-		file_name, os.path.isfile(file_name)
-	))
-	with putil.misc.ignored(OSError):
-		os.remove(file_name)
-	print('File {0} exists? {1}'.format(
-		file_name, os.path.isfile(file_name)
-	))
-	with putil.misc.ignored(OSError):
-		os.remove(file_name)
-	print('No exception trying to remove a file that does not exists')
-	try:
-		with putil.misc.ignored(RuntimeError):
-			os.remove(file_name)
-	except:
-		print('Got an exception')
+    file_name = 'somefile.tmp'
+    open(file_name, 'w').close()
+    print('File {0} exists? {1}'.format(
+        file_name, os.path.isfile(file_name)
+    ))
+    with putil.misc.ignored(OSError):
+        os.remove(file_name)
+    print('File {0} exists? {1}'.format(
+        file_name, os.path.isfile(file_name)
+    ))
+    with putil.misc.ignored(OSError):
+        os.remove(file_name)
+    print('No exception trying to remove a file that does not exists')
+    try:
+        with putil.misc.ignored(RuntimeError):
+            os.remove(file_name)
+    except:
+        print('Got an exception')

@@ -14,23 +14,23 @@ exobj_my_module = trace_my_module_2.trace_module()
 import putil.exh
 
 def func(name):
-	"""
-	Prints your name
+    """
+    Prints your name
 
-	:param   name: Name to print
-	:type name: string
+    :param   name: Name to print
+    :type name: string
 
-	.. [[[cog cog.out(exobj_my_module.get_sphinx_autodoc()) ]]]
-	.. [[[end]]]
+    .. [[[cog cog.out(exobj_my_module.get_sphinx_autodoc()) ]]]
+    .. [[[end]]]
 
-	"""
-	exhobj = putil.exh.get_or_create_exh_obj()
-	exhobj.add_exception(
-		exname='illegal_name',
-		extype=TypeError,
-		exmsg='Argument `name` is not valid'
-	)
-	exhobj.raise_exception_if(
-		exname='illegal_name',
-		condition=not isinstance(name, str)
-	)
+    """
+    exhobj = putil.exh.get_or_create_exh_obj()
+    exhobj.add_exception(
+        exname='illegal_name',
+        extype=TypeError,
+        exmsg='Argument `name` is not valid'
+    )
+    exhobj.raise_exception_if(
+        exname='illegal_name',
+        condition=not isinstance(name, str)
+    )

@@ -148,23 +148,21 @@ Contributing
 
     * `Tox <https://tox.readthedocs.org/>`_
 
-
-
 5. Write a unit test which shows that a bug was fixed or that a new feature
    or API works as expected. Run the package tests to ensure that the bug fix
    or new feature does not have adverse side effects. If possible achieve 100%
    code and branch coverage of the contribution. For a thorough code validation
    use the :bash:`pkg-validate.sh` script (see below)
 
-6. Continuous integration is available via `Shippable
-   <http://www.shippable.com/>`_. The Docker image used is
-   `shippableimages/ubuntu1404_python
-   <https://registry.hub.docker.com/u/shippableimages/ubuntu1404_python/>`_; it
-   may be necessary to update the build image in the "Settings" tab of the
-   Shippable putil repository page for the tests to pass (this image is already
-   specified in the Shippable YML configuration file). In "Build image" select
-   "Custom image", in "Custom image name", type
-   ``shippableimages/ubuntu1404_python`` and finally click on the "Save" button
+.. 6. Continuous integration is available via `Shippable
+..    <http://www.shippable.com/>`_. The Docker image used is
+..    `shippableimages/ubuntu1404_python
+..    <https://registry.hub.docker.com/u/shippableimages/ubuntu1404_python/>`_; it
+..    may be necessary to update the build image in the "Settings" tab of the
+..    Shippable putil repository page for the tests to pass (this image is already
+..    specified in the Shippable YML configuration file). In "Build image" select
+..    "Custom image", in "Custom image name", type
+..    ``shippableimages/ubuntu1404_python`` and finally click on the "Save" button
 
 7. The :bash:`${PUTIL_DIR}/sbin` directory contains all relevant development
    scripts:
