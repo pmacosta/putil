@@ -1,7 +1,7 @@
 ﻿# pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,F0401,R0912,R0914
+# pylint: disable=C0111,E0611,F0401,R0912,R0914,W0212
 
 from __future__ import print_function
 import contracts
@@ -30,27 +30,6 @@ _CUSTOM_CONTRACTS = dict()
 ###
 # Functions
 ###
-def _isexception(obj):
-    """
-    Tests if the argument is an exception object
-
-    :param  obj: Object
-    :type   obj: any
-    :rtype: boolean
-    """
-    return False if not inspect.isclass(obj) else issubclass(obj, Exception)
-
-
-def all_disabled():
-    """
-    Wraps PyContracts `all_disabled()
-    <http://andreacensi.github.io/contracts/api/contracts.html#
-    module-contracts.enabling>`_ function. From the PyContracts documentation:
-    "Returns true if all contracts are disabled"
-    """
-    return contracts.all_disabled()
-
-
 def _create_argument_value_pairs(func, *args, **kwargs):
     """
     Creates a dictionary where the keys are the argument names and the values
@@ -75,40 +54,34 @@ def _create_argument_value_pairs(func, *args, **kwargs):
     return arg_dict
 
 
-def disable_all():
-    """
-    Wraps PyContracts `disable_all()
-    <http://andreacensi.github.io/contracts/api/contracts.html#
-    module-contracts.enabling>`_ function. From the PyContracts documentation:
-    "Disables all contract checks"
-    """
-    contracts.disable_all()
-
-
-def enable_all():
-    """
-    Wraps PyContracts `enable_all()
-    <http://andreacensi.github.io/contracts/api/contracts.html#
-    module-contracts.enabling>`_ function. From the PyContracts documentation:
-    "Enables all contract checks. Can be overridden by an environment variable"
-    """
-    contracts.enable_all()
-
-
 def _format_arg(arg):
     """ Validate one exception specification contract tuple/list """
+    # Check that the argument conforms to one of the acceptable types, a string
+    # (when the default exception type is used), an exception type (when the
+    # default exception message is used) or a list/tuple to specify both
+    # exception type and exception message
     if (not (isinstance(arg, str) or _isexception(arg) or
        isinstance(arg, tuple) or isinstance(arg, list))):
         raise TypeError('Illegal custom contract exception definition')
+    # Check that when the argument is a list or tuple, they only have at most
+    # 2 items, the exception type and the exception message
     if ((isinstance(arg, tuple) or isinstance(arg, list)) and
        ((len(arg) == 0) or (len(arg) > 2))):
         raise TypeError('Illegal custom contract exception definition')
+    # When only an exception message is given (and the default RuntimeError
+    # exception type is used), check that the message is not empty
     if isinstance(arg, str) and (len(arg) == 0):
         raise ValueError('Empty custom contract exception message')
+    # When only an exception message is defined,
+    # use the default exception type
     if isinstance(arg, str):
         return {'msg':arg, 'type':RuntimeError}
+    # When only an exception type is defined,
+    # use the default exception message
     if _isexception(arg):
         return {'msg':'Argument `*[argument_name]*` is not valid', 'type':arg}
+    # If a list/tuple definition is used, check that if is not a string, it is
+    # a valid exception type (i.e. that it actually raises an exception)
     if ((len(arg) == 1) and
        (not isinstance(arg[0], str)) and
        (not _isexception(arg[0]))):
@@ -118,11 +91,15 @@ def _format_arg(arg):
        _isexception(arg[1])) or
        (isinstance(arg[1], str) and _isexception(arg[0]))))):
         raise TypeError('Illegal custom contract exception definition')
+    # Check that the exception definition has a non-empty exception message
+    # when a list/tuple definition is used
     if (len(arg) == 1) and isinstance(arg[0], str) and (len(arg[0]) == 0):
         raise ValueError('Empty custom contract exception message')
-    if ((len(arg) == 2) and ((isinstance(arg[0], str) and (len(arg[0]) == 0)) or
-       (isinstance(arg[1], str) and (len(arg[1]) == 0)))):
+    if ((len(arg) == 2) and ((isinstance(arg[0], str) and (len(arg[0]) == 0))
+       or (isinstance(arg[1], str) and (len(arg[1]) == 0)))):
         raise ValueError('Empty custom contract exception message')
+    # Return conforming dictionary with default exception type and exception
+    # message applied (if necessary)
     if len(arg) == 1:
         return {
             'msg':arg[0] if isinstance(arg[0], str) else
@@ -138,9 +115,14 @@ def _format_arg(arg):
 
 def _get_contract_exception_dict(contract_msg):
     """ Generate message for exception """
-    # Get contract name:
+    # A pcontract-defined custom exception message is wrapped in a string
+    # that starts with '[START CONTRACT MSG:' and ends with
+    # '[STOP CONTRACT MSG]'. This is done to easily detect if an
+    # exception raised is from a custom contract and thus be able
+    # to easily retrieve the actual exception message
     start_token = '[START CONTRACT MSG: '
     stop_token = '[STOP CONTRACT MSG]'
+    # No custom contract
     if contract_msg.find(start_token) == -1:
         return {
             'num':0,
@@ -148,7 +130,9 @@ def _get_contract_exception_dict(contract_msg):
             'type':RuntimeError, 'field':'argument_name'
         }
     else:
-        contract_msg = contract_msg[contract_msg.find(start_token)+len(start_token):]
+        # Custom contract
+        msg_start = contract_msg.find(start_token)+len(start_token)
+        contract_msg = contract_msg[msg_start:]
         contract_name = contract_msg[:contract_msg.find(']')]
         contract_msg = contract_msg[
             contract_msg.find(']')+1:contract_msg.find(stop_token)
@@ -170,6 +154,47 @@ def _get_custom_contract(param_contract):
         if re.search(r'\b{0}\b'.format(custom_contract), param_contract):
             return custom_contract
     return None
+
+
+def _isexception(obj):
+    """
+    Tests if the argument is an exception object
+
+    :param  obj: Object
+    :type   obj: any
+    :rtype: boolean
+    """
+    return False if not inspect.isclass(obj) else issubclass(obj, Exception)
+
+
+def all_disabled():
+    """
+    Wraps PyContracts `all_disabled()
+    <http://andreacensi.github.io/contracts/api/contracts.html#
+    module-contracts.enabling>`_ function. From the PyContracts documentation:
+    "Returns true if all contracts are disabled"
+    """
+    return contracts.all_disabled()
+
+
+def disable_all():
+    """
+    Wraps PyContracts `disable_all()
+    <http://andreacensi.github.io/contracts/api/contracts.html#
+    module-contracts.enabling>`_ function. From the PyContracts documentation:
+    "Disables all contract checks"
+    """
+    contracts.disable_all()
+
+
+def enable_all():
+    """
+    Wraps PyContracts `enable_all()
+    <http://andreacensi.github.io/contracts/api/contracts.html#
+    module-contracts.enabling>`_ function. From the PyContracts documentation:
+    "Enables all contract checks. Can be overridden by an environment variable"
+    """
+    contracts.enable_all()
 
 
 def get_exdesc():
@@ -218,20 +243,26 @@ def get_exdesc():
     :code:`{'ex1':'Empty name', 'ex2':'Invalid name'}`.
 
     """
-    sobj = inspect.stack()
     # First frame is own function (get_exdesc), next frame is the calling
     # function, of which its name is needed
-    fname = sobj[1][3]
-    # Get globals variables, where function attributes reside
-    for sitem in sobj[1:]:
-        fobj = (sitem[0].f_locals[fname]
-               if fname in sitem[0].f_locals else
-               (sitem[0].f_globals[fname] if fname in sitem[0].f_globals else None))
-        if fobj and hasattr(fobj, 'exdesc'):
-            break
-    else:
-        raise RuntimeError(
-            'Function object could not be found for function `{0}`'.format(fname)
+    fname = inspect.getframeinfo(sys._getframe(1))[2]
+    # Find function object in stack
+    count = 0
+    fobj = None
+    while not (fobj and hasattr(fobj, 'exdesc')):
+        count = count+1
+        try:
+            sitem = sys._getframe(count)
+        except ValueError:
+            # Got to top of stack
+            raise RuntimeError(
+                'Function object could not be found for function `{}`'.format(
+                    fname
+                )
+            )
+        fobj = (
+            sitem.f_locals[fname] if fname in sitem.f_locals else
+            (sitem.f_globals[fname] if fname in sitem.f_globals else None)
         )
     # Return function attribute created by new contract decorator
     exdesc = getattr(fobj, 'exdesc')
@@ -409,7 +440,10 @@ def contract(**contract_args):
                     exhobj.add_exception(
                         exname=exname,
                         extype=exdict['type'],
-                        exmsg=exdict['msg'].replace('*[argument_name]*', param_name)
+                        exmsg=exdict['msg'].replace(
+                            '*[argument_name]*',
+                            param_name
+                        )
                     )
         # Argument validation. PyContracts "entry" is the
         # contracts.contract_decorator, which has some logic to figure out
@@ -419,7 +453,13 @@ def contract(**contract_args):
         # contracts.contracts_decorate, which is renamed to contracts.decorate
         # in the contracts __init__.py file
         try:
-            return contracts.decorate(func, False, **contract_args)(*args, **kwargs)
+            return (
+                contracts.decorate(
+                    func,
+                    False,
+                    **contract_args
+                )(*args, **kwargs)
+            )
         except contracts.ContractSyntaxError:
             raise
         except contracts.ContractNotRespected as eobj:
@@ -434,12 +474,16 @@ def contract(**contract_args):
                 param_name,
                 exdict['num']
             )
-            edata = {
-                'field':exdict['field'],
-                'value':param_dict[param_name]
-            } if (exdict['field'] and (exdict['field'] != 'argument_name')) else None
+            efield = exdict['field']
+            edata = (
+                {'field':efield, 'value':param_dict[param_name]}
+                if (efield and (efield != 'argument_name')) else
+                None
+            )
             if exhobj is not None:
-                exhobj.raise_exception_if(exname=exname, condition=True, edata=edata)
+                exhobj.raise_exception_if(
+                    exname=exname, condition=True, edata=edata
+                )
             else:
                 # Pick "nice" variable names because the raise line is going to
                 # be shown in the exception traceback

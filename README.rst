@@ -152,7 +152,21 @@ Contributing
    or API works as expected. Run the package tests to ensure that the bug fix
    or new feature does not have adverse side effects. If possible achieve 100%
    code and branch coverage of the contribution. For a thorough code validation
-   use the :bash:`pkg-validate.sh` script (see below)
+   use the :bash:`pkg-validate.sh` script (see below). Alternatively
+   `setuptools <https://bitbucket.org/pypa/setuptools>`_ can be used to run the
+   package tests via `Tox`_:
+
+	.. code-block:: bash
+
+	    $ python setup.py tests
+            running tests
+            running egg_info
+            writing requirements to putil.egg-info/requires.txt
+            writing putil.egg-info/PKG-INFO
+            ...
+
+   To pass arguments to `Tox`_ use the :code:`-a` option followed by a quoted
+   string.
 
 .. 6. Continuous integration is available via `Shippable
 ..    <http://www.shippable.com/>`_. The Docker image used is
@@ -178,14 +192,19 @@ Contributing
 
 		    Usage:
 		      build-docs.sh -h
-		      build-docs.sh -r [-n num-cpus] [module-name]
-		      build-docs.sh [module-name]
+		      build-docs.sh -r -t [-d dir] [-n num-cpus] [module-name]
+		      build-docs.sh [-d dir] [module-name]
 
 		    Options:
 		      -h  Show this screen
 		      -r  Rebuild exceptions documentation. If no module name
+		      -d  Specify source file directory
+		          [default: (build-docs.sh directory)/../putil]
 		          is given all modules with auto-generated exceptions
 		          documentation are rebuilt
+		      -t  Diff original and rebuilt file(s) (exit code 0
+		          indicates file(s) are identical, exit code 1
+		          file(s) are different
 		      -n  Number of CPUs to use [default: 1]
 
 

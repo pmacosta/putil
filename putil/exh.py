@@ -63,7 +63,7 @@ def _build_exclusion_list(exclude):
 def _get_class_obj(frame_obj):
     """ Extract class object from a frame object """
     scontext = frame_obj.f_locals.get('self', None)
-    return scontext.__class__ if scontext else None
+    return scontext.__class__ if scontext is not None else None
 
 
 def _get_class_props_obj(class_obj):
@@ -522,9 +522,11 @@ class ExHandle(object):
             ]
             # Eliminate callables that are in a decorator chain
             iobj = enumerate(zip(ret[1:], ret, idv[1:]))
-            for num, (nme, prv_nme, in_deco) in iobj:
-                if in_deco and (nme == prv_nme):
-                    ret.pop(num)
+            num_del_items = 0
+            for num, (name, prev_name, in_decorator) in iobj:
+                if in_decorator and (name == prev_name):
+                    del ret[num-num_del_items]
+                    num_del_items += 1
             # Store callable in cache and return
             ret = self._callables_separator.join(ret)
             self._call_path_cache[call_path] = (callable_id, ret)
@@ -639,7 +641,23 @@ class ExHandle(object):
         for action in prop_dict.keys():
             action_obj = getattr(prop_obj, action)
             if action_obj:
-                prop_dict[action] = id(_get_func_code(action_obj))
+                # Unwrap action object. Contracts match the wrapped
+                # code object while exceptions registered in the
+                # body of the function/method which has decorators
+                # match the unwrapped object
+                prev_func_obj, next_func_obj = (
+                    action_obj,
+                    getattr(action_obj, '__wrapped__', None)
+                )
+                while next_func_obj:
+                    prev_func_obj, next_func_obj = (
+                        next_func_obj,
+                        getattr(next_func_obj, '__wrapped__', None)
+                    )
+                prop_dict[action] = [
+                    id(_get_func_code(action_obj)),
+                    id(_get_func_code(prev_func_obj))
+                ]
         return prop_dict
 
     def _property_search(self, fobj):
@@ -668,8 +686,8 @@ class ExHandle(object):
             'fdel':'deleter',
         }
         for prop_name, prop_actions_dict in prop_actions_dicts.items():
-            for action_name, action_id in prop_actions_dict.items():
-                if action_id == func_id:
+            for action_name, action_id_list in prop_actions_dict.items():
+                if action_id_list and (func_id in action_id_list):
                     prop_name = '.'.join([class_name, prop_name])
                     return '{prop_name}({prop_action})'.format(
                         prop_name=prop_name,

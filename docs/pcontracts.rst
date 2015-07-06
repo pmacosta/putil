@@ -27,12 +27,12 @@ attached to). For example, the definitions of the custom contracts
 :py:func:`putil.ptypes.file_name_exists` are:
 
 
-.. literalinclude:: ../putil/ptypes.py
+.. literalinclude:: ./support/ptypes.py
     :language: python
     :tab-width: 4
     :lines: 385-410
 
-.. literalinclude:: ../putil/ptypes.py
+.. literalinclude:: ./support/ptypes.py
     :language: python
     :tab-width: 4
     :lines: 413-452

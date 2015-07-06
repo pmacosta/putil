@@ -15,6 +15,7 @@ import putil.exh
 ###
 """
 [[[cog
+import os, sys
 if sys.version_info.major == 2:
     import __builtin__
 else:

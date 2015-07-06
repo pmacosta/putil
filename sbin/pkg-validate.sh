@@ -87,6 +87,8 @@ fi
 cd ${pkg_dir}
 ${pkg_dir}/sbin/test.sh ${nopt} -d ${eopt}
 ${pkg_dir}/sbin/test.sh ${nopt} -c ${eopt}
+print_banner "Verifying exceptions auto-documentation"
+${pkg_dir}/sbin/build-docs.sh ${nopt} -r -t
 print_banner "Testing documentation"
 for version in ${doc_versions[@]}; do
 	tox -e ${version}

@@ -146,11 +146,11 @@ cd ${pkg_dir}
 for interp in ${interps[@]}; do
 	if [ "${interp}" == "py27" ]; then
 		tox_pkg_dir=".tox/py27/lib/python2.7/site-packages/putil/"
-		docs_dir="${pkg_dir}/.tox/py27/lib/python2.7/site-packages/docs"
+		docs_dir="${pkg_dir}/.tox/py27/usr/share/putil/docs"
 		eopt="-e py27"
 	elif [ "${interp}" == "py34" ]; then
 		tox_pkg_dir=".tox/py34/lib/python3.4/site-packages/putil/"
-		docs_dir="${pkg_dir}/.tox/py34/lib/python3.4/site-packages/docs"
+		docs_dir="${pkg_dir}/.tox/py34/usr/share/putil/docs"
 		eopt="-e py34"
 	fi
 	coverage_file=".coveragerc_tox_${interp}"

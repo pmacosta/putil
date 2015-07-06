@@ -98,7 +98,9 @@ def test_exdoc_doccode():
 
 def test_pcsv_doccode():
     """ Test code used in pcsv module """
-    script_dir = os.path.join(os.path.dirname(__file__), '..', 'docs', 'support')
+    script_dir = os.path.join(
+        os.path.dirname(__file__), '..', 'docs', 'support'
+    )
     script_name = os.path.join(script_dir, 'pcsv_example.py')
     proc = subprocess.Popen(['python', script_name], stdout=subprocess.PIPE)
     proc.communicate()
@@ -151,13 +153,17 @@ def test_pcontracts_doccode():
     @putil.pcontracts.contract(name='custom_contract1')
     def func1(name):
         return name
-    putil.test.assert_exception(func1, {'name':''}, RuntimeError, 'Invalid name')
+    putil.test.assert_exception(
+        func1, {'name':''}, RuntimeError, 'Invalid name'
+    )
     assert func1('John') == 'John'
     # Contract 2
     @putil.pcontracts.contract(name='custom_contract2')
     def func2(name):
         return name
-    putil.test.assert_exception(func2, {'name':''}, RuntimeError, 'Invalid name')
+    putil.test.assert_exception(
+        func2, {'name':''}, RuntimeError, 'Invalid name'
+    )
     assert func2('John') == 'John'
     # Contract 3
     @putil.pcontracts.contract(name='custom_contract3')
@@ -185,13 +191,17 @@ def test_pcontracts_doccode():
     @putil.pcontracts.contract(name='custom_contract5')
     def func5(name):
         return name
-    putil.test.assert_exception(func5, {'name':''}, RuntimeError, 'Invalid name')
+    putil.test.assert_exception(
+        func5, {'name':''}, RuntimeError, 'Invalid name'
+    )
     assert func5('John') == 'John'
     # Contract 6
     @putil.pcontracts.contract(name='custom_contract6')
     def func6(name):
         return name
-    putil.test.assert_exception(func6, {'name':''}, RuntimeError, 'Invalid name')
+    putil.test.assert_exception(
+        func6, {'name':''}, RuntimeError, 'Invalid name'
+    )
     assert func6('John') == 'John'
     # Contract 7
     @putil.pcontracts.contract(name='custom_contract7')
@@ -208,7 +218,9 @@ def test_pcontracts_doccode():
     @putil.pcontracts.contract(name='custom_contract8')
     def func8(name):
         return name
-    putil.test.assert_exception(func8, {'name':''}, RuntimeError, 'Invalid name')
+    putil.test.assert_exception(
+        func8, {'name':''}, RuntimeError, 'Invalid name'
+    )
     assert func8('John') == 'John'
     # Contract 9
     @putil.pcontracts.contract(name='custom_contract9')
@@ -258,7 +270,9 @@ def test_plot_doccode():
     result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
     if (not result) and (not result_ci):
         print('Images do not match')
-        print('Reference image: file://{0}'.format(os.path.realpath(ref_fname)))
+        print(
+            'Reference image: file://{0}'.format(os.path.realpath(ref_fname))
+        )
         print('Reference CI image: file://{0}'.format(
             os.path.realpath(ref_ci_fname)
         ))

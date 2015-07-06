@@ -85,8 +85,12 @@ def main(argv): # pylint: disable=R0912,R0914,R0915
     is_submodule = module in SUBMODULES_LIST
     source_dir = os.path.join(site_pkg_dir, 'putil')
     output_file_name = os.path.join(
-        pkg_dir,
+        site_pkg_dir,
+        'putil',
         '.coveragerc_{0}_{1}'.format(env, interp)
+    )
+    coverage_file_name = os.path.join(
+        site_pkg_dir, 'putil', '.coverage_{}'.format(interp)
     )
     conf_file = []
     conf_file.append(os.path.join(source_dir, 'conftest.py'))
@@ -102,12 +106,13 @@ def main(argv): # pylint: disable=R0912,R0914,R0915
         lines.append('[run]')
         lines.append('branch = True')
         lines.append('show_missing = True')
-        lines.append('data_file = ".coverage_{0}'.format(interp))
+        lines.append('data_file = {}'.format(coverage_file_name))
         start_flag = True
         # Include modules
+        source_files = get_source_files(os.path.join(site_pkg_dir, 'putil'))
         for file_name in [
                 item
-                for item in get_source_files(os.path.join(site_pkg_dir, 'putil'))
+                for item in source_files
                 if (env != 'local') or ((env == 'local') and
                    (not is_submodule) and (item == '{0}.py'.format(module)))]:
             start_flag, prefix = (
@@ -183,7 +188,7 @@ def main(argv): # pylint: disable=R0912,R0914,R0915
     else:
         del_files = conf_file
         del_files.append(output_file_name)
-        del_files.append(os.path.join(pkg_dir, '.coverage_{0}'.format(interp)))
+        del_files.append(coverage_file_name)
         try:
             for fname in del_files:
                 print('Deleting file {0}'.format(fname))

@@ -65,7 +65,7 @@ class CsvSource(DataSource):
     .. putil.plot.csv_source.CsvSource.__init__
 
     :raises:
-     * OSError (File \`*[fname]*\` could not be found)
+     * OSError (File \`*[file_name]*\` could not be found)
 
      * RuntimeError (Argument \`col\` is not valid)
 
@@ -75,9 +75,9 @@ class CsvSource(DataSource):
 
      * RuntimeError (Argument \`dfilter\` is not valid)
 
-     * RuntimeError (Argument \`fname\` is not valid)
-
      * RuntimeError (Argument \`filtered\` is not valid)
+
+     * RuntimeError (Argument \`fname\` is not valid)
 
      * RuntimeError (Argument \`fproc_eargs\` is not valid)
 
@@ -789,7 +789,7 @@ class CsvSource(DataSource):
 
     :raises: (when assigned)
 
-     * OSError (File \`*[fname]*\` could not be found)
+     * OSError (File \`*[file_name]*\` could not be found)
 
      * RuntimeError (Argument \`col\` is not valid)
 
@@ -797,9 +797,9 @@ class CsvSource(DataSource):
 
      * RuntimeError (Argument \`dfilter\` is not valid)
 
-     * RuntimeError (Argument \`fname\` is not valid)
-
      * RuntimeError (Argument \`filtered\` is not valid)
+
+     * RuntimeError (Argument \`fname\` is not valid)
 
      * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
        illegal number of values)

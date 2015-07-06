@@ -63,10 +63,18 @@ class Panel(object):
     :type   primary_axis_label:     string
     :param  primary_axis_units:     primary dependent axis units
     :type   primary_axis_units:     string
+    :param  primary_axis_ticks:     primary dependent axis tick marks. When
+     given overrides automatically generated tick marks if the axis type is
+     linear
+     :type  primary_axis_ticks:     list or Numpy vector
     :param  secondary_axis_label:   secondary dependent axis label
     :type   secondary_axis_label:   string
     :param  secondary_axis_units:   secondary dependent axis units
     :type   secondary_axis_units:   string
+    :param  secondary_axis_ticks:   secondary dependent axis tick marks. When
+     given overrides automatically generated tick marks if the axis type is
+     linear
+     :type  secondary_axis_ticks:   list or Numpy vector
     :param  log_dep_axis:           Flag that indicates whether the dependent
      (primary and/or secondary) axis is linear (False) or logarithmic (True)
     :type   log_dep_axis:           boolean
@@ -115,9 +123,11 @@ class Panel(object):
     .. [[[end]]]
     """
     # pylint: disable=R0902,R0903,W0102
-    def __init__(self, series=None, primary_axis_label='', primary_axis_units='',
+    def __init__(self, series=None, primary_axis_label='',
+                 primary_axis_units='', primary_axis_ticks=None,
                  secondary_axis_label='', secondary_axis_units='',
-                 log_dep_axis=False, legend_props=None, display_indep_axis=False):
+                 secondary_axis_ticks=None, log_dep_axis=False,
+                 legend_props=None, display_indep_axis=False):
         # Private attributes
         self._exh = putil.exh.get_or_create_exh_obj()
         self._series = None
@@ -125,6 +135,8 @@ class Panel(object):
         self._secondary_axis_label = None
         self._primary_axis_units = None
         self._secondary_axis_units = None
+        self._primary_axis_ticks = None
+        self._secondary_axis_ticks = None
         self._log_dep_axis = None
         self._recalculate_series = False
         self._legend_props = {'pos':'BEST', 'cols':1}
@@ -135,7 +147,8 @@ class Panel(object):
             'right', 'center left', 'center right', 'lower center',
             'upper center', 'center'
         ]
-        self._panel_has_primary_axis, self._panel_has_secondary_axis = False, False
+        self._panel_has_primary_axis = False
+        self._panel_has_secondary_axis = False
         self._primary_dep_var_min = None
         self._primary_dep_var_max = None
         self._primary_dep_var_div = None
@@ -154,9 +167,40 @@ class Panel(object):
             'RIGHT', 'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER',
             'UPPER CENTER', 'CENTER'
         ]
+        # Exceptions definition
+        self._exh.add_exception(
+            exname='invalid_primary_axis_ticks',
+            extype=ValueError,
+            exmsg='Argument `primary_axis_ticks` is not valid'
+        )
+        self._exh.add_exception(
+            exname='invalid_secondary_axis_ticks',
+            extype=ValueError,
+            exmsg='Argument `secondary_axis_ticks` is not valid'
+        )
+        self._exh.raise_exception_if(
+            exname='invalid_primary_axis_ticks',
+            condition=(
+                (primary_axis_ticks is not None) and (
+                    (not isinstance(primary_axis_ticks, list)) and
+                    (not isinstance(primary_axis_ticks, numpy.ndarray))
+                )
+            )
+        )
+        self._exh.raise_exception_if(
+            exname='invalid_secondary_axis_ticks',
+            condition=(
+                (secondary_axis_ticks is not None) and (
+                    (not isinstance(secondary_axis_ticks, list)) and
+                    (not isinstance(secondary_axis_ticks, numpy.ndarray))
+                )
+            )
+        )
         # Assignment of arguments to attributes
         # Order here is important to avoid unnecessary re-calculating of
         # panel axes if log_dep_axis is True
+        self._primary_axis_ticks = primary_axis_ticks
+        self._secondary_axis_ticks = secondary_axis_ticks
         self._set_log_dep_axis(log_dep_axis)
         self._set_series(series)
         self._set_primary_axis_label(primary_axis_label)
@@ -168,7 +212,8 @@ class Panel(object):
 
     def __iter__(self):
         """
-        Returns an iterator over the series object(s) in the panel. For example:
+        Returns an iterator over the series object(s) in the panel. For
+        example:
 
         .. =[=cog
         .. import docs.support.incfile
@@ -276,7 +321,9 @@ class Panel(object):
             self._panel_has_secondary_axis = any([
                 series_obj.secondary_axis for series_obj in self.series
             ])
-            comp_prim_dep_var = (not self.log_dep_axis) and self._panel_has_primary_axis
+            comp_prim_dep_var = (
+                (not self.log_dep_axis) and self._panel_has_primary_axis
+            )
             comp_sec_dep_var = ((not self.log_dep_axis) and
                                self._panel_has_secondary_axis)
             panel_has_primary_interp_series = (any([
@@ -321,14 +368,26 @@ class Panel(object):
                 if ((not series_obj.secondary_axis) and
                    (series_obj.interp_dep_var is not None))
             ]) if panel_has_primary_interp_series else None
-            primary_min = (min(min(glob_prim_dep_var), prim_interp_min)
-                          if comp_prim_dep_var and
-                             (prim_interp_min is not None) else
-                          (min(glob_prim_dep_var) if comp_prim_dep_var else None))
-            primary_max = (max(max(glob_prim_dep_var), prim_interp_max)
-                          if comp_prim_dep_var and
-                             (prim_interp_min is not None) else
-                          (max(glob_prim_dep_var) if comp_prim_dep_var else None))
+            primary_min = (
+                min(min(glob_prim_dep_var), prim_interp_min)
+                if comp_prim_dep_var and
+                (prim_interp_min is not None) else
+                (
+                    (min(glob_prim_dep_var)
+                    if comp_prim_dep_var else
+                    None)
+                )
+            )
+            primary_max = (
+                max(max(glob_prim_dep_var), prim_interp_max)
+                if comp_prim_dep_var and
+                (prim_interp_min is not None) else
+                    (
+                        (max(glob_prim_dep_var)
+                        if comp_prim_dep_var else
+                        None)
+                    )
+            )
             # Secondary axis
             glob_sec_dep_var = numpy.unique(numpy.concatenate([
                 series_obj.dep_var
@@ -347,14 +406,18 @@ class Panel(object):
                 if (series_obj.secondary_axis and
                    (series_obj.interp_dep_var is not None))
             ]).tolist() if panel_has_secondary_interp_series else None
-            secondary_min = (min(min(glob_sec_dep_var), sec_interp_min)
-                            if comp_sec_dep_var and
-                               (sec_interp_min is not None) else
-                            (min(glob_sec_dep_var) if comp_sec_dep_var else None))
-            secondary_max = (max(max(glob_sec_dep_var), sec_interp_max)
-                            if comp_sec_dep_var and
-                            (sec_interp_max is not None) else
-                            (max(glob_sec_dep_var) if comp_sec_dep_var else None))
+            secondary_min = (
+                min(min(glob_sec_dep_var), sec_interp_min)
+                if comp_sec_dep_var and
+                (sec_interp_min is not None) else
+                min(glob_sec_dep_var) if comp_sec_dep_var else None
+            )
+            secondary_max = (
+                max(max(glob_sec_dep_var), sec_interp_max)
+                if comp_sec_dep_var and
+                (sec_interp_max is not None) else
+                (max(glob_sec_dep_var) if comp_sec_dep_var else None)
+            )
             # Global (for logarithmic dependent axis)
             glob_panel_dep_var = (None
                                  if not self.log_dep_axis else
@@ -362,22 +425,30 @@ class Panel(object):
                                     series_obj.dep_var
                                     for series_obj in self.series
                                 ])))
-            panel_min = (min(min(glob_panel_dep_var), prim_interp_min)
-                        if self.log_dep_axis and
-                           panel_has_primary_interp_series else
-                        (min(glob_panel_dep_var) if self.log_dep_axis else None))
-            panel_max = (max(max(glob_panel_dep_var), prim_interp_max)
-                        if self.log_dep_axis and
-                           panel_has_primary_interp_series else
-                        (max(glob_panel_dep_var) if self.log_dep_axis else None))
-            panel_min = (min(min(glob_panel_dep_var), sec_interp_min)
-                        if self.log_dep_axis and
-                           panel_has_secondary_interp_series else
-                        (min(glob_panel_dep_var) if self.log_dep_axis else None))
-            panel_max = (max(max(glob_panel_dep_var), sec_interp_max)
-                        if self.log_dep_axis and
-                        panel_has_secondary_interp_series else
-                        (max(glob_panel_dep_var) if self.log_dep_axis else None))
+            panel_min = (
+                min(min(glob_panel_dep_var), prim_interp_min)
+                if self.log_dep_axis and
+                panel_has_primary_interp_series else
+                (min(glob_panel_dep_var) if self.log_dep_axis else None)
+            )
+            panel_max = (
+                max(max(glob_panel_dep_var), prim_interp_max)
+                if self.log_dep_axis and
+                panel_has_primary_interp_series else
+                (max(glob_panel_dep_var) if self.log_dep_axis else None)
+            )
+            panel_min = (
+                min(min(glob_panel_dep_var), sec_interp_min)
+                if self.log_dep_axis and
+                panel_has_secondary_interp_series else
+                (min(glob_panel_dep_var) if self.log_dep_axis else None)
+            )
+            panel_max = (
+                max(max(glob_panel_dep_var), sec_interp_max)
+                if self.log_dep_axis and
+                panel_has_secondary_interp_series else
+                (max(glob_panel_dep_var) if self.log_dep_axis else None)
+            )
             # Get axis tick marks locations
             if comp_prim_dep_var:
                 (self._primary_dep_var_locs,
@@ -391,7 +462,8 @@ class Panel(object):
                         primary_min,
                         primary_max,
                         tight=False,
-                        log_axis=self.log_dep_axis
+                        log_axis=self.log_dep_axis,
+                        tick_list=self._primary_axis_ticks,
                     ))
             if comp_sec_dep_var:
                 (self._secondary_dep_var_locs,
@@ -405,7 +477,8 @@ class Panel(object):
                         secondary_min,
                         secondary_max,
                         tight=False,
-                        log_axis=self.log_dep_axis
+                        log_axis=self.log_dep_axis,
+                        tick_list=self._secondary_axis_ticks,
                     ))
             if self.log_dep_axis and self._panel_has_primary_axis:
                 (self._primary_dep_var_locs,
@@ -438,9 +511,14 @@ class Panel(object):
             # Equalize number of ticks on primary and secondary axis so that
             # ticks are in the same percentage place within the dependent
             # variable plotting interval (for non-logarithmic panels)
+            # If there is any tick override (primary and/or secondary) this
+            # is not done, the user assumes responsibility for aesthetics of
+            # final result
             if ((not self.log_dep_axis) and
                self._panel_has_primary_axis and
-               self._panel_has_secondary_axis):
+               self._panel_has_secondary_axis and
+               (self._primary_axis_ticks is None) and
+               (self._secondary_axis_ticks is None)):
                 max_ticks = max(
                     len(self._primary_dep_var_locs),
                     len(self._secondary_dep_var_locs)
@@ -545,10 +623,12 @@ class Panel(object):
         self._exh.add_exception(
             exname='illegal_legend_prop',
             extype=TypeError,
-            exmsg="Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
-                  "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
-                  "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', "
-                  "'UPPER CENTER', 'CENTER'] (case insensitive)"
+            exmsg=(
+                "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
+                "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
+                "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', "
+                "'UPPER CENTER', 'CENTER'] (case insensitive)"
+            )
         )
         self._exh.add_exception(
             exname='invalid_legend_cols',
@@ -648,10 +728,11 @@ class Panel(object):
             if self.secondary_axis_units not in ['', None] else
             'not specified'
         )
-        ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
-        ret += 'Display independent axis: {0}\n'.format(self.display_indep_axis)
+        ret += 'Logarithmic dependent axis: {}\n'.format(self.log_dep_axis)
+        ret += 'Display independent axis: {}\n'.format(self.display_indep_axis)
         ret += 'Legend properties:\n'
-        for num, (key, value) in enumerate(sorted(list(self.legend_props.items()))):
+        iobj = enumerate(sorted(list(self.legend_props.items())))
+        for num, (key, value) in iobj:
             ret += '   {0}: {1}{2}'.format(
                 key, value, '\n' if num+1 < len(self.legend_props) else ''
             )
@@ -681,7 +762,7 @@ class Panel(object):
         for num, obj in enumerate(self.series):
             self._exh.raise_exception_if(
                 exname='invalid_series',
-                condition=type(obj) is not Series
+                condition=not isinstance(obj, Series)
             )
             self._exh.raise_exception_if(
                 exname='incomplete_series',
@@ -746,9 +827,15 @@ class Panel(object):
             unit_scale = '' if axis_scale is None else axis_scale.strip()
             (fset_label_text(
                 axis_label +
-                (''
+                (
+                    ''
                     if (unit_scale == '') and (axis_units == '') else
-                 (' ['+unit_scale+('-' if axis_units == '' else axis_units)+']')
+                    (
+                        ' [{unit_scale}{units}]'.format(
+                            unit_scale=unit_scale,
+                            units='-' if axis_units == '' else axis_units
+                        )
+                    )
                 ),
                 fontdict={'fontsize':AXIS_LABEL_FONT_SIZE}
             ))
@@ -756,7 +843,11 @@ class Panel(object):
     def _draw_panel(self, axarr_prim, indep_axis_dict, print_indep_axis):
         """ Draw panel series """
         # pylint: disable=W0612
-        axarr_sec = axarr_prim.twinx() if self._panel_has_secondary_axis else None
+        axarr_sec = (
+            axarr_prim.twinx()
+            if self._panel_has_secondary_axis else
+            None
+        )
         # Place data series in their appropriate axis (primary or secondary)
         for series_obj in self.series:
             series_obj._draw_series(
@@ -789,7 +880,8 @@ class Panel(object):
                 self.secondary_axis_units,
                 self._secondary_dep_var_unit_scale
             )
-        if (not self._panel_has_primary_axis) and self._panel_has_secondary_axis:
+        if ((not self._panel_has_primary_axis) and
+           self._panel_has_secondary_axis):
             axarr_prim.yaxis.set_visible(False)
         # Print legend
         if (len(self.series) > 1) and (len(self.legend_props) > 0):
@@ -832,7 +924,8 @@ class Panel(object):
                 # the axis/series of the other
                 # From: http://stackoverflow.com/questions/17158469/
                 #       legend-transparency-when-using-secondary-axis
-                if self._panel_has_primary_axis and self._panel_has_secondary_axis:
+                if (self._panel_has_primary_axis and
+                    self._panel_has_secondary_axis):
                     axarr_prim.set_zorder(1)
                     axarr_prim.set_frame_on(False)
                     axarr_sec.set_frame_on(True)
@@ -844,20 +937,28 @@ class Panel(object):
             indep_axis_dict['indep_var_max'],
             indep_axis_dict['indep_var_locs']
         )
-        indep_var_labels = (indep_axis_dict['indep_var_labels']
-                           if ('indep_var_labels' in indep_axis_dict) and
-                              (indep_axis_dict['indep_var_labels'] is not None) else
-                           None)
-        indep_axis_label = (''
-                           if indep_axis_dict['indep_axis_label'] is None or
-                              not print_indep_axis else
-                           indep_axis_dict['indep_axis_label'].strip())
-        indep_axis_units = (''
-                           if indep_axis_dict['indep_axis_units'] is None else
-                           indep_axis_dict['indep_axis_units'].strip())
-        indep_axis_unit_scale = (''
-                                if indep_axis_dict['indep_axis_unit_scale'] is None else
-                                indep_axis_dict['indep_axis_unit_scale'].strip())
+        indep_var_labels = (
+            indep_axis_dict['indep_var_labels']
+            if ('indep_var_labels' in indep_axis_dict) and
+               (indep_axis_dict['indep_var_labels'] is not None) else
+            None
+        )
+        indep_axis_label = (
+            ''
+            if indep_axis_dict['indep_axis_label'] is None or
+               not print_indep_axis else
+            indep_axis_dict['indep_axis_label'].strip()
+        )
+        indep_axis_units = (
+            ''
+            if indep_axis_dict['indep_axis_units'] is None else
+            indep_axis_dict['indep_axis_units'].strip()
+        )
+        indep_axis_unit_scale = (
+            ''
+            if indep_axis_dict['indep_axis_unit_scale'] is None else
+            indep_axis_dict['indep_axis_unit_scale'].strip()
+        )
         self._setup_axis(
             'INDEP',
             axarr_prim,
@@ -871,8 +972,16 @@ class Panel(object):
         )
         plt.setp(axarr_prim.get_xticklabels(), visible=print_indep_axis)
         return {
-            'primary':None if not self._panel_has_primary_axis else axarr_prim,
-            'secondary':None if not self._panel_has_secondary_axis else axarr_sec
+            'primary':(
+                None
+                if not self._panel_has_primary_axis else
+                axarr_prim
+            ),
+            'secondary':(
+                None
+                if not self._panel_has_secondary_axis else
+                axarr_sec
+            )
         }
 
     _complete = property(_get_complete)

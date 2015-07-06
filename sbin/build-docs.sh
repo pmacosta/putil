@@ -11,46 +11,59 @@ print_usage_message () {
 	echo -e "build-docs.sh\n" >&2
 	echo -e "Usage:" >&2
 	echo -e "  build-docs.sh -h" >&2
-	echo -e "  build-docs.sh -r [-n num-cpus] [module-name]" >&2
-	echo -e "  build-docs.sh [module-name]\n" >&2
+	echo -e "  build-docs.sh -r -t [-d dir] [-n num-cpus] [module-name]" >&2
+	echo -e "  build-docs.sh [-d dir] [module-name]\n" >&2
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
 	echo -e "  -r  Rebuild exceptions documentation. If no module name" >&2
+	echo -e "  -d  Specify source file directory" >&2
+	echo -e "      [default: (build-docs.sh directory)/../putil]" >&2
 	echo -e "      is given all modules with auto-generated exceptions" >&2
 	echo -e "      documentation are rebuilt" >&2
+	echo -e "  -t  Diff original and rebuilt file(s) (exit code 0" >&2
+	echo -e "      indicates file(s) are identical, exit code 1" >&2
+	echo -e "      file(s) are different" >&2
 	echo -e "  -n  Number of CPUs to use [default: 1]" >&2
 }
 
+cpwd=${PWD}
 finish() {
 	export TRACER_DIR=""
 	export NOPTION=""
 	export SUPPORT_DIR=""
+	rm -rf ${smf}.tmp
 	cd ${cpwd}
 }
 trap finish EXIT ERR SIGINT
 
 pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
-src_dir=${pkg_dir}/putil
-cpwd=${PWD}
 export TRACER_DIR=${pkg_dir}/docs/support
+src_dir=${pkg_dir}/putil
 plot_submodules=(basic_source csv_source figure "functions" panel series)
 
 # Default values for command line options
 rebuild=0
 modules=(eng pcsv plot tree)
 num_cpus=""
+test_mode=0
 # Read command line options
-while getopts ":rhn:" opt; do
+while getopts ":rthn:d:" opt; do
 	case ${opt} in
-		r)
-			rebuild=1
-			;;
 		h)
 			print_usage_message
 			exit 0
 			;;
+		d)
+			src_dir=${OPTARG}
+			;;
 		n)
 			num_cpus=${OPTARG}
+			;;
+		r)
+			rebuild=1
+			;;
+		t)
+			test_mode=1
 			;;
 		\?)
 			echo "build-docs.sh: invalid option" >&2
@@ -75,12 +88,17 @@ if [ "${NOPTION}" != "" ] && [ ${rebuild} == 0 ]; then
 	exit 1
 fi
 
-if [ ${rebuild} == 1 ]; then
+if [ ${rebuild} == 1 ] && [ ${test_mode} == 0 ]; then
 	echo "Are you sure [Y/N]? "
 	read -s -n 1 answer
 	if [ "${answer^^}" != "Y" ]; then
 		exit 0
 	fi
+fi
+
+if [ ! -d "${src_dir}" ]; then
+	echo "build-docs.sh: source directory ${src_dir} does not exist" >&2
+	exit 1
 fi
 
 if [ ${rebuild} == 1 ]; then
@@ -101,10 +119,25 @@ if [ ${rebuild} == 1 ]; then
 				exit 1
 			fi
 			echo "   Processing module ${smf}"
+			orig_file=${smf}.orig
+			if [ ${test_mode} == 1 ]; then
+				cp ${smf} ${orig_file}
+			fi
 			if cog.py -e -x -o ${smf}.tmp ${smf}; then
 				mv -f ${smf}.tmp ${smf}
 				if cog.py -e -o ${smf}.tmp ${smf}; then
 					mv -f ${smf}.tmp ${smf}
+					if [ ${test_mode} == 1 ]; then
+						if diff ${smf} ${orig_file}; then
+							echo "File ${smf} identical from original"
+							rm -rf ${orig_file}
+						else
+							echo "File ${smf} differs from original"
+							cp -f ${smf} ${smf}.error
+							mv -f ${orig_file} ${smf}
+							exit 1
+						fi
+					fi
 				else
 					echo "Error generating exceptions"\
 					     "documentation in module"\
@@ -121,6 +154,10 @@ if [ ${rebuild} == 1 ]; then
 	stop_time=$(date +%s)
 	ellapsed_time=$((stop_time-start_time))
 	show_time ${ellapsed_time}
+fi
+
+if [ ${test_mode} == 1 ]; then
+	exit 0
 fi
 
 echo "Inserting files into docstrings"

@@ -342,7 +342,7 @@ class ExDoc(object):
         line_nums = [callable_dict['line'] for callable_dict in module_db]
         name = names[bisect.bisect(line_nums, line_num)-1]
         return self.get_sphinx_doc(
-            name,
+            name=name,
             depth=depth,
             exclude=exclude,
             width=width,
@@ -401,7 +401,7 @@ class ExDoc(object):
         callable_dict = {}
         prop = False
         # Try to find "regular" callable. The trace may have several calls
-        # to the same callable, capturing potentially different exception
+        # to the same callable, capturing potentially different exceptions
         # or behaviors, thus capture them all
         instances = self._tobj.search_tree(name)
         if instances:

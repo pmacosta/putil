@@ -113,6 +113,10 @@ class Figure(object):
     :type   indep_var_label:    string
     :param  indep_var_units:    independent variable units
     :type   indep_var_units:    string
+    :param  indep_axis_ticks:   independent axis tick marks. When
+     given overrides automatically generated tick marks if the axis type is
+     linear
+     :type  indep_axis_ticks:   list or Numpy vector
     :param  fig_width:          hard copy plot width in inches
     :type   fig_width:          :ref:`PositiveRealNum`
     :param  fig_height:         hard copy plot height in inches
@@ -164,15 +168,32 @@ class Figure(object):
     """
     # pylint: disable=R0902,R0913
     def __init__(self, panels=None, indep_var_label='', indep_var_units='',
-        fig_width=None, fig_height=None, title='', log_indep_axis=False):
+        indep_axis_ticks=None, fig_width=None, fig_height=None, title='',
+        log_indep_axis=False):
         self._exh = putil.exh.get_or_create_exh_obj()
+        self._exh.add_exception(
+            exname='invalid_indep_axis_ticks',
+            extype=ValueError,
+            exmsg='Argument `indep_axis_ticks` is not valid'
+        )
+        self._exh.raise_exception_if(
+            exname='invalid_indep_axis_ticks',
+            condition=(
+                (indep_axis_ticks is not None) and (
+                    (not isinstance(indep_axis_ticks, list)) and
+                    (not isinstance(indep_axis_ticks, numpy.ndarray))
+                )
+            )
+        )
         # Public attributes
+        self._indep_axis_ticks = None
         self._fig, self._panels, self._indep_var_label = None, None, None
         self._title, self._log_indep_axis = None, None
         self._fig_width, self._fig_height = None, None
         self._indep_var_units, self._indep_var_div = None, None
         self._axes_list = list()
         # Assignment of arguments to attributes
+        self._indep_axis_ticks = indep_axis_ticks
         self._set_indep_var_label(indep_var_label)
         self._set_indep_var_units(indep_var_units)
         self._set_title(title)
@@ -456,7 +477,12 @@ class Figure(object):
                     min(glob_indep_var),
                     max(glob_indep_var),
                     tight=True,
-                    log_axis=self.log_indep_axis
+                    log_axis=self.log_indep_axis,
+                    tick_list=(
+                        self._indep_axis_ticks
+                        if not self._log_indep_axis else
+                        None
+                    )
                 ))
             # Scale all panel series
             for panel_obj in self.panels:

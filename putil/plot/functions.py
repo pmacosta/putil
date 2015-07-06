@@ -1,7 +1,7 @@
 # functions.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,F0401,W0105,W0212,W0611
+# pylint: disable=C0111,C0302,F0401,R0914,W0105,W0212,W0611
 
 import math
 import numpy
@@ -56,17 +56,27 @@ def _process_ticks(locs, min_lim, max_lim, mant):
         str(putil.eng.round_mantissa(loc, mant))
         for loc in bounded_locs
     ]
-    return (bounded_locs, [label.replace('u', '$\\mu$') for label in raw_labels])
+    return (
+        bounded_locs,
+        [label.replace('u', '$\\mu$') for label in raw_labels]
+    )
 
 
 def _intelligent_ticks(series, series_min, series_max,
-                       tight=True, log_axis=False):
+                       tight=True, log_axis=False, tick_list=None):
     """
     Calculates ticks 'intelligently', trying to calculate sane tick spacing
     """
-    # pylint: disable=E1103,R0912,R0914,R0915
-    # Handle 1-point series
-    if len(series) == 1:
+    # pylint: disable=E1103,R0912,R0913,R0915
+    if tick_list is not None:
+        tick_list = (
+            numpy.array(tick_list)
+            if isinstance(tick_list, list) else
+            tick_list
+        )
+        tick_list = numpy.sort(tick_list)
+    elif (not tick_list) and (len(series) == 1):
+        # Handle 1-point series
         series_min = series_max = series[0]
         tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
         tick_list = numpy.array([
@@ -74,7 +84,7 @@ def _intelligent_ticks(series, series_min, series_max,
         ])
         tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
         tight = tight_left = tight_right = log_axis = False
-    else:
+    elif not tick_list:
         if log_axis:
             dec_start = int(math.log10(min(series)))
             dec_stop = int(math.ceil(math.log10(max(series))))
@@ -86,7 +96,9 @@ def _intelligent_ticks(series, series_min, series_max,
             # Try to find the tick spacing that will have the most number of
             # data points on grid. Otherwise, place max_ticks uniformly
             # distributed across the data rage
-            series_delta = putil.eng.round_mantissa(max(series)-min(series), PRECISION)
+            series_delta = putil.eng.round_mantissa(
+                max(series)-min(series), PRECISION\
+            )
             working_series = series[:].tolist()
             tick_list = list()
             num_ticks = SUGGESTED_MAX_TICKS
@@ -96,8 +108,13 @@ def _intelligent_ticks(series, series_min, series_max,
                     for element in numpy.diff(working_series)
                 ]
                 tick_spacing = putil.misc.gcd(data_spacing)
-                num_ticks = (series_delta/tick_spacing)+1 if tick_spacing else MIN_TICKS
-                if (num_ticks >= MIN_TICKS) and (num_ticks <= SUGGESTED_MAX_TICKS):
+                num_ticks = (
+                    (series_delta/tick_spacing)+1
+                    if tick_spacing else
+                    MIN_TICKS
+                )
+                if ((num_ticks >= MIN_TICKS) and
+                   (num_ticks <= SUGGESTED_MAX_TICKS)):
                     tick_list = numpy.linspace(
                         putil.eng.round_mantissa(min(series), PRECISION),
                         putil.eng.round_mantissa(max(series), PRECISION),
@@ -111,7 +128,8 @@ def _intelligent_ticks(series, series_min, series_max,
                 # Account for fact that if minimum spacing is between last two
                 # elements, the last element cannot be removed (it is the end
                 # of the range), but rather the next-to-last has to be removed
-                if (data_spacing[-1] == min_data_spacing) and (len(working_series) > 2):
+                if ((data_spacing[-1] == min_data_spacing) and
+                   (len(working_series) > 2)):
                     working_series = working_series[:-2]+[working_series[-1]]
                     data_spacing = [
                         putil.eng.round_mantissa(element, PRECISION)
@@ -167,11 +185,15 @@ def _intelligent_ticks(series, series_min, series_max,
     # label marks (aesthetic decision)
     if log_axis and not tight:
         if not tight_left:
-            opt['min'] = putil.eng.round_mantissa(0.9*opt['loc'][0], PRECISION)
+            opt['min'] = putil.eng.round_mantissa(
+                0.9*opt['loc'][0], PRECISION
+            )
             opt['loc'].insert(0, opt['min'])
             opt['labels'].insert(0, '')
         if not tight_right:
-            opt['max'] = putil.eng.round_mantissa(1.1*opt['loc'][-1], PRECISION)
+            opt['max'] = putil.eng.round_mantissa(
+                1.1*opt['loc'][-1], PRECISION
+            )
             opt['loc'].append(opt['max'])
             opt['labels'].append('')
     return (
@@ -180,7 +202,7 @@ def _intelligent_ticks(series, series_min, series_max,
         opt['min'],
         opt['max'],
         opt['scale'],
-        opt['unit']
+        opt['unit'].replace('u', '$\\mu$')
     )
 
 
@@ -198,8 +220,10 @@ def _scale_ticks(tick_list, mode):
     (unit, scale) = putil.eng.peng_power(putil.eng.peng(tick_ref, 3))
     # Move one engineering unit back if there are more ticks
     # below 1.0 than above it
-    rollback = ((sum((tick_list/scale) >= 1000) > sum((tick_list/scale) < 1000))
-               and (tick_list[-1]/scale < 10000))
+    above_1k_sum = sum((tick_list/scale) >= 1000)
+    below_1k_sum = sum((tick_list/scale) < 1000)
+    last_tick_below_10k = tick_list[-1]/scale < 10000
+    rollback = (above_1k_sum > below_1k_sum) and last_tick_below_10k
     scale = 1 if rollback else scale
     unit = putil.eng.peng_suffix_math(unit, +1) if rollback else unit
     tick_list = numpy.array([
