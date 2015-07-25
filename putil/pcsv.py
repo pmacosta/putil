@@ -468,7 +468,11 @@ class CsvFile(object):
             return [[row[index] for index in col_index_list] for row in data]
 
     # Managed attributes
-    dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter')
+    dfilter = property(
+        _get_dfilter,
+        _set_dfilter,
+        doc='Data filter'
+    )
     r"""
     Sets or returns the data filter
 

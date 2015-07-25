@@ -185,7 +185,7 @@ class TestPanel(object):
             31.5,
             38.5,
             1e-6,
-            'u'
+            r'$\mu$'
         )
         # print obj
         # 1

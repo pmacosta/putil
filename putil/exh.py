@@ -516,10 +516,13 @@ class ExHandle(object):
             # Decorator flag vector
             idv = [item[3] for item in stack]
             # Fully qualified callable path
+            fob, fin, uobj, _ = stack[-1]
+            self._get_callable_full_name(fob, fin, uobj)
             ret = [
                 self._get_callable_full_name(fob, fin, uobj)
                 for fob, fin, uobj, _ in stack
             ]
+
             # Eliminate callables that are in a decorator chain
             iobj = enumerate(zip(ret[1:], ret, idv[1:]))
             num_del_items = 0
@@ -766,7 +769,8 @@ class ExHandle(object):
             ex_data['ex_name'],
             {'function':[], 'type':extype, 'msg':exmsg}
         )
-        entry['function'].append(ex_data['func_name'])
+        if ex_data['func_name'] not in entry['function']:
+            entry['function'].append(ex_data['func_name'])
         self._ex_dict[ex_data['ex_name']] = entry
 
     def raise_exception_if(self, exname, condition, edata=None):

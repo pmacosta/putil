@@ -198,10 +198,10 @@ Contributing
 		    Options:
 		      -h  Show this screen
 		      -r  Rebuild exceptions documentation. If no module name
-		      -d  Specify source file directory
-		          [default: (build-docs.sh directory)/../putil]
 		          is given all modules with auto-generated exceptions
 		          documentation are rebuilt
+		      -d  Specify source file directory
+		          [default: (build-docs.sh directory)/../putil]
 		      -t  Diff original and rebuilt file(s) (exit code 0
 		          indicates file(s) are identical, exit code 1
 		          file(s) are different

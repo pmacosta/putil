@@ -16,10 +16,10 @@ print_usage_message () {
 	echo -e "Options:" >&2
 	echo -e "  -h  Show this screen" >&2
 	echo -e "  -r  Rebuild exceptions documentation. If no module name" >&2
-	echo -e "  -d  Specify source file directory" >&2
-	echo -e "      [default: (build-docs.sh directory)/../putil]" >&2
 	echo -e "      is given all modules with auto-generated exceptions" >&2
 	echo -e "      documentation are rebuilt" >&2
+	echo -e "  -d  Specify source file directory" >&2
+	echo -e "      [default: (build-docs.sh directory)/../putil]" >&2
 	echo -e "  -t  Diff original and rebuilt file(s) (exit code 0" >&2
 	echo -e "      indicates file(s) are identical, exit code 1" >&2
 	echo -e "      file(s) are different" >&2
@@ -114,6 +114,8 @@ if [ ${rebuild} == 1 ]; then
 		fi
 		for submodule in ${submodules[@]}; do
 			smf="${module_dir}"/"${submodule}".py
+			istring="File ${smf} identical from original"
+			dstring="File ${smf} differs from original"
 			if [ ! -f "${smf}" ]; then
 				echo "Module ${smf} not found"
 				exit 1
@@ -123,30 +125,23 @@ if [ ${rebuild} == 1 ]; then
 			if [ ${test_mode} == 1 ]; then
 				cp ${smf} ${orig_file}
 			fi
-			if cog.py -e -x -o ${smf}.tmp ${smf}; then
+			if cog.py -e -o ${smf}.tmp ${smf}; then
 				mv -f ${smf}.tmp ${smf}
-				if cog.py -e -o ${smf}.tmp ${smf}; then
-					mv -f ${smf}.tmp ${smf}
-					if [ ${test_mode} == 1 ]; then
-						if diff ${smf} ${orig_file}; then
-							echo "File ${smf} identical from original"
-							rm -rf ${orig_file}
-						else
-							echo "File ${smf} differs from original"
-							cp -f ${smf} ${smf}.error
-							mv -f ${orig_file} ${smf}
-							exit 1
-						fi
+				if [ ${test_mode} == 1 ]; then
+					if diff ${smf} ${orig_file}; then
+						echo ${istring}
+						rm -rf ${orig_file}
+					else
+						echo ${dstring}
+						cp -f ${smf} ${smf}.error
+						mv -f ${orig_file} ${smf}
+						exit 1
 					fi
-				else
-					echo "Error generating exceptions"\
-					     "documentation in module"\
-					     "${smf}"
-					exit 1
 				fi
 			else
-				echo "Error deleting exceptions documentation"\
-				     "in module ${smf}"
+				echo "Error generating exceptions"\
+				     "documentation in module"\
+				     "${smf}"
 				exit 1
 			fi
 		done

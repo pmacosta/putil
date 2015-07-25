@@ -62,7 +62,9 @@ def _get_yaxis_size(fig_obj, tick_labels, axis_label):
     axis_height = axis_width = 0
     label_index = _first_label(tick_labels)
     if label_index:
-        label_height = _get_text_prop(fig_obj, tick_labels[label_index])['height']
+        label_height = _get_text_prop(
+            fig_obj, tick_labels[label_index]
+        )['height']
         axis_height = (2*len(tick_labels)-1)*label_height
         axis_width = max([
             num
@@ -72,7 +74,10 @@ def _get_yaxis_size(fig_obj, tick_labels, axis_label):
         ])
     # axis_label is a Text object, which is never None, it has the x, y
     # coordinates and axis label text, even if is = ''
-    axis_height = max(axis_height, _get_text_prop(fig_obj, axis_label)['height'])
+    axis_height = max(
+        axis_height,
+        _get_text_prop(fig_obj, axis_label)['height']
+    )
     axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
     return axis_height, axis_width
 
@@ -136,6 +141,8 @@ class Figure(object):
 
      * RuntimeError (Argument \`fig_width\` is not valid)
 
+     * RuntimeError (Argument \`indep_axis_ticks\` is not valid)
+
      * RuntimeError (Argument \`indep_var_label\` is not valid)
 
      * RuntimeError (Argument \`indep_var_units\` is not valid)
@@ -173,7 +180,7 @@ class Figure(object):
         self._exh = putil.exh.get_or_create_exh_obj()
         self._exh.add_exception(
             exname='invalid_indep_axis_ticks',
-            extype=ValueError,
+            extype=RuntimeError,
             exmsg='Argument `indep_axis_ticks` is not valid'
         )
         self._exh.raise_exception_if(
@@ -204,7 +211,8 @@ class Figure(object):
 
     def __iter__(self):
         r"""
-        Returns an iterator over the panel object(s) in the figure. For example:
+        Returns an iterator over the panel object(s) in the figure.
+        For example:
 
         .. =[=cog
         .. import docs.support.incfile
@@ -420,7 +428,9 @@ class Figure(object):
         return self._axes_list
 
     def _get_complete(self):
-        """ Returns True if figure is fully specified, otherwise returns False """
+        """
+        Returns True if figure is fully specified, otherwise returns False
+        """
         return (self.panels is not None) and (len(self.panels) > 0)
 
     def _draw(self, force_redraw=False, raise_exception=False):
@@ -448,12 +458,15 @@ class Figure(object):
             for panel_num, panel_obj in enumerate(self.panels):
                 for series_num, series_obj in enumerate(panel_obj.series):
                     if ((self.log_indep_axis is not None) and
-                       self.log_indep_axis and (min(series_obj.indep_var) < 0)):
+                       self.log_indep_axis and
+                       (min(series_obj.indep_var) < 0)):
                         self._exh.raise_exception_if(
                             exname='log_axis',
-                            condition=bool((self.log_indep_axis is not None) and
-                                      self.log_indep_axis and
-                                      (min(series_obj.indep_var) < 0)),
+                            condition=bool(
+                                (self.log_indep_axis is not None) and
+                                self.log_indep_axis and
+                                (min(series_obj.indep_var) < 0)
+                            ),
                             edata=[
                                 {'field':'panel_num', 'value':panel_num},
                                 {'field':'series_num', 'value':series_num}
@@ -511,9 +524,11 @@ class Figure(object):
                 num for num, panel_obj in enumerate(self.panels)
                 if panel_obj.display_indep_axis
             ]
-            panels_with_indep_axis_list = ([num_panels-1]
-                                          if len(panels_with_indep_axis_list) == 0 else
-                                          panels_with_indep_axis_list)
+            panels_with_indep_axis_list = (
+                [num_panels-1]
+                if len(panels_with_indep_axis_list) == 0 else
+                panels_with_indep_axis_list
+            )
             for num, (panel_obj, axarr) in enumerate(zip(self.panels, axes)):
                 panel_dict = panel_obj._draw_panel(
                     axarr, indep_axis_dict, num in panels_with_indep_axis_list
@@ -606,7 +621,11 @@ class Figure(object):
                 {'field':'min_height', 'value':min_fig_height}
             ]
         )
-        self.fig_width = min_fig_width if self.fig_width is None else self.fig_width
+        self.fig_width = (
+            min_fig_width
+            if self.fig_width is None else
+            self.fig_width
+        )
         self.fig_height = (min_fig_height
                           if self.fig_height is None
                           else self.fig_height)
@@ -744,7 +763,9 @@ class Figure(object):
             if self.indep_var_units not in ['', None] else
             'not specified'
         )
-        ret += 'Logarithmic independent axis: {0}\n'.format(self.log_indep_axis)
+        ret += 'Logarithmic independent axis: {0}\n'.format(
+            self.log_indep_axis
+        )
         ret += 'Title: {0}\n'.format(
             self.title if self.title not in ['', None] else 'not specified'
         )
@@ -937,10 +958,13 @@ class Figure(object):
     Gets the Matplotlib figure handle. Useful if annotations or further
     customizations to the figure are needed
 
-    :type: Matplotlib figure handle if figure is fully specified, otherwise None
+    :type: Matplotlib figure handle if figure is fully specified,
+     otherwise None
     """
 
-    axes_list = property(_get_axes_list, doc='Matplotlib figure axes handle list')
+    axes_list = property(
+        _get_axes_list, doc='Matplotlib figure axes handle list'
+    )
     """
     Gets the Matplotlib figure axes handle list. Useful if annotations or
     further customizations to the panel(s) are needed. Each panel has an entry

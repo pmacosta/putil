@@ -98,9 +98,13 @@ class Panel(object):
 
      * RuntimeError (Argument \`primary_axis_label\` is not valid)
 
+     * RuntimeError (Argument \`primary_axis_ticks\` is not valid)
+
      * RuntimeError (Argument \`primary_axis_units\` is not valid)
 
      * RuntimeError (Argument \`secondary_axis_label\` is not valid)
+
+     * RuntimeError (Argument \`secondary_axis_ticks\` is not valid)
 
      * RuntimeError (Argument \`secondary_axis_units\` is not valid)
 
@@ -170,12 +174,12 @@ class Panel(object):
         # Exceptions definition
         self._exh.add_exception(
             exname='invalid_primary_axis_ticks',
-            extype=ValueError,
+            extype=RuntimeError,
             exmsg='Argument `primary_axis_ticks` is not valid'
         )
         self._exh.add_exception(
             exname='invalid_secondary_axis_ticks',
-            extype=ValueError,
+            extype=RuntimeError,
             exmsg='Argument `secondary_axis_ticks` is not valid'
         )
         self._exh.raise_exception_if(

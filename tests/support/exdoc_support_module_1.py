@@ -1,7 +1,9 @@
 ﻿# exdoc_support_module_1.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111
+# pylint: disable=C0111,R0903,W0613
+
+import decorator
 
 import putil.exh
 import putil.tree
@@ -70,19 +72,45 @@ def probe():
     )
 
 
-###
-# Classes
-###
-def dummy_decorator(func):
+def dummy_decorator1(func):
     """ Dummy property decorator """
     return func
 
 
+def dummy_decorator2(**dargs):
+    """
+    Decorator with multiple parameters, suitable to test
+    handling of multiple decorators whose instantiation takes multiple
+    lines
+    """
+    @decorator.decorator
+    def wrapper(func, *args, **kwargs):
+        return func
+    return wrapper
+
+
+@putil.pcontracts.contract(
+    value1=int,
+    value2=int,
+    value3=int,
+    value4=int
+)
+@dummy_decorator2(
+    darg1=False,
+    darg2=True
+)
+def mlmdfunc(arg1, arg2, arg3):
+    pass
+
+
+###
+# Classes
+###
 class ExceptionAutoDocClass(object):
     """ Class to automatically generate exception documentation for """
     # pylint: disable=R0902,R0903,W0212
     @putil.pcontracts.contract(value1=int, value2=int, value3=int, value4=int)
-    @dummy_decorator
+    @dummy_decorator1
     def __init__(self, value1=0, value2=0, value3=0, value4=0):
         self._exobj = (putil.exh.get_exh_obj()
                       if putil.exh.get_exh_obj() else
@@ -137,7 +165,9 @@ class ExceptionAutoDocClass(object):
         self._value2 = value
 
     def _set_value3(self, value):
-        """ Setter method for property defined via function """
+        """
+        Setter method for property defined via function (multi-line docstring)
+        """
         self._exobj.add_exception(
             exname='illegal_value3',
             extype=TypeError,
@@ -171,7 +201,10 @@ class ExceptionAutoDocClass(object):
         )
         self._value1 *= operand
 
-    @putil.pcontracts.contract(divisor='int|float,>0')
+    # Multi-line single decorator
+    @putil.pcontracts.contract(
+        divisor='int|float,>0'
+    )
     def divide(self, divisor):
         """
         Sample method with defined exceptions in argument contract to
@@ -195,14 +228,32 @@ class ExceptionAutoDocClass(object):
         """ Deleter method defined with decorator """
         pass
 
+    # Multi-line property
     value1 = property(
         tests.support.exdoc_support_module_2.module_enclosing_func(10),
         _set_value1
     )
+    """
+    This is the docstring for the property value1
+    (multi-line)
+    """
 
     value2 = property(
         lambda self: self._value2+10,
         _set_value2
     )
+    """ This is the docstring for the property value2 (single line) """
 
     value3 = property(_get_value3, _set_value3, _del_value3)
+
+    value4 = property()
+
+# Test that last property is closed correctly
+def my_func():
+    pass
+
+class MyClass(object):
+    """
+    Class test if property as last line of file gets closed out correctly
+    """
+    value = property()

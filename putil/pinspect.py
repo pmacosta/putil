@@ -26,10 +26,14 @@ else:   # pragma: no cover
 ###
 def _get_module_name_from_fname(fname):
     """ Get module name from module file name """
-    for mobj in [item
-                 for item in sys.modules.values()
-                 if item and hasattr(item, '__file__')]:
-        if mobj.__file__.replace('.pyc', '.py') == fname.replace('.pyc', '.py'):
+    iobj = [
+        item
+        for item in sys.modules.values()
+        if item and hasattr(item, '__file__')
+    ]
+    fname = fname.replace('.pyc', '.py')
+    for mobj in iobj:
+        if mobj.__file__.replace('.pyc', '.py') == fname:
             module_name = mobj.__name__
             return module_name
     raise RuntimeError('Module could not be found')
@@ -89,8 +93,16 @@ def get_function_args(func, no_self=False, no_varargs=False):
     """
     par_dict = signature(func).parameters
     args = [
-        '{0}{1}'.format('*' if par_dict[par].kind == par_dict[par].VAR_POSITIONAL
-        else ('**' if par_dict[par].kind == par_dict[par].VAR_KEYWORD else ''), par)
+        '{0}{1}'.format(
+            '*'
+            if par_dict[par].kind == par_dict[par].VAR_POSITIONAL
+            else (
+                '**'
+                if par_dict[par].kind == par_dict[par].VAR_KEYWORD else
+                ''
+            ),
+            par
+        )
         for par in par_dict
     ]
     self_filtered_args = args if not args else (
@@ -129,7 +141,9 @@ def get_module_name(module_obj):
     name = module_obj.__name__
     if name not in sys.modules:
         raise RuntimeError(
-            'Module object `{0}` could not be found in loaded modules'.format(name)
+            'Module object `{0}` could not be found in loaded modules'.format(
+                name
+            )
         )
     return name
 
@@ -222,11 +236,17 @@ class Callables(object):
         robj._callables_db = copy.deepcopy(self._callables_db)
         robj._callables_db.update(copy.deepcopy(other._callables_db))
         robj._reverse_callables_db = copy.deepcopy(self._reverse_callables_db)
-        robj._reverse_callables_db.update(copy.deepcopy(other._reverse_callables_db))
+        robj._reverse_callables_db.update(
+            copy.deepcopy(other._reverse_callables_db)
+        )
         robj._modules_dict = copy.deepcopy(self._modules_dict)
         robj._modules_dict.update(copy.deepcopy(other._modules_dict))
-        robj._module_names = list(set(self._module_names[:]+other._module_names[:]))
-        robj._class_names = list(set(self._class_names[:]+other._class_names[:]))
+        robj._module_names = list(
+            set(self._module_names[:]+other._module_names[:])
+        )
+        robj._class_names = list(
+            set(self._class_names[:]+other._class_names[:])
+        )
         robj._fnames = list(set(self._fnames[:]+other._fnames[:]))
         return robj
 
@@ -306,9 +326,13 @@ class Callables(object):
 
         self._check_intersection(other)
         self._callables_db.update(copy.deepcopy(other._callables_db))
-        self._reverse_callables_db.update(copy.deepcopy(other._reverse_callables_db))
+        self._reverse_callables_db.update(
+            copy.deepcopy(other._reverse_callables_db)
+        )
         self._modules_dict.update(copy.deepcopy(other._modules_dict))
-        self._module_names = list(set(self._module_names+other._module_names[:]))
+        self._module_names = list(
+            set(self._module_names+other._module_names[:])
+        )
         self._class_names = list(set(self._class_names+other._class_names[:]))
         self._fnames = list(set(self._fnames+other._fnames[:]))
         return self
@@ -419,7 +443,13 @@ class Callables(object):
                         start_line, stop_line) if start_line != stop_line
                         else ' ({0})'.format(start_line
                     ))
-                    ret.append('{0}: {1}{2}'.format(value['name'], value['type'], line_text))
+                    ret.append(
+                        '{0}: {1}{2}'.format(
+                            value['name'],
+                            value['type'],
+                            line_text
+                        )
+                    )
             return '\n'.join(ret)
         else:
             return ''
@@ -440,12 +470,23 @@ class Callables(object):
                 if ((type(self_dict[key]) != type(other_dict[key])) or
                    ((type(self_dict[key]) == type(other_dict[key])) and
                    ((isinstance(self_dict[key], list) and
-                   (not all([item in self_dict[key] for item in other_dict[key]]))) or
-                   (isinstance(self_dict[key], dict) and
-                   (set(self_dict[key].items()) != set(other_dict[key].items()))) or
+                   (not all(
+                       [
+                           item in self_dict[key] for item in other_dict[key]
+                       ]
+                   ))) or
+                   (
+                       isinstance(self_dict[key], dict) and
+                       (
+                           set(self_dict[key].items()) !=
+                           set(other_dict[key].items())
+                       )
+                   ) or
                    (isinstance(self_dict[key], str) and
                    (self_dict[key] != other_dict[key]))))):
-                    raise RuntimeError('Conflicting information between objects')
+                    raise RuntimeError(
+                        'Conflicting information between objects'
+                    )
 
     def _get_callables_db(self):
         """ Getter for callables_db property """
@@ -505,7 +546,10 @@ class Callables(object):
                 tree = ast.parse(''.join(lines))
                 aobj = _AstTreeScanner(fname, lines)
                 aobj.visit(tree)
-                fake_node = putil.misc.Bundle(lineno=len(lines)+1, col_offset=-1)
+                fake_node = putil.misc.Bundle(
+                    lineno=len(lines)+1,
+                    col_offset=-1
+                )
                 aobj._close_callable(fake_node, force=True)
                 self._class_names += aobj._class_names[:]
                 self._module_names.append(module_name)
@@ -597,39 +641,71 @@ class _AstTreeScanner(ast.NodeVisitor):
             'level':0,
             'type':'module',
             'prefix':'',
-            'full_name':None
+            'full_name':None,
+            'lineno':0
         }]
         self._callables_db = {}
         self._reverse_callables_db = {}
         self._class_names = []
         self._num_decorators = 0
+        self._processed_line = 0
 
     def _close_callable(self, node, force=False):
         """ Record last line number of callable """
-        if (isinstance(node, ast.Expr) and
-           isinstance(node.value, ast.Str) and (node.col_offset < 0)):
-            return
+        # Print statements for debug
+        # print 'Close callable'
+
+        # If node has no line number, ignore it since it cannot be used
+        # for closing out a callable
         try:
             lineno = node.lineno
         except AttributeError:
             return
-        if (not force) and self._callables_db:
-            element_full_name = self._indent_stack[-1]['full_name']
-            code_id = self._callables_db[element_full_name].get('code_id', None)
-            if (code_id and
-               (lineno <= code_id[1]+self._num_decorators+1) and
-               (self._indent_stack[-1]['type'] != 'prop')):
-                return
+        # If node is from a past line ignore it since the line has been
+        # processed already
+        if lineno <= self._processed_line:
+            return
+        self._processed_line = lineno
+        if self._num_decorators:
+            self._num_decorators -= 1
+            # Print statements for debug
+            # print '    num_decorators = {} @ {}'.format(
+            #     self._num_decorators, lineno
+            # )
+            return
+        # Extract node name for property closing. Once a property is found,
+        # it can only be closed out by a node type that has a name
+        name = ''
+        if not force:
+            try:
+                name = self._pop_indent_stack(
+                    node, node_type='prop', action=None, add=False
+                )
+            except AttributeError:
+                pass
+        # Print statements for debug
+        # print '    Name {} @ {}'.format(name if name else 'None', lineno)
+        # Traverse backwards through call stack and close callables as needed
         indent = self._get_indent(node)
         count = -1
         while count >= -len(self._indent_stack):
             element_full_name = self._indent_stack[count]['full_name']
+            edict = self._callables_db.get(element_full_name, None)
             stack_indent = self._indent_stack[count]['level']
-            if (element_full_name and
-               (not self._callables_db[element_full_name]['last_lineno']) and
-               (force or (indent <= stack_indent) and
-               (lineno-1 >= self._callables_db[element_full_name]['code_id'][1]))):
-                self._callables_db[element_full_name]['last_lineno'] = lineno-1
+            open_callable = element_full_name and (not edict['last_lineno'])
+            # Print statements for debug
+            # print '    Name {}, indent, {}, stack_indent {}'.format(
+            #     element_full_name, indent, stack_indent
+            # )
+            if (open_callable and (force or (indent < stack_indent) or
+               ((indent <= stack_indent) and
+               ((edict['type'] != 'prop') or ((edict['type'] == 'prop') and
+               (name and (name != element_full_name))))))):
+                # Print statements for debug
+                # print '    Closing {} @ {}'.format(
+                #     element_full_name, lineno-1
+                # )
+                edict['last_lineno'] = lineno-1
                 self._num_decorators = 0
             if indent > stack_indent:
                 break
@@ -647,15 +723,17 @@ class _AstTreeScanner(ast.NodeVisitor):
         """ Find if callable is function or method """
         indent = self._get_indent(node)
         for indent_dict in reversed(self._indent_stack):    # pragma: no branch
-            if (indent_dict['level'] < indent) or (indent_dict['type'] == 'module'):
+            if ((indent_dict['level'] < indent) or
+               (indent_dict['type'] == 'module')):
                 return indent_dict['type'] == 'class'
 
-    def _pop_indent_stack(self, node, node_type=None, action=None):
+    def _pop_indent_stack(self, node, node_type=None, action=None, add=True):
         indent = self._get_indent(node)
-        while (((indent <= self._indent_stack[-1]['level']) and
-              (self._indent_stack[-1]['type'] != 'module')) or
-              (self._indent_stack[-1]['type'] == 'prop')):
-            self._indent_stack.pop()
+        indent_stack = copy.deepcopy(self._indent_stack)
+        while (((indent <= indent_stack[-1]['level']) and
+              (indent_stack[-1]['type'] != 'module')) or
+              (indent_stack[-1]['type'] == 'prop')):
+            indent_stack.pop()
         name = (
             node.targets[0].id
             if hasattr(node.targets[0], 'id') else
@@ -663,15 +741,18 @@ class _AstTreeScanner(ast.NodeVisitor):
         ) if node_type == 'prop' else node.name
         element_full_name = '.'.join([self._module]+[
             indent_dict['prefix']
-            for indent_dict in self._indent_stack
+            for indent_dict in indent_stack
             if indent_dict['type'] != 'module'
         ]+[name])+('({0})'.format(action) if action else '')
-        self._indent_stack.append({
-            'level':indent,
-            'prefix':name,
-            'type':node_type,
-            'full_name':element_full_name
-        })
+        if add:
+            self._indent_stack = indent_stack
+            self._indent_stack.append({
+                'level':indent,
+                'prefix':name,
+                'type':node_type,
+                'full_name':element_full_name,
+                'lineno':node.lineno
+            })
         return element_full_name
 
     def generic_visit(self, node):
@@ -697,8 +778,12 @@ class _AstTreeScanner(ast.NodeVisitor):
                 'last_lineno':None
             }
             self._reverse_callables_db[code_id] = element_full_name
+            # Print statements for debug
+            # print 'Visiting property {} @ {}'.format(
+            #     element_full_name, code_id[1]
+            # )
             # Get property actions
-            super(_AstTreeScanner, self).generic_visit(node)
+            self.generic_visit(node)
 
     def visit_ClassDef(self, node):
         """ Class walker """
@@ -713,6 +798,8 @@ class _AstTreeScanner(ast.NodeVisitor):
             'last_lineno':None
         }
         self._reverse_callables_db[code_id] = element_full_name
+        # Print statements for debug
+        # print 'Visiting class {} @ {}'.format(element_full_name, code_id[1])
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node):
@@ -725,11 +812,14 @@ class _AstTreeScanner(ast.NodeVisitor):
             if hasattr(dobj, 'id') or hasattr(dobj, 'attr')
         ]
         self._num_decorators = len(decorator_list)
+        self._num_decorators = len(node.decorator_list)
         action = ('getter' if 'property' in decorator_list else
                  ('setter' if 'setter' in decorator_list else
                  ('deleter' if 'deleter' in decorator_list else None)))
         element_type = 'meth' if in_class else 'func'
-        element_full_name = self._pop_indent_stack(node, element_type, action=action)
+        element_full_name = self._pop_indent_stack(
+            node, element_type, action=action
+        )
         code_id = (self._fname, node.lineno)
         self._callables_db[element_full_name] = {
             'name':element_full_name,
@@ -738,4 +828,9 @@ class _AstTreeScanner(ast.NodeVisitor):
             'last_lineno':None
         }
         self._reverse_callables_db[code_id] = element_full_name
+        # Print statements for debug
+        # print 'Visiting callable {}  @ {}'.format(
+        #     element_full_name, code_id[1]
+        # )
+        # print '    num_decorators = {}'.format(self._num_decorators)
         self.generic_visit(node)

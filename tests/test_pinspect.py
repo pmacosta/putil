@@ -253,6 +253,44 @@ class TestCallables(object):
 
     def test_callables_works(self):
         # pylint: disable=W0621
+        import putil.pcsv
+        xobj = putil.pinspect.Callables(
+            [sys.modules['putil.pcsv'].__file__]
+        )
+        ref = list()
+        ref.append('Modules:')
+        ref.append('   putil.pcsv')
+        ref.append('Classes:')
+        ref.append('   putil.pcsv.CsvFile')
+        ref.append('putil.pcsv.write: func (32-71)')
+        ref.append('putil.pcsv._write_int: func (72-120)')
+        ref.append('putil.pcsv._tofloat: func (121-136)')
+        ref.append('putil.pcsv.CsvFile: class (137-506)')
+        ref.append('putil.pcsv.CsvFile.__init__: meth (171-238)')
+        ref.append('putil.pcsv.CsvFile._validate_dfilter: meth (239-247)')
+        ref.append('putil.pcsv.CsvFile._get_dfilter: meth (248-250)')
+        ref.append('putil.pcsv.CsvFile._set_dfilter: meth (251-254)')
+        ref.append('putil.pcsv.CsvFile._set_dfilter_int: meth (255-274)')
+        ref.append('putil.pcsv.CsvFile.add_dfilter: meth (275-314)')
+        ref.append('putil.pcsv.CsvFile._get_header: meth (315-317)')
+        ref.append('putil.pcsv.CsvFile.data: meth (318-354)')
+        ref.append('putil.pcsv.CsvFile.reset_dfilter: meth (355-359)')
+        ref.append('putil.pcsv.CsvFile.write: meth (360-439)')
+        ref.append('putil.pcsv.CsvFile._in_header: meth (440-457)')
+        ref.append('putil.pcsv.CsvFile._core_data: meth (458-470)')
+        ref.append('putil.pcsv.CsvFile.dfilter: prop (471-496)')
+        ref.append('putil.pcsv.CsvFile.header: prop (497-506)')
+        ref_txt = '\n'.join(ref)
+        actual_txt = str(xobj)
+        if actual_txt != ref_txt:
+            print('Actual text')
+            print('-----------')
+            print(actual_txt)
+            print('Reference text')
+            print('--------------')
+            print(ref_txt)
+        assert actual_txt == ref_txt
+
         import tests.support.exdoc_support_module_1
         xobj = putil.pinspect.Callables([
             sys.modules['tests.support.exdoc_support_module_1'].__file__
@@ -263,57 +301,79 @@ class TestCallables(object):
         ref.append('Classes:')
         ref.append('   tests.support.exdoc_support_module_1.'
                    'ExceptionAutoDocClass')
+        ref.append('   tests.support.exdoc_support_module_1.'
+                   'MyClass')
         ref.append('tests.support.exdoc_support_module_1._validate_arguments:'
-                   ' func (15-29)')
-        ref.append('tests.support.exdoc_support_module_1._write: func (30-34)')
-        ref.append('tests.support.exdoc_support_module_1.write: func (35-48)')
-        ref.append('tests.support.exdoc_support_module_1.read: func (49-60)')
-        ref.append('tests.support.exdoc_support_module_1.probe: func (61-75)')
-        ref.append('tests.support.exdoc_support_module_1.dummy_decorator:'
-                   ' func (76-80)')
+                   ' func (17-31)')
+        ref.append('tests.support.exdoc_support_module_1._write: func (32-36)')
+        ref.append('tests.support.exdoc_support_module_1.write: func (37-50)')
+        ref.append('tests.support.exdoc_support_module_1.read: func (51-62)')
+        ref.append('tests.support.exdoc_support_module_1.probe: func (63-74)')
+        ref.append('tests.support.exdoc_support_module_1.dummy_decorator1:'
+                   ' func (75-79)')
+        ref.append('tests.support.exdoc_support_module_1.dummy_decorator2:'
+                   ' func (80-91)')
+        ref.append('tests.support.exdoc_support_module_1.dummy_decorator2'
+                   '.wrapper: func (86-88)')
+        ref.append('tests.support.exdoc_support_module_1.mlmdfunc:'
+                   ' func (92-108)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   ': class (81-208)')
+                   ': class (109-251)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.__init__: meth (84-96)')
+                   '.__init__: meth (112-124)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '._del_value3: meth (97-104)')
+                   '._del_value3: meth (125-132)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '._get_value3: meth (105-113)')
+                   '._get_value3: meth (133-141)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '._set_value1: meth (114-124)')
+                   '._set_value1: meth (142-152)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '._set_value2: meth (125-138)')
+                   '._set_value2: meth (153-166)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '._set_value3: meth (139-147)')
+                   '._set_value3: meth (167-177)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.add: meth (148-154)')
+                   '.add: meth (178-184)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.subtract: meth (155-161)')
+                   '.subtract: meth (185-191)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.multiply: meth (162-173)')
+                   '.multiply: meth (192-204)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.divide: meth (174-181)')
+                   '.divide: meth (205-214)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.temp(getter): meth (182-186)')
+                   '.temp(getter): meth (215-219)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.temp(setter): meth (187-192)')
+                   '.temp(setter): meth (220-225)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.temp(deleter): meth (193-197)')
+                   '.temp(deleter): meth (226-231)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.value1: prop (198-202)')
+                   '.value1: prop (232-240)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.value2: prop (203-207)')
+                   '.value2: prop (241-246)')
         ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
-                   '.value3: prop (208)')
+                   '.value3: prop (247-248)')
+        ref.append('tests.support.exdoc_support_module_1.ExceptionAutoDocClass'
+                   '.value4: prop (249-251)')
+        ref.append('tests.support.exdoc_support_module_1.my_func: '
+                   'func (252-254)')
+        ref.append('tests.support.exdoc_support_module_1.MyClass'
+                   ': class (255-259)')
+        ref.append('tests.support.exdoc_support_module_1.MyClass'
+                   '.value: prop (259)')
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
+        if actual_txt != ref_txt:
+            print('Actual text')
+            print('-----------')
+            print(actual_txt)
+            print('Reference text')
+            print('--------------')
+            print(ref_txt)
         assert actual_txt == ref_txt
         import tests.test_exdoc
         xobj = putil.pinspect.Callables(
             [sys.modules['tests.test_exdoc'].__file__]
         )
         ref = list()
-
         ref.append('Modules:')
         ref.append('   tests.test_exdoc')
         ref.append('Classes:')
@@ -363,7 +423,13 @@ class TestCallables(object):
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
-        print(actual_txt)
+        if actual_txt != ref_txt:
+            print('Actual text')
+            print('-----------')
+            print(actual_txt)
+            print('Reference text')
+            print('--------------')
+            print(ref_txt)
         assert actual_txt == ref_txt
         import tests.support.pinspect_support_module_4
         xobj = putil.pinspect.Callables([
