@@ -13,8 +13,13 @@ def trace_module(no_print=True):
     """ Trace plot module exceptions """
     noption = os.environ.get('NOPTION', None)
     start_time = datetime.datetime.now()
+    pickle_file_name = os.path.join(
+        os.path.dirname(__file__),
+        'series.pkl'
+    )
     with putil.exdoc.ExDocCxt(
-            exclude=['_pytest', 'execnet', 'putil.eng']
+            exclude=['_pytest', 'execnet', 'putil.eng'],
+            file_name=pickle_file_name
     ) as exdoc_obj:
         if pytest.main('-x {0}-k TestSeries {1}'.format(
                 '{0} '.format(noption) if noption else '',

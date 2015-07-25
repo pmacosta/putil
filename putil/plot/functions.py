@@ -75,7 +75,7 @@ def _intelligent_ticks(series, series_min, series_max,
             tick_list
         )
         tick_list = numpy.sort(tick_list)
-    elif (not tick_list) and (len(series) == 1):
+    elif len(series) == 1:
         # Handle 1-point series
         series_min = series_max = series[0]
         tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
@@ -84,7 +84,7 @@ def _intelligent_ticks(series, series_min, series_max,
         ])
         tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
         tight = tight_left = tight_right = log_axis = False
-    elif not tick_list:
+    else:
         if log_axis:
             dec_start = int(math.log10(min(series)))
             dec_stop = int(math.ceil(math.log10(max(series))))

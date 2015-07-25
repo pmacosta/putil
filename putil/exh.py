@@ -88,10 +88,12 @@ def _get_code_id_from_obj(obj):
 def _invalid_frame(fobj):
     """ Selects valid stack frame to process """
     fin = fobj.f_code.co_filename
-    invalid_module = any([
-        fin.endswith(item)
-        for item in _INVALID_MODULES_LIST
-    ])
+    invalid_module = any(
+        [
+            fin.endswith(item)
+            for item in _INVALID_MODULES_LIST
+        ]
+    )
     return invalid_module or (not os.path.isfile(fin))
 
 
@@ -254,6 +256,30 @@ class ExHandle(object):
         )
         return robj
 
+    def __bool__(self): # pragma: no cover
+        """
+        Returns :code:`False` if exception handler does not have any exception
+        defined, :code:`True` otherwise. For example:
+
+            >>> from __future__ import print_function
+            >>> import putil.exh
+            >>> obj = putil.exh.ExHandle()
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: False
+            >>> def my_func(exhobj):
+            ...     exhobj.add_exception('test', RuntimeError, 'Message')
+            >>> my_func(obj)
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: True
+        """
+        return bool(self._ex_dict)
+
     def __copy__(self):
         """
         Copies object. For example:
@@ -364,30 +390,6 @@ class ExHandle(object):
         """
         return bool(self._ex_dict)
 
-    def __bool__(self): # pragma: no cover
-        """
-        Returns :code:`False` if exception handler does not have any exception
-        defined, :code:`True` otherwise. For example:
-
-            >>> from __future__ import print_function
-            >>> import putil.exh
-            >>> obj = putil.exh.ExHandle()
-            >>> if obj:
-            ...     print('Boolean test returned: True')
-            ... else:
-            ...     print('Boolean test returned: False')
-            Boolean test returned: False
-            >>> def my_func(exhobj):
-            ...     exhobj.add_exception('test', RuntimeError, 'Message')
-            >>> my_func(obj)
-            >>> if obj:
-            ...     print('Boolean test returned: True')
-            ... else:
-            ...     print('Boolean test returned: False')
-            Boolean test returned: True
-        """
-        return bool(self._ex_dict)
-
     def __str__(self):
         """
         Returns a string with a detailed description of the object's contents.
@@ -446,6 +448,26 @@ class ExHandle(object):
     def _get_callables_db(self):
         """ Returns database of callables """
         return self._callables_obj.callables_db
+
+    def _get_callable_full_name(self, fob, fin, uobj):
+        """
+        Get full path [module, class (if applicable) and function name]
+        of callable
+        """
+        # Check if object is a class property
+        name = self._property_search(fob)
+        if name:
+            return name
+        if os.path.isfile(fin):
+            return self._callables_obj.get_callable_from_line(
+                fin,
+                fob.f_lineno
+            )
+        code_id = _get_code_id_from_obj(uobj)
+        if code_id:
+            self._callables_obj.trace([code_id[0]])
+            return self._callables_obj.reverse_callables_db[code_id]
+        return 'dynamic'
 
     def _get_callable_path(self):
         """ Get fully qualified calling function name """
@@ -522,7 +544,6 @@ class ExHandle(object):
                 self._get_callable_full_name(fob, fin, uobj)
                 for fob, fin, uobj, _ in stack
             ]
-
             # Eliminate callables that are in a decorator chain
             iobj = enumerate(zip(ret[1:], ret, idv[1:]))
             num_del_items = 0
@@ -534,49 +555,6 @@ class ExHandle(object):
             ret = self._callables_separator.join(ret)
             self._call_path_cache[call_path] = (callable_id, ret)
             return callable_id, ret
-
-    def _unwrap_obj(self, fobj, fun):
-        """ Unwrap decorators """
-        try:
-            prev_func_obj, next_func_obj = (
-                fobj.f_globals[fun],
-                getattr(fobj.f_globals[fun], '__wrapped__', None)
-            )
-            while next_func_obj:
-                prev_func_obj, next_func_obj = (
-                    next_func_obj,
-                    getattr(next_func_obj, '__wrapped__', None)
-                )
-            return (
-                prev_func_obj,
-                inspect.getfile(prev_func_obj).replace('.pyc', 'py')
-            )
-        except  (KeyError, AttributeError, TypeError):
-            # KeyErrror: fun not in fobj.f_globals
-            # AttributeError: fobj.f_globals does not have
-            #                 a __wrapped__ attribute
-            # TypeError: pref_func_obj does not have a file associated with it
-            return None, None
-
-    def _get_callable_full_name(self, fob, fin, uobj):
-        """
-        Get full path [module, class (if applicable) and function name]
-        of callable
-        """
-        # Check if object is a class property
-        name = self._property_search(fob)
-        if name:
-            return name
-        if os.path.isfile(fin):
-            return self._callables_obj.get_callable_from_line(
-                fin,
-                fob.f_lineno
-            )
-        code_id = _get_code_id_from_obj(uobj)
-        if code_id:
-            self._callables_obj.trace([code_id[0]])
-            return self._callables_obj.reverse_callables_db[code_id]
-        return 'dynamic'
 
     def _get_callables_separator(self):
         """ Get callable separator character """
@@ -628,11 +606,13 @@ class ExHandle(object):
     def _get_ex_data(self, name=None):
         """ Returns hierarchical function name """
         func_id, func_name = self._get_callable_path()
-        ex_name = ''.join([
-            str(func_id),
-            self._callables_separator if name is not None else '',
-            name if name is not None else ''
-        ])
+        ex_name = ''.join(
+            [
+                str(func_id),
+                self._callables_separator if name is not None else '',
+                name if name is not None else ''
+            ]
+        )
         return {'func_name':func_name, 'ex_name':ex_name}
 
     def _get_prop_actions(self, prop_obj):
@@ -705,6 +685,29 @@ class ExHandle(object):
             _rwtb(eobj['type'], emsg, tbobj)
         else:
             _rwtb(eobj['type'], eobj['msg'], tbobj)
+
+    def _unwrap_obj(self, fobj, fun):
+        """ Unwrap decorators """
+        try:
+            prev_func_obj, next_func_obj = (
+                fobj.f_globals[fun],
+                getattr(fobj.f_globals[fun], '__wrapped__', None)
+            )
+            while next_func_obj:
+                prev_func_obj, next_func_obj = (
+                    next_func_obj,
+                    getattr(next_func_obj, '__wrapped__', None)
+                )
+            return (
+                prev_func_obj,
+                inspect.getfile(prev_func_obj).replace('.pyc', 'py')
+            )
+        except  (KeyError, AttributeError, TypeError):
+            # KeyErrror: fun not in fobj.f_globals
+            # AttributeError: fobj.f_globals does not have
+            #                 a __wrapped__ attribute
+            # TypeError: pref_func_obj does not have a file associated with it
+            return None, None
 
     def _validate_edata(self, edata):
         """ Validate edata argument of raise_exception_if method """
@@ -817,18 +820,14 @@ class ExHandle(object):
             self._raise_exception(eobj, edata)
 
     # Managed attributes
-    callables_db = property(
-        _get_callables_db,
-        doc='Dictionary of callables'
-    )
+    callables_db = property(_get_callables_db, doc='Dictionary of callables')
     """
     Returns the callables database of the modules using the exception handler,
     as reported by :py:meth:`putil.pinspect.Callables.callables_db`
     """
 
     callables_separator = property(
-        _get_callables_separator,
-        doc='Callable separator character'
+        _get_callables_separator, doc='Callable separator character'
     )
     """
     Returns the character (:code:`'/'`) used to separate the sub-parts of fully
@@ -836,10 +835,7 @@ class ExHandle(object):
     **name** key in :py:meth:`putil.exh.ExHandle.exceptions_db`
     """
 
-    exceptions_db = property(
-        _get_exceptions_db,
-        doc='Formatted exceptions'
-    )
+    exceptions_db = property(_get_exceptions_db, doc='Formatted exceptions')
     """
     Returns the exceptions database. This database is a list of dictionaries
     that contain the following keys:

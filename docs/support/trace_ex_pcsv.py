@@ -11,10 +11,15 @@ import putil.exdoc, putil.exh, putil.misc
 
 def trace_module(no_print=False):
     """ Trace pcsv module exceptions """
+    pickle_file_name = os.path.join(
+        os.path.dirname(__file__),
+        'pcsv.pkl'
+    )
     noption = os.environ.get('NOPTION', None)
     start_time = datetime.datetime.now()
     with putil.exdoc.ExDocCxt(
-            exclude=['_pytest', 'execnet']
+            exclude=['_pytest', 'execnet'],
+            file_name=pickle_file_name
     ) as exdoc_obj:
         if pytest.main('-x {0}{1}'.format(
                 '{0} '.format(noption) if noption else '',

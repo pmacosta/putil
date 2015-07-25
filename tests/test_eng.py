@@ -813,16 +813,21 @@ def test_split_every():
     obj = putil.eng._split_every
     assert obj('a, b, c, d', ',', 1) == ['a', ' b', ' c', ' d']
     assert obj('a , b , c , d ', ',', 1) == ['a ', ' b ', ' c ', ' d ']
-    assert obj(
-        'a , b , c , d ', ',', 1,
-        lstrip=True) == ['a ', 'b ', 'c ', 'd ']
-    assert obj(
-        'a , b , c , d ', ',', 1,
-        rstrip=True) == ['a', ' b', ' c', ' d']
-    assert obj(
-        'a , b , c , d ', ',', 1,
-        lstrip=True,
-        rstrip=True) == ['a', 'b', 'c', 'd']
+    assert (
+        obj('a , b , c , d ', ',', 1, lstrip=True)
+        ==
+        ['a ', 'b ', 'c ', 'd ']
+    )
+    assert (
+        obj('a , b , c , d ', ',', 1, rstrip=True)
+        ==
+        ['a', ' b', ' c', ' d']
+    )
+    assert (
+        obj('a , b , c , d ', ',', 1, lstrip=True, rstrip=True)
+        ==
+        ['a', 'b', 'c', 'd']
+    )
     assert obj('a, b, c, d', ',', 2) == ['a, b', ' c, d']
     assert obj('a, b, c, d', ',', 3) == ['a, b, c', ' d']
     assert obj('a, b, c, d', ',', 4) == ['a, b, c, d']
@@ -853,58 +858,94 @@ def test_pprint_vector():
         '[    1.000m,   20.000u,  300.000M,    4.000p,'
         '    5.250k,   -6.000n,  700.000 ,  800.000m ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        eng=True,
-        indent=20) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            eng=True,
+            indent=20
+        )
+        ==
+        ref
+    )
     ref = (
         '[    1.000m,   20.000u,  300.000M,'
         ' ...,'
         '   -6.000n,  700.000 ,  800.000m ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        limit=True,
-        eng=True) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            limit=True,
+            eng=True
+        )
+        ==
+        ref
+    )
     ref = (
         '[    1.000m,   20.000u,  300.000M,'
         ' ...,'
         '   -6.000n,  700.000 ,  800.000m ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        limit=True,
-        eng=True,
-        indent=20) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            limit=True,
+            eng=True,
+            indent=20
+        )
+        ==
+        ref
+    )
     ref = (
         '[    1.0m,   20.0u,  300.0M,    4.0p,'
         '    5.3k,   -6.0n,  700.0 ,  800.0m ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        eng=True,
-        frac_length=1) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            eng=True,
+            frac_length=1
+        )
+        ==
+        ref
+    )
     ref = (
         '[    1.0m,   20.0u,  300.0M,    4.0p,'
         '    5.3k,   -6.0n,  700.0 ,  800.0m ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        eng=True,
-        frac_length=1, indent=20) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            eng=True,
+            frac_length=1,
+            indent=20
+        )
+        ==
+        ref
+    )
     ref = '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        limit=True,
-        eng=True,
-        frac_length=1) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            limit=True,
+            eng=True,
+            frac_length=1
+        )
+        ==
+        ref
+    )
     ref = '[    1.0m,   20.0u,  300.0M, ...,   -6.0n,  700.0 ,  800.0m ]'
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        limit=True,
-        indent=20,
-        eng=True,
-        frac_length=1) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            limit=True,
+            indent=20,
+            eng=True,
+            frac_length=1
+        )
+        ==
+        ref
+    )
     ref = '[ 1, 2,\n  3, 4,\n  5, 6,\n  7, 8 ]'
     assert obj([1, 2, 3, 4, 5, 6, 7, 8], width=8) == ref
     ref = '[ 1, 2, 3,\n  4, 5, 6,\n  7, 8 ]'
@@ -916,21 +957,31 @@ def test_pprint_vector():
         '   700 ,    8 ,\n'
         '     9  ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
-        width=20,
-        eng=True,
-        frac_length=0) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
+            width=20,
+            eng=True,
+            frac_length=0
+        )
+        ==
+        ref
+    )
     ref = (
         '[    1.0m,   20.0u,  300.0M,\n'
         '     4.0p,    5.3k,   -6.0n,\n'
         '   700.0 ,  800.0m ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        width=30,
-        eng=True,
-        frac_length=1) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            width=30,
+            eng=True,
+            frac_length=1
+        )
+        ==
+        ref
+    )
     ref = (
         '[    1m,\n'
         '    20u,\n'
@@ -940,47 +991,67 @@ def test_pprint_vector():
         '     8 ,\n'
         '     9  ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
-        width=20,
-        eng=True,
-        frac_length=0,
-        limit=True) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
+            width=20,
+            eng=True,
+            frac_length=0,
+            limit=True
+        )
+        ==
+        ref
+    )
     ref = (
         '[    1.0m,   20.0u,  300.0M,\n'
         '             ...\n'
         '   700.0 ,    8.0 ,    9.0  ]'
     )
-    assert obj(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
-        width=30,
-        eng=True,
-        frac_length=1,
-        limit=True) == ref
+    assert (
+        obj(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
+            width=30,
+            eng=True,
+            frac_length=1,
+            limit=True
+        )
+        ==
+        ref
+    )
     header = 'Vector: '
     ref = (
         'Vector: [    1.0m,   20.0u,  300.0M,\n'
         '                     ...\n'
         '           700.0 ,    8.0 ,    9.0  ]'
     )
-    assert header+putil.eng.pprint_vector(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
-        width=30,
-        eng=True,
-        frac_length=1,
-        limit=True,
-        indent=len(header)) == ref
+    assert (
+        header+putil.eng.pprint_vector(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
+            width=30,
+            eng=True,
+            frac_length=1,
+            limit=True,
+            indent=len(header)
+        )
+        ==
+        ref
+    )
     ref = (
         'Vector: [    1.0m,   20.0u,  300.0M,\n'
         '             4.0p,    5.3k,   -6.0n,\n'
         '           700.0 ,  800.0m ]'
     )
-    assert header+putil.eng.pprint_vector(
-        [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
-        width=30,
-        eng=True,
-        frac_length=1,
-        indent=len(header)) == ref
+    assert (
+        header+putil.eng.pprint_vector(
+            [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 0.8],
+            width=30,
+            eng=True,
+            frac_length=1,
+            indent=len(header)
+        )
+        ==
+        ref
+    )
     putil.test.assert_exception(
         putil.eng.pprint_vector,
         {

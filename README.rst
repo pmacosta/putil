@@ -151,10 +151,8 @@ Contributing
 5. Write a unit test which shows that a bug was fixed or that a new feature
    or API works as expected. Run the package tests to ensure that the bug fix
    or new feature does not have adverse side effects. If possible achieve 100%
-   code and branch coverage of the contribution. For a thorough code validation
-   use the :bash:`pkg-validate.sh` script (see below). Alternatively
-   `setuptools <https://bitbucket.org/pypa/setuptools>`_ can be used to run the
-   package tests via `Tox`_:
+   code and branch coverage of the contribution. Thorough package validation
+   can be done via `setuptools <https://bitbucket.org/pypa/setuptools>`_:
 
 	.. code-block:: bash
 
@@ -165,20 +163,50 @@ Contributing
             writing putil.egg-info/PKG-INFO
             ...
 
-   To pass arguments to `Tox`_ use the :code:`-a` option followed by a quoted
-   string.
+   Setuptools runs tox with its two default environments ``py27-pkg`` and
+   ``py34-pkg``. These use the Python 2.7 and 3.4 interpreters to test
+   all code in the documentation (both in Sphinx ``*.rst`` source files and in
+   docstrings), run all unit tests and re-build the exceptions documentation.
+   To pass arguments to tox use the :code:`-a` option followed by a quoted
+   string. For example:
 
-.. 6. Continuous integration is available via `Shippable
-..    <http://www.shippable.com/>`_. The Docker image used is
-..    `shippableimages/ubuntu1404_python
-..    <https://registry.hub.docker.com/u/shippableimages/ubuntu1404_python/>`_; it
-..    may be necessary to update the build image in the "Settings" tab of the
-..    Shippable putil repository page for the tests to pass (this image is already
-..    specified in the Shippable YML configuration file). In "Build image" select
-..    "Custom image", in "Custom image name", type
-..    ``shippableimages/ubuntu1404_python`` and finally click on the "Save" button
+	.. code-block:: bash
 
-7. The :bash:`${PUTIL_DIR}/sbin` directory contains all relevant development
+	    $ python setup.py tests -a "-e py27-pkg -- -n 4"
+            running tests
+            ...
+
+   There are other convenience environments defined for tox [#f2]_:
+
+    * ``py27-repl`` and ``py34-repl`` run the Python 2.7 or Python 3.4
+      interpreter in the appropriate virtual environment. The ``putil``
+      package is pip-installed by tox when the environments are created
+
+    * ``py27-test`` and ``py34-test`` run py.test using the Python 2.7
+      or Python 3.4 interpreter in the appropariate virtual environment.
+      Arguments to py.test can be passed in the command line after a
+      double dash (``--``) , for example:
+
+	.. code-block:: bash
+
+	    $ tox -e py34-test -- -x test_eng.py
+            GLOB sdist-make: [...]/putil/setup.py
+            py34-test inst-nodeps: [...]/putil/.tox/dist/putil-[...].zip
+            py34-test runtests: PYTHONHASHSEED='680528711'
+            py34-test runtests: commands[0] | [...]py.test -x test_eng.py
+            ==================== test session starts ====================
+            platform linux -- Python 3.4.2 -- py-1.4.30 -- [...]
+            ...
+
+    * ``py27-cov`` and ``py34-cov`` test code and branch coverage using
+      the Python 2.7 or Python 3.4 interpreter in the appropariate virtual
+      environment. Arguments to py.test can be passed in the command line
+      after a double dash (``--``). The report can be found in
+      :bash:`${PUTIL_DIR}/.tox/py27/usr/share/putil/tests/htmlcov/index.html`
+      or :bash:`${PUTIL_DIR}/.tox/py34/usr/share/putil/tests/htmlcovindex.html`
+      depending on the interpreter used.
+
+7. The :bash:`${PUTIL_DIR}/sbin` directory contains other relevant development
    scripts:
 
    * **build-docs.sh:** (re)builds the package documentation
@@ -204,7 +232,7 @@ Contributing
 		          [default: (build-docs.sh directory)/../putil]
 		      -t  Diff original and rebuilt file(s) (exit code 0
 		          indicates file(s) are identical, exit code 1
-		          file(s) are different
+		          indicates file(s) are different
 		      -n  Number of CPUs to use [default: 1]
 
 
@@ -240,61 +268,13 @@ Contributing
 		Generating image [PUTIL_DIR]/tests/support/...
 		...
 
-   * **test.sh:** runs a module's unit tests, doctests or coverage
-
-		.. [[[cog ste('test.sh -h', 6, mdir, cog.out) ]]]
-
-		.. code-block:: bash
-
-		    $ ${PUTIL_DIR}/sbin/test.sh -h
-		    test.sh
-
-		    Usage:
-		      test.sh -h
-		      test.sh -d [-e env] [-n num-cpus]
-		      test.sh -c [-e env] [-n num-cpus] [module-name]
-		      test.sh [-e env] [-n num-cpus] [module-name] [test-name]
-
-		    Options:
-		      -h  Show this screen
-		      -c  Measure test coverage
-		      -d  Verify doctests
-		      -e  Interpreter version [default: PY27|py34]
-		      -n  Number of CPUs to use [default: 1]
-
-		    If no module name is given all package modules are processed
-
-
-		.. [[[end]]]
-
-   * **pkg-validate.sh:** uses `tox <https://tox.readthedocs.org/>`_ to run
-     the package unit tests, verify doctests, measure test coverage and build
-     the documentation in virtual environments
-
-		.. [[[cog ste('pkg-validate.sh -h', 6, mdir, cog.out) ]]]
-
-		.. code-block:: bash
-
-		    $ ${PUTIL_DIR}/sbin/pkg-validate.sh -h
-		    pkg-validate.sh
-
-		    Usage:
-		      pkg-validate.sh -h
-		      pkg-validate.sh [-n num-cpus] [-e env]
-
-		    Options:
-		      -h  Show this screen
-		      -e  Interpreter version [default: PY27|py34]
-		      -n  Number of CPUs to use [default: 1]
-
-
-		.. [[[end]]]
-
-
 .. rubric:: Footnotes
 
 .. [#f1] All examples are for the `bash <https://www.gnu.org/software/bash/>`_
    shell
+
+.. [#f2] Tox configuration largerly insprired by
+   `Ionel's codelog <http://blog.ionelmc.ro/2015/04/14/tox-tricks-and-patterns/>`_
 
 License
 =======

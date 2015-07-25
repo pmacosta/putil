@@ -41,11 +41,25 @@ print_banner () {
 	echo -e "${cyan}${bold}${line}${reset}"
 }
 
+print_cyan_line () {
+	local cyan="\e[1;36m"
+	local bold="\033[1m"
+	local reset="\033[0m"
+	echo -e "${cyan}${bold}$1${reset}"
+}
+
 print_green_line () {
 	local green="\e[1;32m"
 	local bold="\033[1m"
 	local reset="\033[0m"
 	echo -e "${green}${bold}$1${reset}"
+}
+
+print_red_line () {
+	local red="\e[1;31m"
+	local bold="\033[1m"
+	local reset="\033[0m"
+	echo -e "${red}${bold}$1${reset}"
 }
 
 # Mostly From https://stackoverflow.com/questions/12199631/

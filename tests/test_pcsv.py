@@ -173,11 +173,11 @@ class TestCsvFile(object):
             obj.add_dfilter({'Ctrl':'nom'})
             assert obj.data(filtered=True) == [['nom', 10], ['low', 30]]
             obj.add_dfilter({'Ctrl':'high'})
-            assert obj.data(filtered=True) == [
-                ['nom', 10],
-                ['high', 20],
-                ['low', 30],
-            ]
+            assert (
+                obj.data(filtered=True)
+                ==
+                [['nom', 10], ['high', 20], ['low', 30]]
+            )
 
     def test_reset_dfilter_works(self):
         """ Test if data filter reset works """

@@ -47,12 +47,20 @@ def test_get_exdesc():
 
 def test_get_replacement_token():
     """ Test _get_replacement_token() function """
-    assert putil.pcontracts._get_replacement_token(
-        'Argument `*[argument_name]*` could not be found'
-    ) == 'argument_name'
-    assert putil.pcontracts._get_replacement_token(
-        'Argument `*file_name*` could not be found'
-    ) is None
+    assert (
+        putil.pcontracts._get_replacement_token(
+            'Argument `*[argument_name]*` could not be found'
+        )
+        ==
+        'argument_name'
+    )
+    assert (
+        putil.pcontracts._get_replacement_token(
+            'Argument `*file_name*` could not be found'
+        )
+        is
+        None
+    )
 
 
 def test_format_arg_errors():
@@ -135,22 +143,26 @@ def test_format_arg_works():
     """ Test _format_arg() function """
     fobj = putil.pcontracts._format_arg
     assert (
-        fobj('Message') ==
+        fobj('Message')
+        ==
         {'msg':'Message', 'type':RuntimeError}
     )
     assert (
-        fobj(OSError) ==
+        fobj(OSError)
+        ==
         {
             'msg':'Argument `*[argument_name]*` is not valid',
             'type':OSError
         }
     )
     assert (
-        fobj((ValueError, 'Description 1')) ==
+        fobj((ValueError, 'Description 1'))
+        ==
         {'msg':'Description 1', 'type':ValueError}
     )
     assert (
-        fobj(('Description 2', TypeError)) ==
+        fobj(('Description 2', TypeError))
+        ==
         {'msg':'Description 2', 'type':TypeError}
     )
 
@@ -174,41 +186,82 @@ def test_parse_new_contract_args():
     with pytest.raises(TypeError) as excinfo:
         fobj(5)
     assert (
-        putil.test.get_exmsg(excinfo) ==
+        putil.test.get_exmsg(excinfo)
+        ==
         'Illegal custom contract exception definition'
     )
     # Normal behavior
-    assert fobj() == [{
-        'name':'argument_invalid',
-        'msg':'Argument `*[argument_name]*` is not valid',
-        'type':RuntimeError
-    }]
-    assert fobj('Desc') == [{
-        'name':'default',
-        'msg':'Desc',
-        'type':RuntimeError
-    }]
-    assert fobj(OSError) == [{
-        'name':'default',
-        'msg':'Argument `*[argument_name]*` is not valid',
-        'type':OSError
-    }]
-    assert fobj(('a', )) == [{'name':'default', 'msg':'a', 'type':RuntimeError}]
-    assert fobj((OSError, )) == [{
-        'name':'default',
-        'msg':'Argument `*[argument_name]*` is not valid',
-        'type':OSError
-    }]
-    assert fobj([TypeError, 'bcd']) == [{
-        'name':'default',
-        'msg':'bcd',
-        'type':TypeError
-    }]
-    assert fobj(['xyz', ValueError]) == [{
-        'name':'default',
-        'msg':'xyz',
-        'type':ValueError
-    }]
+    assert (
+        fobj()
+        ==
+        [
+            {
+                'name':'argument_invalid',
+                'msg':'Argument `*[argument_name]*` is not valid',
+                'type':RuntimeError
+            }
+        ]
+    )
+    assert (
+        fobj('Desc')
+        ==
+        [
+            {
+                'name':'default',
+                'msg':'Desc',
+                'type':RuntimeError
+            }
+        ]
+    )
+    assert (
+        fobj(OSError)
+        ==
+        [
+            {
+                'name':'default',
+                'msg':'Argument `*[argument_name]*` is not valid',
+                'type':OSError
+            }
+        ]
+    )
+    assert (
+        fobj(('a', ))
+        ==
+        [{'name':'default', 'msg':'a', 'type':RuntimeError}]
+    )
+    assert (
+        fobj((OSError, ))
+        ==
+        [
+            {
+                'name':'default',
+                'msg':'Argument `*[argument_name]*` is not valid',
+                'type':OSError
+            }
+        ]
+    )
+    assert (
+        fobj([TypeError, 'bcd'])
+        ==
+        [
+            {
+                'name':'default',
+                'msg':'bcd',
+                'type':TypeError
+            }
+        ]
+    )
+    assert (
+        fobj(['xyz', ValueError])
+        ==
+        [
+            {
+                'name':'default',
+                'msg':'xyz',
+                'type':ValueError
+            }
+        ]
+    )
     assert putil.test.comp_list_of_dicts(
         fobj(
             mycontract=('xyz', ValueError),
@@ -238,7 +291,9 @@ def test_parse_new_contract_args():
 
 def test_register_custom_contracts():
     """ Test _register_custom_contracts() function """
-    original_custom_contracts = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
+    original_custom_contracts = copy.deepcopy(
+        putil.pcontracts._CUSTOM_CONTRACTS
+    )
     fobj = putil.pcontracts._register_custom_contracts
     ftest = putil.test.assert_exception
     key1 = 'contract_name'
@@ -292,21 +347,31 @@ def test_register_custom_contracts():
     )
     ftest(
         fobj,
-        {key1:'test', key2:[{'name':'a', 'msg':'b'}, {'name':'a', 'msg':'c',}]},
+        {
+            key1:'test',
+            key2:[{'name':'a', 'msg':'b'}, {'name':'a', 'msg':'c',}]
+        },
         ValueError, 'Contract exception names are not unique'
     )
     ftest(
         fobj,
-        {key1:'test', key2:[
-            {'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}
-        ]},
+        {
+            key1:'test',
+            key2:[
+                {'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}
+            ]
+        },
         ValueError, 'Contract exception messages are not unique'
     )
     ftest(
         fobj,
-        {key1:'test',
-         key2:[{'name':'x', 'msg':'I am *[spartacus]*'},
-               {'name':'y', 'msg':'A move is *[spartacus]*',}]},
+        {
+            key1:'test',
+            key2:[
+                {'name':'x', 'msg':'I am *[spartacus]*'},
+                {'name':'y', 'msg':'A move is *[spartacus]*',}
+            ]
+        },
         ValueError,
         'Multiple replacement fields to be substituted by argument value'
     )
@@ -316,8 +381,10 @@ def test_register_custom_contracts():
     )
     putil.test.assert_exception(
         fobj,
-        {'contract_name':'test1',
-         'contract_exceptions':[{'name':'a', 'msg':'other desc'}]},
+        {
+            'contract_name':'test1',
+            'contract_exceptions':[{'name':'a', 'msg':'other desc'}]
+        },
         RuntimeError,
         'Attempt to redefine custom contract `test1`'
     )
@@ -325,30 +392,45 @@ def test_register_custom_contracts():
     putil.pcontracts._CUSTOM_CONTRACTS = dict()
     fobj('test_contract1', 'my description')
     assert (
-        putil.pcontracts._CUSTOM_CONTRACTS ==
-        {'test_contract1':{'default':{
-            'num':0,
-            'msg':'my description',
-            'type':RuntimeError,
-            'field':None}}
+        putil.pcontracts._CUSTOM_CONTRACTS
+        ==
+        {
+            'test_contract1':{
+                'default':{
+                    'num':0,
+                    'msg':'my description',
+                    'type':RuntimeError,
+                    'field':None
+                }
+            }
         }
     )
     putil.pcontracts._CUSTOM_CONTRACTS = dict()
     fobj(
         'test_contract2',
-        [{'name':'mex1', 'msg':'msg1', 'type':ValueError},
-         {'name':'mex2', 'msg':'msg2 *[token_name]* hello world'}]
+        [
+            {'name':'mex1', 'msg':'msg1', 'type':ValueError},
+            {'name':'mex2', 'msg':'msg2 *[token_name]* hello world'}
+        ]
     )
     assert (
-        putil.pcontracts._CUSTOM_CONTRACTS ==
-        {'test_contract2':{
-            'mex1':{'num':0, 'msg':'msg1', 'type':ValueError, 'field':None},
-            'mex2':{
-                'num':1,
-                'msg':'msg2 *[token_name]* hello world',
-                'type':RuntimeError,
-                'field':'token_name'}}
-       }
+        putil.pcontracts._CUSTOM_CONTRACTS
+        ==
+        {
+            'test_contract2':{
+                'mex1':{
+                    'num':0,
+                    'msg':'msg1',
+                    'type':ValueError,
+                    'field':None
+                },
+                'mex2':{
+                    'num':1,
+                    'msg':'msg2 *[token_name]* hello world',
+                    'type':RuntimeError,
+                    'field':'token_name'}
+            }
+        }
     )
     putil.pcontracts._CUSTOM_CONTRACTS = dict()
     fobj('test_contract3', [{'name':'mex1', 'msg':'msg1', 'type':ValueError}])
@@ -357,43 +439,56 @@ def test_register_custom_contracts():
         [{'name':'mex2', 'msg':'msg2 *[token_name]* hello world'}]
     )
     assert (
-        putil.pcontracts._CUSTOM_CONTRACTS ==
-        {'test_contract3':{'mex1':
+        putil.pcontracts._CUSTOM_CONTRACTS
+        ==
+        {
+            'test_contract3': {
+                'mex1':
                     {
                         'num':0,
                         'msg':'msg1',
                         'type':ValueError,
                         'field':None
                     }
-                },
-         'test_contract4':{'mex2':
+            },
+            'test_contract4':{
+                'mex2':
                     {
                         'num':0,
                         'msg':'msg2 *[token_name]* hello world',
                         'type':RuntimeError,
                         'field':'token_name'
                     }
-                }
-       }
+            }
+        }
     )
     putil.pcontracts._CUSTOM_CONTRACTS = dict()
     fobj('test_contract5', {'name':'mex5', 'msg':'msg5', 'type':ValueError})
     assert (
-        putil.pcontracts._CUSTOM_CONTRACTS ==
-        {'test_contract5':{'mex5':{
-            'num':0,
-            'msg':'msg5',
-            'type':ValueError,
-            'field':None
-        }}}
+        putil.pcontracts._CUSTOM_CONTRACTS
+        ==
+        {
+            'test_contract5':{
+                'mex5':{
+                    'num':0,
+                    'msg':'msg5',
+                    'type':ValueError,
+                    'field':None
+                }
+            }
+        }
     )
     #putil.pcontracts._CUSTOM_CONTRACTS = dict()
-    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
+    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(
+        original_custom_contracts
+    )
 
 
 def test_new_contract():
     """ Tests for new_contract decorator """
-    original_custom_contracts = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
+    original_custom_contracts = copy.deepcopy(
+        putil.pcontracts._CUSTOM_CONTRACTS
+    )
     putil.pcontracts._CUSTOM_CONTRACTS = dict()
     @putil.pcontracts.new_contract()
     def func1(name1):
@@ -445,8 +540,16 @@ def test_new_contract():
     ref = (
         'def',
         {
-            'ex1':'[START CONTRACT MSG: func3]Medium message[STOP CONTRACT MSG]',
-            'ex2':'[START CONTRACT MSG: func3]Complex *[data]*[STOP CONTRACT MSG]'
+            'ex1':(
+                '[START CONTRACT MSG: func3]'
+                'Medium message'
+                '[STOP CONTRACT MSG]'
+            ),
+            'ex2':(
+                '[START CONTRACT MSG: func3]'
+                'Complex *[data]*'
+                '[STOP CONTRACT MSG]'
+            )
         }
     )
     assert func3('def') == ref
@@ -467,7 +570,9 @@ def test_new_contract():
         }
     }
     assert putil.pcontracts._CUSTOM_CONTRACTS == ref
-    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
+    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(
+        original_custom_contracts
+    )
 
 
 ###
@@ -488,11 +593,11 @@ def decfunc(func):
         testing only, obviously in an actual environment the decorator would
         return the original (called) function with the passed arguments
         """
-        return ret_func(putil.pcontracts._create_argument_value_pairs(
-            func,
-            *args,
-            **kwargs
-        ))
+        return ret_func(
+            putil.pcontracts._create_argument_value_pairs(
+                func, *args, **kwargs
+            )
+        )
     return wrapper
 
 
@@ -519,7 +624,11 @@ class TestCreateArgumentValuePairs(object):
         def orig_func_all_keyword_arguments(kpar1, kpar2, kpar3):
             pass
         ref = {'kpar1':1, 'kpar2':2, 'kpar3':3}
-        assert orig_func_all_keyword_arguments(kpar3=3, kpar2=2, kpar1=1) == ref
+        assert (
+            orig_func_all_keyword_arguments(kpar3=3, kpar2=2, kpar1=1)
+            ==
+            ref
+        )
 
     def test_positional_and_keyword_arguments(self):
         """
@@ -539,9 +648,13 @@ class TestCreateArgumentValuePairs(object):
             'kpar2':1.5,
             'kpar3':'x'
         }
-        assert orig_func_positional_and_keyword_arguments(
-            10, 20, 30, kpar2=1.5, kpar3='x', kpar1=[1, 2]
-        ) == ref
+        assert (
+            orig_func_positional_and_keyword_arguments(
+                10, 20, 30, kpar2=1.5, kpar3='x', kpar1=[1, 2]
+            )
+            ==
+            ref
+        )
 
     def test_no_arguments(self):
         """
@@ -598,7 +711,9 @@ class TestCreateArgumentValuePairs(object):
 def test_contract():
     """ Test contract decorator """
     # pylint: disable=R0912,R0914
-    original_custom_contracts = copy.deepcopy(putil.pcontracts._CUSTOM_CONTRACTS)
+    original_custom_contracts = copy.deepcopy(
+        putil.pcontracts._CUSTOM_CONTRACTS
+    )
     putil.pcontracts._CUSTOM_CONTRACTS = dict()
     @putil.pcontracts.new_contract('Illegal number: *[number]*')
     def not_zero(number):
@@ -696,11 +811,17 @@ def test_contract():
     exdict = putil.exh.get_exh_obj()._ex_dict
     pexlist = list()
     for exkey, exitem in exdict.items():
-        pexlist.append({
-            'name':exkey[exkey.rfind(putil.exh.get_exh_obj()._callables_separator)+1:],
-            'type':exitem['type'],
-            'msg':exitem['msg']
-        })
+        pexlist.append(
+            {
+                'name':exkey[
+                    exkey.rfind(
+                        putil.exh.get_exh_obj()._callables_separator
+                    )+1:
+                ],
+                'type':exitem['type'],
+                'msg':exitem['msg']
+            }
+        )
     ref = [
         {
             'name':'contract_func5_flag_0',
@@ -765,7 +886,9 @@ def test_contract():
         contracts.interface.ContractSyntaxError,
         ''
     )
-    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(original_custom_contracts)
+    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(
+        original_custom_contracts
+    )
 
 
 def test_enable_disable_contracts():

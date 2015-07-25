@@ -51,6 +51,42 @@ _SUFFIX_POWER_DICT = {
 ###
 # Functions
 ###
+def _split_every(text, sep, count, lstrip=False, rstrip=False):
+    """
+    Returns a list of the words in the string, using a count of a separator as
+    the delimiter
+
+    :param  text: String to split
+    :type   text: string
+    :param  sep: Separator
+    :type   sep: string
+    :param  count: Number of separators to use as word delimiter
+    :type   count: integer
+    :param  lstrip: Flag that indicates whether whitespace is removed
+     from the beginning of each list item (True) or not (False)
+    :type   lstrip: boolean
+    :param  rstrip: Flag that indicates whether whitespace is removed
+     from the end of each list item (True) or not (False)
+    :type   rstrip: boolean
+    :rtype: list
+    """
+    tlist = text.split(sep)
+    lines = [
+        sep.join(tlist[num:min(num+count, len(tlist))])
+        for num in range(0, len(tlist), count)
+    ]
+    return [
+        line.rstrip()
+        if (rstrip and not lstrip) else
+        (
+            line.lstrip()
+            if (lstrip and not rstrip) else
+            (line.strip() if lstrip and rstrip else line)
+        )
+        for line in lines
+    ]
+
+
 def _to_eng_tuple(number):
     """
     Returns a tuple where the first item is the mantissa and the second
@@ -199,9 +235,11 @@ def peng(number, frac_length, rjust=True):
     mant, exp = _to_eng_tuple(number)
     ppos = mant.find('.')
     if (ppos != -1) and (len(mant)-ppos-1 > frac_length):
-        rounder = Decimal('{sign}0.{frac}5E{exp}'.format(
-            sign=ssign, frac='0'*frac_length, exp=exp
-        ))
+        rounder = Decimal(
+            '{sign}0.{frac}5E{exp}'.format(
+                sign=ssign, frac='0'*frac_length, exp=exp
+            )
+        )
         mant, exp = _to_eng_tuple(
             Decimal('{mant}E{exp}'.format(mant=mant, exp=exp))+rounder
         )
@@ -483,120 +521,17 @@ def round_mantissa(arg, decimals=0):
         return arg
     if isinstance(arg, numpy.ndarray):
         foi = [isinstance(item, int) for item in arg]
-        return numpy.array([
-            item if isint else float(to_scientific_string(item, decimals))
-            for isint, item in zip(foi, arg)
-        ])
+        return numpy.array(
+            [
+                item
+                if isint else
+                float(to_scientific_string(item, decimals))
+                for isint, item in zip(foi, arg)
+            ]
+        )
     if isinstance(arg, int):
         return arg
     return float(to_scientific_string(arg, decimals))
-
-
-def to_scientific_tuple(number):
-    """
-    Returns a tuple in which the first item is the mantissa (*string*) and
-    the second item is the exponent (*integer*) of a number when expressed
-    in scientific notation. Full precision is maintained if the number is
-    represented as a string
-
-    :param  number: Number
-    :type   number: number or string
-    :rtype: tuple
-
-    For example:
-
-        >>> import putil.eng
-        >>> putil.eng.to_scientific_tuple('135.56E-8')
-        ('1.3556', -6)
-        >>> putil.eng.to_scientific_tuple(0.0000013556)
-        ('1.3556', -6)
-
-    """
-    # pylint: disable=W0632
-    convert = not isinstance(number, str)
-    # Detect zero and return, simplifies subsequent algorithm
-    if ((convert and (number == 0)) or
-       ((not convert) and (not number.strip('0').strip('.')))):
-        return ('0', 0)
-    # Break down number into its components, use Decimal type to
-    # preserve resolution:
-    # sign  : 0 -> +, 1 -> -
-    # digits: tuple with digits of number
-    # exp   : exponent that gives mull fractional part
-    sign, digits, exp = Decimal(str(number) if convert else number).as_tuple()
-    mant = '{sign}{itg}{frac}'.format(
-        sign='-' if sign else '',
-        itg=digits[0],
-        frac='.{frac}'.format(frac=''.join([str(num) for num in digits[1:]]))
-             if len(digits) > 1 else
-             ''
-    ).rstrip('0').rstrip('.')
-    exp += len(digits)-1
-    return (mant, exp)
-
-
-def to_scientific_string(
-        number,
-        frac_length=None,
-        exp_length=None,
-        sign_always=False
-    ):
-    """
-    Converts a number or a string representing a number to a string with the
-    number expressed in scientific notation. Full precision is maintained if
-    the number is represented as a string
-
-    :param  number: Number to convert
-    :type   number: number or string
-    :param  frac_length: Number of digits of fractional part, None indicates
-     that the fractional part of the number should not be limited
-    :type   frac_length: integer or None
-    :param  exp_length: Number of digits of the exponent; the actual length of
-     the exponent takes precedence if it is longer
-    :type   exp_length: integer or None
-    :param  sign_always: Flag that indicates whether the sign always
-     precedes the number for both non-negative and negative numbers (True) or
-     only for negative numbers (False)
-    :type   sign_always: boolean
-    :rtype: string
-
-    For example:
-
-        >>> import putil.eng
-        >>> putil.eng.to_scientific_string(333)
-        '3.33E+2'
-        >>> putil.eng.to_scientific_string(0.00101)
-        '1.01E-3'
-        >>> putil.eng.to_scientific_string(99.999, 1, 2, True)
-        '+1.0E+02'
-
-    """
-    exp_length = 0 if not exp_length else exp_length
-    mant, exp = to_scientific_tuple(number)
-    fmant = float(mant)
-    if (not frac_length) or (fmant == int(fmant)):
-        return '{sign}{mant}{period}{zeros}E{exp_sign}{exp}'.format(
-            sign='+' if sign_always and (fmant >= 0) else '',
-            mant=mant,
-            period='.' if frac_length else '',
-            zeros='0'*frac_length if frac_length else '',
-            exp_sign='-' if exp < 0 else '+',
-            exp=str(abs(exp)).rjust(exp_length, '0')
-        )
-    rounded_mant = round(fmant, frac_length)
-    # Avoid infinite recursion when rounded mantissa is _exactly_ 10
-    if abs(rounded_mant) == 10:
-        rounded_mant = fmant = -1.0 if number < 0 else 1.0
-        frac_length = 1
-        exp = exp+1
-    zeros = 2+(1 if (fmant < 0) else 0)+frac_length-len(str(rounded_mant))
-    return '{sign}{mant}{zeros}E{exp_sign}{exp}'.format(
-        sign='+' if sign_always and (fmant >= 0) else '',
-        mant=rounded_mant,
-        zeros='0'*zeros,
-        exp_sign='-' if exp < 0 else '+',
-        exp=str(abs(exp)).rjust(exp_length, '0')
-    )
 
 
 def pprint_vector(vector, limit=False, width=None, indent=0,
@@ -755,43 +690,120 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
             remainder_list[-1]
         )
     )
-    return '\n'.join([
-        '{spaces}{line}'.format(spaces=' '*(indent+2), line=line)
-        if num > 0 else
-        line
-        for num, line in enumerate(new_wrapped_lines_list)
-    ])
+    return '\n'.join(
+        [
+            '{spaces}{line}'.format(spaces=' '*(indent+2), line=line)
+            if num > 0 else
+            line
+            for num, line in enumerate(new_wrapped_lines_list)
+        ]
+    )
 
 
-def _split_every(text, sep, count, lstrip=False, rstrip=False):
+def to_scientific_string(
+        number,
+        frac_length=None,
+        exp_length=None,
+        sign_always=False
+    ):
     """
-    Returns a list of the words in the string, using a count of a separator as
-    the delimiter
+    Converts a number or a string representing a number to a string with the
+    number expressed in scientific notation. Full precision is maintained if
+    the number is represented as a string
 
-    :param  text: String to split
-    :type   text: string
-    :param  sep: Separator
-    :type   sep: string
-    :param  count: Number of separators to use as word delimiter
-    :type   count: integer
-    :param  lstrip: Flag that indicates whether whitespace is removed
-     from the beginning of each list item (True) or not (False)
-    :type   lstrip: boolean
-    :param  rstrip: Flag that indicates whether whitespace is removed
-     from the end of each list item (True) or not (False)
-    :type   rstrip: boolean
-    :rtype: list
+    :param  number: Number to convert
+    :type   number: number or string
+    :param  frac_length: Number of digits of fractional part, None indicates
+     that the fractional part of the number should not be limited
+    :type   frac_length: integer or None
+    :param  exp_length: Number of digits of the exponent; the actual length of
+     the exponent takes precedence if it is longer
+    :type   exp_length: integer or None
+    :param  sign_always: Flag that indicates whether the sign always
+     precedes the number for both non-negative and negative numbers (True) or
+     only for negative numbers (False)
+    :type   sign_always: boolean
+    :rtype: string
+
+    For example:
+
+        >>> import putil.eng
+        >>> putil.eng.to_scientific_string(333)
+        '3.33E+2'
+        >>> putil.eng.to_scientific_string(0.00101)
+        '1.01E-3'
+        >>> putil.eng.to_scientific_string(99.999, 1, 2, True)
+        '+1.0E+02'
+
     """
-    tlist = text.split(sep)
-    lines = [
-        sep.join(tlist[num:min(num+count, len(tlist))])
-        for num in range(0, len(tlist), count)
-    ]
-    return [
-        line.rstrip()
-        if (rstrip and not lstrip) else
-        (
-            line.lstrip() if (lstrip and not rstrip) else
-            (line.strip() if lstrip and rstrip else line)
-        ) for line in lines
-    ]
+    exp_length = 0 if not exp_length else exp_length
+    mant, exp = to_scientific_tuple(number)
+    fmant = float(mant)
+    if (not frac_length) or (fmant == int(fmant)):
+        return '{sign}{mant}{period}{zeros}E{exp_sign}{exp}'.format(
+            sign='+' if sign_always and (fmant >= 0) else '',
+            mant=mant,
+            period='.' if frac_length else '',
+            zeros='0'*frac_length if frac_length else '',
+            exp_sign='-' if exp < 0 else '+',
+            exp=str(abs(exp)).rjust(exp_length, '0')
+        )
+    rounded_mant = round(fmant, frac_length)
+    # Avoid infinite recursion when rounded mantissa is _exactly_ 10
+    if abs(rounded_mant) == 10:
+        rounded_mant = fmant = -1.0 if number < 0 else 1.0
+        frac_length = 1
+        exp = exp+1
+    zeros = 2+(1 if (fmant < 0) else 0)+frac_length-len(str(rounded_mant))
+    return '{sign}{mant}{zeros}E{exp_sign}{exp}'.format(
+        sign='+' if sign_always and (fmant >= 0) else '',
+        mant=rounded_mant,
+        zeros='0'*zeros,
+        exp_sign='-' if exp < 0 else '+',
+        exp=str(abs(exp)).rjust(exp_length, '0')
+    )
+
+
+def to_scientific_tuple(number):
+    """
+    Returns a tuple in which the first item is the mantissa (*string*) and
+    the second item is the exponent (*integer*) of a number when expressed
+    in scientific notation. Full precision is maintained if the number is
+    represented as a string
+
+    :param  number: Number
+    :type   number: number or string
+    :rtype: tuple
+
+    For example:
+
+        >>> import putil.eng
+        >>> putil.eng.to_scientific_tuple('135.56E-8')
+        ('1.3556', -6)
+        >>> putil.eng.to_scientific_tuple(0.0000013556)
+        ('1.3556', -6)
+
+    """
+    # pylint: disable=W0632
+    convert = not isinstance(number, str)
+    # Detect zero and return, simplifies subsequent algorithm
+    if ((convert and (number == 0)) or
+       ((not convert) and (not number.strip('0').strip('.')))):
+        return ('0', 0)
+    # Break down number into its components, use Decimal type to
+    # preserve resolution:
+    # sign  : 0 -> +, 1 -> -
+    # digits: tuple with digits of number
+    # exp   : exponent that gives mull fractional part
+    sign, digits, exp = Decimal(str(number) if convert else number).as_tuple()
+    mant = '{sign}{itg}{frac}'.format(
+        sign='-' if sign else '',
+        itg=digits[0],
+        frac=(
+            '.{frac}'.format(frac=''.join([str(num) for num in digits[1:]]))
+            if len(digits) > 1 else
+            ''
+        )
+    ).rstrip('0').rstrip('.')
+    exp += len(digits)-1
+    return (mant, exp)

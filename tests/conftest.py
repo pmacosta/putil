@@ -19,7 +19,9 @@ import putil.exh
 # Functions
 ###
 def log(line, append=True):
-    """ xdist debugging function """
+    """
+    xdist debugging function
+    """
     with open(
             os.path.join(os.environ['HOME'], 'xdist-debug.log'),
             'a' if append else 'w'
@@ -28,22 +30,30 @@ def log(line, append=True):
 
 
 def pytest_configure(config):
-    """ Pytest configuration, both for the slave and master """
+    """
+    Pytest configuration, both for the slave and master
+    """
     if not hasattr(config, "slaveinput"):   # Master configuration
         pass
 
 
 def pytest_configure_node(node):
-    """ Per node configuration """
+    """
+    Per node configuration
+    """
     # pylint: disable=W0613
     if hasattr(__builtin__, '_EXDOC_EXCLUDE'):
         node.slaveinput['exclude'] = pickle.dumps(__builtin__._EXDOC_EXCLUDE)
     if hasattr(__builtin__, '_EXDOC_FULL_CNAME'):
-        node.slaveinput['full_cname'] = pickle.dumps(__builtin__._EXDOC_FULL_CNAME)
+        node.slaveinput['full_cname'] = pickle.dumps(
+            __builtin__._EXDOC_FULL_CNAME
+        )
 
 
 def pytest_testnodedown(node, error):
-    """ Integrate received exception handler form sub-process into main one """
+    """
+    Integrate received exception handler form sub-process into main one
+    """
     if error:
         raise RuntimeError('Slave node reported an error')
     if 'msg' in node.slaveoutput:

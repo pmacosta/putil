@@ -111,19 +111,30 @@ def test_binary_string_to_octal_string():
             '\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0'
             '\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
         )
-        assert obj(
-            ''.join([struct.pack('h', num) for num in range(1, 15)])
-        ) == ref
+        assert (
+            obj(
+                ''.join([struct.pack('h', num) for num in range(1, 15)])
+            )
+            ==
+            ref
+        )
     else:
         ref = (
             r'\o1\0\o2\0\o3\0\o4\0\o5\0\o6\0\a\0'
             r'\b\0\t\0\n\0\v\0\f\0\r\0\o16\0'
         )
-        assert obj(
-            ''.join([
-                struct.pack('h', num).decode('ascii') for num in range(1, 15)
-            ])
-        ) == ref
+        assert (
+            obj(
+                ''.join(
+                    [
+                        struct.pack('h', num).decode('ascii')
+                        for num in range(1, 15)
+                    ]
+                )
+            )
+            ==
+            ref
+        )
 
 
 def test_char_string_to_decimal_string():
@@ -327,62 +338,118 @@ def test_ellapsed_time_string():
         RuntimeError,
         'Invalid time delta specification'
     )
-    assert obj(
-        datetime.datetime(2014, 1, 1),
-        datetime.datetime(2015, 1, 1)
-    ) == '1 year'
-    assert obj(
-        datetime.datetime(2014, 1, 1),
-        datetime.datetime(2016, 1, 1)
-    ) == '2 years'
-    assert obj(
-        datetime.datetime(2014, 1, 1),
-        datetime.datetime(2014, 1, 31)
-    ) == '1 month'
-    assert obj(
-        datetime.datetime(2014, 1, 1),
-        datetime.datetime(2014, 3, 2)
-    ) == '2 months'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 10),
-        datetime.datetime(2014, 1, 1, 11)
-    ) == '1 hour'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 10),
-        datetime.datetime(2014, 1, 1, 12)
-    ) == '2 hours'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10),
-        datetime.datetime(2014, 1, 1, 1, 11)
-    ) == '1 minute'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10),
-        datetime.datetime(2014, 1, 1, 1, 12)
-    ) == '2 minutes'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10, 1),
-        datetime.datetime(2014, 1, 1, 1, 10, 2)
-    ) == '1 second'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10, 1),
-        datetime.datetime(2014, 1, 1, 1, 10, 3)
-    ) == '2 seconds'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10, 1),
-        datetime.datetime(2015, 1, 1, 1, 10, 2)
-    ) == '1 year and 1 second'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10, 1),
-        datetime.datetime(2015, 1, 1, 1, 10, 3)
-    ) == '1 year and 2 seconds'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10, 1),
-        datetime.datetime(2015, 1, 2, 1, 10, 3)
-    ) == '1 year, 1 day and 2 seconds'
-    assert obj(
-        datetime.datetime(2014, 1, 1, 1, 10, 1),
-        datetime.datetime(2015, 1, 3, 1, 10, 3)
-    ) == '1 year, 2 days and 2 seconds'
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1),
+            datetime.datetime(2015, 1, 1)
+        )
+        ==
+        '1 year'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1),
+            datetime.datetime(2016, 1, 1)
+        )
+        ==
+        '2 years'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1),
+            datetime.datetime(2014, 1, 31)
+        )
+        ==
+        '1 month'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1),
+            datetime.datetime(2014, 3, 2)
+        )
+        ==
+        '2 months'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 10),
+            datetime.datetime(2014, 1, 1, 11)
+        )
+        ==
+        '1 hour'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 10),
+            datetime.datetime(2014, 1, 1, 12)
+        )
+        ==
+        '2 hours'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10),
+            datetime.datetime(2014, 1, 1, 1, 11)
+        )
+        ==
+        '1 minute'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10),
+            datetime.datetime(2014, 1, 1, 1, 12)
+        )
+        ==
+        '2 minutes'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10, 1),
+            datetime.datetime(2014, 1, 1, 1, 10, 2)
+        )
+        ==
+        '1 second'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10, 1),
+            datetime.datetime(2014, 1, 1, 1, 10, 3)
+        )
+        ==
+        '2 seconds'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10, 1),
+            datetime.datetime(2015, 1, 1, 1, 10, 2)
+        )
+        ==
+        '1 year and 1 second'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10, 1),
+            datetime.datetime(2015, 1, 1, 1, 10, 3)
+        )
+        ==
+        '1 year and 2 seconds'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10, 1),
+            datetime.datetime(2015, 1, 2, 1, 10, 3)
+        )
+        ==
+        '1 year, 1 day and 2 seconds'
+    )
+    assert (
+        obj(
+            datetime.datetime(2014, 1, 1, 1, 10, 1),
+            datetime.datetime(2015, 1, 3, 1, 10, 3)
+        )
+        ==
+        '1 year, 2 days and 2 seconds'
+    )
 
 
 def test_tmp_file():
@@ -493,10 +560,15 @@ def test_cidict():
     assert putil.test.get_exmsg(excinfo) == "unhashable type: 'list'"
     with pytest.raises(ValueError) as excinfo:
         putil.misc.CiDict(['Prop1', 'Prop2', 'Prop3', 'Prop4'])
-    assert putil.test.get_exmsg(excinfo) == (
-        "dictionary update sequence "
-        "element #0 has length 5; 2 is required"
+    assert (
+        putil.test.get_exmsg(excinfo)
+        ==
+        (
+            'dictionary update sequence '
+            'element #0 has length 5; 2 is required'
+        )
     )
+
 
 def test_pprint_ast_node():
     """ Test pprint_ast_node() function """
@@ -572,11 +644,15 @@ def test_pprint_ast_node():
     ref3.append("      ], decorator_list=[], lineno=1, col_offset=0),")
     ref3.append("  ])")
 
-    assert putil.misc.pprint_ast_node(
-        ast.parse('\n'.join(ret)),
-        include_attributes=True,
-        annotate_fields=True
-    ) == '\n'.join(ref2 if sys.version_info.major == 2 else ref3)
+    assert (
+        putil.misc.pprint_ast_node(
+            ast.parse('\n'.join(ret)),
+            include_attributes=True,
+            annotate_fields=True
+        )
+        ==
+        '\n'.join(ref2 if sys.version_info.major == 2 else ref3)
+    )
     ref2 = []
     ref2.append("Module([")
     ref2.append("    ClassDef('MyClass', [")
@@ -613,11 +689,15 @@ def test_pprint_ast_node():
     ref3.append("          ], [], None, 2, 4),")
     ref3.append("      ], [], 1, 0),")
     ref3.append("  ])")
-    assert putil.misc.pprint_ast_node(
-        ast.parse('\n'.join(ret)),
-        include_attributes=True,
-        annotate_fields=False
-    ) == '\n'.join(ref2 if sys.version_info.major == 2 else ref3)
+    assert (
+        putil.misc.pprint_ast_node(
+            ast.parse('\n'.join(ret)),
+            include_attributes=True,
+            annotate_fields=False
+        )
+        ==
+        '\n'.join(ref2 if sys.version_info.major == 2 else ref3)
+    )
 
 
 def test_private_props():

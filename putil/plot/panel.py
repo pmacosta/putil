@@ -66,7 +66,7 @@ class Panel(object):
     :param  primary_axis_ticks:     primary dependent axis tick marks. When
      given overrides automatically generated tick marks if the axis type is
      linear
-     :type  primary_axis_ticks:     list or Numpy vector
+    :type  primary_axis_ticks:     list or Numpy vector
     :param  secondary_axis_label:   secondary dependent axis label
     :type   secondary_axis_label:   string
     :param  secondary_axis_units:   secondary dependent axis units
@@ -74,7 +74,7 @@ class Panel(object):
     :param  secondary_axis_ticks:   secondary dependent axis tick marks. When
      given overrides automatically generated tick marks if the axis type is
      linear
-     :type  secondary_axis_ticks:   list or Numpy vector
+    :type  secondary_axis_ticks:   list or Numpy vector
     :param  log_dep_axis:           Flag that indicates whether the dependent
      (primary and/or secondary) axis is linear (False) or logarithmic (True)
     :type   log_dep_axis:           boolean
@@ -203,9 +203,17 @@ class Panel(object):
         # Assignment of arguments to attributes
         # Order here is important to avoid unnecessary re-calculating of
         # panel axes if log_dep_axis is True
-        self._primary_axis_ticks = primary_axis_ticks
-        self._secondary_axis_ticks = secondary_axis_ticks
         self._set_log_dep_axis(log_dep_axis)
+        self._primary_axis_ticks = (
+            primary_axis_ticks
+            if not self.log_dep_axis else
+            None
+        )
+        self._secondary_axis_ticks = (
+            secondary_axis_ticks
+            if not self.log_dep_axis else
+            None
+        )
         self._set_series(series)
         self._set_primary_axis_label(primary_axis_label)
         self._set_primary_axis_units(primary_axis_units)
@@ -557,6 +565,8 @@ class Panel(object):
                         self._secondary_dep_var_locs[0],
                         self._secondary_dep_var_locs[-1]
                     ))
+            self._primary_axis_ticks = self._primary_dep_var_locs
+            self._secondary_axis_ticks = self._secondary_dep_var_locs
             # Scale panel
             self._scale_dep_var(
                 self._primary_dep_var_div,
@@ -566,8 +576,14 @@ class Panel(object):
     def _get_primary_axis_scale(self):
         return self._primary_dep_var_div
 
+    def _get_primary_axis_ticks(self):
+        return self._primary_axis_ticks
+
     def _get_secondary_axis_scale(self):
         return self._secondary_dep_var_div
+
+    def _get_secondary_axis_ticks(self):
+        return self._secondary_axis_ticks
 
     def _get_primary_axis_label(self):
         return self._primary_axis_label
@@ -955,12 +971,14 @@ class Panel(object):
         )
         indep_axis_units = (
             ''
-            if indep_axis_dict['indep_axis_units'] is None else
+            if indep_axis_dict['indep_axis_units'] is None or
+               not print_indep_axis else
             indep_axis_dict['indep_axis_units'].strip()
         )
         indep_axis_unit_scale = (
             ''
-            if indep_axis_dict['indep_axis_unit_scale'] is None else
+            if indep_axis_dict['indep_axis_unit_scale'] is None or
+               not print_indep_axis else
             indep_axis_dict['indep_axis_unit_scale'].strip()
         )
         self._setup_axis(
@@ -990,135 +1008,23 @@ class Panel(object):
 
     _complete = property(_get_complete)
 
-    series = property(_get_series, _set_series, doc='Panel series')
-    r"""
-    Gets or sets the panel series
-
-    :type:  :py:class:`putil.plot.Series` object or list of
-     :py:class:`putil.plot.Series` objects
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.panel.Panel.series
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`series\` is not valid)
-
-     * RuntimeError (Series item *[number]* is not fully specified)
-
-     * ValueError (Series item *[number]* cannot be plotted in a logarithmic
-       axis because it contains negative data points)
-
-    .. [[[end]]]
-    """
-
-    primary_axis_label = property(
-        _get_primary_axis_label,
-        _set_primary_axis_label,
-        doc='Panel primary axis label'
+    display_indep_axis = property(
+        _get_display_indep_axis,
+        _set_display_indep_axis,
+        doc='Show independent axis flag'
     )
     r"""
-    Gets or sets the panel primary dependent axis label
-
-    :type:  string, default is ''
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.panel.Panel.primary_axis_label
-
-    :raises: (when assigned) RuntimeError (Argument \`primary_axis_label\`
-     is not valid)
-
-    .. [[[end]]]
-    """
-
-    secondary_axis_label = property(
-        _get_secondary_axis_label,
-        _set_secondary_axis_label,
-        doc='Panel secondary axis label'
-    )
-    r"""
-    Gets or sets the panel secondary dependent axis label
-
-    :type:  string, default is ''
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.panel.Panel.secondary_axis_label
-
-    :raises: (when assigned) RuntimeError (Argument
-     \`secondary_axis_label\` is not valid)
-
-    .. [[[end]]]
-    """
-
-    primary_axis_units = property(
-        _get_primary_axis_units,
-        _set_primary_axis_units,
-        doc='Panel primary axis units'
-    )
-    r"""
-    Gets or sets the panel primary dependent axis units
-
-    :type:  string, default is ''
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.panel.Panel.primary_axis_units
-
-    :raises: (when assigned) RuntimeError (Argument \`primary_axis_units\`
-     is not valid)
-
-    .. [[[end]]]
-    """
-
-    secondary_axis_units = property(
-        _get_secondary_axis_units,
-        _set_secondary_axis_units,
-        doc='Panel secondary axis units'
-    )
-    r"""
-    Gets or sets the panel secondary dependent axis units
-
-    :type:  string, default is ''
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.panel.Panel.secondary_axis_units
-
-    :raises: (when assigned) RuntimeError (Argument
-     \`secondary_axis_units\` is not valid)
-
-    .. [[[end]]]
-    """
-
-    log_dep_axis = property(
-        _get_log_dep_axis,
-        _set_log_dep_axis,
-        doc='Panel logarithmic dependent axis flag'
-    )
-    r"""
-    Gets or sets the panel logarithmic dependent (primary and/or secondary)
-    axis flag; indicates whether the dependent (primary and/or secondary) axis
-    is linear (False) or logarithmic (True)
+    Gets or sets the independent axis display flag; indicates whether the
+    independent axis is displayed (True) or not (False)
 
     :type:  boolean, default is False
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.plot.panel.Panel.log_dep_axis
+    .. putil.plot.panel.Panel.display_indep_axis
 
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`log_dep_axis\` is not valid)
-
-     * RuntimeError (Argument \`series\` is not valid)
-
-     * RuntimeError (Series item *[number]* is not fully specified)
-
-     * ValueError (Series item *[number]* cannot be plotted in a logarithmic
-       axis because it contains negative data points)
+    :raises: (when assigned) RuntimeError (Argument \`display_indep_axis\`
+     is not valid)
 
     .. [[[end]]]
     """
@@ -1166,22 +1072,51 @@ class Panel(object):
     .. [[[end]]]
     """
 
-    display_indep_axis = property(
-        _get_display_indep_axis,
-        _set_display_indep_axis,
-        doc='Show independent axis flag'
+    log_dep_axis = property(
+        _get_log_dep_axis,
+        _set_log_dep_axis,
+        doc='Panel logarithmic dependent axis flag'
     )
     r"""
-    Gets or sets the independent axis display flag; indicates whether the
-    independent axis is displayed (True) or not (False)
+    Gets or sets the panel logarithmic dependent (primary and/or secondary)
+    axis flag; indicates whether the dependent (primary and/or secondary) axis
+    is linear (False) or logarithmic (True)
 
     :type:  boolean, default is False
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.plot.panel.Panel.display_indep_axis
+    .. putil.plot.panel.Panel.log_dep_axis
 
-    :raises: (when assigned) RuntimeError (Argument \`display_indep_axis\`
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`log_dep_axis\` is not valid)
+
+     * RuntimeError (Argument \`series\` is not valid)
+
+     * RuntimeError (Series item *[number]* is not fully specified)
+
+     * ValueError (Series item *[number]* cannot be plotted in a logarithmic
+       axis because it contains negative data points)
+
+    .. [[[end]]]
+    """
+
+    primary_axis_label = property(
+        _get_primary_axis_label,
+        _set_primary_axis_label,
+        doc='Panel primary axis label'
+    )
+    r"""
+    Gets or sets the panel primary dependent axis label
+
+    :type:  string, default is ''
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.panel.Panel.primary_axis_label
+
+    :raises: (when assigned) RuntimeError (Argument \`primary_axis_label\`
      is not valid)
 
     .. [[[end]]]
@@ -1197,6 +1132,79 @@ class Panel(object):
     :type:  float or None if axis has no series associated with it
     """
 
+    primary_axis_ticks = property(
+        _get_primary_axis_ticks, doc='Primary axis tick locations'
+    )
+    """
+    Gets the primary axis (scaled) tick locations
+
+    :type:  list or None if the axis does not have a series associated
+     with it
+    """
+
+    primary_axis_units = property(
+        _get_primary_axis_units,
+        _set_primary_axis_units,
+        doc='Panel primary axis units'
+    )
+    r"""
+    Gets or sets the panel primary dependent axis units
+
+    :type:  string, default is ''
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.panel.Panel.primary_axis_units
+
+    :raises: (when assigned) RuntimeError (Argument \`primary_axis_units\`
+     is not valid)
+
+    .. [[[end]]]
+    """
+
+    series = property(_get_series, _set_series, doc='Panel series')
+    r"""
+    Gets or sets the panel series
+
+    :type:  :py:class:`putil.plot.Series` object or list of
+     :py:class:`putil.plot.Series` objects
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.panel.Panel.series
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`series\` is not valid)
+
+     * RuntimeError (Series item *[number]* is not fully specified)
+
+     * ValueError (Series item *[number]* cannot be plotted in a logarithmic
+       axis because it contains negative data points)
+
+    .. [[[end]]]
+    """
+
+    secondary_axis_label = property(
+        _get_secondary_axis_label,
+        _set_secondary_axis_label,
+        doc='Panel secondary axis label'
+    )
+    r"""
+    Gets or sets the panel secondary dependent axis label
+
+    :type:  string, default is ''
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.panel.Panel.secondary_axis_label
+
+    :raises: (when assigned) RuntimeError (Argument
+     \`secondary_axis_label\` is not valid)
+
+    .. [[[end]]]
+    """
+
     secondary_axis_scale = property(
         _get_secondary_axis_scale,
         doc='Secondary axis scale'
@@ -1205,4 +1213,34 @@ class Panel(object):
     Gets the scale of the panel secondary axis
 
     :type:  float or None if axis has no series associated with it
+    """
+
+    secondary_axis_ticks = property(
+        _get_secondary_axis_ticks, doc='secondary axis tick locations'
+    )
+    """
+    Gets the secondary axis (scaled) tick locations
+
+    :type:  list or None if the axis does not have a series associated
+     with it
+    """
+
+    secondary_axis_units = property(
+        _get_secondary_axis_units,
+        _set_secondary_axis_units,
+        doc='Panel secondary axis units'
+    )
+    r"""
+    Gets or sets the panel secondary dependent axis units
+
+    :type:  string, default is ''
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.panel.Panel.secondary_axis_units
+
+    :raises: (when assigned) RuntimeError (Argument
+     \`secondary_axis_units\` is not valid)
+
+    .. [[[end]]]
     """

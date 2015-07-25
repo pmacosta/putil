@@ -771,6 +771,119 @@ class CsvSource(DataSource):
         ret += super(CsvSource, self).__str__()
         return ret
 
+    # Managed attributes
+    dep_col_label = property(
+        _get_dep_col_label,
+        _set_dep_col_label,
+        doc='Dependent column label (column name)'
+    )
+    r"""
+    Gets or sets the dependent variable column label (column name)
+
+    :type:  string
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.csv_source.CsvSource.dep_col_label
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`dep_col_label\` is not valid)
+
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
+       illegal number of values)
+
+     * RuntimeError (Processing function *[func_name]* raised an exception
+       when called with the following arguments: ``\n`` indep_var:
+       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
+       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
+       *[exception_error_message]*)
+
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
+       not valid)
+
+     * TypeError (Processed dependent variable is not valid)
+
+     * TypeError (Processed independent variable is not valid)
+
+     * ValueError (Column *[col_name]* (dependent column label) could not be
+       found in comma-separated file *[fname]* header)
+
+     * ValueError (Column *[col_name]* in data filter not found in comma-
+       separated file *[fname]* header)
+
+     * ValueError (Filtered dependent variable is empty)
+
+     * ValueError (Filtered independent variable is empty)
+
+     * ValueError (Processed dependent variable is empty)
+
+     * ValueError (Processed independent and dependent variables are of
+       different length)
+
+     * ValueError (Processed independent variable is empty)
+
+    .. [[[end]]]
+    """
+
+    # dep_var is read only
+    dep_var = property(
+        DataSource._get_dep_var,
+        doc='Dependent variable Numpy vector (read only)'
+    )
+    """
+    Gets the dependent variable Numpy vector
+    """
+
+    dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
+    r"""
+    Gets or sets the data filter
+
+    :type: :ref:`CsvDataFilter`
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.csv_source.CsvSource.dfilter
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`dfilter\` is not valid)
+
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
+       illegal number of values)
+
+     * RuntimeError (Processing function *[func_name]* raised an exception
+       when called with the following arguments: ``\n`` indep_var:
+       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
+       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
+       *[exception_error_message]*)
+
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
+       not valid)
+
+     * TypeError (Processed dependent variable is not valid)
+
+     * TypeError (Processed independent variable is not valid)
+
+     * ValueError (Argument \`dfilter\` is empty)
+
+     * ValueError (Column *[col_name]* in data filter not found in comma-
+       separated file *[fname]* header)
+
+     * ValueError (Filtered dependent variable is empty)
+
+     * ValueError (Filtered independent variable is empty)
+
+     * ValueError (Processed dependent variable is empty)
+
+     * ValueError (Processed independent and dependent variables are of
+       different length)
+
+     * ValueError (Processed independent variable is empty)
+
+    .. [[[end]]]
+    """
+
     fname = property(
         _get_fname,
         _set_fname,
@@ -854,217 +967,6 @@ class CsvSource(DataSource):
        different length)
 
      * ValueError (Processed independent variable is empty)
-
-    .. [[[end]]]
-    """
-
-    dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
-    r"""
-    Gets or sets the data filter
-
-    :type: :ref:`CsvDataFilter`
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.csv_source.CsvSource.dfilter
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`dfilter\` is not valid)
-
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
-
-     * RuntimeError (Processing function *[func_name]* raised an exception
-       when called with the following arguments: ``\n`` indep_var:
-       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
-       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
-       *[exception_error_message]*)
-
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
-
-     * TypeError (Processed dependent variable is not valid)
-
-     * TypeError (Processed independent variable is not valid)
-
-     * ValueError (Argument \`dfilter\` is empty)
-
-     * ValueError (Column *[col_name]* in data filter not found in comma-
-       separated file *[fname]* header)
-
-     * ValueError (Filtered dependent variable is empty)
-
-     * ValueError (Filtered independent variable is empty)
-
-     * ValueError (Processed dependent variable is empty)
-
-     * ValueError (Processed independent and dependent variables are of
-       different length)
-
-     * ValueError (Processed independent variable is empty)
-
-    .. [[[end]]]
-    """
-
-    indep_col_label = property(
-        _get_indep_col_label,
-        _set_indep_col_label,
-        doc='Independent column label (column name)'
-    )
-    r"""
-    Gets or sets the independent variable column label (column name)
-
-    :type:  string
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.csv_source.CsvSource.indep_col_label
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
-
-     * RuntimeError (Argument \`indep_col_label\` is not valid)
-
-     * RuntimeError (Processing function *[func_name]* raised an exception
-       when called with the following arguments: ``\n`` indep_var:
-       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
-       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
-       *[exception_error_message]*)
-
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
-
-     * TypeError (Processed dependent variable is not valid)
-
-     * TypeError (Processed independent variable is not valid)
-
-     * ValueError (Column *[col_name]* (independent column label) could not be
-       found in comma-separated file *[fname]* header)
-
-     * ValueError (Column *[col_name]* in data filter not found in comma-
-       separated file *[fname]* header)
-
-     * ValueError (Filtered dependent variable is empty)
-
-     * ValueError (Filtered independent variable is empty)
-
-     * ValueError (Processed dependent variable is empty)
-
-     * ValueError (Processed independent and dependent variables are of
-       different length)
-
-     * ValueError (Processed independent variable is empty)
-
-    .. [[[end]]]
-    """
-
-    dep_col_label = property(
-        _get_dep_col_label,
-        _set_dep_col_label,
-        doc='Dependent column label (column name)'
-    )
-    r"""
-    Gets or sets the dependent variable column label (column name)
-
-    :type:  string
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.csv_source.CsvSource.dep_col_label
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`dep_col_label\` is not valid)
-
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
-
-     * RuntimeError (Processing function *[func_name]* raised an exception
-       when called with the following arguments: ``\n`` indep_var:
-       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
-       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
-       *[exception_error_message]*)
-
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
-
-     * TypeError (Processed dependent variable is not valid)
-
-     * TypeError (Processed independent variable is not valid)
-
-     * ValueError (Column *[col_name]* (dependent column label) could not be
-       found in comma-separated file *[fname]* header)
-
-     * ValueError (Column *[col_name]* in data filter not found in comma-
-       separated file *[fname]* header)
-
-     * ValueError (Filtered dependent variable is empty)
-
-     * ValueError (Filtered independent variable is empty)
-
-     * ValueError (Processed dependent variable is empty)
-
-     * ValueError (Processed independent and dependent variables are of
-       different length)
-
-     * ValueError (Processed independent variable is empty)
-
-    .. [[[end]]]
-    """
-
-    indep_min = property(
-        _get_indep_min,
-        _set_indep_min,
-        doc='Minimum of independent variable'
-    )
-    r"""
-    Gets or sets the minimum independent variable limit
-
-    :type: :ref:`RealNum`, default is None
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.csv_source.CsvSource.indep_min
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`indep_min\` is not valid)
-
-     * ValueError (Argument \`indep_min\` is greater than argument
-       \`indep_max\`)
-
-     * ValueError (Argument \`indep_var\` is empty after
-       \`indep_min\`/\`indep_max\` range bounding)
-
-    .. [[[end]]]
-    """
-
-    indep_max = property(
-        _get_indep_max,
-        _set_indep_max,
-        doc='Maximum of independent variable'
-    )
-    r"""
-    Gets or sets the maximum independent variable limit
-
-    :type: :ref:`RealNum`, default is None
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.csv_source.CsvSource.indep_max
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`indep_max\` is not valid)
-
-     * ValueError (Argument \`indep_min\` is greater than argument
-       \`indep_max\`)
-
-     * ValueError (Argument \`indep_var\` is empty after
-       \`indep_min\`/\`indep_max\` range bounding)
 
     .. [[[end]]]
     """
@@ -1259,6 +1161,114 @@ class CsvSource(DataSource):
 
     """
 
+    indep_col_label = property(
+        _get_indep_col_label,
+        _set_indep_col_label,
+        doc='Independent column label (column name)'
+    )
+    r"""
+    Gets or sets the independent variable column label (column name)
+
+    :type:  string
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.csv_source.CsvSource.indep_col_label
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
+       illegal number of values)
+
+     * RuntimeError (Argument \`indep_col_label\` is not valid)
+
+     * RuntimeError (Processing function *[func_name]* raised an exception
+       when called with the following arguments: ``\n`` indep_var:
+       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
+       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
+       *[exception_error_message]*)
+
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
+       not valid)
+
+     * TypeError (Processed dependent variable is not valid)
+
+     * TypeError (Processed independent variable is not valid)
+
+     * ValueError (Column *[col_name]* (independent column label) could not be
+       found in comma-separated file *[fname]* header)
+
+     * ValueError (Column *[col_name]* in data filter not found in comma-
+       separated file *[fname]* header)
+
+     * ValueError (Filtered dependent variable is empty)
+
+     * ValueError (Filtered independent variable is empty)
+
+     * ValueError (Processed dependent variable is empty)
+
+     * ValueError (Processed independent and dependent variables are of
+       different length)
+
+     * ValueError (Processed independent variable is empty)
+
+    .. [[[end]]]
+    """
+
+    indep_max = property(
+        _get_indep_max,
+        _set_indep_max,
+        doc='Maximum of independent variable'
+    )
+    r"""
+    Gets or sets the maximum independent variable limit
+
+    :type: :ref:`RealNum`, default is None
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.csv_source.CsvSource.indep_max
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * ValueError (Argument \`indep_min\` is greater than argument
+       \`indep_max\`)
+
+     * ValueError (Argument \`indep_var\` is empty after
+       \`indep_min\`/\`indep_max\` range bounding)
+
+    .. [[[end]]]
+    """
+
+    indep_min = property(
+        _get_indep_min,
+        _set_indep_min,
+        doc='Minimum of independent variable'
+    )
+    r"""
+    Gets or sets the minimum independent variable limit
+
+    :type: :ref:`RealNum`, default is None
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.csv_source.CsvSource.indep_min
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * ValueError (Argument \`indep_min\` is greater than argument
+       \`indep_max\`)
+
+     * ValueError (Argument \`indep_var\` is empty after
+       \`indep_min\`/\`indep_max\` range bounding)
+
+    .. [[[end]]]
+    """
+
     # indep_var is read only
     indep_var = property(
         DataSource._get_indep_var,
@@ -1266,13 +1276,4 @@ class CsvSource(DataSource):
     )
     """
     Gets the independent variable Numpy vector
-    """
-
-    # dep_var is read only
-    dep_var = property(
-        DataSource._get_dep_var,
-        doc='Dependent variable Numpy vector (read only)'
-    )
-    """
-    Gets the dependent variable Numpy vector
     """

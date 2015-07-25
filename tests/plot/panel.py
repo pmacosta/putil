@@ -599,6 +599,26 @@ class TestPanel(object):
             'k'
         )
         # print obj
+        # 22
+        # User-override
+        vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
+        user_vector = numpy.array([1E6, 2E6, 5E6])
+        obj = putil.plot.functions._intelligent_ticks(
+            vector,
+            500,
+            1e9,
+            tight=False,
+            log_axis=False,
+            tick_list=user_vector
+        )
+        assert obj == (
+            [1.0, 2.0, 5.0],
+            ['1', '2', '5'],
+            1.0,
+            5.0,
+            1000000,
+            'M'
+        )
         putil.plot.PRECISION = oprec
 
 
@@ -1001,6 +1021,128 @@ class TestPanel(object):
         assert not obj._complete
         obj.series = default_series
         assert obj._complete
+
+    def test_primary_axis_ticks(self, default_source, default_series):
+        """ Test that primary_axis_ticks property behaves correctly """
+        obj = putil.plot.Panel(series=None)
+        assert obj.primary_axis_ticks == None
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {
+                'series':default_series,
+                'primary_axis_ticks':5
+            },
+            RuntimeError,
+            'Argument `primary_axis_ticks` is not valid'
+        )
+        obj = putil.plot.Panel(
+            series=default_series,
+            primary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.primary_axis_ticks == [
+            1.0, 2.0, 3.0, 3.5
+        ]
+        obj = putil.plot.Panel(
+            series=default_series,
+            primary_axis_ticks=[
+                1E6, 4E6, 8E6, 9E6
+            ]
+        )
+        assert obj.primary_axis_ticks == [
+            1.0, 4.0, 8.0, 9.0
+        ]
+        obj = putil.plot.Panel(
+            series=putil.plot.Series(
+                data_source=default_source,
+                label='test series',
+                secondary_axis=True
+            ),
+            primary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.primary_axis_ticks == None
+        # Logarithmic independent axis tick marks
+        # cannot be overridden
+        obj = putil.plot.Panel(
+            series=putil.plot.Series(
+                data_source=putil.plot.BasicSource(
+                    indep_var=numpy.array([1E9, 20E9]),
+                    dep_var=numpy.array([3, 5])
+                ),
+                interp='STRAIGHT',
+                label='test series',
+            ),
+            primary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ],
+            log_dep_axis=True,
+        )
+        assert obj.primary_axis_ticks == [1.0, 10.0]
+
+    def test_secondary_axis_ticks(self, default_source, default_series):
+        """ Test that secondary_axis_ticks property behaves correctly """
+        obj = putil.plot.Panel(series=None)
+        assert obj.secondary_axis_ticks == None
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {
+                'series':default_series,
+                'secondary_axis_ticks':5
+            },
+            RuntimeError,
+            'Argument `secondary_axis_ticks` is not valid'
+        )
+        series_obj = putil.plot.Series(
+            data_source=default_source,
+            label='test series',
+            secondary_axis=True
+        )
+        obj = putil.plot.Panel(
+            series=series_obj,
+            secondary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.secondary_axis_ticks == [
+            1.0, 2.0, 3.0, 3.5
+        ]
+        obj = putil.plot.Panel(
+            series=series_obj,
+            secondary_axis_ticks=[
+                1E6, 4E6, 8E6, 9E6
+            ]
+        )
+        assert obj.secondary_axis_ticks == [
+            1.0, 4.0, 8.0, 9.0
+        ]
+        obj = putil.plot.Panel(
+            series=default_series,
+            secondary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.secondary_axis_ticks == None
+        # Logarithmic independent axis tick marks
+        # cannot be overridden
+        obj = putil.plot.Panel(
+            series=putil.plot.Series(
+                data_source=putil.plot.BasicSource(
+                    indep_var=numpy.array([1E9, 20E9]),
+                    dep_var=numpy.array([3, 5])
+                ),
+                interp='STRAIGHT',
+                label='test series',
+                secondary_axis=True
+            ),
+            secondary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ],
+            log_dep_axis=True,
+        )
+        assert obj.secondary_axis_ticks == [1.0, 10.0]
 
     def test_scale_series(self, default_series):
         """ Test that series scaling function behaves correctly """

@@ -7,6 +7,7 @@ from __future__ import print_function
 import bisect
 import copy
 import os
+import pickle
 import sys
 import textwrap
 if sys.version_info.major == 2: # pragma: no cover
@@ -61,6 +62,12 @@ class ExDocCxt(object):
      an otherwise fully qualified name is omitted if it belongs to a
      module in this list
     :type   exclude: list
+    :param  file_name: File name to pickle traced exception handler
+    :type   file_name: :ref:`FileName` or None
+    :raises:
+     * RuntimeError (Argument \`exclude\` is not valid)
+
+     * RuntimeError (Argument \`file_name\` is not valid)
 
     For example:
 
@@ -81,10 +88,23 @@ class ExDocCxt(object):
         <BLANKLINE>
 
     """
-    def __init__(self, _no_print=True, exclude=None):
+    def __init__(self, exclude=None, _no_print=True, file_name=None):
+        # Validate aguments
+        if (exclude is not None) and (not isinstance(exclude, list)):
+            raise RuntimeError('Argument `exclude` is not valid')
+        if (file_name is not None) and (not isinstance(file_name, str)):
+            try:
+                if not os.path.exists(file_name):
+                    os.access(file_name, os.W_OK)
+            except TypeError:
+                raise RuntimeError('Argument `file_name` is not valid')
+        if not isinstance(_no_print, bool):
+            raise RuntimeError('Argument `_no_print` is not valid')
         # Need to have an exception handler with full_cname=True and clean
         # the slate for the trace. If there is an existing handler copy it
         # to a temporary variable and copy it back/restore it upon exit
+        self._file_name = file_name
+        self._pickle_dict = {}
         self._existing_exhobj = None
         if putil.exh.get_exh_obj() is not None:
             self._existing_exhobj = copy.copy(putil.exh.get_exh_obj())
@@ -96,7 +116,7 @@ class ExDocCxt(object):
         # The actual (valid) contents of this object are loaded upon
         # context exit
         self._exdoc_obj = putil.exdoc.ExDoc(
-            exh_obj=putil.exh.get_exh_obj(),
+            exh_obj=putil.exh.ExHandle(),
             _empty=True,
             _no_print=_no_print
         )
@@ -121,17 +141,23 @@ class ExDocCxt(object):
             exhobj = copy.copy(__builtin__._EXH_LIST[0])
             for obj in __builtin__._EXH_LIST[1:]:
                 exhobj += obj
+            self._pickle_dict['_EXH_LIST'] = copy.copy(__builtin__._EXH_LIST)
             delattr(__builtin__, '_EXH_LIST')
         else:
             exhobj = putil.exh.get_exh_obj()
         delattr(__builtin__, '_EXDOC_EXCLUDE')
         delattr(__builtin__, '_EXDOC_FULL_CNAME')
         self._exdoc_obj._exh_obj = copy.copy(exhobj)
+        self._pickle_dict['exhobj'] = copy.copy(exhobj)
         # Delete all traced exceptions
         putil.exh.del_exh_obj()
         # Generate exceptions database
         self._exdoc_obj._build_ex_tree()
         self._exdoc_obj._build_module_db()
+        self._pickle_dict['exdoc'] = copy.copy(self._exdoc_obj)
+        if self._file_name is not None:
+            with open(self._file_name, 'wb') as fobj:
+                pickle.dump(self._pickle_dict, fobj)
         # Delete exceptions from exception tree building. The _build_ex_tree()
         # method uses the tree module, which in turn uses the ExDoc class, so
         # there will be exceptions registered in a global exception handler
@@ -253,10 +279,11 @@ class ExDoc(object):
             fname, line_no = callable_dict['code_id']
             if fname not in tdict:
                 tdict[fname] = []
-            if callable_dict['type'] == 'class':
-                cname = '{cls_name}.__init__'.format(cls_name=callable_name)
-            else:
-                cname = callable_name
+            cname = (
+                '{cls_name}.__init__'.format(cls_name=callable_name)
+                if callable_dict['type'] == 'class' else
+                callable_name
+            )
             tdict[fname].append({'name':cname, 'line':line_no})
         for fname in tdict.keys():
             self._module_obj_db[fname] = sorted(
@@ -530,9 +557,11 @@ class ExDoc(object):
                     desc = desc_dict[action]
                     for callable_root in callable_dict:
                         if callable_dict[callable_root]['type'] == action:
-                            exlist = sorted(list(
-                                set(callable_dict[callable_root]['exlist'])
-                            ))
+                            exlist = sorted(
+                                list(
+                                    set(callable_dict[callable_root]['exlist'])
+                                )
+                            )
                             exoutput.extend(
                                 [' * When {action}\n'.format(action=desc)]+
                                 [

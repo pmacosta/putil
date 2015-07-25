@@ -100,6 +100,85 @@ def ignored(*exceptions):
         pass
 
 
+class Timer(object):
+    r"""
+    Profiles blocks of code by calculating elapsed time between the context
+    manager entry and exit time points. Inspired by `Huy Nguyen's blog
+    <http://www.huyng.com/posts/python-performance-analysis/>`_
+
+    :param  verbose: Flag that indicates whether the elapsed time is printed
+     upon exit (True) or not (False)
+    :type   verbose: boolean
+    :returns: :py:class:`putil.misc.Timer` context manager object
+    :raises: RuntimeError (Argument \`verbose\` is not valid)
+
+    For example:
+
+    .. =[=cog
+    .. import docs.support.incfile
+    .. docs.support.incfile.incfile('misc_example_2.py', cog)
+    .. =]=
+    .. code-block:: python
+
+        # misc_example_2.py
+        from __future__ import print_function
+        import putil.misc
+
+        def timer(num_tries, fpointer):
+            with putil.misc.Timer() as tobj:
+                for _ in range(num_tries):
+                    fpointer()
+            print('Time per call: {0} seconds'.format(
+                tobj.elapsed_time/(2.0*num_tries)
+            ))
+
+        def sample_func():
+            count = 0
+            for num in range(0, count):
+                count += num
+
+    .. =[=end=]=
+
+    .. code-block:: python
+
+        >>> from docs.support.misc_example_2 import *
+        >>> timer(100, sample_func) #doctest: +ELLIPSIS
+        Time per call: ... seconds
+
+    """
+    def __init__(self, verbose=False):
+        if not isinstance(verbose, bool):
+            raise RuntimeError('Argument `verbose` is not valid')
+        self.tstart = None
+        self._tstop = None
+        self._elapsed_time = None
+        self._verbose = verbose
+
+    def __enter__(self):
+        self.tstart = time.time()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self._tstop = time.time()
+        # time.time() returns time in seconds since the epoch
+        self._elapsed_time = 1000.0*(self._tstop-self.tstart)
+        if self._verbose:
+            print('Elapsed time: {time}[msec]'.format(time=self._elapsed_time))
+        if exc_type is not None:
+            return False
+
+    def _get_elapsed_time(self):
+        return self._elapsed_time
+
+    elapsed_time = property(_get_elapsed_time, doc='Elapsed time')
+    """
+    Returns elapsed time (in seconds) between context manager entry and exit
+    time points
+
+    :rtype: float
+    """
+
+
 class TmpFile(object):
     r"""
     Creates a temporary file and optionally sets up hooks for a function to
@@ -170,149 +249,9 @@ class TmpFile(object):
             return False
 
 
-class Timer(object):
-    r"""
-    Profiles blocks of code by calculating elapsed time between the context
-    manager entry and exit time points. Inspired by `Huy Nguyen's blog
-    <http://www.huyng.com/posts/python-performance-analysis/>`_
-
-    :param  verbose: Flag that indicates whether the elapsed time is printed
-     upon exit (True) or not (False)
-    :type   verbose: boolean
-    :returns: :py:class:`putil.misc.Timer` context manager object
-    :raises: RuntimeError (Argument \`verbose\` is not valid)
-
-    For example:
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('misc_example_2.py', cog)
-    .. =]=
-    .. code-block:: python
-
-        # misc_example_2.py
-        from __future__ import print_function
-        import putil.misc
-
-        def timer(num_tries, fpointer):
-            with putil.misc.Timer() as tobj:
-                for _ in range(num_tries):
-                    fpointer()
-            print('Time per call: {0} seconds'.format(
-                tobj.elapsed_time/(2.0*num_tries)
-            ))
-
-        def sample_func():
-            count = 0
-            for num in range(0, count):
-                count += num
-
-    .. =[=end=]=
-
-    .. code-block:: python
-
-        >>> from docs.support.misc_example_2 import *
-        >>> timer(100, sample_func) #doctest: +ELLIPSIS
-        Time per call: ... seconds
-
-    """
-    def __init__(self, verbose=False):
-        if not isinstance(verbose, bool):
-            raise RuntimeError('Argument `verbose` is not valid')
-        self.tstart, self._tstop, self._elapsed_time, self._verbose = (
-            None, None, None, verbose
-        )
-
-    def __enter__(self):
-        self.tstart = time.time()
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        self._tstop = time.time()
-        # time.time() returns time in seconds since the epoch
-        self._elapsed_time = 1000.0*(self._tstop-self.tstart)
-        if self._verbose:
-            print('Elapsed time: {time}[msec]'.format(time=self._elapsed_time))
-        if exc_type is not None:
-            return False
-
-    def _get_elapsed_time(self):
-        return self._elapsed_time
-
-    elapsed_time = property(_get_elapsed_time, doc='Elapsed time')
-    """
-    Returns elapsed time (in seconds) between context manager entry and exit
-    time points
-
-    :rtype: float
-    """
-
-
 ###
 # Functions
 ###
-def private_props(obj):
-    """
-    Yields private properties of an object. A private property is
-    defined as one that has a single underscore (:code:`_`) before its name
-
-    :param  obj: Object
-    :type   obj: object
-    :returns: iterator
-    """
-    # Get private properties but NOT magic methods
-    for obj_name in [
-            obj_name
-            for obj_name in dir(obj)
-            if _PRIVATE_PROP_REGEXP.match(obj_name) and
-               (not callable(getattr(obj, obj_name)))]:
-        yield obj_name
-
-
-def pcolor(text, color, indent=0):
-    r"""
-    Returns a string that once printed is colorized
-
-    :param  text: Text to colorize
-    :type   text: string
-    :param  color: Color to use, one of :code:`'black'`, :code:`'red'`,
-     :code:`'green'`, :code:`'yellow'`, :code:`'blue'`, :code:`'magenta'`,
-     :code:`'cyan'`, :code:`'white'` or :code:`'none'` (case insensitive)
-    :type   color: string
-    :param  indent: Number of spaces to prefix the output with
-    :type   indent: integer
-    :rtype: string
-    :raises:
-     * RuntimeError (Argument \`color\` is not valid)
-
-     * RuntimeError (Argument \`indent\` is not valid)
-
-     * RuntimeError (Argument \`text\` is not valid)
-
-     * ValueError (Unknown color *[color]*)
-    """
-    esc_dict = {
-        'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35,
-        'cyan':36, 'white':37, 'none':-1
-    }
-    if not isinstance(text, str):
-        raise RuntimeError('Argument `text` is not valid')
-    if not isinstance(color, str):
-        raise RuntimeError('Argument `color` is not valid')
-    if not isinstance(indent, int):
-        raise RuntimeError('Argument `indent` is not valid')
-    color = color.lower()
-    if color not in esc_dict:
-        raise ValueError('Unknown color {color}'.format(color=color))
-    if esc_dict[color] != -1:
-        return '\033[{color_code}m{indent}{text}\033[0m'.format(
-            color_code=esc_dict[color],
-            indent=' '*indent,
-            text=text
-        )
-    return '{indent}{text}'.format(indent=' '*indent, text=text)
-
-
 def binary_string_to_octal_string(text):
     r"""
     Returns a binary-packed string in octal representation aliasing typical
@@ -380,6 +319,173 @@ def char_to_decimal(text):
     return ' '.join([str(ord(char)) for char in text])
 
 
+def elapsed_time_string(start_time, stop_time):
+    r"""
+    Returns a formatted string with the elapsed time between two time points.
+    The string includes years (365 days), months (30 days), days (24 hours),
+    hours (60 minutes), minutes (60 seconds) and seconds. If both arguments
+    are equal, the string returned is :code:`'None'`; otherwise, the string
+    returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s],
+    [MM minute[s] [and SS second[s\]\]\]\]\]\]. Any part (year[s], month[s],
+    etc.) is omitted if the value of that part is null/zero.
+
+    :param  start_time: Starting time point
+    :type   start_time:
+     `datetime
+     <https://docs.python.org/2/library/datetime.html#datetime-objects>`_
+     object
+    :param  stop_time:  Ending time point
+    :type   stop_time:  `datetime`_ object
+    :rtype:             string
+    :raises: RuntimeError (Invalid time delta specification)
+
+    For example:
+
+        >>> import datetime, putil.misc
+        >>> start_time = datetime.datetime(2014, 1, 1, 1, 10, 1)
+        >>> stop_time = datetime.datetime(2015, 1, 3, 1, 10, 3)
+        >>> putil.misc.elapsed_time_string(start_time, stop_time)
+        '1 year, 2 days and 2 seconds'
+    """
+    if start_time > stop_time:
+        raise RuntimeError('Invalid time delta specification')
+    delta_time = stop_time-start_time
+    tot_seconds = int(delta_time.total_seconds())
+    years, remainder = divmod(tot_seconds, 365*24*60*60)
+    months, remainder = divmod(remainder, 30*24*60*60)
+    days, remainder = divmod(remainder, 24*60*60)
+    hours, remainder = divmod(remainder, 60*60)
+    minutes, seconds = divmod(remainder, 60)
+    token_iter = zip(
+        [years, months, days, hours, minutes, seconds],
+        ['year', 'month', 'day', 'hour', 'minute', 'second']
+    )
+    ret_list = [
+        '{token} {token_name}{plural}'.format(
+            token=num,
+            token_name=desc,
+            plural='s' if num > 1 else ''
+        ) for num, desc in token_iter if num > 0
+    ]
+    if len(ret_list) == 0:
+        return 'None'
+    elif len(ret_list) == 1:
+        return ret_list[0]
+    elif len(ret_list) == 2:
+        return ret_list[0]+' and '+ret_list[1]
+    else:
+        return (', '.join(ret_list[0:-1]))+' and '+ret_list[-1]
+
+
+def flatten_list(lobj):
+    """
+    Recursively flattens a list
+
+    :param  lobj: List to flatten
+    :type   lobj: list
+    :rtype: list
+
+    For example:
+
+        >>> import putil.misc
+        >>> putil.misc.flatten_list([1, [2, 3, [4, 5, 6]], 7])
+        [1, 2, 3, 4, 5, 6, 7]
+
+    """
+    ret = []
+    for item in lobj:
+        if isinstance(item, list):
+            for sub_item in flatten_list(item):
+                ret.append(sub_item)
+        else:
+            ret.append(item)
+    return ret
+
+
+def gcd(vector):
+    """
+    Calculates the greatest common divisor (GCD) of a list of numbers or a
+    Numpy vector of numbers. The computations are carried out with a precision
+    of 1E-12 if the objects are not
+    `fractions <https://docs.python.org/2/library/fractions.html>`_. When
+    possible it is best to use the `fractions
+    <https://docs.python.org/2/library/fractions.html>`_ data type with
+    the numerator and denominator arguments when computing the GCD of
+    floating point numbers.
+
+    :param  vector: Vector of numbers
+    :type   vector: list of numbers or Numpy vector of numbers
+    """
+    if len(vector) == 0:
+        return None
+    elif len(vector) == 1:
+        return vector[0]
+    elif len(vector) == 2:
+        return pgcd(vector[0], vector[1])
+    else:
+        current_gcd = pgcd(vector[0], vector[1])
+        for element in vector[2:]:
+            current_gcd = pgcd(current_gcd, element)
+        return current_gcd
+
+
+def isalpha(obj):
+    """
+    Tests if the argument is a string representing a number
+
+    :param  obj: Object
+    :type   obj: any
+    :rtype: boolean
+
+    For example:
+
+        >>> import putil.misc
+        >>> putil.misc.isalpha('1.5')
+        True
+        >>> putil.misc.isalpha('1E-20')
+        True
+        >>> putil.misc.isalpha('1EA-20')
+        False
+
+    """
+    try:
+        float(obj)
+        return True
+    except ValueError:
+        return False
+
+
+def ishex(obj):
+    """
+    Tests if the argument is a string representing a valid hexadecimal digit
+
+    :param  obj: Object
+    :type   obj: any
+    :rtype: boolean
+    """
+    return (
+        (isinstance(obj, str) and
+        (len(obj) == 1) and
+        (obj.upper() in '0123456789ABCDEF'))
+    )
+
+
+def isiterable(obj):
+    """
+    Tests if the argument is an iterable
+
+    :param  obj: Object
+    :type   obj: any
+    :rtype: boolean
+    """
+    try:
+        iter(obj)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
 def isnumber(obj):
     """
     Tests if the argument is a number (complex, float or integer)
@@ -388,11 +494,13 @@ def isnumber(obj):
     :type   obj: any
     :rtype: boolean
     """
-    return (((obj is not None) and
-           (not isinstance(obj, bool)) and (
-                isinstance(obj, int) or
-                isinstance(obj, float) or
-                isinstance(obj, complex))))
+    return (
+        (((obj is not None) and
+        (not isinstance(obj, bool)) and
+        (isinstance(obj, int) or
+        isinstance(obj, float) or
+        isinstance(obj, complex))))
+    )
 
 
 def isreal(obj):
@@ -403,76 +511,12 @@ def isreal(obj):
     :type   obj: any
     :rtype: boolean
     """
-    return ((obj is not None) and
-           (not isinstance(obj, bool)) and (
-               isinstance(obj, int) or
-               isinstance(obj, float)))
-
-
-def per(arga, argb, prec=10):
-    r"""
-    Calculates the percentage difference between two numbers or the
-    element-wise percentage difference between two lists of numbers or Numpy
-    vectors. If any of the numbers in the arguments is zero the value returned
-    is 1E+20
-
-    :param  arga: First number, list of numbers or Numpy vector
-    :type   arga: float, integer, list of floats or integers, or Numpy vector
-     of floats or integers
-    :param  argb: Second number, list of numbers or or Numpy vector
-    :type   argb: float, integer, list of floats or integers, or Numpy vector
-     of floats or integers
-    :param  prec: Maximum length of the fractional part of the result
-    :type   prec: integer
-    :rtype: Float, list of floats or Numpy vector, depending on the arguments
-     type
-    :raises:
-     * RuntimeError (Argument \`arga\` is not valid)
-
-     * RuntimeError (Argument \`argb\` is not valid)
-
-     * RuntimeError (Argument \`prec\` is not valid)
-
-     * TypeError (Arguments are not of the same type)
-    """
-    # pylint: disable=E1101
-    if not isinstance(prec, int):
-        raise RuntimeError('Argument `prec` is not valid')
-    arga_type = 1 if isreal(arga) else (
-        2 if isinstance(arga, numpy.ndarray) or isinstance(arga, list)
-        else 0
+    return (
+        ((obj is not None) and
+        (not isinstance(obj, bool)) and (
+        isinstance(obj, int) or
+        isinstance(obj, float)))
     )
-    argb_type = 1 if isreal(argb) else (
-        2 if isinstance(argb, numpy.ndarray) or isinstance(argb, list)
-        else 0
-    )
-    if not arga_type:
-        raise RuntimeError('Argument `arga` is not valid')
-    if not argb_type:
-        raise RuntimeError('Argument `argb` is not valid')
-    if arga_type != argb_type:
-        raise TypeError('Arguments are not of the same type')
-    if arga_type == 1:
-        arga = float(arga)
-        argb = float(argb)
-        num_max = max(arga, argb)
-        num_min = min(arga, argb)
-        return 0 if arga == argb else (
-               1e20 if (not num_min) else
-               round((num_max/num_min)-1, prec)
-        )
-    else:
-        arga = numpy.array(arga)
-        argb = numpy.array(argb)
-        num_max = numpy.maximum(arga, argb)
-        num_min = numpy.minimum(arga, argb)
-        # Numpy where() function seems to evaluate both arguments after the
-        # condition, which prints an error to the console if any element
-        # in num_min is zero
-        lim_num = 1e+20*numpy.ones(len(num_max))
-        safe_indexes = numpy.where(num_min != 0)
-        lim_num[safe_indexes] = (num_max[safe_indexes]/num_min[safe_indexes])-1
-        return numpy.round(numpy.where(arga == argb, 0, lim_num), prec)
 
 
 def make_dir(fname):
@@ -545,37 +589,125 @@ def normalize(value, series, offset=0):
         raise ValueError(
             'Argument `value` has to be within the bounds of argument `series`'
         )
-    return offset+((1.0-offset)*(
-            (value-float(min(series)))/(float(max(series))-float(min(series)))
-        )
+    return (
+        offset+((1.0-offset)*
+        ((value-float(min(series)))/(float(max(series))-float(min(series)))))
     )
 
 
-def gcd(vector):
-    """
-    Calculates the greatest common divisor (GCD) of a list of numbers or a
-    Numpy vector of numbers. The computations are carried out with a precision
-    of 1E-12 if the objects are not
-    `fractions <https://docs.python.org/2/library/fractions.html>`_. When
-    possible it is best to use the `fractions
-    <https://docs.python.org/2/library/fractions.html>`_ data type with
-    the numerator and denominator arguments when computing the GCD of
-    floating point numbers.
+def per(arga, argb, prec=10):
+    r"""
+    Calculates the percentage difference between two numbers or the
+    element-wise percentage difference between two lists of numbers or Numpy
+    vectors. If any of the numbers in the arguments is zero the value returned
+    is 1E+20
 
-    :param  vector: Vector of numbers
-    :type   vector: list of numbers or Numpy vector of numbers
+    :param  arga: First number, list of numbers or Numpy vector
+    :type   arga: float, integer, list of floats or integers, or Numpy vector
+     of floats or integers
+    :param  argb: Second number, list of numbers or or Numpy vector
+    :type   argb: float, integer, list of floats or integers, or Numpy vector
+     of floats or integers
+    :param  prec: Maximum length of the fractional part of the result
+    :type   prec: integer
+    :rtype: Float, list of floats or Numpy vector, depending on the arguments
+     type
+    :raises:
+     * RuntimeError (Argument \`arga\` is not valid)
+
+     * RuntimeError (Argument \`argb\` is not valid)
+
+     * RuntimeError (Argument \`prec\` is not valid)
+
+     * TypeError (Arguments are not of the same type)
     """
-    if len(vector) == 0:
-        return None
-    elif len(vector) == 1:
-        return vector[0]
-    elif len(vector) == 2:
-        return pgcd(vector[0], vector[1])
+    # pylint: disable=E1101
+    if not isinstance(prec, int):
+        raise RuntimeError('Argument `prec` is not valid')
+    arga_type = (
+        1
+        if isreal(arga) else
+        (2 if isinstance(arga, numpy.ndarray) or isinstance(arga, list) else 0)
+    )
+    argb_type = (
+        1
+        if isreal(argb) else
+        (2 if isinstance(argb, numpy.ndarray) or isinstance(argb, list) else 0)
+    )
+    if not arga_type:
+        raise RuntimeError('Argument `arga` is not valid')
+    if not argb_type:
+        raise RuntimeError('Argument `argb` is not valid')
+    if arga_type != argb_type:
+        raise TypeError('Arguments are not of the same type')
+    if arga_type == 1:
+        arga = float(arga)
+        argb = float(argb)
+        num_max = max(arga, argb)
+        num_min = min(arga, argb)
+        return (
+            0
+            if arga == argb else
+            (1e20 if (not num_min) else round((num_max/num_min)-1, prec))
+        )
     else:
-        current_gcd = pgcd(vector[0], vector[1])
-        for element in vector[2:]:
-            current_gcd = pgcd(current_gcd, element)
-        return current_gcd
+        arga = numpy.array(arga)
+        argb = numpy.array(argb)
+        num_max = numpy.maximum(arga, argb)
+        num_min = numpy.minimum(arga, argb)
+        # Numpy where() function seems to evaluate both arguments after the
+        # condition, which prints an error to the console if any element
+        # in num_min is zero
+        lim_num = 1e+20*numpy.ones(len(num_max))
+        safe_indexes = numpy.where(num_min != 0)
+        lim_num[safe_indexes] = (num_max[safe_indexes]/num_min[safe_indexes])-1
+        return numpy.round(numpy.where(arga == argb, 0, lim_num), prec)
+
+
+def pcolor(text, color, indent=0):
+    r"""
+    Returns a string that once printed is colorized
+
+    :param  text: Text to colorize
+    :type   text: string
+    :param  color: Color to use, one of :code:`'black'`, :code:`'red'`,
+     :code:`'green'`, :code:`'yellow'`, :code:`'blue'`, :code:`'magenta'`,
+     :code:`'cyan'`, :code:`'white'` or :code:`'none'` (case insensitive)
+    :type   color: string
+    :param  indent: Number of spaces to prefix the output with
+    :type   indent: integer
+    :rtype: string
+    :raises:
+     * RuntimeError (Argument \`color\` is not valid)
+
+     * RuntimeError (Argument \`indent\` is not valid)
+
+     * RuntimeError (Argument \`text\` is not valid)
+
+     * ValueError (Unknown color *[color]*)
+    """
+    esc_dict = {
+        'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35,
+        'cyan':36, 'white':37, 'none':-1
+    }
+    if not isinstance(text, str):
+        raise RuntimeError('Argument `text` is not valid')
+    if not isinstance(color, str):
+        raise RuntimeError('Argument `color` is not valid')
+    if not isinstance(indent, int):
+        raise RuntimeError('Argument `indent` is not valid')
+    color = color.lower()
+    if color not in esc_dict:
+        raise ValueError('Unknown color {color}'.format(color=color))
+    if esc_dict[color] != -1:
+        return (
+            '\033[{color_code}m{indent}{text}\033[0m'.format(
+                color_code=esc_dict[color],
+                indent=' '*indent,
+                text=text
+            )
+        )
+    return '{indent}{text}'.format(indent=' '*indent, text=text)
 
 
 def pgcd(numa, numb):
@@ -624,117 +756,114 @@ def pgcd(numa, numb):
     return int(numa) if int_args else (numa if fraction_args else float(numa))
 
 
-def isalpha(obj):
+def pprint_ast_node(
+        node,
+        annotate_fields=True,
+        include_attributes=False,
+        indent='  '
+    ):
     """
-    Tests if the argument is a string representing a number
+    Emulates the AST module `dump
+    <https://docs.python.org/2/library/ast.html>`_ function but with prettier
+    printing. From `Alex Leone's blog
+    <http://alexleone.blogspot.co.uk/2010/01/python-ast-pretty-printer.html>`_
+
+    :param  node: root abstract syntax tree node
+    :type   node: AST object
+    :param  annotate_fields: Flag that indicates whether name and values for
+     fields are shown (True) or not (False); the latter is required if code is
+     to be evaluated
+    :type   annotate_fields: boolean
+    :param  include_attributes: Flag that indicates whether line numbers and
+     column offsets are dumped (True) or not (False)
+    :type   include_attributes: boolean
+    :param  indent: Characters to use for indenting output sub-nodes and
+     structures
+    :type   indent: string
+    :rtype: string
+    :raises: RuntimeError (Argument \\`node\\` is not valid)
+    """
+    # pylint: disable=W0212
+    def _format(node, level=0):
+        if isinstance(node, ast.AST):
+            fields = [(a, _format(b, level)) for a, b in ast.iter_fields(node)]
+            if include_attributes and node._attributes: # pragma: no branch
+                fields.extend(
+                    [
+                        (a, _format(getattr(node, a), level))
+                        for a in node._attributes
+                    ]
+                )
+            nname = node.__class__.__name__
+            if annotate_fields:
+                ttext = ', '.join(('%s=%s' % field for field in fields))
+            else:
+                ttext = ', '.join((b for a, b in fields))
+            return ''.join([nname, '(', ttext, ')'])    # pragma: no branch
+        elif isinstance(node, list):
+            lines = ['[']
+            lines.extend(
+                (indent*(level+2)+_format(x, level+2)+',' for x in node)
+            )
+            if len(lines) > 1:
+                lines.append(indent*(level+1)+']')
+            else:
+                lines[-1] += ']'
+            return '\n'.join(lines)
+        return repr(node)
+
+    if not isinstance(node, ast.AST):
+        raise RuntimeError('Argument `node` is not valid')
+    return _format(node)
+
+
+def private_props(obj):
+    """
+    Yields private properties of an object. A private property is
+    defined as one that has a single underscore (:code:`_`) before its name
+
+    :param  obj: Object
+    :type   obj: object
+    :returns: iterator
+    """
+    # Get private properties but NOT magic methods
+    iobj = [
+        obj_name
+        for obj_name in dir(obj)
+        if _PRIVATE_PROP_REGEXP.match(obj_name) and
+            (not callable(getattr(obj, obj_name)))
+    ]
+    for obj_name in iobj:
+        yield obj_name
+
+
+def quote_str(obj):
+    """
+    Adds extra quotes to a string. If the argument is not a string it is
+    returned unmodified
 
     :param  obj: Object
     :type   obj: any
-    :rtype: boolean
+    :rtype: Same as argument
 
     For example:
 
         >>> import putil.misc
-        >>> putil.misc.isalpha('1.5')
-        True
-        >>> putil.misc.isalpha('1E-20')
-        True
-        >>> putil.misc.isalpha('1EA-20')
-        False
-
+        >>> putil.misc.quote_str(5)
+        5
+        >>> putil.misc.quote_str('Hello!')
+        '"Hello!"'
+        >>> putil.misc.quote_str('He said "hello!"')
+        '\\'He said "hello!"\\''
     """
-    try:
-        float(obj)
-        return True
-    except ValueError:
-        return False
-
-
-def ishex(obj):
-    """
-    Tests if the argument is a string representing a valid hexadecimal digit
-
-    :param  obj: Object
-    :type   obj: any
-    :rtype: boolean
-    """
-    return (isinstance(obj, str) and
-           (len(obj) == 1) and
-           (obj.upper() in '0123456789ABCDEF'))
-
-
-def isiterable(obj):
-    """
-    Tests if the argument is an iterable
-
-    :param  obj: Object
-    :type   obj: any
-    :rtype: boolean
-    """
-    try:
-        iter(obj)
-    except TypeError:
-        return False
+    if not isinstance(obj, str):
+        return obj
     else:
-        return True
-
-
-def elapsed_time_string(start_time, stop_time):
-    r"""
-    Returns a formatted string with the elapsed time between two time points.
-    The string includes years (365 days), months (30 days), days (24 hours),
-    hours (60 minutes), minutes (60 seconds) and seconds. If both arguments
-    are equal, the string returned is :code:`'None'`; otherwise, the string
-    returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s],
-    [MM minute[s] [and SS second[s\]\]\]\]\]\]. Any part (year[s], month[s],
-    etc.) is omitted if the value of that part is null/zero.
-
-    :param  start_time: Starting time point
-    :type   start_time:
-     `datetime
-     <https://docs.python.org/2/library/datetime.html#datetime-objects>`_
-     object
-    :param  stop_time:  Ending time point
-    :type   stop_time:  `datetime`_ object
-    :rtype:             string
-    :raises: RuntimeError (Invalid time delta specification)
-
-    For example:
-
-        >>> import datetime, putil.misc
-        >>> start_time = datetime.datetime(2014, 1, 1, 1, 10, 1)
-        >>> stop_time = datetime.datetime(2015, 1, 3, 1, 10, 3)
-        >>> putil.misc.elapsed_time_string(start_time, stop_time)
-        '1 year, 2 days and 2 seconds'
-    """
-    if start_time > stop_time:
-        raise RuntimeError('Invalid time delta specification')
-    delta_time = stop_time-start_time
-    tot_seconds = int(delta_time.total_seconds())
-    years, remainder = divmod(tot_seconds, 365*24*60*60)
-    months, remainder = divmod(remainder, 30*24*60*60)
-    days, remainder = divmod(remainder, 24*60*60)
-    hours, remainder = divmod(remainder, 60*60)
-    minutes, seconds = divmod(remainder, 60)
-    token_iter = zip(
-        [years, months, days, hours, minutes, seconds],
-        ['year', 'month', 'day', 'hour', 'minute', 'second']
-    )
-    ret_list = [
-        '{token} {token_name}{plural}'.format(
-            token=num,
-            token_name=desc,
-            plural='s' if num > 1 else ''
-        ) for num, desc in token_iter if num > 0
-    ]
-    if len(ret_list) == 0:
-        return 'None'
-    elif len(ret_list) == 1:
-        return ret_list[0]
-    elif len(ret_list) == 2:
-        return ret_list[0]+' and '+ret_list[1]
-    else:
-        return (', '.join(ret_list[0:-1]))+' and '+ret_list[-1]
+        return (
+            "'{obj}'".format(obj=obj)
+            if '"' in obj else
+            '"{obj}"'.format(obj=obj)
+        )
 
 
 def strframe(obj, extended=False):
@@ -777,99 +906,9 @@ def strframe(obj, extended=False):
     return '\n'.join(ret)
 
 
-def quote_str(obj):
-    """
-    Adds extra quotes to a string. If the argument is not a string it is
-    returned unmodified
-
-    :param  obj: Object
-    :type   obj: any
-    :rtype: Same as argument
-
-    For example:
-
-        >>> import putil.misc
-        >>> putil.misc.quote_str(5)
-        5
-        >>> putil.misc.quote_str('Hello!')
-        '"Hello!"'
-        >>> putil.misc.quote_str('He said "hello!"')
-        '\\'He said "hello!"\\''
-    """
-    if not isinstance(obj, str):
-        return obj
-    else:
-        return "'{}'".format(obj) if '"' in obj else '"{}"'.format(obj)
-
-
-def flatten_list(lobj):
-    """
-    Recursively flattens a list
-
-    :param  lobj: List to flatten
-    :type   lobj: list
-    :rtype: list
-
-    For example:
-
-        >>> import putil.misc
-        >>> putil.misc.flatten_list([1, [2, 3, [4, 5, 6]], 7])
-        [1, 2, 3, 4, 5, 6, 7]
-
-    """
-    ret = []
-    for item in lobj:
-        if isinstance(item, list):
-            for sub_item in flatten_list(item):
-                ret.append(sub_item)
-        else:
-            ret.append(item)
-    return ret
-
-
 ###
 # Classes
 ###
-class CiDict(dict):
-    """
-    Dictionary class with case-insensitive keys
-    """
-    def __init__(self, posarg=None, **kwargs):
-        # Algorithm:
-        # 1. Create a dictionary with the build-in dict() method (this ensures
-        #    that all exceptions will be identical)
-        # 2. Create a new dictionary with lower-case keys of dictionary created
-        #    in step #1
-        # 3. Associate dictionary created in step #2 to self
-        # Method may not be the most efficient for large dictionaries, where
-        # an iteration-based algorithm may have less memory requirements
-        _dict1 = dict()
-        if posarg is not None:
-            try:
-                _dict1.update(posarg)
-            except TypeError:
-                raise
-            except ValueError:
-                raise
-        if kwargs:
-            _dict1.update(kwargs)
-        _dict2 = dict()
-        for key in _dict1.keys():
-            item = key.lower() if isinstance(key, str) is True else key
-            _dict2[item] = _dict1[key]
-        dict.__init__(self, _dict2)
-
-    def __getitem__(self, key):
-        return super(CiDict, self).__getitem__(
-            key.lower() if isinstance(key, str) else key
-        )
-
-    def __setitem__(self, key, val):
-        super(CiDict, self).__setitem__(
-            key.lower() if isinstance(key, str) else key, val
-        )
-
-
 class Bundle(object):
     """
     Bundles a collection of variables into one object
@@ -925,60 +964,41 @@ class Bundle(object):
         )
 
 
-def pprint_ast_node(
-        node,
-        annotate_fields=True,
-        include_attributes=False,
-        indent='  '
-    ):
+class CiDict(dict):
     """
-    Emulates the AST module `dump
-    <https://docs.python.org/2/library/ast.html>`_ function but with prettier
-    printing. From `Alex Leone's blog
-    <http://alexleone.blogspot.co.uk/2010/01/python-ast-pretty-printer.html>`_
-
-    :param  node: root abstract syntax tree node
-    :type   node: AST object
-    :param  annotate_fields: Flag that indicates whether name and values for
-     fields are shown (True) or not (False); the latter is required if code is
-     to be evaluated
-    :type   annotate_fields: boolean
-    :param  include_attributes: Flag that indicates whether line numbers and
-     column offsets are dumped (True) or not (False)
-    :type   include_attributes: boolean
-    :param  indent: Characters to use for indenting output sub-nodes and
-     structures
-    :type   indent: string
-    :rtype: string
-    :raises: RuntimeError (Argument \\`node\\` is not valid)
+    Dictionary class with case-insensitive keys
     """
-    # pylint: disable=W0212
-    def _format(node, level=0):
-        if isinstance(node, ast.AST):
-            fields = [(a, _format(b, level)) for a, b in ast.iter_fields(node)]
-            if include_attributes and node._attributes: # pragma: no branch
-                fields.extend([
-                    (a, _format(getattr(node, a), level))
-                    for a in node._attributes
-                ])
-            nname = node.__class__.__name__
-            if annotate_fields:
-                ttext = ', '.join(('%s=%s' % field for field in fields))
-            else:
-                ttext = ', '.join((b for a, b in fields))
-            return ''.join([nname, '(', ttext, ')'])    # pragma: no branch
-        elif isinstance(node, list):
-            lines = ['[']
-            lines.extend(
-                (indent*(level+2)+_format(x, level+2)+',' for x in node)
-            )
-            if len(lines) > 1:
-                lines.append(indent*(level+1)+']')
-            else:
-                lines[-1] += ']'
-            return '\n'.join(lines)
-        return repr(node)
+    def __init__(self, posarg=None, **kwargs):
+        # Algorithm:
+        # 1. Create a dictionary with the build-in dict() method (this ensures
+        #    that all exceptions will be identical)
+        # 2. Create a new dictionary with lower-case keys of dictionary created
+        #    in step #1
+        # 3. Associate dictionary created in step #2 to self
+        # Method may not be the most efficient for large dictionaries, where
+        # an iteration-based algorithm may have less memory requirements
+        _dict1 = {}
+        if posarg is not None:
+            try:
+                _dict1.update(posarg)
+            except TypeError:
+                raise
+            except ValueError:
+                raise
+        if kwargs:
+            _dict1.update(kwargs)
+        _dict2 = {}
+        for key in _dict1.keys():
+            item = key.lower() if isinstance(key, str) is True else key
+            _dict2[item] = _dict1[key]
+        dict.__init__(self, _dict2)
 
-    if not isinstance(node, ast.AST):
-        raise RuntimeError('Argument `node` is not valid')
-    return _format(node)
+    def __getitem__(self, key):
+        return super(CiDict, self).__getitem__(
+            key.lower() if isinstance(key, str) else key
+        )
+
+    def __setitem__(self, key, val):
+        super(CiDict, self).__setitem__(
+            key.lower() if isinstance(key, str) else key, val
+        )

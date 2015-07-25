@@ -22,7 +22,7 @@ print_usage_message () {
 	echo -e "      [default: (build-docs.sh directory)/../putil]" >&2
 	echo -e "  -t  Diff original and rebuilt file(s) (exit code 0" >&2
 	echo -e "      indicates file(s) are identical, exit code 1" >&2
-	echo -e "      file(s) are different" >&2
+	echo -e "      indicates file(s) are different" >&2
 	echo -e "  -n  Number of CPUs to use [default: 1]" >&2
 }
 
@@ -35,6 +35,30 @@ finish() {
 	cd ${cpwd}
 }
 trap finish EXIT ERR SIGINT
+
+echo_cyan() {
+	if [ ${test_mode} == 1 ]; then
+		print_cyan_line "$1"
+	else
+		echo "$1"
+	fi
+}
+
+echo_green() {
+	if [ ${test_mode} == 1 ]; then
+		print_green_line "$1"
+	else
+		echo "$1"
+	fi
+}
+
+echo_red() {
+	if [ ${test_mode} == 1 ]; then
+		print_red_line "$1" >&2
+	else
+		echo "$1" >&2
+	fi
+}
 
 pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 export TRACER_DIR=${pkg_dir}/docs/support
@@ -101,26 +125,33 @@ if [ ! -d "${src_dir}" ]; then
 	exit 1
 fi
 
+if [ ${test_mode} == 1 ]; then
+	rm -rf ${TRACER_DIR}/*.pkl ${TRACER_DIR}/plot/*.pkl
+fi
 if [ ${rebuild} == 1 ]; then
-	echo "Rebuilding exceptions documentation"
+	msg="Rebuilding exceptions documentation"
+	echo_cyan "Rebuilding exceptions documentation"
 	start_time=$(date +%s)
 	for module in ${modules[@]}; do
 		if [ "${module}" == "plot" ]; then
 			module_dir=${src_dir}/plot
 			submodules=(${plot_submodules[@]})
+			pkl_dir=${TRACER_DIR}/plot
 		else
+			pkl_dir=${TRACER_DIR}
 			module_dir=${src_dir}
 			submodules=(${module})
 		fi
 		for submodule in ${submodules[@]}; do
 			smf="${module_dir}"/"${submodule}".py
+			pkl_file="${pkl_dir}"/"${submodule}".pkl
 			istring="File ${smf} identical from original"
 			dstring="File ${smf} differs from original"
 			if [ ! -f "${smf}" ]; then
 				echo "Module ${smf} not found"
 				exit 1
 			fi
-			echo "   Processing module ${smf}"
+			echo_cyan "   Processing module ${smf}"
 			orig_file=${smf}.orig
 			if [ ${test_mode} == 1 ]; then
 				cp ${smf} ${orig_file}
@@ -129,10 +160,11 @@ if [ ${rebuild} == 1 ]; then
 				mv -f ${smf}.tmp ${smf}
 				if [ ${test_mode} == 1 ]; then
 					if diff ${smf} ${orig_file}; then
-						echo ${istring}
+						echo_green "${istring}"
 						rm -rf ${orig_file}
+						#rm -rf ${orig_file} ${pkl_file}
 					else
-						echo ${dstring}
+						echo_red "${dstring}"
 						cp -f ${smf} ${smf}.error
 						mv -f ${orig_file} ${smf}
 						exit 1
@@ -141,7 +173,7 @@ if [ ${rebuild} == 1 ]; then
 			else
 				echo "Error generating exceptions"\
 				     "documentation in module"\
-				     "${smf}"
+				     "${smf}" >&2
 				exit 1
 			fi
 		done

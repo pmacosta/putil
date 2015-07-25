@@ -41,13 +41,25 @@ def compare_str_outputs(obj, ref_list):
                 break
         print('-----------------------')
         if len(actual_list) != len(ref_list):
-            print('{0} longer than {1}'.format(
-                'Actual' if len(actual_list) > len(ref_list) else 'Reference',
-                'reference' if len(actual_list) > len(ref_list) else 'actual'
-            ))
-            print_list = (actual_list
-                          if len(actual_list) > len(ref_list) else
-                          ref_list)
+            print(
+                '{0} longer than {1}'.format(
+                    (
+                        'Actual'
+                        if len(actual_list) > len(ref_list) else
+                        'Reference'
+                    ),
+                    (
+                        'reference'
+                        if len(actual_list) > len(ref_list) else
+                        'actual'
+                    )
+                )
+            )
+            print_list = (
+                actual_list
+                if len(actual_list) > len(ref_list) else
+                ref_list
+            )
             print(print_list[min([len(actual_list), len(ref_list)]):])
             print('-----------------------')
     return ref_text
@@ -169,7 +181,8 @@ class TestCallables(object):
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
         assert (
-            putil.test.get_exmsg(excinfo) ==
+            putil.test.get_exmsg(excinfo)
+            ==
             'Conflicting information between objects'
         )
         obj1._callables_db = {'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
@@ -178,7 +191,8 @@ class TestCallables(object):
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
         assert (
-            putil.test.get_exmsg(excinfo) ==
+            putil.test.get_exmsg(excinfo)
+            ==
             'Conflicting information between objects'
         )
         obj2._reverse_callables_db = {'rc3':'0', 'rc4':'-1'}
@@ -187,7 +201,8 @@ class TestCallables(object):
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
         assert (
-            putil.test.get_exmsg(excinfo) ==
+            putil.test.get_exmsg(excinfo)
+            ==
             'Conflicting information between objects'
         )
         obj2._modules_dict = {'key3':{'entry':'pi'}, 'key4':{'entry':'gamma'}}
@@ -199,23 +214,41 @@ class TestCallables(object):
         obj2._modules_dict = {'key3':{'entry':'pi'}, 'key4':{'entry':'gamma'}}
 
         sobj = obj1+obj2
-        assert sorted(sobj._callables_db) == sorted({
-            'call1':{'a':5, 'b':6},
-            'call2':{'a':7, 'b':8},
-            'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}
-        })
-        assert sorted(sobj._reverse_callables_db) == sorted({
-            'rc1':'5',
-            'rc2':'7',
-            'rc3':'0',
-            'rc4':'-1'
-        })
-        assert sorted(sobj._modules_dict) == sorted({
-            'key1':{'entry':'alpha'},
-            'key2':{'entry':'beta'},
-            'key3':{'entry':'pi'},
-            'key4':{'entry':'gamma'}
-        })
+        assert (
+            sorted(sobj._callables_db)
+            ==
+            sorted(
+                {
+                    'call1':{'a':5, 'b':6},
+                    'call2':{'a':7, 'b':8},
+                    'call3':{'a':10, 'b':100}, 'call4':{'a':200, 'b':300}
+                }
+            )
+        )
+        assert (
+            sorted(sobj._reverse_callables_db)
+            ==
+            sorted(
+                {
+                    'rc1':'5',
+                    'rc2':'7',
+                    'rc3':'0',
+                    'rc4':'-1'
+                }
+            )
+        )
+        assert (
+            sorted(sobj._modules_dict)
+            ==
+            sorted(
+                {
+                    'key1':{'entry':'alpha'},
+                    'key2':{'entry':'beta'},
+                    'key3':{'entry':'pi'},
+                    'key4':{'entry':'gamma'}
+                }
+            )
+        )
         assert sorted(sobj._fnames) == sorted(['hello', 'world'])
         assert (
             sorted(sobj._module_names) == sorted(['this', 'is', 'a', 'test'])
@@ -225,24 +258,42 @@ class TestCallables(object):
         )
         #
         obj1 += obj2
-        assert sorted(obj1._callables_db) == sorted({
-            'call1':{'a':5, 'b':6},
-            'call2':{'a':7, 'b':8},
-            'call3':{'a':10, 'b':100},
-            'call4':{'a':200, 'b':300}
-        })
-        assert sorted(obj1._reverse_callables_db) == sorted({
-            'rc1':'5',
-            'rc2':'7',
-            'rc3':'0',
-            'rc4':'-1'
-        })
-        assert sorted(obj1._modules_dict) == sorted({
-            'key1':{'entry':'alpha'},
-            'key2':{'entry':'beta'},
-            'key3':{'entry':'pi'},
-            'key4':{'entry':'gamma'}
-        })
+        assert (
+            sorted(obj1._callables_db)
+            ==
+            sorted(
+                {
+                    'call1':{'a':5, 'b':6},
+                    'call2':{'a':7, 'b':8},
+                    'call3':{'a':10, 'b':100},
+                    'call4':{'a':200, 'b':300}
+                }
+            )
+        )
+        assert (
+            sorted(obj1._reverse_callables_db)
+            ==
+            sorted(
+                {
+                    'rc1':'5',
+                    'rc2':'7',
+                    'rc3':'0',
+                    'rc4':'-1'
+                }
+            )
+        )
+        assert (
+            sorted(obj1._modules_dict)
+            ==
+            sorted(
+                {
+                    'key1':{'entry':'alpha'},
+                    'key2':{'entry':'beta'},
+                    'key3':{'entry':'pi'},
+                    'key4':{'entry':'gamma'}
+                }
+            )
+        )
         assert sorted(obj1._fnames) == sorted(['hello', 'world'])
         assert (
             sorted(obj1._module_names) == sorted(['this', 'is', 'a', 'test'])
@@ -262,24 +313,24 @@ class TestCallables(object):
         ref.append('   putil.pcsv')
         ref.append('Classes:')
         ref.append('   putil.pcsv.CsvFile')
-        ref.append('putil.pcsv.write: func (32-71)')
-        ref.append('putil.pcsv._write_int: func (72-120)')
-        ref.append('putil.pcsv._tofloat: func (121-136)')
-        ref.append('putil.pcsv.CsvFile: class (137-506)')
-        ref.append('putil.pcsv.CsvFile.__init__: meth (171-238)')
-        ref.append('putil.pcsv.CsvFile._validate_dfilter: meth (239-247)')
+        ref.append('putil.pcsv._tofloat: func (32-44)')
+        ref.append('putil.pcsv._write_int: func (45-94)')
+        ref.append('putil.pcsv.write: func (95-135)')
+        ref.append('putil.pcsv.CsvFile: class (136-515)')
+        ref.append('putil.pcsv.CsvFile.__init__: meth (170-235)')
+        ref.append('putil.pcsv.CsvFile._core_data: meth (236-247)')
         ref.append('putil.pcsv.CsvFile._get_dfilter: meth (248-250)')
-        ref.append('putil.pcsv.CsvFile._set_dfilter: meth (251-254)')
-        ref.append('putil.pcsv.CsvFile._set_dfilter_int: meth (255-274)')
-        ref.append('putil.pcsv.CsvFile.add_dfilter: meth (275-314)')
-        ref.append('putil.pcsv.CsvFile._get_header: meth (315-317)')
-        ref.append('putil.pcsv.CsvFile.data: meth (318-354)')
-        ref.append('putil.pcsv.CsvFile.reset_dfilter: meth (355-359)')
-        ref.append('putil.pcsv.CsvFile.write: meth (360-439)')
-        ref.append('putil.pcsv.CsvFile._in_header: meth (440-457)')
-        ref.append('putil.pcsv.CsvFile._core_data: meth (458-470)')
-        ref.append('putil.pcsv.CsvFile.dfilter: prop (471-496)')
-        ref.append('putil.pcsv.CsvFile.header: prop (497-506)')
+        ref.append('putil.pcsv.CsvFile._get_header: meth (251-253)')
+        ref.append('putil.pcsv.CsvFile._in_header: meth (254-271)')
+        ref.append('putil.pcsv.CsvFile._set_dfilter: meth (272-275)')
+        ref.append('putil.pcsv.CsvFile._set_dfilter_int: meth (276-295)')
+        ref.append('putil.pcsv.CsvFile._validate_dfilter: meth (296-306)')
+        ref.append('putil.pcsv.CsvFile.add_dfilter: meth (307-355)')
+        ref.append('putil.pcsv.CsvFile.data: meth (356-394)')
+        ref.append('putil.pcsv.CsvFile.reset_dfilter: meth (395-399)')
+        ref.append('putil.pcsv.CsvFile.write: meth (400-482)')
+        ref.append('putil.pcsv.CsvFile.dfilter: prop (483-506)')
+        ref.append('putil.pcsv.CsvFile.header: prop (507-515)')
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
         if actual_txt != ref_txt:
@@ -292,9 +343,9 @@ class TestCallables(object):
         assert actual_txt == ref_txt
 
         import tests.support.exdoc_support_module_1
-        xobj = putil.pinspect.Callables([
-            sys.modules['tests.support.exdoc_support_module_1'].__file__
-        ])
+        xobj = putil.pinspect.Callables(
+            [sys.modules['tests.support.exdoc_support_module_1'].__file__]
+        )
         ref = list()
         ref.append('Modules:')
         ref.append('   tests.support.exdoc_support_module_1')
@@ -386,40 +437,40 @@ class TestCallables(object):
         ref.append('tests.test_exdoc.exdocobj_single: func (89-98)')
         ref.append('tests.test_exdoc.simple_exobj: func (99-113)')
         ref.append('tests.test_exdoc.simple_exobj.func1: func (104-109)')
-        ref.append('tests.test_exdoc.MockFCode: class (121-126)')
-        ref.append('tests.test_exdoc.MockFCode.__init__: meth (122-126)')
-        ref.append('tests.test_exdoc.MockGetFrame: class (127-131)')
-        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (128-131)')
-        ref.append('tests.test_exdoc.mock_getframe: func (132-135)')
-        ref.append('tests.test_exdoc.test_exdoc_errors: func (136-186)')
-        ref.append('tests.test_exdoc.test_depth_property: func (187-197)')
-        ref.append('tests.test_exdoc.test_exclude_property: func (198-208)')
-        ref.append('tests.test_exdoc.test_build_ex_tree: func (209-314)')
-        ref.append('tests.test_exdoc.test_build_ex_tree.func1: func (216-221)')
+        ref.append('tests.test_exdoc.MockFCode: class (123-128)')
+        ref.append('tests.test_exdoc.MockFCode.__init__: meth (124-128)')
+        ref.append('tests.test_exdoc.MockGetFrame: class (129-133)')
+        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (130-133)')
+        ref.append('tests.test_exdoc.mock_getframe: func (134-137)')
+        ref.append('tests.test_exdoc.test_exdoc_errors: func (138-188)')
+        ref.append('tests.test_exdoc.test_depth_property: func (189-199)')
+        ref.append('tests.test_exdoc.test_exclude_property: func (200-210)')
+        ref.append('tests.test_exdoc.test_build_ex_tree: func (211-316)')
+        ref.append('tests.test_exdoc.test_build_ex_tree.func1: func (218-223)')
         ref.append(
             'tests.test_exdoc.test_build_ex_tree.mock_add_nodes1: '
-            'func (223-224)'
-        )
-        ref.append(
-            'tests.test_exdoc.test_build_ex_tree.mock_add_nodes2: '
             'func (225-226)'
         )
         ref.append(
-            'tests.test_exdoc.test_build_ex_tree.mock_add_nodes3: '
+            'tests.test_exdoc.test_build_ex_tree.mock_add_nodes2: '
             'func (227-228)'
         )
-        ref.append('tests.test_exdoc.test_get_sphinx_doc: func (315-637)')
-        ref.append('tests.test_exdoc.test_get_sphinx_autodoc: func (638-683)')
-        ref.append('tests.test_exdoc.test_copy_works: func (684-698)')
-        ref.append('tests.test_exdoc.test_exdoccxt_errors: func (699-709)')
-        ref.append('tests.test_exdoc.test_exdoccxt_multiple: func (710-748)')
+        ref.append(
+            'tests.test_exdoc.test_build_ex_tree.mock_add_nodes3: '
+            'func (229-230)'
+        )
+        ref.append('tests.test_exdoc.test_get_sphinx_doc: func (317-639)')
+        ref.append('tests.test_exdoc.test_get_sphinx_autodoc: func (640-685)')
+        ref.append('tests.test_exdoc.test_copy_works: func (686-700)')
+        ref.append('tests.test_exdoc.test_exdoccxt_errors: func (701-711)')
+        ref.append('tests.test_exdoc.test_exdoccxt_multiple: func (712-750)')
         ref.append(
             'tests.test_exdoc.test_exdoccxt_multiple.func1: '
-            'func (712-721)'
+            'func (714-723)'
         )
         ref.append(
             'tests.test_exdoc.test_exdoccxt_multiple.test_trace: '
-            'func (722-738)'
+            'func (724-740)'
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
@@ -432,9 +483,9 @@ class TestCallables(object):
             print(ref_txt)
         assert actual_txt == ref_txt
         import tests.support.pinspect_support_module_4
-        xobj = putil.pinspect.Callables([
-            sys.modules['tests.support.pinspect_support_module_4'].__file__
-        ])
+        xobj = putil.pinspect.Callables(
+            [sys.modules['tests.support.pinspect_support_module_4'].__file__]
+        )
         ref = list()
         ref.append('Modules:')
         ref.append('   tests.support.pinspect_support_module_4')
@@ -462,9 +513,9 @@ class TestCallables(object):
         """ Test __copy__() magic method """
         source_obj = putil.pinspect.Callables()
         import tests.support.pinspect_support_module_1
-        source_obj.trace([
-            sys.modules['tests.support.pinspect_support_module_1'].__file__
-        ])
+        source_obj.trace(
+            [sys.modules['tests.support.pinspect_support_module_1'].__file__]
+        )
         dest_obj = copy.copy(source_obj)
         assert source_obj._module_names == dest_obj._module_names
         assert id(source_obj._module_names) != id(dest_obj._module_names)
@@ -498,18 +549,20 @@ class TestCallables(object):
     def test_callables_db(self):
         """ Test callables_db property """
         import tests.support.pinspect_support_module_4
-        xobj = putil.pinspect.Callables([
-            sys.modules['tests.support.pinspect_support_module_4'].__file__
-        ])
+        xobj = putil.pinspect.Callables(
+            [sys.modules['tests.support.pinspect_support_module_4'].__file__]
+        )
         pkg_dir = os.path.dirname(__file__)
         ref = {
             'tests.support.pinspect_support_module_4.'
             'another_property_action_enclosing_function': {
-                'code_id': (os.path.join(
-                    pkg_dir,
-                    'support',
-                    'pinspect_support_module_4.py'
-                ), 16),
+                'code_id': (
+                    os.path.join(
+                        pkg_dir,
+                        'support',
+                        'pinspect_support_module_4.py'
+                    ), 16
+                ),
                 'last_lineno': 21,
                 'name': 'pinspect_support_module_4.'
                         'another_property_action_enclosing_function',
@@ -517,11 +570,13 @@ class TestCallables(object):
             },
             'tests.support.pinspect_support_module_4.'
             'another_property_action_enclosing_function.fget': {
-                'code_id': (os.path.join(
-                    pkg_dir,
-                    'support',
-                    'pinspect_support_module_4.py'
-                ), 18),
+                'code_id': (
+                    os.path.join(
+                        pkg_dir,
+                        'support',
+                        'pinspect_support_module_4.py'
+                    ), 18
+                ),
                 'last_lineno': 20,
                 'name': 'pinspect_support_module_4.'
                         'another_property_action_enclosing_function.fget',
@@ -530,18 +585,28 @@ class TestCallables(object):
         }
         assert sorted(xobj.callables_db) == sorted(ref)
         ref = {
-            (os.path.join(
-                pkg_dir,
-                'support',
-                'pinspect_support_module_4.py'
-            ), 16): 'pinspect_support_module_4.'
-                    'another_property_action_enclosing_function',
-            (os.path.join(
-                pkg_dir,
-                'support',
-                'pinspect_support_module_4.py'
-            ), 21): 'pinspect_support_module_4.'
-                    'another_property_action_enclosing_function.fget',
+            (
+                os.path.join(
+                    pkg_dir,
+                    'support',
+                    'pinspect_support_module_4.py'
+                ),
+                16
+            ): (
+                'pinspect_support_module_4.'
+                'another_property_action_enclosing_function'
+               ),
+            (
+                os.path.join(
+                    pkg_dir,
+                    'support',
+                    'pinspect_support_module_4.py'
+                ),
+                21
+            ): (
+                'pinspect_support_module_4.'
+                'another_property_action_enclosing_function.fget'
+            )
         }
         assert sorted(xobj.reverse_callables_db) == sorted(ref)
 
@@ -643,24 +708,40 @@ class TestGetFunctionArgs(object):
         class MyClass(object):
             def __init__(self, value, **kwargs):
                 pass
-        assert putil.pinspect.get_function_args(MyClass.__init__) == (
-            'self',
-            'value',
-            '**kwargs'
+        assert (
+            putil.pinspect.get_function_args(MyClass.__init__)
+            ==
+            (
+                'self',
+                'value',
+                '**kwargs'
+            )
         )
-        assert putil.pinspect.get_function_args(
-            MyClass.__init__,
-            no_self=True
-        ) == ('value', '**kwargs')
-        assert putil.pinspect.get_function_args(
-            MyClass.__init__,
-            no_self=True,
-            no_varargs=True
-        ) == ('value', )
-        assert putil.pinspect.get_function_args(
-            MyClass.__init__,
-            no_varargs=True
-        ) == ('self', 'value')
+        assert (
+            putil.pinspect.get_function_args(
+                MyClass.__init__,
+                no_self=True
+            )
+            ==
+            ('value', '**kwargs')
+        )
+        assert (
+            putil.pinspect.get_function_args(
+                MyClass.__init__,
+                no_self=True,
+                no_varargs=True
+            )
+            ==
+            ('value', )
+        )
+        assert (
+            putil.pinspect.get_function_args(
+                MyClass.__init__,
+                no_varargs=True
+            )
+            ==
+            ('self', 'value')
+        )
 
     def test_nonzero(self):
         """ Test __nonzero__() function """

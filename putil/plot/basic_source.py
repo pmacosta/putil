@@ -258,30 +258,27 @@ class BasicSource(DataSource):
             )
 
     # Managed attributes
-    indep_min = property(
-        _get_indep_min,
-        _set_indep_min,
+    dep_var = property(
+        DataSource._get_dep_var,
+        _set_dep_var,
         None,
-        doc='Minimum of independent variable'
+        doc='Dependent variable Numpy vector'
     )
     r"""
-    Gets or sets the minimum independent variable limit
+    Gets or sets the dependent variable data
 
-    :type: :ref:`RealNum`, default is None
+    :type: :ref:`RealNumpyVector`
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for
-    .. putil.plot.basic_source.BasicSource.indep_min
+    .. putil.plot.basic_source.BasicSource.dep_var
 
     :raises: (when assigned)
 
-     * RuntimeError (Argument \`indep_min\` is not valid)
+     * RuntimeError (Argument \`dep_var\` is not valid)
 
-     * ValueError (Argument \`indep_min\` is greater than argument
-       \`indep_max\`)
-
-     * ValueError (Argument \`indep_var\` is empty after
-       \`indep_min\`/\`indep_max\` range bounding)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
+       number of elements)
 
     .. [[[end]]]
     """
@@ -314,6 +311,34 @@ class BasicSource(DataSource):
     .. [[[end]]]
     """
 
+    indep_min = property(
+        _get_indep_min,
+        _set_indep_min,
+        None,
+        doc='Minimum of independent variable'
+    )
+    r"""
+    Gets or sets the minimum independent variable limit
+
+    :type: :ref:`RealNum`, default is None
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.basic_source.BasicSource.indep_min
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * ValueError (Argument \`indep_min\` is greater than argument
+       \`indep_max\`)
+
+     * ValueError (Argument \`indep_var\` is empty after
+       \`indep_min\`/\`indep_max\` range bounding)
+
+    .. [[[end]]]
+    """
+
     indep_var = property(
         DataSource._get_indep_var,
         _set_indep_var,
@@ -335,31 +360,6 @@ class BasicSource(DataSource):
 
      * ValueError (Argument \`indep_var\` is empty after
        \`indep_min\`/\`indep_max\` range bounding)
-
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
-
-    .. [[[end]]]
-    """
-
-    dep_var = property(
-        DataSource._get_dep_var,
-        _set_dep_var,
-        None,
-        doc='Dependent variable Numpy vector'
-    )
-    r"""
-    Gets or sets the dependent variable data
-
-    :type: :ref:`RealNumpyVector`
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.basic_source.BasicSource.dep_var
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`dep_var\` is not valid)
 
      * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
        number of elements)

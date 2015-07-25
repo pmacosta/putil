@@ -655,6 +655,29 @@ class Series(object):
 
     _complete = property(_get_complete)
 
+    # Managed attributes
+    color = property(
+        _get_color, _set_color, doc='Series line and marker color'
+    )
+    r"""
+    Gets or sets the series line and marker color. All `Matplotlib colors
+    <http://matplotlib.org/api/colors_api.html>`_ are supported
+
+    :type:  polymorphic, default is 'k' (black)
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.series.Series.color
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`color\` is not valid)
+
+     * TypeError (Invalid color specification)
+
+    .. [[[end]]]
+    """
+
     data_source = property(
         _get_data_source, _set_data_source, doc='Data source'
     )
@@ -690,68 +713,6 @@ class Series(object):
 
     .. [[[end]]]
     """
-
-    label = property(_get_label, _set_label, doc='Series label')
-    r"""
-    Gets or sets the series label, to be used in the panel legend if the panel
-    has more than one series
-
-    :type:  string
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.series.Series.label
-
-    :raises: (when assigned) RuntimeError (Argument \`label\` is not
-     valid)
-
-    .. [[[end]]]
-    """
-
-    color = property(
-        _get_color, _set_color, doc='Series line and marker color'
-    )
-    r"""
-    Gets or sets the series line and marker color. All `Matplotlib colors
-    <http://matplotlib.org/api/colors_api.html>`_ are supported
-
-    :type:  polymorphic, default is 'k' (black)
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.series.Series.color
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`color\` is not valid)
-
-     * TypeError (Invalid color specification)
-
-    .. [[[end]]]
-    """
-
-    marker = property(
-        _get_marker,
-        _set_marker,
-        doc='Plot data point markers flag'
-    )
-    r"""
-    Gets or sets the series marker type. All `Matplotlib marker types
-    <http://matplotlib.org/api/markers_api.html>`_ are supported. None
-    indicates no marker
-
-    :type: string or None, default is 'o' (circle)
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.series.Series.marker
-
-    :raises: (when assigned) RuntimeError (Argument \`marker\` is not
-     valid)
-
-    .. [[[end]]]
-    """
-
     interp = property(
         _get_interp,
         _set_interp,
@@ -784,6 +745,23 @@ class Series(object):
     .. [[[end]]]
     """
 
+    label = property(_get_label, _set_label, doc='Series label')
+    r"""
+    Gets or sets the series label, to be used in the panel legend if the panel
+    has more than one series
+
+    :type:  string
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.series.Series.label
+
+    :raises: (when assigned) RuntimeError (Argument \`label\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
     line_style = property(
         _get_line_style,
         _set_line_style,
@@ -806,6 +784,28 @@ class Series(object):
 
      * ValueError (Argument \`line_style\` is not one of ['-', '--', '-.',
        ':'])
+
+    .. [[[end]]]
+    """
+
+    marker = property(
+        _get_marker,
+        _set_marker,
+        doc='Plot data point markers flag'
+    )
+    r"""
+    Gets or sets the series marker type. All `Matplotlib marker types
+    <http://matplotlib.org/api/markers_api.html>`_ are supported. None
+    indicates no marker
+
+    :type: string or None, default is 'o' (circle)
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.series.Series.marker
+
+    :raises: (when assigned) RuntimeError (Argument \`marker\` is not
+     valid)
 
     .. [[[end]]]
     """

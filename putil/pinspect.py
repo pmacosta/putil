@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,E0611,F0401,W0212,W0631
 
+from __future__ import print_function
 import ast
 import copy
 try:    # pragma: no cover
@@ -92,22 +93,27 @@ def get_function_args(func, no_self=False, no_varargs=False):
         ('self', 'value')
     """
     par_dict = signature(func).parameters
+    # Mark positional and/or keyword arguments (if any)
     args = [
-        '{0}{1}'.format(
-            '*'
-            if par_dict[par].kind == par_dict[par].VAR_POSITIONAL
-            else (
-                '**'
-                if par_dict[par].kind == par_dict[par].VAR_KEYWORD else
-                ''
+        '{prefix}{arg}'.format(
+            prefix=(
+                '*'
+                if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else
+                (
+                    '**'
+                    if par_dict[par].kind == par_dict[par].VAR_KEYWORD else
+                    ''
+                )
             ),
-            par
+            arg=par
         )
         for par in par_dict
     ]
+    # Filter out 'self' from parameter list (optional)
     self_filtered_args = args if not args else (
         args[1 if (args[0] == 'self') and no_self else 0:]
     )
+    # Filter out positional or keyword arguments (optional)
     varargs_filtered_args = tuple([
         arg
         for arg in self_filtered_args
@@ -141,8 +147,11 @@ def get_module_name(module_obj):
     name = module_obj.__name__
     if name not in sys.modules:
         raise RuntimeError(
-            'Module object `{0}` could not be found in loaded modules'.format(
-                name
+            (
+                'Module object `{name}` '
+                'could not be found in loaded modules'.format(
+                    name=name
+                )
             )
         )
     return name
@@ -249,6 +258,28 @@ class Callables(object):
         )
         robj._fnames = list(set(self._fnames[:]+other._fnames[:]))
         return robj
+
+    def __bool__(self): # pragma: no cover
+        """
+        Returns :code:`False` if no modules have been traced, :code:`True`
+        otherwise. For example:
+
+            >>> from __future__ import print_function
+            >>> import putil.eng, putil.pinspect, sys
+            >>> obj = putil.pinspect.Callables()
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: False
+            >>> obj.trace([sys.modules['putil.eng'].__file__])
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: True
+        """
+        return bool(self._module_names)
 
     def __copy__(self):
         """
@@ -359,28 +390,6 @@ class Callables(object):
         """
         return bool(self._module_names)
 
-    def __bool__(self): # pragma: no cover
-        """
-        Returns :code:`False` if no modules have been traced, :code:`True`
-        otherwise. For example:
-
-            >>> from __future__ import print_function
-            >>> import putil.eng, putil.pinspect, sys
-            >>> obj = putil.pinspect.Callables()
-            >>> if obj:
-            ...     print('Boolean test returned: True')
-            ... else:
-            ...     print('Boolean test returned: False')
-            Boolean test returned: False
-            >>> obj.trace([sys.modules['putil.eng'].__file__])
-            >>> if obj:
-            ...     print('Boolean test returned: True')
-            ... else:
-            ...     print('Boolean test returned: False')
-            Boolean test returned: True
-        """
-        return bool(self._module_names)
-
     def __repr__(self):
         """
         Returns a string with the expression needed to re-create the object.
@@ -427,27 +436,40 @@ class Callables(object):
         """
         ret = list()
         if self._module_names:
+            # List traced modules
             ret.append('Modules:')
             for module_name in sorted(self._module_names):
-                ret.append('   {0}'.format(module_name))
+                ret.append(
+                    '   {module_name}'.format(module_name=module_name)
+                )
+            # List traced classes
             if self._class_names:
                 ret.append('Classes:')
                 for class_name in sorted(self._class_names):
-                    ret.append('   {0}'.format(class_name))
+                    ret.append(
+                        '   {class_name}'.format(class_name=class_name)
+                    )
+            # List traced callables (methods, functions, properties)
             for entry in sorted(self._modules_dict):
                 dict_value = self._modules_dict[entry]
                 for value in sorted(dict_value, key=lambda x: x['code_id'][1]):
                     start_line = value['code_id'][1]
                     stop_line = value['last_lineno']
-                    line_text = (' ({0}-{1})'.format(
-                        start_line, stop_line) if start_line != stop_line
-                        else ' ({0})'.format(start_line
-                    ))
+                    line_text = (
+                        (
+                            ' ({start_line}-{stop_line})'.format(
+                                start_line=start_line,
+                                stop_line=stop_line
+                            )
+                        )
+                        if start_line != stop_line else
+                        ' ({line_number})'.format(line_number=start_line)
+                    )
                     ret.append(
-                        '{0}: {1}{2}'.format(
-                            value['name'],
-                            value['type'],
-                            line_text
+                        '{callable_name}: {callable_type}{line_range}'.format(
+                            callable_name=value['name'],
+                            callable_type=value['type'],
+                            line_range=line_text
                         )
                     )
             return '\n'.join(ret)
@@ -492,23 +514,27 @@ class Callables(object):
         """ Getter for callables_db property """
         return self._callables_db
 
-    def _get_reverse_callables_db(self):
-        """ Getter for reverse_callables_db property """
-        return self._reverse_callables_db
-
     def get_callable_from_line(self, module_file, lineno):
         """ Get the callable that the line number belongs to """
         module_name = _get_module_name_from_fname(module_file)
         if module_name not in self._modules_dict:
             self.trace([module_file])
         ret = None
-        for value in sorted(self._modules_dict[module_name],
-                            key=lambda x: x['code_id'][1]):
+        # Sort callables by starting line number
+        iobj = sorted(
+            self._modules_dict[module_name],
+            key=lambda x: x['code_id'][1]
+        )
+        for value in iobj:
             if value['code_id'][1] <= lineno <= value['last_lineno']:
                 ret = value['name']
             elif value['code_id'][1] > lineno:
                 break
         return ret if ret else module_name
+
+    def _get_reverse_callables_db(self):
+        """ Getter for reverse_callables_db property """
+        return self._reverse_callables_db
 
     def trace(self, fnames):
         r"""
@@ -546,6 +572,9 @@ class Callables(object):
                 tree = ast.parse(''.join(lines))
                 aobj = _AstTreeScanner(fname, lines)
                 aobj.visit(tree)
+                # Create a fake callable at the end of the file to properly
+                # 'close', i.e. assign a last line number to the last
+                # callable in file
                 fake_node = putil.misc.Bundle(
                     lineno=len(lines)+1,
                     col_offset=-1
@@ -553,24 +582,30 @@ class Callables(object):
                 aobj._close_callable(fake_node, force=True)
                 self._class_names += aobj._class_names[:]
                 self._module_names.append(module_name)
-                for name, item in aobj._callables_db.items():
-                    self._callables_db[name] = item
-                for name, item in aobj._reverse_callables_db.items():
-                    self._reverse_callables_db[name] = copy.deepcopy(item)
+                self._callables_db.update(aobj._callables_db)
+                self._reverse_callables_db.update(aobj._reverse_callables_db)
+                #for name, item in aobj._callables_db.items():
+                #    self._callables_db[name] = item
+                #for name, item in aobj._reverse_callables_db.items():
+                #    self._reverse_callables_db[name] = copy.deepcopy(item)
                 # Split into modules
                 self._modules_dict[module_name] = []
-                for entry in [
-                        item for item in self._callables_db.values()
-                        if item['name'].startswith('{0}.'.format(module_name))
-                ]:
+                iobj = [
+                    item
+                    for item in self._callables_db.values()
+                    if item['name'].startswith(module_name+'.')
+                ]
+                for entry in iobj:
                     self._modules_dict[module_name].append(entry)
-        self._fnames = list(set(
-            self._fnames+[item.replace('.pyc', '.py') for item in fnames]
-        ))
+        self._fnames = list(
+            set(
+                self._fnames+[item.replace('.pyc', '.py') for item in fnames]
+            )
+        )
 
+    # Managed attributes
     callables_db = property(
-        _get_callables_db,
-        doc='Module(s) callables database'
+        _get_callables_db, doc='Module(s) callables database'
     )
     """
     Returns the callables database
@@ -605,8 +640,7 @@ class Callables(object):
         indentation level)
     """
     reverse_callables_db = property(
-        _get_reverse_callables_db,
-        doc='Reverse module(s) callables database'
+        _get_reverse_callables_db, doc='Reverse module(s) callables database'
     )
     """
     Returns the reverse callables database
@@ -629,7 +663,9 @@ class Callables(object):
 
 
 class _AstTreeScanner(ast.NodeVisitor):
-    """ Get all callables from a given module """
+    """
+    Get all callables from a given module by traversing abstract syntax tree
+    """
     # pylint: disable=R0902
     def __init__(self, fname, lines):
         super(_AstTreeScanner, self).__init__()
@@ -649,11 +685,14 @@ class _AstTreeScanner(ast.NodeVisitor):
         self._class_names = []
         self._num_decorators = 0
         self._processed_line = 0
+        # self._debug = False
 
     def _close_callable(self, node, force=False):
         """ Record last line number of callable """
+        # pylint: disable=R0912
         # Print statements for debug
-        # print 'Close callable'
+        # if self._debug:
+        #     print('Close callable')
 
         # If node has no line number, ignore it since it cannot be used
         # for closing out a callable
@@ -669,22 +708,31 @@ class _AstTreeScanner(ast.NodeVisitor):
         if self._num_decorators:
             self._num_decorators -= 1
             # Print statements for debug
-            # print '    num_decorators = {} @ {}'.format(
-            #     self._num_decorators, lineno
-            # )
+            # if self._debug:
+            #     print('    num_decorators = {} @ {}'.format(
+            #         self._num_decorators, lineno
+            #     ))
             return
         # Extract node name for property closing. Once a property is found,
         # it can only be closed out by a node type that has a name
         name = ''
         if not force:
             try:
-                name = self._pop_indent_stack(
-                    node, node_type='prop', action=None, add=False
+                name = (
+                    node.name
+                    if hasattr(node, 'name') else (
+                        node.targets[0].id
+                        if hasattr(node.targets[0], 'id') else
+                        node.targets[0].value.id
+                    )
                 )
             except AttributeError:
                 pass
         # Print statements for debug
-        # print '    Name {} @ {}'.format(name if name else 'None', lineno)
+        # if self._debug:
+        #     print(
+        #         '    Name {} @ {}'.format(name if name else 'None', lineno)
+        #     )
         # Traverse backwards through call stack and close callables as needed
         indent = self._get_indent(node)
         count = -1
@@ -694,17 +742,19 @@ class _AstTreeScanner(ast.NodeVisitor):
             stack_indent = self._indent_stack[count]['level']
             open_callable = element_full_name and (not edict['last_lineno'])
             # Print statements for debug
-            # print '    Name {}, indent, {}, stack_indent {}'.format(
-            #     element_full_name, indent, stack_indent
-            # )
+            # if self._debug:
+            #     print('    Name {}, indent, {}, stack_indent {}'.format(
+            #         element_full_name, indent, stack_indent
+            #     ))
             if (open_callable and (force or (indent < stack_indent) or
-               ((indent <= stack_indent) and
+               ((indent == stack_indent) and
                ((edict['type'] != 'prop') or ((edict['type'] == 'prop') and
                (name and (name != element_full_name))))))):
                 # Print statements for debug
-                # print '    Closing {} @ {}'.format(
-                #     element_full_name, lineno-1
-                # )
+                # if self._debug:
+                #     print('    Closing {} @ {}'.format(
+                #         element_full_name, lineno-1
+                #     ))
                 edict['last_lineno'] = lineno-1
                 self._num_decorators = 0
             if indent > stack_indent:
@@ -727,7 +777,7 @@ class _AstTreeScanner(ast.NodeVisitor):
                (indent_dict['type'] == 'module')):
                 return indent_dict['type'] == 'class'
 
-    def _pop_indent_stack(self, node, node_type=None, action=None, add=True):
+    def _pop_indent_stack(self, node, node_type=None, action=None):
         indent = self._get_indent(node)
         indent_stack = copy.deepcopy(self._indent_stack)
         while (((indent <= indent_stack[-1]['level']) and
@@ -744,15 +794,14 @@ class _AstTreeScanner(ast.NodeVisitor):
             for indent_dict in indent_stack
             if indent_dict['type'] != 'module'
         ]+[name])+('({0})'.format(action) if action else '')
-        if add:
-            self._indent_stack = indent_stack
-            self._indent_stack.append({
-                'level':indent,
-                'prefix':name,
-                'type':node_type,
-                'full_name':element_full_name,
-                'lineno':node.lineno
-            })
+        self._indent_stack = indent_stack
+        self._indent_stack.append({
+            'level':indent,
+            'prefix':name,
+            'type':node_type,
+            'full_name':element_full_name,
+            'lineno':node.lineno
+        })
         return element_full_name
 
     def generic_visit(self, node):
@@ -779,9 +828,10 @@ class _AstTreeScanner(ast.NodeVisitor):
             }
             self._reverse_callables_db[code_id] = element_full_name
             # Print statements for debug
-            # print 'Visiting property {} @ {}'.format(
-            #     element_full_name, code_id[1]
-            # )
+            # if self._debug:
+            #     print('Visiting property {} @ {}'.format(
+            #         element_full_name, code_id[1]
+            #     ))
             # Get property actions
             self.generic_visit(node)
 
@@ -799,7 +849,12 @@ class _AstTreeScanner(ast.NodeVisitor):
         }
         self._reverse_callables_db[code_id] = element_full_name
         # Print statements for debug
-        # print 'Visiting class {} @ {}'.format(element_full_name, code_id[1])
+        # if self._debug:
+        #     print(
+        #         'Visiting class {} @ {}'.format(
+        #             element_full_name, code_id[1]
+        #         )
+        #     )
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node):
@@ -811,7 +866,6 @@ class _AstTreeScanner(ast.NodeVisitor):
             for dobj in node.decorator_list
             if hasattr(dobj, 'id') or hasattr(dobj, 'attr')
         ]
-        self._num_decorators = len(decorator_list)
         self._num_decorators = len(node.decorator_list)
         action = ('getter' if 'property' in decorator_list else
                  ('setter' if 'setter' in decorator_list else
@@ -829,8 +883,9 @@ class _AstTreeScanner(ast.NodeVisitor):
         }
         self._reverse_callables_db[code_id] = element_full_name
         # Print statements for debug
-        # print 'Visiting callable {}  @ {}'.format(
-        #     element_full_name, code_id[1]
-        # )
-        # print '    num_decorators = {}'.format(self._num_decorators)
+        # if self._debug:
+        #     print('Visiting callable {}  @ {}'.format(
+        #         element_full_name, code_id[1]
+        #     ))
+        #     print('    num_decorators = {}'.format(self._num_decorators))
         self.generic_visit(node)

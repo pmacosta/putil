@@ -29,47 +29,21 @@ exobj = trace_ex_pcsv.trace_module(no_print=True)
 ###
 # Functions
 ###
-@putil.pcontracts.contract(
-    fname='file_name',
-    data='list(list(str|int|float))',
-    append=bool
-)
-def write(fname, data, append=True):
-    r"""
-    Writes data to a specified comma-separated values (CSV) file
-
-    :param  fname:  Name of the comma-separated values file to be written
-    :type   fname:  :ref:`FileName`
-    :param  data:   Data to write to the file. Each item in this argument
-     should contain a sub-list corresponding to a row of data; each item in the
-     sub-lists should contain data corresponding to a particular column
-    :type   data:   list
-    :param  append: Flag that indicates whether data is added to an existing
-     file (or a new file is created if it does not exist) (True), or whether
-     data overwrites the file contents (if the file exists) or creates a new
-     file if the file does not exists (False)
-    :type   append: boolean
-
-    .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for putil.pcsv.write
-
-    :raises:
-     * OSError (File *[fname]* could not be created: *[reason]*)
-
-     * RuntimeError (Argument \`append\` is not valid)
-
-     * RuntimeError (Argument \`data\` is not valid)
-
-     * RuntimeError (Argument \`fname\` is not valid)
-
-     * ValueError (There is no data to save to file)
-
-    .. [[[end]]]
-    """
-    _write_int(fname, data, append)
+def _tofloat(obj):
+    """ Convert to float if object is a float string """
+    if 'inf' in obj.lower().strip():
+        return obj
+    try:
+        return int(obj)
+    except ValueError:
+        try:
+            return float(obj)
+        except ValueError:
+            return obj
 
 
 def _write_int(fname, data, append=True):
+    """ Write data to CSV file with validation """
     _exh = putil.exh.get_or_create_exh_obj()
     _exh.add_exception(
         exname='data_is_empty',
@@ -118,17 +92,42 @@ def _write_int(fname, data, append=True):
         )
 
 
-def _tofloat(obj):
-    """ Convert to float if object is a float string """
-    if 'inf' in obj.lower().strip():
-        return obj
-    try:
-        return int(obj)
-    except ValueError:
-        try:
-            return float(obj)
-        except ValueError:
-            return obj
+@putil.pcontracts.contract(
+    fname='file_name', data='list(list(str|int|float))', append=bool
+)
+def write(fname, data, append=True):
+    r"""
+    Writes data to a specified comma-separated values (CSV) file
+
+    :param  fname:  Name of the comma-separated values file to be written
+    :type   fname:  :ref:`FileName`
+    :param  data:   Data to write to the file. Each item in this argument
+     should contain a sub-list corresponding to a row of data; each item in the
+     sub-lists should contain data corresponding to a particular column
+    :type   data:   list
+    :param  append: Flag that indicates whether data is added to an existing
+     file (or a new file is created if it does not exist) (True), or whether
+     data overwrites the file contents (if the file exists) or creates a new
+     file if the file does not exists (False)
+    :type   append: boolean
+
+    .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for putil.pcsv.write
+
+    :raises:
+     * OSError (File *[fname]* could not be created: *[reason]*)
+
+     * RuntimeError (Argument \`append\` is not valid)
+
+     * RuntimeError (Argument \`data\` is not valid)
+
+     * RuntimeError (Argument \`fname\` is not valid)
+
+     * ValueError (There is no data to save to file)
+
+    .. [[[end]]]
+    """
+    _write_int(fname, data, append)
 
 
 ###
@@ -169,8 +168,7 @@ class CsvFile(object):
     """
     # pylint: disable=W0631
     @putil.pcontracts.contract(
-        fname='file_name_exists',
-        dfilter='csv_data_filter'
+        fname='file_name_exists', dfilter='csv_data_filter'
     )
     def __init__(self, fname, dfilter=None):
         self._header = None
@@ -211,7 +209,8 @@ class CsvFile(object):
             exname='column_headers_not_unique',
             condition=len(set(self._header_upper)) != len(self._header_upper)
         )
-        # Find start of data row
+        # Find start of data row. A data row is defined as one that has at
+        # least one column with a number
         for num, row in enumerate(self._raw_data[1:]):
             if any([putil.misc.isnumber(_tofloat(col)) for col in row]):
                 break
@@ -224,9 +223,7 @@ class CsvFile(object):
         # Set up class properties
         self._data = [
             [
-                None
-                if col.strip() == '' else
-                _tofloat(col)
+                None if col.strip() == '' else _tofloat(col)
                 for col in row
             ]
             for row in self._raw_data[num+1:]
@@ -236,17 +233,41 @@ class CsvFile(object):
         # not API end-point
         self._set_dfilter_int(dfilter)
 
-    def _validate_dfilter(self, dfilter):
-        """ Validate that all columns in filter are in header """
-        if dfilter is not None:
-            for key in dfilter:
-                self._in_header(key)
-                dfilter[key] = ([dfilter[key]]
-                               if isinstance(dfilter[key], str) else
-                               dfilter[key])
+    def _core_data(self, data, col=None):
+        """ Extract columns from data """
+        if isinstance(col, str):
+            col_num = self._header_upper.index(col.upper())
+            return [[row[col_num]] for row in data]
+        else:   # isinstance(col, list):
+            col_list = col[:]
+            col_index_list = [
+                self._header_upper.index(col.upper()) for col in col_list
+            ]
+            return [[row[index] for index in col_index_list] for row in data]
 
     def _get_dfilter(self):
         return self._dfilter
+
+    def _get_header(self):
+        return self._header
+
+    def _in_header(self, col):
+        """
+        Validate column name(s) against the column names in the file header
+        """
+        self._exh.add_exception(
+            exname='header_not_found',
+            extype=ValueError,
+            exmsg='Column *[column_name]* not found in header'
+        )
+        if col is not None:
+            col_list = [col] if isinstance(col, str) else col
+            for col in col_list:
+                self._exh.raise_exception_if(
+                    exname='header_not_found',
+                    condition=col.upper() not in self._header_upper,
+                    edata={'field':'column_name', 'value':col}
+                )
 
     @putil.pcontracts.contract(dfilter='csv_data_filter')
     def _set_dfilter(self, dfilter):
@@ -271,6 +292,17 @@ class CsvFile(object):
                 for col_num, col_value in df_tuples])
             ]
         self._dfilter = dfilter
+
+    def _validate_dfilter(self, dfilter):
+        """ Validate that all columns in filter are in header """
+        if dfilter is not None:
+            for key in dfilter:
+                self._in_header(key)
+                dfilter[key] = (
+                    [dfilter[key]]
+                    if isinstance(dfilter[key], str) else
+                    dfilter[key]
+                )
 
     @putil.pcontracts.contract(dfilter='csv_data_filter')
     def add_dfilter(self, dfilter):
@@ -302,18 +334,24 @@ class CsvFile(object):
         else:
             for key in dfilter:
                 if key in self._dfilter:
-                    self._dfilter[key] = list(set((
-                        self._dfilter[key]
-                        if isinstance(self._dfilter[key], list) else
-                        [self._dfilter[key]]) + (dfilter[key]
-                        if isinstance(dfilter[key], list) else [dfilter[key]])
-                    ))
+                    self._dfilter[key] = list(
+                        set(
+                            (
+                                self._dfilter[key]
+                                if isinstance(self._dfilter[key], list) else
+                                [self._dfilter[key]]
+                            )
+                            +
+                            (
+                                dfilter[key]
+                                if isinstance(dfilter[key], list) else
+                                [dfilter[key]]
+                            )
+                        )
+                    )
                 else:
                     self._dfilter[key] = dfilter[key]
         self._set_dfilter_int(self._dfilter)
-
-    def _get_header(self):
-        return self._header
 
     @putil.pcontracts.contract(col='None|str|list(str)', filtered=bool)
     def data(self, col=None, filtered=False):
@@ -345,12 +383,14 @@ class CsvFile(object):
         .. [[[end]]]
         """
         self._in_header(col)
-        return ((self._data if not filtered else self._fdata)
-               if col is None else
-               self._core_data(
-                   (self._data if not filtered else self._fdata),
-                   col
-               ))
+        return (
+            (self._data if not filtered else self._fdata)
+            if col is None else
+            self._core_data(
+                (self._data if not filtered else self._fdata),
+                col
+            )
+        )
 
     def reset_dfilter(self):
         """ Reset (clears) the data filter """
@@ -422,12 +462,14 @@ class CsvFile(object):
         data = self.data(col=col, filtered=filtered)
         if headers:
             col = [col] if isinstance(col, str) else col
-            header = (self.header
-                     if col is None else
-                     [
-                         self.header[self._header_upper.index(element.upper())]
-                        for element in col
-                     ])
+            header = (
+                self.header
+                if col is None else
+                [
+                   self.header[self._header_upper.index(element.upper())]
+                   for element in col
+                ]
+            )
         self._exh.raise_exception_if(
             exname='write',
             condition=(
@@ -437,41 +479,9 @@ class CsvFile(object):
         data = [["''" if col is None else col for col in row] for row in data]
         _write_int(fname, [header]+data if headers else data, append=append)
 
-    def _in_header(self, col):
-        """
-        Validate column name(s) against the column names in the file header
-        """
-        self._exh.add_exception(
-            exname='header_not_found',
-            extype=ValueError,
-            exmsg='Column *[column_name]* not found in header'
-        )
-        if col is not None:
-            col_list = [col] if isinstance(col, str) else col
-            for col in col_list:
-                self._exh.raise_exception_if(
-                    exname='header_not_found',
-                    condition=col.upper() not in self._header_upper,
-                    edata={'field':'column_name', 'value':col}
-                )
-
-    def _core_data(self, data, col=None):
-        """ Extract columns from data """
-        if isinstance(col, str):
-            col_num = self._header_upper.index(col.upper())
-            return [[row[col_num]] for row in data]
-        else:   # isinstance(col, list):
-            col_list = col[:]
-            col_index_list = [
-                self._header_upper.index(col.upper()) for col in col_list
-            ]
-            return [[row[index] for index in col_index_list] for row in data]
-
     # Managed attributes
     dfilter = property(
-        _get_dfilter,
-        _set_dfilter,
-        doc='Data filter'
+        _get_dfilter, _set_dfilter, doc='Data filter'
     )
     r"""
     Sets or returns the data filter
@@ -495,8 +505,7 @@ class CsvFile(object):
     """
 
     header = property(
-        _get_header,
-        doc='Comma-separated file (CSV) header'
+        _get_header, doc='Comma-separated file (CSV) header'
     )
     """
     Returns the header of the comma-separated values file. Each list item is

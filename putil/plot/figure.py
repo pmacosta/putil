@@ -121,7 +121,7 @@ class Figure(object):
     :param  indep_axis_ticks:   independent axis tick marks. When
      given overrides automatically generated tick marks if the axis type is
      linear
-     :type  indep_axis_ticks:   list or Numpy vector
+    :type  indep_axis_ticks:    list or Numpy vector
     :param  fig_width:          hard copy plot width in inches
     :type   fig_width:          :ref:`PositiveRealNum`
     :param  fig_height:         hard copy plot height in inches
@@ -160,9 +160,9 @@ class Figure(object):
 
      * TypeError (Panel *[panel_num]* is not fully specified)
 
-     * ValueError (Figure cannot cannot be plotted with a logarithmic
-       independent axis because panel *[panel_num]*, series *[series_num]*
-       contains negative independent data points)
+     * ValueError (Figure cannot be plotted with a logarithmic independent
+       axis because panel *[panel_num]*, series *[series_num]* contains
+       negative independent data points)
 
     .. [[[end]]]
 
@@ -200,11 +200,15 @@ class Figure(object):
         self._indep_var_units, self._indep_var_div = None, None
         self._axes_list = list()
         # Assignment of arguments to attributes
-        self._indep_axis_ticks = indep_axis_ticks
         self._set_indep_var_label(indep_var_label)
         self._set_indep_var_units(indep_var_units)
         self._set_title(title)
         self._set_log_indep_axis(log_indep_axis)
+        self._indep_axis_ticks = (
+            indep_axis_ticks
+            if not self.log_indep_axis else
+            None
+        )
         self._set_fig_width(fig_width)
         self._set_fig_height(fig_height)
         self._set_panels(panels)
@@ -338,6 +342,9 @@ class Figure(object):
     def _get_indep_axis_scale(self):
         return self._indep_var_div
 
+    def _get_indep_axis_ticks(self):
+        return self._indep_axis_ticks
+
     def _get_indep_var_label(self):
         return self._indep_var_label
 
@@ -438,7 +445,7 @@ class Figure(object):
         self._exh.add_exception(
             exname='log_axis',
             extype=ValueError,
-            exmsg='Figure cannot cannot be plotted with a logarithmic '
+            exmsg='Figure cannot be plotted with a logarithmic '
                   'independent axis because panel *[panel_num]*, series '
                   '*[series_num]* contains negative independent data points'
         )
@@ -497,6 +504,7 @@ class Figure(object):
                         None
                     )
                 ))
+            self._indep_axis_ticks = indep_var_locs
             # Scale all panel series
             for panel_obj in self.panels:
                 panel_obj._scale_indep_var(self._indep_var_div)
@@ -630,66 +638,6 @@ class Figure(object):
                           if self.fig_height is None
                           else self.fig_height)
 
-    def show(self):
-        """
-        Displays the figure
-
-        .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-        .. Auto-generated exceptions documentation for
-        .. putil.plot.figure.Figure.show
-
-        :raises:
-         * RuntimeError (Figure object is not fully specified)
-
-         * ValueError (Figure cannot cannot be plotted with a logarithmic
-           independent axis because panel *[panel_num]*, series *[series_num]*
-           contains negative independent data points)
-
-        .. [[[end]]]
-        """
-        self._draw(force_redraw=self._fig is None, raise_exception=True)
-        plt.show()
-
-    @putil.pcontracts.contract(fname='file_name')
-    def save(self, fname):
-        r"""
-        Saves the figure in PNG format to a file
-
-        :param  fname:  File name
-        :type   fname:  :ref:`FileName`
-
-        .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-        .. Auto-generated exceptions documentation for
-        .. putil.plot.figure.Figure.save
-
-        :raises:
-         * RuntimeError (Argument \`fname\` is not valid)
-
-         * RuntimeError (Figure object is not fully specified)
-
-         * ValueError (Figure cannot cannot be plotted with a logarithmic
-           independent axis because panel *[panel_num]*, series *[series_num]*
-           contains negative independent data points)
-
-        .. [[[end]]]
-        """
-        self._exh.add_exception(
-            exname='fig_not_fully_specified',
-            extype=RuntimeError,
-            exmsg='Figure object is not fully specified'
-        )
-        self._exh.raise_exception_if(
-            exname='fig_not_fully_specified',
-            condition=not self._complete
-        )
-        self._draw(force_redraw=self._fig is None, raise_exception=True)
-        self.fig.set_size_inches(self.fig_width, self.fig_height)
-        # Matplotlib seems to have a problem with ~/, expand it to $HOME
-        fname = os.path.expanduser(fname)
-        putil.misc.make_dir(fname)
-        self._fig.savefig(fname, bbox_inches='tight', dpi=self._fig.dpi)
-        plt.close('all')
-
     def __str__(self):
         r"""
         Prints figure information. For example:
@@ -775,6 +723,155 @@ class Figure(object):
 
     _complete = property(_get_complete)
 
+    @putil.pcontracts.contract(fname='file_name')
+    def save(self, fname):
+        r"""
+        Saves the figure in PNG format to a file
+
+        :param  fname:  File name
+        :type   fname:  :ref:`FileName`
+
+        .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.plot.figure.Figure.save
+
+        :raises:
+         * RuntimeError (Argument \`fname\` is not valid)
+
+         * RuntimeError (Figure object is not fully specified)
+
+         * ValueError (Figure cannot be plotted with a logarithmic independent
+           axis because panel *[panel_num]*, series *[series_num]* contains
+           negative independent data points)
+
+        .. [[[end]]]
+        """
+        self._exh.add_exception(
+            exname='fig_not_fully_specified',
+            extype=RuntimeError,
+            exmsg='Figure object is not fully specified'
+        )
+        self._exh.raise_exception_if(
+            exname='fig_not_fully_specified',
+            condition=not self._complete
+        )
+        self._draw(force_redraw=self._fig is None, raise_exception=True)
+        self.fig.set_size_inches(self.fig_width, self.fig_height)
+        # Matplotlib seems to have a problem with ~/, expand it to $HOME
+        fname = os.path.expanduser(fname)
+        putil.misc.make_dir(fname)
+        self._fig.savefig(fname, bbox_inches='tight', dpi=self._fig.dpi)
+        plt.close('all')
+
+    def show(self):
+        """
+        Displays the figure
+
+        .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.plot.figure.Figure.show
+
+        :raises:
+         * RuntimeError (Figure object is not fully specified)
+
+         * ValueError (Figure cannot be plotted with a logarithmic independent
+           axis because panel *[panel_num]*, series *[series_num]* contains
+           negative independent data points)
+
+        .. [[[end]]]
+        """
+        self._draw(force_redraw=self._fig is None, raise_exception=True)
+        plt.show()
+
+    # Managed atttributes
+    axes_list = property(
+        _get_axes_list, doc='Matplotlib figure axes handle list'
+    )
+    """
+    Gets the Matplotlib figure axes handle list. Useful if annotations or
+    further customizations to the panel(s) are needed. Each panel has an entry
+    in the list, which is sorted in the order the panels are plotted (top to
+    bottom). Each panel entry is a dictionary containing the following
+    key-value pairs:
+
+    * **number** (*integer*) -- panel number, panel 0 is the top-most panel
+
+    * **primary** (*Matplotlib axis object*) -- axis handle for the primary
+      axis, None if the figure has not primary axis
+
+    * **secondary** (*Matplotlib axis object*) -- axis handle for the
+      secondary axis, None if the figure has no secondary axis
+
+    :type: list
+    """
+
+    fig = property(_get_fig, doc='Figure handle')
+    """
+    Gets the Matplotlib figure handle. Useful if annotations or further
+    customizations to the figure are needed
+
+    :type: Matplotlib figure handle if figure is fully specified,
+     otherwise None
+    """
+
+    fig_height = property(
+        _get_fig_height,
+        _set_fig_height,
+        doc='height of the hard copy plot'
+    )
+    r"""
+    Gets or sets the height (in inches) of the hard copy plot
+
+    :type: :ref:`PositiveRealNum`
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.figure.Figure.fig_height
+
+    :raises: (when assigned) RuntimeError (Argument \`fig_height\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
+    fig_width = property(
+        _get_fig_width,
+        _set_fig_width,
+        doc='Width of the hard copy plot'
+    )
+    r"""
+    Gets or sets the width (in inches) of the hard copy plot
+
+    :type: :ref:`PositiveRealNum`
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.figure.Figure.fig_width
+
+    :raises: (when assigned) RuntimeError (Argument \`fig_width\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
+    indep_axis_scale = property(
+        _get_indep_axis_scale, doc='Independent axis scale'
+    )
+    """
+    Gets the scale of the figure independent axis
+
+    :type:  float or None if figure has no panels associated with it
+    """
+
+    indep_axis_ticks = property(
+        _get_indep_axis_ticks, doc='Independent axis tick locations'
+    )
+    """
+    Gets the independent axis (scaled) tick locations
+
+    :type:  list
+    """
+
     indep_var_label = property(
         _get_indep_var_label,
         _set_indep_var_label,
@@ -795,9 +892,9 @@ class Figure(object):
 
      * RuntimeError (Figure object is not fully specified)
 
-     * ValueError (Figure cannot cannot be plotted with a logarithmic
-       independent axis because panel *[panel_num]*, series *[series_num]*
-       contains negative independent data points)
+     * ValueError (Figure cannot be plotted with a logarithmic independent
+       axis because panel *[panel_num]*, series *[series_num]* contains
+       negative independent data points)
 
     .. [[[end]]]
     """
@@ -822,32 +919,9 @@ class Figure(object):
 
      * RuntimeError (Figure object is not fully specified)
 
-     * ValueError (Figure cannot cannot be plotted with a logarithmic
-       independent axis because panel *[panel_num]*, series *[series_num]*
-       contains negative independent data points)
-
-    .. [[[end]]]
-    """
-
-    title = property(_get_title, _set_title, doc='Figure title')
-    r"""
-    Gets or sets the figure title
-
-    :type: string or None, default is ''
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.figure.Figure.title
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`title\` is not valid)
-
-     * RuntimeError (Figure object is not fully specified)
-
-     * ValueError (Figure cannot cannot be plotted with a logarithmic
-       independent axis because panel *[panel_num]*, series *[series_num]*
-       contains negative independent data points)
+     * ValueError (Figure cannot be plotted with a logarithmic independent
+       axis because panel *[panel_num]*, series *[series_num]* contains
+       negative independent data points)
 
     .. [[[end]]]
     """
@@ -873,49 +947,9 @@ class Figure(object):
 
      * RuntimeError (Figure object is not fully specified)
 
-     * ValueError (Figure cannot cannot be plotted with a logarithmic
-       independent axis because panel *[panel_num]*, series *[series_num]*
-       contains negative independent data points)
-
-    .. [[[end]]]
-    """
-
-    fig_width = property(
-        _get_fig_width,
-        _set_fig_width,
-        doc='Width of the hard copy plot'
-    )
-    r"""
-    Gets or sets the width (in inches) of the hard copy plot
-
-    :type: :ref:`PositiveRealNum`
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.figure.Figure.fig_width
-
-    :raises: (when assigned) RuntimeError (Argument \`fig_width\` is not
-     valid)
-
-    .. [[[end]]]
-    """
-
-    fig_height = property(
-        _get_fig_height,
-        _set_fig_height,
-        doc='height of the hard copy plot'
-    )
-    r"""
-    Gets or sets the height (in inches) of the hard copy plot
-
-    :type: :ref:`PositiveRealNum`
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.figure.Figure.fig_height
-
-    :raises: (when assigned) RuntimeError (Argument \`fig_height\` is not
-     valid)
+     * ValueError (Figure cannot be plotted with a logarithmic independent
+       axis because panel *[panel_num]*, series *[series_num]* contains
+       negative independent data points)
 
     .. [[[end]]]
     """
@@ -946,49 +980,32 @@ class Figure(object):
 
      * TypeError (Panel *[panel_num]* is not fully specified)
 
-     * ValueError (Figure cannot cannot be plotted with a logarithmic
-       independent axis because panel *[panel_num]*, series *[series_num]*
-       contains negative independent data points)
+     * ValueError (Figure cannot be plotted with a logarithmic independent
+       axis because panel *[panel_num]*, series *[series_num]* contains
+       negative independent data points)
 
     .. [[[end]]]
     """
 
-    fig = property(_get_fig, doc='Figure handle')
-    """
-    Gets the Matplotlib figure handle. Useful if annotations or further
-    customizations to the figure are needed
+    title = property(_get_title, _set_title, doc='Figure title')
+    r"""
+    Gets or sets the figure title
 
-    :type: Matplotlib figure handle if figure is fully specified,
-     otherwise None
-    """
+    :type: string or None, default is ''
 
-    axes_list = property(
-        _get_axes_list, doc='Matplotlib figure axes handle list'
-    )
-    """
-    Gets the Matplotlib figure axes handle list. Useful if annotations or
-    further customizations to the panel(s) are needed. Each panel has an entry
-    in the list, which is sorted in the order the panels are plotted (top to
-    bottom). Each panel entry is a dictionary containing the following
-    key-value pairs:
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.figure.Figure.title
 
-    * **number** (*integer*) -- panel number, panel 0 is the top-most panel
+    :raises: (when assigned)
 
-    * **primary** (*Matplotlib axis object*) -- axis handle for the primary
-      axis, None if the figure has not primary axis
+     * RuntimeError (Argument \`title\` is not valid)
 
-    * **secondary** (*Matplotlib axis object*) -- axis handle for the
-      secondary axis, None if the figure has no secondary axis
+     * RuntimeError (Figure object is not fully specified)
 
-    :type: list
-    """
+     * ValueError (Figure cannot be plotted with a logarithmic independent
+       axis because panel *[panel_num]*, series *[series_num]* contains
+       negative independent data points)
 
-    indep_axis_scale = property(
-        _get_indep_axis_scale,
-        doc='Independent axis scale'
-    )
-    """
-    Gets the scale of the figure independent axis
-
-    :type:  float or None if figure has no panels associated with it
+    .. [[[end]]]
     """

@@ -114,10 +114,12 @@ def simple_exobj():
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SEQ = [
     (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 99),
-    (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 167),
+    (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 197),
     (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_4.py+{0}'), 23),
     (os.path.join(TEST_DIR, 'support', 'exdoc_support_module_1.py+{0}'), 1000)
 ]
+
+
 class MockFCode(object):
     def __init__(self):
         text, line_no = SEQ.pop(0)
@@ -701,7 +703,7 @@ def test_exdoccxt_errors():
     if putil.exh.get_exh_obj():
         putil.exh.del_exh_obj()
     with pytest.raises(OSError) as excinfo:
-        with putil.exdoc.ExDocCxt(True):
+        with putil.exdoc.ExDocCxt(_no_print=True):
             raise OSError('This is bad')
     assert putil.test.get_exmsg(excinfo) == 'This is bad'
     assert putil.exh.get_exh_obj() is None

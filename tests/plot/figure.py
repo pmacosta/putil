@@ -86,7 +86,7 @@ class TestFigure(object):
             putil.plot.Figure,
             {'panels':negative_panel, 'log_indep_axis':True},
             ValueError,
-            'Figure cannot cannot be plotted with a logarithmic independent '
+            'Figure cannot be plotted with a logarithmic independent '
             'axis because panel 0, series 0 contains negative independent '
             'data points'
         )
@@ -155,6 +155,50 @@ class TestFigure(object):
         obj = putil.plot.Figure(panels=default_panel)
         assert isinstance(obj.fig, matplotlib.figure.Figure)
 
+    def test_indep_axis_ticks(self, default_panel):
+        """ Test indep_axis_ticks property """
+        obj = putil.plot.Figure(panels=None)
+        assert obj.indep_axis_ticks == None
+        putil.test.assert_exception(
+            putil.plot.Figure,
+            {
+                'panels':default_panel,
+                'indep_axis_ticks':5
+            },
+            RuntimeError,
+            'Argument `indep_axis_ticks` is not valid'
+        )
+        obj = putil.plot.Figure(
+            panels=default_panel,
+            indep_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.indep_axis_ticks == [
+            1.0, 2.0, 3.0, 3.5
+        ]
+        obj = putil.plot.Figure(
+            panels=default_panel,
+            indep_axis_ticks=numpy.array(
+                [1E6, 2E6, 3E6, 3.5E6]
+            )
+        )
+        assert obj.indep_axis_ticks == [
+            1.0, 2.0, 3.0, 3.5
+        ]
+        # Logarithmic independent axis tick marks
+        # cannot be overridden
+        obj = putil.plot.Figure(
+            panels=default_panel,
+            log_indep_axis=True,
+            indep_axis_ticks=numpy.array(
+                [1E6, 2E6, 3E6, 3.5E6]
+            )
+        )
+        assert obj.indep_axis_ticks == [
+            1.0, 10.0
+        ]
+
     def test_indep_axis_scale(self, default_panel):
         """ Test indep_axis_scale property """
         obj = putil.plot.Figure(panels=None)
@@ -194,7 +238,10 @@ class TestFigure(object):
                 'fig_height':200
             },
             RuntimeError,
-            'Figure size is too small: minimum width = 5.6[1]*, minimum height 2.66'
+            (
+                'Figure size is too small: minimum width = 5.6[1]*, '
+                'minimum height 2.66'
+            )
         )
         putil.test.assert_exception(
             putil.plot.Figure,
@@ -207,7 +254,10 @@ class TestFigure(object):
                 'fig_height':0.1
             },
             RuntimeError,
-            'Figure size is too small: minimum width = 5.6[1]*, minimum height 2.66'
+            (
+                'Figure size is too small: minimum width = 5.6[1]*, '
+                'minimum height 2.66'
+            )
         )
         putil.test.assert_exception(
             putil.plot.Figure,
@@ -220,7 +270,10 @@ class TestFigure(object):
                 'fig_height':0.1
             },
             RuntimeError,
-            'Figure size is too small: minimum width = 5.6[1]*, minimum height 2.66'
+            (
+                'Figure size is too small: minimum width = 5.6[1]*, '
+                'minimum height 2.66'
+            )
         )
 
     def test_complete(self, default_panel):
@@ -289,7 +342,9 @@ class TestFigure(object):
         assert (str(obj) == ret) or (str(obj) == ret_ci)
 
     def test_cannot_delete_attributes(self, default_panel):
-        """ Test that del method raises an exception on all class attributes """
+        """
+        Test that del method raises an exception on all class attributes
+        """
         obj = putil.plot.Figure(panels=default_panel)
         with pytest.raises(AttributeError) as excinfo:
             del obj.panels
@@ -354,7 +409,9 @@ class TestFigure(object):
     def test_images(self, tmpdir):
         """ Compare images to verify correct plotting of figure """
         tmpdir.mkdir('test_images')
-        images_dict_list = unittest_figure_images(mode='test', test_dir=str(tmpdir))
+        images_dict_list = unittest_figure_images(
+            mode='test', test_dir=str(tmpdir)
+        )
         for images_dict in images_dict_list:
             ref_file_name = images_dict['ref_file_name']
             ref_ci_file_name = images_dict['ref_ci_file_name']
