@@ -2,8 +2,9 @@
 # pylint-cleaner.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0103
+# pylint: disable=C0103,C0111
 
+from __future__ import print_function
 import fnmatch
 import os
 import re
@@ -17,7 +18,9 @@ def main():
             for filename in fnmatch.filter(filenames, '*.py'):
                 source_files.append(os.path.join(root, filename))
     soline = re.compile(r'^\s*#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)')
-    token_regexp = re.compile(r'(.*)#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)')
+    token_regexp = re.compile(
+        r'(.*)#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)'
+    )
     errors = False
     for source_file in source_files:
         with open(source_file, 'r') as fname:
@@ -31,8 +34,8 @@ def main():
             if token_match and (not line_match):
                 if not header:
                     header = True
-                    print 'File {0}'.format(source_file)
-                print '   Line {0} (EOL)'.format(num+1)
+                    print('File {}'.format(source_file))
+                print('   Line {} (EOL)'.format(num+1))
                 errors = True
             if token_match:
                 indent = token_match.groups()[0]
@@ -40,8 +43,8 @@ def main():
                 if any([item in file_tokens for item in tokens]):
                     if not header:
                         header = True
-                        print 'File {0}'.format(source_file)
-                    print '   Line {0} (repeated)'.format(num+1)
+                        print('File {}'.format(source_file))
+                    print('   Line {} (repeated)'.format(num+1))
                     errors = True
                 file_tokens.extend(tokens)
                 output_lines.append(
@@ -53,7 +56,7 @@ def main():
             for output_line in output_lines:
                 fname.write(output_line)
     if not errors:
-        print 'All files compliant'
+        print('All files compliant')
 
 if __name__ == '__main__':
     main()

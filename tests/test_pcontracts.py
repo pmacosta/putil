@@ -15,38 +15,42 @@ import putil.test
 
 
 ###
-# Fixtures
+# Helper functions
 ###
+def decfunc(func):
+    """" Decorator function to test _create_argument_value_pairs function """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        """
+        Wrapper function that creates the argument dictionary and returns a
+        ret_func, which in turn just returns the argument passed. This is for
+        testing only, obviously in an actual environment the decorator would
+        return the original (called) function with the passed arguments
+        """
+        return ret_func(
+            putil.pcontracts._create_argument_value_pairs(
+                func, *args, **kwargs
+            )
+        )
+    return wrapper
+
+
+def ret_func(par):
+    """ Returns the passed argument """
+    return par
+
+
 def sample_func_global():
-    """ Global test function to test get_exdesc() function """
+    """ Global test function to test get_exdesc function behavior """
     tmp_global = putil.pcontracts.get_exdesc()
     return tmp_global
 
 
 ###
-# Tests
+# Test functions
 ###
-def test_get_exdesc():
-    """ Test get_exdesc() function """
-    def sample_func_local():
-        """ Local test function to test get_exdesc() function """
-        tmp_local = putil.pcontracts.get_exdesc()
-        return tmp_local
-    sample_func_local.exdesc = 'Test local function property'
-    sample_func_global.exdesc = 'Test global function property'
-    assert sample_func_local() == 'Test local function property'
-    assert sample_func_global() == 'Test global function property'
-    del globals()['sample_func_global']
-    putil.test.assert_exception(
-        putil.pcontracts.get_exdesc,
-        {},
-        RuntimeError,
-        'Function object could not be found for function `assert_exception`'
-    )
-
-
 def test_get_replacement_token():
-    """ Test _get_replacement_token() function """
+    """ Test _get_replacement_token function behavior """
     assert (
         putil.pcontracts._get_replacement_token(
             'Argument `*[argument_name]*` could not be found'
@@ -63,84 +67,8 @@ def test_get_replacement_token():
     )
 
 
-def test_format_arg_errors():
-    """ Test _format_arg() function exceptions """
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':''},
-        ValueError,
-        'Empty custom contract exception message'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':[RuntimeError,
-          '']},
-        ValueError, 'Empty custom contract exception message'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':['',
-          RuntimeError]},
-        ValueError, 'Empty custom contract exception message'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':['']},
-        ValueError,
-        'Empty custom contract exception message'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':set([RuntimeError, 'Message'])},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':[]},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':(RuntimeError, 'Message', 3)},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':[3]},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':['a', 3]},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':[3, 'a']},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':[ValueError, 3]},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-    putil.test.assert_exception(
-        putil.pcontracts._format_arg,
-        {'arg':[3, ValueError]},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
-
-
-def test_format_arg_works():
-    """ Test _format_arg() function """
+def test_format_arg():
+    """ Test _format_arg function behavior """
     fobj = putil.pcontracts._format_arg
     assert (
         fobj('Message')
@@ -167,8 +95,49 @@ def test_format_arg_works():
     )
 
 
+def test_format_arg_exceptions():
+    """ Test _format_arg function exceptions """
+    items = [
+        '',
+        [RuntimeError, ''],
+        ['', RuntimeError],
+        [''],
+    ]
+    for item in items:
+        putil.test.assert_exception(
+            putil.pcontracts._format_arg,
+            {'arg':item},
+            ValueError,
+            'Empty custom contract exception message'
+        )
+    items = [
+        set([RuntimeError, 'Message']),
+        [],
+        (RuntimeError, 'Message', 3),
+        [3],
+        ['a', 3],
+        [3, 'a'],
+        [ValueError, 3],
+        [3, ValueError]
+    ]
+    for item in items:
+        putil.test.assert_exception(
+            putil.pcontracts._format_arg,
+            {'arg':item},
+            TypeError,
+            'Illegal custom contract exception definition'
+        )
+
+
+def test_isexception():
+    """ Test _isexception function behavior """
+    assert not putil.pcontracts._isexception(str)
+    assert not putil.pcontracts._isexception(3)
+    assert putil.pcontracts._isexception(RuntimeError)
+
+
 def test_parse_new_contract_args():
-    """ Test _parse_new_contract_args() function """
+    """ Test _parse_new_contract_args function behavior """
     fobj = putil.pcontracts._parse_new_contract_args
     # Validate *args
     with pytest.raises(TypeError) as excinfo:
@@ -290,7 +259,7 @@ def test_parse_new_contract_args():
 
 
 def test_register_custom_contracts():
-    """ Test _register_custom_contracts() function """
+    """ Test _register_custom_contracts function behavior """
     original_custom_contracts = copy.deepcopy(
         putil.pcontracts._CUSTOM_CONTRACTS
     )
@@ -484,232 +453,8 @@ def test_register_custom_contracts():
     )
 
 
-def test_new_contract():
-    """ Tests for new_contract decorator """
-    original_custom_contracts = copy.deepcopy(
-        putil.pcontracts._CUSTOM_CONTRACTS
-    )
-    putil.pcontracts._CUSTOM_CONTRACTS = dict()
-    @putil.pcontracts.new_contract()
-    def func1(name1):
-        return name1, putil.pcontracts.get_exdesc()
-    ref = (
-        'a',
-        '[START CONTRACT MSG: func1]Argument `*[argument_name]*` '
-        'is not valid[STOP CONTRACT MSG]'
-    )
-    assert func1('a') == ref
-    ref = {
-        'func1':{
-            'argument_invalid':{
-                'num':0,
-                'msg':'Argument `*[argument_name]*` is not valid',
-                'type':RuntimeError,
-                'field':'argument_name'
-            }
-        }
-    }
-    assert putil.pcontracts._CUSTOM_CONTRACTS == ref
-    putil.pcontracts._CUSTOM_CONTRACTS = dict()
-    @putil.pcontracts.new_contract('Simple message')
-    def func2(name2):
-        return name2, putil.pcontracts.get_exdesc()
-    ref = (
-        'bc',
-        '[START CONTRACT MSG: func2]Simple message[STOP CONTRACT MSG]'
-    )
-    assert func2('bc') == ref
-    ref = {
-        'func2':{
-            'default':{
-                'num':0,
-                'msg':'Simple message',
-                'type':RuntimeError,
-                'field':None
-            }
-        }
-    }
-    assert putil.pcontracts._CUSTOM_CONTRACTS == ref
-    putil.pcontracts._CUSTOM_CONTRACTS = dict()
-    @putil.pcontracts.new_contract(
-        ex1='Medium message',
-        ex2=('Complex *[data]*', TypeError)
-    )
-    def func3(name3):
-        return name3, putil.pcontracts.get_exdesc()
-    ref = (
-        'def',
-        {
-            'ex1':(
-                '[START CONTRACT MSG: func3]'
-                'Medium message'
-                '[STOP CONTRACT MSG]'
-            ),
-            'ex2':(
-                '[START CONTRACT MSG: func3]'
-                'Complex *[data]*'
-                '[STOP CONTRACT MSG]'
-            )
-        }
-    )
-    assert func3('def') == ref
-    ref = {
-        'func3':{
-            'ex1':{
-                'num':0,
-                'msg':'Medium message',
-                'type':RuntimeError,
-                'field':None
-            },
-            'ex2':{
-                'num':1,
-                'msg':'Complex *[data]*',
-                'type':TypeError,
-                'field':'data'
-            }
-        }
-    }
-    assert putil.pcontracts._CUSTOM_CONTRACTS == ref
-    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(
-        original_custom_contracts
-    )
-
-
-###
-# Tests for _create_argument_value_pairs()
-###
-def ret_func(par):
-    """ Returns the passed argument """
-    return par
-
-
-def decfunc(func):
-    """" Decorator function to test _create_argument_value_pairs function """
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        """
-        Wrapper function that creates the argument dictionary and returns a
-        ret_func, which in turn just returns the argument passed. This is for
-        testing only, obviously in an actual environment the decorator would
-        return the original (called) function with the passed arguments
-        """
-        return ret_func(
-            putil.pcontracts._create_argument_value_pairs(
-                func, *args, **kwargs
-            )
-        )
-    return wrapper
-
-
-class TestCreateArgumentValuePairs(object):
-    """ Tests for _create_argument_value_pairs function """
-    # pylint: disable=E1123,E1124,R0201,R0913
-    def test_all_positional_arguments(self):
-        """
-        Test that function behaves properly when all arguments
-        are positional arguments
-        """
-        @decfunc
-        def orig_func_all_positional_arguments(ppar1, ppar2, ppar3):
-            pass
-        ref = {'ppar1':1, 'ppar2':2, 'ppar3':3}
-        assert orig_func_all_positional_arguments(1, 2, 3) == ref
-
-    def test_all_keyword_arguments(self):
-        """
-        Test that function behaves properly when all arguments are
-        keyword arguments
-        """
-        @decfunc
-        def orig_func_all_keyword_arguments(kpar1, kpar2, kpar3):
-            pass
-        ref = {'kpar1':1, 'kpar2':2, 'kpar3':3}
-        assert (
-            orig_func_all_keyword_arguments(kpar3=3, kpar2=2, kpar1=1)
-            ==
-            ref
-        )
-
-    def test_positional_and_keyword_arguments(self):
-        """
-        Test that function behaves properly when arguments are a mix of
-        positional and keywords arguments
-        """
-        @decfunc
-        def orig_func_positional_and_keyword_arguments(
-            ppar1, ppar2, ppar3, kpar1=1, kpar2=2, kpar3=3
-        ):
-            pass
-        ref = {
-            'ppar1':10,
-            'ppar2':20,
-            'ppar3':30,
-            'kpar1':[1, 2],
-            'kpar2':1.5,
-            'kpar3':'x'
-        }
-        assert (
-            orig_func_positional_and_keyword_arguments(
-                10, 20, 30, kpar2=1.5, kpar3='x', kpar1=[1, 2]
-            )
-            ==
-            ref
-        )
-
-    def test_no_arguments(self):
-        """
-        Test that function behaves properly when there are no
-        arguments passed
-        """
-        @decfunc
-        def orig_func_no_arguments():
-            pass
-        assert orig_func_no_arguments() == {}
-
-    def test_more_positional_arguments_passed_than_defined(self):
-        """
-        Test that function behaves properly when there are more arguments
-        passed by position than in the function definition
-        """
-        @decfunc
-        def orig_func(ppar1):
-            pass
-        assert orig_func(1, 2, 3) == {}
-
-    def test_more_keyword_arguments_passed_than_defined(self):
-        """
-        Test that function behaves properly when there are more arguments
-        passed by keyword than in the function definition
-        """
-        @decfunc
-        def orig_func(kpar1=0, kpar2=2):
-            pass
-        assert orig_func(kpar1=1, kpar2=2, kpar3=3) == {}
-
-    def test_argument_passed_by_position_and_keyword(self):
-        """
-        Test that function behaves properly when there are arguments passed
-        both by position and keyword
-        """
-        @decfunc
-        def orig_func(ppar1, ppar2, kpar1=1, kpar2=2):
-            pass
-        assert orig_func(1, 2, ppar1=5) == {}
-
-    def test_default_arguments(self):
-        """
-        Test that function behaves properly when omitting keyword arguments
-        that have defaults
-        """
-        @decfunc
-        def orig_func(ppar1, ppar2, kpar1='a', kpar2=2):
-            pass
-        ref = {'ppar1':1, 'ppar2':2, 'kpar1':'a', 'kpar2':20}
-        assert orig_func(1, 2, kpar2=20) == ref
-
-
 def test_contract():
-    """ Test contract decorator """
+    """ Test contract decorator behavior """
     # pylint: disable=R0912,R0914
     original_custom_contracts = copy.deepcopy(
         putil.pcontracts._CUSTOM_CONTRACTS
@@ -893,8 +638,8 @@ def test_contract():
 
 def test_enable_disable_contracts():
     """
-    Test wrappers around disable_all(), enable_all() and
-    all_disabled() functions
+    Test wrappers around disable_all, enable_all and
+    all_disabled functions behavior
     """
     @putil.pcontracts.contract(number=int)
     def func(number):
@@ -908,6 +653,7 @@ def test_enable_disable_contracts():
     )
     putil.pcontracts.disable_all()
     assert putil.pcontracts.all_disabled()
+    # Contracts are disabled, no exception should be raised
     assert func(['a', 'b']) == ['a', 'b']
     putil.pcontracts.enable_all()
     assert not putil.pcontracts.all_disabled()
@@ -919,8 +665,221 @@ def test_enable_disable_contracts():
     )
 
 
-def test_isexception():
-    """ Test _isexception() function """
-    assert not putil.pcontracts._isexception(str)
-    assert not putil.pcontracts._isexception(3)
-    assert putil.pcontracts._isexception(RuntimeError)
+def test_get_exdesc():
+    """ Test get_exdesc function behavior """
+    def sample_func_local():
+        """ Local test function to test get_exdesc function behavior """
+        tmp_local = putil.pcontracts.get_exdesc()
+        return tmp_local
+    sample_func_local.exdesc = 'Test local function property'
+    sample_func_global.exdesc = 'Test global function property'
+    assert sample_func_local() == 'Test local function property'
+    assert sample_func_global() == 'Test global function property'
+    del globals()['sample_func_global']
+    putil.test.assert_exception(
+        putil.pcontracts.get_exdesc,
+        {},
+        RuntimeError,
+        'Function object could not be found for function `assert_exception`'
+    )
+
+
+def test_new_contract():
+    """ Tests for new_contract decorator behavior """
+    original_custom_contracts = copy.deepcopy(
+        putil.pcontracts._CUSTOM_CONTRACTS
+    )
+    putil.pcontracts._CUSTOM_CONTRACTS = dict()
+    @putil.pcontracts.new_contract()
+    def func1(name1):
+        return name1, putil.pcontracts.get_exdesc()
+    ref = (
+        'a',
+        '[START CONTRACT MSG: func1]Argument `*[argument_name]*` '
+        'is not valid[STOP CONTRACT MSG]'
+    )
+    assert func1('a') == ref
+    ref = {
+        'func1':{
+            'argument_invalid':{
+                'num':0,
+                'msg':'Argument `*[argument_name]*` is not valid',
+                'type':RuntimeError,
+                'field':'argument_name'
+            }
+        }
+    }
+    assert putil.pcontracts._CUSTOM_CONTRACTS == ref
+    putil.pcontracts._CUSTOM_CONTRACTS = dict()
+    @putil.pcontracts.new_contract('Simple message')
+    def func2(name2):
+        return name2, putil.pcontracts.get_exdesc()
+    ref = (
+        'bc',
+        '[START CONTRACT MSG: func2]Simple message[STOP CONTRACT MSG]'
+    )
+    assert func2('bc') == ref
+    ref = {
+        'func2':{
+            'default':{
+                'num':0,
+                'msg':'Simple message',
+                'type':RuntimeError,
+                'field':None
+            }
+        }
+    }
+    assert putil.pcontracts._CUSTOM_CONTRACTS == ref
+    putil.pcontracts._CUSTOM_CONTRACTS = dict()
+    @putil.pcontracts.new_contract(
+        ex1='Medium message',
+        ex2=('Complex *[data]*', TypeError)
+    )
+    def func3(name3):
+        return name3, putil.pcontracts.get_exdesc()
+    ref = (
+        'def',
+        {
+            'ex1':(
+                '[START CONTRACT MSG: func3]'
+                'Medium message'
+                '[STOP CONTRACT MSG]'
+            ),
+            'ex2':(
+                '[START CONTRACT MSG: func3]'
+                'Complex *[data]*'
+                '[STOP CONTRACT MSG]'
+            )
+        }
+    )
+    assert func3('def') == ref
+    ref = {
+        'func3':{
+            'ex1':{
+                'num':0,
+                'msg':'Medium message',
+                'type':RuntimeError,
+                'field':None
+            },
+            'ex2':{
+                'num':1,
+                'msg':'Complex *[data]*',
+                'type':TypeError,
+                'field':'data'
+            }
+        }
+    }
+    assert putil.pcontracts._CUSTOM_CONTRACTS == ref
+    putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(
+        original_custom_contracts
+    )
+
+
+###
+# Test classes
+###
+class TestCreateArgumentValuePairs(object):
+    """ Tests for _create_argument_value_pairs function behavior """
+    # pylint: disable=E1123,E1124,R0201,R0913
+    def test_all_positional_arguments(self):
+        """
+        Test that function behaves properly when all arguments
+        are positional arguments
+        """
+        @decfunc
+        def orig_func_all_positional_arguments(ppar1, ppar2, ppar3):
+            pass
+        ref = {'ppar1':1, 'ppar2':2, 'ppar3':3}
+        assert orig_func_all_positional_arguments(1, 2, 3) == ref
+
+    def test_all_keyword_arguments(self):
+        """
+        Test that function behaves properly when all arguments are
+        keyword arguments
+        """
+        @decfunc
+        def orig_func_all_keyword_arguments(kpar1, kpar2, kpar3):
+            pass
+        ref = {'kpar1':1, 'kpar2':2, 'kpar3':3}
+        assert (
+            orig_func_all_keyword_arguments(kpar3=3, kpar2=2, kpar1=1)
+            ==
+            ref
+        )
+
+    def test_positional_and_keyword_arguments(self):
+        """
+        Test that function behaves properly when arguments are a mix of
+        positional and keywords arguments
+        """
+        @decfunc
+        def orig_func_positional_and_keyword_arguments(
+            ppar1, ppar2, ppar3, kpar1=1, kpar2=2, kpar3=3
+        ):
+            pass
+        ref = {
+            'ppar1':10,
+            'ppar2':20,
+            'ppar3':30,
+            'kpar1':[1, 2],
+            'kpar2':1.5,
+            'kpar3':'x'
+        }
+        assert (
+            orig_func_positional_and_keyword_arguments(
+                10, 20, 30, kpar2=1.5, kpar3='x', kpar1=[1, 2]
+            )
+            ==
+            ref
+        )
+
+    def test_no_arguments(self):
+        """
+        Test that function behaves properly when there are no
+        arguments passed
+        """
+        @decfunc
+        def orig_func_no_arguments():
+            pass
+        assert orig_func_no_arguments() == {}
+
+    def test_more_positional_arguments_passed_than_defined(self):
+        """
+        Test that function behaves properly when there are more arguments
+        passed by position than in the function definition
+        """
+        @decfunc
+        def orig_func(ppar1):
+            pass
+        assert orig_func(1, 2, 3) == {}
+
+    def test_more_keyword_arguments_passed_than_defined(self):
+        """
+        Test that function behaves properly when there are more arguments
+        passed by keyword than in the function definition
+        """
+        @decfunc
+        def orig_func(kpar1=0, kpar2=2):
+            pass
+        assert orig_func(kpar1=1, kpar2=2, kpar3=3) == {}
+
+    def test_argument_passed_by_position_and_keyword(self):
+        """
+        Test that function behaves properly when there are arguments passed
+        both by position and keyword
+        """
+        @decfunc
+        def orig_func(ppar1, ppar2, kpar1=1, kpar2=2):
+            pass
+        assert orig_func(1, 2, ppar1=5) == {}
+
+    def test_default_arguments(self):
+        """
+        Test that function behaves properly when omitting keyword arguments
+        that have defaults
+        """
+        @decfunc
+        def orig_func(ppar1, ppar2, kpar1='a', kpar2=2):
+            pass
+        ref = {'ppar1':1, 'ppar2':2, 'kpar1':'a', 'kpar2':20}
+        assert orig_func(1, 2, kpar2=20) == ref

@@ -45,11 +45,12 @@ def ignored(*exceptions):
     """
     Executes commands and selectively ignores exceptions
     (Inspired by `"Transforming Code into Beautiful, Idiomatic Python"
-    <http://pyvideo.org/video/1780/transforming-code-into-beautiful-idiomatic-pytho>`_
-    talk at PyCon US 2013 by Raymond Hettinger)
+    <http://pyvideo.org/video/1780/
+    transforming-code-into-beautiful-idiomatic-pytho>`_ talk at PyCon US
+    2013 by Raymond Hettinger)
 
-    :param  exceptions: Exception type(s) to ignore
-    :type   exceptions: Exception object, i.e. RuntimeError, OSError, etc.
+    :param exceptions: Exception type(s) to ignore
+    :type  exceptions: Exception object, i.e. RuntimeError, OSError, etc.
 
     For example:
 
@@ -64,22 +65,22 @@ def ignored(*exceptions):
         import os, putil.misc
 
         def ignored_example():
-            file_name = 'somefile.tmp'
-            open(file_name, 'w').close()
+            fname = 'somefile.tmp'
+            open(fname, 'w').close()
             print('File {0} exists? {1}'.format(
-                file_name, os.path.isfile(file_name)
+                fname, os.path.isfile(fname)
             ))
             with putil.misc.ignored(OSError):
-                os.remove(file_name)
+                os.remove(fname)
             print('File {0} exists? {1}'.format(
-                file_name, os.path.isfile(file_name)
+                fname, os.path.isfile(fname)
             ))
             with putil.misc.ignored(OSError):
-                os.remove(file_name)
+                os.remove(fname)
             print('No exception trying to remove a file that does not exists')
             try:
                 with putil.misc.ignored(RuntimeError):
-                    os.remove(file_name)
+                    os.remove(fname)
             except:
                 print('Got an exception')
 
@@ -106,10 +107,12 @@ class Timer(object):
     manager entry and exit time points. Inspired by `Huy Nguyen's blog
     <http://www.huyng.com/posts/python-performance-analysis/>`_
 
-    :param  verbose: Flag that indicates whether the elapsed time is printed
-     upon exit (True) or not (False)
-    :type   verbose: boolean
-    :returns: :py:class:`putil.misc.Timer` context manager object
+    :param verbose: Flag that indicates whether the elapsed time is printed
+                    upon exit (True) or not (False)
+    :type  verbose: boolean
+
+    :returns: :py:class:`putil.misc.Timer`
+
     :raises: RuntimeError (Argument \`verbose\` is not valid)
 
     For example:
@@ -144,7 +147,6 @@ class Timer(object):
         >>> from docs.support.misc_example_2 import *
         >>> timer(100, sample_func) #doctest: +ELLIPSIS
         Time per call: ... seconds
-
     """
     def __init__(self, verbose=False):
         if not isinstance(verbose, bool):
@@ -184,14 +186,16 @@ class TmpFile(object):
     Creates a temporary file and optionally sets up hooks for a function to
     write data to it
 
-    :param  fpointer: Pointer to a function that writes data to file or None.
-     If the argument is not None the function pointed to receives exactly one
-     argument, a file-like object as created by the
-     `tempfile.NamedTemporaryFile
-     <https://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile>`_
-     function.
-    :type   fpointer: function object or None
+    :param fpointer: Pointer to a function that writes data to file.
+                     If the argument is not None the function pointed to
+                     receives exactly one argument, a file-like object as
+                     created by the `tempfile.NamedTemporaryFile
+                     <https://docs.python.org/2/library/tempfile.html#
+                     tempfile.NamedTemporaryFile>`_ function
+    :type  fpointer: function object or None
+
     :returns:   temporary file name
+
     :raises:    RuntimeError (Argument \`fpointer\` is not valid)
 
     For example:
@@ -225,7 +229,6 @@ class TmpFile(object):
         >>> from docs.support.misc_example_3 import *
         >>> show_tmpfile()
         Hello world!
-
     """
     def __init__(self, fpointer=None):
         if (fpointer and
@@ -259,6 +262,7 @@ def binary_string_to_octal_string(text):
 
     :param  text: Text to convert
     :type   text: string
+
     :rtype: string
 
     +------+-------+-----------------+
@@ -294,7 +298,6 @@ def binary_string_to_octal_string(text):
         ...     ''.join([py23struct(num) for num in nums])
         ... ).replace('o', '')  #doctest: +ELLIPSIS
         '\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0\\b\\0\\t\\0\\...
-
     """
     # pylint: disable=C0103
     return ''.join([_OCTAL_ALPHABET[ord(char)] for char in text])
@@ -305,8 +308,9 @@ def char_to_decimal(text):
     Converts a string to its decimal ASCII representation, with spaces between
     characters
 
-    :param  text: Text to convert
-    :type   text: string
+    :param text: Text to convert
+    :type  text: string
+
     :rtype: string
 
     For example:
@@ -314,7 +318,6 @@ def char_to_decimal(text):
         >>> import putil.misc
         >>> putil.misc.char_to_decimal('Hello world!')
         '72 101 108 108 111 32 119 111 114 108 100 33'
-
     """
     return ' '.join([str(ord(char)) for char in text])
 
@@ -327,16 +330,17 @@ def elapsed_time_string(start_time, stop_time):
     are equal, the string returned is :code:`'None'`; otherwise, the string
     returned is [YY year[s], [MM month[s], [DD day[s], [HH hour[s],
     [MM minute[s] [and SS second[s\]\]\]\]\]\]. Any part (year[s], month[s],
-    etc.) is omitted if the value of that part is null/zero.
+    etc.) is omitted if the value of that part is null/zero
 
-    :param  start_time: Starting time point
-    :type   start_time:
-     `datetime
-     <https://docs.python.org/2/library/datetime.html#datetime-objects>`_
-     object
-    :param  stop_time:  Ending time point
-    :type   stop_time:  `datetime`_ object
-    :rtype:             string
+    :param start_time: Starting time point
+    :type  start_time: `datetime <https://docs.python.org/2/library/
+                       datetime.html#datetime-objects>`_
+
+    :param stop_time: Ending time point
+    :type  stop_time: `datetime`
+
+    :rtype: string
+
     :raises: RuntimeError (Invalid time delta specification)
 
     For example:
@@ -381,8 +385,9 @@ def flatten_list(lobj):
     """
     Recursively flattens a list
 
-    :param  lobj: List to flatten
-    :type   lobj: list
+    :param lobj: List to flatten
+    :type  lobj: list
+
     :rtype: list
 
     For example:
@@ -390,7 +395,6 @@ def flatten_list(lobj):
         >>> import putil.misc
         >>> putil.misc.flatten_list([1, [2, 3, [4, 5, 6]], 7])
         [1, 2, 3, 4, 5, 6, 7]
-
     """
     ret = []
     for item in lobj:
@@ -413,8 +417,8 @@ def gcd(vector):
     the numerator and denominator arguments when computing the GCD of
     floating point numbers.
 
-    :param  vector: Vector of numbers
-    :type   vector: list of numbers or Numpy vector of numbers
+    :param vector: Vector of numbers
+    :type  vector: list of numbers or Numpy vector of numbers
     """
     if len(vector) == 0:
         return None
@@ -433,8 +437,9 @@ def isalpha(obj):
     """
     Tests if the argument is a string representing a number
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: boolean
 
     For example:
@@ -446,7 +451,6 @@ def isalpha(obj):
         True
         >>> putil.misc.isalpha('1EA-20')
         False
-
     """
     try:
         float(obj)
@@ -459,8 +463,9 @@ def ishex(obj):
     """
     Tests if the argument is a string representing a valid hexadecimal digit
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: boolean
     """
     return (
@@ -474,8 +479,9 @@ def isiterable(obj):
     """
     Tests if the argument is an iterable
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: boolean
     """
     try:
@@ -490,8 +496,9 @@ def isnumber(obj):
     """
     Tests if the argument is a number (complex, float or integer)
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: boolean
     """
     return (
@@ -507,8 +514,9 @@ def isreal(obj):
     """
     Tests if the argument is a real number (float or integer)
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: boolean
     """
     return (
@@ -523,8 +531,8 @@ def make_dir(fname):
     """
     Creates the directory of a fully qualified file name if it does not exist
 
-    :param  fname: File name
-    :type   fname: string
+    :param fname: File name
+    :type  fname: string
 
     Equivalent to these Bash shell commands:
 
@@ -533,8 +541,8 @@ def make_dir(fname):
         $ dir=$(dirname ${fname})
         $ mkdir -p ${dir}
 
-    :param  fname: Fully qualified file name
-    :type   fname: string
+    :param fname: Fully qualified file name
+    :type  fname: string
     """
     file_path, fname = os.path.split(os.path.abspath(fname))
     if os.path.exists(file_path) is False:
@@ -545,14 +553,18 @@ def normalize(value, series, offset=0):
     r"""
     Scales a value to the range defined by a series
 
-    :param  value: Value to normalize
-    :type   value: number
-    :param  series: List of numbers that defines the normalization range
-    :type   series: list
-    :param  offset: Normalization offset, i.e. the returned value will be in
-     the range [**offset**, 1.0]
-    :type   offset: number
+    :param value: Value to normalize
+    :type  value: number
+
+    :param series: List of numbers that defines the normalization range
+    :type  series: list
+
+    :param offset: Normalization offset, i.e. the returned value will be in
+                   the range [**offset**, 1.0]
+    :type  offset: number
+
     :rtype: number
+
     :raises:
      * RuntimeError (Argument \`offset\` is not valid)
 
@@ -572,7 +584,6 @@ def normalize(value, series, offset=0):
         0.5
         >>> putil.misc.normalize(15, [10, 20], 0.5)
         0.75
-
     """
     if not isreal(value):
         raise RuntimeError('Argument `value` is not valid')
@@ -602,16 +613,20 @@ def per(arga, argb, prec=10):
     vectors. If any of the numbers in the arguments is zero the value returned
     is 1E+20
 
-    :param  arga: First number, list of numbers or Numpy vector
-    :type   arga: float, integer, list of floats or integers, or Numpy vector
-     of floats or integers
-    :param  argb: Second number, list of numbers or or Numpy vector
-    :type   argb: float, integer, list of floats or integers, or Numpy vector
-     of floats or integers
-    :param  prec: Maximum length of the fractional part of the result
-    :type   prec: integer
+    :param arga: First number, list of numbers or Numpy vector
+    :type  arga: float, integer, list of floats or integers, or Numpy vector
+                 of floats or integers
+
+    :param argb: Second number, list of numbers or or Numpy vector
+    :type  argb: float, integer, list of floats or integers, or Numpy vector
+                 of floats or integers
+
+    :param prec: Maximum length of the fractional part of the result
+    :type  prec: integer
+
     :rtype: Float, list of floats or Numpy vector, depending on the arguments
      type
+
     :raises:
      * RuntimeError (Argument \`arga\` is not valid)
 
@@ -668,15 +683,20 @@ def pcolor(text, color, indent=0):
     r"""
     Returns a string that once printed is colorized
 
-    :param  text: Text to colorize
-    :type   text: string
+    :param text: Text to colorize
+    :type  text: string
+
     :param  color: Color to use, one of :code:`'black'`, :code:`'red'`,
-     :code:`'green'`, :code:`'yellow'`, :code:`'blue'`, :code:`'magenta'`,
-     :code:`'cyan'`, :code:`'white'` or :code:`'none'` (case insensitive)
+                   :code:`'green'`, :code:`'yellow'`, :code:`'blue'`,
+                   :code:`'magenta'`, :code:`'cyan'`, :code:`'white'` or
+                   :code:`'none'` (case insensitive)
     :type   color: string
-    :param  indent: Number of spaces to prefix the output with
-    :type   indent: integer
+
+    :param indent: Number of spaces to prefix the output with
+    :type  indent: integer
+
     :rtype: string
+
     :raises:
      * RuntimeError (Argument \`color\` is not valid)
 
@@ -714,10 +734,12 @@ def pgcd(numa, numb):
     """
     Calculate the greatest common divisor (GCD) of two numbers
 
-    :param  numa: First number
-    :type   numa: number
-    :param  numb: Second number
-    :type   numb: number
+    :param numa: First number
+    :type  numa: number
+
+    :param numb: Second number
+    :type  numb: number
+
     :rtype: number
 
     For example:
@@ -739,7 +761,6 @@ def pgcd(numa, numb):
         ...     fractions.Fraction(2, 3)
         ... )
         Fraction(1, 3)
-
     """
     int_args = isinstance(numa, int) and isinstance(numb, int)
     fraction_args = isinstance(numa, Fraction) and isinstance(numb, Fraction)
@@ -764,23 +785,28 @@ def pprint_ast_node(
     ):
     """
     Emulates the AST module `dump
-    <https://docs.python.org/2/library/ast.html>`_ function but with prettier
-    printing. From `Alex Leone's blog
+    <https://docs.python.org/2/library/ast.html#ast.dump>`_ function but with
+    prettier printing. From `Alex Leone's blog
     <http://alexleone.blogspot.co.uk/2010/01/python-ast-pretty-printer.html>`_
 
-    :param  node: root abstract syntax tree node
-    :type   node: AST object
-    :param  annotate_fields: Flag that indicates whether name and values for
-     fields are shown (True) or not (False); the latter is required if code is
-     to be evaluated
-    :type   annotate_fields: boolean
-    :param  include_attributes: Flag that indicates whether line numbers and
-     column offsets are dumped (True) or not (False)
-    :type   include_attributes: boolean
-    :param  indent: Characters to use for indenting output sub-nodes and
-     structures
-    :type   indent: string
+    :param node: root abstract syntax tree node
+    :type  node: AST object
+
+    :param annotate_fields: Flag that indicates whether name and values for
+                            fields are shown (True) or not (False); the latter
+                            is required if code is to be evaluated
+    :type  annotate_fields: boolean
+
+    :param include_attributes: Flag that indicates whether line numbers and
+                               column offsets are dumped (True) or not (False)
+    :type  include_attributes: boolean
+
+    :param indent: Characters to use for indenting output sub-nodes and
+                   structures
+    :type  indent: string
+
     :rtype: string
+
     :raises: RuntimeError (Argument \\`node\\` is not valid)
     """
     # pylint: disable=W0212
@@ -822,8 +848,9 @@ def private_props(obj):
     Yields private properties of an object. A private property is
     defined as one that has a single underscore (:code:`_`) before its name
 
-    :param  obj: Object
-    :type   obj: object
+    :param obj: Object
+    :type  obj: object
+
     :returns: iterator
     """
     # Get private properties but NOT magic methods
@@ -842,8 +869,9 @@ def quote_str(obj):
     Adds extra quotes to a string. If the argument is not a string it is
     returned unmodified
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: Same as argument
 
     For example:
@@ -870,14 +898,16 @@ def strframe(obj, extended=False):
     """
     Returns a string with a frame record (typically an item in a list generated
     by `inspect.stack()
-    <https://docs.python.org/2/library/inspect.html#module-inspect>`_) pretty
+    <https://docs.python.org/2/library/inspect.html#inspect.stack>`_) pretty
     printed
 
-    :param  obj: Frame record
-    :type   obj: tuple
-    :param  extended: Flag that indicates whether contents of the frame object
-     are printed (True) or not (False)
-    :type   extended: boolean
+    :param obj: Frame record
+    :type  obj: tuple
+
+    :param extended: Flag that indicates whether contents of the frame object
+                     are printed (True) or not (False)
+    :type  extended: boolean
+
     :rtype:     string
     """
     # Stack frame -> (frame object [0], filename [1], line number of current
@@ -914,7 +944,7 @@ class Bundle(object):
     Bundles a collection of variables into one object
 
     :param elements: The keyword argument names are the variable names,
-     the keyword arguments values are the variable values
+                     the keyword arguments values are the variable values
     :type  elements: any
 
     For example:
@@ -931,7 +961,6 @@ class Bundle(object):
         >>> del obj.var1
         >>> print(str(obj))
         var2 = 20
-
     """
     def __init__(self, **elements):
         self.__dict__.update(elements)

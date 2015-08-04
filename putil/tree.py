@@ -36,8 +36,9 @@ class Tree(object):
     Provides basic `trie <http://wikipedia.org/wiki/Trie>`_ (radix tree)
     functionality
 
-    :param  node_separator: Single character used to separate nodes in the tree
-    :type   node_separator: string
+    :param node_separator: Single character used to separate nodes in the tree
+    :type  node_separator: string
+
     :rtype: :py:class:`putil.tree.Tree` object
 
     .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -50,10 +51,11 @@ class Tree(object):
     """
     # pylint: disable=R0902,R0903
     def __init__(self, node_separator='.'):
-        self._db = dict()
+        self._db = {}
         self._root = None
         self._root_hierarchy_length = None
         ufunc = unichr if sys.version_info.major == 2 else chr
+        # Characters from http://www.unicode.org/charts/PDF/U2500.pdf
         self._vertical = ufunc(0x2502)
         self._vertical_and_right = ufunc(0x251C)
         self._up_and_right = ufunc(0x2514)
@@ -65,21 +67,14 @@ class Tree(object):
         )
         self._exh.raise_exception_if(
             exname='illegal_node_separator',
-            condition=(not isinstance(node_separator, str)) or
-                      (isinstance(node_separator, str) and len(node_separator) != 1)
+            condition=(
+                (not isinstance(node_separator, str)) or
+                (isinstance(node_separator, str) and len(node_separator) != 1)
+            )
         )
         self._node_separator = node_separator
 
-    def __copy__(self, memodict=None):
-        memodict = dict() if memodict is None else memodict
-        cobj = Tree(self.node_separator)
-        cobj._db = copy.deepcopy(self._db, memodict)
-        cobj._root = self._root
-        cobj._root_hierarchy_length = self._root_hierarchy_length
-        cobj._exh = self._exh
-        return cobj
-
-    def __nonzero__(self):  # pragma: no cover
+    def __bool__(self): # pragma: no cover
         """
         Returns :code:`False` if tree object has no nodes, :code:`True`
         otherwise. For example:
@@ -101,7 +96,17 @@ class Tree(object):
         """
         return bool(self._db)
 
-    def __bool__(self): # pragma: no cover
+    def __copy__(self, memodict=None):
+        memodict = {} if memodict is None else memodict
+        cobj = Tree(self.node_separator)
+        cobj._db = copy.deepcopy(self._db, memodict)
+        cobj._root = self._root
+        cobj._root_hierarchy_length = self._root_hierarchy_length
+        # Link to the global exception handler
+        cobj._exh = self._exh
+        return cobj
+
+    def __nonzero__(self):  # pragma: no cover
         """
         Returns :code:`False` if tree object has no nodes, :code:`True`
         otherwise. For example:
@@ -135,8 +140,8 @@ class Tree(object):
             >>> tobj = putil.tree.Tree()
             >>> tobj.add_nodes([
             ...     {'name':'root.branch1', 'data':5},
-            ...     {'name':'root.branch2', 'data':list()},
-            ...     {'name':'root.branch1.leaf1', 'data':list()},
+            ...     {'name':'root.branch2', 'data':[]},
+            ...     {'name':'root.branch1.leaf1', 'data':[]},
             ...     {'name':'root.branch1.leaf2', 'data':'Hello world!'}
             ... ])
             >>> print(tobj)
@@ -148,13 +153,11 @@ class Tree(object):
 
         :rtype: Unicode string
         """
-        ret = '' if not self._db else self._prt(
-            name=self.root_name,
-            lparent=-1,
-            sep='',
-            pre1='',
-            pre2=''
-        )
+        ret = ''
+        if self._db:
+            ret = self._prt(
+                name=self.root_name, lparent=-1, sep='', pre1='', pre2=''
+            )
         return ret.encode('utf-8') if sys.version_info.major == 2 else ret
 
     def _collapse_subtree(self, name, recursive=True):
@@ -162,7 +165,7 @@ class Tree(object):
         oname = name
         children = self._db[name]['children']
         data = self._db[name]['data']
-        del_list = list()
+        del_list = []
         while (len(children) == 1) and (not data):
             del_list.append(name)
             name = children[0]
@@ -172,7 +175,9 @@ class Tree(object):
         self._db[name]['parent'] = parent
         if parent:
             self._db[parent]['children'].remove(oname)
-            self._db[parent]['children'] = sorted(self._db[parent]['children']+[name])
+            self._db[parent]['children'] = sorted(
+                self._db[parent]['children']+[name]
+            )
         else:
             self._root = name
             self._root_hierarchy_length = len(
@@ -184,34 +189,43 @@ class Tree(object):
             for name in copy.copy(children):
                 self._collapse_subtree(name)
 
-    def _create_node(self, name, parent, children, data):
-        """ Create new tree node """
-        self._db[name] = {'parent':parent, 'children':children, 'data':data}
-
     def _create_intermediate_nodes(self, name):
         """ Create intermediate nodes if hierarchy does not exist """
         hierarchy = self._split_node_name(name, self.root_name)
-        node_tree = ([
+        node_tree = [
             self.root_name+
             self._node_separator+
             self._node_separator.join(hierarchy[:num+1])
             for num in range(len(hierarchy))
-        ])
-        for parent, child in [
-                (child[:child.rfind(self._node_separator)], child)
-                for child in node_tree if child not in self._db
-        ]:
-            self._db[child] = {'parent':parent, 'children':list(), 'data':list()}
-            self._db[parent]['children'] = sorted(self._db[parent]['children']+[child])
+        ]
+        iobj = [
+            (child[:child.rfind(self._node_separator)], child)
+            for child in node_tree if child not in self._db
+        ]
+        for parent, child in iobj:
+            self._db[child] = {
+                'parent':parent, 'children':[], 'data':[]
+            }
+            self._db[parent]['children'] = sorted(
+                self._db[parent]['children']+[child]
+            )
+
+    def _create_node(self, name, parent, children, data):
+        """ Create new tree node """
+        self._db[name] = {'parent':parent, 'children':children, 'data':data}
 
     def _delete_prefix(self, name):
         lname = len(name)+1
         self._root = self._root[lname:]
-        self._root_hierarchy_length = len(self.root_name.split(self._node_separator))
+        self._root_hierarchy_length = len(
+            self.root_name.split(self._node_separator)
+        )
         for key, value in list(self._db.items()):
-            value['parent'] = (value['parent'][lname:]
-                              if value['parent'] else
-                              value['parent'])
+            value['parent'] = (
+                value['parent'][lname:]
+                if value['parent'] else
+                value['parent']
+            )
             value['children'] = [child[lname:] for child in value['children']]
             del self._db[key]
             self._db[key[lname:]] = value
@@ -222,10 +236,12 @@ class Tree(object):
         getter/setter private methods for speed)
         """
         nodes = nodes if isinstance(nodes, list) else [nodes]
-        for parent, node in [
-                (self._db[node]['parent'], node)
-                for node in nodes
-                if self._node_name_in_tree(node)]:
+        iobj = [
+            (self._db[node]['parent'], node)
+            for node in nodes
+            if self._node_name_in_tree(node)
+        ]
+        for parent, node in iobj:
             # Delete link to parent (if not root node)
             del_list = self._get_subtree(node)
             if parent:
@@ -311,19 +327,41 @@ class Tree(object):
         return True
 
     def _prt(self, name, lparent, sep, pre1, pre2):
+        """
+        Print a row (leaf) of tree
+
+        :param name: Full node name
+        :type  name: string
+
+        :param lparent: Position in full node name of last seperator before
+                        node to be printed
+        :type  lparent: integer
+
+        :param pre1: Connector next to node name, either a null character if
+                     the node to print is the root node, a right angle if node
+                     name to be printed is a leaf or a rotated "T" if the node
+                     name to be printed is one of many children
+        :type  pre1: string
+        """
         # pylint: disable=R0914
-        # Characters from http://www.unicode.org/charts/PDF/U2500.pdf
         nname = name[lparent+1:]
         children = self._db[name]['children']
         ncmu = len(children)-1
-        plist1 = ncmu*[self._vertical_and_right]+[self._up_and_right]
-        plist2 = ncmu*[self._vertical]+[' ']
+        plst1 = ncmu*[self._vertical_and_right]+[self._up_and_right]
+        plst2 = ncmu*[self._vertical]+[' ']
         slist = (ncmu+1)*[sep+pre2]
         dmark = ' (*)' if self._db[name]['data'] else ''
-        return '\n'.join([u'{0}{1}{2}{3}'.format(sep, pre1, nname, dmark)]+[
-            self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2)
-            for child, p1, p2, schar in zip(children, plist1, plist2, slist)
-        ])
+        return '\n'.join(
+            [
+                u'{sep}{connector}{name}{dmark}'.format(
+                    sep=sep, connector=pre1, name=nname, dmark=dmark
+                )
+            ]+
+            [
+                self._prt(child, len(name), sep=schar, pre1=p1, pre2=p2)
+                for child, p1, p2, schar in zip(children, plst1, plst2, slist)
+            ]
+        )
 
     def _rename_node(self, name, new_name):
         """
@@ -338,11 +376,18 @@ class Tree(object):
                 self._db[parent]['children']+[new_name]
             )
         # Update children
-        for key in self._get_subtree(name) if name != self.root_name else self.nodes:
+        iobj = (
+            self._get_subtree(name)
+            if name != self.root_name else
+            self.nodes
+        )
+        for key in iobj:
             new_key = key.replace(name, new_name, 1)
-            new_parent = (self._db[key]['parent']
-                         if key == name else
-                         self._db[key]['parent'].replace(name, new_name, 1))
+            new_parent = (
+                self._db[key]['parent']
+                if key == name else
+                self._db[key]['parent'].replace(name, new_name, 1)
+            )
             self._db[new_key] = {
                 'parent':new_parent,
                 'children':[
@@ -360,14 +405,17 @@ class Tree(object):
 
     def _search_tree(self, name):
         """ Search_tree for nodes that contain a specific hierarchy name """
-        return sorted([
-            node
-            for node in self._db
-            if (('{0}{1}{0}'.format(self._node_separator, name) in node) or
-               node.endswith('{0}{1}'.format(self._node_separator, name)) or
-               node.startswith('{0}{1}'.format(name, self._node_separator)) or
-               (name == node))
-        ])
+        tpl1 = '{sep}{name}{sep}'.format(sep=self._node_separator, name=name)
+        tpl2 = '{sep}{name}'.format(sep=self._node_separator, name=name)
+        tpl3 = '{name}{sep}'.format(sep=self._node_separator, name=name)
+        return sorted(
+            [
+                node
+                for node in self._db
+                if (tpl1 in node) or node.endswith(tpl2) or
+                node.startswith(tpl3) or (name == node)
+            ]
+        )
 
     def _set_children(self, name, children):
         self._db[name]['children'] = sorted(list(set(children)))
@@ -395,9 +443,13 @@ class Tree(object):
             if ((not isinstance(var_value, str)) or
                (isinstance(var_value, str) and
                ((' ' in var_value) or
-               any([
-                   element.strip() == ''
-                   for element in var_value.strip().split(self._node_separator)])))):
+               any(
+                   [
+                       element.strip() == ''
+                       for element in
+                       var_value.strip().split(self._node_separator)
+                   ]
+               )))):
                 return True
         return False
 
@@ -426,23 +478,27 @@ class Tree(object):
                 condition=(not isinstance(name, str)) or
                           (isinstance(name, str) and
                           ((' ' in name) or
-                          any([
-                              element.strip() == ''
-                              for element in name.strip().split(self._node_separator)
-                          ])))
+                          any(
+                              [
+                                  element.strip() == ''
+                                  for element in
+                                  name.strip().split(self._node_separator)
+                            ]
+                          )))
             )
 
     def add_nodes(self, nodes):
         r"""
         Adds nodes to tree
 
-        :param  nodes: Node(s) to add with associated data. If there are
-         several list items in the argument with the same node name the
-         resulting node data is a list with items corresponding to the data of
-         each entry in the argument with the same node name, in their order of
-         appearance, in addition to any existing node data if the node is
-         already present in the tree
-        :type   nodes: :ref:`NodesWithData`
+        :param nodes: Node(s) to add with associated data. If there are
+                      several list items in the argument with the same node
+                      name the resulting node data is a list with items
+                      corresponding to the data of each entry in the argument
+                      with the same node name, in their order of appearance,
+                      in addition to any existing node data if the node is
+                      already present in the tree
+        :type  nodes: :ref:`NodesWithData`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -516,8 +572,8 @@ class Tree(object):
             self._create_node(
                 name=self.root_name,
                 parent='',
-                children=list(),
-                data=list()
+                children=[],
+                data=[]
             )
         # Process new data
         for node_dict in nodes:
@@ -526,14 +582,18 @@ class Tree(object):
                 # Validate node name (root of new node same as tree root)
                 self._exh.raise_exception_if(
                     exname='illegal_node_name',
-                    condition=not name.startswith(self.root_name+self._node_separator),
+                    condition=(
+                        not name.startswith(
+                            self.root_name+self._node_separator
+                        )
+                    ),
                     edata={'field':'node_name', 'value':name}
                 )
                 self._create_intermediate_nodes(name)
             self._db[name]['data'] += copy.deepcopy(
                 data
                 if isinstance(data, list) and data else
-                (list() if isinstance(data, list) else [data])
+                ([] if isinstance(data, list) else [data])
             )
 
     def collapse_subtree(self, name, recursive=True):
@@ -541,12 +601,14 @@ class Tree(object):
         Collapses a sub-tree; nodes that have a single child and no data are
         combined with their child as a single tree node
 
-        :param  name: Root of the sub-tree to collapse
-        :type   name: :ref:`NodeName`
-        :param  recursive: Flag that indicates whether the collapse operation
-         is performed on the whole sub-tree (True) or whether it stops upon
-         reaching the first node where the collapsing condition is not
-         satisfied (False)
+        :param name: Root of the sub-tree to collapse
+        :type  name: :ref:`NodeName`
+
+        :param recursive: Flag that indicates whether the collapse operation
+                          is performed on the whole sub-tree (True) or whether
+                          it stops upon reaching the first node where the
+                          collapsing condition is not satisfied (False)
+        :type  recursive: boolean
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -561,7 +623,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example
@@ -594,14 +657,14 @@ class Tree(object):
             extype=RuntimeError,
             exmsg='Argument `name` is not valid'
         )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
         self._exh.add_exception(
             exname='illegal_recursive',
             extype=RuntimeError,
             exmsg='Argument `recursive` is not valid'
+        )
+        self._exh.raise_exception_if(
+            exname='illegal_name',
+            condition=self._validate_node_name(name)
         )
         self._exh.raise_exception_if(
             exname='illegal_recursive',
@@ -615,10 +678,11 @@ class Tree(object):
         Copies a sub-tree from one sub-node to another. Data is added if some
         nodes of the source sub-tree exist in the destination sub-tree
 
-        :param  source_name: Root node of the sub-tree to copy from
-        :type   source_name: :ref:`NodeName`
-        :param  dest_name: Root node of the sub-tree to copy to
-        :type   dest_name: :ref:`NodeName`
+        :param source_name: Root node of the sub-tree to copy from
+        :type  source_name: :ref:`NodeName`
+
+        :param dest_name: Root node of the sub-tree to copy to
+        :type  dest_name: :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -635,7 +699,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example
@@ -698,11 +763,15 @@ class Tree(object):
         )
         self._exh.raise_exception_if(
             exname='illegal_dest_node2',
-            condition=not dest_node.startswith(self.root_name+self._node_separator)
+            condition=not dest_node.startswith(
+                self.root_name+self._node_separator
+            )
         )
         for node in self._get_subtree(source_node):
             self._db[node.replace(source_node, dest_node, 1)] = {
-                'parent':self._db[node]['parent'].replace(source_node, dest_node, 1),
+                'parent':self._db[node]['parent'].replace(
+                    source_node, dest_node, 1
+                ),
                 'children':[
                     child.replace(source_node, dest_node, 1)
                     for child in self._db[node]['children']
@@ -721,8 +790,8 @@ class Tree(object):
         r"""
         Deletes hierarchy levels from all nodes in the tree
 
-        :param  nodes: Prefix to delete
-        :type   nodes: :ref:`NodeName`
+        :param nodes: Prefix to delete
+        :type  nodes: :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -741,7 +810,7 @@ class Tree(object):
             >>> import putil.tree
             >>> tobj = putil.tree.Tree('/')
             >>> tobj.add_nodes([
-            ...     {'name':'hello/world/root', 'data':list()},
+            ...     {'name':'hello/world/root', 'data':[]},
             ...     {'name':'hello/world/root/anode', 'data':7},
             ...     {'name':'hello/world/root/bnode', 'data':8},
             ...     {'name':'hello/world/root/cnode', 'data':False},
@@ -783,7 +852,11 @@ class Tree(object):
         )
         self._exh.raise_exception_if(
             exname='illegal_prefix',
-            condition=(not self.root_name.startswith(name)) or (self.root_name == name)
+            condition=(
+                (not self.root_name.startswith(name))
+                or
+                (self.root_name == name)
+            )
         )
         self._delete_prefix(name)
 
@@ -791,8 +864,8 @@ class Tree(object):
         r"""
         Deletes nodes (and their sub-trees) from the tree
 
-        :param  nodes: Node(s) to delete
-        :type   nodes: :ref:`NodeName` or list of :ref:`NodeName`
+        :param nodes: Node(s) to delete
+        :type  nodes: :ref:`NodeName` or list of :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -805,7 +878,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example
@@ -841,9 +915,9 @@ class Tree(object):
         Flattens sub-tree; nodes that have children and no data are merged
         with each child
 
-        :param  name: Ending hierarchy node whose sub-trees are to be
-         flattened
-        :type   name: :ref:`NodeName`
+        :param name: Ending hierarchy node whose sub-trees are to be
+                     flattened
+        :type  name: :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -856,7 +930,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example
@@ -920,15 +995,18 @@ class Tree(object):
             for child in children:
                 self._db[child]['parent'] = parent
             self._db[parent]['children'].remove(name)
-            self._db[parent]['children'] = sorted(self._db[parent]['children']+children)
+            self._db[parent]['children'] = sorted(
+                self._db[parent]['children']+children
+            )
             del self._db[name]
 
     def get_children(self, name):
         r"""
         Gets the children node names of a node
 
-        :param  name: Parent node name
-        :type   name: :ref:`NodeName`
+        :param name: Parent node name
+        :type  name: :ref:`NodeName`
+
         :rtype: list of :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -958,8 +1036,9 @@ class Tree(object):
         r"""
         Gets the data associated with a node
 
-        :param  name: Node name
-        :type   name: :ref:`NodeName`
+        :param name: Node name
+        :type  name: :ref:`NodeName`
+
         :rtype: any type or list of objects of any type
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -989,8 +1068,9 @@ class Tree(object):
         r"""
         Gets the sub-tree leaf node(s)
 
-        :param  name: Sub-tree root node name
-        :type   name: :ref:`NodeName`
+        :param name: Sub-tree root node name
+        :type  name: :ref:`NodeName`
+
         :rtype: list of :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1021,16 +1101,17 @@ class Tree(object):
         Gets a tree node structure. The structure is a dictionary with the
         following keys:
 
-         * **parent** (*:ref:`NodeName`*) Parent node name, :code:`''` if the
+         * **parent** (*NodeName*) Parent node name, :code:`''` if the
            node is the root node
 
-         * **children** (*list of :ref:`NodeName`*) Children node names, an
+         * **children** (*list of NodeName*) Children node names, an
            empty list if node is a leaf
 
          * **data** (*list*) Node data, an empty list if node contains no data
 
-        :param  name: Node name
-        :type   name: string
+        :param name: Node name
+        :type  name: string
+
         :rtype: dictionary
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1061,8 +1142,9 @@ class Tree(object):
         Gets the list of children structures of a node. See
         :py:meth:`putil.tree.Tree.get_node` for details about the structure
 
-        :param  name: Parent node name
-        :type   name: :ref:`NodeName`
+        :param name: Parent node name
+        :type  name: :ref:`NodeName`
+
         :rtype: list
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1093,8 +1175,9 @@ class Tree(object):
         Gets the parent structure of a node. See
         :py:meth:`putil.tree.Tree.get_node` for details about the structure
 
-        :param  name: Child node name
-        :type   name: :ref:`NodeName`
+        :param name: Child node name
+        :type  name: :ref:`NodeName`
+
         :rtype: dictionary
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1118,16 +1201,19 @@ class Tree(object):
             condition=self._validate_node_name(name)
         )
         self._node_in_tree(name)
-        return (self._db[self._db[name]['parent']]
-               if not self.is_root(name) else
-               dict())
+        return (
+            self._db[self._db[name]['parent']]
+            if not self.is_root(name) else
+            {}
+        )
 
     def get_subtree(self, name):
         r"""
         Gets all node names in a sub-tree
 
-        :param  name: Sub-tree root node name
-        :type   name: :ref:`NodeName`
+        :param name: Sub-tree root node name
+        :type  name: :ref:`NodeName`
+
         :rtype: list of :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1141,7 +1227,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example, pprint
@@ -1177,8 +1264,9 @@ class Tree(object):
         r"""
         Tests if a node is the root node (node with no ancestors)
 
-        :param  name: Node name
-        :type   name: :ref:`NodeName`
+        :param name: Node name
+        :type  name: :ref:`NodeName`
+
         :rtype: boolean
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1207,9 +1295,10 @@ class Tree(object):
         r"""
         Tests if a node is in the tree
 
-        :param  name: Node name to search for
-        :type   name: :ref:`NodeName`
-        :rtype  data: boolean
+        :param name: Node name to search for
+        :type  name: :ref:`NodeName`
+
+        :rtype: boolean
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for putil.tree.Tree.in_tree
@@ -1233,8 +1322,9 @@ class Tree(object):
         r"""
         Tests if a node is a leaf node (node with no children)
 
-        :param  name: Node name
-        :type   name: :ref:`NodeName`
+        :param name: Node name
+        :type  name: :ref:`NodeName`
+
         :rtype: boolean
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
@@ -1264,8 +1354,8 @@ class Tree(object):
         Makes a sub-node the root node of the tree. All nodes not belonging to
         the sub-tree are deleted
 
-        :param  name: New root node name
-        :type   name: :ref:`NodeName`
+        :param name: New root node name
+        :type  name: :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -1278,7 +1368,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example
@@ -1321,8 +1412,8 @@ class Tree(object):
         r"""
         Prints node information (parent, children and data)
 
-        :param  name: Node name
-        :type   name: :ref:`NodeName`
+        :param name: Node name
+        :type  name: :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -1335,7 +1426,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example
@@ -1353,7 +1445,6 @@ class Tree(object):
             Parent: root
             Children: leaf1, leaf2
             Data: [5, 7]
-
         """
         self._exh.add_exception(
             exname='illegal_name',
@@ -1373,11 +1464,16 @@ class Tree(object):
         data = (node['data'][0]
                if node['data'] and (len(node['data']) == 1) else
                node['data'])
-        return 'Name: {0}\nParent: {1}\nChildren: {2}\nData: {3}'.format(
-            name,
-            node['parent'] if node['parent'] else None,
-            ', '.join(children) if children else None,
-            data if data else None
+        return (
+            'Name: {node_name}\n'
+            'Parent: {parent_name}\n'
+            'Children: {children_list}\n'
+            'Data: {node_data}'.format(
+                node_name=name,
+                parent_name=node['parent'] if node['parent'] else None,
+                children_list=', '.join(children) if children else None,
+                node_data=data if data else None
+            )
         )
 
     def rename_node(self, name, new_name):
@@ -1386,10 +1482,10 @@ class Tree(object):
         than one hierarchy level after using
         :py:meth:`putil.tree.Tree.make_root`. In this instance the root node
         *can* be renamed as long as the new root name has the same or less
-        hierarchy levels as the existing root name.
+        hierarchy levels as the existing root name
 
-        :param  name: Node name to rename
-        :type   name: :ref:`NodeName`
+        :param name: Node name to rename
+        :type  name: :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -1410,7 +1506,8 @@ class Tree(object):
 
         .. [[[end]]]
 
-        Using the same example tree created in :py:meth:`putil.tree.Tree.add_nodes`::
+        Using the same example tree created in
+        :py:meth:`putil.tree.Tree.add_nodes`::
 
             >>> from __future__ import print_function
             >>> import docs.support.tree_example
@@ -1495,8 +1592,8 @@ class Tree(object):
         r"""
         Searches tree for all nodes with a specific name
 
-        :param  name: Node name to search for
-        :type   name: :ref:`NodeName`
+        :param name: Node name to search for
+        :type  name: :ref:`NodeName`
 
         .. [[[cog cog.out(exobj_tree.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
@@ -1512,10 +1609,10 @@ class Tree(object):
             >>> import pprint, putil.tree
             >>> tobj = putil.tree.Tree('/')
             >>> tobj.add_nodes([
-            ...     {'name':'root', 'data':list()},
+            ...     {'name':'root', 'data':[]},
             ...     {'name':'root/anode', 'data':7},
-            ...     {'name':'root/bnode', 'data':list()},
-            ...     {'name':'root/cnode', 'data':list()},
+            ...     {'name':'root/bnode', 'data':[]},
+            ...     {'name':'root/cnode', 'data':[]},
             ...     {'name':'root/bnode/anode', 'data':['a', 'b', 'c']},
             ...     {'name':'root/cnode/anode/leaf', 'data':True}
             ... ])
@@ -1559,19 +1656,19 @@ class Tree(object):
     :rtype: string
     """
 
+    root_name = property(_get_root_name, doc='Tree root node name')
+    """
+    Gets the tree root node name, :code:`None` if the
+    :py:class:`putil.tree.Tree` object has no nodes
+
+    :rtype: :ref:`NodeName` or None
+    """
+
     root_node = property(_get_root_node, doc='Tree root node')
     """
     Gets the tree root node structure or :code:`None`
     if :py:class:`putil.tree.Tree` object has no nodes. See
-    :py:meth:`putil.tree.Tree.get_node` for details about returned dictionary.
+    :py:meth:`putil.tree.Tree.get_node` for details about returned dictionary
 
     :rtype: dictionary or None
-    """
-
-    root_name = property(_get_root_name, doc='Tree root node name')
-    """
-    Gets the tree root node name, :code:`None` if the
-    :py:class:`putil.tree.Tree` object has no nodes.
-
-    :rtype: :ref:`NodeName` or None
     """

@@ -10,115 +10,56 @@ import putil.test
 
 
 ###
-# Contracts tests
+# Test classes
 ###
 class TestContracts(object):
+    """ Test for ccontract sub-module """
     def test_real_num_contract(self):
         """ Tests for RealNumber pseudo-type """
-        putil.test.assert_exception(
-            putil.plot.real_num,
-            {'obj':'a'},
-            ValueError,
-            ('[START CONTRACT MSG: real_num]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.real_num,
-            {'obj':[1, 2, 3]},
-            ValueError,
-            ('[START CONTRACT MSG: real_num]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.real_num,
-            {'obj':False},
-            ValueError,
-            ('[START CONTRACT MSG: real_num]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.plot.real_num(1)
-        putil.plot.real_num(2.0)
+        items = ['a', [1, 2, 3], False]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.real_num,
+                {'obj':'a'},
+                ValueError,
+                ('[START CONTRACT MSG: real_num]Argument `*[argument_name]*` '
+                 'is not valid[STOP CONTRACT MSG]')
+            )
+        items = [-1, 1, 2.0]
+        for item in items:
+            putil.plot.real_num(item)
 
     def test_positive_real_num_contract(self):
         """ Tests for PositiveRealNumber pseudo-type """
-        putil.test.assert_exception(
-            putil.plot.positive_real_num,
-            {'obj':'a'},
-            ValueError,
-            ('[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*`'
-             ' is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.positive_real_num,
-            {'obj':[1, 2, 3]},
-            ValueError,
-            ('[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*`'
-             ' is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.positive_real_num,
-            {'obj':False},
-            ValueError,
-            ('[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*`'
-             ' is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.positive_real_num,
-            {'obj':-1},
-            ValueError,
-            ('[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*`'
-             ' is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.positive_real_num,
-            {'obj':-2.0},
-            ValueError,
-            ('[START CONTRACT MSG: positive_real_num]Argument `*[argument_name]*`'
-             ' is not valid[STOP CONTRACT MSG]')
-        )
-        putil.plot.positive_real_num(1)
-        putil.plot.positive_real_num(2.0)
+        items = ['a', [1, 2, 3], False, -1, -2.0]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.positive_real_num,
+                {'obj':'a'},
+                ValueError,
+                (
+                    '[START CONTRACT MSG: positive_real_num]Argument '
+                    '`*[argument_name]*` is not valid[STOP CONTRACT MSG]'
+                )
+            )
+        items = [1, 2.0]
+        for item in items:
+            putil.plot.positive_real_num(item)
 
     def test_offset_range_contract(self):
         """ Tests for PositiveRealNumber pseudo-type """
-        putil.test.assert_exception(
-            putil.plot.offset_range,
-            {'obj':'a'},
-            ValueError,
-            ('[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.offset_range,
-            {'obj':[1, 2, 3]},
-            ValueError,
-            ('[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.offset_range,
-            {'obj':False},
-            ValueError,
-            ('[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.offset_range,
-            {'obj':-0.1},
-            ValueError,
-            ('[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.offset_range,
-            {'obj':-1.1},
-            ValueError,
-            ('[START CONTRACT MSG: offset_range]Argument `*[argument_name]*` '
-             'is not valid[STOP CONTRACT MSG]')
-        )
-        putil.plot.offset_range(0)
-        putil.plot.offset_range(0.5)
-        putil.plot.offset_range(1)
+        items = ['a', [1, 2, 3], False, -0.1, -1.1]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.offset_range,
+                {'obj':item},
+                ValueError,
+                ('[START CONTRACT MSG: offset_range]Argument '
+                 '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+            )
+        items = [0, 0.5, 1]
+        for item in items:
+            putil.plot.offset_range(item)
 
     def test_function_contract(self):
         """ Tests for Function pseudo-type """
@@ -131,104 +72,62 @@ class TestContracts(object):
             ('[START CONTRACT MSG: function]Argument `*[argument_name]*` '
              'is not valid[STOP CONTRACT MSG]')
         )
-        putil.plot.function(func1)
-        putil.plot.function(None)
+        items = [None, func1]
+        for item in items:
+            putil.plot.function(item)
 
     def test_real_numpy_vector_contract(self):
         """ Tests for RealNumpyVector pseudo-type """
-        putil.test.assert_exception(
-            putil.plot.real_numpy_vector,
-            {'obj':'a'},
-            ValueError,
-            ('[START CONTRACT MSG: real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.real_numpy_vector,
-            {'obj':[1, 2, 3]},
-            ValueError,
-            ('[START CONTRACT MSG: real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.real_numpy_vector,
-            {'obj':numpy.array([])},
-            ValueError,
-            ('[START CONTRACT MSG: real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.real_numpy_vector,
-            {'obj':numpy.array([[1, 2, 3], [4, 5, 6]])},
-            ValueError,
-            ('[START CONTRACT MSG: real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.real_numpy_vector,
-            {'obj':numpy.array(['a', 'b'])},
-            ValueError,
-            ('[START CONTRACT MSG: real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.plot.real_numpy_vector(numpy.array([1, 2, 3]))
-        putil.plot.real_numpy_vector(numpy.array([10.0, 8.0, 2.0]))
-        putil.plot.real_numpy_vector(numpy.array([10.0]))
+        items = [
+            'a',
+            [1, 2, 3],
+            numpy.array([]),
+            numpy.array([[1, 2, 3], [4, 5, 6]]),
+            numpy.array(['a', 'b'])
+        ]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.real_numpy_vector,
+                {'obj':item},
+                ValueError,
+                ('[START CONTRACT MSG: real_numpy_vector]Argument '
+                 '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+            )
+        items = [
+            numpy.array([1, 2, 3]),
+            numpy.array([10.0, 8.0, 2.0]),
+            numpy.array([10.0])
+        ]
+        for item in items:
+            putil.plot.real_numpy_vector(item)
 
     def test_increasing_real_numpy_vector_contract(self):
         """ Tests for IncreasingRealNumpyVector pseudo-type """
-        putil.test.assert_exception(
-            putil.plot.increasing_real_numpy_vector,
-            {'obj':'a'},
-            ValueError,
-            ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.increasing_real_numpy_vector,
-            {'obj':[1, 2, 3]},
-            ValueError,
-            ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.increasing_real_numpy_vector,
-            {'obj':numpy.array([])},
-            ValueError,
-            ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.increasing_real_numpy_vector,
-            {'obj':numpy.array([[1, 2, 3], [4, 5, 6]])},
-            ValueError,
-            ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.increasing_real_numpy_vector,
-            {'obj':numpy.array(['a', 'b'])},
-            ValueError,
-            ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.increasing_real_numpy_vector,
-            {'obj':numpy.array([1, 0, -3])},
-            ValueError,
-            ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.test.assert_exception(
-            putil.plot.increasing_real_numpy_vector,
-            {'obj':numpy.array([10.0, 8.0, 2.0])},
-            ValueError,
-            ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
-             '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
-        )
-        putil.plot.increasing_real_numpy_vector(numpy.array([1, 2, 3]))
-        putil.plot.increasing_real_numpy_vector(numpy.array([10.0, 12.1, 12.5]))
-        putil.plot.increasing_real_numpy_vector(numpy.array([10.0]))
+        items = [
+            'a',
+            [1, 2, 3],
+            numpy.array([]),
+            numpy.array([[1, 2, 3], [4, 5, 6]]),
+            numpy.array(['a', 'b']),
+            numpy.array([1, 0, -3]),
+            numpy.array([10.0, 8.0, 2.0])
+        ]
+
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.increasing_real_numpy_vector,
+                {'obj':item},
+                ValueError,
+                ('[START CONTRACT MSG: increasing_real_numpy_vector]Argument '
+                 '`*[argument_name]*` is not valid[STOP CONTRACT MSG]')
+            )
+        items = [
+            numpy.array([1, 2, 3]),
+            numpy.array([10.0, 12.1, 12.5]),
+            numpy.array([10.0])
+        ]
+        for item in items:
+            putil.plot.increasing_real_numpy_vector(item)
 
     def test_interpolation_option_contract(self):
         """ Tests for InterpolationOption pseudo-type """
@@ -248,7 +147,8 @@ class TestContracts(object):
              "'LINREG'] (case insensitive)[STOP CONTRACT MSG]")
         )
         putil.plot.interpolation_option(None)
-        for item in ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']:
+        items = ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
+        for item in items:
             putil.plot.interpolation_option(item)
             putil.plot.interpolation_option(item.lower())
 
@@ -270,7 +170,8 @@ class TestContracts(object):
              "':'][STOP CONTRACT MSG]")
         )
         putil.plot.line_style_option(None)
-        for item in ['-', '--', '-.', ':']:
+        items = ['-', '--', '-.', ':']
+        for item in items:
             putil.plot.line_style_option(item)
 
     def test_color_space_option_contract(self):
@@ -292,19 +193,24 @@ class TestContracts(object):
              "'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', "
              "'YlOrBr' or 'YlOrRd' (case insensitive)[STOP CONTRACT MSG]")
         )
-        for item in [
-                'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens',
-                'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd',
-                'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr',
-                'YlOrRd']:
+        items = [
+            'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens',
+            'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd',
+            'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr',
+            'YlOrRd'
+        ]
+        for item in items:
             putil.plot.color_space_option(item)
 
     def test_legend_position_validation(self):
-        """ Tests for _legend_position_validation() pseudo-type """
-        assert putil.plot.panel._legend_position_validation(5)
-        assert putil.plot.panel._legend_position_validation('x')
-        for item in [
-                None, 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT',
-                'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',
-                'LOWER CENTER', 'UPPER CENTER', 'CENTER']:
+        """ Tests _legend_position_validation() function behavior """
+        items = [5, 'x']
+        for item in items:
+            assert putil.plot.panel._legend_position_validation(item)
+        items = [
+            None, 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT',
+            'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',
+            'LOWER CENTER', 'UPPER CENTER', 'CENTER'
+        ]
+        for item in items:
             assert not putil.plot.panel._legend_position_validation(item)

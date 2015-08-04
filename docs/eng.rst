@@ -28,7 +28,7 @@ This module provides engineering-related functions including:
 		>>> putil.eng.peng_mant(x)
 		1.35
 		>>> putil.eng.peng_power(x)
-		('k', 1000.0)
+		EngPower(suffix='k', exp=1000.0)
 		>>> putil.eng.peng_suffix(x)
 		'k'
 
@@ -39,7 +39,7 @@ This module provides engineering-related functions including:
 		>>> from __future__ import print_function
 		>>> import putil.eng
 		>>> header = 'Vector: '
-		>>> data = [1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9]
+		>>> data = [1e-3, 20e-6, 30e+6, 4e-12, 5.25e3, -6e-9, 70, 8, 9]
 		>>> print(
 		...     header+putil.eng.pprint_vector(
 		...         data,
@@ -50,9 +50,9 @@ This module provides engineering-related functions including:
 		...         indent=len(header)
 		...     )
 		... )
-		Vector: [    1.0m,   20.0u,  300.0M,
+		Vector: [    1.0m,   20.0u,   30.0M,
 		                     ...
-		           700.0 ,    8.0 ,    9.0  ]
+		            70.0 ,    8.0 ,    9.0  ]
 
 * Formatting numbers represented in scientific notation with a greater
   degree of control and options than standard Python string formatting.
@@ -68,6 +68,13 @@ This module provides engineering-related functions including:
 		...     sign_always=True
 		... )
 		'+1.0E+02'
+
+************
+Named tuples
+************
+
+.. autofunction:: putil.eng.ENGPOWER
+.. autofunction:: putil.eng.NUMCOMP
 
 *********
 Functions

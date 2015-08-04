@@ -21,9 +21,9 @@ def trace_module(no_print=True):
             exclude=['_pytest', 'execnet', 'putil.eng'],
             file_name=pickle_file_name
     ) as exdoc_obj:
-        if pytest.main('-x {0}-k TestCsvSource {1}'.format(
-                '{0} '.format(noption) if noption else '',
-                os.path.realpath(os.path.join(
+        if pytest.main('-q -x {noption}-m csvsource {file}'.format(
+                noption='{} '.format(noption) if noption else '',
+                file=os.path.realpath(os.path.join(
                     os.path.dirname(__file__),
                     '..',
                     '..',
@@ -39,7 +39,7 @@ def trace_module(no_print=True):
         callable_names = (
             '__init__',
             'file_name',
-            'dfilter',
+            'rfilter',
             'indep_col_label',
             'dep_col_label',
             'indep_min',

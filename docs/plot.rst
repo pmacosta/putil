@@ -41,15 +41,15 @@ and minimum/maximum independent variable range bounding. The
 data from a comma-separated values (CSV) file.  Other data sources can be
 programmed by inheriting from the :py:class:`putil.plot.functions.DataSource`
 abstract base class (ABC). The custom data source needs to implement the
-following methods: :code:`__str__` magic method, :code:`_set_indep_var` and
-:code:`_set_dep_var` which set the contents of the independent variable (an
-increasing real Numpy vector) and the dependent variable (a real Numpy vector)
-of the source, respectively.
+following methods: :code:`__str__`, :code:`_set_indep_var` and
+:code:`_set_dep_var`. The latter two methods set the contents of the
+independent variable (an increasing real Numpy vector) and the dependent
+variable (a real Numpy vector) of the source, respectively.
 
 .. figure:: ./support/Class_hierarchy_example.png
    :scale: 100%
 
-**Figure 1:** Example diagram of the class hierarchy that composes a figure. In
+**Figure 1:** Example diagram of the class hierarchy of a figure. In
 this particular example the figure consists of 3 panels. Panel 1 has a
 series whose data comes from a basic source, panel 2 has three series, two
 of which come from comma-separated values (CSV) files and one that comes
@@ -118,31 +118,32 @@ Classes
 *******
 
  .. autoclass:: putil.plot.functions.DataSource
-	:members: _set_indep_var, _set_dep_var, __str__
+	:members: __str__, _set_indep_var, _set_dep_var
 	:show-inheritance:
  .. autoclass:: putil.plot.BasicSource
-	:members: dep_var, indep_max, indep_min, indep_var, __str__
+	:members: __str__, dep_var, indep_max, indep_min, indep_var
 	:show-inheritance:
  .. autoclass:: putil.plot.CsvSource
-	:members: dep_col_label, dep_var, dfilter, fname, fproc, fproc_eargs,
-	          indep_col_label, indep_max, indep_min, indep_var, __str__
+	:members: __str__, dep_col_label, dep_var, fname, fproc, fproc_eargs,
+	          indep_col_label, indep_max, indep_min, indep_var, rfilter
 	:show-inheritance:
  .. autoclass:: putil.plot.Series
-	:members: color, data_source, interp, label, line_style, marker,
-              secondary_axis, __str__
+	:members: __str__, color, data_source, interp, label, line_style,
+                  marker, secondary_axis
 	:show-inheritance:
  .. autoclass:: putil.plot.Panel
 	:members: display_indep_axis, legend_props, log_dep_axis,
 	          primary_axis_label, primary_axis_scale, primary_axis_ticks,
                   primary_axis_units, secondary_axis_label,
-                  secondary_axis_scale, secondary_axis_ticks, secondary_axis_units,
-		  series, __iter__, __nonzero__, __str__
+                  secondary_axis_scale, secondary_axis_ticks,
+                  secondary_axis_units, series, __bool__, __iter__,
+                  __nonzero__, __str__
 	:show-inheritance:
  .. autoclass:: putil.plot.Figure
 	:members: axes_list, fig, fig_height, fig_width,
 	          indep_axis_scale, indep_axis_ticks, indep_var_label,
                   indep_var_units, log_indep_axis, panels, save, show, title,
-                  __iter__, __nonzero__, __str__
+                  __bool__, __iter__, __nonzero__, __str__
 	:show-inheritance:
 
 .. .. automodule:: putil.plot

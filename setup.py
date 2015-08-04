@@ -1,7 +1,7 @@
 ﻿# setup.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0904,W0201,E1111
+# pylint: disable=C0111,E1111,R0904,W0201
 
 # Taken in large part from
 # http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
@@ -107,7 +107,11 @@ setup(
     ),
     include_package_data=True,
     long_description=LONG_DESCRIPTION,
-    packages=[PKG_NAME, '{pkg_name}.plot'.format(pkg_name=PKG_NAME)],
+    packages=[
+        PKG_NAME,
+        '{pkg_name}.plot'.format(pkg_name=PKG_NAME),
+        '{pkg_name}.pcsv'.format(pkg_name=PKG_NAME)
+    ],
     data_files=[
         (
             SHARE_DIR,
@@ -161,6 +165,10 @@ setup(
         (
             os.path.join(TESTS_DIR, 'plot'),
             glob.glob(os.path.join(PKG_DIR, 'tests', 'plot', '*.py'))
+        ),
+        (
+            os.path.join(TESTS_DIR, 'pcsv'),
+            glob.glob(os.path.join(PKG_DIR, 'tests', 'pcsv', '*.py'))
         ),
         (
             os.path.join(TESTS_DIR, 'support'),

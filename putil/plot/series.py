@@ -117,33 +117,42 @@ class Series(object):
     r"""
     Specifies a series within a panel
 
-    :param  data_source:    data source object
-    :type   data_source:    :py:class:`putil.plot.BasicSource` *object or*
-     :py:class:`putil.plot.CsvSource` *object or others conforming to the data
-     source specification*
-    :param  label:          series label, to be used in the panel legend
-    :type   label:          string
-    :param  color:          series color. All `Matplotlib colors
-     <http://matplotlib.org/api/colors_api.html>`_ are supported.
-    :type   color:          polymorphic
-    :param  marker:         marker type. All `Matplotlib marker types
-     <http://matplotlib.org/api/markers_api.html>`_ are supported. None
-     indicates no marker.
-    :type   marker:         string or None
-    :param  interp:         interpolation option, one of None (no
-     interpolation) 'STRAIGHT' (straight line connects data points),
-     'STEP' (horizontal segments between data points), 'CUBIC'
-     (cubic interpolation between data points) or 'LINREG' (linear
-     regression based on data points). The interpolation option is case
-     insensitive.
-    :type   interp:         :ref:`InterpolationOption`
-    :param  line_style:     line style.   All `Matplotlib line styles
-     <http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D.
-     set_linestyle>`_ are supported. None indicates no line.
-    :type   line_style:     :ref:`LineStyleOption`
-    :param  secondary_axis: Flag that indicates whether the series belongs to
-     the panel primary axis (False) or secondary axis (True)
-    :type   secondary_axis: boolean
+    :param data_source: Data source object
+    :type  data_source: :py:class:`putil.plot.BasicSource`,
+                        :py:class:`putil.plot.CsvSource` *or others
+                        conforming to the data source specification*
+
+    :param label: Series label, to be used in the panel legend
+    :type  label: string
+
+    :param color: Series color. All `Matplotlib colors
+                  <http://matplotlib.org/api/colors_api.html>`_
+                  are supported
+    :type  color: polymorphic
+
+    :param marker: Marker type. All `Matplotlib marker types
+                   <http://matplotlib.org/api/markers_api.html>`_
+                   are supported. None indicates no marker
+    :type  marker: string or None
+
+    :param interp: Interpolation option (case insensitive), one of None (no
+                   interpolation) 'STRAIGHT' (straight line connects data
+                   points), 'STEP' (horizontal segments between data points),
+                   'CUBIC' (cubic interpolation between data points) or
+                   'LINREG' (linear regression based on data points). The
+                   interpolation option is case insensitive
+    :type  interp: :ref:`InterpolationOption` *or None*
+
+    :param line_style: Line style. All `Matplotlib line styles
+                       <http://matplotlib.org/api/artist_api.html#
+                       matplotlib.lines.Line2D.set_linestyle>`_ are supported.
+                       None indicates no line
+    :type  line_style: :ref:`LineStyleOption` *or None*
+
+    :param secondary_axis: Flag that indicates whether the series belongs to
+                           the panel primary axis (False) or secondary axis
+                           (True)
+    :type  secondary_axis: boolean
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -155,8 +164,8 @@ class Series(object):
      * RuntimeError (Argument \`data_source\` does not have an \`dep_var\`
        attribute)
 
-     * RuntimeError (Argument \`data_source\` does not have an \`indep_var\`
-       attribute)
+     * RuntimeError (Argument \`data_source\` does not have an
+       \`indep_var\` attribute)
 
      * RuntimeError (Argument \`data_source\` is not fully specified)
 
@@ -178,10 +187,11 @@ class Series(object):
      * ValueError (Argument \`line_style\` is not one of ['-', '--', '-.',
        ':'])
 
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the
+       same number of elements)
 
-     * ValueError (At least 4 data points are needed for CUBIC interpolation)
+     * ValueError (At least 4 data points are needed for CUBIC
+       interpolation)
 
     .. [[[end]]]
     """
@@ -195,15 +205,20 @@ class Series(object):
         self._ref_markeredgewidth = self._ref_markersize*(5.0/14.0)
         self._ref_markerfacecolor = 'w'
         # Private attributes
-        self._scaling_factor_indep_var, self._scaling_factor_dep_var = 1, 1
+        self._scaling_factor_indep_var = 1
+        self._scaling_factor_dep_var = 1
         self._marker_spec = None
         self._linestyle_spec = None
         self._linewidth_spec = None
         # Public attributes
-        self.scaled_indep_var, self.scaled_dep_var = None, None
-        self.interp_indep_var, self.interp_dep_var = None, None
-        self.indep_var, self.dep_var = None, None
-        self.scaled_interp_indep_var, self.scaled_interp_dep_var = None, None
+        self.scaled_indep_var = None
+        self.scaled_dep_var = None
+        self.interp_indep_var = None
+        self.interp_dep_var = None
+        self.indep_var = None
+        self.dep_var = None
+        self.scaled_interp_indep_var = None
+        self.scaled_interp_dep_var = None
         self._data_source = None
         self._label = None
         self._color = 'k'
@@ -373,19 +388,22 @@ class Series(object):
             condition=not self._validate_marker(marker)
         )
         self._marker = marker
-        self._marker_spec = (self.marker
-                            if self.marker not in ["None", None, ' ', ''] else
-                            '')
+        self._marker_spec = (
+            self.marker
+            if self.marker not in ["None", None, ' ', ''] else
+            ''
+        )
 
     def _get_interp(self):
         return self._interp
 
     @putil.pcontracts.contract(interp='interpolation_option')
     def _set_interp(self, interp):
-        self._interp = (interp.upper().strip()
-                        if isinstance(interp, str) else
-                        interp)
-        #self._check_series_is_plottable()
+        self._interp = (
+            interp.upper().strip()
+            if isinstance(interp, str) else
+            interp
+        )
         self._validate_source_length_cubic_interp()
         self._update_linestyle_spec()
         self._update_linewidth_spec()
@@ -399,7 +417,6 @@ class Series(object):
         self._line_style = line_style
         self._update_linestyle_spec()
         self._update_linewidth_spec()
-        #self._check_series_is_plottable()
 
     def _get_secondary_axis(self):
         return self._secondary_axis
@@ -411,18 +428,18 @@ class Series(object):
     def __str__(self):
         """ Print series object information """
         ret = ''
-        ret += 'Independent variable: {0}\n'.format(
+        ret += 'Independent variable: {}\n'.format(
             putil.eng.pprint_vector(self.indep_var, width=50)
         )
-        ret += 'Dependent variable: {0}\n'.format(
+        ret += 'Dependent variable: {}\n'.format(
             putil.eng.pprint_vector(self.dep_var, width=50)
         )
-        ret += 'Label: {0}\n'.format(self.label)
-        ret += 'Color: {0}\n'.format(self.color)
-        ret += 'Marker: {0}\n'.format(self._print_marker())
-        ret += 'Interpolation: {0}\n'.format(self.interp)
-        ret += 'Line style: {0}\n'.format(self.line_style)
-        ret += 'Secondary axis: {0}'.format(self.secondary_axis)
+        ret += 'Label: {}\n'.format(self.label)
+        ret += 'Color: {}\n'.format(self.color)
+        ret += 'Marker: {}\n'.format(self._print_marker())
+        ret += 'Interpolation: {}\n'.format(self.interp)
+        ret += 'Line style: {}\n'.format(self.line_style)
+        ret += 'Secondary axis: {}'.format(self.secondary_axis)
         return ret
 
     def _check_series_is_plottable(self):
@@ -430,21 +447,12 @@ class Series(object):
         Check that the combination of marker, line style and line width width
         will produce a printable series
         """
-        #self._exh.add_exception(
-        #   exname='invalid_series',
-        #   extype=RuntimeError,
-        #   exmsg='Series options make it not plottable'
-        #)
-        #self._exh.raise_exception_if(
-        #   exname='invalid_series',
-        #   condition=(self._marker_spec == '') and
-        #             ((not self.interp) or
-        #             (not self.line_style))
-        #)
-        return not (((self._marker_spec == '') and
-               ((not self.interp) or
-               (not self.line_style))) or
-               (self.color in [None, '']))
+        return (
+            not (((self._marker_spec == '') and
+            ((not self.interp) or
+            (not self.line_style))) or
+            (self.color in [None, '']))
+        )
 
     def _validate_source_length_cubic_interp(self):
         """
@@ -540,11 +548,9 @@ class Series(object):
                 finterp = interp1d(self.indep_var, self.dep_var, kind='cubic')
                 self.interp_dep_var = finterp(self.interp_indep_var)
             elif self.interp == 'LINREG':
-                (slope,
-                intercept,
-                r_value,
-                p_value,
-                std_err) = linregress(self.indep_var, self.dep_var)
+                slope, intercept, _, _, _ = linregress(
+                    self.indep_var, self.dep_var
+                )
                 self.interp_indep_var = self.indep_var
                 self.interp_dep_var = intercept+(slope*self.indep_var)
         self._scale_indep_var(self._scaling_factor_indep_var)
@@ -553,13 +559,16 @@ class Series(object):
     def _scale_indep_var(self, scaling_factor):
         """ Scale independent variable """
         self._scaling_factor_indep_var = float(scaling_factor)
-        self.scaled_indep_var = (self.indep_var/self._scaling_factor_indep_var
-                                if self.indep_var is not None else
-                                self.scaled_indep_var)
+        self.scaled_indep_var = (
+            self.indep_var/self._scaling_factor_indep_var
+            if self.indep_var is not None else
+            self.scaled_indep_var
+        )
         self.scaled_interp_indep_var = (
             self.interp_indep_var/self._scaling_factor_indep_var
             if self.interp_indep_var is not None else
-            self.scaled_interp_indep_var)
+            self.scaled_interp_indep_var
+        )
 
     def _scale_dep_var(self, scaling_factor):
         """ Scale dependent variable """
@@ -567,25 +576,29 @@ class Series(object):
         self.scaled_dep_var = (
             self.dep_var/self._scaling_factor_dep_var
             if self.dep_var is not None else
-            self.scaled_dep_var)
+            self.scaled_dep_var
+        )
         self.scaled_interp_dep_var = (
             self.interp_dep_var/self._scaling_factor_dep_var
             if self.interp_dep_var is not None else
-            self.scaled_interp_dep_var)
+            self.scaled_interp_dep_var
+        )
 
     def _update_linestyle_spec(self):
         """ Update line style specification to be used in series drawing """
-        self._linestyle_spec = (self.line_style
-                               if (self.line_style is not None) and
-                                  (self.interp is not None) else
-                               '')
+        self._linestyle_spec = (
+            self.line_style
+            if (self.line_style is not None) and (self.interp is not None) else
+            ''
+        )
 
     def _update_linewidth_spec(self):
         """ Update line width specification to be used in series drawing """
-        self._linewidth_spec = (self._ref_linewidth
-                               if (self.line_style is not None) and
-                                  (self.interp is not None) else
-                               0.0)
+        self._linewidth_spec = (
+            self._ref_linewidth
+            if (self.line_style is not None) and (self.interp is not None) else
+            0.0
+        )
 
     def _legend_artist(self, legend_scale=None):
         """ Creates artist (marker -if used- and line style -if used-) """
@@ -606,34 +619,34 @@ class Series(object):
     def _draw_series(self, axarr, log_indep, log_dep):
         """ Draw series """
         if self._check_series_is_plottable():
-            fplot = (axarr.plot
-                    if (not log_indep) and (not log_dep) else
-                    (
-                        axarr.semilogx
-                        if log_indep and (not log_dep) else
-                        (
-                            axarr.loglog
-                            if (log_indep) and (log_dep) else
-                            axarr.semilogy
-                        )
-                    ))
+            fplot = (
+                axarr.plot
+                if (not log_indep) and (not log_dep) else
+                (
+                    axarr.semilogx
+                    if log_indep and (not log_dep) else
+                    (axarr.loglog if log_indep and log_dep else axarr.semilogy)
+                )
+            )
             # Plot line
             if self._linestyle_spec != '':
-                (fplot(
+                fplot(
                     self.scaled_indep_var
-                        if self.interp in ['STRAIGHT', 'STEP'] else
-                        self.scaled_interp_indep_var,
+                    if self.interp in ['STRAIGHT', 'STEP'] else
+                    self.scaled_interp_indep_var,
                     self.scaled_dep_var
-                        if self.interp in ['STRAIGHT', 'STEP'] else
-                        self.scaled_interp_dep_var,
+                    if self.interp in ['STRAIGHT', 'STEP'] else
+                    self.scaled_interp_dep_var,
                     color=self.color,
                     linestyle=self.line_style,
                     linewidth=self._ref_linewidth,
-                    drawstyle=('steps-post'
-                               if self.interp == 'STEP' else
-                               'default'),
+                    drawstyle=(
+                        'steps-post'
+                        if self.interp == 'STEP' else
+                        'default'
+                    ),
                     label=self.label
-                ))
+                )
             # Plot markers
             if self._marker_spec != '':
                 fplot(
@@ -642,9 +655,11 @@ class Series(object):
                     color=self.color,
                     linestyle='',
                     linewidth=0,
-                    drawstyle=('steps-post'
-                               if self.interp == 'STEP' else
-                               'default'),
+                    drawstyle=(
+                        'steps-post'
+                        if self.interp == 'STEP' else
+                        'default'
+                    ),
                     marker=self._marker_spec,
                     markeredgecolor=self.color,
                     markersize=self._ref_markersize,
@@ -663,7 +678,7 @@ class Series(object):
     Gets or sets the series line and marker color. All `Matplotlib colors
     <http://matplotlib.org/api/colors_api.html>`_ are supported
 
-    :type:  polymorphic, default is 'k' (black)
+    :type: polymorphic
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -688,8 +703,8 @@ class Series(object):
     increasing real numbers and a ``dep_var`` attribute that contains a Numpy
     vector of real numbers
 
-    :type:  :py:class:`putil.plot.BasicSource` object,
-     :py:class:`putil.plot.CsvSource` object or other objects conforming to the
+    :type:  :py:class:`putil.plot.BasicSource`,
+     :py:class:`putil.plot.CsvSource` or others conforming to the
      data source specification
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
@@ -701,15 +716,16 @@ class Series(object):
      * RuntimeError (Argument \`data_source\` does not have an \`dep_var\`
        attribute)
 
-     * RuntimeError (Argument \`data_source\` does not have an \`indep_var\`
-       attribute)
+     * RuntimeError (Argument \`data_source\` does not have an
+       \`indep_var\` attribute)
 
      * RuntimeError (Argument \`data_source\` is not fully specified)
 
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the
+       same number of elements)
 
-     * ValueError (At least 4 data points are needed for CUBIC interpolation)
+     * ValueError (At least 4 data points are needed for CUBIC
+       interpolation)
 
     .. [[[end]]]
     """
@@ -727,7 +743,7 @@ class Series(object):
     regression based on data points). The interpolation option is case
     insensitive
 
-    :type:  :ref:`InterpolationOption`, default is 'CUBIC'
+    :type:  :ref:`InterpolationOption` or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -740,7 +756,8 @@ class Series(object):
      * ValueError (Argument \`interp\` is not one of ['STRAIGHT', 'STEP',
        'CUBIC', 'LINREG'] (case insensitive))
 
-     * ValueError (At least 4 data points are needed for CUBIC interpolation)
+     * ValueError (At least 4 data points are needed for CUBIC
+       interpolation)
 
     .. [[[end]]]
     """
@@ -770,9 +787,9 @@ class Series(object):
     r"""
     Sets or gets the line style. All `Matplotlib line styles
     <http://matplotlib.org/api/artist_api.html#matplotlib.lines.
-    Line2D.set_linestyle>`_ are supported. None indicates no line
+    Line2D.set_linestyle>`_ are supported. :code:`None` indicates no line
 
-    :type:  :ref:`LineStyleOption`, default is '-'
+    :type:  :ref:`LineStyleOption`
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -789,16 +806,14 @@ class Series(object):
     """
 
     marker = property(
-        _get_marker,
-        _set_marker,
-        doc='Plot data point markers flag'
+        _get_marker, _set_marker, doc='Plot data point markers flag'
     )
     r"""
     Gets or sets the series marker type. All `Matplotlib marker types
-    <http://matplotlib.org/api/markers_api.html>`_ are supported. None
-    indicates no marker
+    <http://matplotlib.org/api/markers_api.html>`_ are supported.
+    :code:`None` indicates no marker
 
-    :type: string or None, default is 'o' (circle)
+    :type: string or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -819,7 +834,7 @@ class Series(object):
     Sets or gets the secondary axis flag; indicates whether the series belongs
     to the panel primary axis (False) or secondary axis (True)
 
-    :type:  boolean, default is False
+    :type:  boolean
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for

@@ -21,9 +21,9 @@ def trace_module(no_print=True):
             exclude=['_pytest', 'execnet', 'putil.eng'],
             file_name=pickle_file_name
     ) as exdoc_obj:
-        if pytest.main('-x {0}-k TestBasicSource {1}'.format(
-                '{0} '.format(noption) if noption else '',
-                os.path.realpath(os.path.join(
+        if pytest.main('-q -x {noption}-m basicsource {file}'.format(
+                noption='{} '.format(noption) if noption else '',
+                file=os.path.realpath(os.path.join(
                     os.path.dirname(__file__),
                     '..',
                     '..',

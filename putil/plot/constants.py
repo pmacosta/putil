@@ -4,11 +4,28 @@
 # pylint: disable=C0111,C0302,W0105
 
 
-PRECISION = 10
+AXIS_TICKS_FONT_SIZE = 14
 """
-Number of mantissa significant digits used in all computations
+Axis tick labels font size in points
 
-:type:  integer
+:type: integer
+"""
+
+
+AXIS_LABEL_FONT_SIZE = 18
+"""
+Axis labels font size in points
+
+:type: integer
+"""
+
+
+LEGEND_SCALE = 1.5
+"""
+Scale factor for panel legend. The legend font size in points is equal to the
+axis font size divided by the legend scale
+
+:type: number
 """
 
 
@@ -33,7 +50,15 @@ MIN_TICKS = 6
 Minimum number of ticks desired for the independent and dependent axis of
 a panel
 
-:type:  integer
+:type: integer
+"""
+
+
+PRECISION = 10
+"""
+Number of mantissa significant digits used in all computations
+
+:type: integer
 """
 
 
@@ -48,9 +73,9 @@ SUGGESTED_MAX_TICKS+1 ticks if some interpolation curve is above the maximum
 data point of the panel or below the minimum data point of the panel; or the
 panel will have SUGGESTED_MAX_TICKS+2 ticks if some interpolation curve(s)
 is(are) above the maximum data point of the panel and below the minimum data
-point of the panel.
+point of the panel
 
-:type:  integer
+:type: integer
 """
 
 
@@ -58,30 +83,5 @@ TITLE_FONT_SIZE = 24
 """
 Figure title font size in points
 
-:type:  integer
-"""
-
-
-AXIS_LABEL_FONT_SIZE = 18
-"""
-Axis labels font size in points
-
-:type:  integer
-"""
-
-
-AXIS_TICKS_FONT_SIZE = 14
-"""
-Axis tick labels font size in points
-
-:type:  integer
-"""
-
-
-LEGEND_SCALE = 1.5
-"""
-Scale factor for panel legend. The legend font size in points is equal to the
-axis font size divided by the legend scale.
-
-:type:  number
+:type: integer
 """

@@ -1,7 +1,8 @@
 ﻿# exdoc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0903,W0105,W0122,W0212,W0611,W0613
+# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0201,R0903,R0913
+# pylint: disable=W0105,W0122,W0212,W0611,W0613
 
 from __future__ import print_function
 import bisect
@@ -51,19 +52,25 @@ def _format_msg(text, width, indent=0, prefix=''):
 # Context managers
 ###
 class ExDocCxt(object):
-    r""" Context manager to simplify exception tracing; it sets up the
+    r"""
+    Context manager to simplify exception tracing; it sets up the
     tracing environment and returns a :py:class:`putil.exdoc.ExDoc`
     object that can the be used in the documentation string of each
     callable to extract the exceptions documentation with either
     :py:meth:`putil.exdoc.ExDoc.get_sphinx_doc` or
     :py:meth:`putil.exdoc.ExDoc.get_sphinx_autodoc`.
 
-    :param  exclude: Module exclusion list. A particular callable in
-     an otherwise fully qualified name is omitted if it belongs to a
-     module in this list
-    :type   exclude: list
-    :param  file_name: File name to pickle traced exception handler
-    :type   file_name: :ref:`FileName` or None
+    :param exclude: Module exclusion list. A particular callable in
+                    an otherwise fully qualified name is omitted if
+                    it belongs to a module in this list. If None all
+                    callables are included
+    :type  exclude: list of strings or None
+
+    :param file_name: File name to pickle traced exception handler
+                      (useful for debugging purposes). If None all
+                      pickle file is created
+    :type  file_name: :ref:`FileName` or None
+
     :raises:
      * RuntimeError (Argument \`exclude\` is not valid)
 
@@ -86,16 +93,16 @@ class ExDocCxt(object):
          * RuntimeError (Argument \`rjust\` is not valid)
         <BLANKLINE>
         <BLANKLINE>
-
     """
     def __init__(self, exclude=None, _no_print=True, file_name=None):
         # Validate aguments
         if (exclude is not None) and (not isinstance(exclude, list)):
             raise RuntimeError('Argument `exclude` is not valid')
         if (file_name is not None) and (not isinstance(file_name, str)):
+            raise RuntimeError('Argument `file_name` is not valid')
+        if file_name is not None:
             try:
-                if not os.path.exists(file_name):
-                    os.access(file_name, os.W_OK)
+                os.path.exists(file_name)
             except TypeError:
                 raise RuntimeError('Argument `file_name` is not valid')
         if not isinstance(_no_print, bool):
@@ -175,17 +182,23 @@ class ExDoc(object):
     Generates exception documentation with `reStructuredText
     <http://docutils.sourceforge.net/rst.html>`_ mark-up
 
-    :param  exh_obj: Exception handler containing exception information
-     for the callable(s) to be documented
-    :type   exh_obj: :py:class:`putil.exh.ExHandle` object
-    :param  depth: Default hierarchy levels to include in the exceptions
-     per callable (see :py:attr:`putil.exdoc.ExDoc.depth`)
-    :type   depth: non-negative integer
+    :param exh_obj: Exception handler containing exception information
+                    for the callable(s) to be documented
+    :type  exh_obj: :py:class:`putil.exh.ExHandle`
+
+    :param depth: Default hierarchy levels to include in the exceptions
+                  per callable (see :py:attr:`putil.exdoc.ExDoc.depth`).
+                  If None exceptions at all depths are included
+    :type  depth: non-negative integer or None
+
     :param  exclude: Default list of (potentially partial) module and
-     callable names to exclude from exceptions per callable (see
-     :py:attr:`putil.exdoc.ExDoc.exclude`)
-    :type   exclude: list
-    :rtype: :py:class:`putil.exdoc.ExDoc` object
+                     callable names to exclude from exceptions per callable
+                     (see :py:attr:`putil.exdoc.ExDoc.exclude`). If None all
+                     callables are included
+    :type   exclude: list of strings or None
+
+    :rtype: :py:class:`putil.exdoc.ExDoc`
+
     :raises:
      * RuntimeError (Argument \\`depth\\` is not valid)
 
@@ -228,7 +241,7 @@ class ExDoc(object):
         cobj = ExDoc(
             exh_obj=None,
             depth=self.depth,
-            exclude=self.exclude[:] if self.exclude else self.exclude,
+            exclude=self.exclude[:] if self.exclude else None,
             _empty=True,
             _no_print=self._no_print
         )
@@ -255,10 +268,11 @@ class ExDoc(object):
             if str(eobj).startswith('Illegal node name'):
                 raise RuntimeError('Exceptions do not have a common callable')
             raise
-        # Find closest root node to first multi-leaf
-        # branching and make that the root node
+        # Find closest root node to first multi-leaf branching or first
+        # callable with exceptions and make that the root node
         node = self._tobj.root_name
-        while len(self._tobj.get_children(node)) == 1:
+        while ((len(self._tobj.get_children(node)) == 1) and
+              (not self._tobj.get_data(node))):
             node = self._tobj.get_children(node)[0]
         if not self._tobj.is_root(node):    # pragma: no branch
             self._tobj.make_root(node)
@@ -302,10 +316,19 @@ class ExDoc(object):
     def _print_ex_tree(self):
         """ Prints exception tree """
         if not self._no_print:
-            print(str(self._tobj).encode('utf-8'))
+            print(self._tobj)
+
+    def _process_exlist(self, exc, raised):
+        """
+        Remove raised information from exception message and create separate
+        list for it
+        """
+        if (not raised) or (raised and exc.endswith('*')):
+            return exc[:-1] if exc.endswith('*') else exc
+        return None
 
     def _set_depth(self, depth):
-        """ Depth setter """
+        """ depth setter """
         if depth and ((not isinstance(depth, int)) or
            (isinstance(depth, int) and (depth < 0))):
             raise RuntimeError('Argument `depth` is not valid')
@@ -320,25 +343,39 @@ class ExDoc(object):
         self._exclude = exclude
 
     def get_sphinx_autodoc(self, depth=None, exclude=None,
-                           width=72, error=False):
+                           width=72, error=False, raised=False):
         """
         Returns an exception list marked up in `reStructuredText`_
         automatically determining callable name
 
-        :param  depth: Hierarchy levels to include in the exceptions list
-         (overrides default **depth** argument; see
-         :py:attr:`putil.exdoc.ExDoc.depth`)
-        :type   depth: non-negative integer
-        :param  exclude: List of (potentially partial) module and callable
-         names to exclude from exceptions list  (overrides default
-         **exclude** argument, see :py:attr:`putil.exdoc.ExDoc.exclude`)
-        :type   exclude: list
-        :param  width: Maximum width of the lines of text (minimum 40)
-        :type   width: integer
-        :param  error: Flag that indicates whether an exception should be
-         raised if the callable is not found in the callables exceptions
-         database (True) or not (False)
-        :type   error: boolean
+        :param depth: Hierarchy levels to include in the exceptions list
+                      (overrides default **depth** argument; see
+                      :py:attr:`putil.exdoc.ExDoc.depth`). If None exceptions
+                      at all depths are included
+        :type  depth: non-negative integer or None
+
+        :param exclude: List of (potentially partial) module and callable
+                        names to exclude from exceptions list  (overrides
+                        default **exclude** argument, see
+                        :py:attr:`putil.exdoc.ExDoc.exclude`). If None all
+                        callables are included
+        :type  exclude: list of strings or None
+
+        :param width: Maximum width of the lines of text (minimum 40)
+        :type  width: integer
+
+        :param error: Flag that indicates whether an exception should be
+                      raised if the callable is not found in the callables
+                      exceptions database (True) or not (False)
+        :type  error: boolean
+
+        :param raised: Flag that indicates whether only exceptions that
+                       were raised (and presumably caught) should be
+                       documented (True) or all registered exceptions should
+                       be documented (False)
+
+        :type  raised: boolean
+
         :raises:
 
          * RuntimeError (Argument \\`depth\\` is not valid)
@@ -347,13 +384,14 @@ class ExDoc(object):
 
          * RuntimeError (Argument \\`exclude\\` is not valid)
 
+         * RuntimeError (Argument \\`raised\\` is not valid)
+
          * RuntimeError (Argument \\`width\\` is not valid)
 
          * RuntimeError (Callable not found in exception list: *[name]*)
 
          * RuntimeError (Unable to determine callable name)
         """
-        # pylint: disable=R0201
         # This code is cog-specific: cog code file name is the module
         # file name, a plus (+), and then the line number where the
         # cog function is
@@ -373,32 +411,46 @@ class ExDoc(object):
             depth=depth,
             exclude=exclude,
             width=width,
-            error=error
+            error=error,
+            raised=raised
         )
 
     def get_sphinx_doc(self, name, depth=None, exclude=None,
-                       width=72, error=False):
+                       width=72, error=False, raised=False):
         """
         Returns an exception list marked up in `reStructuredText`_
 
-        :param  name: Name of the callable (method, function or class
-         property) to generate exceptions documentation for
-        :type   name: string
-        :param  depth: Hierarchy levels to include in the exceptions
-         list (overrides default **depth** argument; see
-         :py:attr:`putil.exdoc.ExDoc.depth`)
-        :type   depth: non-negative integer
-        :param  exclude: List of (potentially partial) module and
-         callable names to exclude from exceptions list  (overrides
-         default **exclude** argument; see
-         :py:attr:`putil.exdoc.ExDoc.exclude`)
-        :type   exclude: list
-        :param  width: Maximum width of the lines of text (minimum 40)
-        :type   width: integer
-        :param  error: Flag that indicates whether an exception should
-         be raised if the callable is not found in the callables
-         exceptions database (True) or not (False)
-        :type   error: boolean
+        :param name: Name of the callable (method, function or class
+                     property) to generate exceptions documentation for
+        :type  name: string
+
+        :param depth: Hierarchy levels to include in the exceptions
+                      list (overrides default **depth** argument; see
+                      :py:attr:`putil.exdoc.ExDoc.depth`). If None exceptions
+                      at all depths are included
+        :type  depth: non-negative integer or None
+
+        :param exclude: List of (potentially partial) module and
+                        callable names to exclude from exceptions list
+                        (overrides default **exclude** argument; see
+                        :py:attr:`putil.exdoc.ExDoc.exclude`). If None all
+                        callables are included
+        :type  exclude: list of strings or None
+
+        :param width: Maximum width of the lines of text (minimum 40)
+        :type  width: integer
+
+        :param error: Flag that indicates whether an exception should
+                      be raised if the callable is not found in the callables
+                      exceptions database (True) or not (False)
+        :type  error: boolean
+
+        :param raised: Flag that indicates whether only exceptions that
+                       were raised (and presumably caught) should be
+                       documented (True) or all registered exceptions
+                       should be documented (False)
+        :type  raised: boolean
+
         :raises:
          * RuntimeError (Argument \\`depth\\` is not valid)
 
@@ -406,11 +458,13 @@ class ExDoc(object):
 
          * RuntimeError (Argument \\`exclude\\` is not valid)
 
+         * RuntimeError (Argument \\`raised\\` is not valid)
+
          * RuntimeError (Argument \\`width\\` is not valid)
 
          * RuntimeError (Callable not found in exception list: *[name]*)
         """
-        # pylint: disable=R0912,R0913,R0914,R0915
+        # pylint: disable=R0912,R0914,R0915
         if depth and ((not isinstance(depth, int)) or
            (isinstance(depth, int) and (depth < 0))):
             raise RuntimeError('Argument `depth` is not valid')
@@ -423,6 +477,8 @@ class ExDoc(object):
             raise RuntimeError('Argument `width` is not valid')
         if not isinstance(error, bool):
             raise RuntimeError('Argument `error` is not valid')
+        if not isinstance(raised, bool):
+            raise RuntimeError('Argument `raised` is not valid')
         depth = self._depth if depth is None else depth
         exclude = self._exclude if not exclude else exclude
         callable_dict = {}
@@ -453,9 +509,10 @@ class ExDoc(object):
         elif not callable_dict:
             # Callable did not register any exception
             return ''
-        # Create exception table considering depth and exclude arguments
+        # Create exception table using depth, exclude and raised arguments
         sep = self._tobj.node_separator
-        for name_dict in callable_dict.values():
+        dkeys = []
+        for key, name_dict in callable_dict.items():
             exlist = []
             for callable_root in name_dict['instances']:
                 # Find callable tree depth, this is the reference
@@ -465,7 +522,7 @@ class ExDoc(object):
                 # that contains the callable name (to find exceptions in tree)
                 # and the path underneath the callable appearance on the
                 # callable tree, split by tree path separator (to determine if
-                # exception should be added based on # depth and exclusion list
+                # exception should be added based on depth and exclusion list
                 nodes = self._tobj.get_subtree(callable_root)
                 tnodes = [
                     (node, sep.join(node.split(sep)[rlevel:]))
@@ -477,13 +534,28 @@ class ExDoc(object):
                        (rnode.count(sep) <= depth))) and ((not exclude) or
                        (not any([item in rnode for item in exclude])))):
                         for exc in data:
-                            exlist.append(exc)
-            name_dict['exlist'] = list(set(exlist[:]))
+                            msg = self._process_exlist(exc, raised)
+                            if msg is not None:
+                                exlist.append(msg)
+            if exlist:
+                name_dict['exlist'] = list(set(exlist[:]))
+            else:
+                # A callable can have registered exceptions but none of them
+                # might have been raised, in this case the entry should be
+                # deleted from the dictionary
+                dkeys.append(key)
+        for key in dkeys:
+            del callable_dict[key]
+        if not callable_dict:
+            # Callable had registered exceptions but not a single one of those
+            # was raised
+            return ''
         # Generate final output
         template = '.. Auto-generated exceptions documentation for {callable}'
         exoutput = [
             _format_msg(template.format(callable=name), width, prefix='.. ')
         ]
+        exoutput.extend([''])
         desc_dict = {
             'getter':'retrieved',
             'setter':'assigned',
@@ -491,10 +563,9 @@ class ExDoc(object):
         }
         if prop:
             if len(callable_dict) == 1:
-                # Property that raises exceptions on one and only one action,
-                # set, get or delete. The format for this is (with get as an
-                # example action):
-                # If there is only one exception:
+                # For a property that raises exceptions on one and only one
+                # action (set, get or delete) the format when there is only
+                # one exception is (with get as an example action):
                 # :raises: (when retrieved) RuntimeError (Invalid option)
                 # If there are multiple exceptions:
                 # :raises: (when retrieved)
@@ -502,45 +573,27 @@ class ExDoc(object):
                 #    * RuntimeError (Invalid options)
                 #
                 #    * TypeError (Wrong type)
-                #
-                callable_root = list(callable_dict.keys())[0]
+                callable_root = next(iter(callable_dict))
                 action = callable_dict[callable_root]['type']
                 desc = desc_dict[action]
-                exlist = sorted(
-                    list(set(callable_dict[callable_root]['exlist']))
+                exlist = set(callable_dict[callable_root]['exlist'])
+                exlength = len(exlist)
+                indent = 1 if exlength == 1 else 3
+                template = ':raises: (when {action})\n\n'.format(action=desc)
+                prefix = (template.strip()+' ') if exlength == 1 else ' * '
+                fexlist = [
+                    _format_msg(
+                        '{prefix}{name}'.format(prefix=prefix, name=name),
+                        width,
+                        indent
+                    ) for name in sorted(list(exlist))
+                ]
+                exoutput.extend(
+                    [(template if exlength > 1 else '')+'\n\n'.join(fexlist)]
                 )
-                if len(exlist) == 1:
-                    template = ':raises: (when {action}) {exception}'
-                    exoutput.extend(
-                        [
-                            '\n{template}'.format(
-                                template=_format_msg(
-                                    template.format(
-                                        action=desc,
-                                        exception=exlist[0]
-                                    ),
-                                    width,
-                                    indent=1
-                                )
-                            )
-                        ]
-                    )
-                else:
-                    exoutput.extend(
-                        ['\n:raises: (when {action})\n'.format(action=desc)]+
-                        [
-                            ' * {exception}\n'.format(
-                                exception=_format_msg(
-                                    name,
-                                    width,
-                                    3
-                                )
-                            ) for name in exlist
-                        ]
-                    )
             else:
-                # Property that raises exceptions on more than one action,
-                # set, get or delete. The format for this is:
+                # For a property that raises exceptions on more than one
+                # action (set, get or delete) the format is:
                 # :raises:
                 #  * When assigned:
                 #
@@ -551,68 +604,55 @@ class ExDoc(object):
                 #  * When retrieved:
                 #
                 #    * RuntimeError (Null object)
-                #
-                exoutput.append('\n:raises:')
+                exoutput.append(':raises:')
                 for action in ['setter', 'deleter', 'getter']:
                     desc = desc_dict[action]
                     for callable_root in callable_dict:
                         if callable_dict[callable_root]['type'] == action:
-                            exlist = sorted(
-                                list(
-                                    set(callable_dict[callable_root]['exlist'])
-                                )
+                            exlist = set(
+                                callable_dict[callable_root]['exlist']
                             )
+                            fexlist = [
+                                _format_msg(
+                                    '   * {name}'.format(name=name),
+                                    width,
+                                    5
+                                ) for name in sorted(list(exlist))
+                            ]
                             exoutput.extend(
-                                [' * When {action}\n'.format(action=desc)]+
                                 [
-                                    '   * {exception}\n'.format(
-                                        exception=_format_msg(
-                                            name,
-                                            width,
-                                            5
-                                        )
-                                    ) for name in exlist
-                                 ]
+                                    ' * When {action}\n\n'.format(action=desc)+
+                                    '\n\n'.join(fexlist)+'\n'
+                                ]
                             )
         else:
-            exlist = sorted(
-                list(
-                    set(callable_dict[list(callable_dict.keys())[0]]['exlist'])
-                )
+            # For a regular callable (function or method) that raises only
+            # one exception the format is:
+            # :raises: RuntimeError (Invalid options)
+            # For a regular callable (function or method) that raises multiple
+            # exceptions the format is:
+            # :raises:
+            #  * RuntimeError (Invalid options)
+            #
+            #  * RuntimeError (Null object)
+            exlist = set(callable_dict[next(iter(callable_dict))]['exlist'])
+            exlength = len(exlist)
+            indent = 1 if exlength == 1 else 3
+            prefix = ':raises: ' if exlength == 1 else ' * '
+            fexlist = [
+                _format_msg(
+                    '{prefix}{name}'.format(prefix=prefix, name=name),
+                    width,
+                    indent
+                ) for name in sorted(list(exlist))
+            ]
+            exoutput.extend(
+                [(':raises:\n' if exlength > 1 else '')+'\n\n'.join(fexlist)]
             )
-            if len(exlist) == 1:
-                # Regular callable (function or method) that raises only
-                # one exception. The format for this is:
-                # :raises: RuntimeError (Invalid options)
-                template = ':raises: {exception}'
-                exoutput.extend(
-                    [
-                        '\n{line}'.format(
-                            line=_format_msg(
-                                template.format(exception=exlist[0]),
-                                width,
-                                indent=1
-                            )
-                        )
-                    ]
-                )
-            else:
-                # Regular callable (function or method) that raises multiple
-                # exceptions. The format for this is:
-                # :raises:
-                #  * RuntimeError (Invalid options)
-                #
-                #  * RuntimeError (Null object)
-                exoutput.extend(
-                    ['\n:raises:']+
-                    [
-                        ' * {line}\n'.format(line=_format_msg(name, width, 3))
-                        for name in exlist
-                    ]
-                )
         exoutput[-1] = '{line}\n\n'.format(line=exoutput[-1].rstrip())
         return ('\n'.join(exoutput)) if exoutput else ''
 
+    # Managed attributes
     depth = property(_get_depth, _set_depth, doc='Call hierarchy depth')
     """
     Gets or sets the default hierarchy levels to include in the exceptions per
@@ -636,6 +676,7 @@ class ExDoc(object):
     :code:`open_socket()` are going to be included in the documentation.
 
     :rtype: non-negative integer
+
     :raises: RuntimeError (Argument \\`depth\\` is not valid)
     """
 
@@ -653,5 +694,6 @@ class ExDoc(object):
     from the function :code:`putil.eng.peng`.
 
     :rtype: list
+
     :raises: RuntimeError (Argument \\`exclude\\` is not valid)
     """

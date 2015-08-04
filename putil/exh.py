@@ -15,7 +15,6 @@ else:   # pragma: no cover
     import builtins as __builtin__
     from putil.compat3 import _ex_type_str, _get_ex_msg, _get_func_code, _rwtb
 
-
 import putil.misc
 import putil.pinspect
 
@@ -111,8 +110,8 @@ def get_exh_obj():
     """
     Returns the global exception handler
 
-    :rtype: :py:class:`putil.exh.ExHandle` object if global exception handler
-     is set, None otherwise
+    :rtype: :py:class:`putil.exh.ExHandle` if global exception handler
+            is set, None otherwise
     """
     return getattr(__builtin__, '_EXH', None)
 
@@ -122,16 +121,25 @@ def get_or_create_exh_obj(full_cname=False, exclude=None):
     Returns the global exception handler if it is set, otherwise creates a new
     global exception handler and returns it
 
-    :param  full_cname: Flag that indicates whether fully qualified
-     function/method/class property names are obtained for
-     functions/methods/class properties that use the exception manager (True)
-     or not (False).
+    :param full_cname: Flag that indicates whether fully qualified
+                       function/method/class property names are obtained for
+                       functions/methods/class properties that use the
+                       exception manager (True) or not (False).
 
-     There is a performance penalty if the flag is True as the call stack needs
-     to be traced. This argument is only relevant if the global exception
-     handler is not set and a new one is created
-    :type   full_cname: boolean
-    :rtype: :py:class:`putil.exh.ExHandle` object
+                       There is a performance penalty if the flag is True as
+                       the call stack needs to be traced. This argument is
+                       only relevant if the global exception handler is not
+                       set and a new one is created
+    :type  full_cname: boolean
+
+    :param exclude: Module exclusion list. A particular callable in an
+                    otherwise fully qualified name is omitted if it belongs
+                    to a module in this list. If None all callables are
+                    included
+    :type  exclude: list of strings or None
+
+    :rtype: :py:class:`putil.exh.ExHandle`
+
     :raises:
      * RuntimeError (Argument \\`exclude\\` is not valid)
 
@@ -146,8 +154,8 @@ def set_exh_obj(obj):
     """
     Sets the global exception handler
 
-    :param  obj: Exception handler
-    :type   obj: :py:class:`putil.exh.ExHandle` object
+    :param obj: Exception handler
+    :type  obj: :py:class:`putil.exh.ExHandle`
 
     :raises: RuntimeError (Argument \\`obj\\` is not valid)
     """
@@ -159,10 +167,10 @@ def set_exh_obj(obj):
 ###
 # Classes
 ###
-# In the second line of some examples, note that the function
+# In the second line of some examples, the function
 # putil.exh.get_or_create_exh_obj() is not used because if any other
 # module that registers exceptions is executed first in the doctest run,
-# the exception handler is going to be non-empty and the some of the
+# the exception handler is going to be non-empty and then some of the
 # tests in the examples may fail because there is previous history.
 # Setting the global exception handler to a new object makes the example
 # start with a clean global exception handler
@@ -170,19 +178,23 @@ class ExHandle(object):
     """
     Exception handler
 
-    :param  full_cname: Flag that indicates whether fully qualified
-     function/method/class property names are obtained for
-     functions/methods/class properties that use the exception manager (True)
-     or not (False).
+    :param full_cname: Flag that indicates whether fully qualified
+                       function/method/class property names are obtained for
+                       functions/methods/class properties that use the
+                       exception manager (True) or not (False).
 
-     There is a performance penalty if the flag is True as the call stack needs
-     to be traced
-    :type   full_cname: boolean
-    :param  exclude: Module exclusion list (only applicable if **full_cname**
-     is True). The exceptions of a particular callable are omitted if it
-     belongs to a module in this argument
-    :type   exclude: list
-    :rtype: :py:class:`putil.exh.ExHandle` object
+                       There is a performance penalty if the flag is True as
+                       the call stack needs to be traced
+    :type  full_cname: boolean
+
+    :param exclude: Module exclusion list. A particular callable in an
+                    otherwise fully qualified name is omitted if it belongs
+                    to a module in this list. If None all callables are
+                    included
+    :type  exclude: list of strings or None
+
+    :rtype: :py:class:`putil.exh.ExHandle`
+
     :raises:
      * RuntimeError (Argument \\`exclude\\` is not valid)
 
@@ -204,7 +216,6 @@ class ExHandle(object):
         self._exclude = exclude
         self._callables_obj = None
         self._exclude_list = []
-        self._call_path_cache = {}
         if not _copy:
             self._callables_obj = putil.pinspect.Callables()
             self._exclude_list = _build_exclusion_list(exclude)
@@ -213,7 +224,11 @@ class ExHandle(object):
         """
         Merges two objects.
 
-        :raises: RuntimeError (Incompatible exception handlers)
+        :raises:
+         * RuntimeError (Incompatible exception handlers)
+
+         * TypeError (Unsupported operand type(s) for +:
+           putil.exh.ExHandle and *[other_type]*)
 
         For example:
 
@@ -238,8 +253,14 @@ class ExHandle(object):
             False
             >>> obj1 == obj2+obj3
             True
-
         """
+        if not isinstance(other, ExHandle):
+            stype = str(type(other))
+            offset = stype.index("'")+1
+            raise TypeError(
+                'Unsupported operand type(s) for +: putil.exh.ExHandle and '+
+                stype[offset:-2]
+            )
         if ((self._full_cname != other._full_cname) or
            (self._exclude != other._exclude)):
             raise RuntimeError('Incompatible exception handlers')
@@ -259,7 +280,11 @@ class ExHandle(object):
     def __bool__(self): # pragma: no cover
         """
         Returns :code:`False` if exception handler does not have any exception
-        defined, :code:`True` otherwise. For example:
+        defined, :code:`True` otherwise.
+
+        .. note:: This method applies to Python 3.x
+
+        For example:
 
             >>> from __future__ import print_function
             >>> import putil.exh
@@ -292,7 +317,6 @@ class ExHandle(object):
             >>> obj2 = copy.copy(obj1)
             >>> obj1 == obj2
             True
-
         """
         cobj = ExHandle(
             full_cname=self._full_cname,
@@ -318,7 +342,6 @@ class ExHandle(object):
             True
             >>> 5 == obj1
             False
-
         """
         return (
             isinstance(other, ExHandle) and
@@ -326,12 +349,15 @@ class ExHandle(object):
             (self._callables_obj == other._callables_obj)
         )
 
-
     def __iadd__(self, other):
         """
         Merges an object into an existing object.
 
-        :raises: RuntimeError (Incompatible exception handlers)
+        :raises:
+         * RuntimeError (Incompatible exception handlers)
+
+         * TypeError (Unsupported operand type(s) for +:
+           putil.exh.ExHandle and *[other_type]*)
 
         For example:
 
@@ -357,8 +383,14 @@ class ExHandle(object):
             >>> obj2 += obj3
             >>> obj1 == obj2
             True
-
         """
+        if not isinstance(other, ExHandle):
+            stype = str(type(other))
+            offset = stype.index("'")+1
+            raise TypeError(
+                'Unsupported operand type(s) for +: putil.exh.ExHandle and '+
+                stype[offset:-2]
+            )
         if ((self._full_cname != other._full_cname) or
            (self._exclude != other._exclude)):
             raise RuntimeError('Incompatible exception handlers')
@@ -369,7 +401,11 @@ class ExHandle(object):
     def __nonzero__(self):  # pragma: no cover
         """
         Returns :code:`False` if exception handler does not have any exception
-        defined, :code:`True` otherwise. For example:
+        defined, :code:`True` otherwise.
+
+        .. note:: This method applies to Python 2.7
+
+        For example:
 
             >>> from __future__ import print_function
             >>> import putil.exh
@@ -404,7 +440,6 @@ class ExHandle(object):
             Type    : TypeError
             Message : Argument `name` is not valid
             Function: None
-
         """
         ret = []
         for key in sorted(self._ex_dict.keys()):
@@ -415,16 +450,22 @@ class ExHandle(object):
             rstr.append('Name    : {exname}'.format(exname=key))
             rstr.append('Type    : {extype}'.format(extype=extype))
             rstr.append('Message : {exmsg}'.format(exmsg=exmsg))
-            # Callable paths. A given callable that registers an exception
+            # Callable paths: a given callable that registers an exception
             # can be called multiple times following different calling paths,
             # so there could potentially be multiple items in the
             # self._ex_dict[key]['function'] list
             iobj = enumerate(sorted(self._ex_dict[key]['function']))
             for fnum, func_name in iobj:
+                rindex = self._ex_dict[key]['function'].index(func_name)
                 rstr.append(
-                   '{callable_type}{callable_name}'.format(
+                   '{callable_type}{callable_name}{rtext}'.format(
                        callable_type='Function: ' if fnum == 0 else ' '*10,
-                       callable_name=func_name
+                       callable_name=func_name,
+                       rtext=(
+                           ' [raised]'
+                           if self._ex_dict[key]['raised'][rindex] else
+                           ''
+                       )
                    )
                 )
             ret.append('\n'.join(rstr))
@@ -527,64 +568,49 @@ class ExHandle(object):
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
-        # Return cached value, otherwise get full callable path
-        call_path = tuple(call_path)
-        try:
-            return self._call_path_cache[call_path]
-        except KeyError:
-            # Stack is from most recent frame out, fully qualified
-            # callable path is from the first callable in
-            stack.reverse()
-            # Decorator flag vector
-            idv = [item[3] for item in stack]
-            # Fully qualified callable path
-            fob, fin, uobj, _ = stack[-1]
+        # Stack is from most recent frame out, fully qualified
+        # callable path is from first callable to lat callable
+        stack.reverse()
+        # Decorator flag vector
+        idv = [item[3] for item in stack]
+        # Fully qualified callable path construction
+        fob, fin, uobj, _ = stack[-1]
+        self._get_callable_full_name(fob, fin, uobj)
+        ret = [
             self._get_callable_full_name(fob, fin, uobj)
-            ret = [
-                self._get_callable_full_name(fob, fin, uobj)
-                for fob, fin, uobj, _ in stack
-            ]
-            # Eliminate callables that are in a decorator chain
-            iobj = enumerate(zip(ret[1:], ret, idv[1:]))
-            num_del_items = 0
-            for num, (name, prev_name, in_decorator) in iobj:
-                if in_decorator and (name == prev_name):
-                    del ret[num-num_del_items]
-                    num_del_items += 1
-            # Store callable in cache and return
-            ret = self._callables_separator.join(ret)
-            self._call_path_cache[call_path] = (callable_id, ret)
-            return callable_id, ret
+            for fob, fin, uobj, _ in stack
+        ]
+        # Eliminate callables that are in a decorator chain
+        iobj = enumerate(zip(ret[1:], ret, idv[1:]))
+        num_del_items = 0
+        for num, (name, prev_name, in_decorator) in iobj:
+            if in_decorator and (name == prev_name):
+                del ret[num-num_del_items]
+                num_del_items += 1
+        ret = self._callables_separator.join(ret)
+        return callable_id, ret
 
     def _get_callables_separator(self):
         """ Get callable separator character """
         return self._callables_separator
-
-    def _get_exception_by_name(self, name):
-        """ Find exception object """
-        exname = self._get_ex_data(name)['ex_name']
-        if exname not in self._ex_dict:
-            raise ValueError(
-                'Exception name {exname} not found'.format(exname=name)
-            )
-        return self._ex_dict[exname]
 
     def _get_exceptions_db(self):
         """
         Returns a list of dictionaries suitable to be used with
         putil.tree module
         """
-        template = '{extype} ({exmsg})'
+        template = '{extype} ({exmsg}){raised}'
         if not self._full_cname:
             # When full callable name is not used the calling path is
-            # irrelevant and there is no function associated to an
+            # irrelevant and there is no function associated with an
             # exception
             return [
                 {
                     'name':key,
                     'data':template.format(
                         extype=_ex_type_str(self._ex_dict[key]['type']),
-                        exmsg=self._ex_dict[key]['msg']
+                        exmsg=self._ex_dict[key]['msg'],
+                        raised='*' if self._ex_dict[key]['raised'][0] else ''
                     )
                 } for key in self._ex_dict.keys()
             ]
@@ -592,12 +618,15 @@ class ExHandle(object):
         ret = []
         for key in self._ex_dict.keys():
             for func_name in self._ex_dict[key]['function']:
+                rindex = self._ex_dict[key]['function'].index(func_name)
+                raised = self._ex_dict[key]['raised'][rindex]
                 ret.append(
                     {
                         'name':func_name,
                         'data':template.format(
                             extype=_ex_type_str(self._ex_dict[key]['type']),
-                            exmsg=self._ex_dict[key]['msg']
+                            exmsg=self._ex_dict[key]['msg'],
+                            raised='*' if raised else ''
                         )
                     }
                 )
@@ -729,22 +758,26 @@ class ExHandle(object):
         r"""
         Adds an exception to the handler
 
-        :param  exname: Exception name; has to be unique within the namespace,
-         duplicates are eliminated
-        :type   exname: string
-        :param  extype: Exception type; *must* be derived from the `Exception
-         <https://docs.python.org/2/library/exceptions.html#exceptions.Exception>`_
-         class
-        :type   extype: Exception type object, i.e. RuntimeError, TypeError,
-         etc.
-        :param  exmsg: Exception message; it can contain fields to be replaced
-         when the exception is raised via
-         :py:meth:`putil.exh.ExHandle.raise_exception_if`. A field starts with
-         the characters :code:`'\*['` and ends with the characters
-         :code:`']\*'`, the field name follows the same rules as variable names
-         and is between these two sets of characters. For example,
-         :code:`\*[fname]\*` defines the :code:`fname` field
-        :type   exmsg: string
+        :param exname: Exception name; has to be unique within the namespace,
+                       duplicates are eliminated
+        :type  exname: string
+
+        :param extype: Exception type; *must* be derived from the `Exception
+                       <https://docs.python.org/2/library/exceptions.html#
+                       exceptions.Exception>`_ class
+        :type  extype: Exception type object, i.e. RuntimeError, TypeError,
+                       etc.
+
+        :param exmsg: Exception message; it can contain fields to be replaced
+                      when the exception is raised via
+                      :py:meth:`putil.exh.ExHandle.raise_exception_if`.
+                      A field starts with the characters :code:`'\*['` and
+                      ends with the characters :code:`']\*'`, the field name
+                      follows the same rules as variable names and is between
+                      these two sets of characters. For example,
+                      :code:`\*[fname]\*` defines the :code:`fname` field
+        :type  exmsg: string
+
         :raises:
          * RuntimeError (Argument \`exmsg\` is not valid)
 
@@ -770,33 +803,39 @@ class ExHandle(object):
         ex_data = self._get_ex_data(exname)
         entry = self._ex_dict.get(
             ex_data['ex_name'],
-            {'function':[], 'type':extype, 'msg':exmsg}
+            {'function':[], 'type':extype, 'msg':exmsg, 'raised':[]}
         )
         if ex_data['func_name'] not in entry['function']:
             entry['function'].append(ex_data['func_name'])
+            entry['raised'].append(False)
         self._ex_dict[ex_data['ex_name']] = entry
 
     def raise_exception_if(self, exname, condition, edata=None):
         """
         Raises exception conditionally
 
-        :param  exname: Exception name
-        :type   exname: string
+        :param exname: Exception name
+        :type  exname: string
+
         :param condition: Flag that indicates whether the exception is
-         raised *(True)* or not *(False)*
+                          raised *(True)* or not *(False)*
         :type  condition: boolean
+
         :param edata: Replacement values for fields in the exception message
-         (see :py:meth:`putil.exh.ExHandle.add_exception` for how to define
-         fields). Each dictionary entry can only have these two keys:
+                      (see :py:meth:`putil.exh.ExHandle.add_exception` for how
+                      to define fields). Each dictionary entry can only have
+                      these two keys:
 
-         * **field** *(string)* -- Field name
+                      * **field** *(string)* -- Field name
 
-         * **value** *(any)* -- Field value, to be converted into a string with
-           the `format
-           <https://docs.python.org/2/library/stdtypes.html#str.format>`_
-           string method
+                      * **value** *(any)* -- Field value, to be converted into
+                        a string with the `format
+                        <https://docs.python.org/2/library/stdtypes.html#
+                        str.format>`_ string method
 
-        :type  edata: dictionary or iterable of dictionaries
+                      If None no field replacement is done
+        :type  edata: dictionary, iterable of dictionaries or None
+
         :raises:
          * RuntimeError (Argument \\`condition\\` is not valid)
 
@@ -815,8 +854,15 @@ class ExHandle(object):
             raise RuntimeError('Argument `condition` is not valid')
         if not self._validate_edata(edata):
             raise RuntimeError('Argument `edata` is not valid')
-        eobj = self._get_exception_by_name(exname)
+        # Find exception object
+        edict = self._get_ex_data(exname)
+        if edict['ex_name'] not in self._ex_dict:
+            raise ValueError(
+                'Exception name {exname} not found'.format(exname=exname)
+            )
+        eobj = self._ex_dict[edict['ex_name']]
         if condition:
+            eobj['raised'][eobj['function'].index(edict['func_name'])] = True
             self._raise_exception(eobj, edata)
 
     # Managed attributes
@@ -860,9 +906,12 @@ class ExHandle(object):
        :py:meth:`putil.exh.ExHandle.add_exception` (**exname** argument)
 
      * **data** *(string)* -- Text of the form :code:`'[exception_type]
-       ([exception_message])'` where :code:`[exception_type]` and
+       ([exception_message])[raised]'` where :code:`[exception_type]` and
        :code:`[exception_message]` are the exception type and exception
        message, respectively, given when the exception was defined by
        :py:meth:`putil.exh.ExHandle.add_exception` (**extype** and
-       **exmsg** arguments)
+       **exmsg** arguments); and :code:`raised` is an asterisk (:code:`'*'`)
+       when the exception has been raised via
+       :py:meth:`putil.exh.ExHandle.raise_exception_if`, the empty string
+       (:code:`''`) otherwise
     """

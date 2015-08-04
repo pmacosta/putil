@@ -50,7 +50,7 @@ Classes
 *******
 
 .. autoclass:: putil.exh.ExHandle
-	:members: add_exception, callables_db, callables_separator, exceptions_db,
-			  raise_exception_if, __add__, __copy__, __eq__, __iadd__,
-			  __nonzero__, __str__
+	:members: add_exception, callables_db, callables_separator,
+                  exceptions_db, raise_exception_if, __add__, __bool__,
+                  __copy__, __eq__, __iadd__, __nonzero__, __str__
 	:show-inheritance:

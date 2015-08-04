@@ -19,7 +19,7 @@ def write_csv_file(file_handle):
     cwrite(file_handle, '3E-12,-10\n')
     cwrite(file_handle, '4E-12,30\n')
 
-# indep_var is a Numpy vector, in this example  time,
+# indep_var is a Numpy vector, in this example time,
 # in seconds. dep_var is a Numpy vector
 def proc_func1(indep_var, dep_var):
     # Scale time to pico-seconds

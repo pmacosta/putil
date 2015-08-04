@@ -8,7 +8,8 @@ ptypes module
 #############
 
 This module provides several pseudo-type definitions which can be enforced
-and/or validated with custom contracts defined using the pcontracts module
+and/or validated with custom contracts defined using the
+:ref:`pcontracts-module`
 
 ************
 Pseudo-types
@@ -18,32 +19,113 @@ Pseudo-types
 
 ColorSpaceOption
 ----------------
-String representing a Matplotlib color space, one :code:`'binary'`,
-:code:`'Blues'`, :code:`'BuGn'`, :code:`'BuPu'`, :code:`'GnBu'`,
-:code:`'Greens'`, :code:`'Greys'`, :code:`'Oranges'`, :code:`'OrRd'`,
-:code:`'PuBu'`, :code:`'PuBuGn'`, :code:`'PuRd'`, :code:`'Purples'`,
-:code:`'RdPu'`, :code:`'Reds'`, :code:`'YlGn'`, :code:`'YlGnBu'`,
-:code:`'YlOrBr`', :code:`'YlOrRd'` or :code:`None`
+String representing a `Matplotlib <http://matplotlib.org/>`_ color space, one
+:code:`'binary'`, :code:`'Blues'`, :code:`'BuGn'`, :code:`'BuPu'`,
+:code:`'GnBu'`, :code:`'Greens'`, :code:`'Greys'`, :code:`'Oranges'`,
+:code:`'OrRd'`, :code:`'PuBu'`, :code:`'PuBuGn'`, :code:`'PuRd'`,
+:code:`'Purples'`, :code:`'RdPu'`, :code:`'Reds'`, :code:`'YlGn'`,
+:code:`'YlGnBu'`, :code:`'YlOrBr`', :code:`'YlOrRd'` or :code:`None`
+
+.. _CsvColFilter:
+
+CsvColFilter
+------------
+
+String, integer, a list of strings or a list of integers that identify a column
+or columns within a comma-separated values (CSV) file.
+
+Integers identify a column by position (column 0 is the leftmost column)
+whereas strings identify the column by name. Columns can be identified either
+by position or by name when the file has a header (first row of file
+containing column labels) but only by position when the file does not have a
+header.
+
+:code:`None` indicates that no column filtering should be done
+
+.. _CsvColSort:
+
+CsvColSort
+----------
+
+Integer, string, dictionary or list of integers, strings or dictionaries that
+specify the sort direction of a column or columns in a comma-separated values
+(CSV) file.
+
+The sort direction can be either ascending, specified by the string
+:code:`'A'`, or descending, specified by the string :code:`'B'` (case
+insensitive). The default sort direction is ascending.
+
+The column can be specified numerically or with labels depending on whether the
+CSV file was loaded with or without a header.
+
+The full specification is a dictionary (or list of dictionaries if multiple
+columns are to be used for sorting) where the key is the column and the value
+is the sort order, thus valid examples are :code:`{'MyCol':'A'}` and
+:code:`[{'MyCol':'A'}, {3:'d'}]`.
+
+When the default direction suffices it can be omitted; for example in
+:code:`[{'MyCol':'D'}, 3]`, the data is sorted first by MyCol in descending
+order and then by the 4th column (column 0 is the leftmost column in a CSV
+file) in ascending order
 
 .. _CsvDataFilter:
 
 CsvDataFilter
 -------------
 
-The comma-separated values (CSV) data filter is a dictionary whose elements
-are sub-filters with the following structure:
+In its most general form a two-item tuple, where one item is of `CsvColFilter`_
+pseudo-type and the other item is of `CsvRowFilter`_ pseudo-type (the order of
+the items is not mandated, i.e.  the first item could be of pseudo-type
+CsvRowFilter and the second item could be of pseudo-type CsvColFilter or
+vice-versa).
 
-* **column name** *(string)* -- Dictionary key. Column to filter (as it appears
-  in the comma-separated values file header)
+The two-item tuple can be reduced to a one-item tuple when only a row or column
+filter needs to be specified, or simply to an object of either CsvRowFilter
+or CsvColFilter pseudo-type.
+
+For example, all of the following are valid CsvDataFilter objects:
+:code:`('MyCol', {'MyCol':2.5})`, :code:`({'MyCol':2.5}, 'MyCol')` (filter in
+the column labeled MyCol and rows where the column labeled MyCol has the value
+2.5), :code:`('MyCol', )` (filter in column labeled MyCol and all rows) and
+:code:`{'MyCol':2.5}` (filter in all columns and only rows where the column
+labeled MyCol has the values 2.5)
+
+:code:`None`, :code:`(None, )` or :code:`(None, None)` indicate that no row or
+column filtering should be done
+
+.. _CsvFiltered:
+
+CsvFiltered
+-----------
+
+String or a boolean that indicates what type of row and column filtering is to
+be performed in a comma-separated values (CSV) file. If :code:`True`,
+:code:`'B'` or :code:`'b'` it indicates that both row- and column-filtering are
+to be performed; if :code:`False`, :code:`'N'` or :code:`'n'` no filtering is
+to be performed, if :code:`'R'` or :code:`'r'` only row-filtering is to be
+performed, if :code:`'C'` or :code:`'c'` only column-filtering is to be
+performed
+
+.. _CsvRowFilter:
+
+CsvRowFilter
+------------
+
+Dictionary whose elements are sub-filters with the following structure:
+
+* **column identifier** *(CsvColFilter)* -- Dictionary key. Column to filter
+  (as it appears in the comma-separated values file header when a string is
+  given) or column number (when an integer is given, column zero is the
+  leftmost column)
 
 * **value** *(list of strings or numbers, or string or number)* -- Dictionary
   value. Column value to filter if a string or number, column values to filter
   if a list of strings or numbers
 
-If a data filter sub-filter is a column value all rows which contain the
+If a row filter sub-filter is a column value all rows which contain the
 specified value in the specified column are kept for that particular
 individual filter. The overall data set is the intersection of all the data
-sets specified by each individual filter. For example, if the file to be
+sets specified by each individual sub-filter. For example, if the file to be
 processed is:
 
 +------+-----+--------+
@@ -60,7 +142,7 @@ processed is:
 |    3 |   5 |     50 |
 +------+-----+--------+
 
-Then the filter specification ``dfilter = {'Ctrl':2, 'Ref':5}`` would result
+Then the filter specification ``rfilter = {'Ctrl':2, 'Ref':5}`` would result
 in the following filtered data set:
 
 +------+-----+--------+
@@ -69,14 +151,14 @@ in the following filtered data set:
 |    2 |   5 |     40 |
 +------+-----+--------+
 
-However, the filter specification ``dfilter = {'Ctrl':2, 'Ref':3}`` would
+However, the filter specification ``rfilter = {'Ctrl':2, 'Ref':3}`` would
 result in an empty list because the data set specified by the `Ctrl`
-individual filter does not overlap with the data set specified by the `Ref`
-individual filter.
+individual sub-filter does not overlap with the data set specified by the
+`Ref` individual sub-filter.
 
-If a data filter sub-filter is a list, the items of the list represent all
+If a row sub-filter is a list, the items of the list represent all
 the values to be kept for a particular column (strings or numbers). So for
-example ``dfilter = {'Ctrl':[2, 3], 'Ref':5}`` would result in the following
+example ``rfilter = {'Ctrl':[2, 3], 'Ref':5}`` would result in the following
 filtered data set:
 
 +------+-----+--------+
@@ -86,6 +168,8 @@ filtered data set:
 +------+-----+--------+
 |    3 |   5 |     50 |
 +------+-----+--------+
+
+:code:`None` indicates that no row filtering should be done
 
 .. _EngineeringNotationNumber:
 
@@ -149,21 +233,21 @@ A single character string, one  of :code:`'y'`, :code:`'z'`, :code:`'a'`,
 :code:`' '` (space), :code:`'k'`, :code:`'M'`, :code:`'G'`, :code:`'T'`,
 :code:`'P'`, :code:`'E'`, :code:`'Z'` or :code:`'Y'`.
 :ref:`EngineeringNotationNumber` lists the correspondence between
-suffix and floating point exponent.
+suffix and floating point exponent
 
 .. _FileName:
 
 FileName
 --------
 
-Valid file name
+String with a valid file name
 
 .. _FileNameExists:
 
 FileNameExists
 --------------
 
-File name that exists in the file system
+String with a file name that exists in the file system
 
 .. _Function:
 
@@ -177,20 +261,21 @@ IncreasingRealNumpyVector
 -------------------------
 Numpy vector in which all elements are real (integers and/or floats) and
 monotonically increasing (each element is strictly greater than the
-preceeding one)
+preceding one)
 
 .. _InterpolationOption:
 
 InterpolationOption
 -------------------
 String representing an interpolation type, one of :code:`'STRAIGHT'`,
-:code:`'STEP'`, :code:`'CUBIC'`, :code:`'LINREG'` or :code:`None`
+:code:`'STEP'`, :code:`'CUBIC'`, :code:`'LINREG'` (case insensitive)
+or :code:`None`
 
 .. _LineStyleOption:
 
 LineStyleOption
 ---------------
-String representing a Matplotlib line style, one of :code:`'-'`,
+String representing a `Matplotlib`_ line style, one of :code:`'-'`,
 :code:`'--'`, :code:`'-.'`, :code:`':'` or :code:`None`
 
 .. _NodeName:
@@ -198,9 +283,9 @@ String representing a Matplotlib line style, one of :code:`'-'`,
 NodeName
 --------
 
-A tree node name is a string where hierarchy levels are denoted by node
-separator characters (:code:`'.'` by default). Node names cannot contain
-spaces, empty hierarchy levels, start or end with a node separator character.
+String where hierarchy levels are denoted by node separator characters
+(:code:`'.'` by default). Node names cannot contain spaces, empty hierarchy
+levels, start or end with a node separator character.
 
 For this example tree::
 
@@ -211,14 +296,14 @@ For this example tree::
 	└branch2
 
 The node names are ``'root'``, ``'root.branch1'``, ``'root.branch1.leaf1'``,
-``'root.branch1.leaf2'`` and ``'root.branch2'``.
+``'root.branch1.leaf2'`` and ``'root.branch2'``
 
 .. _NodesWithData:
 
 NodesWithData
 -------------
 
-Dictionary or list of dictionaries. Each dictionary must contain exactly two
+Dictionary or list of dictionaries; each dictionary must contain exactly two
 keys:
 
 * **name** (*NodeName*) Node name. See `NodeName`_ pseudo-type specification
@@ -226,7 +311,7 @@ keys:
 * **data** (*any*) node data
 
 The node data should be an empty list to create a node without data, for
-example: :code:`{'name':'a.b.c', 'data':list()}`
+example: :code:`{'name':'a.b.c', 'data':[]}`
 
 .. _NonNegativeInteger:
 
@@ -263,7 +348,11 @@ Contracts
 *********
 
 .. autofunction:: putil.ptypes.color_space_option
+.. autofunction:: putil.ptypes.csv_col_filter
+.. autofunction:: putil.ptypes.csv_col_sort
 .. autofunction:: putil.ptypes.csv_data_filter
+.. autofunction:: putil.ptypes.csv_filtered
+.. autofunction:: putil.ptypes.csv_row_filter
 .. autofunction:: putil.ptypes.engineering_notation_number
 .. autofunction:: putil.ptypes.engineering_notation_suffix
 .. autofunction:: putil.ptypes.non_negative_integer

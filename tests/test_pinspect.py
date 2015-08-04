@@ -305,32 +305,49 @@ class TestCallables(object):
     def test_callables_works(self):
         # pylint: disable=W0621
         import putil.pcsv
+        mname = 'putil.pcsv.csv_file'
+        cname = '{}.CsvFile'.format(mname)
         xobj = putil.pinspect.Callables(
-            [sys.modules['putil.pcsv'].__file__]
+            [sys.modules[mname].__file__]
         )
         ref = list()
         ref.append('Modules:')
-        ref.append('   putil.pcsv')
+        ref.append('   {}'.format(mname))
         ref.append('Classes:')
-        ref.append('   putil.pcsv.CsvFile')
-        ref.append('putil.pcsv._tofloat: func (32-44)')
-        ref.append('putil.pcsv._write_int: func (45-94)')
-        ref.append('putil.pcsv.write: func (95-135)')
-        ref.append('putil.pcsv.CsvFile: class (136-515)')
-        ref.append('putil.pcsv.CsvFile.__init__: meth (170-235)')
-        ref.append('putil.pcsv.CsvFile._core_data: meth (236-247)')
-        ref.append('putil.pcsv.CsvFile._get_dfilter: meth (248-250)')
-        ref.append('putil.pcsv.CsvFile._get_header: meth (251-253)')
-        ref.append('putil.pcsv.CsvFile._in_header: meth (254-271)')
-        ref.append('putil.pcsv.CsvFile._set_dfilter: meth (272-275)')
-        ref.append('putil.pcsv.CsvFile._set_dfilter_int: meth (276-295)')
-        ref.append('putil.pcsv.CsvFile._validate_dfilter: meth (296-306)')
-        ref.append('putil.pcsv.CsvFile.add_dfilter: meth (307-355)')
-        ref.append('putil.pcsv.CsvFile.data: meth (356-394)')
-        ref.append('putil.pcsv.CsvFile.reset_dfilter: meth (395-399)')
-        ref.append('putil.pcsv.CsvFile.write: meth (400-482)')
-        ref.append('putil.pcsv.CsvFile.dfilter: prop (483-506)')
-        ref.append('putil.pcsv.CsvFile.header: prop (507-515)')
+        ref.append('   {}'.format(cname))
+        ref.append('{}._homogenize_data_filter: func (40-62)'.format(mname))
+        ref.append('{}._tofloat: func (63-78)'.format(mname))
+        ref.append('{}: class (79-1006)'.format(cname))
+        ref.append('{}.__init__: meth (127-208)'.format(cname))
+        ref.append('{}.__eq__: meth (209-241)'.format(cname))
+        ref.append('{}.__repr__: meth (242-276)'.format(cname))
+        ref.append('{}.__str__: meth (277-322)'.format(cname))
+        ref.append('{}._format_rfilter: meth (323-339)'.format(cname))
+        ref.append('{}._gen_col_index: meth (340-352)'.format(cname))
+        ref.append('{}._get_cfilter: meth (353-355)'.format(cname))
+        ref.append('{}._get_dfilter: meth (356-358)'.format(cname))
+        ref.append('{}._get_rfilter: meth (359-361)'.format(cname))
+        ref.append('{}._reset_dfilter_int: meth (362-367)'.format(cname))
+        ref.append('{}._in_header: meth (368-420)'.format(cname))
+        ref.append('{}._set_cfilter: meth (421-425)'.format(cname))
+        ref.append('{}._set_dfilter: meth (426-431)'.format(cname))
+        ref.append('{}._set_rfilter: meth (432-436)'.format(cname))
+        ref.append('{}._add_dfilter_int: meth (437-479)'.format(cname))
+        ref.append('{}._apply_filter: meth (480-509)'.format(cname))
+        ref.append('{}._set_has_header: meth (510-513)'.format(cname))
+        ref.append('{}._validate_rfilter: meth (514-559)'.format(cname))
+        ref.append('{}.add_dfilter: meth (560-583)'.format(cname))
+        ref.append('{}.cols: meth (584-603)'.format(cname))
+        ref.append('{}.data: meth (604-625)'.format(cname))
+        ref.append('{}.dsort: meth (626-678)'.format(cname))
+        ref.append('{}.header: meth (679-710)'.format(cname))
+        ref.append('{}.replace: meth (711-805)'.format(cname))
+        ref.append('{}.reset_dfilter: meth (806-823)'.format(cname))
+        ref.append('{}.rows: meth (824-843)'.format(cname))
+        ref.append('{}.write: meth (844-929)'.format(cname))
+        ref.append('{}.cfilter: prop (930-954)'.format(cname))
+        ref.append('{}.dfilter: prop (955-980)'.format(cname))
+        ref.append('{}.rfilter: prop (981-1006)'.format(cname))
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
         if actual_txt != ref_txt:
@@ -430,47 +447,70 @@ class TestCallables(object):
         ref.append('Classes:')
         ref.append('   tests.test_exdoc.MockFCode')
         ref.append('   tests.test_exdoc.MockGetFrame')
-        ref.append('tests.test_exdoc.load_support_module: func (31-45)')
-        ref.append('tests.test_exdoc.trace_error_class: func (46-54)')
-        ref.append('tests.test_exdoc.exdocobj: func (55-88)')
-        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (60-65)')
-        ref.append('tests.test_exdoc.exdocobj_single: func (89-98)')
-        ref.append('tests.test_exdoc.simple_exobj: func (99-113)')
-        ref.append('tests.test_exdoc.simple_exobj.func1: func (104-109)')
-        ref.append('tests.test_exdoc.MockFCode: class (123-128)')
-        ref.append('tests.test_exdoc.MockFCode.__init__: meth (124-128)')
-        ref.append('tests.test_exdoc.MockGetFrame: class (129-133)')
-        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (130-133)')
-        ref.append('tests.test_exdoc.mock_getframe: func (134-137)')
-        ref.append('tests.test_exdoc.test_exdoc_errors: func (138-188)')
-        ref.append('tests.test_exdoc.test_depth_property: func (189-199)')
-        ref.append('tests.test_exdoc.test_exclude_property: func (200-210)')
-        ref.append('tests.test_exdoc.test_build_ex_tree: func (211-316)')
-        ref.append('tests.test_exdoc.test_build_ex_tree.func1: func (218-223)')
+        ref.append('   tests.test_exdoc.TestExDoc')
+        ref.append('   tests.test_exdoc.TestExDocCxt')
+        ref.append('tests.test_exdoc.exdocobj: func (45-78)')
+        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (50-55)')
+        ref.append('tests.test_exdoc.exdocobj_raised: func (79-92)')
+        ref.append('tests.test_exdoc.exdocobj_single: func (93-102)')
+        ref.append('tests.test_exdoc.simple_exobj: func (103-120)')
+        ref.append('tests.test_exdoc.simple_exobj.func1: func (108-113)')
+        ref.append('tests.test_exdoc.mock_getframe: func (121-124)')
+        ref.append('tests.test_exdoc.trace_error_class: func (125-136)')
+        ref.append('tests.test_exdoc.MockFCode: class (137-142)')
+        ref.append('tests.test_exdoc.MockFCode.__init__: meth (138-142)')
+        ref.append('tests.test_exdoc.MockGetFrame: class (143-150)')
+        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (144-150)')
+        ref.append('tests.test_exdoc.TestExDocCxt: class (151-258)')
+        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (153-213)')
         ref.append(
-            'tests.test_exdoc.test_build_ex_tree.mock_add_nodes1: '
-            'func (225-226)'
+            'tests.test_exdoc.TestExDocCxt.test_init.func0: '
+            'func (155-164)'
         )
         ref.append(
-            'tests.test_exdoc.test_build_ex_tree.mock_add_nodes2: '
-            'func (227-228)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple: '
+            'meth (214-258)'
         )
         ref.append(
-            'tests.test_exdoc.test_build_ex_tree.mock_add_nodes3: '
-            'func (229-230)'
-        )
-        ref.append('tests.test_exdoc.test_get_sphinx_doc: func (317-639)')
-        ref.append('tests.test_exdoc.test_get_sphinx_autodoc: func (640-685)')
-        ref.append('tests.test_exdoc.test_copy_works: func (686-700)')
-        ref.append('tests.test_exdoc.test_exdoccxt_errors: func (701-711)')
-        ref.append('tests.test_exdoc.test_exdoccxt_multiple: func (712-750)')
-        ref.append(
-            'tests.test_exdoc.test_exdoccxt_multiple.func1: '
-            'func (714-723)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple.func1: '
+            'func (216-225)'
         )
         ref.append(
-            'tests.test_exdoc.test_exdoccxt_multiple.test_trace: '
-            'func (724-740)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple.test_trace: '
+            'func (226-243)'
+        )
+        ref.append('tests.test_exdoc.TestExDoc: class (259-850)')
+        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (261-310)')
+        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (311-324)')
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree: '
+            'meth (325-432)'
+        )
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree.func1: '
+            'func (332-337)'
+        )
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes1: '
+            'func (339-340)'
+        )
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes2: '
+            'func (341-342)'
+        )
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes3: '
+            'func (343-344)'
+        )
+        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (433-442)')
+        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (443-452)')
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_get_sphinx_autodoc: '
+            'meth (453-480)'
+        )
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: '
+            'meth (481-850)'
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)

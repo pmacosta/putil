@@ -38,15 +38,21 @@ class BasicSource(DataSource):
     convenient way to plot manually-entered data or data coming from
     a source that does not export to a comma-separated values (CSV) file.
 
-    :param  indep_var:          independent variable vector
-    :type   indep_var:          :ref:`IncreasingRealNumpyVector`
-    :param  dep_var:            dependent variable vector
-    :type   dep_var:            :ref:`RealNumpyVector`
-    :param  indep_min:          minimum independent variable value
-    :type   indep_min:          :ref:`RealNum` *or None*
-    :param  indep_max:          maximum independent variable value
-    :type   indep_max:          :ref:`RealNum` *or None*
-    :rtype:                     :py:class:`putil.plot.BasicSource` object
+    :param indep_var: Independent variable vector
+    :type  indep_var: :ref:`IncreasingRealNumpyVector`
+
+    :param dep_var: Dependent variable vector
+    :type  dep_var: :ref:`RealNumpyVector`
+
+    :param indep_min: Minimum independent variable value. If None no minimum
+                      thresholding is applied to the data
+    :type  indep_min: :ref:`RealNum` *or None*
+
+    :param indep_max: Maximum independent variable value. If None no maximum
+                      thresholding is applied to the data
+    :type  indep_max: :ref:`RealNum` *or None*
+
+    :rtype: :py:class:`putil.plot.BasicSource`
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for
@@ -67,8 +73,8 @@ class BasicSource(DataSource):
      * ValueError (Argument \`indep_var\` is empty after
        \`indep_min\`/\`indep_max\` range bounding)
 
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the
+       same number of elements)
 
     .. [[[end]]]
     """
@@ -83,7 +89,8 @@ class BasicSource(DataSource):
         self._min_indep_var_index = None
         self._max_indep_var_index = None
         # Public attributes
-        self._indep_min, self._indep_max = None, None
+        self._indep_min = None
+        self._indep_max = None
         # Assignment of arguments to attributes
         # Assign minimum and maximum first so as not to trigger unnecessary
         # thresholding if the dependent and independent variables are
@@ -172,9 +179,11 @@ class BasicSource(DataSource):
                       (indep_max is not None) and
                       (indep_max < self.indep_min)
         )
-        self._indep_max = (putil.eng.round_mantissa(indep_max, PRECISION)
-                          if not isinstance(indep_max, int) else
-                          indep_max)
+        self._indep_max = (
+            putil.eng.round_mantissa(indep_max, PRECISION)
+            if not isinstance(indep_max, int) else
+            indep_max
+        )
         # Apply minimum and maximum range bounding and assign it
         # to self._indep_var and thus this is what self.indep_var returns
         self._update_indep_var()
@@ -193,9 +202,11 @@ class BasicSource(DataSource):
                       (indep_min is not None) and
                       (self.indep_max < indep_min)
         )
-        self._indep_min = (putil.eng.round_mantissa(indep_min, PRECISION)
-                          if not isinstance(indep_min, int) else
-                          indep_min)
+        self._indep_min = (
+            putil.eng.round_mantissa(indep_min, PRECISION)
+            if not isinstance(indep_min, int) else
+            indep_min
+        )
         # Apply minimum and maximum range bounding and assign it to
         # self._indep_var and thus this is what self.indep_var returns
         self._update_indep_var()
@@ -226,7 +237,8 @@ class BasicSource(DataSource):
         variable range bounding
         """
         self._dep_var = self._raw_dep_var
-        if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
+        if ((self._indep_var_indexes is not None) and
+            (self._raw_dep_var is not None)):
             super(BasicSource, self)._set_dep_var(
                 self._raw_dep_var[self._indep_var_indexes]
             )
@@ -242,26 +254,30 @@ class BasicSource(DataSource):
                   ' range bounding'
         )
         if self._raw_indep_var is not None:
-            min_indexes = (self._raw_indep_var >= (
-                self.indep_min if self.indep_min is not None else self._raw_indep_var[0])
+            indep_min = (
+                self.indep_min
+                if self.indep_min is not None else
+                self._raw_indep_var[0]
             )
-            max_indexes = (self._raw_indep_var <= (
-                self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])
+            indep_max = (
+                self.indep_max
+                if self.indep_max is not None else
+                self._raw_indep_var[-1]
             )
+            min_indexes = self._raw_indep_var >= indep_min
+            max_indexes = self._raw_indep_var <= indep_max
             self._indep_var_indexes = numpy.where(min_indexes & max_indexes)
             super(BasicSource, self)._set_indep_var(
                 self._raw_indep_var[self._indep_var_indexes]
             )
             self._exh.raise_exception_if(
-                exname='empty',
-                condition=len(self.indep_var) == 0
+                exname='empty', condition=len(self.indep_var) == 0
             )
 
     # Managed attributes
     dep_var = property(
         DataSource._get_dep_var,
         _set_dep_var,
-        None,
         doc='Dependent variable Numpy vector'
     )
     r"""
@@ -277,22 +293,20 @@ class BasicSource(DataSource):
 
      * RuntimeError (Argument \`dep_var\` is not valid)
 
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the
+       same number of elements)
 
     .. [[[end]]]
     """
 
     indep_max = property(
-        _get_indep_max,
-        _set_indep_max,
-        None,
-        doc='Maximum of independent variable'
+        _get_indep_max, _set_indep_max, doc='Maximum of independent variable'
     )
     r"""
-    Gets or sets the maximum independent variable limit
+    Gets or sets the maximum independent variable limit. If :code:`None` no
+    maximum thresholding is applied to the data
 
-    :type: :ref:`RealNum`, default is None
+    :type: :ref:`RealNum` or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for
@@ -312,15 +326,13 @@ class BasicSource(DataSource):
     """
 
     indep_min = property(
-        _get_indep_min,
-        _set_indep_min,
-        None,
-        doc='Minimum of independent variable'
+        _get_indep_min, _set_indep_min, doc='Minimum of independent variable'
     )
     r"""
-    Gets or sets the minimum independent variable limit
+    Gets or sets the minimum independent variable limit. If :code:`None` no
+    minimum thresholding is applied to the data
 
-    :type: :ref:`RealNum`, default is None
+    :type: :ref:`RealNum` or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for
@@ -342,7 +354,6 @@ class BasicSource(DataSource):
     indep_var = property(
         DataSource._get_indep_var,
         _set_indep_var,
-        None,
         doc='Independent variable Numpy vector'
     )
     r"""
@@ -361,8 +372,8 @@ class BasicSource(DataSource):
      * ValueError (Argument \`indep_var\` is empty after
        \`indep_min\`/\`indep_max\` range bounding)
 
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the
+       same number of elements)
 
     .. [[[end]]]
     """

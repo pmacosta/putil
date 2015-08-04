@@ -2,7 +2,7 @@
 # coveragerc-manager.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0103
+# pylint: disable=C0103,C0111
 
 from __future__ import print_function
 import os
@@ -12,7 +12,7 @@ import sys
 ###
 # Global variables
 ###
-SUBMODULES_LIST = ['plot']
+SUBMODULES_LIST = ['plot', 'pcsv']
 
 
 ###
@@ -32,7 +32,7 @@ def get_source_files(sdir):
     isf = []
     isf.append('conftest.py')
     isf.append('compat{0}.py'.format(ver))
-    isf.append('datasource{0}.py'.format(ver))
+    isf.append('data_source{0}.py'.format(ver))
     return [
         file_name
         for file_name in os.listdir(sdir)
@@ -41,20 +41,21 @@ def get_source_files(sdir):
     ]
 
 
-def main(argv): # pylint: disable=R0912,R0914,R0915
+def main(argv):
     """ Processing """
+    # pylint: disable=R0912,R0914,R0915,W0702
     debug = True
     env = argv[0]
     # Unpack command line arguments
     if env == 'tox':
         if len(argv[1:]) == 4:
-            mode_flag, interp, pkg_dir, site_pkg_dir, submodules, module = (
+            mode_flag, interp, _, site_pkg_dir, submodules, module = (
                 argv[1:]+[SUBMODULES_LIST, '']
             )
         else:
-            mode_flag, interp, pkg_dir, module = argv[1:]+['']
+            mode_flag, interp, _, module = argv[1:]+['']
     elif env == 'shippable':
-        mode_flag, interp, pkg_dir, site_pkg_dir, submodules, module = (
+        mode_flag, interp, _, site_pkg_dir, submodules, module = (
             argv[1],
             argv[2],
             os.environ['SHIPPABLE_REPO_DIR'],
@@ -64,7 +65,7 @@ def main(argv): # pylint: disable=R0912,R0914,R0915
         )
     elif env == 'local':
         if len(argv[1:]) == 4:
-            mode_flag, interp, pkg_dir, site_pkg_dir, submodules, module = (
+            mode_flag, interp, _, site_pkg_dir, submodules, module = (
                 argv[1],
                 argv[2],
                 argv[3],
@@ -73,7 +74,7 @@ def main(argv): # pylint: disable=R0912,R0914,R0915
                 argv[4]
             )
         else:
-            mode_flag, interp, pkg_dir, site_pkg_dir, submodules, module = (
+            mode_flag, interp, _, site_pkg_dir, submodules, module = (
                 argv[1],
                 argv[2],
                 argv[3],
@@ -179,9 +180,9 @@ def main(argv): # pylint: disable=R0912,R0914,R0915
             "import sys\n"
             "collect_ignore = []\n"
             "if sys.version_info.major == 2:\n"
-            "   collect_ignore.append('datasource3.py')\n"
+            "   collect_ignore.append('data_source3.py')\n"
             "else:\n"
-            "   collect_ignore.append('datasource2.py')\n"
+            "   collect_ignore.append('data_source2.py')\n"
         )
         with open(conf_file[1], 'w') as fobj:
             _write(fobj, skip_file)
@@ -193,7 +194,7 @@ def main(argv): # pylint: disable=R0912,R0914,R0915
             for fname in del_files:
                 print('Deleting file {0}'.format(fname))
                 os.remove(fname)
-        except: #pylint: disable=W0702
+        except:
             pass
 
 

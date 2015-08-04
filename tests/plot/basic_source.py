@@ -12,332 +12,67 @@ import putil.test
 
 
 ###
-# Tests for BasicSource
+# Test classes
 ###
 class TestBasicSource(object):
     """ Tests for BasicSource """
-    def test_indep_min_type(self):
-        """ Tests indep_min type validation """
-        # __init__ path
-        # Wrong types
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([1, 2, 3]),
-                'dep_var':numpy.array([10, 20, 30]),
-                'indep_min':'a'
-            },
-            RuntimeError,
-            'Argument `indep_min` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([1, 2, 3]),
-                'dep_var':numpy.array([10, 20, 30]),
-                'indep_min':False
-            },
-            RuntimeError,
-            'Argument `indep_min` is not valid'
-        )
-        # Valid values, these should not raise an exception
-        for param_value in [1, 2.0]:
-            putil.plot.BasicSource(
-                indep_var=numpy.array([1, 2, 3]),
-                dep_var=numpy.array([10, 20, 30]),
-                indep_min=param_value
-            )
-        # Managed attribute path
-        # Wrong types
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30])
-        )
-        for param_value in ['a', False]:
-            with pytest.raises(RuntimeError) as excinfo:
-                obj.indep_min = param_value
-            assert putil.test.get_exmsg(excinfo) == 'Argument `indep_min` is not valid'
-        # Valid values, these should not raise an exception
-        for param_value in [1, 2.0]:
-            obj.indep_min = param_value
-            assert obj.indep_min == param_value
-
-    def test_indep_max_type(self):
-        """ Tests indep_max type validation """
-        # __init__ path
-        # Wrong types
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([1, 2, 3]),
-                'dep_var':numpy.array([10, 20, 30]),
-                'indep_max':'a'
-            },
-            RuntimeError,
-            'Argument `indep_max` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([1, 2, 3]),
-                'dep_var':numpy.array([10, 20, 30]),
-                'indep_max':False
-            },
-            RuntimeError,
-            'Argument `indep_max` is not valid'
-        )
-        # Valid values, these should not raise an exception
-        for param_value in [1, 2.0]:
-            putil.plot.BasicSource(
-                indep_var=numpy.array([1, 2, 3]),
-                dep_var=numpy.array([10, 20, 30]),
-                indep_max=param_value
-            )
-        # Managed attribute path
-        # Wrong types
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30])
-        )
-        for param_value in ['a', False]:
-            with pytest.raises(RuntimeError) as excinfo:
-                obj.indep_max = param_value
-            assert putil.test.get_exmsg(excinfo) == 'Argument `indep_max` is not valid'
-        # Valid values, these should not raise an exception
-        for param_value in [1, 2.0]:
-            obj.indep_max = param_value
-            assert obj.indep_max == param_value
-
-    def test_indep_min_greater_than_indep_max(self):
-        """
-        Test if object behaves correctly when indep_min and indep_max
-        are incongruous
-        """
-        # Assign indep_min first
-        obj = putil.plot.BasicSource(
+    def test_str(self):
+        """ Test that str behaves correctly """
+        # Full set
+        obj = str(putil.plot.BasicSource(
             indep_var=numpy.array([1, 2, 3]),
             dep_var=numpy.array([10, 20, 30]),
-            indep_min=0.5)
+            indep_min=-10,
+            indep_max=20.0)
+        )
+        ref = (
+            'Independent variable minimum: -10\n'
+            'Independent variable maximum: 20.0\n'
+            'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+            'Dependent variable: [ 10.0, 20.0, 30.0 ]'
+        )
+        assert obj == ref
+        # indep_min not set
+        obj = str(putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30]),
+            indep_max=20.0)
+        )
+        ref = (
+            'Independent variable minimum: -inf\n'
+            'Independent variable maximum: 20.0\n'
+            'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+            'Dependent variable: [ 10.0, 20.0, 30.0 ]'
+        )
+        assert obj == ref
+        # indep_max not set
+        obj = str(putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30]),
+            indep_min=-10)
+        )
+        ref = (
+            'Independent variable minimum: -10\n'
+            'Independent variable maximum: +inf\n'
+            'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+            'Dependent variable: [ 10.0, 20.0, 30.0 ]'
+        )
+        assert obj == ref
+        # indep_min and indep_max not set
+        obj = str(putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30]))
+        )
+        ref = (
+            'Independent variable minimum: -inf\n'
+            'Independent variable maximum: +inf\n'
+            'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
+            'Dependent variable: [ 10.0, 20.0, 30.0 ]'
+        )
+        assert obj == ref
 
-        with pytest.raises(ValueError) as excinfo:
-            obj.indep_max = 0
-        assert putil.test.get_exmsg(excinfo) == ('Argument `indep_min` is greater '
-                                         'than argument `indep_max`')
-        # Assign indep_max first
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30])
-        )
-        obj.indep_max = 40
-        with pytest.raises(ValueError) as excinfo:
-            obj.indep_min = 50
-        assert putil.test.get_exmsg(excinfo) == ('Argument `indep_min` is greater '
-                                         'than argument `indep_max`')
-
-    def test_indep_var_type(self):
-        """ Tests indep_var type validation """
-        # __init__ path
-        # Wrong type
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {'indep_var':None, 'dep_var':numpy.array([10, 20, 30])},
-            RuntimeError,
-            'Argument `indep_var` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {'indep_var':'a', 'dep_var':numpy.array([10, 20, 30])},
-            RuntimeError,
-            'Argument `indep_var` is not valid'
-        )
-        # Non monotonically increasing vector
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([1.0, 2.0, 0.0, 3.0]),
-                'dep_var':numpy.array([10, 20, 30])
-            },
-            RuntimeError,
-            'Argument `indep_var` is not valid'
-        )
-        # Empty vector
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {'indep_var':numpy.array([]), 'dep_var':numpy.array([10, 20, 30])},
-            RuntimeError,
-            'Argument `indep_var` is not valid'
-        )
-        # Valid values, these should not raise any exception
-        assert (putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30])
-        ).indep_var == numpy.array([1, 2, 3])).all()
-        assert (putil.plot.BasicSource(
-            indep_var=numpy.array([4.0, 5.0, 6.0]),
-            dep_var=numpy.array([10, 20, 30])
-        ).indep_var == numpy.array([4.0, 5.0, 6.0])).all()
-        # Invalid range bounding
-        # Assign indep_min via attribute
-        obj = putil.plot.BasicSource(
-            numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30])
-        )
-        with pytest.raises(ValueError) as excinfo:
-            obj.indep_min = 45
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ('Argument `indep_var` is empty after '
-             '`indep_min`/`indep_max` range bounding')
-        )
-        # Assign indep_max via attribute
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30])
-        )
-        with pytest.raises(ValueError) as excinfo:
-            obj.indep_max = 0
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ('Argument `indep_var` is empty after '
-             '`indep_min`/`indep_max` range bounding')
-        )
-        # Assign both indep_min and indep_max via __init__ path
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([1, 2, 3]),
-                'dep_var':numpy.array([10, 20, 30]),
-                'indep_min':4, 'indep_max':10
-            },
-            ValueError,
-            'Argument `indep_var` is empty after `indep_min`/`indep_max` range bounding'
-        )
-        # Managed attribute path
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30])
-        )
-        # Wrong type
-        assert (obj.indep_var == numpy.array([1, 2, 3])).all()
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.indep_var = None
-        assert putil.test.get_exmsg(excinfo) == 'Argument `indep_var` is not valid'
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.indep_var = 'a'
-        assert putil.test.get_exmsg(excinfo) == 'Argument `indep_var` is not valid'
-        # Non monotonically increasing vector
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.indep_var = numpy.array([1.0, 2.0, 0.0, 3.0])
-        assert putil.test.get_exmsg(excinfo) == 'Argument `indep_var` is not valid'
-        # Valid values, these should not raise any exception
-        obj.indep_var = numpy.array([4.0, 5.0, 6.0])
-        assert (obj.indep_var == numpy.array([4.0, 5.0, 6.0])).all()
-
-    def test_dep_var_type(self):
-        """ Tests dep_var type validation """
-        # __init__ path
-        # Wrong type
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {'indep_var':numpy.array([1, 2, 3]), 'dep_var':None},
-            RuntimeError,
-            'Argument `dep_var` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {'indep_var':numpy.array([1, 2, 3]), 'dep_var':'a'},
-            RuntimeError,
-            'Argument `dep_var` is not valid'
-        )
-        # Empty vector
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {'indep_var':numpy.array([1, 2, 3]), 'dep_var':[]},
-            RuntimeError,
-            'Argument `dep_var` is not valid'
-        )
-        # Valid values, these should not raise any exception
-        assert (putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([1, 2, 3])
-        ).dep_var == numpy.array([1, 2, 3])).all()
-        assert (putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([4.0, 5.0, 6.0])
-        ).dep_var == numpy.array([4.0, 5.0, 6.0])).all()
-        # Managed attribute path
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([1, 2, 3])
-        )
-        # Wrong type
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.dep_var = 'a'
-        assert putil.test.get_exmsg(excinfo) == 'Argument `dep_var` is not valid'
-        # Empty vector
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.dep_var = numpy.array([])
-        assert putil.test.get_exmsg(excinfo) == 'Argument `dep_var` is not valid'
-        # Valid values, these should not raise any exception
-        obj.dep_var = numpy.array([1, 2, 3])
-        assert (obj.dep_var == numpy.array([1, 2, 3])).all()
-        obj.dep_var = numpy.array([4.0, 5.0, 6.0])
-        assert (obj.dep_var == numpy.array([4.0, 5.0, 6.0])).all()
-
-    def test_indep_var_and_dep_var_do_not_have_the_same_number_of_elements(self):
-        """ Tests dep_var type validation """
-        # Both set at object creation
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([10, 20, 30]),
-                'dep_var':numpy.array([1, 2, 3, 4, 5, 6]),
-                'indep_min':30,
-                'indep_max':50
-            },
-            ValueError,
-            'Arguments `indep_var` and `dep_var` must have the same number of elements'
-        )
-        putil.test.assert_exception(
-            putil.plot.BasicSource,
-            {
-                'indep_var':numpy.array([10, 20, 30]),
-                'dep_var':numpy.array([1, 2]),
-                'indep_min':30,
-                'indep_max':50
-            },
-            ValueError,
-            'Arguments `indep_var` and `dep_var` must have the same number of elements'
-        )
-        # indep_var set first
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([10, 20, 30, 40, 50, 60]),
-            dep_var=numpy.array([1, 2, 3, 4, 5, 6]),
-            indep_min=30,
-            indep_max=50)
-        with pytest.raises(ValueError) as excinfo:
-            obj.dep_var = numpy.array([100, 200, 300])
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ('Arguments `indep_var` and `dep_var` '
-             'must have the same number of elements')
-        )
-        # dep_var set first
-        obj = putil.plot.BasicSource(
-            indep_var=numpy.array([10, 20, 30]),
-            dep_var=numpy.array([100, 200, 300]),
-            indep_min=30,
-            indep_max=50
-        )
-        with pytest.raises(ValueError) as excinfo:
-            obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ('Arguments `indep_var` and `dep_var` '
-             'must have the same number of elements')
-        )
     def test_complete(self):
-        """ Test that _complete property behaves correctly """
+        """ Test _complete property behavior """
         obj = putil.plot.BasicSource(
             indep_var=numpy.array([10, 20, 30]),
             dep_var=numpy.array([100, 200, 300]),
@@ -354,55 +89,324 @@ class TestBasicSource(object):
         )
         assert obj._complete
 
-    def test_str(self):
-        """ Test that str behaves correctly """
-        # Full set
-        obj = str(putil.plot.BasicSource(
+    def test_indep_min(self):
+        """ Tests indep_min property behavior """
+        # __init__ path
+        items = [1, 2.0]
+        for item in items:
+            putil.plot.BasicSource(
+                indep_var=numpy.array([1, 2, 3]),
+                dep_var=numpy.array([10, 20, 30]),
+                indep_min=item
+            )
+        # Managed attribute path
+        obj = putil.plot.BasicSource(
             indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30]),
-            indep_min=-10,
-            indep_max=20.0)
+            dep_var=numpy.array([10, 20, 30])
         )
-        ref = ('Independent variable minimum: -10\n'
-               'Independent variable maximum: 20.0\n'
-               'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
-               'Dependent variable: [ 10.0, 20.0, 30.0 ]')
-        assert obj == ref
-        # indep_min not set
-        obj = str(putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30]),
-            indep_max=20.0)
-        )
-        ref = ('Independent variable minimum: -inf\n'
-               'Independent variable maximum: 20.0\n'
-               'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
-               'Dependent variable: [ 10.0, 20.0, 30.0 ]')
-        assert obj == ref
-        # indep_max not set
-        obj = str(putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30]),
-            indep_min=-10)
-        )
-        ref = ('Independent variable minimum: -10\n'
-               'Independent variable maximum: +inf\n'
-               'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
-               'Dependent variable: [ 10.0, 20.0, 30.0 ]')
-        assert obj == ref
-        # indep_min and indep_max not set
-        obj = str(putil.plot.BasicSource(
-            indep_var=numpy.array([1, 2, 3]),
-            dep_var=numpy.array([10, 20, 30]))
-        )
-        ref = ('Independent variable minimum: -inf\n'
-               'Independent variable maximum: +inf\n'
-               'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
-               'Dependent variable: [ 10.0, 20.0, 30.0 ]')
-        assert obj == ref
+        for item in items:
+            obj.indep_min = item
+            assert obj.indep_min == item
 
-    def test_cannot_delete_attributes(self):
-        """ Test that del method raises an exception on all class attributes """
+    @pytest.mark.basicsource
+    def test_indep_min_exceptions(self):
+        """ Tests indep_min property exceptions """
+        # __init__ path
+        items = ['a', False]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.BasicSource,
+                {
+                    'indep_var':numpy.array([1, 2, 3]),
+                    'dep_var':numpy.array([10, 20, 30]),
+                    'indep_min':item
+                },
+                RuntimeError,
+                'Argument `indep_min` is not valid'
+            )
+        # Managed attribute path
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30])
+        )
+        for item in items:
+            with pytest.raises(RuntimeError) as excinfo:
+                obj.indep_min = item
+            assert (
+                putil.test.get_exmsg(excinfo)
+                ==
+                'Argument `indep_min` is not valid'
+            )
+
+    def test_indep_max(self):
+        """ Tests indep_max property behavior """
+        # __init__ path
+        items = [1, 2.0]
+        for item in items:
+            putil.plot.BasicSource(
+                indep_var=numpy.array([1, 2, 3]),
+                dep_var=numpy.array([10, 20, 30]),
+                indep_max=item
+            )
+        # Managed attribute path
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30])
+        )
+        for item in items:
+            obj.indep_max = item
+            assert obj.indep_max == item
+
+    @pytest.mark.basicsource
+    def test_indep_max_exceptions(self):
+        """ Tests indep_max property exceptions """
+        # __init__ path
+        items = ['a', False]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.BasicSource,
+                {
+                    'indep_var':numpy.array([1, 2, 3]),
+                    'dep_var':numpy.array([10, 20, 30]),
+                    'indep_max':item
+                },
+                RuntimeError,
+                'Argument `indep_max` is not valid'
+            )
+        # Managed attribute path
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30])
+        )
+        for item in items:
+            with pytest.raises(RuntimeError) as excinfo:
+                obj.indep_max = item
+            assert (
+                putil.test.get_exmsg(excinfo)
+                ==
+                'Argument `indep_max` is not valid'
+            )
+
+    @pytest.mark.basicsource
+    def test_indep_min_greater_than_indep_max_exceptions(self):
+        """
+        Test behavior when indep_min and indep_max are incongruous
+        """
+        # Assign indep_min first
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30]),
+            indep_min=0.5)
+        with pytest.raises(ValueError) as excinfo:
+            obj.indep_max = 0
+        assert (
+            putil.test.get_exmsg(excinfo)
+            ==
+            'Argument `indep_min` is greater than argument `indep_max`'
+        )
+        # Assign indep_max first
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30])
+        )
+        obj.indep_max = 40
+        with pytest.raises(ValueError) as excinfo:
+            obj.indep_min = 50
+        assert (
+            putil.test.get_exmsg(excinfo)
+            ==
+            'Argument `indep_min` is greater than argument `indep_max`'
+        )
+
+    def test_indep_var(self):
+        """ Tests indep_var property behavior """
+        # __init__ path
+        indep_var1 = numpy.array([1, 2, 3])
+        indep_var2 = numpy.array([4.0, 5.0, 6.0])
+        dep_var = numpy.array([10, 20, 30])
+        assert (
+            putil.plot.BasicSource(
+                indep_var=indep_var1, dep_var=dep_var
+            ).indep_var == indep_var1
+        ).all()
+        assert (
+            putil.plot.BasicSource(
+                indep_var=indep_var2, dep_var=dep_var
+            ).indep_var == indep_var2
+        ).all()
+        # Managed attribute path
+        obj = putil.plot.BasicSource(indep_var=indep_var1, dep_var=dep_var)
+        obj.indep_var = indep_var2
+        assert (obj.indep_var == indep_var2).all()
+
+    @pytest.mark.basicsource
+    def test_indep_var_exceptions(self):
+        """ Tests indep_var property exceptions """
+        # __init__ path
+        items = [
+            None,
+            'a',
+            numpy.array([1.0, 2.0, 0.0, 3.0]),
+            numpy.array([])
+        ]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.BasicSource,
+                {'indep_var':item, 'dep_var':numpy.array([10, 20, 30])},
+                RuntimeError,
+                'Argument `indep_var` is not valid'
+            )
+        # Assign indep_min via attribute
+        msg = (
+            'Argument `indep_var` is empty after '
+            '`indep_min`/`indep_max` range bounding'
+        )
+        obj = putil.plot.BasicSource(
+            numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30])
+        )
+        with pytest.raises(ValueError) as excinfo:
+            obj.indep_min = 45
+        assert putil.test.get_exmsg(excinfo) == msg
+        # Assign indep_max via attribute
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30])
+        )
+        with pytest.raises(ValueError) as excinfo:
+            obj.indep_max = 0
+        assert putil.test.get_exmsg(excinfo) == msg
+        # Assign both indep_min and indep_max via __init__ path
+        putil.test.assert_exception(
+            putil.plot.BasicSource,
+            {
+                'indep_var':numpy.array([1, 2, 3]),
+                'dep_var':numpy.array([10, 20, 30]),
+                'indep_min':4, 'indep_max':10
+            },
+            ValueError,
+            msg
+        )
+        # Managed attribute path
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([10, 20, 30])
+        )
+        # Wrong type
+        assert (obj.indep_var == numpy.array([1, 2, 3])).all()
+        for item in items:
+            with pytest.raises(RuntimeError) as excinfo:
+                obj.indep_var = item
+            assert (
+                putil.test.get_exmsg(excinfo)
+                ==
+                'Argument `indep_var` is not valid'
+            )
+
+    def test_dep_var(self):
+        """ Tests dep_var property behavior """
+        # __init__ path
+        # Valid values, these should not raise any exception
+        indep_var = numpy.array([10, 20, 30])
+        dep_var1 = numpy.array([1, 2, 3])
+        dep_var2 = numpy.array([4.0, 5.0, 6.0])
+        assert (
+            putil.plot.BasicSource(
+                indep_var=indep_var,
+                dep_var=dep_var1
+            ).dep_var == dep_var1
+        ).all()
+        assert (
+            putil.plot.BasicSource(
+                indep_var=indep_var,
+                dep_var=dep_var2
+            ).dep_var == dep_var2
+        ).all()
+        # Managed attribute path
+        obj = putil.plot.BasicSource(indep_var=indep_var, dep_var=dep_var1)
+        obj.dep_var = dep_var1
+        assert (obj.dep_var == dep_var1).all()
+        obj.dep_var = dep_var2
+        assert (obj.dep_var == dep_var2).all()
+
+    @pytest.mark.basicsource
+    def test_dep_var_exceptions(self):
+        """ Tests dep_var property exceptions """
+        # __init__ path
+        msg = 'Argument `dep_var` is not valid'
+        items = [None, 'a', []]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.BasicSource,
+                {'indep_var':numpy.array([1, 2, 3]), 'dep_var':item},
+                RuntimeError,
+                msg
+            )
+        # Managed attribute path
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([1, 2, 3]),
+            dep_var=numpy.array([1, 2, 3])
+        )
+        for item in items:
+            with pytest.raises(RuntimeError) as excinfo:
+                obj.dep_var = item
+            assert putil.test.get_exmsg(excinfo) == msg
+
+    @pytest.mark.basicsource
+    def test_indep_dep_var_not_same_number_of_elements_exceptions(self):
+        """ Tests indep_var and dep_var vector congruency """
+        msg = (
+            'Arguments `indep_var` and `dep_var` '
+            'must have the same number of elements'
+        )
+        # Both set at object creation
+        putil.test.assert_exception(
+            putil.plot.BasicSource,
+            {
+                'indep_var':numpy.array([10, 20, 30]),
+                'dep_var':numpy.array([1, 2, 3, 4, 5, 6]),
+                'indep_min':30,
+                'indep_max':50
+            },
+            ValueError,
+            msg
+        )
+        putil.test.assert_exception(
+            putil.plot.BasicSource,
+            {
+                'indep_var':numpy.array([10, 20, 30]),
+                'dep_var':numpy.array([1, 2]),
+                'indep_min':30,
+                'indep_max':50
+            },
+            ValueError,
+            msg
+        )
+        # indep_var set first
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([10, 20, 30, 40, 50, 60]),
+            dep_var=numpy.array([1, 2, 3, 4, 5, 6]),
+            indep_min=30,
+            indep_max=50)
+        with pytest.raises(ValueError) as excinfo:
+            obj.dep_var = numpy.array([100, 200, 300])
+        assert putil.test.get_exmsg(excinfo) == msg
+        # dep_var set first
+        obj = putil.plot.BasicSource(
+            indep_var=numpy.array([10, 20, 30]),
+            dep_var=numpy.array([100, 200, 300]),
+            indep_min=30,
+            indep_max=50
+        )
+        with pytest.raises(ValueError) as excinfo:
+            obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
+        assert putil.test.get_exmsg(excinfo) == msg
+
+    @pytest.mark.basicsource
+    def test_cannot_delete_attributes_exceptions(self):
+        """
+        Test that del method raises an exception on all class attributes
+        """
         obj = putil.plot.BasicSource(
             indep_var=numpy.array([10, 20, 30]),
             dep_var=numpy.array([100, 200, 300])

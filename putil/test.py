@@ -16,33 +16,6 @@ else:   # pragma: no cover
 ###
 # Functions
 ###
-def comp_list_of_dicts(list1, list2):
-    """ Compare list of dictionaries """
-    return all([item in list1 for item in list2])
-
-
-def get_exmsg(obj): # pragma: no cover
-    """ Return exception message """
-    return _get_ex_msg(obj)
-
-
-def exception_type_str(exobj):
-    """
-    Returns an exception type string
-
-    :param  exobj: Exception
-    :type   exobj: type (Python 2) or class (Python 3)
-    :rtype: string
-
-    For example:
-
-        >>> import putil.test
-        >>> exception_type_str(RuntimeError)
-        'RuntimeError'
-    """
-    return _ex_type_str(exobj)
-
-
 def assert_exception(obj, args, extype, exmsg):
     """
     Asserts an exception type and message within the Py.test environment. If
@@ -50,14 +23,18 @@ def assert_exception(obj, args, extype, exmsg):
     literally match then the expected exception message is treated as a
     regular expression and a match is sought with the actual exception message
 
-    :param  obj: Object to evaluate
-    :type   obj: callable
-    :param  args: Keyword arguments to pass to object
-    :type   args: dictionary
-    :param  extype: Expected exception type
-    :type   extype: type
-    :param  exmsg: Expected exception message (can have regular expressions)
-    :type   exmsg: string
+    :param obj: Object to evaluate
+    :type  obj: callable
+
+    :param args: Keyword arguments to pass to object
+    :type  args: dictionary
+
+    :param extype: Expected exception type
+    :type  extype: type
+
+    :param exmsg: Expected exception message (can have regular expressions)
+    :type  exmsg: string
+
     :rtype: None
 
     For example:
@@ -86,16 +63,52 @@ def assert_exception(obj, args, extype, exmsg):
         if actmsg == 'DID NOT RAISE':
             raise AssertionError
         eobj_extype = repr(eobj)[:repr(eobj).find('(')]
-        assert '{0} ({1})'.format(
-            eobj_extype,
-            actmsg
-        ) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
+        assert (
+            '{0} ({1})'.format(
+                eobj_extype,
+                actmsg
+            )
+            ==
+            '{0} ({1})'.format(exception_type_str(extype), exmsg)
+        )
     actmsg = get_exmsg(excinfo)
     if ((exception_type_str(excinfo.type) == exception_type_str(extype)) and
        ((actmsg == exmsg) or regexp.match(actmsg))):
         assert True
     else:
-        assert '{0} ({1})'.format(
-            exception_type_str(excinfo.type),
-            actmsg
-        ) == '{0} ({1})'.format(exception_type_str(extype), exmsg)
+        assert (
+            '{0} ({1})'.format(
+                exception_type_str(excinfo.type),
+                actmsg
+            )
+            ==
+            '{0} ({1})'.format(exception_type_str(extype), exmsg)
+        )
+
+
+def comp_list_of_dicts(list1, list2):
+    """ Compare list of dictionaries """
+    return all([item in list1 for item in list2])
+
+
+def exception_type_str(exobj):
+    """
+    Returns an exception type string
+
+    :param exobj: Exception
+    :type  exobj: type (Python 2) or class (Python 3)
+
+    :rtype: string
+
+    For example:
+
+        >>> import putil.test
+        >>> exception_type_str(RuntimeError)
+        'RuntimeError'
+    """
+    return _ex_type_str(exobj)
+
+
+def get_exmsg(obj): # pragma: no cover
+    """ Return exception message """
+    return _get_ex_msg(obj)

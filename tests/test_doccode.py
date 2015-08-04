@@ -101,10 +101,15 @@ def test_pcsv_doccode():
     script_dir = os.path.join(
         os.path.dirname(__file__), '..', 'docs', 'support'
     )
-    script_name = os.path.join(script_dir, 'pcsv_example.py')
-    proc = subprocess.Popen(['python', script_name], stdout=subprocess.PIPE)
-    proc.communicate()
-    assert proc.returncode == 0
+    for num in range(1, 7):
+        script_name = os.path.join(
+            script_dir, 'pcsv_example_{}.py'.format(num))
+
+        proc = subprocess.Popen(
+            ['python', script_name], stdout=subprocess.PIPE
+        )
+        proc.communicate()
+        assert proc.returncode == 0
 
 
 def test_pcontracts_doccode():

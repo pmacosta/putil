@@ -30,12 +30,12 @@ attached to). For example, the definitions of the custom contracts
 .. literalinclude:: ./support/ptypes.py
     :language: python
     :tab-width: 4
-    :lines: 385-410
+    :lines: 337-362
 
 .. literalinclude:: ./support/ptypes.py
     :language: python
     :tab-width: 4
-    :lines: 413-452
+    :lines: 365-401
 
 This is nearly identical to the way custom contracts are defined using the
 `PyContracts <https://andreacensi.github.io/contracts/>`_ library with two
@@ -70,7 +70,7 @@ Valid file name: some_file.txt
 Traceback (most recent call last):
     ...
 RuntimeError: Argument `name` is not valid
->>> fname = os.path.join('..', 'docs', 'pcontracts.rst')	#doctest: +ELLIPSIS
+>>> fname = os.path.join('..', 'docs', 'pcontracts.rst') #doctest: +ELLIPSIS
 >>> print_if_fname_exists(10, fname)
 Valid file name: [10] ...pcontracts.rst
 >>> print_if_fname_exists('hello', fname)
@@ -84,7 +84,7 @@ RuntimeError: Argument `name` is not valid
 >>> print_if_fname_exists(5, '/dev/null/some_file.txt')
 Traceback (most recent call last):
     ...
-OSError: File `/dev/null/some_file.txt` could not be found
+OSError: File /dev/null/some_file.txt could not be found
 
 *********
 Functions

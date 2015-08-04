@@ -16,156 +16,21 @@ from tests.plot.gen_ref_images import unittest_panel_images
 
 
 ###
-# Tests for Panel
+# Test classes
 ###
-
 class TestPanel(object):
-    # pylint: disable=C0103,R0201,W0232,W0621
-    """ Tests for Series """
-    def test_primary_axis_label_wrong_type(self, default_series):
-        """ Test panel_primary_axis data validation """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'primary_axis_label':5},
-            RuntimeError,
-            'Argument `primary_axis_label` is not valid'
-        )
-        # This assignment should not raise an exception
-        putil.plot.Panel(series=default_series, primary_axis_label=None)
-        obj = putil.plot.Panel(series=default_series, primary_axis_label='test')
-        assert obj.primary_axis_label == 'test'
-
-    def test_primary_axis_units_wrong_type(self, default_series):
-        """ Test panel_primary_axis data validation """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'primary_axis_units':5},
-            RuntimeError,
-            'Argument `primary_axis_units` is not valid'
-        )
-        # These assignments should not raise an exception
-        putil.plot.Panel(series=default_series, primary_axis_units=None)
-        obj = putil.plot.Panel(series=default_series, primary_axis_units='test')
-        assert obj.primary_axis_units == 'test'
-
-    def test_secondary_axis_label_wrong_type(self, default_series):
-        """ Test panel_secondary_axis data validation """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'secondary_axis_label':5},
-            RuntimeError,
-            'Argument `secondary_axis_label` is not valid'
-        )
-        # These assignments should not raise an exception
-        putil.plot.Panel(series=default_series, secondary_axis_label=None)
-        obj = putil.plot.Panel(series=default_series, secondary_axis_label='test')
-        assert obj.secondary_axis_label == 'test'
-
-    def test_secondary_axis_units_wrong_type(self, default_series):
-        """ Test panel_secondary_axis data validation """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'secondary_axis_units':5},
-            RuntimeError,
-            'Argument `secondary_axis_units` is not valid'
-        )
-        # These assignments should not raise an exception
-        putil.plot.Panel(series=default_series, secondary_axis_units=None)
-        obj = putil.plot.Panel(series=default_series, secondary_axis_units='test')
-        assert obj.secondary_axis_units == 'test'
-
-    def test_log_dep_axis_wrong_type(self, default_series):
-        """ Test log_dep_axis data validation """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'log_dep_axis':5},
-            RuntimeError,
-            'Argument `log_dep_axis` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'log_dep_axis':True},
-            ValueError,
-            'Series item 0 cannot be plotted in a logarithmic axis because '
-            'it contains negative data points'
-        )
-        # These assignments should not raise an exception
-        non_negative_data_source = putil.plot.BasicSource(
-            indep_var=numpy.array([5, 6, 7, 8]),
-            dep_var=numpy.array([0.1, 10, 5, 4])
-        )
-        non_negative_series = putil.plot.Series(
-            data_source=non_negative_data_source,
-            label='non-negative data series'
-        )
-        obj = putil.plot.Panel(series=default_series, log_dep_axis=False)
-        assert not obj.log_dep_axis
-        obj = putil.plot.Panel(series=non_negative_series, log_dep_axis=True)
-        assert obj.log_dep_axis
-        obj = putil.plot.Panel(series=default_series)
-        assert not obj.log_dep_axis
-
-    def test_display_indep_axis_wrong_type(self, default_series):
-        """ Test display_indep_axis data validation """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'display_indep_axis':5},
-            RuntimeError,
-            'Argument `display_indep_axis` is not valid'
-        )
-        # These assignments should not raise an exception
-        obj = putil.plot.Panel(series=default_series, display_indep_axis=False)
-        assert not obj.display_indep_axis
-        obj = putil.plot.Panel(series=default_series, display_indep_axis=True)
-        assert obj.display_indep_axis
-        obj = putil.plot.Panel(series=default_series)
-        assert not obj.display_indep_axis
-
-    def test_legend_props_wrong_type(self, default_series):
-        """ Test legend_props data validation """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':5},
-            RuntimeError,
-            'Argument `legend_props` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':{'not_a_valid_prop':5}},
-            ValueError,
-            'Illegal legend property `not_a_valid_prop`'
-        )
-        msg = (
-            "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
-            "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
-            "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', "
-            "'CENTER'] (case insensitive)"
-        )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':{'pos':5}},
-            TypeError,
-            msg
-        )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':{'cols':-1}},
-            RuntimeError,
-            'Legend property `cols` is not valid'
-        )
-        # These assignments should not raise an exception
-        obj = putil.plot.Panel(
-            series=default_series,
-            legend_props={'pos':'upper left'}
-        )
-        assert obj.legend_props == {'pos':'UPPER LEFT', 'cols':1}
-        obj = putil.plot.Panel(series=default_series, legend_props={'cols':3})
-        assert obj.legend_props == {'pos':'BEST', 'cols':3}
-        obj = putil.plot.Panel(series=default_series)
-        assert obj.legend_props == {'pos':'BEST', 'cols':1}
+    # pylint: disable=C0103,R0201,R0904,W0232,W0621
+    """ Tests for Panel class """
+    ### Private methods
+    def test_complete(self, default_series):
+        """ Test _complete property behavior """
+        obj = putil.plot.Panel(series=None)
+        assert not obj._complete
+        obj.series = default_series
+        assert obj._complete
 
     def test_intelligent_ticks(self):
-        """ Test that intelligent_tick methods works for all scenarios """
+        """ Test _intelligent_tick method behavior """
         # pylint: disable=E1103
         oprec = putil.plot.PRECISION
         putil.plot.PRECISION = 8
@@ -337,7 +202,9 @@ class TestPanel(object):
             max(vector),
             tight=False
         )
-        assert obj == ([0.9, 1, 1.1], ['0.9', '1.0', '1.1'], 0.9, 1.1, 1e-9, 'n')
+        assert (
+            obj == ([0.9, 1, 1.1], ['0.9', '1.0', '1.1'], 0.9, 1.1, 1e-9, 'n')
+        )
         # print obj
         # 9
         # Scaling with more data samples after 1.0
@@ -621,9 +488,18 @@ class TestPanel(object):
         )
         putil.plot.PRECISION = oprec
 
+    def test_legend_position_validation(self):
+        """ Tests _legend_position_validation method """
+        assert putil.plot.panel._legend_position_validation(5)
+        assert putil.plot.panel._legend_position_validation('x')
+        for item in [
+                None, 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT',
+                'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',
+                'LOWER CENTER', 'UPPER CENTER', 'CENTER']:
+            assert not putil.plot.panel._legend_position_validation(item)
 
-    def test_iterator(self):
-        """ Test __iter__() method """
+    def test_iter(self):
+        """ Test __iter__ method behavior """
         ds1_obj = putil.plot.BasicSource(
             indep_var=numpy.array([100, 200, 300, 400]),
             dep_var=numpy.array([1, 2, 3, 4])
@@ -663,8 +539,380 @@ class TestPanel(object):
             if num == 2:
                 assert series == series3_obj
 
+    def test_nonzero(self, default_series):
+        """ Test __nonzero__ method behavior """
+        obj = putil.plot.Panel()
+        assert not obj
+        obj.series = default_series
+        assert obj
+
+    def test_str(self, default_series):
+        """ Test __str__ method behavior """
+        obj = putil.plot.Panel(series=None)
+        ret = (
+            'Series: None\n'
+            'Primary axis label: not specified\n'
+            'Primary axis units: not specified\n'
+            'Secondary axis label: not specified\n'
+            'Secondary axis units: not specified\n'
+            'Logarithmic dependent axis: False\n'
+            'Display independent axis: False\n'
+            'Legend properties:\n'
+            '   cols: 1\n'
+            '   pos: BEST'
+        )
+        assert str(obj) == ret
+        obj = putil.plot.Panel(
+            series=default_series,
+            primary_axis_label='Output',
+            primary_axis_units='Volts',
+            secondary_axis_label='Input',
+            secondary_axis_units='Watts',
+            display_indep_axis=True
+        )
+        ret = (
+            'Series 0:\n'
+            '   Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+            '   Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+            '   Label: test series\n'
+            '   Color: k\n'
+            '   Marker: o\n'
+            '   Interpolation: CUBIC\n'
+            '   Line style: -\n'
+            '   Secondary axis: False\n'
+            'Primary axis label: Output\n'
+            'Primary axis units: Volts\n'
+            'Secondary axis label: Input\n'
+            'Secondary axis units: Watts\n'
+            'Logarithmic dependent axis: False\n'
+            'Display independent axis: True\n'
+            'Legend properties:\n'
+            '   cols: 1\n'
+            '   pos: BEST'
+        )
+        assert str(obj) == ret
+
+    ### Properties
+    def test_log_dep_axis(self, default_series):
+        """ Test log_dep_axis attribute """
+        non_negative_data_source = putil.plot.BasicSource(
+            indep_var=numpy.array([5, 6, 7, 8]),
+            dep_var=numpy.array([0.1, 10, 5, 4])
+        )
+        non_negative_series = putil.plot.Series(
+            data_source=non_negative_data_source,
+            label='non-negative data series'
+        )
+        obj = putil.plot.Panel(series=default_series, log_dep_axis=False)
+        assert not obj.log_dep_axis
+        obj = putil.plot.Panel(series=non_negative_series, log_dep_axis=True)
+        assert obj.log_dep_axis
+        obj = putil.plot.Panel(series=default_series)
+        assert not obj.log_dep_axis
+
+    @pytest.mark.panel
+    def test_log_dep_axis_exceptions(self, default_series):
+        """ Test log_dep_axis property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'log_dep_axis':5},
+            RuntimeError,
+            'Argument `log_dep_axis` is not valid'
+        )
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'log_dep_axis':True},
+            ValueError,
+            'Series item 0 cannot be plotted in a logarithmic axis because '
+            'it contains negative data points'
+        )
+        # Trigger execution of self._series function to
+        # pick up exceptions there
+        obj = putil.plot.Panel(series=default_series)
+        with pytest.raises(ValueError) as excinfo:
+            obj.log_dep_axis = True
+        assert (
+            putil.test.get_exmsg(excinfo)
+            ==
+            (
+                'Series item 0 cannot be plotted in a logarithmic axis '
+                'because it contains negative data points'
+            )
+        )
+
+    def test_display_indep_axis(self, default_series):
+        """ Test display_indep_axis attribute """
+        items = [False, True]
+        for item in items:
+            obj = putil.plot.Panel(
+                series=default_series, display_indep_axis=item
+            )
+            assert obj.display_indep_axis == item
+        obj = putil.plot.Panel(series=default_series)
+        assert not obj.display_indep_axis
+
+    @pytest.mark.panel
+    def test_display_indep_axis_exceptions(self, default_series):
+        """ Test display_indep_axis property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'display_indep_axis':5},
+            RuntimeError,
+            'Argument `display_indep_axis` is not valid'
+        )
+
+    def test_legend_props(self, default_series):
+        """ Test legend_props attribute """
+        obj = putil.plot.Panel(
+            series=default_series,
+            legend_props={'pos':'upper left'}
+        )
+        assert obj.legend_props == {'pos':'UPPER LEFT', 'cols':1}
+        obj = putil.plot.Panel(series=default_series, legend_props={'cols':3})
+        assert obj.legend_props == {'pos':'BEST', 'cols':3}
+        obj = putil.plot.Panel(series=default_series)
+        assert obj.legend_props == {'pos':'BEST', 'cols':1}
+
+    @pytest.mark.panel
+    def test_legend_props_exceptions(self, default_series):
+        """ Test legend_props property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'legend_props':5},
+            RuntimeError,
+            'Argument `legend_props` is not valid'
+        )
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'legend_props':{'not_a_valid_prop':5}},
+            ValueError,
+            'Illegal legend property `not_a_valid_prop`'
+        )
+        msg = (
+            "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
+            "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
+            "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', "
+            "'CENTER'] (case insensitive)"
+        )
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'legend_props':{'pos':5}},
+            TypeError,
+            msg
+        )
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'legend_props':{'cols':-1}},
+            RuntimeError,
+            'Legend property `cols` is not valid'
+        )
+
+    def test_primary_axis_label(self, default_series):
+        """ Test panel_primary_axis attribute """
+        # This assignment should not raise an exception
+        putil.plot.Panel(series=default_series, primary_axis_label=None)
+        obj = putil.plot.Panel(
+            series=default_series, primary_axis_label='test'
+        )
+        assert obj.primary_axis_label == 'test'
+
+    @pytest.mark.panel
+    def test_primary_axis_label_exceptions(self, default_series):
+        """ Test panel_primary_axis property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'primary_axis_label':5},
+            RuntimeError,
+            'Argument `primary_axis_label` is not valid'
+        )
+
+    def test_primary_axis_ticks(self, default_source, default_series):
+        """ Test primary_axis_ticks property behavior """
+        obj = putil.plot.Panel(series=None)
+        assert obj.primary_axis_ticks == None
+        obj = putil.plot.Panel(
+            series=default_series,
+            primary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.primary_axis_ticks == [
+            1.0, 2.0, 3.0, 3.5
+        ]
+        obj = putil.plot.Panel(
+            series=default_series,
+            primary_axis_ticks=[
+                1E6, 4E6, 8E6, 9E6
+            ]
+        )
+        assert obj.primary_axis_ticks == [
+            1.0, 4.0, 8.0, 9.0
+        ]
+        obj = putil.plot.Panel(
+            series=putil.plot.Series(
+                data_source=default_source,
+                label='test series',
+                secondary_axis=True
+            ),
+            primary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.primary_axis_ticks == None
+        # Logarithmic independent axis tick marks
+        # cannot be overridden
+        obj = putil.plot.Panel(
+            series=putil.plot.Series(
+                data_source=putil.plot.BasicSource(
+                    indep_var=numpy.array([1E9, 20E9]),
+                    dep_var=numpy.array([3, 5])
+                ),
+                interp='STRAIGHT',
+                label='test series',
+            ),
+            primary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ],
+            log_dep_axis=True,
+        )
+        assert obj.primary_axis_ticks == [1.0, 10.0]
+
+    @pytest.mark.panel
+    def test_primary_axis_ticks_exceptions(self, default_series):
+        """ Test primary_axis_ticks property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {
+                'series':default_series,
+                'primary_axis_ticks':5
+            },
+            RuntimeError,
+            'Argument `primary_axis_ticks` is not valid'
+        )
+
+    def test_primary_axis_units(self, default_series):
+        """ Test panel_primary_axis attribute """
+        putil.plot.Panel(series=default_series, primary_axis_units=None)
+        obj = putil.plot.Panel(
+            series=default_series, primary_axis_units='test'
+        )
+        assert obj.primary_axis_units == 'test'
+
+    @pytest.mark.panel
+    def test_primary_axis_units_exceptions(self, default_series):
+        """ Test panel_primary_axis property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'primary_axis_units':5},
+            RuntimeError,
+            'Argument `primary_axis_units` is not valid'
+        )
+
+    def test_secondary_axis_label(self, default_series):
+        """ Test panel_secondary_axis attribute """
+        putil.plot.Panel(series=default_series, secondary_axis_label=None)
+        obj = putil.plot.Panel(
+            series=default_series, secondary_axis_label='test'
+        )
+        assert obj.secondary_axis_label == 'test'
+
+    @pytest.mark.panel
+    def test_secondary_axis_label_exceptions(self, default_series):
+        """ Test panel_secondary_axis property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'secondary_axis_label':5},
+            RuntimeError,
+            'Argument `secondary_axis_label` is not valid'
+        )
+
+    def test_secondary_axis_ticks(self, default_source, default_series):
+        """ Test secondary_axis_ticks attribute behavior """
+        obj = putil.plot.Panel(series=None)
+        assert obj.secondary_axis_ticks == None
+        series_obj = putil.plot.Series(
+            data_source=default_source,
+            label='test series',
+            secondary_axis=True
+        )
+        obj = putil.plot.Panel(
+            series=series_obj,
+            secondary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.secondary_axis_ticks == [
+            1.0, 2.0, 3.0, 3.5
+        ]
+        obj = putil.plot.Panel(
+            series=series_obj,
+            secondary_axis_ticks=[
+                1E6, 4E6, 8E6, 9E6
+            ]
+        )
+        assert obj.secondary_axis_ticks == [
+            1.0, 4.0, 8.0, 9.0
+        ]
+        obj = putil.plot.Panel(
+            series=default_series,
+            secondary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ]
+        )
+        assert obj.secondary_axis_ticks == None
+        # Logarithmic independent axis tick marks
+        # cannot be overridden
+        obj = putil.plot.Panel(
+            series=putil.plot.Series(
+                data_source=putil.plot.BasicSource(
+                    indep_var=numpy.array([1E9, 20E9]),
+                    dep_var=numpy.array([3, 5])
+                ),
+                interp='STRAIGHT',
+                label='test series',
+                secondary_axis=True
+            ),
+            secondary_axis_ticks=[
+                1000, 2000, 3000, 3500
+            ],
+            log_dep_axis=True,
+        )
+        assert obj.secondary_axis_ticks == [1.0, 10.0]
+
+    @pytest.mark.panel
+    def test_secondary_axis_ticks_exceptions(self, default_series):
+        """ Test secondary_axis_ticks property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {
+                'series':default_series,
+                'secondary_axis_ticks':5
+            },
+            RuntimeError,
+            'Argument `secondary_axis_ticks` is not valid'
+        )
+
+    def test_secondary_axis_units(self, default_series):
+        """ Test panel_secondary_axis attribute """
+        putil.plot.Panel(series=default_series, secondary_axis_units=None)
+        obj = putil.plot.Panel(
+            series=default_series, secondary_axis_units='test'
+        )
+        assert obj.secondary_axis_units == 'test'
+
+    @pytest.mark.panel
+    def test_secondary_axis_units_exceptions(self, default_series):
+        """ Test panel_secondary_axis property exceptions """
+        putil.test.assert_exception(
+            putil.plot.Panel,
+            {'series':default_series, 'secondary_axis_units':5},
+            RuntimeError,
+            'Argument `secondary_axis_units` is not valid'
+        )
+
+    ### Miscellaneous
     def test_series(self):
-        """ Test that the panel dependent axis are correctly set """
+        """ Test panel dependent axis calculation """
         # pylint: disable=R0914
         ds1_obj = putil.plot.BasicSource(
             indep_var=numpy.array([100, 200, 300, 400]),
@@ -1015,138 +1263,8 @@ class TestPanel(object):
             panel_obj._secondary_dep_var_unit_scale
         ) == (None, None)
 
-    def test_complete(self, default_series):
-        """ Test that _complete property behaves correctly """
-        obj = putil.plot.Panel(series=None)
-        assert not obj._complete
-        obj.series = default_series
-        assert obj._complete
-
-    def test_primary_axis_ticks(self, default_source, default_series):
-        """ Test that primary_axis_ticks property behaves correctly """
-        obj = putil.plot.Panel(series=None)
-        assert obj.primary_axis_ticks == None
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {
-                'series':default_series,
-                'primary_axis_ticks':5
-            },
-            RuntimeError,
-            'Argument `primary_axis_ticks` is not valid'
-        )
-        obj = putil.plot.Panel(
-            series=default_series,
-            primary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
-        )
-        assert obj.primary_axis_ticks == [
-            1.0, 2.0, 3.0, 3.5
-        ]
-        obj = putil.plot.Panel(
-            series=default_series,
-            primary_axis_ticks=[
-                1E6, 4E6, 8E6, 9E6
-            ]
-        )
-        assert obj.primary_axis_ticks == [
-            1.0, 4.0, 8.0, 9.0
-        ]
-        obj = putil.plot.Panel(
-            series=putil.plot.Series(
-                data_source=default_source,
-                label='test series',
-                secondary_axis=True
-            ),
-            primary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
-        )
-        assert obj.primary_axis_ticks == None
-        # Logarithmic independent axis tick marks
-        # cannot be overridden
-        obj = putil.plot.Panel(
-            series=putil.plot.Series(
-                data_source=putil.plot.BasicSource(
-                    indep_var=numpy.array([1E9, 20E9]),
-                    dep_var=numpy.array([3, 5])
-                ),
-                interp='STRAIGHT',
-                label='test series',
-            ),
-            primary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ],
-            log_dep_axis=True,
-        )
-        assert obj.primary_axis_ticks == [1.0, 10.0]
-
-    def test_secondary_axis_ticks(self, default_source, default_series):
-        """ Test that secondary_axis_ticks property behaves correctly """
-        obj = putil.plot.Panel(series=None)
-        assert obj.secondary_axis_ticks == None
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {
-                'series':default_series,
-                'secondary_axis_ticks':5
-            },
-            RuntimeError,
-            'Argument `secondary_axis_ticks` is not valid'
-        )
-        series_obj = putil.plot.Series(
-            data_source=default_source,
-            label='test series',
-            secondary_axis=True
-        )
-        obj = putil.plot.Panel(
-            series=series_obj,
-            secondary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
-        )
-        assert obj.secondary_axis_ticks == [
-            1.0, 2.0, 3.0, 3.5
-        ]
-        obj = putil.plot.Panel(
-            series=series_obj,
-            secondary_axis_ticks=[
-                1E6, 4E6, 8E6, 9E6
-            ]
-        )
-        assert obj.secondary_axis_ticks == [
-            1.0, 4.0, 8.0, 9.0
-        ]
-        obj = putil.plot.Panel(
-            series=default_series,
-            secondary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
-        )
-        assert obj.secondary_axis_ticks == None
-        # Logarithmic independent axis tick marks
-        # cannot be overridden
-        obj = putil.plot.Panel(
-            series=putil.plot.Series(
-                data_source=putil.plot.BasicSource(
-                    indep_var=numpy.array([1E9, 20E9]),
-                    dep_var=numpy.array([3, 5])
-                ),
-                interp='STRAIGHT',
-                label='test series',
-                secondary_axis=True
-            ),
-            secondary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ],
-            log_dep_axis=True,
-        )
-        assert obj.secondary_axis_ticks == [1.0, 10.0]
-
     def test_scale_series(self, default_series):
-        """ Test that series scaling function behaves correctly """
-        #return putil.plot.Series(data_source=default_source, label='test series')
+        """ Test series scaling calculation """
         source_obj = putil.plot.BasicSource(
             indep_var=numpy.array([5, 6, 7, 8]),
             dep_var=numpy.array([4.2, 8, 10, 4])
@@ -1160,71 +1278,33 @@ class TestPanel(object):
         panel2_obj = putil.plot.Panel(series=[default_series, series_obj])
         obj = putil.plot.Panel(series=default_series)
         obj._scale_dep_var(2, None)
-        assert (abs(obj.series[0].scaled_dep_var-[0, -5, 2.5, 2]) < 1e-10).all()
+        assert (
+            (abs(obj.series[0].scaled_dep_var-[0, -5, 2.5, 2]) < 1e-10).all()
+        )
         obj._scale_dep_var(2, 5)
-        assert (abs(obj.series[0].scaled_dep_var-[0, -5, 2.5, 2]) < 1e-10).all()
+        assert (
+            (abs(obj.series[0].scaled_dep_var-[0, -5, 2.5, 2]) < 1e-10).all()
+        )
         panel1_obj._scale_dep_var(None, 2)
         assert (
             abs(panel1_obj.series[0].scaled_dep_var-[2.1, 4, 5, 2]) < 1e-10
         ).all()
         panel2_obj._scale_dep_var(4, 5)
+        tobj = panel2_obj.series
         assert (
-            (abs(panel2_obj.series[0].scaled_dep_var-[0, -2.5, 1.25, 1]) < 1e-10).all(),
-            (abs(panel2_obj.series[1].scaled_dep_var-[0.84, 1.6, 2, 0.8]) < 1e-10).all()
+            (abs(tobj[0].scaled_dep_var-[0, -2.5, 1.25, 1]) < 1e-10).all(),
+            (abs(tobj[1].scaled_dep_var-[0.84, 1.6, 2, 0.8]) < 1e-10).all()
         ) == (True, True)
         assert panel1_obj.primary_axis_scale == None
         assert panel1_obj.secondary_axis_scale == 1
         assert panel2_obj.primary_axis_scale == 1
         assert panel2_obj.secondary_axis_scale == 1
 
-    def test_str(self, default_series):
-        """ Test that str behaves correctly """
-        obj = putil.plot.Panel(series=None)
-        ret = (
-            'Series: None\n'
-            'Primary axis label: not specified\n'
-            'Primary axis units: not specified\n'
-            'Secondary axis label: not specified\n'
-            'Secondary axis units: not specified\n'
-            'Logarithmic dependent axis: False\n'
-            'Display independent axis: False\n'
-            'Legend properties:\n'
-            '   cols: 1\n'
-            '   pos: BEST'
-        )
-        assert str(obj) == ret
-        obj = putil.plot.Panel(
-            series=default_series,
-            primary_axis_label='Output',
-            primary_axis_units='Volts',
-            secondary_axis_label='Input',
-            secondary_axis_units='Watts',
-            display_indep_axis=True
-        )
-        ret = (
-            'Series 0:\n'
-            '   Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
-            '   Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
-            '   Label: test series\n'
-            '   Color: k\n'
-            '   Marker: o\n'
-            '   Interpolation: CUBIC\n'
-            '   Line style: -\n'
-            '   Secondary axis: False\n'
-            'Primary axis label: Output\n'
-            'Primary axis units: Volts\n'
-            'Secondary axis label: Input\n'
-            'Secondary axis units: Watts\n'
-            'Logarithmic dependent axis: False\n'
-            'Display independent axis: True\n'
-            'Legend properties:\n'
-            '   cols: 1\n'
-            '   pos: BEST'
-        )
-        assert str(obj) == ret
-
-    def test_cannot_delete_attributes(self, default_series):
-        """ Test that del method raises an exception on all class attributes """
+    @pytest.mark.panel
+    def test_cannot_delete_attributes_exceptions(self, default_series):
+        """
+        Test that del method raises an exception on all class attributes
+        """
         obj = putil.plot.Panel(series=default_series)
         with pytest.raises(AttributeError) as excinfo:
             del obj.series
@@ -1257,7 +1337,9 @@ class TestPanel(object):
     def test_images(self, tmpdir):
         """ Compare images to verify correct plotting of panel """
         tmpdir.mkdir('test_images')
-        images_dict_list = unittest_panel_images(mode='test', test_dir=str(tmpdir))
+        images_dict_list = unittest_panel_images(
+            mode='test', test_dir=str(tmpdir)
+        )
         for images_dict in images_dict_list:
             ref_file_name = images_dict['ref_file_name']
             ref_ci_file_name = images_dict['ref_ci_file_name']
@@ -1276,27 +1358,4 @@ class TestPanel(object):
                 print('Actual image: file://{0}'.format(
                     os.path.realpath(test_file_name)
                 ))
-            #print 'Comparison: {0} with {1} -> {2} {3}'.format(
-            #   ref_file_name,
-            #   test_file_name,
-            #   result,
-            #   metrics
-            #)
             assert result or result_ci
-
-    def test_nonzero(self, default_series):
-        """ Test __nonzero__() function """
-        obj = putil.plot.Panel()
-        assert not obj
-        obj.series = default_series
-        assert obj
-
-    def test_legend_position_validation(self):
-        """ Tests for _legend_position_validation() pseudo-type """
-        assert putil.plot.panel._legend_position_validation(5)
-        assert putil.plot.panel._legend_position_validation('x')
-        for item in [
-                None, 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT',
-                'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',
-                'LOWER CENTER', 'UPPER CENTER', 'CENTER']:
-            assert not putil.plot.panel._legend_position_validation(item)

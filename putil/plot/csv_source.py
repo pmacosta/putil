@@ -8,10 +8,11 @@ from collections import OrderedDict
 
 import putil.exh
 import putil.pcsv
-from putil.pcsv import csv_data_filter
+from putil.ptypes import csv_row_filter
 from .constants import PRECISION
-from .functions import (DataSource, _check_increasing_real_numpy_vector,
-                        _check_real_numpy_vector)
+from .functions import (
+    DataSource, _check_increasing_real_numpy_vector, _check_real_numpy_vector
+)
 
 
 ###
@@ -27,6 +28,16 @@ else:
 sys.path.append(os.environ['TRACER_DIR'])
 import trace_ex_plot_csv_source
 exobj_plot = trace_ex_plot_csv_source.trace_module(no_print=True)
+exclude_list = [
+    'putil.pcsv.csv_file.CsvFile._set_cfilter',
+    'putil.pcsv.csv_file.CsvFile._set_dfilter',
+    'putil.pcsv.csv_file.CsvFile._set_has_header',
+    'putil.pcsv.csv_file.CsvFile.data',
+    'putil.pcsv.csv_file.CsvFile.header',
+    'putil.pcsv.csv_file.CsvFile.cfilter',
+    'putil.pcsv.csv_file.CsvFile.dfilter',
+    'putil.pcsv.csv_file.CsvFile.reset_dfilter'
+]
 ]]]
 [[[end]]]
 """
@@ -39,50 +50,59 @@ class CsvSource(DataSource):
     r"""
     Objects of this class hold a data set from a CSV file intended for
     plotting. The raw data from the file can be filtered and a callback
-    function can be used for more general data pre-processing.
+    function can be used for more general data pre-processing
 
-    :param  fname:              comma-separated values file name
-    :type   fname:              :ref:`FileNameExists`
-    :param  indep_col_label:    independent variable column label
-    :type   indep_col_label:    case insensitive string
-    :param  dep_col_label:      dependent variable column label
-    :type   dep_col_label:      case insensitive string
-    :param  dfilter:            data filter
-     specification
-    :type   dfilter:            :ref:`CsvDataFilter`
-    :param  indep_min:          minimum independent variable value
-    :type   indep_min:          :ref:`RealNum` *or None*
-    :param  indep_max:          maximum independent variable value
-    :type   indep_max:          :ref:`RealNum` *or None*
-    :param  fproc:              data processing function
-    :type   fproc:              :ref:`Function`
-    :param  fproc_eargs:        data processing function extra arguments
-    :type   fproc_eargs:        dictionary or None
-    :rtype:                     :py:class:`putil.plot.CsvSource` object
+    :param fname: Comma-separated values file name
+    :type  fname: :ref:`FileNameExists`
 
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    :param indep_col_label: Independent variable column label
+                            (case insensitive)
+    :type  indep_col_label: string
+
+    :param dep_col_label: Dependent variable column label
+                          (case insensitive)
+    :type  dep_col_label: string
+
+    :param rfilter: Row filter specification. If None no row filtering is
+                    performed
+    :type  rfilter: :ref:`CsvRowFilter` *or None*
+
+    :param indep_min: Minimum independent variable value. If None no minimum
+                      thresholding is applied to the data
+    :type  indep_min: :ref:`RealNum` *or None*
+
+    :param indep_max: Maximum independent variable value. If None no maximum
+                      thresholding is applied to the data
+    :type  indep_max: :ref:`RealNum` *or None*
+
+    :param fproc: Data processing function. If None no processing function is
+                  used
+    :type  fproc: :ref:`Function` *or None*
+
+    :param fproc_eargs: Data processing function extra arguments. If None no
+                        extra arguments are passed to the processing function
+                        (if defined)
+    :type  fproc_eargs: dictionary or None
+
+    :rtype: :py:class:`putil.plot.CsvSource`
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=exclude_list)) ]]]
     .. Auto-generated exceptions documentation for
     .. putil.plot.csv_source.CsvSource.__init__
 
     :raises:
-     * OSError (File \`*[file_name]*\` could not be found)
-
-     * RuntimeError (Argument \`col\` is not valid)
+     * OSError (File *[fname]* could not be found)
 
      * RuntimeError (Argument \`dep_col_label\` is not valid)
 
      * RuntimeError (Argument \`dep_var\` is not valid)
 
-     * RuntimeError (Argument \`dfilter\` is not valid)
-
-     * RuntimeError (Argument \`filtered\` is not valid)
-
      * RuntimeError (Argument \`fname\` is not valid)
 
      * RuntimeError (Argument \`fproc_eargs\` is not valid)
 
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned
+       an illegal number of values)
 
      * RuntimeError (Argument \`fproc\` is not valid)
 
@@ -94,7 +114,9 @@ class CsvSource(DataSource):
 
      * RuntimeError (Argument \`indep_var\` is not valid)
 
-     * RuntimeError (Column headers are not unique)
+     * RuntimeError (Argument \`rfilter\` is not valid)
+
+     * RuntimeError (Column headers are not unique in file *[fname]*)
 
      * RuntimeError (File *[fname]* has no valid data)
 
@@ -106,17 +128,15 @@ class CsvSource(DataSource):
        fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
        *[exception_error_message]*)
 
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value
+       is not valid)
 
      * TypeError (Processed dependent variable is not valid)
 
      * TypeError (Processed independent variable is not valid)
 
-     * ValueError (Argument \`dfilter\` is empty)
-
-     * ValueError (Argument \`fproc\` (function *[func_name]*) does not have
-       at least 2 arguments)
+     * ValueError (Argument \`fproc\` (function *[func_name]*) does not
+       have at least 2 arguments)
 
      * ValueError (Argument \`indep_min\` is greater than argument
        \`indep_max\`)
@@ -124,19 +144,21 @@ class CsvSource(DataSource):
      * ValueError (Argument \`indep_var\` is empty after
        \`indep_min\`/\`indep_max\` range bounding)
 
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
+     * ValueError (Argument \`rfilter\` is empty)
 
-     * ValueError (Column *[col_name]* (dependent column label) could not be
-       found in comma-separated file *[fname]* header)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the
+       same number of elements)
 
-     * ValueError (Column *[col_name]* (independent column label) could not be
-       found in comma-separated file *[fname]* header)
+     * ValueError (Column *[col_name]* (dependent column label) could not
+       be found in comma-separated file *[fname]* header)
 
-     * ValueError (Column *[col_name]* in data filter not found in comma-
+     * ValueError (Column *[col_name]* (independent column label) could not
+       be found in comma-separated file *[fname]* header)
+
+     * ValueError (Column *[col_name]* in row filter not found in comma-
        separated file *[fname]* header)
 
-     * ValueError (Column *[column_name]* not found in header)
+     * ValueError (Column *[column_identifier]* not found)
 
      * ValueError (Extra argument \`*[arg_name]*\` not found in argument
        \`fproc\` (function *[func_name]*) definition)
@@ -155,224 +177,216 @@ class CsvSource(DataSource):
     .. [[[end]]]
     """
     # pylint: disable=R0902,R0903,R0913
-    def __init__(self, fname, indep_col_label, dep_col_label, dfilter=None,
+    def __init__(self, fname, indep_col_label, dep_col_label, rfilter=None,
                  indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):
         # Private attributes
         super(CsvSource, self).__init__()
         self._exh = putil.exh.get_or_create_exh_obj()
-        self._raw_indep_var, self._raw_dep_var = None, None
-        self._min_indep_var_index, self._max_indep_var_index = None, None
+        self._raw_indep_var = None
+        self._raw_dep_var = None
+        self._min_indep_var_index = None
+        self._max_indep_var_index = None
         self._indep_var_indexes = None
-        self._csv_obj, self._reverse_data = None, False
+        self._csv_obj = None
+        self._reverse_data = False
         # Public attributes
-        self._indep_min, self._indep_max = None, None
-        self._fname, self._dfilter, self._indep_col_label = None, None, None
-        self._dep_col_label, self._fproc, self._fproc_eargs = None, None, None
-        # Assignment of arguments to attributes
+        self._indep_min = None
+        self._indep_max = None
+        self._fname = None
+        self._rfilter = None
+        self._indep_col_label = None
+        self._dep_col_label = None
+        self._fproc = None
+        self._fproc_eargs = None
+        # Assignment of arguments to attributes.
         self._set_fproc(fproc)
         self._set_fproc_eargs(fproc_eargs)
-        self._set_dfilter(dfilter)
+        self._set_rfilter(rfilter)
         self._set_indep_col_label(indep_col_label)
         self._set_dep_col_label(dep_col_label)
         self._set_indep_min(indep_min)
         self._set_indep_max(indep_max)
         self._set_fname(fname)
 
-    def _get_fname(self):
-        return self._fname
+    def __str__(self):
+        r"""
+        Prints source information. For example:
 
-    @putil.pcontracts.contract(fname='file_name_exists')
-    def _set_fname(self, fname):
-        self._fname = fname
-        self._csv_obj = putil.pcsv.CsvFile(fname)
-        self._apply_dfilter()   # This also gets indep_var and dep_var from file
-        self._process_data()
+        .. =[=cog
+        .. import docs.support.incfile
+        .. docs.support.incfile.incfile('plot_example_3.py', cog)
+        .. =]=
+        .. code-block:: python
 
-    def _get_dfilter(self):
-        return self._dfilter
+            # plot_example_3.py
+            import putil.misc, putil.pcsv, sys
 
-    @putil.pcontracts.contract(dfilter='csv_data_filter')
-    def _set_dfilter(self, dfilter):
-        # putil.pcsv is case insensitive and all caps
-        self._dfilter = (dict([(key, value) for key, value in dfilter.items()])
-                        if isinstance(dfilter, dict) else dfilter)
-        self._apply_dfilter()
-        self._process_data()
+            def cwrite(fobj, data):
+                if sys.version_info.major == 2:
+                    fobj.write(data)
+                else:
+                    fobj.write(bytes(data, 'ascii'))
 
-    def _get_indep_col_label(self):
-        return self._indep_col_label
+            def write_csv_file(file_handle):
+                cwrite(file_handle, 'Col1,Col2\n')
+                cwrite(file_handle, '0E-12,10\n')
+                cwrite(file_handle, '1E-12,0\n')
+                cwrite(file_handle, '2E-12,20\n')
+                cwrite(file_handle, '3E-12,-10\n')
+                cwrite(file_handle, '4E-12,30\n')
 
-    @putil.pcontracts.contract(indep_col_label=str)
-    def _set_indep_col_label(self, indep_col_label):
-        self._indep_col_label = indep_col_label
-        self._check_indep_col_label()
-        self._apply_dfilter()
-        self._process_data()
+            # indep_var is a Numpy vector, in this example time,
+            # in seconds. dep_var is a Numpy vector
+            def proc_func1(indep_var, dep_var):
+                # Scale time to pico-seconds
+                indep_var = indep_var/1e-12
+                # Remove offset
+                dep_var = dep_var-dep_var[0]
+                return indep_var, dep_var
 
-    def _get_dep_col_label(self):
-        return self._dep_col_label
+            def create_csv_source():
+                with putil.misc.TmpFile(write_csv_file) as fname:
+                    obj = putil.plot.CsvSource(
+                        fname=fname,
+                        indep_col_label='Col1',
+                        dep_col_label='Col2',
+                        indep_min=2E-12,
+                        fproc=proc_func1
+                    )
+                return obj
 
-    @putil.pcontracts.contract(dep_col_label=str)
-    def _set_dep_col_label(self, dep_col_label):
-        self._dep_col_label = dep_col_label
-        self._check_dep_col_label()
-        self._apply_dfilter()
-        self._process_data()
+        .. =[=end=]=
 
-    @putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
-    def _set_indep_var(self, indep_var):
-        self._exh.add_exception(
-            exname='same',
-            extype=ValueError,
-            exmsg='Arguments `indep_var` and `dep_var`'
-                  ' must have the same number of elements'
-        )
-        self._exh.raise_exception_if(
-            exname='same',
-            condition=(indep_var is not None) and
-                      (self._raw_dep_var is not None) and
-                      (len(self._raw_dep_var) != len(indep_var)))
-        self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
-        # Apply minimum and maximum range bounding and assign it to
-        # self._indep_var and thus this is what self.indep_var returns
-        self._update_indep_var()
-        self._update_dep_var()
+        .. code-block:: python
 
-    @putil.pcontracts.contract(dep_var='real_numpy_vector')
-    def _set_dep_var(self, dep_var):
-        self._exh.add_exception(
-            exname='same',
-            extype=ValueError,
-            exmsg='Arguments `indep_var` and `dep_var`'
-                  ' must have the same number of elements'
-        )
-        self._exh.raise_exception_if(
-            exname='same',
-            condition=(dep_var is not None) and
-                      (self._raw_indep_var is not None) and
-                      (len(self._raw_indep_var) != len(dep_var)))
-        self._raw_dep_var = putil.eng.round_mantissa(dep_var, PRECISION)
-        self._update_dep_var()
-
-    def _get_indep_min(self):
-        return self._indep_min
-
-    @putil.pcontracts.contract(indep_min='real_num')
-    def _set_indep_min(self, indep_min):
-        self._exh.add_exception(
-            exname='min_max',
-            extype=ValueError,
-            exmsg='Argument `indep_min` is greater than argument `indep_max`'
-        )
-        self._exh.raise_exception_if(
-            exname='min_max',
-            condition=(self.indep_max is not None) and
-                      (indep_min is not None) and
-                      (self.indep_max < indep_min)
-        )
-        self._indep_min = (putil.eng.round_mantissa(indep_min, PRECISION)
-                          if not isinstance(indep_min, int) else
-                          indep_min)
-        # Apply minimum and maximum range bounding and assign it to
-        # self._indep_var and thus this is what self.indep_var returns
-        self._update_indep_var()
-        self._update_dep_var()
-
-    def _get_indep_max(self):
-        return self._indep_max
-
-    @putil.pcontracts.contract(indep_max='real_num')
-    def _set_indep_max(self, indep_max):
-        self._exh.add_exception(
-            exname='min_max',
-            extype=ValueError,
-            exmsg='Argument `indep_min` is greater than argument `indep_max`'
-        )
-        self._exh.raise_exception_if(
-            exname='min_max',
-            condition=(self.indep_min is not None) and
-                      (indep_max is not None) and
-                      (indep_max < self.indep_min)
-        )
-        self._indep_max = (putil.eng.round_mantissa(indep_max, PRECISION)
-                          if not isinstance(indep_max, int) else
-                          indep_max)
-        # Apply minimum and maximum range bounding and assign it to
-        # self._indep_var and thus this is what self.indep_var returns
-        self._update_indep_var()
-        self._update_dep_var()
-
-    def _update_indep_var(self):
+            >>> from __future__ import print_function
+            >>> import docs.support.plot_example_3
+            >>> obj = docs.support.plot_example_3.create_csv_source()
+            >>> print(obj)  #doctest: +ELLIPSIS
+            File name: ...
+            Row filter: None
+            Independent column label: Col1
+            Dependent column label: Col2
+            Processing function: proc_func1
+            Processing function extra arguments: None
+            Independent variable minimum: 2e-12
+            Independent variable maximum: +inf
+            Independent variable: [ 2.0, 3.0, 4.0 ]
+            Dependent variable: [ 0.0, -30.0, 10.0 ]
         """
-        Update independent variable according to its minimum and maximum limits
+        ret = ''
+        ret += 'File name: {}\n'.format(self.fname)
+        ret += 'Row filter: {}\n'.format(
+            self.rfilter if self.rfilter is None else ''
+        )
+        if self.rfilter is not None:
+            orfilter = OrderedDict(
+                sorted(self.rfilter.items(), key=lambda t: t[0])
+            )
+            for key, value in orfilter.items():
+                ret += '   {key}: {value}\n'.format(key=key, value=value)
+        ret += 'Independent column label: {}\n'.format(self.indep_col_label)
+        ret += 'Dependent column label: {}\n'.format(self.dep_col_label)
+        ret += 'Processing function: {}\n'.format(
+            'None' if self.fproc is None else self.fproc.__name__
+        )
+        ret += 'Processing function extra arguments: {}\n'.format(
+            self.fproc_eargs if self.fproc_eargs is None else ''
+        )
+        if self.fproc_eargs is not None:
+            ofproc_eargs = OrderedDict(
+                sorted(
+                    self.fproc_eargs.items(), key=lambda t: t[0]
+                )
+            )
+            for key, value in ofproc_eargs.items():
+                ret += '   {key}: {value}\n'.format(key=key, value=value)
+        ret += 'Independent variable minimum: {}\n'.format(
+            '-inf' if self.indep_min is None else self.indep_min
+        )
+        ret += 'Independent variable maximum: {}\n'.format(
+            '+inf' if self.indep_max is None else self.indep_max
+        )
+        ret += super(CsvSource, self).__str__()
+        return ret
+
+    def _apply_rfilter(self):
+        """ Apply row filters to loaded data """
+        self._check_rfilter()
+        if ((self.rfilter is not None) and
+            (len(self.rfilter) > 0) and
+            (self._csv_obj is not None)):
+            self._csv_obj.rfilter = self.rfilter
+        elif self._csv_obj is not None:
+            self._csv_obj.reset_dfilter()
+        self._get_indep_var_from_file()
+        self._get_dep_var_from_file()
+
+    def _check_dep_col_label(self):
+        """
+        Check that dependent column label can be found in
+        comma-separated file header
         """
         self._exh.add_exception(
-            exname='empty',
+            exname='label',
             extype=ValueError,
-            exmsg='Argument `indep_var` is empty after '
-                  '`indep_min`/`indep_max` range bounding'
+            exmsg='Column *[col_name]* (dependent column label) could not be'
+                  ' found in comma-separated file *[fname]* header'
         )
-        if self._raw_indep_var is not None:
-            min_indexes = (self._raw_indep_var >=
-                (self.indep_min if self.indep_min is not None else self._raw_indep_var[0])
-            )
-            max_indexes = (self._raw_indep_var <=
-                (self.indep_max if self.indep_max is not None else self._raw_indep_var[-1])
-            )
-            self._indep_var_indexes = numpy.where(min_indexes & max_indexes)
-            super(CsvSource, self)._set_indep_var(
-                self._raw_indep_var[self._indep_var_indexes]
-            )
-            self._exh.raise_exception_if(
-                exname='empty',
-                condition=len(self.indep_var) == 0
-            )
+        self._exh.raise_exception_if(
+            exname='label',
+            condition=(self._csv_obj is not None) and
+                      (self.dep_col_label is not None) and
+                      (self.dep_col_label not in self._csv_obj.header()),
+            edata=[
+                {'field':'col_name', 'value':self.dep_col_label},
+                {'field':'fname', 'value':self.fname}
+            ]
+        )
 
-    def _update_dep_var(self):
+    def _check_rfilter(self):
         """
-        Update dependent variable (if assigned) to match the independent
-        variable range bounding
+        Check that columns in filter specification can be found in
+        comma-separated file header
         """
-        self._dep_var = self._raw_dep_var
-        if (self._indep_var_indexes is not None) and (self._raw_dep_var is not None):
-            super(CsvSource, self)._set_dep_var(
-                self._raw_dep_var[self._indep_var_indexes]
-            )
-
-    def _get_fproc(self):
-        return self._fproc
-
-    @putil.pcontracts.contract(fproc='function')
-    def _set_fproc(self, fproc):
         self._exh.add_exception(
-            exname='min_args',
+            exname='rfilter',
             extype=ValueError,
-            exmsg='Argument `fproc` (function *[func_name]*) '
-                  'does not have at least 2 arguments'
+            exmsg='Column *[col_name]* in row filter not found '
+                  'in comma-separated file *[fname]* header'
         )
-        if fproc is not None:
-            args = putil.pinspect.get_function_args(fproc)
-            self._exh.raise_exception_if(
-                exname='min_args',
-                condition=(fproc is not None) and
-                          (len(args) < 2) and
-                          ('*args' not in args) and
-                          ('**kwargs' not in args),
-                edata={'field':'func_name', 'value':fproc.__name__}
-            )
-        self._fproc = fproc
-        self._check_fproc_eargs()
-        self._process_data()
+        if (self._csv_obj is not None) and (self.rfilter is not None):
+            for key in self.rfilter:
+                self._exh.raise_exception_if(
+                    exname='rfilter',
+                    condition=key not in self._csv_obj.header(),
+                    edata=[
+                        {'field':'col_name', 'value':key},
+                        {'field':'fname', 'value':self.fname}
+                    ]
+                )
 
-    def _get_fproc_eargs(self):
-        return self._fproc_eargs
-
-    @putil.pcontracts.contract(fproc_eargs='None|dict')
-    def _set_fproc_eargs(self, fproc_eargs):
-        # Check that extra arguments to see if they are in the function definition
-        self._fproc_eargs = fproc_eargs
-        self._check_fproc_eargs()
-        self._process_data()
+    def _check_indep_col_label(self):
+        """
+        Check that independent column label can be found in
+        comma-separated file header
+        """
+        self._exh.add_exception(
+            exname='label',
+            extype=ValueError,
+            exmsg='Column *[col_name]* (independent column label) could not'
+                  ' be found in comma-separated file *[fname]* header'
+        )
+        self._exh.raise_exception_if(
+            exname='label',
+            condition=(self._csv_obj is not None) and
+                      (self.indep_col_label is not None) and
+                      (self.indep_col_label not in self._csv_obj.header()),
+            edata=[
+                {'field':'col_name', 'value':self.indep_col_label},
+                {'field':'fname', 'value':self.fname}
+            ]
+        )
 
     def _check_fproc_eargs(self):
         """
@@ -399,114 +413,8 @@ class CsvSource(DataSource):
                     ]
                 )
 
-    def _check_indep_col_label(self):
-        """
-        Check that independent column label can be found in
-        comma-separated file header
-        """
-        self._exh.add_exception(
-            exname='label',
-            extype=ValueError,
-            exmsg='Column *[col_name]* (independent column label) could not'
-                  ' be found in comma-separated file *[fname]* header'
-        )
-        self._exh.raise_exception_if(
-            exname='label',
-            condition=(self._csv_obj is not None) and
-                      (self.indep_col_label is not None) and
-                      (self.indep_col_label not in self._csv_obj.header),
-            edata=[
-                {'field':'col_name', 'value':self.indep_col_label},
-                {'field':'fname', 'value':self.fname}
-            ]
-        )
-
-    def _check_dep_col_label(self):
-        """
-        Check that dependent column label can be found in
-        comma-separated file header
-        """
-        self._exh.add_exception(
-            exname='label',
-            extype=ValueError,
-            exmsg='Column *[col_name]* (dependent column label) could not be'
-                  ' found in comma-separated file *[fname]* header'
-        )
-        self._exh.raise_exception_if(
-            exname='label',
-            condition=(self._csv_obj is not None) and
-                      (self.dep_col_label is not None) and
-                      (self.dep_col_label not in self._csv_obj.header),
-            edata=[
-                {'field':'col_name', 'value':self.dep_col_label},
-                {'field':'fname', 'value':self.fname}
-            ]
-        )
-
-    def _check_dfilter(self):
-        """
-        Check that columns in filter specification can be found in
-        comma-separated file header
-        """
-        self._exh.add_exception(
-            exname='dfilter',
-            extype=ValueError,
-            exmsg='Column *[col_name]* in data filter not found '
-                  'in comma-separated file *[fname]* header'
-        )
-        if (self._csv_obj is not None) and (self.dfilter is not None):
-            for key in self.dfilter:
-                self._exh.raise_exception_if(
-                    exname='dfilter',
-                    condition=key not in self._csv_obj.header,
-                    edata=[
-                        {'field':'col_name', 'value':key},
-                        {'field':'fname', 'value':self.fname}
-                    ]
-                )
-
-    def _apply_dfilter(self):
-        """ Apply data filters to loaded data """
-        self._check_dfilter()
-        if ((self.dfilter is not None) and
-            (len(self.dfilter) > 0) and
-            (self._csv_obj is not None)):
-            self._csv_obj.dfilter = self.dfilter
-        elif self._csv_obj is not None:
-            self._csv_obj.reset_dfilter()
-        self._get_indep_var_from_file()
-        self._get_dep_var_from_file()
-
-    def _get_indep_var_from_file(self):
-        """
-        Retrieve independent data variable from comma-separated values file
-        """
-        self._exh.add_exception(
-            exname='empty',
-            extype=ValueError,
-            exmsg='Filtered independent variable is empty'
-        )
-        if (self._csv_obj is not None) and (self.indep_col_label is not None):
-            # When object is given all arguments at construction the column
-            # label checking cannot happen at property assignment because file
-            # data is not yet loaded
-            self._check_indep_col_label()
-            data = numpy.array([
-                row[0] for row in self._csv_obj.data(
-                    self.indep_col_label,
-                    filtered=True
-                )
-            ])
-            self._exh.raise_exception_if(
-                exname='empty',
-                condition=(len(data) == 0) or
-                          bool(((data == [None]*len(data)).all()))
-            )
-            # Flip data if it is in descending order (affects interpolation)
-            if max(numpy.diff(data)) < 0:
-                self._reverse_data = True
-                data = data[::-1]
-            self._set_indep_var(data)
+    def _get_dep_col_label(self):
+        return self._dep_col_label
 
     def _get_dep_var_from_file(self):
         """
@@ -522,12 +430,10 @@ class CsvSource(DataSource):
             # label checking cannot happen at property assignment because file
             # data is not yet loaded
             self._check_dep_col_label()
-            data = numpy.array([
-                row[0] for row in self._csv_obj.data(
-                    self.dep_col_label,
-                    filtered=True
-                )
-            ])
+            self._csv_obj.cfilter = self.dep_col_label
+            data = numpy.array(
+                [row[0] for row in self._csv_obj.data(filtered=True)]
+            )
             self._exh.raise_exception_if(
                 exname='empty',
                 condition=(len(data) == 0) or
@@ -535,13 +441,66 @@ class CsvSource(DataSource):
             )
             self._set_dep_var(data[::-1] if self._reverse_data else data)
 
+    def _get_fname(self):
+        return self._fname
+
+    def _get_fproc(self):
+        return self._fproc
+
+    def _get_fproc_eargs(self):
+        return self._fproc_eargs
+
+    def _get_indep_col_label(self):
+        return self._indep_col_label
+
+    def _get_indep_max(self):
+        return self._indep_max
+
+    def _get_indep_min(self):
+        return self._indep_min
+
+    def _get_indep_var_from_file(self):
+        """
+        Retrieve independent data variable from comma-separated values file
+        """
+        self._exh.add_exception(
+            exname='empty',
+            extype=ValueError,
+            exmsg='Filtered independent variable is empty'
+        )
+        if (self._csv_obj is not None) and (self.indep_col_label is not None):
+            # When object is given all arguments at construction the column
+            # label checking cannot happen at property assignment because file
+            # data is not yet loaded
+            self._check_indep_col_label()
+            self._csv_obj.cfilter = self.indep_col_label
+            data = numpy.array(
+                [row[0] for row in self._csv_obj.data(filtered=True)]
+            )
+            self._exh.raise_exception_if(
+                exname='empty',
+                condition=(len(data) == 0) or
+                          bool(((data == [None]*len(data)).all()))
+            )
+            # Flip data if it is in descending order (affects interpolation)
+            if max(numpy.diff(data)) < 0:
+                self._reverse_data = True
+                data = data[::-1]
+            self._set_indep_var(data)
+
+    def _get_rfilter(self):
+        return self._rfilter
+
     def _process_data(self):
         """ Process data through call-back function """
         # pylint: disable=W0703
         self._exh.add_exception(
             exname='invalid_ret',
             extype=TypeError,
-            exmsg='Argument `fproc` (function *[func_name]*) return value is not valid'
+            exmsg=(
+                'Argument `fproc` (function *[func_name]*) '
+                'return value is not valid'
+            )
         )
         self._exh.add_exception(
             exname='illegal_ret',
@@ -591,14 +550,18 @@ class CsvSource(DataSource):
             try:
                 ret = (self.fproc(self.indep_var, self.dep_var)
                       if self.fproc_eargs is None else
-                      self.fproc(self.indep_var, self.dep_var, **self.fproc_eargs))
+                      self.fproc(
+                          self.indep_var, self.dep_var, **self.fproc_eargs)
+                       )
             except Exception as error_msg:
                 if (self.fproc_eargs is None) or (not self.fproc_eargs):
                     eamsg = 'None'
                 else:
                     eamsg = '\n'
                     for key, value in self.fproc_eargs.items():
-                        eamsg += '   {0}: {1}\n'.format(key, value)
+                        eamsg += '   {key}: {value}\n'.format(
+                            key=key, value=value
+                        )
                     eamsg = eamsg.rstrip()
                 self._exh.raise_exception_if(
                     exname='proc_fun_ex',
@@ -620,12 +583,17 @@ class CsvSource(DataSource):
                             )
                         },
                         {'field':'fproc_eargs_value', 'value':eamsg},
-                        {'field':'exception_error_message', 'value':str(error_msg)}
+                        {
+                            'field':'exception_error_message',
+                            'value':str(error_msg)
+                        }
                     ]
                 )
             self._exh.raise_exception_if(
                 exname='invalid_ret',
-                condition=(not isinstance(ret, list)) and (not isinstance(ret, tuple)),
+                condition=(
+                    not (isinstance(ret, list) or isinstance(ret, tuple))
+                ),
                 edata={'field':'func_name', 'value':self.fproc.__name__}
             )
             self._exh.raise_exception_if(
@@ -671,105 +639,184 @@ class CsvSource(DataSource):
             self._set_indep_var(indep_var)
             self._set_dep_var(dep_var)
 
-    def __str__(self):
-        r"""
-        Prints source information. For example:
+    @putil.pcontracts.contract(dep_col_label=str)
+    def _set_dep_col_label(self, dep_col_label):
+        self._dep_col_label = dep_col_label
+        self._check_dep_col_label()
+        self._apply_rfilter()
+        self._process_data()
 
-        .. =[=cog
-        .. import docs.support.incfile
-        .. docs.support.incfile.incfile('plot_example_3.py', cog)
-        .. =]=
-        .. code-block:: python
+    @putil.pcontracts.contract(dep_var='real_numpy_vector')
+    def _set_dep_var(self, dep_var):
+        self._exh.add_exception(
+            exname='same',
+            extype=ValueError,
+            exmsg='Arguments `indep_var` and `dep_var`'
+                  ' must have the same number of elements'
+        )
+        self._exh.raise_exception_if(
+            exname='same',
+            condition=(dep_var is not None) and
+                      (self._raw_indep_var is not None) and
+                      (len(self._raw_indep_var) != len(dep_var)))
+        self._raw_dep_var = putil.eng.round_mantissa(dep_var, PRECISION)
+        self._update_dep_var()
 
-            # plot_example_3.py
-            import putil.misc, putil.pcsv, sys
+    @putil.pcontracts.contract(fname='file_name_exists')
+    def _set_fname(self, fname):
+        self._fname = fname
+        self._csv_obj = putil.pcsv.CsvFile(fname)
+        self._apply_rfilter()   # This also gets indep_var,dep_var from file
+        self._process_data()
 
-            def cwrite(fobj, data):
-                if sys.version_info.major == 2:
-                    fobj.write(data)
-                else:
-                    fobj.write(bytes(data, 'ascii'))
+    @putil.pcontracts.contract(fproc='function')
+    def _set_fproc(self, fproc):
+        self._exh.add_exception(
+            exname='min_args',
+            extype=ValueError,
+            exmsg='Argument `fproc` (function *[func_name]*) '
+                  'does not have at least 2 arguments'
+        )
+        if fproc is not None:
+            args = putil.pinspect.get_function_args(fproc)
+            self._exh.raise_exception_if(
+                exname='min_args',
+                condition=(fproc is not None) and
+                          (len(args) < 2) and
+                          ('*args' not in args) and
+                          ('**kwargs' not in args),
+                edata={'field':'func_name', 'value':fproc.__name__}
+            )
+        self._fproc = fproc
+        self._check_fproc_eargs()
+        self._process_data()
 
-            def write_csv_file(file_handle):
-                cwrite(file_handle, 'Col1,Col2\n')
-                cwrite(file_handle, '0E-12,10\n')
-                cwrite(file_handle, '1E-12,0\n')
-                cwrite(file_handle, '2E-12,20\n')
-                cwrite(file_handle, '3E-12,-10\n')
-                cwrite(file_handle, '4E-12,30\n')
+    @putil.pcontracts.contract(fproc_eargs='None|dict')
+    def _set_fproc_eargs(self, fproc_eargs):
+        # Check that extra arguments to see if
+        # they are in the function definition
+        self._fproc_eargs = fproc_eargs
+        self._check_fproc_eargs()
+        self._process_data()
 
-            # indep_var is a Numpy vector, in this example  time,
-            # in seconds. dep_var is a Numpy vector
-            def proc_func1(indep_var, dep_var):
-                # Scale time to pico-seconds
-                indep_var = indep_var/1e-12
-                # Remove offset
-                dep_var = dep_var-dep_var[0]
-                return indep_var, dep_var
+    @putil.pcontracts.contract(indep_col_label=str)
+    def _set_indep_col_label(self, indep_col_label):
+        self._indep_col_label = indep_col_label
+        self._check_indep_col_label()
+        self._apply_rfilter()
+        self._process_data()
 
-            def create_csv_source():
-                with putil.misc.TmpFile(write_csv_file) as fname:
-                    obj = putil.plot.CsvSource(
-                        fname=fname,
-                        indep_col_label='Col1',
-                        dep_col_label='Col2',
-                        indep_min=2E-12,
-                        fproc=proc_func1
-                    )
-                return obj
+    @putil.pcontracts.contract(indep_max='real_num')
+    def _set_indep_max(self, indep_max):
+        self._exh.add_exception(
+            exname='min_max',
+            extype=ValueError,
+            exmsg='Argument `indep_min` is greater than argument `indep_max`'
+        )
+        self._exh.raise_exception_if(
+            exname='min_max',
+            condition=(self.indep_min is not None) and
+                      (indep_max is not None) and
+                      (indep_max < self.indep_min)
+        )
+        self._indep_max = (putil.eng.round_mantissa(indep_max, PRECISION)
+                          if not isinstance(indep_max, int) else
+                          indep_max)
+        # Apply minimum and maximum range bounding and assign it to
+        # self._indep_var and thus this is what self.indep_var returns
+        self._update_indep_var()
+        self._update_dep_var()
 
-        .. =[=end=]=
+    @putil.pcontracts.contract(indep_min='real_num')
+    def _set_indep_min(self, indep_min):
+        self._exh.add_exception(
+            exname='min_max',
+            extype=ValueError,
+            exmsg='Argument `indep_min` is greater than argument `indep_max`'
+        )
+        self._exh.raise_exception_if(
+            exname='min_max',
+            condition=(self.indep_max is not None) and
+                      (indep_min is not None) and
+                      (self.indep_max < indep_min)
+        )
+        self._indep_min = (putil.eng.round_mantissa(indep_min, PRECISION)
+                          if not isinstance(indep_min, int) else
+                          indep_min)
+        # Apply minimum and maximum range bounding and assign it to
+        # self._indep_var and thus this is what self.indep_var returns
+        self._update_indep_var()
+        self._update_dep_var()
 
-        .. code-block:: python
+    @putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
+    def _set_indep_var(self, indep_var):
+        self._exh.add_exception(
+            exname='same',
+            extype=ValueError,
+            exmsg='Arguments `indep_var` and `dep_var`'
+                  ' must have the same number of elements'
+        )
+        self._exh.raise_exception_if(
+            exname='same',
+            condition=(indep_var is not None) and
+                      (self._raw_dep_var is not None) and
+                      (len(self._raw_dep_var) != len(indep_var)))
+        self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
+        # Apply minimum and maximum range bounding and assign it to
+        # self._indep_var and thus this is what self.indep_var returns
+        self._update_indep_var()
+        self._update_dep_var()
 
-            >>> from __future__ import print_function
-            >>> import docs.support.plot_example_3
-            >>> obj = docs.support.plot_example_3.create_csv_source()
-            >>> print(obj)  #doctest: +ELLIPSIS
-            File name: ...
-            Data filter: None
-            Independent column label: Col1
-            Dependent column label: Col2
-            Processing function: proc_func1
-            Processing function extra arguments: None
-            Independent variable minimum: 2e-12
-            Independent variable maximum: +inf
-            Independent variable: [ 2.0, 3.0, 4.0 ]
-            Dependent variable: [ 0.0, -30.0, 10.0 ]
+    @putil.pcontracts.contract(rfilter='csv_row_filter')
+    def _set_rfilter(self, rfilter):
+        # putil.pcsv is case insensitive and all caps
+        self._rfilter = rfilter
+        self._apply_rfilter()
+        self._process_data()
 
+    def _update_dep_var(self):
         """
-        ret = ''
-        ret += 'File name: {0}\n'.format(self.fname)
-        ret += 'Data filter: {0}\n'.format(
-            self.dfilter if self.dfilter is None else ''
+        Update dependent variable (if assigned) to match the independent
+        variable range bounding
+        """
+        self._dep_var = self._raw_dep_var
+        if ((self._indep_var_indexes is not None) and
+           (self._raw_dep_var is not None)):
+            super(CsvSource, self)._set_dep_var(
+                self._raw_dep_var[self._indep_var_indexes]
+            )
+
+    def _update_indep_var(self):
+        """
+        Update independent variable according to its minimum and maximum limits
+        """
+        self._exh.add_exception(
+            exname='empty',
+            extype=ValueError,
+            exmsg='Argument `indep_var` is empty after '
+                  '`indep_min`/`indep_max` range bounding'
         )
-        if self.dfilter is not None:
-            odfilter = OrderedDict(sorted(self.dfilter.items(), key=lambda t: t[0]))
-            for key, value in odfilter.items():
-                ret += '   {0}: {1}\n'.format(key, value)
-        ret += 'Independent column label: {0}\n'.format(self.indep_col_label)
-        ret += 'Dependent column label: {0}\n'.format(self.dep_col_label)
-        ret += 'Processing function: {0}\n'.format(
-            'None' if self.fproc is None else self.fproc.__name__
-        )
-        ret += 'Processing function extra arguments: {0}\n'.format(
-            self.fproc_eargs if self.fproc_eargs is None else ''
-        )
-        if self.fproc_eargs is not None:
-            ofproc_eargs = OrderedDict(sorted(
-                self.fproc_eargs.items(),
-                key=lambda t: t[0]
-            ))
-            for key, value in ofproc_eargs.items():
-                ret += '   {0}: {1}\n'.format(key, value)
-        ret += 'Independent variable minimum: {0}\n'.format(
-            '-inf' if self.indep_min is None else self.indep_min
-        )
-        ret += 'Independent variable maximum: {0}\n'.format(
-            '+inf' if self.indep_max is None else self.indep_max
-        )
-        ret += super(CsvSource, self).__str__()
-        return ret
+        if self._raw_indep_var is not None:
+            indep_min = (
+                self.indep_min
+                if self.indep_min is not None else
+                self._raw_indep_var[0]
+            )
+            indep_max = (
+                self.indep_max
+                if self.indep_max is not None else
+                self._raw_indep_var[-1]
+            )
+            min_indexes = self._raw_indep_var >= indep_min
+            max_indexes = self._raw_indep_var <= indep_max
+            self._indep_var_indexes = numpy.where(min_indexes & max_indexes)
+            super(CsvSource, self)._set_indep_var(
+                self._raw_indep_var[self._indep_var_indexes]
+            )
+            self._exh.raise_exception_if(
+                exname='empty',
+                condition=len(self.indep_var) == 0
+            )
 
     # Managed attributes
     dep_col_label = property(
@@ -780,7 +827,7 @@ class CsvSource(DataSource):
     r"""
     Gets or sets the dependent variable column label (column name)
 
-    :type:  string
+    :type: string
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -790,8 +837,8 @@ class CsvSource(DataSource):
 
      * RuntimeError (Argument \`dep_col_label\` is not valid)
 
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned
+       an illegal number of values)
 
      * RuntimeError (Processing function *[func_name]* raised an exception
        when called with the following arguments: ``\n`` indep_var:
@@ -799,17 +846,17 @@ class CsvSource(DataSource):
        fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
        *[exception_error_message]*)
 
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value
+       is not valid)
 
      * TypeError (Processed dependent variable is not valid)
 
      * TypeError (Processed independent variable is not valid)
 
-     * ValueError (Column *[col_name]* (dependent column label) could not be
-       found in comma-separated file *[fname]* header)
+     * ValueError (Column *[col_name]* (dependent column label) could not
+       be found in comma-separated file *[fname]* header)
 
-     * ValueError (Column *[col_name]* in data filter not found in comma-
+     * ValueError (Column *[col_name]* in row filter not found in comma-
        separated file *[fname]* header)
 
      * ValueError (Filtered dependent variable is empty)
@@ -835,91 +882,36 @@ class CsvSource(DataSource):
     Gets the dependent variable Numpy vector
     """
 
-    dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter dictionary')
-    r"""
-    Gets or sets the data filter
-
-    :type: :ref:`CsvDataFilter`
-
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.plot.csv_source.CsvSource.dfilter
-
-    :raises: (when assigned)
-
-     * RuntimeError (Argument \`dfilter\` is not valid)
-
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
-
-     * RuntimeError (Processing function *[func_name]* raised an exception
-       when called with the following arguments: ``\n`` indep_var:
-       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
-       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
-       *[exception_error_message]*)
-
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
-
-     * TypeError (Processed dependent variable is not valid)
-
-     * TypeError (Processed independent variable is not valid)
-
-     * ValueError (Argument \`dfilter\` is empty)
-
-     * ValueError (Column *[col_name]* in data filter not found in comma-
-       separated file *[fname]* header)
-
-     * ValueError (Filtered dependent variable is empty)
-
-     * ValueError (Filtered independent variable is empty)
-
-     * ValueError (Processed dependent variable is empty)
-
-     * ValueError (Processed independent and dependent variables are of
-       different length)
-
-     * ValueError (Processed independent variable is empty)
-
-    .. [[[end]]]
-    """
-
     fname = property(
-        _get_fname,
-        _set_fname,
-        doc='Comma-separated file name'
+        _get_fname, _set_fname, doc='Comma-separated file name'
     )
     r"""
     Gets or sets the comma-separated values file from which data series is to
     be extracted. It is assumed that the first line of the file contains
     unique headers for each column
 
-    :type:      string
+    :type: string
 
-    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=exclude_list)) ]]]
     .. Auto-generated exceptions documentation for
     .. putil.plot.csv_source.CsvSource.fname
 
     :raises: (when assigned)
 
-     * OSError (File \`*[file_name]*\` could not be found)
-
-     * RuntimeError (Argument \`col\` is not valid)
+     * OSError (File *[fname]* could not be found)
 
      * RuntimeError (Argument \`dep_var\` is not valid)
 
-     * RuntimeError (Argument \`dfilter\` is not valid)
-
-     * RuntimeError (Argument \`filtered\` is not valid)
-
      * RuntimeError (Argument \`fname\` is not valid)
 
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned
+       an illegal number of values)
 
      * RuntimeError (Argument \`indep_var\` is not valid)
 
-     * RuntimeError (Column headers are not unique)
+     * RuntimeError (Argument \`rfilter\` is not valid)
+
+     * RuntimeError (Column headers are not unique in file *[fname]*)
 
      * RuntimeError (File *[fname]* has no valid data)
 
@@ -931,31 +923,31 @@ class CsvSource(DataSource):
        fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
        *[exception_error_message]*)
 
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value
+       is not valid)
 
      * TypeError (Processed dependent variable is not valid)
 
      * TypeError (Processed independent variable is not valid)
 
-     * ValueError (Argument \`dfilter\` is empty)
-
      * ValueError (Argument \`indep_var\` is empty after
        \`indep_min\`/\`indep_max\` range bounding)
 
-     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the same
-       number of elements)
+     * ValueError (Argument \`rfilter\` is empty)
 
-     * ValueError (Column *[col_name]* (dependent column label) could not be
-       found in comma-separated file *[fname]* header)
+     * ValueError (Arguments \`indep_var\` and \`dep_var\` must have the
+       same number of elements)
 
-     * ValueError (Column *[col_name]* (independent column label) could not be
-       found in comma-separated file *[fname]* header)
+     * ValueError (Column *[col_name]* (dependent column label) could not
+       be found in comma-separated file *[fname]* header)
 
-     * ValueError (Column *[col_name]* in data filter not found in comma-
+     * ValueError (Column *[col_name]* (independent column label) could not
+       be found in comma-separated file *[fname]* header)
+
+     * ValueError (Column *[col_name]* in row filter not found in comma-
        separated file *[fname]* header)
 
-     * ValueError (Column *[column_name]* not found in header)
+     * ValueError (Column *[column_identifier]* not found)
 
      * ValueError (Filtered dependent variable is empty)
 
@@ -972,20 +964,18 @@ class CsvSource(DataSource):
     """
 
     fproc = property(
-        _get_fproc,
-        _set_fproc,
-        doc='Processing function'
+        _get_fproc, _set_fproc, doc='Processing function'
     )
     r"""
     Gets or sets the data processing function pointer. The processing function
     is useful for "light" data massaging, like scaling, unit conversion, etc.;
     it is called after the data has been retrieved from the comma-separated
     values file and the resulting filtered data set has been bounded
-    (if applicable).
+    (if applicable). If :code:`None` no processing function is used.
 
-    The processing function is given two arguments, a Numpy vector containing
-    the independent variable array (first argument) and a Numpy vector
-    containing the dependent variable array (second argument).
+    When defined the processing function is given two arguments, a Numpy vector
+    containing the independent variable array (first argument) and a Numpy
+    vector containing the dependent variable array (second argument).
     The expected return value is a two-item Numpy vector tuple, its first
     item being the processed independent variable array, and the second
     item being the processed dependent variable array. One valid processing
@@ -993,22 +983,22 @@ class CsvSource(DataSource):
 
     .. =[=cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('plot_example_3.py', cog, '16-23')
+    .. docs.support.incfile.incfile('plot_example_3.py', cog, '22-29')
     .. =]=
     .. code-block:: python
 
-            cwrite(file_handle, '0E-12,10\n')
-            cwrite(file_handle, '1E-12,0\n')
-            cwrite(file_handle, '2E-12,20\n')
-            cwrite(file_handle, '3E-12,-10\n')
-            cwrite(file_handle, '4E-12,30\n')
-
-        # indep_var is a Numpy vector, in this example  time,
+        # indep_var is a Numpy vector, in this example time,
         # in seconds. dep_var is a Numpy vector
+        def proc_func1(indep_var, dep_var):
+            # Scale time to pico-seconds
+            indep_var = indep_var/1e-12
+            # Remove offset
+            dep_var = dep_var-dep_var[0]
+            return indep_var, dep_var
 
     .. =[=end=]=
 
-    :type: :ref:`Function`
+    :type: :ref:`Function` or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -1016,8 +1006,8 @@ class CsvSource(DataSource):
 
     :raises: (when assigned)
 
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned
+       an illegal number of values)
 
      * RuntimeError (Argument \`fproc\` is not valid)
 
@@ -1027,15 +1017,15 @@ class CsvSource(DataSource):
        fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
        *[exception_error_message]*)
 
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value
+       is not valid)
 
      * TypeError (Processed dependent variable is not valid)
 
      * TypeError (Processed independent variable is not valid)
 
-     * ValueError (Argument \`fproc\` (function *[func_name]*) does not have
-       at least 2 arguments)
+     * ValueError (Argument \`fproc\` (function *[func_name]*) does not
+       have at least 2 arguments)
 
      * ValueError (Extra argument \`*[arg_name]*\` not found in argument
        \`fproc\` (function *[func_name]*) definition)
@@ -1063,9 +1053,10 @@ class CsvSource(DataSource):
     dictionary value specifies the argument value. The extra parameters are
     passed by keyword so they must appear in the function definition explicitly
     or keyword variable argument collection must be used
-    (:code:`**kwargs`, for example).
+    (:code:`**kwargs`, for example). If :code:`None` no extra arguments are
+    passed to the processing function (if defined)
 
-    :type:  dictionary, default is None
+    :type: dictionary or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -1075,8 +1066,8 @@ class CsvSource(DataSource):
 
      * RuntimeError (Argument \`fproc_eargs\` is not valid)
 
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned
+       an illegal number of values)
 
      * RuntimeError (Processing function *[func_name]* raised an exception
        when called with the following arguments: ``\n`` indep_var:
@@ -1084,8 +1075,8 @@ class CsvSource(DataSource):
        fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
        *[exception_error_message]*)
 
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value
+       is not valid)
 
      * TypeError (Processed dependent variable is not valid)
 
@@ -1149,7 +1140,7 @@ class CsvSource(DataSource):
         >>> obj = docs.support.plot_example_5.create_csv_source()
         >>> print(obj)  #doctest: +ELLIPSIS
         File name: ...
-        Data filter: None
+        Row filter: None
         Independent column label: Col1
         Dependent column label: Col2
         Processing function: proc_func2
@@ -1158,7 +1149,6 @@ class CsvSource(DataSource):
         Independent variable maximum: +inf
         Independent variable: [ 10, 11, 12, 13, 14 ]
         Dependent variable: [ 16, 6, 26, -4, 36 ]
-
     """
 
     indep_col_label = property(
@@ -1169,7 +1159,7 @@ class CsvSource(DataSource):
     r"""
     Gets or sets the independent variable column label (column name)
 
-    :type:  string
+    :type: string
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -1177,8 +1167,8 @@ class CsvSource(DataSource):
 
     :raises: (when assigned)
 
-     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned an
-       illegal number of values)
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned
+       an illegal number of values)
 
      * RuntimeError (Argument \`indep_col_label\` is not valid)
 
@@ -1188,17 +1178,17 @@ class CsvSource(DataSource):
        fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
        *[exception_error_message]*)
 
-     * TypeError (Argument \`fproc\` (function *[func_name]*) return value is
-       not valid)
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value
+       is not valid)
 
      * TypeError (Processed dependent variable is not valid)
 
      * TypeError (Processed independent variable is not valid)
 
-     * ValueError (Column *[col_name]* (independent column label) could not be
-       found in comma-separated file *[fname]* header)
+     * ValueError (Column *[col_name]* (independent column label) could not
+       be found in comma-separated file *[fname]* header)
 
-     * ValueError (Column *[col_name]* in data filter not found in comma-
+     * ValueError (Column *[col_name]* in row filter not found in comma-
        separated file *[fname]* header)
 
      * ValueError (Filtered dependent variable is empty)
@@ -1216,14 +1206,13 @@ class CsvSource(DataSource):
     """
 
     indep_max = property(
-        _get_indep_max,
-        _set_indep_max,
-        doc='Maximum of independent variable'
+        _get_indep_max, _set_indep_max, doc='Maximum of independent variable'
     )
     r"""
-    Gets or sets the maximum independent variable limit
+    Gets or sets the maximum independent variable limit. If :code:`None` no
+    maximum thresholding is applied to the data
 
-    :type: :ref:`RealNum`, default is None
+    :type: :ref:`RealNum` or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -1243,14 +1232,13 @@ class CsvSource(DataSource):
     """
 
     indep_min = property(
-        _get_indep_min,
-        _set_indep_min,
-        doc='Minimum of independent variable'
+        _get_indep_min, _set_indep_min, doc='Minimum of independent variable'
     )
     r"""
-    Gets or sets the minimum independent variable limit
+    Gets or sets the minimum independent variable limit. If :code:`None` no
+    minimum thresholding is applied to the data
 
-    :type: :ref:`RealNum`, default is None
+    :type: :ref:`RealNum` or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -1276,4 +1264,56 @@ class CsvSource(DataSource):
     )
     """
     Gets the independent variable Numpy vector
+    """
+
+    rfilter = property(
+        _get_rfilter, _set_rfilter, doc='Row filter dictionary'
+    )
+    r"""
+    Gets or sets the row filter. If :code:`None` no row filtering is
+    performed
+
+    :type: :ref:`CsvRowFilter` or None
+
+    .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.plot.csv_source.CsvSource.rfilter
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`fproc\` (function *[func_name]*) returned
+       an illegal number of values)
+
+     * RuntimeError (Argument \`rfilter\` is not valid)
+
+     * RuntimeError (Processing function *[func_name]* raised an exception
+       when called with the following arguments: ``\n`` indep_var:
+       *[indep_var_value]* ``\n`` dep_var: *[dep_var_value]* ``\n``
+       fproc_eargs: *[fproc_eargs_value]* ``\n`` Exception error:
+       *[exception_error_message]*)
+
+     * TypeError (Argument \`fproc\` (function *[func_name]*) return value
+       is not valid)
+
+     * TypeError (Processed dependent variable is not valid)
+
+     * TypeError (Processed independent variable is not valid)
+
+     * ValueError (Argument \`rfilter\` is empty)
+
+     * ValueError (Column *[col_name]* in row filter not found in comma-
+       separated file *[fname]* header)
+
+     * ValueError (Filtered dependent variable is empty)
+
+     * ValueError (Filtered independent variable is empty)
+
+     * ValueError (Processed dependent variable is empty)
+
+     * ValueError (Processed independent and dependent variables are of
+       different length)
+
+     * ValueError (Processed independent variable is empty)
+
+    .. [[[end]]]
     """

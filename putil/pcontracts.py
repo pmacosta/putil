@@ -154,7 +154,7 @@ def _get_custom_contract(param_contract):
     if not isinstance(param_contract, str):
         return None
     for custom_contract in _CUSTOM_CONTRACTS:
-        if re.search(r'\b{0}\b'.format(custom_contract), param_contract):
+        if re.search(r'\b{}\b'.format(custom_contract), param_contract):
             return custom_contract
     return None
 
@@ -163,8 +163,9 @@ def _isexception(obj):
     """
     Tests if the argument is an exception object
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: boolean
     """
     return False if not inspect.isclass(obj) else issubclass(obj, Exception)
@@ -269,7 +270,7 @@ def get_exdesc():
         )
     # Return function attribute created by new contract decorator
     exdesc = getattr(fobj, 'exdesc')
-    return exdesc if len(exdesc) > 1 else exdesc[list(exdesc.keys())[0]]
+    return exdesc if len(exdesc) > 1 else exdesc[next(iter(exdesc))]
 
 
 def _get_num_contracts(contracts_list, param_name):
@@ -421,7 +422,7 @@ def contract(**contract_args):
     exception type and message are controlled by the custom
     contract specification.
     """
-    # pylint: disable=W0212,W0631
+    # pylint: disable=W0631
     @decorator.decorator
     def wrapper(func, *args, **kwargs):
         """ Decorator """

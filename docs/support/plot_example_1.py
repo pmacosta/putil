@@ -11,7 +11,7 @@ import sys
 import putil.plot
 
 
-def main(fname):
+def main(fname, no_print):
     """
     Example of how to use the putil.plot library
     to generate presentation-quality plots
@@ -26,7 +26,7 @@ def main(fname):
     series1_obj = [putil.plot.Series(
         data_source=putil.plot.CsvSource(
             fname=csv_file,
-            dfilter={'value1':1},
+            rfilter={'value1':1},
             indep_col_label='value2',
             dep_col_label='value3',
             indep_min=None,
@@ -103,7 +103,8 @@ def main(fname):
     )
     # Save figure
     output_fname = os.path.join(wdir, fname)
-    print('Saving image to file {0}'.format(output_fname))
+    if not no_print:
+        print('Saving image to file {0}'.format(output_fname))
     fig_obj.save(output_fname)
 
 def series1_proc_func(indep_var, dep_var, xoffset):
@@ -112,4 +113,6 @@ def series1_proc_func(indep_var, dep_var, xoffset):
     return (indep_var*1e-3)-xoffset, dep_var
 
 if __name__ == '__main__':
-    main(sys.argv[1] if len(sys.argv) > 1 else 'plot_example_1.png')
+    FNAME = 'plot_example_1.png' if len(sys.argv) < 2 else sys.argv[1]
+    NO_PRINT = False if len(sys.argv) < 3 else bool(int(sys.argv[2]))
+    main(FNAME, NO_PRINT)

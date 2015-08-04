@@ -9,5 +9,5 @@ from tests.plot.csv_source import TestCsvSource
 from tests.plot.series import TestSeries
 from tests.plot.panel import TestPanel
 from tests.plot.figure import TestFigure
-from tests.plot.functions import TestParameterizedColorSpace, TestDataSource
+from tests.plot.functions import TestDataSource, TestParameterizedColorSpace
 from tests.plot.fixtures import default_panel, default_series, default_source

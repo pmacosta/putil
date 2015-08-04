@@ -11,7 +11,14 @@ from scipy.misc import imread
 import putil.plot
 
 
+###
+# Global variables
+###
 IMGTOL = 1e-3
+
+###
+# Fixtures
+###
 def compare_images(image_file_name1, image_file_name2):
     """ Compare two images by calculating Manhattan and Zero norms """
     # Source: http://stackoverflow.com/questions/189943/
@@ -21,9 +28,12 @@ def compare_images(image_file_name1, image_file_name2):
     if img1.size != img2.size:
         m_norm, z_norm = 2*[2*IMGTOL]
     else:
-        diff = img1 - img2                              # element-wise for scipy arrays
-        m_norm = scipy.sum(numpy.abs(diff))             # Manhattan norm
-        z_norm = scipy.linalg.norm(diff.ravel(), 0)     # Zero norm
+        # Element-wise for Scipy arrays
+        diff = img1-img2
+        # Manhattan norm
+        m_norm = scipy.sum(numpy.abs(diff))
+        # Zero norm
+        z_norm = scipy.linalg.norm(diff.ravel(), 0)
     return (m_norm, z_norm)
 
 
@@ -31,7 +41,7 @@ def compare_images(image_file_name1, image_file_name2):
 def default_source():
     """
     Provides a default source to be used in testing the
-    putil.plot.Series() class
+    putil.plot.Series class
     """
     return putil.plot.BasicSource(
         indep_var=numpy.array([5, 6, 7, 8]),
@@ -43,7 +53,7 @@ def default_source():
 def default_series(default_source):
     """
     Provides a default series object to be used in testing the
-    putil.plot.Panel() class
+    putil.plot.Panel class
     """
     return putil.plot.Series(
         data_source=default_source,
@@ -55,7 +65,7 @@ def default_series(default_source):
 def default_panel(default_series):
     """
     Provides a default panel object to be used in testing the
-    putil.plot.Figure() class
+    putil.plot.Figure class
     """
     return putil.plot.Panel(
         series=default_series,

@@ -9,10 +9,10 @@ import putil.plot
 
 
 ###
-# Test for DataSource
+# Test classes
 ###
 class TestDataSource(object):
-    """ Tests for abstract base class DataSource """
+    """ Tests for DataSource abstract base class """
     # pylint: disable=R0912,W0223
     def test_compliance(self):
         class Test1(putil.plot.DataSource):
@@ -87,36 +87,34 @@ class TestDataSource(object):
         # This statement should raise no exception
         Test6()
 
-###
-# Tests for parameterized_color_space
-###
 class TestParameterizedColorSpace(object):
-    """ Tests for function parameterized_color_space """
+    """ Tests for parameterized_color_space function """
     # pylint: disable=W0232
-    def test_param_list_wrong_type(self):
-        """ Test for invalid series parameter """
-        putil.test.assert_exception(
-            putil.plot.parameterized_color_space,
-            {'param_list':'a'},
-            RuntimeError,
-            'Argument `param_list` is not valid'
-        )
+    def test_param_list(self):
+        """ Test param_list arguments behavior """
+        putil.plot.parameterized_color_space([0, 1, 2, 3.3])
+
+    @pytest.mark.functions
+    def test_param_list_exceptions(self):
+        """ Test param_list argument exceptions """
+        items = ['a', ['a', None, False]]
+        for item in items:
+            putil.test.assert_exception(
+                putil.plot.parameterized_color_space,
+                {'param_list':item},
+                RuntimeError,
+                'Argument `param_list` is not valid'
+            )
         putil.test.assert_exception(
             putil.plot.parameterized_color_space,
             {'param_list':list()},
             TypeError,
             'Argument `param_list` is empty'
         )
-        putil.test.assert_exception(
-            putil.plot.parameterized_color_space,
-            {'param_list':['a', None, False]},
-            RuntimeError,
-            'Argument `param_list` is not valid'
-        )
-        putil.plot.parameterized_color_space([0, 1, 2, 3.3])
 
-    def test_offset_wrong_type(self):
-        """ Test for invalid offset parameter """
+    @pytest.mark.functions
+    def test_offset_exceptions(self):
+        """ Test offset argument exceptions """
         putil.test.assert_exception(
             putil.plot.parameterized_color_space,
             {'param_list':[1, 2], 'offset':'a'},
@@ -129,10 +127,20 @@ class TestParameterizedColorSpace(object):
             RuntimeError,
             'Argument `offset` is not valid'
         )
+
+    def test_offset(self):
+        """ Test offset argument behavior """
         putil.plot.parameterized_color_space([0, 1, 2, 3.3], 0.5)
 
-    def test_color_space_wrong_type(self):
-        """ Test for invalid offset parameter """
+    def test_color_space(self):
+        """ Test color argument behavior """
+        putil.plot.parameterized_color_space(
+            [0, 1, 2, 3.3], color_space='Blues'
+        )
+
+    @pytest.mark.functions
+    def test_color_space_exceptions(self):
+        """ Test color argument exceptions """
         putil.test.assert_exception(
             putil.plot.parameterized_color_space,
             {'param_list':[1, 2], 'color_space':3},
@@ -151,11 +159,9 @@ class TestParameterizedColorSpace(object):
             ValueError,
             msg
         )
-        # This should not raise an exception
-        putil.plot.parameterized_color_space([0, 1, 2, 3.3], color_space='Blues')
 
-    def test_function_works(self):
-        """ Test for correct behavior of function """
+    def test_parameterized_color_space(self):
+        """ Test color_space function behavior """
         # pylint: disable=E1101
         import matplotlib.pyplot as plt
         color_space = plt.cm.Greys

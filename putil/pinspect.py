@@ -61,13 +61,17 @@ def get_function_args(func, no_self=False, no_varargs=False):
     Returns a tuple of the function argument names in the order they are
     specified in the function signature
 
-    :param  func: Function
-    :type   func: function object
-    :param  no_self: Flag that indicates whether the function argument *self*,
-     if present, is included in the output (False) or not (True)
-    :type   no_self: boolean
-    :param  no_varargs: Flag that indicates whether keyword arguments are
-     included in the output (True) or not (False)
+    :param func: Function
+    :type  func: function object
+
+    :param no_self: Flag that indicates whether the function argument *self*,
+                    if present, is included in the output (False) or not (True)
+    :type  no_self: boolean
+
+    :param no_varargs: Flag that indicates whether keyword arguments are
+                       included in the output (True) or not (False)
+    :type  no_varargs: boolean
+
     :rtype: tuple
 
     For example:
@@ -127,9 +131,11 @@ def get_module_name(module_obj):
     r"""
     Retrieves the module name from a module object
 
-    :param  module_obj: Module object
-    :type   module_obj: object
+    :param module_obj: Module object
+    :type  module_obj: object
+
     :rtype: string
+
     :raises:
      * RuntimeError (Argument \`module_obj\` is not valid)
 
@@ -148,10 +154,8 @@ def get_module_name(module_obj):
     if name not in sys.modules:
         raise RuntimeError(
             (
-                'Module object `{name}` '
-                'could not be found in loaded modules'.format(
-                    name=name
-                )
+                'Module object `{name}` could not '
+                'be found in loaded modules'.format(name=name)
             )
         )
     return name
@@ -161,8 +165,9 @@ def is_object_module(obj):
     """
     Tests if the argument is a module object
 
-    :param  obj: Object
-    :type   obj: any
+    :param obj: Object
+    :type  obj: any
+
     :rtype: boolean
     """
     return isinstance(obj, types.ModuleType)
@@ -173,8 +178,9 @@ def is_special_method(name):
     Tests if a callable name is a special Python method (has a :code:`'__'`
     prefix and suffix)
 
-    :param  name: Callable name
-    :type   name: string
+    :param name: Callable name
+    :type  name: string
+
     :rtype: boolean
     """
     return name.startswith('__')
@@ -193,10 +199,12 @@ class Callables(object):
     A :py:class:`putil.pinspect.Callables` object retains knowledge of which
     modules have been traced so repeated calls to
     :py:meth:`putil.pinspect.Callables.trace` with the *same* module object
-    will *not* result in module re-traces (and the consequent performance hit).
+    will *not* result in module re-traces (and the consequent performance hit)
 
-    :param  fnames: File names of the modules to trace
-    :type   fnames: list
+    :param fnames: File names of the modules to trace. If None no immediate
+                   tracing is done
+    :type  fnames: list of strings or None
+
     :raises:
      * OSError (File *[fname]* could not be found)
 
@@ -215,7 +223,7 @@ class Callables(object):
 
     def __add__(self, other):
         """
-        Merges two objects.
+        Merges two objects
 
         :raises: RuntimeError (Conflicting information between objects)
 
@@ -238,7 +246,6 @@ class Callables(object):
             False
             >>> obj1+obj2 == obj3
             True
-
         """
         self._check_intersection(other)
         robj = Callables()
@@ -292,7 +299,6 @@ class Callables(object):
             >>> obj2 = copy.copy(obj1)
             >>> obj1 == obj2
             True
-
         """
         cobj = Callables()
         for prop_name in putil.misc.private_props(self):
@@ -319,7 +325,6 @@ class Callables(object):
             False
             >>> 5 == obj3
             False
-
         """
         return isinstance(other, Callables) and all([
             sorted(getattr(self, attr)) == sorted(getattr(other, attr))
@@ -328,7 +333,7 @@ class Callables(object):
 
     def __iadd__(self, other):
         """
-        Merges an object into an existing object.
+        Merges an object into an existing object
 
         :raises: RuntimeError (Conflicting information between objects)
 
@@ -352,7 +357,6 @@ class Callables(object):
             >>> obj1 += obj2
             >>> obj1 == obj3
             True
-
         """
 
         self._check_intersection(other)
@@ -406,7 +410,7 @@ class Callables(object):
             True
 
         """
-        return 'putil.pinspect.Callables({0})'.format(sorted(self._fnames))
+        return 'putil.pinspect.Callables({})'.format(sorted(self._fnames))
 
     def __str__(self):
         """
@@ -432,7 +436,7 @@ class Callables(object):
             ...pinspect_example_1.print_name: func (26-27)
 
         The numbers in parenthesis indicate the line number in which the
-        callable starts and ends within the file it is defined in.
+        callable starts and ends within the file it is defined in
         """
         ret = list()
         if self._module_names:
@@ -542,8 +546,9 @@ class Callables(object):
         class properties) and gets their attributes (callable type, file name,
         lines span)
 
-        :param  fnames: File names of the modules to trace
-        :type   fnames: list
+        :param fnames: File names of the modules to trace
+        :type  fnames: list
+
         :raises:
          * OSError (File *[fname]* could not be found)
 
@@ -584,10 +589,6 @@ class Callables(object):
                 self._module_names.append(module_name)
                 self._callables_db.update(aobj._callables_db)
                 self._reverse_callables_db.update(aobj._reverse_callables_db)
-                #for name, item in aobj._callables_db.items():
-                #    self._callables_db[name] = item
-                #for name, item in aobj._reverse_callables_db.items():
-                #    self._reverse_callables_db[name] = copy.deepcopy(item)
                 # Split into modules
                 self._modules_dict[module_name] = []
                 iobj = [
@@ -690,6 +691,7 @@ class _AstTreeScanner(ast.NodeVisitor):
     def _close_callable(self, node, force=False):
         """ Record last line number of callable """
         # pylint: disable=R0912
+
         # Print statements for debug
         # if self._debug:
         #     print('Close callable')

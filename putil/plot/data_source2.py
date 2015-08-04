@@ -1,4 +1,4 @@
-# datasource2.py
+# data_source2.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,C0302,W0105,W0212
@@ -39,19 +39,17 @@ class DataSource(object):
                 super(MySource, self)._set_indep_var(indep_var)
 
             dep_var = property(
-                putil.plot.DataSource._get_dep_var,
-                _set_dep_var
+                putil.plot.DataSource._get_dep_var, _set_dep_var
             )
 
             indep_var = property(
-                putil.plot.DataSource._get_indep_var,
-                _set_indep_var
+                putil.plot.DataSource._get_indep_var, _set_indep_var
             )
 
     .. =[=end=]=
 
     .. warning:: The abstract methods listed below need to be defined
-     in a child class
+                 in a child class
 
     """
     # pylint: disable=R0903,R0921
@@ -82,7 +80,6 @@ class DataSource(object):
             >>> print(obj)
             Independent variable: [ 1.0, 2.0, 3.0 ]
             Dependent variable: [ -1.0, 1.0, -1.0 ]
-
         """
         ret = ''
         ret += 'Independent variable: {0}\n'.format(putil.eng.pprint_vector(
@@ -109,7 +106,6 @@ class DataSource(object):
             >>> obj.dep_var = numpy.array([-1, 1, -1])
             >>> obj.dep_var
             array([-1.,  1., -1.])
-
         """
         self._dep_var = dep_var.astype(float)
 
@@ -125,7 +121,6 @@ class DataSource(object):
             >>> obj.indep_var = numpy.array([1, 2, 3])
             >>> obj.indep_var
             array([ 1.,  2.,  3.])
-
         """
         self._indep_var = indep_var.astype(float)
 

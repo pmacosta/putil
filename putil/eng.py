@@ -3,15 +3,18 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0105,W0611
 
+import collections
 import numpy
 import textwrap
 import decimal
 from decimal import Decimal
 
 import putil.exh
-from putil.ptypes import (engineering_notation_number,
-                         engineering_notation_suffix,
-                         non_negative_integer)
+from putil.ptypes import (
+    engineering_notation_number,
+    engineering_notation_suffix,
+    non_negative_integer
+)
 
 
 ###
@@ -35,17 +38,25 @@ exobj_eng = trace_ex_eng.trace_module(no_print=True)
 ###
 # Global variables
 ###
-_POWER_TO_SUFFIX_DICT = {
-    -24:'y', -21:'z', -18:'a', -15:'f', -12:'p', -9:'n', -6:'u', -3:'m',
-      0:' ',
-      3:'k', 6:'M', 9:'G', 12:'T', 15:'P', 18:'E', 21:'Z', 24:'Y'
-}
+_POWER_TO_SUFFIX_DICT = dict(
+    (exp, prf) for exp, prf in zip(range(-24, 27, 3), 'yzafpnum kMGTPEZY')
+)
 _SUFFIX_TO_POWER_DICT = {
     value:key for key, value in _POWER_TO_SUFFIX_DICT.items()
 }
 _SUFFIX_POWER_DICT = {
     key:float(10**value) for key, value in _SUFFIX_TO_POWER_DICT.items()
 }
+
+ENGPOWER = collections.namedtuple('EngPower', ['suffix', 'exp'])
+"""
+Constructor for engineering notation suffix
+"""
+
+NUMCOMP = collections.namedtuple('NumComp', ['mant', 'exp'])
+"""
+Constructor for number components representation
+"""
 
 
 ###
@@ -56,34 +67,33 @@ def _split_every(text, sep, count, lstrip=False, rstrip=False):
     Returns a list of the words in the string, using a count of a separator as
     the delimiter
 
-    :param  text: String to split
-    :type   text: string
-    :param  sep: Separator
-    :type   sep: string
-    :param  count: Number of separators to use as word delimiter
-    :type   count: integer
-    :param  lstrip: Flag that indicates whether whitespace is removed
-     from the beginning of each list item (True) or not (False)
-    :type   lstrip: boolean
-    :param  rstrip: Flag that indicates whether whitespace is removed
-     from the end of each list item (True) or not (False)
-    :type   rstrip: boolean
+    :param text: String to split
+    :type  text: string
+
+    :param sep: Separator
+    :type  sep: string
+
+    :param count: Number of separators to use as delimiter
+    :type  count: integer
+
+    :param lstrip: Flag that indicates whether whitespace is removed
+                   from the beginning of each list item (True) or not
+                   (False)
+    :type  lstrip: boolean
+
+    :param rstrip: Flag that indicates whether whitespace is removed
+                   from the end of each list item (True) or not (False)
+    :type  rstrip: boolean
+
     :rtype: list
     """
     tlist = text.split(sep)
-    lines = [
-        sep.join(tlist[num:min(num+count, len(tlist))])
-        for num in range(0, len(tlist), count)
-    ]
+    lines = (
+        sep.join(tlist[num:num+count]) for num in range(0, len(tlist), count)
+    )
+    ltr = '_rl '[2*lstrip+rstrip].strip()
     return [
-        line.rstrip()
-        if (rstrip and not lstrip) else
-        (
-            line.lstrip()
-            if (lstrip and not rstrip) else
-            (line.strip() if lstrip and rstrip else line)
-        )
-        for line in lines
+        getattr(line, ltr+'strip')() if ltr != '_' else line for line in lines
     ]
 
 
@@ -109,7 +119,7 @@ def _to_eng_tuple(number):
         int_part=mant[:new_ppos],
         frac_part=mant[new_ppos:]
     ).rstrip('0').rstrip('.')
-    return new_mant, new_exp
+    return NUMCOMP(new_mant, new_exp)
 
 
 def _to_sci_string(number):
@@ -137,13 +147,16 @@ def peng(number, frac_length, rjust=True):
     number (if it is not exactly zero) is bounded to the interval
     [1E-24, 1E+24)
 
-    :param  number: Number to convert
-    :type   number: number
-    :param  frac_length: Number of digits of fractional part
-    :type   frac_length: :ref:`NonNegativeInteger`
-    :param  rjust: Flag that indicates whether the number is
-     right-justified (True) or not (False)
-    :type   rjust: boolean
+    :param number: Number to convert
+    :type  number: integer or float
+
+    :param frac_length: Number of digits of fractional part
+    :type  frac_length: :ref:`NonNegativeInteger`
+
+    :param rjust: Flag that indicates whether the number is
+                  right-justified (True) or not (False)
+    :type  rjust: boolean
+
     :rtype: string
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -203,7 +216,6 @@ def peng(number, frac_length, rjust=True):
         >>> import putil.eng
         >>> putil.eng.peng(1235.6789E3, 3, False)
         '1.236M'
-
     """
     # The decimal module has a to_eng_string() function, but it does not seem
     # to work well in all cases. For example:
@@ -213,8 +225,8 @@ def peng(number, frac_length, rjust=True):
     # '3457122334'
     # It seems that the conversion function does not work in all cases
     #
-    ## Return formatted zero if number is zero, easier to not deal with this
-    ## special case through the rest of the algorithm
+    # Return formatted zero if number is zero, easier to not deal with this
+    # special case through the rest of the algorithm
     if number == 0:
         number = '0.{zrs}'.format(zrs='0'*frac_length) if frac_length else '0'
         # Engineering notation numbers can have a sign, a 3-digit integer part,
@@ -231,7 +243,7 @@ def peng(number, frac_length, rjust=True):
     number = sign*max(1e-24, abs(number))
     # Round fractional part if requested frac_length is less than length
     # of fractional part. Rounding method is to add a '5' at the decimal
-    # position just after the end of frac_length digits, to trigger
+    # position just after the end of frac_length digits
     mant, exp = _to_eng_tuple(number)
     ppos = mant.find('.')
     if (ppos != -1) and (len(mant)-ppos-1 > frac_length):
@@ -261,7 +273,7 @@ def peng(number, frac_length, rjust=True):
         )
     # Right-justify number, engineering notation numbers can have a sign,
     # a 3-digit integer part and a period, and a fractional part of length
-    # frac_length, so the the length of the number to the left of the
+    # frac_length, so the length of the number to the left of the
     # period is 4
     new_mant = new_mant.rjust(rjust*(4+bool(frac_length)+frac_length))
     # Format number
@@ -278,8 +290,9 @@ def peng_float(snum):
     Returns the floating point equivalent of a number represented
     in engineering notation
 
-    :param  snum: Number
-    :type   snum: :ref:`EngineeringNotationNumber`
+    :param snum: Number
+    :type  snum: :ref:`EngineeringNotationNumber`
+
     :rtype: string
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -294,7 +307,6 @@ def peng_float(snum):
         >>> import putil.eng
         >>> putil.eng.peng_float(putil.eng.peng(1235.6789E3, 3, False))
         1236000.0
-
     """
     # This can be coded as peng_mant(snum)*(peng_power(snum)[1]), but the
     # "function unrolling" is about 4x faster
@@ -308,8 +320,9 @@ def peng_frac(snum):
     r"""
     Returns the fractional part of a number represented in engineering notation
 
-    :param  snum: Number
-    :type   snum: :ref:`EngineeringNotationNumber`
+    :param snum: Number
+    :type  snum: :ref:`EngineeringNotationNumber`
+
     :rtype: integer
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -324,7 +337,6 @@ def peng_frac(snum):
         >>> import putil.eng
         >>> putil.eng.peng_frac(putil.eng.peng(1235.6789E3, 3, False))
         236
-
     """
     snum = snum.rstrip()
     pindex = snum.find('.')
@@ -332,9 +344,7 @@ def peng_frac(snum):
         return 0
     else:
         return (
-            int(snum[pindex+1:]
-            if snum[-1].isdigit() else
-            snum[pindex+1:-1])
+            int(snum[pindex+1:] if snum[-1].isdigit() else snum[pindex+1:-1])
         )
 
 
@@ -343,7 +353,8 @@ def peng_int(snum):
     Returns the integer part of a number represented in engineering notation
 
     :param snum: Number
-    :type   snum: :ref:`EngineeringNotationNumber`
+    :type  snum: :ref:`EngineeringNotationNumber`
+
     :rtype: integer
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -358,7 +369,6 @@ def peng_int(snum):
         >>> import putil.eng
         >>> putil.eng.peng_int(putil.eng.peng(1235.6789E3, 3, False))
         1
-
     """
     return int(peng_mant(snum))
 
@@ -368,8 +378,9 @@ def peng_mant(snum):
     r"""
     Returns the mantissa of a number represented in engineering notation
 
-    :param  snum: Number
-    :type   snum: :ref:`EngineeringNotationNumber`
+    :param snum: Number
+    :type  snum: :ref:`EngineeringNotationNumber`
+
     :rtype: float
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -384,7 +395,6 @@ def peng_mant(snum):
         >>> import putil.eng
         >>> putil.eng.peng_mant(putil.eng.peng(1235.6789E3, 3, False))
         1.236
-
     """
     snum = snum.rstrip()
     return float(snum if snum[-1].isdigit() else snum[:-1])
@@ -393,14 +403,18 @@ def peng_mant(snum):
 @putil.pcontracts.contract(snum='engineering_notation_number')
 def peng_power(snum):
     r"""
-    Returns a tuple with the engineering suffix (first tuple item) and
-    floating point equivalent of the suffix (second tuple item) of a
-    number represented in engineering notation. :py:func:`putil.eng.peng`
-    lists the correspondence between suffix and floating point exponent.
+    Returns  engineering suffix and floating point equivalent of the
+    suffix when a number is represented in engineering notation.
+    :py:func:`putil.eng.peng` lists the correspondence between suffix and
+    floating point exponent.
 
-    :param  snum: Number
-    :type   snum: :ref:`EngineeringNotationNumber`
-    :rtype: tuple
+    :param snum: Number
+    :type  snum: :ref:`EngineeringNotationNumber`
+
+    :rtype: named tuple in which the first item is the engineering suffix and
+            the second item is the floating point equivalent of the suffix
+            when the number is represented in engineering notation.
+
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for putil.eng.peng_power
@@ -413,11 +427,10 @@ def peng_power(snum):
 
         >>> import putil.eng
         >>> putil.eng.peng_power(putil.eng.peng(1235.6789E3, 3, False))
-        ('M', 1000000.0)
-
+        EngPower(suffix='M', exp=1000000.0)
     """
     suffix = ' ' if snum[-1].isdigit() else snum[-1]
-    return (suffix, _SUFFIX_POWER_DICT[suffix])
+    return ENGPOWER(suffix, _SUFFIX_POWER_DICT[suffix])
 
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
@@ -425,8 +438,9 @@ def peng_suffix(snum):
     r"""
     Returns the suffix of a number represented in engineering notation
 
-    :param  snum: Number
-    :type   snum: :ref:`EngineeringNotationNumber`
+    :param snum: Number
+    :type  snum: :ref:`EngineeringNotationNumber`
+
     :rtype: string
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -441,7 +455,6 @@ def peng_suffix(snum):
         >>> import putil.eng
         >>> putil.eng.peng_suffix(putil.eng.peng(1235.6789E3, 3, False))
         'M'
-
     """
     snum = snum.rstrip()
     return ' ' if snum[-1].isdigit() else snum[-1]
@@ -453,10 +466,12 @@ def peng_suffix_math(suffix, offset):
     Returns an engineering suffix based on a starting suffix and an offset of
     number of suffixes
 
-    :param  suffix: Engineering suffix
-    :type   suffix: :ref:`EngineeringNotationSuffix`
-    :param  offset: Engineering suffix offset
-    :type   offset: integer
+    :param suffix: Engineering suffix
+    :type  suffix: :ref:`EngineeringNotationSuffix`
+
+    :param offset: Engineering suffix offset
+    :type  offset: integer
+
     :rtype: string
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
@@ -477,7 +492,6 @@ def peng_suffix_math(suffix, offset):
         >>> import putil.eng
         >>> putil.eng.peng_suffix_math('u', 6)
         'T'
-
     """
     # pylint: disable=W0212,W0631
     exhobj = putil.exh.get_or_create_exh_obj()
@@ -500,13 +514,14 @@ def round_mantissa(arg, decimals=0):
     when expressed in `normalized scientific notation
     <https://en.wikipedia.org/wiki/Scientific_notation#Normalized_notation>`_
 
-    :param  arg: Input data
-    :type   arg: number, Numpy vector of numbers or None
-    :param  decimals: Number of digits to round the fractional part of the
-     mantissa to.
-    :type   decimals: integer
-    :rtype: number, Numpy vector of numbers or None depending on the argument
-     type
+    :param arg: Input data
+    :type  arg: integer, float, Numpy vector of integers or floats, or None
+
+    :param decimals: Number of digits to round the fractional part of the
+                     mantissa to.
+    :type  decimals: integer
+
+    :rtype: same as **arg**
 
     For example::
 
@@ -515,7 +530,6 @@ def round_mantissa(arg, decimals=0):
         12.35
         >>> putil.eng.round_mantissa(5, 3)
         5
-
     """
     if arg is None:
         return arg
@@ -540,27 +554,34 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     Formats a list of numbers (vector) or a Numpy vector for printing. If the
     argument **vector** is :code:`None` the string :code:`'None'` is returned
 
-    :param  vector: Vector to pretty print or None
-    :type   vector: list of numbers, Numpy vector or None
-    :param  limit: Flag that indicates whether at most 6 vector items are
-     printed (all vector items if its length is equal or less than 6, first
-     and last 3 vector items if it is not) (True), or the entire vector is
-     printed (False)
-    :type   limit: boolean
-    :param  width: Number of available characters per line. If None the vector
-     is printed in one line
-    :type   width: integer or None
-    :param  indent: Flag that indicates whether all subsequent lines after the
-     first one are indented (True) or not (False). Only relevant if
-     **width** is not None
-    :type   indent: boolean
-    :param  eng: Flag that indicates whether engineering notation is used
-     (True) or not (False)
-    :type   eng: boolean
-    :param  frac_length: Number of digits of fractional part (only applicable
-     if **eng** is True)
-    :type   frac_length: integer
+    :param vector: Vector to pretty print or None
+    :type  vector: list of integers or floats, Numpy vector or None
+
+    :param limit: Flag that indicates whether at most 6 vector items are
+                  printed (all vector items if its length is equal or less
+                  than 6, first and last 3 vector items if it is not) (True),
+                  or the entire vector is printed (False)
+    :type  limit: boolean
+
+    :param width: Number of available characters per line. If None the vector
+                  is printed in one line
+    :type  width: integer or None
+
+    :param indent: Flag that indicates whether all subsequent lines after the
+                   first one are indented (True) or not (False). Only relevant
+                   if **width** is not None
+    :type  indent: boolean
+
+    :param eng: Flag that indicates whether engineering notation is used
+                (True) or not (False)
+    :type  eng: boolean
+
+    :param frac_length: Number of digits of fractional part (only applicable
+                        if **eng** is True)
+    :type  frac_length: integer
+
     :raises: ValueError (Argument \`width\` is too small)
+
     :rtype: string
 
     For example:
@@ -598,11 +619,13 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
         [    1m,   20u,  300M,    4p,    5k,   -6n,  700 ,    8 ,    9  ]
         >>> print(putil.eng.pprint_vector(data, limit=True))
         [ 0.001, 2e-05, 300000000.0, ..., 700, 8, 9 ]
-
     """
     # pylint: disable=R0912,R0913,R0914
     def _str(*args):
-        """ Print a straight number or one with engineering notation """
+        """
+        Converts numbers to string, optionally represented
+        in engineering notation
+        """
         ret = [
             str(element)
             if not eng else
@@ -711,18 +734,23 @@ def to_scientific_string(
     number expressed in scientific notation. Full precision is maintained if
     the number is represented as a string
 
-    :param  number: Number to convert
-    :type   number: number or string
-    :param  frac_length: Number of digits of fractional part, None indicates
-     that the fractional part of the number should not be limited
-    :type   frac_length: integer or None
-    :param  exp_length: Number of digits of the exponent; the actual length of
-     the exponent takes precedence if it is longer
-    :type   exp_length: integer or None
-    :param  sign_always: Flag that indicates whether the sign always
-     precedes the number for both non-negative and negative numbers (True) or
-     only for negative numbers (False)
-    :type   sign_always: boolean
+    :param number: Number to convert
+    :type  number: number or string
+
+    :param frac_length: Number of digits of fractional part, None indicates
+                        that the fractional part of the number should not be
+                        limited
+    :type  frac_length: integer or None
+
+    :param exp_length: Number of digits of the exponent; the actual length of
+                       the exponent takes precedence if it is longer
+    :type  exp_length: integer or None
+
+    :param sign_always: Flag that indicates whether the sign always
+                        precedes the number for both non-negative and negative
+                        numbers (True) or only for negative numbers (False)
+    :type  sign_always: boolean
+
     :rtype: string
 
     For example:
@@ -734,7 +762,6 @@ def to_scientific_string(
         '1.01E-3'
         >>> putil.eng.to_scientific_string(99.999, 1, 2, True)
         '+1.0E+02'
-
     """
     exp_length = 0 if not exp_length else exp_length
     mant, exp = to_scientific_tuple(number)
@@ -766,23 +793,24 @@ def to_scientific_string(
 
 def to_scientific_tuple(number):
     """
-    Returns a tuple in which the first item is the mantissa (*string*) and
-    the second item is the exponent (*integer*) of a number when expressed
-    in scientific notation. Full precision is maintained if the number is
+    Returns mantissa and exponent of a number when expressed in
+    scientific notation. Full precision is maintained if the number is
     represented as a string
 
-    :param  number: Number
-    :type   number: number or string
-    :rtype: tuple
+    :param number: Number
+    :type  number: integer, float or string
+
+    :rtype: named tuple in which the first item is the mantissa (*string*)
+            and the second item is the exponent (*integer*) of the number
+            when expressed in scientific notation
 
     For example:
 
         >>> import putil.eng
         >>> putil.eng.to_scientific_tuple('135.56E-8')
-        ('1.3556', -6)
+        NumComp(mant='1.3556', exp=-6)
         >>> putil.eng.to_scientific_tuple(0.0000013556)
-        ('1.3556', -6)
-
+        NumComp(mant='1.3556', exp=-6)
     """
     # pylint: disable=W0632
     convert = not isinstance(number, str)
@@ -794,7 +822,7 @@ def to_scientific_tuple(number):
     # preserve resolution:
     # sign  : 0 -> +, 1 -> -
     # digits: tuple with digits of number
-    # exp   : exponent that gives mull fractional part
+    # exp   : exponent that gives null fractional part
     sign, digits, exp = Decimal(str(number) if convert else number).as_tuple()
     mant = '{sign}{itg}{frac}'.format(
         sign='-' if sign else '',
@@ -806,4 +834,4 @@ def to_scientific_tuple(number):
         )
     ).rstrip('0').rstrip('.')
     exp += len(digits)-1
-    return (mant, exp)
+    return NUMCOMP(mant, exp)

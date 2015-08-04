@@ -1,4 +1,4 @@
-# datasource3.py
+# data_source3.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,C0302,E1101,W0105,W0212
@@ -39,19 +39,17 @@ class DataSource(abc.ABC):
                 super(MySource, self)._set_indep_var(indep_var)
 
             dep_var = property(
-                putil.plot.DataSource._get_dep_var,
-                _set_dep_var
+                putil.plot.DataSource._get_dep_var, _set_dep_var
             )
 
             indep_var = property(
-                putil.plot.DataSource._get_indep_var,
-                _set_indep_var
+                putil.plot.DataSource._get_indep_var, _set_indep_var
             )
 
     .. =[=end=]=
 
     .. warning:: The abstract methods listed below need to be defined
-     in a child class
+                 in a child class
 
     """
     # pylint: disable=R0903,R0921
@@ -82,7 +80,6 @@ class DataSource(abc.ABC):
             >>> print(obj)
             Independent variable: [ 1.0, 2.0, 3.0 ]
             Dependent variable: [ -1.0, 1.0, -1.0 ]
-
         """
         ret = ''
         ret += 'Independent variable: {0}\n'.format(putil.eng.pprint_vector(
@@ -100,7 +97,7 @@ class DataSource(abc.ABC):
     @abc.abstractmethod
     def _set_dep_var(self, dep_var):
         """
-        Sets the dependent variable. For example:
+        Sets the dependent variable (casting to float type). For example:
 
         .. code-block:: python
 
@@ -109,14 +106,13 @@ class DataSource(abc.ABC):
             >>> obj.dep_var = numpy.array([-1, 1, -1])
             >>> obj.dep_var
             array([-1.,  1., -1.])
-
         """
         self._dep_var = dep_var.astype(float)
 
     @abc.abstractmethod
     def _set_indep_var(self, indep_var):
         """
-        Sets the independent variable. For example:
+        Sets the independent variable (casting to float type). For example:
 
         .. code-block:: python
 
@@ -125,7 +121,6 @@ class DataSource(abc.ABC):
             >>> obj.indep_var = numpy.array([1, 2, 3])
             >>> obj.indep_var
             array([ 1.,  2.,  3.])
-
         """
         self._indep_var = indep_var.astype(float)
 

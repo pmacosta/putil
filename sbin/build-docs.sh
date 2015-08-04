@@ -63,7 +63,11 @@ echo_red() {
 pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 export TRACER_DIR=${pkg_dir}/docs/support
 src_dir=${pkg_dir}/putil
-plot_submodules=(basic_source csv_source figure "functions" panel series)
+plot_submodules=(\
+	data_source2 data_source3 basic_source csv_source figure \
+	"functions" panel series\
+)
+pcsv_submodules=(concatenate csv_file dsort merge replace write)
 
 # Default values for command line options
 rebuild=0
@@ -129,14 +133,21 @@ if [ ${test_mode} == 1 ]; then
 	rm -rf ${TRACER_DIR}/*.pkl ${TRACER_DIR}/plot/*.pkl
 fi
 if [ ${rebuild} == 1 ]; then
-	msg="Rebuilding exceptions documentation"
-	echo_cyan "Rebuilding exceptions documentation"
+	test_msg=""
+	if [ ${test_mode} == 1 ]; then
+		test_msg="(test mode)"
+	fi
+	echo_cyan "Rebuilding exceptions documentation ${test_msg}"
 	start_time=$(date +%s)
 	for module in ${modules[@]}; do
 		if [ "${module}" == "plot" ]; then
 			module_dir=${src_dir}/plot
 			submodules=(${plot_submodules[@]})
-			pkl_dir=${TRACER_DIR}/plot
+			pkl_dir=${TRACER_DIR}
+		elif [ "${module}" == "pcsv" ]; then
+			module_dir=${src_dir}/pcsv
+			submodules=(${pcsv_submodules[@]})
+			pkl_dir=${TRACER_DIR}
 		else
 			pkl_dir=${TRACER_DIR}
 			module_dir=${src_dir}
@@ -145,8 +156,8 @@ if [ ${rebuild} == 1 ]; then
 		for submodule in ${submodules[@]}; do
 			smf="${module_dir}"/"${submodule}".py
 			pkl_file="${pkl_dir}"/"${submodule}".pkl
-			istring="File ${smf} identical from original"
-			dstring="File ${smf} differs from original"
+			istring="   File ${smf} identical from original"
+			dstring="   File ${smf} differs from original"
 			if [ ! -f "${smf}" ]; then
 				echo "Module ${smf} not found"
 				exit 1
@@ -156,19 +167,35 @@ if [ ${rebuild} == 1 ]; then
 			if [ ${test_mode} == 1 ]; then
 				cp ${smf} ${orig_file}
 			fi
-			if cog.py -e -o ${smf}.tmp ${smf}; then
+			trace_error=0
+			if [ ${test_mode} == 1 ]; then
+				if cog.py -e -o ${smf}.tmp ${smf} &>/dev/null
+				then
+					trace_error=0
+				else
+					trace_error=1
+				fi
+			else
+				if cog.py -e -o ${smf}.tmp ${smf}; then
+					trace_error=0
+				else
+					trace_error=1
+				fi
+			fi
+			if [ "${trace_error}" == 0 ]; then
 				mv -f ${smf}.tmp ${smf}
 				if [ ${test_mode} == 1 ]; then
 					if diff ${smf} ${orig_file}; then
 						echo_green "${istring}"
-						rm -rf ${orig_file}
-						#rm -rf ${orig_file} ${pkl_file}
+						rm -rf ${orig_file} ${pkl_file}
 					else
 						echo_red "${dstring}"
 						cp -f ${smf} ${smf}.error
 						mv -f ${orig_file} ${smf}
 						exit 1
 					fi
+				else
+					rm -rf ${pkl_file}
 				fi
 			else
 				echo "Error generating exceptions"\
@@ -186,6 +213,14 @@ fi
 if [ ${test_mode} == 1 ]; then
 	exit 0
 fi
+
+echo "Performing module-specific actions"
+for module in ${modules[@]}; do
+	if [ "${module}" == "plot" ]; then
+		echo "   Processing module ${module}"
+		python $TRACER_DIR/plot_example_1.py plot_example_1.png 1
+	fi
+done
 
 echo "Inserting files into docstrings"
 modules=(misc pcontracts plot tree)
@@ -239,4 +274,5 @@ else
 fi
 
 cd ${pkg_dir}/docs
+rm -rf _build
 make html

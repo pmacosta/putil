@@ -19,11 +19,9 @@ class MySource(putil.plot.DataSource, object):
         super(MySource, self)._set_indep_var(indep_var)
 
     dep_var = property(
-        putil.plot.DataSource._get_dep_var,
-        _set_dep_var
+        putil.plot.DataSource._get_dep_var, _set_dep_var
     )
 
     indep_var = property(
-        putil.plot.DataSource._get_indep_var,
-        _set_indep_var
+        putil.plot.DataSource._get_indep_var, _set_indep_var
     )

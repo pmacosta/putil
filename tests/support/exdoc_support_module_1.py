@@ -108,7 +108,7 @@ def mlmdfunc(arg1, arg2, arg3):
 ###
 class ExceptionAutoDocClass(object):
     """ Class to automatically generate exception documentation for """
-    # pylint: disable=R0902,R0903,W0212
+    # pylint: disable=R0902,W0212
     @putil.pcontracts.contract(value1=int, value2=int, value3=int, value4=int)
     @dummy_decorator1
     def __init__(self, value1=0, value2=0, value3=0, value4=0):
@@ -141,7 +141,7 @@ class ExceptionAutoDocClass(object):
 
     def _set_value1(self, value):
         """
-        Setter method for propety with getter defined via enclosed function
+        Setter method for property with getter defined via enclosed function
         """
         self._exobj.add_exception(
             exname='illegal_value1',
@@ -151,7 +151,7 @@ class ExceptionAutoDocClass(object):
         self._value1 = value
 
     def _set_value2(self, value):
-        """ Setter method for propety with getter defined via lambda """
+        """ Setter method for property with getter defined via lambda """
         self._exobj.add_exception(
             exname='illegal_value2_1',
             extype=TypeError,
