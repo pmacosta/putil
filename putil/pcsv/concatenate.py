@@ -76,7 +76,7 @@ def concatenate(
     :param ocols: Column names of the output comma-separated values file.
                   If None the column names in the first file are used if
                   **has_header1** is True or the column names in the second
-                  files are used if **has_heaser1** is False and
+                  files are used if **has_header1** is False and
                   **has_header2** is True, otherwise no header is used
     :type  ocols: list or None
 

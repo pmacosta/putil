@@ -1,21 +1,23 @@
-﻿# test_exdoc.py
+﻿# -*- coding: utf-8 -*-
+# test_exdoc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,F0401,R0201,R0903,W0104,W0212,W0612,W0613,W0621
+# pylint: disable=C0111,E0611,F0401,R0201,R0903,W0104,W0212,W0612,W0613,W0621
 
 from __future__ import print_function
 import imp
 import copy
-import mock
 import os
 import pytest
 import sys
 import tempfile
 if sys.version_info.major == 2:
     import __builtin__
+    import mock
 else:
     import builtins as __builtin__
     import importlib
+    import unittest.mock as mock
 
 import putil.exdoc
 import putil.exh

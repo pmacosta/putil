@@ -1,4 +1,4 @@
-﻿# exdoc_support_module_1.py
+# exdoc_support_module_1.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,R0903,W0613

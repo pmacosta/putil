@@ -1,15 +1,18 @@
 # plot_example_1.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111
+# pylint: disable=C0111,W0613
 
 from __future__ import print_function
+import matplotlib
 import numpy
 import os
 import sys
+# Default to non-interactive PNG to avoid any
+# matplotlib back-end misconfiguration
+matplotlib.rcParams['backend'] = 'Agg'
 
 import putil.plot
-
 
 def main(fname, no_print):
     """
@@ -109,7 +112,6 @@ def main(fname, no_print):
 
 def series1_proc_func(indep_var, dep_var, xoffset):
     """ Process data 1 series """
-    # pylint: disable=W0613
     return (indep_var*1e-3)-xoffset, dep_var
 
 if __name__ == '__main__':

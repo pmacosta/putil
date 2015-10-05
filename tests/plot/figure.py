@@ -1,16 +1,19 @@
 # figure.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,F0401,R0201,W0212,W0621
+# pylint: disable=C0103,C0111,E0611,F0401,R0201,W0212,W0621
 
 from __future__ import print_function
 import matplotlib
-import mock
 import numpy
 import os
 import pytest
 import sys
 import tempfile
+if sys.version_info.major == 2:
+    import mock
+else:
+    import unittest.mock as mock
 
 import putil.plot
 from .fixtures import compare_images, IMGTOL

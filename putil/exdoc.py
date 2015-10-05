@@ -1,4 +1,5 @@
-﻿# exdoc.py
+# -*- coding: utf-8 -*-
+# exdoc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,E0611,E1101,E1103,F0401,R0201,R0903,R0913

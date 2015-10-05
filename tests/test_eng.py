@@ -1,4 +1,4 @@
-﻿# test_eng.py
+# test_eng.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,C0302,R0915,W0212

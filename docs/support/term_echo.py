@@ -3,14 +3,16 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import subprocess
+import os, subprocess
 
 def ste(command, nindent, mdir, fpointer):
     """
     Simplified term_echo
     """
     term_echo(
-        '${{PUTIL_DIR}}/sbin/{0}'.format(command),
+        '${{PUTIL_DIR}}{sep}sbin{sep}{cmd}'.format(
+            sep=os.path.sep, cmd=command
+        ),
         nindent,
         {'PUTIL_DIR':mdir},
         fpointer
@@ -40,7 +42,9 @@ def term_echo(command, nindent=0, env=None, fpointer=None):
     fpointer('{0}    $ {1}\n'.format(indent, command), dedent=False)
     for line in stdout:
         if line.strip():
-            fpointer(indent+'    '+line.replace('\t', '    ')+'\n', dedent=False)
+            fpointer(
+                indent+'    '+line.replace('\t', '    ')+'\n', dedent=False
+            )
         else:
             fpointer('\n', dedent=False)
     fpointer('\n', dedent=False)

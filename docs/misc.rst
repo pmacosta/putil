@@ -43,7 +43,6 @@ Membership
 Miscellaneous
 *************
 
-.. autofunction:: putil.misc.Bundle
 .. autofunction:: putil.misc.flatten_list
 .. autofunction:: putil.misc.pprint_ast_node
 .. autofunction:: putil.misc.private_props

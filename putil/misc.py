@@ -1,4 +1,4 @@
-﻿# misc.py
+# misc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,R0903,W0611
@@ -14,7 +14,6 @@ import tempfile
 import time
 import types
 from fractions import Fraction
-
 
 ###
 # Global constants
@@ -939,60 +938,6 @@ def strframe(obj, extended=False):
 ###
 # Classes
 ###
-class Bundle(object):
-    """
-    Bundles a collection of variables into one object
-
-    :param elements: The keyword argument names are the variable names,
-                     the keyword arguments values are the variable values
-    :type  elements: any
-
-    For example:
-
-        >>> from __future__ import print_function
-        >>> import putil.misc
-        >>> obj = putil.misc.Bundle(var1=10)
-        >>> obj.var2 = 20
-        >>> print(str(obj))
-        var1 = 10
-        var2 = 20
-        >>> obj.var2
-        20
-        >>> del obj.var1
-        >>> print(str(obj))
-        var2 = 20
-    """
-    def __init__(self, **elements):
-        self.__dict__.update(elements)
-
-    def __len__(self):
-        return len(self.__dict__)
-
-    def __repr__(self):
-        skeys = sorted(list(self.__dict__.keys()))
-        return 'Bundle({args})'.format(
-            args=', '.join(
-                [
-                    '{arg}={value}'.format(
-                        arg=key,
-                        value=self.__dict__[key]
-                    ) for key in skeys
-                ]
-            )
-        )
-
-    def __str__(self):
-        skeys = sorted(list(self.__dict__.keys()))
-        return '\n'.join(
-            [
-                '{var} = {value}'.format(
-                    var=key,
-                    value=self.__dict__[key]
-                ) for key in skeys
-            ]
-        )
-
-
 class CiDict(dict):
     """
     Dictionary class with case-insensitive keys

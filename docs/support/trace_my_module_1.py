@@ -1,4 +1,4 @@
-﻿# trace_my_module_1.py
+# trace_my_module_1.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111

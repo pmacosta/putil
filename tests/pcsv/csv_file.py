@@ -1,13 +1,16 @@
-﻿# csv_file.py
+# csv_file.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
-import mock
 import os
 import pytest
 import sys
 import tempfile
+if sys.version_info.major == 2:
+    import mock
+else:
+    import unittest.mock as mock
 
 import putil.misc
 import putil.pcsv

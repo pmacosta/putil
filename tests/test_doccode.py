@@ -4,9 +4,13 @@
 # pylint: disable=C0111,C0302,R0914,W0212,W0640
 
 from __future__ import print_function
+import matplotlib
 import os
 import subprocess
 import sys
+# Default to non-interactive PNG to avoid any
+# matplotlib back-end misconfiguration
+matplotlib.rcParams['backend'] = 'Agg'
 
 import putil.misc
 import putil.test
@@ -30,13 +34,13 @@ def test_exdoc_doccode():
         return '\n'.join(actual_text)
     # Test tracing module #1 (py.test based)
     script_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         'docs',
         'support'
     )
     script_name = os.path.join(script_dir, 'trace_my_module_1.py')
     proc = subprocess.Popen(['python', script_name], stdout=subprocess.PIPE)
-    stdout = proc.communicate()[0]
+    stdout, stderr = proc.communicate()
     actual_text = remove_header(stdout)
     ref_text = (
         'Callable: docs.support.my_module.func\n'
@@ -66,6 +70,9 @@ def test_exdoc_doccode():
         '\n'
         '\n'
     )
+    if actual_text != ref_text:
+        print('STDOUT: {}'.format(stdout))
+        print('STDERR: {}'.format(stderr))
     assert actual_text == ref_text
     # Test tracing module #2 (simple usage based)
     script_name = os.path.join(script_dir, 'trace_my_module_2.py')
@@ -99,7 +106,7 @@ def test_exdoc_doccode():
 def test_pcsv_doccode():
     """ Test code used in pcsv module """
     script_dir = os.path.join(
-        os.path.dirname(__file__), '..', 'docs', 'support'
+        os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'support'
     )
     for num in range(1, 7):
         script_name = os.path.join(
@@ -108,7 +115,10 @@ def test_pcsv_doccode():
         proc = subprocess.Popen(
             ['python', script_name], stdout=subprocess.PIPE
         )
-        proc.communicate()
+        stdout, stderr = proc.communicate()
+        if proc.returncode != 0:
+            print('STDOUT: {}'.format(stdout))
+            print('STDERR: {}'.format(stderr))
         assert proc.returncode == 0
 
 
@@ -250,23 +260,24 @@ def test_pcontracts_doccode():
     )
     assert func10('John') == 'John'
 
-def test_plot_doccode():
+def test_plot_doccode(capsys):
     """ Test used in plot module """
+    # pylint: disable=R0915
     from tests.plot.fixtures import compare_images, IMGTOL
     script_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         'docs',
         'support'
     )
     script_name = os.path.join(script_dir, 'plot_example_1.py')
-    output_file = 'test_image.png'
+    output_file = os.path.join(script_dir, 'test_image.png')
     proc = subprocess.Popen(
         ['python', script_name, output_file],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT
     )
-    proc.communicate()
-    test_fname = os.path.join(script_dir, output_file)
+    stdout, stderr = proc.communicate()
+    test_fname = output_file
     ref_fname = os.path.join(script_dir, 'plot_example_1.png')
     metrics = compare_images(ref_fname, test_fname)
     result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
@@ -275,6 +286,8 @@ def test_plot_doccode():
     result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
     if (not result) and (not result_ci):
         print('Images do not match')
+        print('STDOUT: {}'.format(stdout))
+        print('STDERR: {}'.format(stderr))
         print(
             'Reference image: file://{0}'.format(os.path.realpath(ref_fname))
         )
@@ -315,3 +328,29 @@ def test_plot_doccode():
     obj = docs.support.plot_example_5.create_csv_source()
     assert obj.indep_var.tolist() == [10, 11, 12, 13, 14]
     assert obj.dep_var.tolist() == [16, 6, 26, -4, 36]
+    #
+    import docs.support.plot_example_6
+    docs.support.plot_example_6.panel_iterator_example(no_print=False)
+    stdout, stderr = capsys.readouterr()
+    ref = (
+        'Series 1:\n'
+        'Independent variable: [ 1.0, 2.0, 3.0, 4.0 ]\n'
+        'Dependent variable: [ 1.0, -10.0, 10.0, 5.0 ]\n'
+        'Label: Goals\n'
+        'Color: k\n'
+        'Marker: o\n'
+        'Interpolation: CUBIC\n'
+        'Line style: -\n'
+        'Secondary axis: False\n'
+        '\n'
+        'Series 2:\n'
+        'Independent variable: [ 100.0, 200.0, 300.0, 400.0 ]\n'
+        'Dependent variable: [ 50.0, 75.0, 100.0, 125.0 ]\n'
+        'Label: Saves\n'
+        'Color: b\n'
+        'Marker: None\n'
+        'Interpolation: STRAIGHT\n'
+        'Line style: --\n'
+        'Secondary axis: False\n\n'
+    )
+    assert stdout == ref

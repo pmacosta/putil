@@ -1,24 +1,71 @@
-﻿# setup.py
+# setup.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,E1111,R0904,W0201
 
-# Taken in large part from
-# http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
-# With additional hints from http://oddbird.net/set-your-code-free-preso/
+# Taken in large part from:
+#    http://www.jeffknupp.com/blog/2013/08/16/
+#    open-sourcing-a-python-project-the-right-way/
+# With additional hints from:
+#     http://oddbird.net/set-your-code-free-preso/
+# The function to get the version number from __init__.py is from:
+#     https://python-packaging-user-guide.readthedocs.org/
+#     en/latest/single_source_version/
 from __future__ import print_function
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 import glob
 import io
 import os
+import re
 import sys
 
 
 ###
 # Functions
 ###
+def find_version(*file_paths):
+    """ Get version number from package __init__.py file """
+    version_file = read(*file_paths)
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
+    )
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string")
+
+
+def get_short_desc(long_desc):
+    """ Get first sentence of first paragraph of long description """
+    found = False
+    olines = []
+    for line in [item.rstrip() for item in long_desc.split('\n')]:
+        if (found and (((not line) and (not olines))
+           or (line and olines))):
+            olines.append(line)
+        elif found and olines and (not line):
+            return (' '.join(olines).split('.')[0]).strip()
+        found = line == '.. [[[end]]]' if not found else found
+
+
+def load_requirements(pkg_dir, libs):
+    """ Get package names from requirements.txt file """
+    with open(os.path.join(pkg_dir, 'requirements.txt'), 'r') as fobj:
+        lines = [item.strip() for item in fobj.readlines()]
+    regexps = [
+        re.compile('^{}[>=]*'.format(item))
+        for item in libs
+        if not item.startswith('#')
+    ]
+    return [
+        item
+        for item in lines
+        if any([regexp.match(item) for regexp in regexps])
+    ]
+
+
 def read(*filenames, **kwargs):
+    """ Read plain text file(s) """
     encoding = kwargs.get('encoding', 'utf-8')
     sep = kwargs.get('sep', '\n')
     buf = []
@@ -32,11 +79,15 @@ def read(*filenames, **kwargs):
 # Global variables
 ###
 PKG_NAME = 'putil'
-PKG_DIR = os.path.dirname(__file__)
+REPO = 'http://bitbucket.org/pacosta/{pkg_name}/'.format(pkg_name=PKG_NAME)
+AUTHOR = 'Pablo Acosta-Serafini'
+AUTHOR_EMAIL = 'pmacosta@yahoo.com'
+PKG_DIR = os.path.abspath(os.path.dirname(__file__))
 LONG_DESCRIPTION = read(
     os.path.join(PKG_DIR, 'README.rst'),
     os.path.join(PKG_DIR, 'CHANGELOG.rst')
 )
+SHORT_DESC = get_short_desc(LONG_DESCRIPTION)
 RST_FILES = glob.glob(os.path.join(PKG_DIR, 'docs', '*.rst'))
 SHARE_DIR = os.path.join('usr', 'share', PKG_NAME)
 DOCS_DIR = os.path.join(SHARE_DIR, 'docs')
@@ -71,40 +122,28 @@ class Tox(TestCommand):
 ###
 # Processing
 ###
-INSTALL_REQUIRES = [
-    'decorator>=3.4.2',
-    'matplotlib>=1.4.2',
-    'numpy>=1.8.2',
-    'Pillow>=2.6.1',
-    'PyContracts>=1.7.6',
-    'scipy>=0.14.0',
-]
-
-if sys.version_info.major == 2:
-    INSTALL_REQUIRES.append(
-        [
-            'funcsigs>=0.4',
-        ]
-    )
+INSTALL_REQUIRES = load_requirements(
+    PKG_DIR,
+    ['decorator', 'matplotlib', 'numpy', 'Pillow', 'PyContracts', 'scipy']
+    +
+    (['funcsigs', 'mock'] if sys.version_info.major == 2 else [])
+)
 
 # package_data is used only for binary packages, i.e.
 # $ python setup.py bdist ...
-# but NOT when building source pacakges, i.e.
+# but NOT when building source packages, i.e.
 # $ python setup.py sdist ...
 setup(
     name=PKG_NAME,
-    version='0.9.0.5',
-    url='http://bitbucket.org/pacosta/{pkg_name}/'.format(pkg_name=PKG_NAME),
+    version=find_version(os.path.join(PKG_DIR, PKG_NAME, '__init__.py')),
+    url=REPO,
     license='MIT',
-    author='Pablo Acosta-Serafini',
+    author=AUTHOR,
     tests_require=['tox>=1.9.0'],
     install_requires=INSTALL_REQUIRES,
     cmdclass={'tests':Tox},
-    author_email='pmacosta@yahoo.com',
-    description=(
-        'This library provides a collection of utility modules to '
-        'supplement the Python standard library'
-    ),
+    author_email=AUTHOR_EMAIL,
+    description=SHORT_DESC,
     include_package_data=True,
     long_description=LONG_DESCRIPTION,
     packages=[

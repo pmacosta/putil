@@ -1,7 +1,7 @@
-﻿# test_pinspect.py
+# test_pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,F0401,R0201,R0903,R0913,R0915,W0104,W0212,W0232,W0612,W0613
+# pylint: disable=C0103,C0111,E0611,F0401,R0201,R0903,R0913,R0915,W0104,W0212,W0232,W0612,W0613
 
 from __future__ import print_function
 import copy
@@ -9,10 +9,11 @@ import os
 import pytest
 import sys
 import types
+if sys.version_info.major == 3:
+    from putil.compat3 import _readlines
 
 import putil.pinspect
 import putil.test
-
 
 ###
 # Helper functions
@@ -68,6 +69,39 @@ def compare_str_outputs(obj, ref_list):
 ###
 # Tests for module functions
 ###
+if sys.version_info.major == 3:
+    def test_readlines():
+        """ Test _readlines function behavior """
+        def mopen1(fname, mode):
+            raise RuntimeError('Mock mopen1 function')
+        def mopen2(fname, mode):
+            text = chr(40960) + 'abcd' + chr(1972)
+            # Next line raises UnicodeDecodeError
+            b'\x80abc'.decode("utf-8", "strict")
+        class MockOpenCls(object):
+            def __init__(self, fname, mode, encoding):
+                pass
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc_value, exc_tb):
+                if exc_type is not None:
+                    return False
+            def readlines(self):
+                return 'MockOpenCls'
+        pkg_dir = os.path.abspath(os.path.dirname(__file__))
+        fname = os.path.join(pkg_dir, 'test_misc.py')
+        # This should not trigger an exception (functionality checked
+        # by other unit tests
+        _readlines(fname)
+        # Trigger unrelated exception exception
+        obj = _readlines
+        with pytest.raises(RuntimeError) as excinfo:
+            _readlines(fname, mopen1)
+        assert putil.test.get_exmsg(excinfo) == 'Mock mopen1 function'
+        # Trigger UnicodeDecodeError exception
+        assert _readlines(fname, mopen2, MockOpenCls) == 'MockOpenCls'
+
+
 def test_object_is_module():
     """ Test object_is_module() function """
     assert not putil.pinspect.is_object_module(5)
@@ -449,68 +483,68 @@ class TestCallables(object):
         ref.append('   tests.test_exdoc.MockGetFrame')
         ref.append('   tests.test_exdoc.TestExDoc')
         ref.append('   tests.test_exdoc.TestExDocCxt')
-        ref.append('tests.test_exdoc.exdocobj: func (45-78)')
-        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (50-55)')
-        ref.append('tests.test_exdoc.exdocobj_raised: func (79-92)')
-        ref.append('tests.test_exdoc.exdocobj_single: func (93-102)')
-        ref.append('tests.test_exdoc.simple_exobj: func (103-120)')
-        ref.append('tests.test_exdoc.simple_exobj.func1: func (108-113)')
-        ref.append('tests.test_exdoc.mock_getframe: func (121-124)')
-        ref.append('tests.test_exdoc.trace_error_class: func (125-136)')
-        ref.append('tests.test_exdoc.MockFCode: class (137-142)')
-        ref.append('tests.test_exdoc.MockFCode.__init__: meth (138-142)')
-        ref.append('tests.test_exdoc.MockGetFrame: class (143-150)')
-        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (144-150)')
-        ref.append('tests.test_exdoc.TestExDocCxt: class (151-258)')
-        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (153-213)')
+        ref.append('tests.test_exdoc.exdocobj: func (47-80)')
+        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (52-57)')
+        ref.append('tests.test_exdoc.exdocobj_raised: func (81-94)')
+        ref.append('tests.test_exdoc.exdocobj_single: func (95-104)')
+        ref.append('tests.test_exdoc.simple_exobj: func (105-122)')
+        ref.append('tests.test_exdoc.simple_exobj.func1: func (110-115)')
+        ref.append('tests.test_exdoc.mock_getframe: func (123-126)')
+        ref.append('tests.test_exdoc.trace_error_class: func (127-138)')
+        ref.append('tests.test_exdoc.MockFCode: class (139-144)')
+        ref.append('tests.test_exdoc.MockFCode.__init__: meth (140-144)')
+        ref.append('tests.test_exdoc.MockGetFrame: class (145-152)')
+        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (146-152)')
+        ref.append('tests.test_exdoc.TestExDocCxt: class (153-260)')
+        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (155-215)')
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_init.func0: '
-            'func (155-164)'
+            'func (157-166)'
         )
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_multiple: '
-            'meth (214-258)'
+            'meth (216-260)'
         )
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_multiple.func1: '
-            'func (216-225)'
+            'func (218-227)'
         )
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_multiple.test_trace: '
-            'func (226-243)'
+            'func (228-245)'
         )
-        ref.append('tests.test_exdoc.TestExDoc: class (259-850)')
-        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (261-310)')
-        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (311-324)')
+        ref.append('tests.test_exdoc.TestExDoc: class (261-852)')
+        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (263-312)')
+        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (313-326)')
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree: '
-            'meth (325-432)'
+            'meth (327-434)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.func1: '
-            'func (332-337)'
+            'func (334-339)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes1: '
-            'func (339-340)'
-        )
-        ref.append(
-            'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes2: '
             'func (341-342)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes3: '
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes2: '
             'func (343-344)'
         )
-        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (433-442)')
-        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (443-452)')
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes3: '
+            'func (345-346)'
+        )
+        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (435-444)')
+        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (445-454)')
         ref.append(
             'tests.test_exdoc.TestExDoc.test_get_sphinx_autodoc: '
-            'meth (453-480)'
+            'meth (455-482)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: '
-            'meth (481-850)'
+            'meth (483-852)'
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)

@@ -1,0 +1,6 @@
+﻿| root
+| ├branch1
+| │├leaf1
+| │└leaf2
+| └branch2
+|

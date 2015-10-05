@@ -1,4 +1,4 @@
-﻿.. TODO.rst
+.. TODO.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
 

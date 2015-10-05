@@ -1,4 +1,4 @@
-﻿# test_pcontracts.py
+# test_pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,E1121,W0212,W0232,W0611,W0612,W0613

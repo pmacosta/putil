@@ -333,7 +333,7 @@ class Tree(object):
         :param name: Full node name
         :type  name: string
 
-        :param lparent: Position in full node name of last seperator before
+        :param lparent: Position in full node name of last separator before
                         node to be printed
         :type  lparent: integer
 

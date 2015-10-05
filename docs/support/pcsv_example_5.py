@@ -1,4 +1,4 @@
-﻿# pcsv_example_5.py
+# pcsv_example_5.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,W0104

@@ -261,7 +261,7 @@ for module in ${modules[@]}; do
 done
 
 file=${pkg_dir}/README.rst
-echo "Inserting files into ${file}"
+echo "Inserting files and updating dependencies into ${file}"
 if cog.py -e -x -o ${file}.tmp ${file}; then
 	mv -f ${file}.tmp ${file}
 	if cog.py -e -o ${file}.tmp ${file}; then

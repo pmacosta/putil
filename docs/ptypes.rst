@@ -287,13 +287,9 @@ String where hierarchy levels are denoted by node separator characters
 (:code:`'.'` by default). Node names cannot contain spaces, empty hierarchy
 levels, start or end with a node separator character.
 
-For this example tree::
+For this example tree:
 
-	root
-	├branch1
-	│├leaf1
-	│└leaf2
-	└branch2
+.. include:: ./support/tree.txt
 
 The node names are ``'root'``, ``'root.branch1'``, ``'root.branch1.leaf1'``,
 ``'root.branch1.leaf2'`` and ``'root.branch2'``

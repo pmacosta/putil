@@ -31,8 +31,8 @@ def get_source_files(sdir):
     ver = 3 if sys.version_info.major == 2 else 2
     isf = []
     isf.append('conftest.py')
-    isf.append('compat{0}.py'.format(ver))
-    isf.append('data_source{0}.py'.format(ver))
+    isf.append('compat{}.py'.format(ver))
+    isf.append('data_source{}.py'.format(ver))
     return [
         file_name
         for file_name in os.listdir(sdir)
@@ -54,11 +54,11 @@ def main(argv):
             )
         else:
             mode_flag, interp, _, module = argv[1:]+['']
-    elif env == 'shippable':
+    elif env == 'ci':
         mode_flag, interp, _, site_pkg_dir, submodules, module = (
             argv[1],
             argv[2],
-            os.environ['SHIPPABLE_REPO_DIR'],
+            os.environ['REPO_DIR'],
             argv[3],
             SUBMODULES_LIST,
             ''
@@ -104,9 +104,10 @@ def main(argv):
                 env.capitalize()
             )
         )
+        lines.append('[report]')
+        lines.append('show_missing = True')
         lines.append('[run]')
         lines.append('branch = True')
-        lines.append('show_missing = True')
         lines.append('data_file = {}'.format(coverage_file_name))
         start_flag = True
         # Include modules
@@ -115,7 +116,7 @@ def main(argv):
                 item
                 for item in source_files
                 if (env != 'local') or ((env == 'local') and
-                   (not is_submodule) and (item == '{0}.py'.format(module)))]:
+                   (not is_submodule) and (item == '{}.py'.format(module)))]:
             start_flag, prefix = (
                 (False, 'include = ')
                 if start_flag else
@@ -148,11 +149,10 @@ def main(argv):
                         file_name
                     )))
         # Generate XML reports for continuous integration
-        if env == 'shippable':
+        if env == 'ci':
             lines.append('[xml]')
-            lines.append('output = {0}'.format(os.path.join(
-                os.environ['SHIPPABLE_REPO_DIR'],
-                'shippable',
+            lines.append('output = {}'.format(os.path.join(
+                os.environ['RESULTS_DIR'],
                 'codecoverage',
                 'coverage.xml'
             )))
@@ -161,7 +161,7 @@ def main(argv):
             _write(fobj, '\n'.join(lines))
         # Echo file
         if debug:
-            print('File: {0}'.format(output_file_name))
+            print('File: {}'.format(output_file_name))
             with open(output_file_name, 'r') as fobj:
                 print(''.join(fobj.readlines()))
         # Generate conftest.py files to selectively
@@ -169,10 +169,14 @@ def main(argv):
         skip_file = (
             "import sys\n"
             "collect_ignore = []\n"
+            "import matplotlib\n"
+            "matplotlib.rcParams['backend'] = 'Agg'\n"
             "if sys.version_info.major == 2:\n"
             "   collect_ignore.append('compat3.py')\n"
+            "   collect_ignore.append('data_source3.py')\n"
             "else:\n"
             "   collect_ignore.append('compat2.py')\n"
+            "   collect_ignore.append('data_source2.py')\n"
         )
         with open(conf_file[0], 'w') as fobj:
             _write(fobj, skip_file)
@@ -192,7 +196,7 @@ def main(argv):
         del_files.append(coverage_file_name)
         try:
             for fname in del_files:
-                print('Deleting file {0}'.format(fname))
+                print('Deleting file {}'.format(fname))
                 os.remove(fname)
         except:
             pass

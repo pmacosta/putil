@@ -1,24 +1,27 @@
-﻿# test_exh.py
+# test_exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0302,F0401,R0201,R0903,R0912,R0915
+# pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0903,R0912,R0915
 # pylint: disable=W0122,W0123,W0212,W0612,W0640
 
 from __future__ import print_function
 import copy
-import mock
 import os
 import pytest
 import re
 import sys
 from itertools import product
+if sys.version_info.major == 2:
+    import mock
+else:
+    import unittest.mock as mock
 
 import putil.eng
 import putil.exh
 import putil.misc
 import putil.pcontracts
 import putil.test
-TEST_DIR = os.path.dirname(__file__)
+TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
 sys.path.append(SUPPORT_DIR)
 import exh_support_module_1

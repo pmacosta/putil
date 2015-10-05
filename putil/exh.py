@@ -1,9 +1,11 @@
-﻿# exh.py
+# exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0201,R0914,W0122,W0212,W0613
+# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0201,R0912,R0914,R0915
+# pylint: disable=W0122,W0212,W0613,W0631
 
 import copy
+import decorator
 import imp
 import inspect
 import os
@@ -27,7 +29,6 @@ _INVALID_MODULES_LIST = [
     os.path.join('putil', 'exh.py'),
     os.path.join('putil', 'exdoc.py')
 ]
-
 
 ###
 # Functions
@@ -510,85 +511,153 @@ class ExHandle(object):
             return self._callables_obj.reverse_callables_db[code_id]
         return 'dynamic'
 
-    def _get_callable_path(self):
-        """ Get fully qualified calling function name """
-        # pylint: disable=R0912,R0915,W0631
-        # If full_cname is False, then the only thing that matters is to return
-        # the ID of the calling function as fast as possible. If full_cname is
-        # True, the full calling path has to be calculated because multiple
-        # callables can call the same callable, thus the ID does not uniquely
-        # identify the callable path
-        fnum = 0
-        frame = sys._getframe(fnum)
-        while _invalid_frame(frame):
-            fnum += 1
+    if (hasattr(sys.modules['decorator'], '__version__') and
+       (int(decorator.__version__.split('.')[0]) == 3)):   # pragma: no cover
+        # Method works with decorator 3.x series
+        def _get_callable_path(self):
+            """ Get fully qualified calling function name """
+            # If full_cname is False, then the only thing that matters is to
+            # return the ID of the calling function as fast as possible. If
+            # full_cname is True, the full calling path has to be calculated
+            # because multiple callables can call the same callable, thus the
+            # ID does not uniquely identify the callable path
+            fnum = 0
             frame = sys._getframe(fnum)
-        callable_id = id(frame.f_code)
-        if not self._full_cname:
-            return callable_id, None
-        # Filter stack to omit frames that are part of the exception handling
-        # module, argument validation, or top level (tracing) module
-        # Stack frame -> (frame object [0], filename [1], line number of
-        # current line [2], function name [3], list of lines of context from
-        # source code [4], index of current line within list [5])
-        # Classes initialization appear as: filename = '<string>', function
-        # name = '__init__', list of lines of context from source code = None,
-        # index of current line within list = None
-        stack, call_path = [], []
-        ### Check to see if path has modules in exclude list
-        fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
-        uobj, ufin = self._unwrap_obj(frame, fun)
-        if ufin in self._exclude_list:
-            return callable_id, None
-        tokens = frame.f_code.co_filename.split(os.sep)
-        ###
-        while not any([token.startswith(item)
-              for token in tokens for item in _BREAK_LIST]):
-            # Gobble up two frames if it is a decorator. 4th stack list
-            # tuple element (index 3) indicates whether the frame corresponds
-            # to a decorator or not
-            if (fin, lin, fuc, fui) == ('<string>', 2, None, None):
-                stack.pop()
-                call_path.pop()
-                if stack:
-                    stack[-1][3] = True
-            stack.append([frame, fin, uobj, False])
-            call_path.append(id(frame))
-            fnum += 1
-            try:
+            while _invalid_frame(frame):
+                fnum += 1
                 frame = sys._getframe(fnum)
-            except ValueError:
-                # Got to top of stack
-                break
+            callable_id = id(frame.f_code)
+            if not self._full_cname:
+                return callable_id, None
+            # Filter stack to omit frames that are part of the exception
+            # handling module, argument validation, or top level (tracing)
+            # module Stack frame -> (frame object [0], filename [1], line
+            # number of current line [2], function name [3], list of lines
+            # of context from source code [4], index of current line within
+            # list [5]) Classes initialization appear as:
+            # filename = '<string>', function name = '__init__', list of lines
+            # of context from source code = None, index of current line within
+            # list = None
+            stack = []
             ### Check to see if path has modules in exclude list
-            # Repeated to avoid an expensive function call
             fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
             uobj, ufin = self._unwrap_obj(frame, fun)
             if ufin in self._exclude_list:
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
-        # Stack is from most recent frame out, fully qualified
-        # callable path is from first callable to lat callable
-        stack.reverse()
-        # Decorator flag vector
-        idv = [item[3] for item in stack]
-        # Fully qualified callable path construction
-        fob, fin, uobj, _ = stack[-1]
-        self._get_callable_full_name(fob, fin, uobj)
-        ret = [
-            self._get_callable_full_name(fob, fin, uobj)
-            for fob, fin, uobj, _ in stack
-        ]
-        # Eliminate callables that are in a decorator chain
-        iobj = enumerate(zip(ret[1:], ret, idv[1:]))
-        num_del_items = 0
-        for num, (name, prev_name, in_decorator) in iobj:
-            if in_decorator and (name == prev_name):
-                del ret[num-num_del_items]
-                num_del_items += 1
-        ret = self._callables_separator.join(ret)
-        return callable_id, ret
+            while not any([token.startswith(item)
+                  for token in tokens for item in _BREAK_LIST]):
+                # Gobble up two frames if it is a decorator. 4th stack list
+                # tuple element (index 3) indicates whether the frame
+                # corresponds to a decorator or not
+                if (fin, lin, fuc, fui) == ('<string>', 2, None, None):
+                    stack.pop()
+                    if stack:
+                        stack[-1][3] = True
+                stack.append([frame, fin, uobj, False])
+                fnum += 1
+                try:
+                    frame = sys._getframe(fnum)
+                except ValueError:
+                    # Got to top of stack
+                    break
+                ### Check to see if path has modules in exclude list
+                # Repeated to avoid an expensive function call
+                fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
+                uobj, ufin = self._unwrap_obj(frame, fun)
+                if ufin in self._exclude_list:
+                    return callable_id, None
+                tokens = frame.f_code.co_filename.split(os.sep)
+                ###
+            # Stack is from most recent frame out, fully qualified
+            # callable path is from first callable to lat callable
+            stack.reverse()
+            # Decorator flag vector
+            idv = [item[3] for item in stack]
+            # Fully qualified callable path construction
+            fob, fin, uobj, _ = stack[-1]
+            ret = [
+                self._get_callable_full_name(fob, fin, uobj)
+                for fob, fin, uobj, _ in stack
+            ]
+            # Eliminate callables that are in a decorator chain
+            iobj = enumerate(zip(ret[1:], ret, idv[1:]))
+            num_del_items = 0
+            for num, (name, prev_name, in_decorator) in iobj:
+                if in_decorator and (name == prev_name):
+                    del ret[num-num_del_items]
+                    num_del_items += 1
+            ret = self._callables_separator.join(ret)
+            return callable_id, ret
+    else:   # pragma: no cover
+        # Method works with decorator 4.x series
+        def _get_callable_path(self):
+            """ Get fully qualified calling function name """
+            # If full_cname is False, then the only thing that matters is to
+            # return the ID of the calling function as fast as possible. If
+            # full_cname is True, the full calling path has to be calculated
+            # because multiple callables can call the same callable, thus the
+            # ID does not uniquely identify the callable path
+            fnum = 0
+            frame = sys._getframe(fnum)
+            while _invalid_frame(frame):
+                fnum += 1
+                frame = sys._getframe(fnum)
+            callable_id = id(frame.f_code)
+            if not self._full_cname:
+                return callable_id, None
+            # Filter stack to omit frames that are part of the exception
+            # handling module, argument validation, or top level (tracing)
+            # module Stack frame -> (frame object [0], filename [1], line
+            # number of current line [2], function name [3], list of lines
+            # of context from source code [4], index of current line within
+            # list [5]) Classes initialization appear as:
+            # filename = '<string>', function name = '__init__', list of lines
+            # of context from source code = None, index of current line within
+            # list = None
+            stack = []
+            ### Check to see if path has modules in exclude list
+            fin, _, fun, _, _ = inspect.getframeinfo(frame)
+            uobj, ufin = self._unwrap_obj(frame, fun)
+            if ufin in self._exclude_list:
+                return callable_id, None
+            tokens = frame.f_code.co_filename.split(os.sep)
+            ###
+            while not any([token.startswith(item)
+                  for token in tokens for item in _BREAK_LIST]):
+                stack.append([frame, fin, uobj])
+                fnum += 1
+                try:
+                    frame = sys._getframe(fnum)
+                except ValueError:
+                    # Got to top of stack
+                    break
+                ### Check to see if path has modules in exclude list
+                # Repeated to avoid an expensive function call
+                fin, _, fun, _, _ = inspect.getframeinfo(frame)
+                uobj, ufin = self._unwrap_obj(frame, fun)
+                if ufin in self._exclude_list:
+                    return callable_id, None
+                tokens = frame.f_code.co_filename.split(os.sep)
+                ###
+            # Stack is from most recent frame out, fully qualified
+            # callable path is from first callable to lat callable
+            stack.reverse()
+            # Fully qualified callable path construction (exclude
+            # pcontracts decorators)
+            ret = []
+            skip = 0
+            for fob, fin, uobj in stack:
+                if skip > 0:
+                    skip -= 1
+                else:
+                    item = self._get_callable_full_name(fob, fin, uobj)
+                    if item == 'putil.pcontracts.contract.wrapper':
+                        skip = 3
+                    else:
+                        ret.append(item)
+            return callable_id, self._callables_separator.join(ret)
 
     def _get_callables_separator(self):
         """ Get callable separator character """

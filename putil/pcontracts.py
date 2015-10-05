@@ -1,4 +1,4 @@
-﻿# pcontracts.py
+# pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,E0611,F0401,R0912,R0914,W0212
@@ -744,7 +744,7 @@ def new_contract(*args, **kwargs):
         >>> print(print_fname(fname))   #doctest: +ELLIPSIS
         Traceback (most recent call last):
             ...
-        OSError: File `/dev/null/_not_a_file_` not found
+        OSError: File `..._not_a_file_` not found
 
     """
     def wrapper(func):

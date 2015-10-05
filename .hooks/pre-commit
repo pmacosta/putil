@@ -88,12 +88,25 @@ fi
 ###
 #echo -e "\tValidating author name and email"
 # Check that e-mail and name match the e-mail and address of first commit
+check_email=1
 first_commit_hash=$(git rev-list --max-parents=0 HEAD)
 history_name=$(git log ${first_commit_hash} --format="%an" | head -n 1)
 history_email=$(git log ${first_commit_hash} --format="%ae" | head -n 1)
 current_name=$(git config --global user.name)
 current_email=$(git config --global user.email)
-if [ "${history_name}" != "${current_name}" ] || [ "${history_email}" != "${current_email}" ]; then
-	echo -e "Error: Incongruent author information, current is ${current_name} <${current_email}>,\nfirst commit is ${history_name} <${history_email}>."
+if [ "${check_email}" == 1 ]; then
+	if [ "${history_name}" != "${current_name}" ] || [ "${history_email}" != "${current_email}" ]; then
+		echo -e "Error: Incongruent author information, current is ${current_name} <${current_email}>,\nfirst commit is ${history_name} <${history_email}>."
+		exit 1
+	fi
+fi
+
+###
+# Check for code "standard" compliance
+###
+files=$(git diff --name-only --cached)
+pkg_dir=$(git rev-parse --show-toplevel)
+if ! ${pkg_dir}/sbin/check-files-compliance.py --quiet --aspell --header --pylint "${files}"; then
+	echo -e "Error: Files do not comply with package code standard"
 	exit 1
 fi

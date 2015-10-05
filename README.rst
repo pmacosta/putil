@@ -85,12 +85,12 @@ Contributing
    documentation theme <https://github.com/snide/sphinx_rtd_theme>`_ is a
    repository sub-module [#f1]_:
 
-		.. code-block:: bash
+	.. code-block:: bash
 
-			$ git clone --recursive \
-			      https://bitbucket.org/[bitbucket-user-name]/putil.git
-			$ cd putil
-			$ export PUTIL_DIR=${PWD}
+		$ git clone --recursive \
+		      https://bitbucket.org/[bitbucket-user-name]/putil.git
+		$ cd putil
+		$ export PUTIL_DIR=${PWD}
 
 2. Install the project's Git hooks. The pre-commit hook does some minor
    consistency checks, namely trailing whitespace and
@@ -98,18 +98,18 @@ Contributing
    Pylint. Assuming the directory to which the repository was cloned is
    in the :bash:`$PUTIL_DIR` shell environment variable:
 
-		.. code-block:: bash
+	.. code-block:: bash
 
-			$ ${PUTIL_DIR}/sbin/setup-git-hooks.sh
+		$ ${PUTIL_DIR}/sbin/setup-git-hooks.sh
 
 3. Ensure that the Python interpreter can find the package modules
    (update the :bash:`$PYTHONPATH` environment variable, or use
    `sys.paths() <https://docs.python.org/2/library/sys.html#sys.path>`_,
    etc.)
 
-		.. code-block:: bash
+	.. code-block:: bash
 
-			$ export PYTHONPATH=${PYTHONPATH}:${PUTIL_DIR}
+		$ export PYTHONPATH=${PYTHONPATH}:${PUTIL_DIR}
 
    This is relevant only if it is desired to run unit tests, measure
    test coverage and/or (re)build the documentation using the cloned
@@ -120,33 +120,55 @@ Contributing
 
 4. Install the dependencies (if needed):
 
-    * `Cog`_
+    .. [[[cog
+    .. import docs.support.requirements_to_rst
+    .. docs.support.requirements_to_rst.proc_requirements(cog)
+    .. ]]]
 
-    * `Coverage <http://coverage.readthedocs.org/en/coverage-4.0a5/>`_
+    * `Cog`_
+      >= 2.4
+
+    * `Coverage <http://coverage.readthedocs.org/en/coverage-4.0a5>`_
+      >= 3.7.1
+
+    * `Decorator <https://pythonhosted.org/decorator>`_
+      >= 3.4.2
 
     * `Funcsigs <https://pypi.python.org/pypi/funcsigs>`_
+      >= 0.4 (only for Python 2.7)
 
-    * `Matplotlib <http://matplotlib.org/>`_
+    * `Matplotlib <http://matplotlib.org>`_
+      >= 1.4.0
 
-    * `Mock <http://www.voidspace.org.uk/python/mock/>`_
+    * `Mock <http://www.voidspace.org.uk/python/mock>`_
+      >= 1.0.1 (only for Python 2.7)
 
-    * `Numpy <http://www.numpy.org/>`_
+    * `Numpy <http://www.numpy.org>`_
+      >= 1.8.2
 
-    * `Pillow <https://python-pillow.github.io/>`_
+    * `Pillow <https://python-pillow.github.io>`_
+      >= 2.6.1
 
-    * `PyContracts <https://andreacensi.github.io/contracts/>`_
-
-    * `Py.test`_
+    * `PyContracts`_
+      >= 1.7.2
 
     * `Pytest-coverage <https://pypi.python.org/pypi/pytest-cov>`_
+      >= 1.8.0
 
-    * `Pytest-xdist <https://pypi.python.org/pypi/pytest-xdist>`_ (optional)
+    * `Pytest-xdist <https://pypi.python.org/pypi/pytest-xdist>`_
+      >= 1.8.0 (optional)
 
-    * `Scipy <http://www.scipy.org/>`_
+    * `Py.test`_
+      >= 2.7.0
 
-    * `Sphinx <http://sphinx-doc.org/>`_
+    * `Scipy <http://www.scipy.org>`_
+      >= 0.14.0
 
-    * `Tox <https://tox.readthedocs.org/>`_
+    .. [[[end]]]
+
+    * `Sphinx <http://sphinx-doc.org>`_ >= 1.2.3
+
+    * `Tox <https://tox.readthedocs.org>`_ >= 1.9.0
 
 5. Write a unit test which shows that a bug was fixed or that a new feature
    or API works as expected. Run the package tests to ensure that the bug fix
@@ -183,7 +205,7 @@ Contributing
       package is pip-installed by tox when the environments are created
 
     * ``py27-test`` and ``py34-test`` run py.test using the Python 2.7
-      or Python 3.4 interpreter in the appropariate virtual environment.
+      or Python 3.4 interpreter in the appropriate virtual environment.
       Arguments to py.test can be passed in the command line after a
       double dash (``--``) , for example:
 
@@ -199,7 +221,7 @@ Contributing
             ...
 
     * ``py27-cov`` and ``py34-cov`` test code and branch coverage using
-      the Python 2.7 or Python 3.4 interpreter in the appropariate virtual
+      the Python 2.7 or Python 3.4 interpreter in the appropriate virtual
       environment. Arguments to py.test can be passed in the command line
       after a double dash (``--``). The report can be found in
       :bash:`${PUTIL_DIR}/.tox/py27/usr/share/putil/tests/htmlcov/index.html`
@@ -273,8 +295,9 @@ Contributing
 .. [#f1] All examples are for the `bash <https://www.gnu.org/software/bash/>`_
    shell
 
-.. [#f2] Tox configuration largerly insprired by
-   `Ionel's codelog <http://blog.ionelmc.ro/2015/04/14/tox-tricks-and-patterns/>`_
+.. [#f2] Tox configuration largely inspired by
+   `Ionel's codelog <http://blog.ionelmc.ro/2015/04/14/
+   tox-tricks-and-patterns/>`_
 
 License
 =======

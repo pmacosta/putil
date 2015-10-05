@@ -1,4 +1,4 @@
-﻿# test_misc.py
+# test_misc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,C0302,E0611,E1101,F0401,R0915,W0621
@@ -7,7 +7,6 @@ from __future__ import print_function
 import ast
 import datetime
 import inspect
-import mock
 import os
 import pytest
 import re
@@ -16,6 +15,10 @@ import sys
 import tempfile
 from fractions import Fraction
 from numpy import array
+if sys.version_info.major == 2:
+    import mock
+else:
+    import unittest.mock as mock
 
 import putil.misc
 import putil.test
@@ -139,7 +142,7 @@ def test_char_string_to_decimal():
     assert putil.misc.char_to_decimal('Hello world!') == ref
 
 
-def test_ellapsed_time_string():
+def test_elapsed_time_string():
     """ Test elapsed_time_string function behavior """
     obj = putil.misc.elapsed_time_string
     assert obj(
@@ -656,32 +659,6 @@ def test_strframe():
     else:
         assert lines[13].startswith('f_trace........: ')
         assert len(lines) == 14
-
-
-def test_bundle():
-    """ Test Bundle class """
-    obj = putil.misc.Bundle()
-    obj.var1 = 10
-    obj.var2 = 20
-    assert obj.var1 == 10
-    assert obj.var2 == 20
-    assert len(obj) == 2
-    del obj.var1
-    with pytest.raises(AttributeError) as excinfo:
-        print(obj.var1)
-    assert (
-        putil.test.get_exmsg(excinfo) ==
-        "'Bundle' object has no attribute 'var1'"
-    )
-    assert obj.var2 == 20
-    assert len(obj) == 1
-    obj = putil.misc.Bundle(var3=30, var4=40, var5=50)
-    assert obj.var3 == 30
-    assert obj.var4 == 40
-    assert obj.var5 == 50
-    assert len(obj) == 3
-    assert str(obj) == 'var3 = 30\nvar4 = 40\nvar5 = 50'
-    assert repr(obj) == 'Bundle(var3=30, var4=40, var5=50)'
 
 
 def test_cidict():

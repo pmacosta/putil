@@ -366,13 +366,13 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
         exname='par_list_empty',
         condition=len(param_list) == 0
     )
-    color_pallette_list = [
+    color_palette_list = [
         plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.GnBu,
         plt.cm.Greens, plt.cm.Greys, plt.cm.Oranges, plt.cm.OrRd, plt.cm.PuBu,
         plt.cm.PuBuGn, plt.cm.PuRd, plt.cm.Purples, plt.cm.RdPu, plt.cm.Reds,
         plt.cm.YlGn, plt.cm.YlGnBu, plt.cm.YlOrBr, plt.cm.YlOrRd
     ]
-    color_dict = dict(zip(color_space_name_list, color_pallette_list))
+    color_dict = dict(zip(color_space_name_list, color_palette_list))
     return [
         color_dict[color_space](
             putil.misc.normalize(value, param_list, offset)

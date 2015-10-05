@@ -1,10 +1,11 @@
-﻿# pinspect.py
+# pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,E0611,F0401,W0212,W0631
 
 from __future__ import print_function
 import ast
+import collections
 import copy
 try:    # pragma: no cover
     from funcsigs import signature
@@ -17,9 +18,9 @@ import types
 
 import putil.misc
 if sys.version_info.major == 2: # pragma: no cover
-    from putil.compat2 import _unicode_char
+    from putil.compat2 import _readlines, _unicode_char
 else:   # pragma: no cover
-    from putil.compat3 import _unicode_char
+    from putil.compat3 import _readlines, _unicode_char
 
 
 ###
@@ -404,7 +405,7 @@ class Callables(object):
             ...     [sys.modules['putil.exh'].__file__]
             ... )
             >>> repr(obj1)  #doctest: +ELLIPSIS
-            "putil.pinspect.Callables(['.../exh.py'])"
+            "putil.pinspect.Callables(['...exh.py'])"
             >>> exec("obj2="+repr(obj1))
             >>> obj1 == obj2
             True
@@ -562,11 +563,11 @@ class Callables(object):
             if not os.path.exists(fname):
                 raise OSError('File {0} could not be found'.format(fname))
         fnames = [item.replace('.pyc', '.py') for item in fnames]
+        bobj = collections.namedtuple('Bundle', ['lineno', 'col_offset'])
         for fname in fnames:
             if fname not in self._fnames:
                 module_name = _get_module_name_from_fname(fname)
-                with open(fname, 'r') as fobj:
-                    lines = fobj.readlines()
+                lines = _readlines(fname)
                 # Eliminate all Unicode characters till the first ASCII
                 # character is found in first line of file, to deal with
                 # Unicode-encoded source files
@@ -580,10 +581,7 @@ class Callables(object):
                 # Create a fake callable at the end of the file to properly
                 # 'close', i.e. assign a last line number to the last
                 # callable in file
-                fake_node = putil.misc.Bundle(
-                    lineno=len(lines)+1,
-                    col_offset=-1
-                )
+                fake_node = bobj(len(lines)+1, -1)
                 aobj._close_callable(fake_node, force=True)
                 self._class_names += aobj._class_names[:]
                 self._module_names.append(module_name)
