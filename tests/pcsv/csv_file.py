@@ -7,7 +7,7 @@ import os
 import pytest
 import sys
 import tempfile
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import mock
 else:
     import unittest.mock as mock
@@ -15,7 +15,7 @@ else:
 import putil.misc
 import putil.pcsv
 import putil.test
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     from putil.compat2 import _read
 else:
     from putil.compat3 import _read
@@ -49,13 +49,13 @@ class TestCsvFile(object):
             'exists.csv'
         )
         func_pointers = [
-            (RuntimeError, 'File {} is empty', write_file_empty),
+            (RuntimeError, 'File {0} is empty', write_file_empty),
             (
                 RuntimeError,
-                'Column headers are not unique in file {}',
+                'Column headers are not unique in file {0}',
                 write_cols_not_unique
             ),
-            (RuntimeError, 'File {} has no valid data', write_no_data)
+            (RuntimeError, 'File {0} has no valid data', write_no_data)
         ]
         putil.test.assert_exception(
             putil.pcsv.CsvFile,
@@ -67,13 +67,13 @@ class TestCsvFile(object):
             putil.pcsv.CsvFile,
             {'fname':fname},
             OSError,
-            'File {} could not be found'.format(fname)
+            'File {0} could not be found'.format(fname)
         )
         for extype, exmsg, fobj in func_pointers:
             with pytest.raises(extype) as excinfo:
                 with putil.misc.TmpFile(fobj) as fname:
                     putil.pcsv.CsvFile(fname=fname)
-            ref = (exmsg.format(fname) if '{}' in exmsg else exmsg)
+            ref = (exmsg.format(fname) if '{0}' in exmsg else exmsg)
             assert putil.test.get_exmsg(excinfo) == ref
         with putil.misc.TmpFile(write_file) as fname:
             putil.test.assert_exception(
@@ -133,19 +133,19 @@ class TestCsvFile(object):
         """ Test __repr__ method behavior """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        assert repr(obj) == "putil.pcsv.CsvFile(fname='{}')".format(fname)
+        assert repr(obj) == "putil.pcsv.CsvFile(fname='{0}')".format(fname)
         obj.dfilter = 'Ctrl'
         assert (
             repr(obj)
             ==
-            "putil.pcsv.CsvFile(fname='{}', dfilter=['Ctrl'])".format(fname)
+            "putil.pcsv.CsvFile(fname='{0}', dfilter=['Ctrl'])".format(fname)
         )
         obj.dfilter = {'Ctrl':2}
         assert (
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{}', "
+                "putil.pcsv.CsvFile(fname='{0}', "
                 "dfilter={{'Ctrl': 2}})".format(fname)
             )
         )
@@ -154,7 +154,7 @@ class TestCsvFile(object):
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{}', "
+                "putil.pcsv.CsvFile(fname='{0}', "
                 "dfilter=({{'Result': 40}}, ['Ctrl']))".format(fname)
             )
         )
@@ -163,14 +163,14 @@ class TestCsvFile(object):
         assert (
             repr(obj)
             ==
-            "putil.pcsv.CsvFile(fname='{}', has_header=False)".format(fname)
+            "putil.pcsv.CsvFile(fname='{0}', has_header=False)".format(fname)
         )
         obj.dfilter = 0
         assert (
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{}', "
+                "putil.pcsv.CsvFile(fname='{0}', "
                 "dfilter=[0], has_header=False)".format(fname)
             )
         )
@@ -179,7 +179,7 @@ class TestCsvFile(object):
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{}', "
+                "putil.pcsv.CsvFile(fname='{0}', "
                 "dfilter={{0: 2}}, has_header=False)".format(fname)
             )
         )
@@ -188,7 +188,7 @@ class TestCsvFile(object):
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{}', "
+                "putil.pcsv.CsvFile(fname='{0}', "
                 "dfilter=({{2: 40}}, [0]), "
                 "has_header=False)".format(fname)
             )
@@ -199,7 +199,7 @@ class TestCsvFile(object):
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
         ref = (
-            'File: {}\n'
+            'File: {0}\n'
             "Header: ['Ctrl', 'Ref', 'Result']\n"
             'Row filter: None\n'
             'Column filter: None\n'
@@ -209,7 +209,7 @@ class TestCsvFile(object):
         assert str(obj) == ref
         obj.cfilter = 'Ref'
         ref = (
-            'File: {}\n'
+            'File: {0}\n'
             "Header: ['Ctrl', 'Ref', 'Result']\n"
             'Row filter: None\n'
             "Column filter: ['Ref']\n"
@@ -219,7 +219,7 @@ class TestCsvFile(object):
         assert str(obj) == ref
         obj.rfilter = {'Ctrl':[1, 3]}
         ref = (
-            'File: {}\n'
+            'File: {0}\n'
             "Header: ['Ctrl', 'Ref', 'Result']\n"
             "Row filter: {{'Ctrl': [1, 3]}}\n"
             "Column filter: ['Ref']\n"
@@ -924,7 +924,7 @@ class TestCsvFile(object):
             obj.write(fname, append=False)
             with open(fname, 'r') as fobj:
                 data = ''.join([line for line in fobj])
-        sep = '\r\n' if sys.version_info.major == 2 else '\n'
+        sep = '\r\n' if sys.hexversion < 0x03000000 else '\n'
         assert (
             data
             ==

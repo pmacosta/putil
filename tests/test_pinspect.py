@@ -1,15 +1,17 @@
 # test_pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,E0611,F0401,R0201,R0903,R0913,R0915,W0104,W0212,W0232,W0612,W0613
+# pylint: disable=C0103,C0111,E0611,F0401,R0201,R0903,R0913,R0915,W0104,W0212,W0232,W0612,W0613,W0621
 
 from __future__ import print_function
 import copy
 import os
 import pytest
+import shutil
 import sys
+import tempfile
 import types
-if sys.version_info.major == 3:
+if sys.hexversion == 0x03000000:
     from putil.compat3 import _readlines
 
 import putil.pinspect
@@ -69,7 +71,20 @@ def compare_str_outputs(obj, ref_list):
 ###
 # Tests for module functions
 ###
-if sys.version_info.major == 3:
+def test_private_props():
+    """ Test private_props function behavior """
+    obj = putil.pinspect.Callables()
+    assert sorted(list(putil.pinspect.private_props(obj))) == [
+        '_callables_db',
+        '_class_names',
+        '_fnames',
+        '_module_names',
+        '_modules_dict',
+        '_reverse_callables_db'
+    ]
+
+
+if sys.hexversion == 0x03000000:
     def test_readlines():
         """ Test _readlines function behavior """
         def mopen1(fname, mode):
@@ -154,8 +169,48 @@ def test_is_special_method():
 ###
 class TestCallables(object):
     """ Test for Callables """
-    def test_callables_errors(self):
-        """ Test callables __init__ (and trace() function) data validation """
+    def test_check_intersection(self):
+        """ Test _check_intersection method behavior """
+        obj1 = putil.pinspect.Callables()
+        obj1._callables_db = {'call1':1, 'call2':2}
+        obj2 = putil.pinspect.Callables()
+        obj2._callables_db = {'call1':1, 'call2':'a'}
+        putil.test.assert_exception(
+            obj1._check_intersection,
+            {'other':obj2},
+            RuntimeError,
+            'Conflicting information between objects'
+        )
+        obj1._callables_db = {'call1':1, 'call2':['a', 'c']}
+        obj2._callables_db = {'call1':1, 'call2':['a', 'b']}
+        putil.test.assert_exception(
+            obj1._check_intersection,
+            {'other':obj2},
+            RuntimeError,
+            'Conflicting information between objects'
+        )
+        obj1._callables_db = {'call1':1, 'call2':{'a':'b'}}
+        obj2._callables_db = {'call1':1, 'call2':{'a':'c'}}
+        putil.test.assert_exception(
+            obj1._check_intersection,
+            {'other':obj2},
+            RuntimeError,
+            'Conflicting information between objects'
+        )
+        obj1._callables_db = {'call1':1, 'call2':'a'}
+        obj2._callables_db = {'call1':1, 'call2':'c'}
+        putil.test.assert_exception(
+            obj1._check_intersection,
+            {'other':obj2},
+            RuntimeError,
+            'Conflicting information between objects'
+        )
+        obj1._callables_db = {'call1':1, 'call2':'a'}
+        obj2._callables_db = {'call1':1, 'call2':'a'}
+        assert obj1._check_intersection(obj2) == None
+
+    def test_init_exceptions(self):
+        """ Test constructor exceptions """
         putil.test.assert_exception(
             putil.pinspect.Callables,
             {'fnames':5},
@@ -175,29 +230,15 @@ class TestCallables(object):
             'File _not_a_file_ could not be found'
         )
 
-    def test_repr(self):
-        """ Test __repr__() function """
-        import tests.support.exdoc_support_module_1
-        file1 = sys.modules[
-            'tests.support.exdoc_support_module_1'
-        ].__file__.replace('.pyc', '.py')
-        file2 = sys.modules[
-            'tests.support.exdoc_support_module_2'
-        ].__file__.replace('.pyc', '.py')
-        xobj = putil.pinspect.Callables([file2])
-        xobj.trace([file1])
-        ref = "putil.pinspect.Callables(['{0}', '{1}'])".format(file1, file2)
-        assert repr(xobj) == ref
-
     def test_add(self):
-        """ Test __add__() and __radd__() functions """
+        """ Test __add__ __radd__ method behavior """
         obj1 = putil.pinspect.Callables()
         obj1._callables_db = {'call1':{'a':5, 'b':6}, 'call2':{'a':7, 'b':8}}
         obj1._reverse_callables_db = {'rc1':'5', 'rc2':'7'}
         obj1._modules_dict = {
             'key1':{'entry':'alpha'}, 'key2':{'entry':'beta'}
         }
-        obj1._fnames = ['hello']
+        obj1._fnames = {'hello':0}
         obj1._module_names = ['this', 'is']
         obj1._class_names = ['once', 'upon']
         #
@@ -207,7 +248,7 @@ class TestCallables(object):
         }
         obj2._reverse_callables_db = {'rc3':'0', 'rc4':'1'}
         obj2._modules_dict = {'key3':{'entry':'pi'}, 'key4':{'entry':'gamma'}}
-        obj2._fnames = ['world']
+        obj2._fnames = {'world':1}
         obj2._module_names = ['a', 'test']
         obj2._class_names = ['a', 'time']
         #
@@ -283,7 +324,7 @@ class TestCallables(object):
                 }
             )
         )
-        assert sorted(sobj._fnames) == sorted(['hello', 'world'])
+        assert sorted(sobj._fnames) == sorted({'hello':0, 'world':1})
         assert (
             sorted(sobj._module_names) == sorted(['this', 'is', 'a', 'test'])
         )
@@ -328,7 +369,7 @@ class TestCallables(object):
                 }
             )
         )
-        assert sorted(obj1._fnames) == sorted(['hello', 'world'])
+        assert sorted(obj1._fnames) == sorted({'hello':0, 'world':1})
         assert (
             sorted(obj1._module_names) == sorted(['this', 'is', 'a', 'test'])
         )
@@ -336,52 +377,236 @@ class TestCallables(object):
             sorted(obj1._class_names) == sorted(['once', 'upon', 'a', 'time'])
         )
 
-    def test_callables_works(self):
-        # pylint: disable=W0621
+    def test_copy(self):
+        """ Test __copy__ method behavior """
+        source_obj = putil.pinspect.Callables()
+        import tests.support.pinspect_support_module_1
+        source_obj.trace(
+            [sys.modules['tests.support.pinspect_support_module_1'].__file__]
+        )
+        dest_obj = copy.copy(source_obj)
+        assert source_obj._module_names == dest_obj._module_names
+        assert id(source_obj._module_names) != id(dest_obj._module_names)
+        assert source_obj._class_names == dest_obj._class_names
+        assert id(source_obj._class_names) != id(dest_obj._class_names)
+        assert source_obj._callables_db == dest_obj._callables_db
+        assert id(source_obj._callables_db) != id(dest_obj._callables_db)
+        assert (
+            source_obj._reverse_callables_db == dest_obj._reverse_callables_db
+        )
+        assert (id(source_obj._reverse_callables_db) !=
+               id(dest_obj._reverse_callables_db))
+
+    def test_eq(self):
+        """ Test __eq__ method behavior """
+        obj1 = putil.pinspect.Callables()
+        obj2 = putil.pinspect.Callables()
+        obj3 = putil.pinspect.Callables()
+        import tests.support.pinspect_support_module_1
+        import tests.support.pinspect_support_module_2
+        obj1.trace(
+            [sys.modules['tests.support.pinspect_support_module_1'].__file__]
+        )
+        obj2.trace(
+            [sys.modules['tests.support.pinspect_support_module_1'].__file__]
+        )
+        obj3.trace([sys.modules['putil.test'].__file__])
+        assert (obj1 == obj2) and (obj1 != obj3)
+        assert 5 != obj1
+
+    def test_repr(self):
+        """ Test __repr__ method behavior """
+        import tests.support.exdoc_support_module_1
+        file1 = sys.modules[
+            'tests.support.exdoc_support_module_1'
+        ].__file__.replace('.pyc', '.py')
+        file2 = sys.modules[
+            'tests.support.exdoc_support_module_2'
+        ].__file__.replace('.pyc', '.py')
+        xobj = putil.pinspect.Callables([file2])
+        xobj.trace([file1])
+        ref = "putil.pinspect.Callables(['{0}', '{1}'])".format(file1, file2)
+        assert repr(xobj) == ref
+
+    def test_str_empty(self):
+        """ Test __str__() magic method when object is empty """
+        obj = putil.pinspect.Callables()
+        assert str(obj) == ''
+
+    def test_refresh(self):
+        """ Test refresh method behavior """
+        ref = sys.modules['putil.test'].__file__
+        src = os.path.join(os.path.dirname(ref), 'pit.py')
+        shutil.copy(ref, src)
+        with open(src, 'w') as fobj:
+            fobj.write(
+                'class MyClass(object):\n'
+                '    pass\n'
+                'def func1():\n'
+                '    pass\n'
+            )
+        import putil.pit
+        obj = putil.pinspect.Callables([ref, src])
+        tmod = obj._fnames[src]
+        obj.trace([src])
+        assert obj._fnames[src] == tmod
+        rtext = (
+            'Modules:\n'
+            '   putil.pit\n'
+            '   putil.test\n'
+            'Classes:\n'
+            '   putil.pit.MyClass\n'
+            'putil.pit.MyClass: class (1-2)\n'
+            'putil.pit.func1: func (3-4)\n'
+            'putil.test.assert_exception: func (19-88)\n'
+            'putil.test.comp_list_of_dicts: func (89-93)\n'
+            'putil.test.exception_type_str: func (94-111)\n'
+            'putil.test.get_exmsg: func (112-114)'
+        )
+        assert str(obj) == rtext
+        with open(src, 'w') as fobj:
+            fobj.write('def my_func():\n    pass')
+        obj.refresh()
+        assert obj._fnames[src] != tmod
+        rtext = (
+            'Modules:\n'
+            '   putil.pit\n'
+            '   putil.test\n'
+            'putil.pit.my_func: func (1-2)\n'
+            'putil.test.assert_exception: func (19-88)\n'
+            'putil.test.comp_list_of_dicts: func (89-93)\n'
+            'putil.test.exception_type_str: func (94-111)\n'
+            'putil.test.get_exmsg: func (112-114)'
+        )
+        assert str(obj) == rtext
+        os.remove(src)
+
+    def test_load_save(self):
+        """ Test load and save methods behavior """
+        # pylint: disable=R0914
+        import putil.pcsv
+        import tests.support.exdoc_support_module_1
+        # Empty object
+        obj1 = putil.pinspect.Callables()
+        with tempfile.NamedTemporaryFile() as fobj:
+            fname = fobj.name
+            obj1.save(fname)
+            obj2 = putil.pinspect.Callables()
+            obj2.load(fname)
+        assert obj1 == obj2
+        # 1 module trace
+        mname = 'putil.pcsv.csv_file'
+        cname = '{0}.CsvFile'.format(mname)
+        obj1 = putil.pinspect.Callables(
+            [sys.modules[mname].__file__]
+        )
+        with tempfile.NamedTemporaryFile() as fobj:
+            fname = fobj.name
+            obj1.save(fname)
+            obj2 = putil.pinspect.Callables()
+            assert not bool(obj2)
+            obj2.load(fname)
+        assert obj1 == obj2
+        # Test merging of traced and file-based module information
+        mname1 = 'putil.pcsv.csv_file'
+        obj1 = putil.pinspect.Callables(
+            [sys.modules[mname1].__file__]
+        )
+        mname2 = 'tests.support.exdoc_support_module_1'
+        obj2 = putil.pinspect.Callables(
+            [sys.modules[mname2].__file__]
+        )
+        with tempfile.NamedTemporaryFile() as fobj1:
+            with tempfile.NamedTemporaryFile() as fobj2:
+                fname1 = fobj1.name
+                obj1.save(fname1)
+                fname2 = fobj2.name
+                obj2.save(fname2)
+                obj3 = putil.pinspect.Callables(
+                    [
+                        sys.modules[mname1].__file__,
+                        sys.modules[mname2].__file__
+                    ]
+                )
+                obj4 = putil.pinspect.Callables()
+                obj4.load(fname2)
+                obj4.load(fname1)
+        assert obj3 == obj4
+
+    def test_load_exceptions(self):
+        """ Test load method exceptions """
+        obj = putil.pinspect.Callables()
+        for item in [True, 5]:
+            putil.test.assert_exception(
+                obj.load,
+                {'callables_fname':item},
+                RuntimeError,
+                'Argument `callables_fname` is not valid'
+            )
+        putil.test.assert_exception(
+            obj.load,
+            {'callables_fname':'_not_a_file_'},
+            OSError,
+            'File _not_a_file_ could not be found'
+        )
+
+    def test_save_exceptions(self):
+        """ Test save method exceptions """
+        obj = putil.pinspect.Callables()
+        for item in [True, 5]:
+            putil.test.assert_exception(
+                obj.save,
+                {'callables_fname':item},
+                RuntimeError,
+                'Argument `callables_fname` is not valid'
+            )
+
+    def test_trace(self):
+        """ Test trace method behavior """
         import putil.pcsv
         mname = 'putil.pcsv.csv_file'
-        cname = '{}.CsvFile'.format(mname)
+        cname = '{0}.CsvFile'.format(mname)
         xobj = putil.pinspect.Callables(
             [sys.modules[mname].__file__]
         )
         ref = list()
         ref.append('Modules:')
-        ref.append('   {}'.format(mname))
+        ref.append('   {0}'.format(mname))
         ref.append('Classes:')
-        ref.append('   {}'.format(cname))
-        ref.append('{}._homogenize_data_filter: func (40-62)'.format(mname))
-        ref.append('{}._tofloat: func (63-78)'.format(mname))
-        ref.append('{}: class (79-1006)'.format(cname))
-        ref.append('{}.__init__: meth (127-208)'.format(cname))
-        ref.append('{}.__eq__: meth (209-241)'.format(cname))
-        ref.append('{}.__repr__: meth (242-276)'.format(cname))
-        ref.append('{}.__str__: meth (277-322)'.format(cname))
-        ref.append('{}._format_rfilter: meth (323-339)'.format(cname))
-        ref.append('{}._gen_col_index: meth (340-352)'.format(cname))
-        ref.append('{}._get_cfilter: meth (353-355)'.format(cname))
-        ref.append('{}._get_dfilter: meth (356-358)'.format(cname))
-        ref.append('{}._get_rfilter: meth (359-361)'.format(cname))
-        ref.append('{}._reset_dfilter_int: meth (362-367)'.format(cname))
-        ref.append('{}._in_header: meth (368-420)'.format(cname))
-        ref.append('{}._set_cfilter: meth (421-425)'.format(cname))
-        ref.append('{}._set_dfilter: meth (426-431)'.format(cname))
-        ref.append('{}._set_rfilter: meth (432-436)'.format(cname))
-        ref.append('{}._add_dfilter_int: meth (437-479)'.format(cname))
-        ref.append('{}._apply_filter: meth (480-509)'.format(cname))
-        ref.append('{}._set_has_header: meth (510-513)'.format(cname))
-        ref.append('{}._validate_rfilter: meth (514-559)'.format(cname))
-        ref.append('{}.add_dfilter: meth (560-583)'.format(cname))
-        ref.append('{}.cols: meth (584-603)'.format(cname))
-        ref.append('{}.data: meth (604-625)'.format(cname))
-        ref.append('{}.dsort: meth (626-678)'.format(cname))
-        ref.append('{}.header: meth (679-710)'.format(cname))
-        ref.append('{}.replace: meth (711-805)'.format(cname))
-        ref.append('{}.reset_dfilter: meth (806-823)'.format(cname))
-        ref.append('{}.rows: meth (824-843)'.format(cname))
-        ref.append('{}.write: meth (844-929)'.format(cname))
-        ref.append('{}.cfilter: prop (930-954)'.format(cname))
-        ref.append('{}.dfilter: prop (955-980)'.format(cname))
-        ref.append('{}.rfilter: prop (981-1006)'.format(cname))
+        ref.append('   {0}'.format(cname))
+        ref.append('{0}._homogenize_data_filter: func (40-62)'.format(mname))
+        ref.append('{0}._tofloat: func (63-78)'.format(mname))
+        ref.append('{0}: class (79-1006)'.format(cname))
+        ref.append('{0}.__init__: meth (127-208)'.format(cname))
+        ref.append('{0}.__eq__: meth (209-241)'.format(cname))
+        ref.append('{0}.__repr__: meth (242-276)'.format(cname))
+        ref.append('{0}.__str__: meth (277-322)'.format(cname))
+        ref.append('{0}._format_rfilter: meth (323-339)'.format(cname))
+        ref.append('{0}._gen_col_index: meth (340-352)'.format(cname))
+        ref.append('{0}._get_cfilter: meth (353-355)'.format(cname))
+        ref.append('{0}._get_dfilter: meth (356-358)'.format(cname))
+        ref.append('{0}._get_rfilter: meth (359-361)'.format(cname))
+        ref.append('{0}._reset_dfilter_int: meth (362-367)'.format(cname))
+        ref.append('{0}._in_header: meth (368-420)'.format(cname))
+        ref.append('{0}._set_cfilter: meth (421-425)'.format(cname))
+        ref.append('{0}._set_dfilter: meth (426-431)'.format(cname))
+        ref.append('{0}._set_rfilter: meth (432-436)'.format(cname))
+        ref.append('{0}._add_dfilter_int: meth (437-479)'.format(cname))
+        ref.append('{0}._apply_filter: meth (480-509)'.format(cname))
+        ref.append('{0}._set_has_header: meth (510-513)'.format(cname))
+        ref.append('{0}._validate_rfilter: meth (514-559)'.format(cname))
+        ref.append('{0}.add_dfilter: meth (560-583)'.format(cname))
+        ref.append('{0}.cols: meth (584-603)'.format(cname))
+        ref.append('{0}.data: meth (604-625)'.format(cname))
+        ref.append('{0}.dsort: meth (626-678)'.format(cname))
+        ref.append('{0}.header: meth (679-710)'.format(cname))
+        ref.append('{0}.replace: meth (711-805)'.format(cname))
+        ref.append('{0}.reset_dfilter: meth (806-823)'.format(cname))
+        ref.append('{0}.rows: meth (824-843)'.format(cname))
+        ref.append('{0}.write: meth (844-929)'.format(cname))
+        ref.append('{0}.cfilter: prop (930-954)'.format(cname))
+        ref.append('{0}.dfilter: prop (955-980)'.format(cname))
+        ref.append('{0}.rfilter: prop (981-1006)'.format(cname))
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
         if actual_txt != ref_txt:
@@ -495,56 +720,54 @@ class TestCallables(object):
         ref.append('tests.test_exdoc.MockFCode.__init__: meth (140-144)')
         ref.append('tests.test_exdoc.MockGetFrame: class (145-152)')
         ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (146-152)')
-        ref.append('tests.test_exdoc.TestExDocCxt: class (153-260)')
-        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (155-215)')
+        ref.append('tests.test_exdoc.TestExDocCxt: class (153-299)')
+        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (155-236)')
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_init.func0: '
-            'func (157-166)'
+            'tests.test_exdoc.TestExDocCxt.test_init.func0: func (157-166)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_multiple: '
-            'meth (216-260)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple: meth (237-277)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_multiple.func1: '
-            'func (218-227)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple.func1: func (239-248)'
         )
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_multiple.test_trace: '
-            'func (228-245)'
+            'func (249-266)'
         )
-        ref.append('tests.test_exdoc.TestExDoc: class (261-852)')
-        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (263-312)')
-        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (313-326)')
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_build_ex_tree: '
-            'meth (327-434)'
+            'tests.test_exdoc.TestExDocCxt.test_save_callables: meth (278-299)'
+        )
+        ref.append('tests.test_exdoc.TestExDoc: class (300-891)')
+        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (302-351)')
+        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (352-365)')
+        ref.append(
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree: meth (366-473)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.func1: '
-            'func (334-339)'
+            'func (373-378)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes1: '
-            'func (341-342)'
+            'func (380-381)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes2: '
-            'func (343-344)'
+            'func (382-383)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes3: '
-            'func (345-346)'
+            'func (384-385)'
         )
-        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (435-444)')
-        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (445-454)')
+        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (474-483)')
+        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (484-493)')
         ref.append(
             'tests.test_exdoc.TestExDoc.test_get_sphinx_autodoc: '
-            'meth (455-482)'
+            'meth (494-521)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: '
-            'meth (483-852)'
+            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: meth (522-891)'
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
@@ -577,48 +800,6 @@ class TestCallables(object):
         xobj.trace(
             [sys.modules['tests.support.pinspect_support_module_4'].__file__]
         )
-
-    def test_empty_str(self):
-        """ Test __str__() magic method when object is empty """
-        obj = putil.pinspect.Callables()
-        assert str(obj) == ''
-
-    def test_copy(self):
-        """ Test __copy__() magic method """
-        source_obj = putil.pinspect.Callables()
-        import tests.support.pinspect_support_module_1
-        source_obj.trace(
-            [sys.modules['tests.support.pinspect_support_module_1'].__file__]
-        )
-        dest_obj = copy.copy(source_obj)
-        assert source_obj._module_names == dest_obj._module_names
-        assert id(source_obj._module_names) != id(dest_obj._module_names)
-        assert source_obj._class_names == dest_obj._class_names
-        assert id(source_obj._class_names) != id(dest_obj._class_names)
-        assert source_obj._callables_db == dest_obj._callables_db
-        assert id(source_obj._callables_db) != id(dest_obj._callables_db)
-        assert (
-            source_obj._reverse_callables_db == dest_obj._reverse_callables_db
-        )
-        assert (id(source_obj._reverse_callables_db) !=
-               id(dest_obj._reverse_callables_db))
-
-    def test_eq(self):
-        """ Test __eq__() magic method """
-        obj1 = putil.pinspect.Callables()
-        obj2 = putil.pinspect.Callables()
-        obj3 = putil.pinspect.Callables()
-        import tests.support.pinspect_support_module_1
-        import tests.support.pinspect_support_module_2
-        obj1.trace(
-            [sys.modules['tests.support.pinspect_support_module_1'].__file__]
-        )
-        obj2.trace(
-            [sys.modules['tests.support.pinspect_support_module_1'].__file__]
-        )
-        obj3.trace([sys.modules['putil.test'].__file__])
-        assert (obj1 == obj2) and (obj1 != obj3)
-        assert 5 != obj1
 
     def test_callables_db(self):
         """ Test callables_db property """

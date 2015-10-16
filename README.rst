@@ -138,7 +138,7 @@ Contributing
       >= 0.4 (only for Python 2.7)
 
     * `Matplotlib <http://matplotlib.org>`_
-      >= 1.4.0
+      >= 1.3.1
 
     * `Mock <http://www.voidspace.org.uk/python/mock>`_
       >= 1.0.1 (only for Python 2.7)
@@ -162,7 +162,10 @@ Contributing
       >= 2.7.0
 
     * `Scipy <http://www.scipy.org>`_
-      >= 0.14.0
+      >= 0.13.3
+
+    * `Six <https://pythonhosted.org/six>`_
+      >= 1.4.0
 
     .. [[[end]]]
 
@@ -228,7 +231,7 @@ Contributing
       or :bash:`${PUTIL_DIR}/.tox/py34/usr/share/putil/tests/htmlcovindex.html`
       depending on the interpreter used.
 
-7. The :bash:`${PUTIL_DIR}/sbin` directory contains other relevant development
+6. The :bash:`${PUTIL_DIR}/sbin` directory contains other relevant development
    scripts:
 
    * **build-docs.sh:** (re)builds the package documentation
@@ -254,7 +257,7 @@ Contributing
 		          [default: (build-docs.sh directory)/../putil]
 		      -t  Diff original and rebuilt file(s) (exit code 0
 		          indicates file(s) are identical, exit code 1
-		          indicates file(s) are different
+		          indicates file(s) are different)
 		      -n  Number of CPUs to use [default: 1]
 
 
@@ -289,6 +292,10 @@ Contributing
 		$ ${PUTIL_DIR}/sbin/gen_ref_images.py
 		Generating image [PUTIL_DIR]/tests/support/...
 		...
+
+7. Contributors must follow the `PyPA Code of Conduct
+   <https://www.pypa.io/en/latest/code-of-conduct>`_
+
 
 .. rubric:: Footnotes
 

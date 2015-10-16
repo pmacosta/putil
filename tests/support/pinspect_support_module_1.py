@@ -4,6 +4,7 @@
 # pylint: disable=C0103,C0111,R0201,R0903,W0212,W0621
 
 from __future__ import print_function
+import sys
 import putil.exh
 import tests.support.pinspect_support_module_2
 import putil.pcontracts
@@ -45,8 +46,9 @@ def class_enclosing_func():
                     self.subobj = None
             return SubClosureClass
 
+        mobj = sys.modules['tests.support.pinspect_support_module_2']
         obj = property(
-            tests.support.pinspect_support_module_2.getter_func_for_closure_class,
+            mobj.getter_func_for_closure_class,
             set_obj,
             tests.support.pinspect_support_module_3.deleter
         )

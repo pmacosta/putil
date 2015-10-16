@@ -24,7 +24,7 @@ def test_exdoc_doccode():
         off_header = False
         lines = (
             stdout.split('\n')
-            if sys.version_info.major == 2 else
+            if sys.hexversion < 0x03000000 else
             stdout.decode('ascii').split('\n')
         )
         for line in lines:
@@ -71,8 +71,8 @@ def test_exdoc_doccode():
         '\n'
     )
     if actual_text != ref_text:
-        print('STDOUT: {}'.format(stdout))
-        print('STDERR: {}'.format(stderr))
+        print('STDOUT: {0}'.format(stdout))
+        print('STDERR: {0}'.format(stderr))
     assert actual_text == ref_text
     # Test tracing module #2 (simple usage based)
     script_name = os.path.join(script_dir, 'trace_my_module_2.py')
@@ -110,15 +110,16 @@ def test_pcsv_doccode():
     )
     for num in range(1, 7):
         script_name = os.path.join(
-            script_dir, 'pcsv_example_{}.py'.format(num))
+            script_dir, 'pcsv_example_{0}.py'.format(num))
 
         proc = subprocess.Popen(
             ['python', script_name], stdout=subprocess.PIPE
         )
         stdout, stderr = proc.communicate()
         if proc.returncode != 0:
-            print('STDOUT: {}'.format(stdout))
-            print('STDERR: {}'.format(stderr))
+            print('Script: {0}'.format(script_name))
+            print('STDOUT: {0}'.format(stdout))
+            print('STDERR: {0}'.format(stderr))
         assert proc.returncode == 0
 
 
@@ -278,27 +279,33 @@ def test_plot_doccode(capsys):
     )
     stdout, stderr = proc.communicate()
     test_fname = output_file
-    ref_fname = os.path.join(script_dir, 'plot_example_1.png')
-    metrics = compare_images(ref_fname, test_fname)
-    result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-    ref_ci_fname = os.path.join(script_dir, 'plot_example_1_ci.png')
-    metrics_ci = compare_images(ref_ci_fname, test_fname)
-    result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
-    if (not result) and (not result_ci):
+    ref_names = [
+        'plot_example_1_1.png',
+        'plot_example_1_2.png',
+        'plot_example_1_3.png',
+        'plot_example_1_4.png'
+    ]
+    ref_fnames = [os.path.join(script_dir, item) for item in ref_names]
+    result = False
+    for ref_fname in ref_fnames:
+        metrics = compare_images(ref_fname, test_fname)
+        result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
+        if result:
+            break
+    else:
         print('Images do not match')
-        print('STDOUT: {}'.format(stdout))
-        print('STDERR: {}'.format(stderr))
-        print(
-            'Reference image: file://{0}'.format(os.path.realpath(ref_fname))
-        )
-        print('Reference CI image: file://{0}'.format(
-            os.path.realpath(ref_ci_fname)
-        ))
+        print('STDOUT: {0}'.format(stdout))
+        print('STDERR: {0}'.format(stderr))
+        for num, ref_fname in enumerate(ref_fnames):
+            print(
+                'Reference image {0}: file://{1}'.format(
+                    num, os.path.realpath(ref_fname)
+                )
+            )
         print('Actual image: file://{0}'.format(os.path.realpath(test_fname)))
-    if result or result_ci:
-        with putil.misc.ignored(OSError):
-            os.remove(test_fname)
-    assert result or result_ci
+    assert result
+    with putil.misc.ignored(OSError):
+        os.remove(test_fname)
     # Test ABC example
     import numpy, docs.support.plot_example_2
     obj = docs.support.plot_example_2.MySource()

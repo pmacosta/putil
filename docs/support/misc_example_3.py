@@ -7,7 +7,7 @@ from __future__ import print_function
 import sys, putil.misc
 
 def write_data(file_handle):
-    if sys.version_info.major == 2:
+    if sys.hexversion < 0x03000000:
         file_handle.write('Hello world!')
     else:
         file_handle.write(bytes('Hello world!', 'ascii'))

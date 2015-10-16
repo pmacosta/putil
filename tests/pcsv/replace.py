@@ -172,7 +172,7 @@ def test_replace_function_exceptions():
                         'rdfilter':['b']
                     },
                     RuntimeError,
-                    'Argument `*[{}]*` is not valid'.format(
+                    'Argument `*[{0}]*` is not valid'.format(
                         'ifname' if not file_toggle else 'rfname'
                     )
                 )
@@ -221,7 +221,7 @@ def test_replace_function_exceptions():
                             'rdfilter':rdfilter
                         },
                         RuntimeError,
-                        'Argument `{}` is not valid'.format(
+                        'Argument `{0}` is not valid'.format(
                             'idfilter' if not file_toggle else 'rdfilter'
                         )
                     )

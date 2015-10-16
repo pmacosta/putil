@@ -149,7 +149,7 @@ def test_merge():
                 fname2,
                 has_header1=False,
                 has_header2=False,
-                ocols=['D{}'.format(num) for num in range(0, 8)]
+                ocols=['D{0}'.format(num) for num in range(0, 8)]
             )
         obj = putil.pcsv.CsvFile(fname=fname1, has_header=True)
     assert (
@@ -223,7 +223,7 @@ def test_merge_exceptions():
                         'dfilter2':['b']
                     },
                     RuntimeError,
-                    'Argument `*[{}]*` is not valid'.format(
+                    'Argument `*[{0}]*` is not valid'.format(
                         'fname1' if not file_toggle else 'fname2'
                     )
                 )
@@ -272,7 +272,7 @@ def test_merge_exceptions():
                             'dfilter2':dfilter2
                         },
                         RuntimeError,
-                        'Argument `{}` is not valid'.format(
+                        'Argument `{0}` is not valid'.format(
                             'dfilter1' if not file_toggle else 'dfilter2'
                         )
                     )

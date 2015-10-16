@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# coveragerc-manager.py
+# coveragerc_manager.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111
+# pylint: disable=C0111
 
 from __future__ import print_function
 import os
@@ -28,11 +28,10 @@ def get_source_files(sdir):
     Get Python source files that are not __init__.py and
     interpreter-specific
     """
-    ver = 3 if sys.version_info.major == 2 else 2
+    ver = 3 if sys.hexversion < 0x03000000 else 2
     isf = []
     isf.append('conftest.py')
-    isf.append('compat{}.py'.format(ver))
-    isf.append('data_source{}.py'.format(ver))
+    isf.append('compat{0}.py'.format(ver))
     return [
         file_name
         for file_name in os.listdir(sdir)
@@ -91,7 +90,7 @@ def main(argv):
         '.coveragerc_{0}_{1}'.format(env, interp)
     )
     coverage_file_name = os.path.join(
-        site_pkg_dir, 'putil', '.coverage_{}'.format(interp)
+        site_pkg_dir, 'putil', '.coverage_{0}'.format(interp)
     )
     conf_file = []
     conf_file.append(os.path.join(source_dir, 'conftest.py'))
@@ -108,7 +107,7 @@ def main(argv):
         lines.append('show_missing = True')
         lines.append('[run]')
         lines.append('branch = True')
-        lines.append('data_file = {}'.format(coverage_file_name))
+        lines.append('data_file = {0}'.format(coverage_file_name))
         start_flag = True
         # Include modules
         source_files = get_source_files(os.path.join(site_pkg_dir, 'putil'))
@@ -116,7 +115,7 @@ def main(argv):
                 item
                 for item in source_files
                 if (env != 'local') or ((env == 'local') and
-                   (not is_submodule) and (item == '{}.py'.format(module)))]:
+                   (not is_submodule) and (item == '{0}.py'.format(module)))]:
             start_flag, prefix = (
                 (False, 'include = ')
                 if start_flag else
@@ -151,7 +150,7 @@ def main(argv):
         # Generate XML reports for continuous integration
         if env == 'ci':
             lines.append('[xml]')
-            lines.append('output = {}'.format(os.path.join(
+            lines.append('output = {0}'.format(os.path.join(
                 os.environ['RESULTS_DIR'],
                 'codecoverage',
                 'coverage.xml'
@@ -161,34 +160,23 @@ def main(argv):
             _write(fobj, '\n'.join(lines))
         # Echo file
         if debug:
-            print('File: {}'.format(output_file_name))
+            print('File: {0}'.format(output_file_name))
             with open(output_file_name, 'r') as fobj:
                 print(''.join(fobj.readlines()))
         # Generate conftest.py files to selectively
         # skip Python 2 or Python 3 files
         skip_file = (
+            "# pylint: disable=C0103,C0111\n"
             "import sys\n"
             "collect_ignore = []\n"
             "import matplotlib\n"
             "matplotlib.rcParams['backend'] = 'Agg'\n"
-            "if sys.version_info.major == 2:\n"
-            "   collect_ignore.append('compat3.py')\n"
-            "   collect_ignore.append('data_source3.py')\n"
+            "if sys.hexversion < 0x03000000:\n"
+            "    collect_ignore.append('compat3.py')\n"
             "else:\n"
-            "   collect_ignore.append('compat2.py')\n"
-            "   collect_ignore.append('data_source2.py')\n"
+            "    collect_ignore.append('compat2.py')\n"
         )
         with open(conf_file[0], 'w') as fobj:
-            _write(fobj, skip_file)
-        skip_file = (
-            "import sys\n"
-            "collect_ignore = []\n"
-            "if sys.version_info.major == 2:\n"
-            "   collect_ignore.append('data_source3.py')\n"
-            "else:\n"
-            "   collect_ignore.append('data_source2.py')\n"
-        )
-        with open(conf_file[1], 'w') as fobj:
             _write(fobj, skip_file)
     else:
         del_files = conf_file
@@ -196,7 +184,7 @@ def main(argv):
         del_files.append(coverage_file_name)
         try:
             for fname in del_files:
-                print('Deleting file {}'.format(fname))
+                print('Deleting file {0}'.format(fname))
                 os.remove(fname)
         except:
             pass

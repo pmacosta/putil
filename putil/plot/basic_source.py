@@ -17,7 +17,7 @@ from .functions import DataSource
 """
 [[[cog
 import os, sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__

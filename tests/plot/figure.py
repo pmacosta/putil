@@ -8,9 +8,10 @@ import matplotlib
 import numpy
 import os
 import pytest
+import re
 import sys
 import tempfile
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import mock
 else:
     import unittest.mock as mock
@@ -97,7 +98,7 @@ class TestFigure(object):
             indep_var_units='Amps',
             title='My graph'
         )
-        ret = (
+        ref = (
             'Panel 0:\n'
             '   Series 0:\n'
             '      Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
@@ -121,13 +122,15 @@ class TestFigure(object):
             'Independent variable units: Amps\n'
             'Logarithmic independent axis: False\n'
             'Title: My graph\n'
+            'Figure width: (5\\.6|6\\.2).*\n'
+            'Figure height: 2.6.*\n'
         )
-        ret_ci = ret + 'Figure width: 5.61\n'
-        ret += 'Figure width: 5.6\n'
-        ret_ci += 'Figure height: 2.66\n'
-        ret += 'Figure height: 2.66\n'
-
-        assert (str(obj) == ret) or (str(obj) == ret_ci)
+        actual = str(obj)
+        ref_invariant = '\n'.join(ref.split('\n')[:-3])
+        actual_invariant = '\n'.join(actual.split('\n')[:-3])
+        assert ref_invariant == actual_invariant
+        regexp = re.compile('\n'.join(ref.split('\n')[-3:]))
+        assert regexp.match('\n'.join(actual.split('\n')[-3:]))
 
     ### Public methods
     def test_save(self, default_panel):
@@ -233,7 +236,11 @@ class TestFigure(object):
         obj = putil.plot.Figure(panels=None)
         assert obj.fig_width == None
         obj = putil.plot.Figure(panels=default_panel)
-        assert (obj.fig_width-5.6 < 1e-10) or (obj.fig_width-5.61 < 1e-10)
+        assert (
+            (obj.fig_width-5.6 < 1e-10) or
+            (obj.fig_width-5.61 < 1e-10) or
+            (obj.fig_width-6.2 < 1e-10)
+        )
         obj.fig_width = 5
         assert obj.fig_width == 5
 
@@ -446,8 +453,8 @@ class TestFigure(object):
             },
             RuntimeError,
             (
-                'Figure size is too small: minimum width 5.6[1]*, '
-                'minimum height 2.66'
+                'Figure size is too small: minimum width [5.6[1]|6.2]*, '
+                'minimum height 2.6[6|8]'
             )
         )
         putil.test.assert_exception(
@@ -462,7 +469,7 @@ class TestFigure(object):
             },
             RuntimeError,
             (
-                'Figure size is too small: minimum width 5.6[1]*, '
+                'Figure size is too small: minimum width [5.6[1]|6.2]*, '
                 'minimum height 2.66'
             )
         )
@@ -478,8 +485,8 @@ class TestFigure(object):
             },
             RuntimeError,
             (
-                'Figure size is too small: minimum width 5.6[1]*, '
-                'minimum height 2.66'
+                'Figure size is too small: minimum width [5.6[1]|6.2]*, '
+                'minimum height 2.6[6|8]'
             )
         )
 

@@ -12,7 +12,7 @@ import os
 import pickle
 import sys
 import textwrap
-if sys.version_info.major == 2: # pragma: no cover
+if sys.hexversion < 0x03000000: # pragma: no cover
     import __builtin__
     from putil.compat2 import _rwtb
 else:   # pragma: no cover
@@ -49,6 +49,19 @@ def _format_msg(text, width, indent=0, prefix=''):
     return ('\n'.join(wrapped_text))[1:-1].rstrip()
 
 
+def _validate_fname(fname, arg_name):
+    """ Validates that a string is a valid file name """
+    if fname is not None:
+        msg = 'Argument `{0}` is not valid'.format(arg_name)
+        if not isinstance(fname, str):
+            raise RuntimeError(msg)
+        try:
+            if not os.path.exists(fname):
+                os.access(fname, os.W_OK)
+        except (TypeError, ValueError): # pragma: no cover
+            raise RuntimeError(msg)
+
+
 ###
 # Context managers
 ###
@@ -67,15 +80,34 @@ class ExDocCxt(object):
                     callables are included
     :type  exclude: list of strings or None
 
-    :param file_name: File name to pickle traced exception handler
-                      (useful for debugging purposes). If None all
-                      pickle file is created
-    :type  file_name: :ref:`FileName` or None
+    :param pickle_fname: File name to pickle traced exception handler
+                         (useful for debugging purposes). If None all
+                         pickle file is created
+    :type  pickle_fname: :ref:`FileName` or None
+
+    :param in_callables_fname: File name that contains traced modules
+                               information. File can be produced by either
+                               the
+                               :py:meth:`putil.pinspect.Callables.save` or
+                               :py:meth:`putil.exh.ExHandle.save_callables`
+                               methods
+    :type  in_callables_fname: :ref:`FileNameExists` or None
+
+    :param out_callables_fname: File name to save traced modules information
+                                to in `JSON <http://www.json.org/>`_ format.
+                                If the file exists it is overwritten
+    :type  out_callables_fname: :ref:`FileNameExists` or None
 
     :raises:
+     * OSError (File *[in_callables_fname]* could not be found)
+
+     * RuntimeError (Argument \`in_callables_fname\` is not valid)
+
      * RuntimeError (Argument \`exclude\` is not valid)
 
-     * RuntimeError (Argument \`file_name\` is not valid)
+     * RuntimeError (Argument \`out_callables_fname\` is not valid)
+
+     * RuntimeError (Argument \`pickle_fname\` is not valid)
 
     For example:
 
@@ -95,29 +127,42 @@ class ExDocCxt(object):
         <BLANKLINE>
         <BLANKLINE>
     """
-    def __init__(self, exclude=None, _no_print=True, file_name=None):
+    def __init__(
+        self,
+        exclude=None,
+        _no_print=True,
+        pickle_fname=None,
+        in_callables_fname=None,
+        out_callables_fname=None
+    ):
         # Validate aguments
         if (exclude is not None) and (not isinstance(exclude, list)):
             raise RuntimeError('Argument `exclude` is not valid')
-        if (file_name is not None) and (not isinstance(file_name, str)):
-            raise RuntimeError('Argument `file_name` is not valid')
-        if file_name is not None:
-            try:
-                os.path.exists(file_name)
-            except TypeError:
-                raise RuntimeError('Argument `file_name` is not valid')
+        _validate_fname(pickle_fname, 'pickle_fname')
+        _validate_fname(in_callables_fname, 'in_callables_fname')
+        _validate_fname(out_callables_fname, 'out_callables_fname')
+        if ((in_callables_fname is not None) and
+           (not os.path.exists(in_callables_fname))):
+            raise OSError(
+                'File {0} could not be found'.format(in_callables_fname)
+            )
         if not isinstance(_no_print, bool):
             raise RuntimeError('Argument `_no_print` is not valid')
         # Need to have an exception handler with full_cname=True and clean
         # the slate for the trace. If there is an existing handler copy it
         # to a temporary variable and copy it back/restore it upon exit
-        self._file_name = file_name
+        self._pickle_fname = pickle_fname
         self._pickle_dict = {}
         self._existing_exhobj = None
+        self._out_callables_fname = out_callables_fname
         if putil.exh.get_exh_obj() is not None:
             self._existing_exhobj = copy.copy(putil.exh.get_exh_obj())
         putil.exh.set_exh_obj(
-            putil.exh.ExHandle(full_cname=True, exclude=exclude)
+            putil.exh.ExHandle(
+                full_cname=True,
+                exclude=exclude,
+                callables_fname=in_callables_fname
+            )
         )
         # Create a dummy ExDoc object. It has to be created here so that
         # it can be returned by the context in the '[...] as [...]' clause.
@@ -133,6 +178,7 @@ class ExDocCxt(object):
         # ../tests/conftest.py file
         setattr(__builtin__, '_EXDOC_EXCLUDE', exclude)
         setattr(__builtin__, '_EXDOC_FULL_CNAME', True)
+        setattr(__builtin__, '_EXDOC_CALLABLES_FNAME', in_callables_fname)
 
     def __enter__(self):
         return self._exdoc_obj
@@ -155,6 +201,9 @@ class ExDocCxt(object):
             exhobj = putil.exh.get_exh_obj()
         delattr(__builtin__, '_EXDOC_EXCLUDE')
         delattr(__builtin__, '_EXDOC_FULL_CNAME')
+        delattr(__builtin__, '_EXDOC_CALLABLES_FNAME')
+        if self._out_callables_fname is not None:
+            exhobj.save_callables(self._out_callables_fname)
         self._exdoc_obj._exh_obj = copy.copy(exhobj)
         self._pickle_dict['exhobj'] = copy.copy(exhobj)
         # Delete all traced exceptions
@@ -163,8 +212,8 @@ class ExDocCxt(object):
         self._exdoc_obj._build_ex_tree()
         self._exdoc_obj._build_module_db()
         self._pickle_dict['exdoc'] = copy.copy(self._exdoc_obj)
-        if self._file_name is not None:
-            with open(self._file_name, 'wb') as fobj:
+        if self._pickle_fname is not None:
+            with open(self._pickle_fname, 'wb') as fobj:
                 pickle.dump(self._pickle_dict, fobj)
         # Delete exceptions from exception tree building. The _build_ex_tree()
         # method uses the tree module, which in turn uses the ExDoc class, so

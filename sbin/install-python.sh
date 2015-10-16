@@ -49,13 +49,15 @@ for ver in ${vers[@]}; do
 	tar_file=Python-${ver}.tgz
 	inst=get-pip.py
 	if which ${python_cmd} >/dev/null; then
-		print_green_line "Python ${short_ver} (${ver}) already installed"
+		print_green_line \
+			"Python ${short_ver} (${ver}) already installed"
 	else
 		print_green_line "Installing Python ${short_ver} (${ver})"
 		install_pkg zlib1g
 		install_pkg zlib1g-dev
 		mkdir -p ${build_dir}
-		wget https://www.python.org/ftp/python/${ver}/${tar_file} -O ${build_dir}/${tar_file}
+		wget https://www.python.org/ftp/python/${ver}/${tar_file} \
+			-O ${build_dir}/${tar_file}
 		cd ${build_dir}
 		tar xvfz ${tar_file}
 		mkdir -p ${dest_dir}
@@ -63,7 +65,8 @@ for ver in ${vers[@]}; do
 		./configure --prefix=${dest_dir}
 		make
 		sudo make install
-		sudo ln -s /opt/python${short_ver}/bin/python${short_ver} /usr/bin/python${short_ver}
+		sudo ln -s /opt/python${short_ver}/bin/python${short_ver} \
+			/usr/bin/python${short_ver}
 	fi
 	if which ${pip_cmd} >/dev/null; then
 		print_green_line "pip ${short_ver} already installed"
@@ -73,7 +76,8 @@ for ver in ${vers[@]}; do
 		wget https://bootstrap.pypa.io/${inst} -O ${build_dir}/${inst}
 		cd ${build_dir}
 		${python_cmd} ${inst}
-		sudo ln -s /opt/python${short_ver}/bin/pip${short_ver} /usr/bin/pip${short_ver}
+		sudo ln -s /opt/python${short_ver}/bin/pip${short_ver} \
+			/usr/bin/pip${short_ver}
 	fi
 	rm -rf ${build_dir}
 done

@@ -4,7 +4,6 @@
 # pylint: disable=C0111,C0302,E0602,W0105,W0212,W0611
 
 import numpy
-from collections import OrderedDict
 
 import putil.exh
 import putil.pcsv
@@ -21,7 +20,7 @@ from .functions import (
 """
 [[[cog
 import os, sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__
@@ -222,7 +221,7 @@ class CsvSource(DataSource):
             import putil.misc, putil.pcsv, sys
 
             def cwrite(fobj, data):
-                if sys.version_info.major == 2:
+                if sys.hexversion < 0x03000000:
                     fobj.write(data)
                 else:
                     fobj.write(bytes(data, 'ascii'))
@@ -275,36 +274,32 @@ class CsvSource(DataSource):
             Dependent variable: [ 0.0, -30.0, 10.0 ]
         """
         ret = ''
-        ret += 'File name: {}\n'.format(self.fname)
-        ret += 'Row filter: {}\n'.format(
+        ret += 'File name: {0}\n'.format(self.fname)
+        ret += 'Row filter: {0}\n'.format(
             self.rfilter if self.rfilter is None else ''
         )
         if self.rfilter is not None:
-            orfilter = OrderedDict(
-                sorted(self.rfilter.items(), key=lambda t: t[0])
-            )
-            for key, value in orfilter.items():
-                ret += '   {key}: {value}\n'.format(key=key, value=value)
-        ret += 'Independent column label: {}\n'.format(self.indep_col_label)
-        ret += 'Dependent column label: {}\n'.format(self.dep_col_label)
-        ret += 'Processing function: {}\n'.format(
+            for key in sorted(self.rfilter):
+                ret += '   {key}: {value}\n'.format(
+                    key=key, value=self.rfilter[key]
+                )
+        ret += 'Independent column label: {0}\n'.format(self.indep_col_label)
+        ret += 'Dependent column label: {0}\n'.format(self.dep_col_label)
+        ret += 'Processing function: {0}\n'.format(
             'None' if self.fproc is None else self.fproc.__name__
         )
-        ret += 'Processing function extra arguments: {}\n'.format(
+        ret += 'Processing function extra arguments: {0}\n'.format(
             self.fproc_eargs if self.fproc_eargs is None else ''
         )
         if self.fproc_eargs is not None:
-            ofproc_eargs = OrderedDict(
-                sorted(
-                    self.fproc_eargs.items(), key=lambda t: t[0]
+            for key in sorted(self.fproc_eargs):
+                ret += '   {key}: {value}\n'.format(
+                    key=key, value=self.fproc_eargs[key]
                 )
-            )
-            for key, value in ofproc_eargs.items():
-                ret += '   {key}: {value}\n'.format(key=key, value=value)
-        ret += 'Independent variable minimum: {}\n'.format(
+        ret += 'Independent variable minimum: {0}\n'.format(
             '-inf' if self.indep_min is None else self.indep_min
         )
-        ret += 'Independent variable maximum: {}\n'.format(
+        ret += 'Independent variable maximum: {0}\n'.format(
             '+inf' if self.indep_max is None else self.indep_max
         )
         ret += super(CsvSource, self).__str__()
@@ -1104,7 +1099,7 @@ class CsvSource(DataSource):
 
         # plot_example_5.py
         import putil.misc, putil.pcsv, sys
-        if sys.version_info.major == 2:
+        if sys.hexversion < 0x03000000:
             from putil.compat2 import _write
         else:
             from putil.compat3 import _write

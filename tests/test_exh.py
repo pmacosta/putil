@@ -10,8 +10,9 @@ import os
 import pytest
 import re
 import sys
+import tempfile
 from itertools import product
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import mock
 else:
     import unittest.mock as mock
@@ -79,6 +80,40 @@ def test_star_exh_obj():
         RuntimeError,
         'Argument `full_cname` is not valid'
     )
+    putil.test.assert_exception(
+        putil.exh.get_or_create_exh_obj,
+        {'exclude':5},
+        RuntimeError,
+        'Argument `exclude` is not valid'
+    )
+    putil.test.assert_exception(
+        putil.exh.get_or_create_exh_obj,
+        {'callables_fname':True},
+        RuntimeError,
+        'Argument `callables_fname` is not valid'
+    )
+    putil.test.assert_exception(
+        putil.exh.get_or_create_exh_obj,
+        {'callables_fname':'_not_an_existing_file_'},
+        OSError,
+        'File _not_an_existing_file_ could not be found'
+    )
+    pobj = putil.pinspect.Callables(
+        [sys.modules['putil.eng'].__file__]
+    )
+    # exclude parameter
+    new_exh_obj = putil.exh.get_or_create_exh_obj(exclude=['putil.eng'])
+    new_exh_obj._exclude = ['putil.eng']
+    putil.exh.del_exh_obj()
+    # callables_fname parameter
+    with tempfile.NamedTemporaryFile() as fobj:
+        callables_fname = fobj.name
+        pobj.save(callables_fname)
+        new_exh_obj = putil.exh.get_or_create_exh_obj(
+            callables_fname=callables_fname
+        )
+        assert pobj == new_exh_obj._callables_obj
+    putil.exh.del_exh_obj()
 
 
 def test_ex_type_str():
@@ -115,6 +150,18 @@ class TestExHandle(object):
             ValueError,
             'Source for module _not_a_module_ could not be found'
         )
+        putil.test.assert_exception(
+            putil.exh.ExHandle,
+            {'callables_fname':True},
+            RuntimeError,
+            'Argument `callables_fname` is not valid'
+        )
+        putil.test.assert_exception(
+            putil.exh.ExHandle,
+            {'callables_fname':'_not_an_existing_file_'},
+            OSError,
+            'File _not_an_existing_file_ could not be found'
+        )
         exobj = putil.exh.ExHandle()
         assert not exobj._full_cname
         assert exobj._exclude is None
@@ -132,6 +179,14 @@ class TestExHandle(object):
         assert exobj._exclude_list == [
             sys.modules['putil.exh'].__file__.replace('.pyc', '.py')
         ]
+        pobj = putil.pinspect.Callables(
+            [sys.modules['putil.eng'].__file__]
+        )
+        with tempfile.NamedTemporaryFile() as fobj:
+            callables_fname = fobj.name
+            pobj.save(callables_fname)
+            exobj = putil.exh.ExHandle(callables_fname=callables_fname)
+        assert pobj == exobj._callables_obj
 
     def test_add_exception_exceptions(self):
         """ Test add_exception() method exceptions """
@@ -308,7 +363,7 @@ class TestExHandle(object):
                 if full_cname and exclude:
                     template = (
                         'tests.test_exh.TestExHandle.test_add_exception/'
-                        'tests.test_exh.TestExHandle.{}'
+                        'tests.test_exh.TestExHandle.{0}'
                     )
                     if re.compile(r'\d+/first_exception').match(exname):
                         ttuple = (
@@ -434,103 +489,106 @@ class TestExHandle(object):
                     ctext = 'tests.test_exh.TestExHandle.test_add_exception'
                     if re.compile(r'\d+/first_exception').match(exname):
                         ttuple = (
-                            r'.+/{}.func1'.format(ctext),
+                            r'.+/{0}.func1'.format(ctext),
                             TypeError,
                             'This is the first exception'
                         )
                     elif re.compile(r'\d+/second_exception').match(exname):
                         ttuple = (
-                            r'.+/{}.func2'.format(ctext),
+                            r'.+/{0}.func2'.format(ctext),
                             ValueError,
                             'This is the second exception'
                         )
                     elif re.compile(r'\d+/third_exception').match(exname):
                         ttuple = (
-                            r'.+/{}.func2'.format(ctext),
+                            r'.+/{0}.func2'.format(ctext),
                             OSError,
                             'This is the third exception'
                         )
                     elif re.compile(r'\d+/setter_exception').match(exname):
                         ttuple = (
-                            r'.+/{}.Class1.value3\(setter\)'.format(ctext),
+                            r'.+/{0}.Class1.value3\(setter\)'.format(ctext),
                             TypeError,
                             'Set function exception'
                         )
                     elif re.compile(r'\d+/getter_exception').match(exname):
                         ttuple = (
-                            r'.+/{}.Class1.value3\(getter\)'.format(ctext),
+                            r'.+/{0}.Class1.value3\(getter\)'.format(ctext),
                             TypeError,
                             'Get function exception'
                         )
                     elif re.compile(r'\d+/deleter_exception').match(exname):
                         ttuple = (
-                            r'.+/{}.Class1.value3\(deleter\)'.format(ctext),
+                            r'.+/{0}.Class1.value3\(deleter\)'.format(ctext),
                             TypeError,
                             'Delete function exception'
                         )
                     elif re.compile(r'\d+/total_exception_7').match(exname):
                         ttuple = (
-                            r'.+/{}.func7'.format(ctext),
+                            r'.+/{0}.func7'.format(ctext),
                             TypeError,
                             'Total exception #7'
                         )
                     elif re.compile(r'\d+/total_exception_8').match(exname):
                         ttuple = (
-                            r'.+/{}.func8'.format(ctext),
+                            r'.+/{0}.func8'.format(ctext),
                             TypeError,
                             'Total exception #8'
                         )
                     elif re.compile(r'\d+/total_exception_9').match(exname):
                         ttuple = (
-                            r'.+/{}.func9'.format(ctext),
+                            r'.+/{0}.func9'.format(ctext),
                             TypeError,
                             'Total exception #9'
                         )
                     elif re.compile(r'\d+/total_exception_10').match(exname):
                         ttuple = (
-                            r'.+/{}.func10'.format(ctext),
+                            r'.+/{0}.func10'.format(ctext),
                             TypeError,
                             'Total exception #10'
                         )
                     elif re.compile(r'\d+/total_exception_11').match(exname):
                         ttuple = (
-                            r'.+/{}.func11'.format(ctext),
+                            r'.+/{0}.func11'.format(ctext),
                             TypeError,
                             'Total exception #11'
                         )
                     elif re.compile(r'\d+/total_exception_12').match(exname):
                         ttuple = (
-                            r'.+/{}.func12'.format(ctext),
+                            r'.+/{0}.func12'.format(ctext),
                             TypeError,
                             'Total exception #12'
                         )
                     elif re.compile(r'\d+/total_exception_13').match(exname):
                         ttuple = (
-                            r'.+/{}.func13'.format(ctext),
+                            r'.+/{0}.func13'.format(ctext),
                             TypeError,
                             'Total exception #13'
                         )
                     elif re.compile(r'\d+/total_exception_14').match(exname):
                         ttuple = (
-                            r'.+/{}.func14'.format(ctext),
+                            r'.+/{0}.func14'.format(ctext),
                             TypeError,
                             'Total exception #14'
                         )
                     elif re.compile(r'\d+/total_exception_15').match(exname):
                         ttuple = (
-                            r'.+/{}'.format(ctext),
+                            r'.+/{0}'.format(ctext),
                             TypeError,
                             'Total exception #15'
                         )
                     elif re.compile(r'\d+/total_exception_16').match(exname):
                         ttuple = (
-                            r'.+/{}/exh_support_module_1.func16'.format(ctext),
+                            (
+                                r'.+/{0}/exh_support_module_1'
+                                '.func16'.format(ctext)
+                            ),
                             TypeError,
                             'Total exception #16'
                         )
                     elif re.compile(r'\d+/dummy_exception').match(exname):
                         ttuple = (
-                            r'.+/{}.Class1.value4\(getter\)'.format(ctext),
+                            r'.+/{0}.Class1.value4\(getter\)'.format(ctext),
                             OSError,
                             'Pass-through exception'
                         )
@@ -833,13 +891,13 @@ class TestExHandle(object):
             assert False
         for exname, erec in cdb.items():
             mname = 'test_exh.test_raise_exception.func3'
-            if exname.endswith('/{}.my_exception1'.format(mname)):
-                assert erec['function'].endswith('{}'.format(mname))
+            if exname.endswith('/{0}.my_exception1'.format(mname)):
+                assert erec['function'].endswith('{0}'.format(mname))
                 assert erec['type'] == RuntimeError
                 assert erec['msg'] == 'This is an exception'
                 assert erec['raised'] == True
-            if exname.endswith('/{}.my_exception2'.format(mname)):
-                assert erec['function'].endswith('{}'.format(mname))
+            if exname.endswith('/{0}.my_exception2'.format(mname)):
+                assert erec['function'].endswith('{0}'.format(mname))
                 assert erec['type'] == OSError
                 assert (
                     erec['msg']
@@ -998,33 +1056,59 @@ class TestExHandle(object):
                 print(erec['name'])
                 if full_cname:
                     if re.compile(regtext1).match(erec['name']):
-                        name = '{}.func4'.format(cname)
+                        name = '{0}.func4'.format(cname)
                     elif re.compile(regtext2).match(erec['name']):
-                        name = '{}.func5'.format(cname)
+                        name = '{0}.func5'.format(cname)
                 else:
                     if re.compile(r'\d+/my_exception1').match(erec['name']):
-                        name = '{}.func4'.format(cname)
+                        name = '{0}.func4'.format(cname)
                     elif re.compile(regtext3).match(erec['name']):
-                        name = '{}.func5'.format(cname)
+                        name = '{0}.func5'.format(cname)
                 if not name:
                     print('NOT FOUND')
                     assert False
                 tdata_out.append({'name':name, 'data':erec['data']})
             ref = [
                     {
-                        'name':'{}.func4'.format(cname),
+                        'name':'{0}.func4'.format(cname),
                         'data':'RuntimeError (This is exception #1)'
                     },
                     {
-                        'name':'{}.func5'.format(cname),
+                        'name':'{0}.func5'.format(cname),
                         'data':'ValueError (This is exception #2, *[result]*)'
                     },
                     {
-                        'name':'{}.func5'.format(cname),
+                        'name':'{0}.func5'.format(cname),
                         'data':'TypeError (This is exception #3)'
                     }
             ]
             assert putil.test.comp_list_of_dicts(tdata_out, ref)
+
+    def test_save_callables(self):
+        """ Test save_callables method behavior """
+        obj1 = putil.pinspect.Callables(
+            [sys.modules['putil.eng'].__file__]
+        )
+        with tempfile.NamedTemporaryFile() as fobj1:
+            with tempfile.NamedTemporaryFile() as fobj2:
+                callables_fname1 = fobj1.name
+                callables_fname2 = fobj2.name
+                obj1.save(callables_fname1)
+                obj2 = putil.exh.ExHandle(callables_fname=callables_fname1)
+                obj2.save_callables(callables_fname2)
+                obj3 = putil.pinspect.Callables()
+                obj3.load(callables_fname2)
+        assert obj1 == obj3
+
+    def test_save_callables_exceptions(self):
+        """ Test save_callables method exceptions """
+        obj = putil.exh.ExHandle()
+        putil.test.assert_exception(
+            obj.save_callables,
+            {'callables_fname':True},
+            RuntimeError,
+            'Argument `callables_fname` is not valid'
+        )
 
     def test_callables_db(self):
         """ Test callables_db property behavior """
@@ -1088,23 +1172,23 @@ class TestExHandle(object):
                 str_list = str_element.split('\n')
                 if str_list[0].endswith('/my_exception7'):
                     str_list[0] = (
-                        'Name    : {}.func7/my_exception7'.format(cname)
+                        'Name    : {0}.func7/my_exception7'.format(cname)
                     )
                 elif str_list[0].endswith('/my_exception8'):
                     str_list[0] = (
-                        'Name    : {}.func8/my_exception8'.format(cname)
+                        'Name    : {0}.func8/my_exception8'.format(cname)
                     )
                 elif str_list[0].endswith('/my_exception9'):
                     str_list[0] = (
-                        'Name    : {}.func8/my_exception9'.format(cname)
+                        'Name    : {0}.func8/my_exception9'.format(cname)
                     )
-                if str_list[3].endswith('{}.func7'.format(cname)):
+                if str_list[3].endswith('{0}.func7'.format(cname)):
                     str_list[3] = 'Function: {0}'.format(
-                        '{}.func7'.format(cname) if full_cname else 'None'
+                        '{0}.func7'.format(cname) if full_cname else 'None'
                     )
-                elif str_list[3].endswith('{}.func8'.format(cname)):
+                elif str_list[3].endswith('{0}.func8'.format(cname)):
                     str_list[3] = 'Function: {0}'.format(
-                        '{}.func8'.format(cname) if full_cname else 'None'
+                        '{0}.func8'.format(cname) if full_cname else 'None'
                     )
                 str_out.append('\n'.join(str_list))
             #
@@ -1114,7 +1198,7 @@ class TestExHandle(object):
                 'Type    : RuntimeError\n'
                 'Message : This is exception #7\n'
                 'Function: {name}'.format(
-                    name='{}.func7'.format(cname) if full_cname else 'None'
+                    name='{0}.func7'.format(cname) if full_cname else 'None'
                 )
             )
             str_check.append(
@@ -1122,7 +1206,7 @@ class TestExHandle(object):
                 'Type    : ValueError\n'
                 'Message : This is exception #8, *[fname]*\n'
                 'Function: {name}'.format(
-                    name='{}.func8'.format(cname) if full_cname else 'None'
+                    name='{0}.func8'.format(cname) if full_cname else 'None'
                 )
             )
             str_check.append(
@@ -1130,7 +1214,7 @@ class TestExHandle(object):
                 'Type    : TypeError\n'
                 'Message : This is exception #9\n'
                 'Function: {name}'.format(
-                    name='{}.func8'.format(cname) if full_cname else 'None'
+                    name='{0}.func8'.format(cname) if full_cname else 'None'
                 )
             )
             if sorted(str_out) != sorted(str_check):
@@ -1241,7 +1325,7 @@ class TestExHandle(object):
         }
         obj1._callables_obj._reverse_callables_db = {'rc1':5, 'rc2':7}
         obj1._callables_obj._modules_dict = {'key1':'alpha', 'key2':'beta'}
-        obj1._callables_obj._fnames = ['hello']
+        obj1._callables_obj._fnames = {'hello':0}
         obj1._callables_obj._module_names = ['this', 'is']
         obj1._callables_obj._class_names = ['once', 'upon']
         #
@@ -1254,7 +1338,7 @@ class TestExHandle(object):
         }
         obj2._callables_obj._reverse_callables_db = {'rc3':0, 'rc4':-1}
         obj2._callables_obj._modules_dict = {'key3':'pi', 'key4':'gamma'}
-        obj2._callables_obj._fnames = ['world']
+        obj2._callables_obj._fnames = {'world':0}
         obj2._callables_obj._module_names = ['a', 'test']
         obj2._callables_obj._class_names = ['a', 'time']
         #
@@ -1277,7 +1361,7 @@ class TestExHandle(object):
         assert (
             sorted(sobj._callables_obj._fnames)
             ==
-            sorted(['hello', 'world'])
+            sorted({'hello':0, 'world':1})
         )
         assert sorted(sobj._callables_obj._module_names) == sorted(
             ['this', 'is', 'a', 'test']
@@ -1305,7 +1389,7 @@ class TestExHandle(object):
         assert (
             sorted(obj1._callables_obj._fnames)
             ==
-            sorted(['hello', 'world'])
+            sorted({'hello':0, 'world':1})
         )
         assert sorted(obj1._callables_obj._module_names) == sorted(
             ['this', 'is', 'a', 'test']

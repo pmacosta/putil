@@ -191,7 +191,7 @@ def test_concatenate_exceptions():
                         'dfilter2':['b']
                     },
                     RuntimeError,
-                    'Argument `*[{}]*` is not valid'.format(
+                    'Argument `*[{0}]*` is not valid'.format(
                         'fname1' if not file_toggle else 'fname2'
                     )
                 )
@@ -240,7 +240,7 @@ def test_concatenate_exceptions():
                             'dfilter2':dfilter2
                         },
                         RuntimeError,
-                        'Argument `{}` is not valid'.format(
+                        'Argument `{0}` is not valid'.format(
                             'dfilter1' if not file_toggle else 'dfilter2'
                         )
                     )

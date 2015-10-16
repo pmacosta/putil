@@ -27,7 +27,7 @@ def incfile(file_name, mobj, lrange='1,6-'):
                 int(subtokens[0]),
                 int(subtokens[1]) if subtokens[1] else len(lines)
             )
-            for num in xrange(lmin, lmax+1):
+            for num in range(lmin, lmax+1):
                 inc_lines.append(num)
         else:
             inc_lines.append(int(token))
@@ -36,5 +36,7 @@ def incfile(file_name, mobj, lrange='1,6-'):
     fpointer('\n')
     for num, line in enumerate(lines):
         if num+1 in inc_lines:
-            fpointer('    '+line.replace('\t', '    ') if line.strip() else '\n')
+            fpointer(
+                '    '+line.replace('\t', '    ') if line.strip() else '\n'
+            )
     fpointer('\n')

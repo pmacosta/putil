@@ -39,12 +39,15 @@ def custom_contract6(arg):
     if not arg:
         raise ValueError(putil.pcontracts.get_exdesc())
 
-@putil.pcontracts.new_contract((OSError, 'File could not be opened'))
+@putil.pcontracts.new_contract(
+    (OSError, 'File could not be opened')
+)
 def custom_contract7(arg):
     if not arg:
         raise ValueError(putil.pcontracts.get_exdesc())
 
-# Define contract that uses exception (RuntimeError, 'Invalid name')
+# Define contract that uses exception
+# (RuntimeError, 'Invalid name')
 @putil.pcontracts.new_contract('Invalid name')
 def custom_contract8(arg):
     if not arg:

@@ -1,0 +1,80 @@
+# trace_support.py
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,W0212
+
+from __future__ import print_function
+import collections
+import copy
+import datetime
+import os
+import pytest
+
+import putil.exdoc
+
+
+###
+# Functions
+###
+def trace_pars(mname):
+    """ Define trace parameters """
+    pickle_fname = os.path.join(
+        os.path.dirname(__file__),
+        '{0}.pkl'.format(mname)
+    )
+    ddir = os.path.dirname(os.path.dirname(__file__))
+    moddb_fname = os.path.join(ddir, 'moddb.json')
+    in_callables_fname = moddb_fname if os.path.exists(moddb_fname) else None
+    out_callables_fname = os.path.join(ddir, '{0}.json'.format(mname))
+    noption = os.environ.get('NOPTION', None)
+    exclude = ['_pytest', 'execnet']
+    partuple = collections.namedtuple(
+        'ParTuple',
+        [
+            'pickle_fname',
+            'in_callables_fname',
+            'out_callables_fname',
+            'noption',
+            'exclude'
+        ]
+    )
+    return partuple(
+        pickle_fname, in_callables_fname, out_callables_fname, noption, exclude
+    )
+
+
+def run_trace(
+    mname, fname, module_prefix, callable_names, no_print, exclude=None
+):
+    """ Run module tracing """
+    # pylint: disable=R0913
+    exclude = [] if exclude is None else exclude
+    par = trace_pars(mname)
+    start_time = datetime.datetime.now()
+    with putil.exdoc.ExDocCxt(
+            exclude=par.exclude+exclude,
+            pickle_fname=par.pickle_fname,
+            in_callables_fname=par.in_callables_fname,
+            out_callables_fname=par.out_callables_fname
+    ) as exdoc_obj:
+        if pytest.main('-q -x {noption}-m {mname} {file}'.format(
+                noption='{0} '.format(par.noption) if par.noption else '',
+                mname=mname,
+                file=os.path.realpath(os.path.join(
+                    os.path.dirname(__file__),
+                    '..',
+                    '..',
+                    'tests',
+                    'test_{0}.py'.format(fname))))):
+            raise RuntimeError('Tracing did not complete successfully')
+    stop_time = datetime.datetime.now()
+    if not no_print:
+        print('Auto-generation of exceptions documentation time: {0}'.format(
+            putil.misc.elapsed_time_string(start_time, stop_time)
+        ))
+        for callable_name in callable_names:
+            callable_name = module_prefix+callable_name
+            print('\nCallable: {0}'.format(callable_name))
+            print(exdoc_obj.get_sphinx_doc(callable_name))
+            print('\n')
+    return copy.copy(exdoc_obj)

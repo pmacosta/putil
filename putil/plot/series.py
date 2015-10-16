@@ -98,7 +98,7 @@ from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
 """
 [[[cog
 import os, sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__
@@ -428,18 +428,18 @@ class Series(object):
     def __str__(self):
         """ Print series object information """
         ret = ''
-        ret += 'Independent variable: {}\n'.format(
+        ret += 'Independent variable: {0}\n'.format(
             putil.eng.pprint_vector(self.indep_var, width=50)
         )
-        ret += 'Dependent variable: {}\n'.format(
+        ret += 'Dependent variable: {0}\n'.format(
             putil.eng.pprint_vector(self.dep_var, width=50)
         )
-        ret += 'Label: {}\n'.format(self.label)
-        ret += 'Color: {}\n'.format(self.color)
-        ret += 'Marker: {}\n'.format(self._print_marker())
-        ret += 'Interpolation: {}\n'.format(self.interp)
-        ret += 'Line style: {}\n'.format(self.line_style)
-        ret += 'Secondary axis: {}'.format(self.secondary_axis)
+        ret += 'Label: {0}\n'.format(self.label)
+        ret += 'Color: {0}\n'.format(self.color)
+        ret += 'Marker: {0}\n'.format(self._print_marker())
+        ret += 'Interpolation: {0}\n'.format(self.interp)
+        ret += 'Line style: {0}\n'.format(self.line_style)
+        ret += 'Secondary axis: {0}'.format(self.secondary_axis)
         return ret
 
     def _check_series_is_plottable(self):

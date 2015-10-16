@@ -21,6 +21,9 @@ import re
 import sys
 
 
+if sys.hexversion < 0x02060000:
+    sys.exit('Supported interpreter versions: 2.6, 2.7, 3.3, 3.4 and 3.5')
+
 ###
 # Functions
 ###
@@ -51,9 +54,13 @@ def get_short_desc(long_desc):
 def load_requirements(pkg_dir, libs):
     """ Get package names from requirements.txt file """
     with open(os.path.join(pkg_dir, 'requirements.txt'), 'r') as fobj:
-        lines = [item.strip() for item in fobj.readlines()]
+        lines = [
+            item.strip()
+            for item in fobj.readlines()
+            if item.strip()
+        ]
     regexps = [
-        re.compile('^{}[>=]*'.format(item))
+        re.compile('^{0}[>=]*'.format(item))
         for item in libs
         if not item.startswith('#')
     ]
@@ -93,6 +100,90 @@ SHARE_DIR = os.path.join('usr', 'share', PKG_NAME)
 DOCS_DIR = os.path.join(SHARE_DIR, 'docs')
 TESTS_DIR = os.path.join(SHARE_DIR, 'tests')
 SBIN_DIR = os.path.join(SHARE_DIR, 'sbin')
+DEPS = ['decorator', 'matplotlib', 'numpy', 'Pillow', 'PyContracts', 'scipy']
+if sys.hexversion < 0x03000000:
+    DEPS.extend(['funcsigs', 'mock'])
+INSTALL_REQUIRES = load_requirements(PKG_DIR, DEPS)
+DATA_FILES = [
+    (
+        SHARE_DIR,
+        [os.path.join(PKG_DIR, 'README.rst')],
+    ),
+    (
+        SBIN_DIR,
+        glob.glob(os.path.join(PKG_DIR, 'sbin', '*')),
+    ),
+    (
+        DOCS_DIR,
+        RST_FILES+[
+            os.path.join(PKG_DIR, 'docs', '__init__.py'),
+            os.path.join(PKG_DIR, 'docs', 'conf.py'),
+            os.path.join(PKG_DIR, 'docs', 'make.bat'),
+            os.path.join(PKG_DIR, 'docs', 'Makefile'),
+        ],
+    ),
+    (
+        os.path.join(DOCS_DIR, '_static'),
+        [os.path.join(PKG_DIR, 'docs', '_static', '.keepdir')],
+    ),
+    (
+        os.path.join(DOCS_DIR, 'support'),
+        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.py'))
+    ),
+    (
+        os.path.join(DOCS_DIR, 'support'),
+        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.csv'))
+    ),
+    (
+        os.path.join(DOCS_DIR, 'support'),
+        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.png'))
+    ),
+    (
+        os.path.join(DOCS_DIR, 'support'),
+        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.odg'))
+    ),
+    (
+        os.path.join(DOCS_DIR, 'support'),
+        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.sh'))
+    ),
+    (
+        TESTS_DIR,
+        glob.glob(os.path.join(PKG_DIR, 'tests', 'pytest.ini'))
+    ),
+    (
+        TESTS_DIR,
+        glob.glob(os.path.join(PKG_DIR, 'tests', '*.py'))
+    ),
+    (
+        os.path.join(TESTS_DIR, 'plot'),
+        glob.glob(os.path.join(PKG_DIR, 'tests', 'plot', '*.py'))
+    ),
+    (
+        os.path.join(TESTS_DIR, 'pcsv'),
+        glob.glob(os.path.join(PKG_DIR, 'tests', 'pcsv', '*.py'))
+    ),
+    (
+        os.path.join(TESTS_DIR, 'support'),
+        glob.glob(os.path.join(PKG_DIR, 'tests', 'support', '*.py'))
+    ),
+    (
+        os.path.join(TESTS_DIR, 'support', 'ref_images'),
+        glob.glob(
+            os.path.join(
+                PKG_DIR, 'tests', 'support', 'ref_images', '*.png'
+            )
+        )
+    ),
+    (
+        os.path.join(TESTS_DIR, 'support', 'ref_images_ci'),
+        glob.glob(
+            os.path.join(
+                PKG_DIR, 'tests', 'support', 'ref_images_ci', '*.png'
+            )
+       )
+    ),
+]
+
 
 ###
 # Classes
@@ -122,13 +213,6 @@ class Tox(TestCommand):
 ###
 # Processing
 ###
-INSTALL_REQUIRES = load_requirements(
-    PKG_DIR,
-    ['decorator', 'matplotlib', 'numpy', 'Pillow', 'PyContracts', 'scipy']
-    +
-    (['funcsigs', 'mock'] if sys.version_info.major == 2 else [])
-)
-
 # package_data is used only for binary packages, i.e.
 # $ python setup.py bdist ...
 # but NOT when building source packages, i.e.
@@ -149,87 +233,9 @@ setup(
     packages=[
         PKG_NAME,
         '{pkg_name}.plot'.format(pkg_name=PKG_NAME),
-        '{pkg_name}.pcsv'.format(pkg_name=PKG_NAME)
+        '{pkg_name}.pcsv'.format(pkg_name=PKG_NAME),
     ],
-    data_files=[
-        (
-            SHARE_DIR,
-            [os.path.join(PKG_DIR, 'README.rst')],
-        ),
-        (
-            SBIN_DIR,
-            glob.glob(os.path.join(PKG_DIR, 'sbin', '*')),
-        ),
-        (
-            DOCS_DIR,
-            RST_FILES+[
-                os.path.join(PKG_DIR, 'docs', '__init__.py'),
-                os.path.join(PKG_DIR, 'docs', 'conf.py'),
-                os.path.join(PKG_DIR, 'docs', 'make.bat'),
-                os.path.join(PKG_DIR, 'docs', 'Makefile'),
-            ],
-        ),
-        (
-            os.path.join(DOCS_DIR, '_static'),
-            [os.path.join(PKG_DIR, 'docs', '_static', '.keepdir')],
-        ),
-        (
-            os.path.join(DOCS_DIR, 'support'),
-            glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.py'))
-        ),
-        (
-            os.path.join(DOCS_DIR, 'support'),
-            glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.csv'))
-        ),
-        (
-            os.path.join(DOCS_DIR, 'support'),
-            glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.png'))
-        ),
-        (
-            os.path.join(DOCS_DIR, 'support'),
-            glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.odg'))
-        ),
-        (
-            os.path.join(DOCS_DIR, 'support'),
-            glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.sh'))
-        ),
-        (
-            TESTS_DIR,
-            glob.glob(os.path.join(PKG_DIR, 'tests', 'pytest.ini'))
-        ),
-        (
-            TESTS_DIR,
-            glob.glob(os.path.join(PKG_DIR, 'tests', '*.py'))
-        ),
-        (
-            os.path.join(TESTS_DIR, 'plot'),
-            glob.glob(os.path.join(PKG_DIR, 'tests', 'plot', '*.py'))
-        ),
-        (
-            os.path.join(TESTS_DIR, 'pcsv'),
-            glob.glob(os.path.join(PKG_DIR, 'tests', 'pcsv', '*.py'))
-        ),
-        (
-            os.path.join(TESTS_DIR, 'support'),
-            glob.glob(os.path.join(PKG_DIR, 'tests', 'support', '*.py'))
-        ),
-        (
-            os.path.join(TESTS_DIR, 'support', 'ref_images'),
-            glob.glob(
-                os.path.join(
-                    PKG_DIR, 'tests', 'support', 'ref_images', '*.png'
-                )
-            )
-        ),
-        (
-            os.path.join(TESTS_DIR, 'support', 'ref_images_ci'),
-            glob.glob(
-                os.path.join(
-                    PKG_DIR, 'tests', 'support', 'ref_images_ci', '*.png'
-                )
-           )
-        ),
-    ],
+    data_files=DATA_FILES,
     zip_safe=False,
     platforms='any',
     classifiers=[

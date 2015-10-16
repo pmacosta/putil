@@ -266,11 +266,11 @@ class CsvFile(object):
             (self._cfilter is not None)
         ]
         has_header = self._has_header
-        ret = ["putil.pcsv.CsvFile(fname='{}'".format(self._fname)]
+        ret = ["putil.pcsv.CsvFile(fname='{0}'".format(self._fname)]
         if dfilter:
-            ret.append("dfilter={}".format(dfilter))
+            ret.append("dfilter={0}".format(dfilter))
         if not has_header:
-            ret.append("has_header={}".format(has_header))
+            ret.append("has_header={0}".format(has_header))
         return ", ".join(ret)+")"
 
 
@@ -294,10 +294,10 @@ class CsvFile(object):
             Rows: 2
             Columns: 2 (1 filtered)
         """
-        ret = ['File: {}'.format(self._fname)]
-        ret += ['Header: {}'.format(self._header)]
-        ret += ['Row filter: {}'.format(self._rfilter)]
-        ret += ['Column filter: {}'.format(self._cfilter)]
+        ret = ['File: {0}'.format(self._fname)]
+        ret += ['Header: {0}'.format(self._header)]
+        ret += ['Row filter: {0}'.format(self._rfilter)]
+        ret += ['Column filter: {0}'.format(self._cfilter)]
         ret += [
             'Rows: {rrows}{urows}'.format(
                 rrows=self._data_rows,

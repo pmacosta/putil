@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import os, subprocess
+import os, subprocess, sys
 
 def ste(command, nindent, mdir, fpointer):
     """
@@ -34,6 +34,8 @@ def term_echo(command, nindent=0, env=None, fpointer=None):
     )
     stdout = proc.communicate()[0]
 
+    if sys.hexversion >= 0x03000000:
+        stdout = stdout.decode('utf-8')
     stdout = stdout.split('\n')
     indent = nindent*' '
     fpointer('\n', dedent=False)

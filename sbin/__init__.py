@@ -1,6 +1,6 @@
-#!/bin/bash
-# make-doc-static-dir.sh
+# __init__.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
+# pylint: disable=C0111
 
-mkdir -p $1
+pass

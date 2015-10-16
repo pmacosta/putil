@@ -7,7 +7,7 @@ import os
 import pickle
 import pytest
 import sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__
@@ -48,6 +48,10 @@ def pytest_configure_node(node):
         node.slaveinput['full_cname'] = pickle.dumps(
             __builtin__._EXDOC_FULL_CNAME
         )
+    if hasattr(__builtin__, '_EXDOC_CALLABLES_FNAME'):
+        node.slaveinput['callables_fname'] = pickle.dumps(
+            __builtin__._EXDOC_CALLABLES_FNAME
+        )
 
 
 def pytest_testnodedown(node, error):
@@ -82,7 +86,7 @@ def exhobj(request):
             )
     request.addfinalizer(fin)
     if xdist_run: # sub-process
-        modname = '__builtin__' if sys.version_info.major == 2 else 'builtins'
+        modname = '__builtin__' if sys.hexversion < 0x03000000 else 'builtins'
         if not hasattr(request.module, '__builtin__'):
             setattr(request.module, '__builtin__', __import__(modname))
         exclude = (pickle.loads(request.config.slaveinput['exclude'])
@@ -91,8 +95,18 @@ def exhobj(request):
         full_cname = (pickle.loads(request.config.slaveinput['full_cname'])
                      if 'full_cname' in request.config.slaveinput else
                      False)
+        callables_fname = (
+            pickle.loads(request.config.slaveinput['callables_fname'])
+            if 'callables_fname' in request.config.slaveinput else
+            None
+        )
+
         setattr(
             request.module.__builtin__,
             '_EXH',
-            putil.exh.ExHandle(full_cname=full_cname, exclude=exclude)
+            putil.exh.ExHandle(
+                full_cname=full_cname,
+                exclude=exclude,
+                callables_fname=callables_fname
+            )
         )

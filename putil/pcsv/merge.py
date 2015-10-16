@@ -142,14 +142,14 @@ def merge(
         ocols = [
             cfilter1+
             [
-                'Column {}'.format(item)
+                'Column {0}'.format(item)
                 for item in range(cols1+1, cols1+cols2+1)
             ]
         ]
     elif (ocols is None) and (not has_header1) and has_header2:
         ocols = [
             [
-                'Column {}'.format(item)
+                'Column {0}'.format(item)
                 for item in range(1, cols1+1)
             ]
             +cfilter2

@@ -23,7 +23,7 @@ from putil.ptypes import (
 """
 [[[cog
 import os, sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__
@@ -41,12 +41,12 @@ exobj_eng = trace_ex_eng.trace_module(no_print=True)
 _POWER_TO_SUFFIX_DICT = dict(
     (exp, prf) for exp, prf in zip(range(-24, 27, 3), 'yzafpnum kMGTPEZY')
 )
-_SUFFIX_TO_POWER_DICT = {
-    value:key for key, value in _POWER_TO_SUFFIX_DICT.items()
-}
-_SUFFIX_POWER_DICT = {
-    key:float(10**value) for key, value in _SUFFIX_TO_POWER_DICT.items()
-}
+_SUFFIX_TO_POWER_DICT = dict(
+    (value, key) for key, value in _POWER_TO_SUFFIX_DICT.items()
+)
+_SUFFIX_POWER_DICT = dict(
+    (key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.items()
+)
 
 ENGPOWER = collections.namedtuple('EngPower', ['suffix', 'exp'])
 """
@@ -134,6 +134,47 @@ def _to_sci_string(number):
         exp_sign='-' if exp < 0 else '+',
         exp=abs(exp)
     )
+
+
+@putil.pcontracts.contract(number='number')
+def no_exp(number):
+    r"""
+    Converts a number to a string guaranteeing that the result is not
+    expressed in scientific notation
+
+    :param number: Number to convert
+    :type  number: integer or float
+
+    :rtype: string
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for putil.eng.no_exp
+
+    :raises: RuntimeError (Argument \`number\` is not valid)
+
+    .. [[[end]]]
+    """
+    mant, exp = to_scientific_tuple(number)
+    if exp == 0:
+        return str(number)
+    elif exp < 0:
+        return '0.{zeros}{fpart}'.format(
+            zeros='0'*(abs(exp)-1),
+            fpart=mant.replace('.', '')
+        )
+    else:
+        if '.' not in mant:
+            return mant+('0'*exp)+('.0' if isinstance(number, float) else '')
+        else:
+            lfpart = len(mant)-2
+            if lfpart < exp:
+                return '{fpart}{zeros}'.format(
+                    fpart=mant.replace('.', ''),
+                    zeros='0'*(exp-lfpart)
+                ).rstrip('.')
+            else:
+                mant = mant.replace('.', '')
+                return (mant[:lfpart+1]+'.'+mant[lfpart+1:]).rstrip('.')
 
 
 @putil.pcontracts.contract(
@@ -636,9 +677,9 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     if vector is None:
         return 'None'
     if (not limit) or (limit and (len(vector) < 7)):
-        uret = '[ {} ]'.format(', '.join(_str(*vector)))
+        uret = '[ {0} ]'.format(', '.join(_str(*vector)))
     else:
-        uret = '[ {}, ..., {} ]'.format(
+        uret = '[ {0}, ..., {1} ]'.format(
             ', '.join(_str(*vector[:3])), ', '.join(_str(*vector[-3:])),
         )
     if (width is None) or (len(uret) < width):
@@ -664,20 +705,20 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     if limit:
         if elements_per_row < 3:
             rlist = [
-                '[ {},'.format(_str(vector[0])),
+                '[ {0},'.format(_str(vector[0])),
                 _str(vector[1]),
                 _str(vector[2]),
                 '...',
                 _str(vector[-3]),
                 _str(vector[-2]),
-                '{} ]'.format(_str(vector[-1]))
+                '{0} ]'.format(_str(vector[-1]))
             ]
             elements_per_row = 1
         else:
             rlist = [
-                '[ {},'.format(', '.join(_str(*vector[:3]))),
+                '[ {0},'.format(', '.join(_str(*vector[:3]))),
                 '...',
-                '{} ]'.format(', '.join(_str(*vector[-3:]))),
+                '{0} ]'.format(', '.join(_str(*vector[-3:]))),
             ]
         first_line = rlist[0]
     if not eng:
@@ -697,7 +738,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     new_wrapped_lines_list = [first_line]
     for line in remainder_list[:-1]:
         new_wrapped_lines_list.append(
-            '{},'.format(line).rjust(actual_width)
+            '{0},'.format(line).rjust(actual_width)
             if line != '...' else
             line.center(actual_width).rstrip()
         )
@@ -708,7 +749,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     else:
         marker = remainder_list[-1].find(',')
     new_wrapped_lines_list.append(
-        '{}{}'.format(
+        '{0}{1}'.format(
             (first_comma_index-marker-2)*' ',
             remainder_list[-1]
         )

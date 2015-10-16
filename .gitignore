@@ -16,6 +16,7 @@ tags
 *.rot
 *.pyc
 *.spell
+*.json
 dist
 putil.egg-info
 putil/htmlcov

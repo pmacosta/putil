@@ -36,10 +36,10 @@ def _readlines(fname, fpointer1=open, fpointer2=open):
     try:
         with fpointer1(fname, 'r') as fobj:
             return fobj.readlines()
-    except UnicodeDecodeError:
+    except UnicodeDecodeError: # pragma: no cover
         with fpointer2(fname, 'r', encoding='utf-8') as fobj:
             return fobj.readlines()
-    except:
+    except: # pragma: no cover
         raise
 
 

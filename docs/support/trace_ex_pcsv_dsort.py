@@ -3,50 +3,20 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0212
 
-from __future__ import print_function
-import copy, datetime, os, pytest
-
-import putil.exdoc, putil.exh, putil.misc
+import docs.support.trace_support
 
 
 def trace_module(no_print=False):
-    """ Trace pcsv module exceptions """
+    """ Trace pcsv dsort module exceptions """
     mname = 'dsort'
-    pickle_file_name = os.path.join(
-        os.path.dirname(__file__),
-        '{}.pkl'.format(mname)
+    fname = 'pcsv'
+    module_prefix = 'putil.pcsv.{0}.'.format(mname)
+    callable_names = (
+        mname
     )
-    noption = os.environ.get('NOPTION', None)
-    start_time = datetime.datetime.now()
-    with putil.exdoc.ExDocCxt(
-            exclude=['_pytest', 'execnet'],
-            file_name=pickle_file_name
-    ) as exdoc_obj:
-        if pytest.main('-q -x {noption}-m {mname} {file}'.format(
-                noption='{} '.format(noption) if noption else '',
-                mname=mname,
-                file=os.path.realpath(os.path.join(
-                    os.path.dirname(__file__),
-                    '..',
-                    '..',
-                    'tests',
-                    'test_pcsv.py')))):
-            raise RuntimeError('Tracing did not complete successfully')
-    stop_time = datetime.datetime.now()
-    if not no_print:
-        print('Auto-generation of exceptions documentation time: {0}'.format(
-            putil.misc.elapsed_time_string(start_time, stop_time)
-        ))
-        module_prefix = 'putil.pcsv.{}.'.format(mname)
-        callable_names = (
-            mname,
-        )
-        for callable_name in callable_names:
-            callable_name = module_prefix+callable_name
-            print('\nCallable: {0}'.format(callable_name))
-            print(exdoc_obj.get_sphinx_doc(callable_name))
-            print('\n')
-    return copy.copy(exdoc_obj)
+    return docs.support.trace_support.run_trace(
+        mname, fname, module_prefix, callable_names, no_print
+    )
 
 
 if __name__ == '__main__':

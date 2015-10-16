@@ -4,6 +4,7 @@
 # pylint: disable=C0103,C0111,C0302,R0915,W0212
 
 import numpy
+import pytest
 import sys
 
 import putil.test
@@ -101,79 +102,79 @@ def test_to_sci_string():
     assert obj(1000) == '1E+3'
     assert obj(1000.1234567890) == (
         '1.00012345679E+3'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '1.000123456789E+3'
     )
     assert obj(10000) == '10E+3'
     assert obj(10000.1234567890) == (
         '10.0001234568E+3'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '10.000123456789E+3'
     )
     assert obj(100000) == '100E+3'
     assert obj(100000.1234567890) == (
         '100.000123457E+3'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '100.000123456789E+3'
     )
     assert obj(1000000) == '1E+6'
     assert obj(1000000.1234567890) == (
         '1.00000012346E+6'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '1.000000123456789E+6'
     )
     assert obj(10000000) == '10E+6'
     assert obj(10000000.1234567890) == (
         '10.0000001235E+6'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '10.00000012345679E+6'
     )
     assert obj(100000000) == '100E+6'
     assert obj(100000000.1234567890) == (
         '100.000000123E+6'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '100.00000012345679E+6'
     )
     assert obj(1000000000) == '1E+9'
     assert obj(1000000000.1234567890) == (
         '1.00000000012E+9'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '1.0000000001234568E+9'
     )
     assert obj(10000000000) == '10E+9'
     assert obj(10000000000.1234567890) == (
         '10.0000000001E+9'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '10.000000000123457E+9'
     )
     assert obj(100000000000) == '100E+9'
     assert obj(100000000000.1234567890) == (
         '100E+9'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '100.00000000012346E+9'
     )
     assert obj(1000000000000) == '1E+12'
     assert obj(1000000000000.1234567890) == (
         '1E+12'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '1.0000000000001234E+12'
     )
     assert obj(10000000000000) == '10E+12'
     assert obj(10000000000000.1234567890) == (
         '10E+12'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '10.000000000000123E+12'
     )
     assert obj(100000000000000) == '100E+12'
     assert obj(100000000000000.1234567890) == (
         '100E+12'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '100.00000000000012E+12'
     )
     assert obj(1000000000000000) == '1E+15'
     assert obj(1000000000000000.1234567890) == (
         '1E+15'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '1.0000000000000001E+15'
     )
     assert obj(10000000000000000) == '10E+15'
@@ -193,7 +194,7 @@ def test_to_sci_string():
     assert obj(100000000000000000000000) == '100E+21'
     assert obj(100000000000000000000000.1234567890) == (
         '100E+21'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '100.00000000000001E+21'
     )
     assert obj(1000000000000000000000000) == '1E+24'
@@ -260,79 +261,79 @@ def test_to_sci_string():
     assert obj(-1000) == '-1E+3'
     assert obj(-1000.1234567890) == (
         '-1.00012345679E+3'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-1.000123456789E+3'
     )
     assert obj(-10000) == '-10E+3'
     assert obj(-10000.1234567890) == (
         '-10.0001234568E+3'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-10.000123456789E+3'
     )
     assert obj(-100000) == '-100E+3'
     assert obj(-100000.1234567890) == (
         '-100.000123457E+3'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-100.000123456789E+3'
     )
     assert obj(-1000000) == '-1E+6'
     assert obj(-1000000.1234567890) == (
         '-1.00000012346E+6'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-1.000000123456789E+6'
     )
     assert obj(-10000000) == '-10E+6'
     assert obj(-10000000.1234567890) == (
         '-10.0000001235E+6'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-10.00000012345679E+6'
     )
     assert obj(-100000000) == '-100E+6'
     assert obj(-100000000.1234567890) == (
         '-100.000000123E+6'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-100.00000012345679E+6'
     )
     assert obj(-1000000000) == '-1E+9'
     assert obj(-1000000000.1234567890) == (
         '-1.00000000012E+9'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-1.0000000001234568E+9'
     )
     assert obj(-10000000000) == '-10E+9'
     assert obj(-10000000000.1234567890) == (
         '-10.0000000001E+9'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-10.000000000123457E+9'
     )
     assert obj(-100000000000) == '-100E+9'
     assert obj(-100000000000.1234567890) == (
         '-100E+9'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-100.00000000012346E+9'
     )
     assert obj(-1000000000000) == '-1E+12'
     assert obj(-1000000000000.1234567890) == (
         '-1E+12'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-1.0000000000001234E+12'
     )
     assert obj(-10000000000000) == '-10E+12'
     assert obj(-10000000000000.1234567890) == (
         '-10E+12'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-10.000000000000123E+12'
     )
     assert obj(-100000000000000) == '-100E+12'
     assert obj(-100000000000000.1234567890) == (
         '-100E+12'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-100.00000000000012E+12'
     )
     assert obj(-1000000000000000) == '-1E+15'
     assert obj(-1000000000000000.1234567890) == (
         '-1E+15'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-1.0000000000000001E+15'
     )
     assert obj(-10000000000000000) == '-10E+15'
@@ -352,7 +353,7 @@ def test_to_sci_string():
     assert obj(-100000000000000000000000) == '-100E+21'
     assert obj(-100000000000000000000000.1234567890) == (
         '-100E+21'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         '-100.00000000000001E+21'
     )
     assert obj(-1000000000000000000000000) == '-1E+24'
@@ -366,6 +367,37 @@ def test_to_sci_string():
     assert obj('-100000.1234567890') == '-100.000123456789E+3'
 
 
+def test_no_exp():
+    """ Test no_exp function behavior """
+    assert putil.eng.no_exp(0) == '0'
+    assert putil.eng.no_exp(0.0) == '0.0'
+    assert putil.eng.no_exp(4) == '4'
+    assert putil.eng.no_exp(4.0) == '4.0'
+    assert putil.eng.no_exp(45) == '45'
+    assert putil.eng.no_exp(450) == '450'
+    assert putil.eng.no_exp(1234567) == '1234567'
+    assert putil.eng.no_exp(4.5) == '4.5'
+    assert putil.eng.no_exp(4.1234) == '4.1234'
+    assert putil.eng.no_exp(4123.4E4) == '41234000'
+    assert putil.eng.no_exp(0.1) == '0.1'
+    assert putil.eng.no_exp(1.43E-2) == '0.0143'
+    assert putil.eng.no_exp(100000000.0) == '100000000.0'
+    assert putil.eng.no_exp(1000000) == '1000000'
+    assert putil.eng.no_exp(1e3) == '1000.0'
+
+
+@pytest.mark.eng
+def test_no_ex_exceptions():
+    """ Test no_exp function exceptions """
+    putil.test.assert_exception(
+        putil.eng.no_exp,
+        {'number':'a'},
+        RuntimeError,
+        'Argument `number` is not valid'
+    )
+
+
+@pytest.mark.eng
 def test_peng_exceptions():
     """ Test peng function exceptions """
     putil.test.assert_exception(
@@ -536,6 +568,7 @@ def test_peng():
     assert putil.eng.peng(-1.05e3, 0, True) == '  -1k'
 
 
+@pytest.mark.eng
 def test_peng_float_exceptions():
     """ Test peng_float function exceptions """
     putil.test.assert_exception(
@@ -583,6 +616,7 @@ def test_peng_float():
     assert putil.eng.peng_float('    -5.235k    ') == -5.235e3
 
 
+@pytest.mark.eng
 def test_peng_frac_exceptions():
     """ Test peng_frac function exceptions """
     putil.test.assert_exception(
@@ -623,6 +657,7 @@ def test_peng_frac():
     assert putil.eng.peng_frac(putil.eng.peng(5234, 0, True)) == 0
 
 
+@pytest.mark.eng
 def test_peng_int_exceptions():
     """ Test peng_int function exceptions """
     putil.test.assert_exception(
@@ -662,6 +697,7 @@ def test_peng_int():
     assert putil.eng.peng_int(putil.eng.peng(5234.567, 6, True)) == 5
 
 
+@pytest.mark.eng
 def test_peng_mant_exceptions():
     """ Test peng_mant function exceptions """
     putil.test.assert_exception(
@@ -701,6 +737,7 @@ def test_peng_mant():
     assert putil.eng.peng_mant(putil.eng.peng(5234.567, 3, True)) == 5.235
 
 
+@pytest.mark.eng
 def test_peng_power_exceptions():
     """ Test peng_power function exceptions """
     putil.test.assert_exception(
@@ -742,6 +779,7 @@ def test_peng_power():
     assert isinstance(tup[1], float)
 
 
+@pytest.mark.eng
 def test_peng_suffix_exceptions():
     """ Test peng_suffix function exceptions """
     putil.test.assert_exception(
@@ -782,6 +820,7 @@ def test_peng_suffix():
     assert putil.eng.peng_suffix(putil.eng.peng(-10.5e-6, 3, False)) == 'u'
 
 
+@pytest.mark.eng
 def test_peng_suffix_math_exceptions():
     """ Test peng_suffix_math function exceptions """
     putil.test.assert_exception(
@@ -866,6 +905,7 @@ def test_to_scientific_string():
     assert obj(-9999999999.999, 1, 1, sign_always=True) == '-1.0E+10'
 
 
+@pytest.mark.eng
 def test_pprint_vector_exceptions():
     """ Test pprint_vector function exceptions """
     putil.test.assert_exception(

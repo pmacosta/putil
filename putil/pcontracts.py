@@ -1,21 +1,25 @@
 # pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,F0401,R0912,R0914,W0212
+# pylint: disable=C0111,E0102,E0611,F0401,R0912,R0914,W0212,W0613
 
-from __future__ import print_function
-import contracts
 import decorator
 try:    # pragma: no cover
     from funcsigs import signature, Parameter
 except ImportError: # pragma: no cover
     from inspect import signature, Parameter
 import inspect
+import os
 import re
 import sys
+RTD = os.environ.get('READTHEDOCS', False) == 'True'
+if not RTD: # pragma: no branch
+    # The PyContracts module imports numpy, which is not allowed in
+    # the ReadTheDocs environment
+    import contracts
 
 import putil.exh
-if sys.version_info.major == 2: # pragma: no cover
+if sys.hexversion < 0x03000000: # pragma: no cover
     from putil.compat2 import _raise_exception
 else:   # pragma: no cover
     from putil.compat3 import _raise_exception
@@ -154,7 +158,7 @@ def _get_custom_contract(param_contract):
     if not isinstance(param_contract, str):
         return None
     for custom_contract in _CUSTOM_CONTRACTS:
-        if re.search(r'\b{}\b'.format(custom_contract), param_contract):
+        if re.search(r'\b{0}\b'.format(custom_contract), param_contract):
             return custom_contract
     return None
 
@@ -260,7 +264,7 @@ def get_exdesc():
         except ValueError:
             # Got to top of stack
             raise RuntimeError(
-                'Function object could not be found for function `{}`'.format(
+                'Function object could not be found for function `{0}`'.format(
                     fname
                 )
             )
@@ -409,19 +413,8 @@ def _register_custom_contracts(contract_name, contract_exceptions):
 ###
 # Decorators
 ###
+# Function docstring in rst documentation
 def contract(**contract_args):
-    r"""
-    Wraps PyContracts `contract() <http://andreacensi.github.io/contracts/
-    api_reference.html#module-contracts>`_ decorator (only the decorator way
-    of specifying a contract is supported and tested). A :code:`RuntimeError`
-    exception with the message :code:`'Argument \`*[argument_name]*\` is not
-    valid'` is raised when a contract is breached (:code:`'*[argument_name]*'`
-    is replaced by the argument name the contract is attached to) unless the
-    contract is custom and specified with the
-    :py:func:`putil.pcontracts.new_contract` decorator. In this case the
-    exception type and message are controlled by the custom
-    contract specification.
-    """
     # pylint: disable=W0631
     @decorator.decorator
     def wrapper(func, *args, **kwargs):
@@ -446,7 +439,9 @@ def contract(**contract_args):
                                 contracts_dicts, param_name
                             ),
                             'type':RuntimeError,
-                            'msg':msg.replace('*[argument_name]*', param_name)
+                            'msg':msg.replace(
+                                '*[argument_name]*', param_name
+                            )
                         }
                     ]
                 for exdict in contracts_dicts:
@@ -465,11 +460,11 @@ def contract(**contract_args):
                     )
         # Argument validation. PyContracts "entry" is the
         # contracts.contract_decorator, which has some logic to figure out
-        # which way the contract was specified. Since this module (pcontracts)
-        # supports only the decorator way of specifying the contracts, all the
-        # mentioned logic can be bypassed by calling
-        # contracts.contracts_decorate, which is renamed to contracts.decorate
-        # in the contracts __init__.py file
+        # which way the contract was specified. Since this module
+        # (pcontracts) supports only the decorator way of specifying the
+        # contracts, all the mentioned logic can be bypassed by calling
+        # contracts.contracts_decorate, which is renamed to
+        # contracts.decorate in the contracts __init__.py file
         try:
             return (
                 contracts.decorate(
@@ -482,7 +477,9 @@ def contract(**contract_args):
             raise
         except contracts.ContractNotRespected as eobj:
             # Extract which function parameter triggered exception
-            param_dict = _create_argument_value_pairs(func, *args, **kwargs)
+            param_dict = _create_argument_value_pairs(
+                func, *args, **kwargs
+            )
             # re.search returns the string with quotes in it
             param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]
             # Raise exception
@@ -503,8 +500,8 @@ def contract(**contract_args):
                     exname=exname, condition=True, edata=edata
                 )
             else:
-                # Pick "nice" variable names because the raise line is going to
-                # be shown in the exception traceback
+                # Pick "nice" variable names because the raise line is
+                # going to be shown in the exception traceback
                 exception_type = exdict['type']
                 exception_message = exdict['msg'].replace(
                     '*[{0}]*'.format(exdict['field']),
@@ -514,239 +511,7 @@ def contract(**contract_args):
                 _raise_exception(exception_type(exception_message))
     return wrapper
 
-
 def new_contract(*args, **kwargs):
-    r"""
-    Defines a new (custom) contract with custom exceptions.
-
-    :raises:
-     * RuntimeError (Attempt to redefine custom contract \`*[contract_name]*\`)
-
-     * TypeError (Argument \`contract_exceptions\` is of the wrong type)
-
-     * TypeError (Argument \`contract_name\` is of the wrong type)
-
-     * TypeError (Contract exception definition is of the wrong type)
-
-     * TypeError (Illegal custom contract exception definition)
-
-     * ValueError (Empty custom contract exception message)
-
-     * ValueError (Contract exception messages are not unique)
-
-     * ValueError (Contract exception names are not unique)
-
-     * ValueError (Multiple replacement fields to be substituted by
-       argument value)
-
-
-    The decorator argument(s) is(are) the exception(s) that can be raised by
-    the contract. The most general way to define an exception is using a
-    2-item tuple with the following members:
-
-     * **exception type** *(type)* -- Either a built-in exception or
-       sub-classed from Exception. Default is ``RuntimeError``
-
-     * **exception message** *(string)* -- Default is
-       ``'Argument `*[argument_name]*` is not valid'``, where the token
-       :code:`*[argument_name]*` is replaced by the argument name the contract
-       is attached to
-
-    The order of the tuple elements is not important, i.e. the following are
-    valid exception specifications and define the same exception:
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '9-17')
-    .. =]=
-    .. code-block:: python
-
-        @putil.pcontracts.new_contract(ex1=(RuntimeError, 'Invalid name'))
-        def custom_contract1(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-        @putil.pcontracts.new_contract(ex1=('Invalid name', RuntimeError))
-        def custom_contract2(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-    .. =[=end=]=
-
-    The exception definition simplifies to just one of the exception definition
-    tuple items if the other exception definition tuple item takes its
-    default value. For example, the same exception is defined in these two
-    contracts:
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '19-30')
-    .. =]=
-    .. code-block:: python
-
-        @putil.pcontracts.new_contract(ex1=ValueError)
-        def custom_contract3(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-        @putil.pcontracts.new_contract(ex1=(
-            ValueError,
-            'Argument `*[argument_name]*` is not valid'
-        ))
-        def custom_contract4(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-    .. =[=end=]=
-
-    and these contracts also define the same exception (but different from that
-    of the previous example):
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '32-40')
-    .. =]=
-    .. code-block:: python
-
-        @putil.pcontracts.new_contract(ex1='Invalid name')
-        def custom_contract5(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-        @putil.pcontracts.new_contract(ex1=('Invalid name', RuntimeError))
-        def custom_contract6(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-    .. =[=end=]=
-
-    In fact the exception need not be specified by keyword if the contract only
-    uses one exception. All of the following are valid one-exception contract
-    specifications:
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '42-58')
-    .. =]=
-    .. code-block:: python
-
-        @putil.pcontracts.new_contract((OSError, 'File could not be opened'))
-        def custom_contract7(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-        # Define contract that uses exception (RuntimeError, 'Invalid name')
-        @putil.pcontracts.new_contract('Invalid name')
-        def custom_contract8(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-        # Define contract that uses exception
-        # (TypeError, 'Argument `*[argument_name]*` is not valid')
-        @putil.pcontracts.new_contract(TypeError)
-        def custom_contract9(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-    .. =[=end=]=
-
-    No arguments are needed if a contract only needs a single exception and the
-    default exception type and message suffice:
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '60-65')
-    .. =]=
-    .. code-block:: python
-
-        # Define contract that uses exception
-        # (RuntimeError, 'Argument `*[argument_name]*` is not valid')
-        @putil.pcontracts.new_contract()
-        def custom_contract10(arg):
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-    .. =[=end=]=
-
-    For code conciseness and correctness the exception message(s) should be
-    retrieved via the :py:func:`putil.pcontracts.get_exdesc` function.
-
-    A `PyContracts new contract <http://andreacensi.github.io/contracts/
-    new_contract.html#new-contract>`_ can return False or raise a
-    :code:`ValueError` exception to indicate a contract breach, however a new
-    contract specified via the :py:func:`putil.pcontracts.new_contract`
-    decorator *has* to raise a :code:`ValueError` exception to indicate a
-    contract breach.
-
-    The exception message can have substitution "tokens" of the form
-    :code:`*[token_name]*`. The token :code:`*[argument_name]*` it is
-    substituted with the argument name the contract is attached to.
-    For example:
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '67-77')
-    .. =]=
-    .. code-block:: python
-
-        @putil.pcontracts.new_contract((
-            TypeError,
-            'Argument `*[argument_name]*` has to be a string'
-        ))
-        def custom_contract11(city):
-            if not isinstance(city, str):
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-        @putil.pcontracts.contract(city_name='custom_contract11')
-        def print_city_name(city_name):
-            return 'City: {0}'.format(city_name)
-
-    .. =[=end=]=
-
-    .. code-block:: python
-
-        >>> from __future__ import print_function
-        >>> from docs.support.pcontracts_example_3 import print_city_name
-        >>> print(print_city_name('Omaha'))
-        City: Omaha
-        >>> print(print_city_name(5))   #doctest: +ELLIPSIS
-        Traceback (most recent call last):
-            ...
-        TypeError: Argument `city_name` has to be a string
-
-    Any other token is substituted with the argument *value*. For example:
-
-    .. =[=cog
-    .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '79-')
-    .. =]=
-    .. code-block:: python
-
-        @putil.pcontracts.new_contract((
-            OSError, 'File `*[fname]*` not found'
-        ))
-        def custom_contract12(fname):
-            if not os.path.exists(fname):
-                raise ValueError(putil.pcontracts.get_exdesc())
-
-        @putil.pcontracts.contract(fname='custom_contract12')
-        def print_fname(fname):
-            print('File name to find: {0}'.format(fname))
-
-    .. =[=end=]=
-
-    .. code-block:: python
-
-        >>> from __future__ import print_function
-        >>> import os
-        >>> from docs.support.pcontracts_example_3 import print_fname
-        >>> fname = os.path.join(os.sep, 'dev', 'null', '_not_a_file_')
-        >>> print(print_fname(fname))   #doctest: +ELLIPSIS
-        Traceback (most recent call last):
-            ...
-        OSError: File `..._not_a_file_` not found
-
-    """
     def wrapper(func):
         """ Decorator """
         contract_name = func.__name__
@@ -757,10 +522,13 @@ def new_contract(*args, **kwargs):
             [
                 (
                     value['name'],
-                    '[START CONTRACT MSG: {0}]{1}[STOP CONTRACT MSG]'.format(
-                        contract_name,
-                        value['msg']
-                    )
+                    (
+                        '[START CONTRACT MSG: {0}]{1}'
+                        '[STOP CONTRACT MSG]'.format(
+                            contract_name,
+                            value['msg']
+                        )
+                )
             )    for value in exdesc
             ]
         )
@@ -769,3 +537,15 @@ def new_contract(*args, **kwargs):
         # Apply PyContracts decorator
         return contracts.new_contract(func)
     return wrapper
+
+if RTD: # pragma: no cover
+    def contract(**contract_args):
+        @decorator.decorator
+        def wrapper(func, *args, **kwargs):
+            return func
+        return wrapper
+
+    def new_contract(*args, **kwargs):
+        def wrapper(func):
+            return func
+        return wrapper

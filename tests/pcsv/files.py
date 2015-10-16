@@ -5,7 +5,7 @@
 
 import sys
 
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
     from putil.compat3 import _write

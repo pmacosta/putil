@@ -7,7 +7,7 @@ import pytest
 import re
 import sys
 
-if sys.version_info.major == 2: # pragma: no cover
+if sys.hexversion < 0x03000000: # pragma: no cover
     from putil.compat2 import _ex_type_str, _get_ex_msg
 else:   # pragma: no cover
     from putil.compat3 import _ex_type_str, _get_ex_msg
@@ -61,7 +61,7 @@ def assert_exception(obj, args, extype, exmsg):
     except Exception as eobj:
         actmsg = get_exmsg(eobj)
         if actmsg == 'DID NOT RAISE':
-            raise AssertionError
+            raise AssertionError('Did not raise')
         eobj_extype = repr(eobj)[:repr(eobj).find('(')]
         assert (
             '{0} ({1})'.format(

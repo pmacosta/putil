@@ -120,7 +120,7 @@ script:
   ###
   # Write coverage configuration file
   ###
-  - $PYTHONCMD ./sbin/coveragerc-manager.py 'ci' 1 ${INTERP} ${PYTHON_SITE_PACKAGES}
+  - $PYTHONCMD ./sbin/coveragerc_manager.py 'ci' 1 ${INTERP} ${PYTHON_SITE_PACKAGES}
   - cat ${COV_FILE}
   ###
   # Change to tests sub-directory to mimic Tox conditions

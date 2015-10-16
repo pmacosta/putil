@@ -1,0 +1,134 @@
+# .travis.yml
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+
+sudo: required
+
+dist: trusty
+
+language: python
+
+python:
+  - "2.6"
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
+before_install:
+  ###
+  # Set up environment variable
+  ###
+  - export REPO_DIR=${TRAVIS_BUILD_DIR}
+  - export RESULTS_DIR=${REPO_DIR}/results
+  - export PKG_NAME=$(echo ${TRAVIS_REPO_SLUG} | sed -r "s|.*/(.*)|\1|g")
+  - export INTERP=py"${TRAVIS_PYTHON_VERSION//./}"
+  - export PYTHON_MAJOR=$(echo ${TRAVIS_PYTHON_VERSION} | sed -r 's/([0-9]).*/\1/g')
+  - export PYTHONCMD=python
+  - export PIPCMD=pip
+  - export PYTHON_SITE_PACKAGES=$(${PIPCMD} show pytest | grep "Location*" | sed -r "s/^.*Location\W (.*)/\1/g")
+  - export SOURCE_DIR=${PYTHON_SITE_PACKAGES}/${PKG_NAME}
+  - export VIRTUALENV_DIR=$(dirname $(dirname $(dirname ${PYTHON_SITE_PACKAGES})))
+  - export EXTRA_DIR=${VIRTUALENV_DIR}/usr/share/${PKG_NAME}
+  - export PYTHONPATH=${PYTHONPATH}:${PYTHON_SITE_PACKAGES}:${SOURCE_DIR}:${EXTRA_DIR}:${EXTRA_DIR}/tests:${EXTRA_DIR}/docs:${EXTRA_DIR}/docs/support
+  - export PYTESTCMD=py.test
+  - export COV_FILE=${SOURCE_DIR}/.coveragerc_ci_${INTERP}
+  - echo "REPO_DIR=${REPO_DIR}"
+  - echo "RESULTS_DIR=${RESULTS_DIR}"
+  - echo "PKG_NAME=${PKG_NAME}"
+  - echo "INTERP=${INTERP}"
+  - echo "PYTHON_MAJOR=${PYTHON_MAJOR}"
+  - echo "PYTHONCMD=${PYTHONCMD}"
+  - echo "PIPCMD=${PIPCMD}"
+  - echo "PYTHON_SITE_PACKAGES=${PYTHON_SITE_PACKAGES}"
+  - echo "SOURCE_DIR=${SOURCE_DIR}"
+  - echo "EXTRA_DIR=${EXTRA_DIR}"
+  - echo "PYTHONPATH=${PYTHONPATH}"
+  - echo "PYTESTCMD=${PYTESTCMD}"
+  - echo "COV_FILE=${COV_FILE}"
+  - sudo apt-get update
+  - sudo apt-get install -qq -y curl
+  - sudo apt-get install -qq -y python-dev
+  - sudo apt-get install -qq -y python2.7-dev
+  - sudo apt-get install -qq -y libfreetype6-dev
+  - sudo apt-get install -qq -y libjpeg-dev
+  - sudo apt-get install -qq -y liblapack-dev
+  - sudo apt-get install -qq -y libpng12-dev
+  - sudo apt-get install -qq -y gfortran
+  - sudo apt-get install -qq -y libatlas-dev
+  - sudo apt-get install -qq -y libatlas-base-dev
+  - sudo apt-get install -qq -y libatlas3gf-base
+  - sudo apt-get install -qq -y python-numpy
+  - sudo apt-get install -qq -y python-scipy
+  - sudo apt-get install -qq -y python-matplotlib
+  - sudo apt-get install -qq -y python3-numpy
+  - sudo apt-get install -qq -y python3-scipy
+  - sudo apt-get install -qq -y python3-matplotlib
+  - if [ ! -f /usr/include/ft2build.h ]; then sudo ln -s /usr/include/freetype2/ft2build.h /usr/include/.; fi
+
+install:
+  ###
+  # Report version numbers for all dependencies
+  ###
+  - dpkg --status curl
+  - dpkg --status python-dev
+  - dpkg --status python2.7-dev
+  - dpkg --status libfreetype6-dev
+  - dpkg --status libjpeg-dev
+  - dpkg --status liblapack-dev
+  - dpkg --status libpng12-dev
+  - dpkg --status gfortran
+  - dpkg --status libatlas-dev
+  - dpkg --status libatlas-base-dev
+  - dpkg --status libatlas3gf-base
+  - dpkg --status python-numpy
+  - dpkg --status python-scipy
+  - dpkg --status python-matplotlib
+  - dpkg --status python3-numpy
+  - dpkg --status python3-scipy
+  - dpkg --status python3-matplotlib
+
+###
+  # Install package dependencies
+  ###
+  - travis_wait $PIPCMD install --quiet --upgrade -r requirements.txt
+  - $PIPCMD freeze
+
+before_script:
+  ###
+  # Create directories for reports and images
+  ###
+  - mkdir -p ${RESULTS_DIR}/testresults
+  - mkdir -p ${RESULTS_DIR}/codecoverage
+  - mkdir -p ${RESULTS_DIR}/images
+
+script:
+  ###
+  # Install package
+  ###
+  - $PYTHONCMD setup.py sdist
+  - PKG_VERSION=$(grep __version__ ${REPO_DIR}/${PKG_NAME}/__init__.py | sed -e "s/.*__version__ = '\(.*\)'/\1/g")
+  - echo "PKG_VERSION=${PKG_VERSION}"
+  - $PIPCMD install --quiet --upgrade --no-deps --force-reinstall dist/${PKG_NAME}-${PKG_VERSION}.tar.gz
+  ###
+  # Write coverage configuration file
+  ###
+  - $PYTHONCMD ./sbin/coveragerc_manager.py 'ci' 1 ${INTERP} ${PYTHON_SITE_PACKAGES}
+  - cat ${COV_FILE}
+  ###
+  # Change to tests sub-directory to mimic Tox conditions
+  ###
+  - cd ${EXTRA_DIR}/tests
+  ###
+  # Run tests
+  ###
+  - $PYTESTCMD --doctest-glob='*.rst' ${EXTRA_DIR}/docs
+  - $PYTESTCMD --doctest-modules ${SOURCE_DIR}
+  - $PYTESTCMD -s -vv --junitxml=${RESULTS_DIR}/testresults/pytest.xml
+  - $PYTESTCMD --cov-config ${COV_FILE} --cov ${SOURCE_DIR} --cov-report term
+  - ${EXTRA_DIR}/sbin/build-docs.sh -r -t -d ${SOURCE_DIR}
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always

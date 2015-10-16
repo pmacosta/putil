@@ -22,7 +22,7 @@ print_usage_message () {
 	echo -e "      [default: (build-docs.sh directory)/../putil]" >&2
 	echo -e "  -t  Diff original and rebuilt file(s) (exit code 0" >&2
 	echo -e "      indicates file(s) are identical, exit code 1" >&2
-	echo -e "      indicates file(s) are different" >&2
+	echo -e "      indicates file(s) are different)" >&2
 	echo -e "  -n  Number of CPUs to use [default: 1]" >&2
 }
 
@@ -32,6 +32,8 @@ finish() {
 	export NOPTION=""
 	export SUPPORT_DIR=""
 	rm -rf ${smf}.tmp
+	find ${pkg_dir}/docs -type f -name '*.json'\
+		-not -name 'moddb.json' -delete
 	cd ${cpwd}
 }
 trap finish EXIT ERR SIGINT
@@ -63,10 +65,7 @@ echo_red() {
 pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
 export TRACER_DIR=${pkg_dir}/docs/support
 src_dir=${pkg_dir}/putil
-plot_submodules=(\
-	data_source2 data_source3 basic_source csv_source figure \
-	"functions" panel series\
-)
+plot_submodules=(basic_source csv_source figure "functions" panel series)
 pcsv_submodules=(concatenate csv_file dsort merge replace write)
 
 # Default values for command line options
@@ -137,6 +136,7 @@ if [ ${rebuild} == 1 ]; then
 	if [ ${test_mode} == 1 ]; then
 		test_msg="(test mode)"
 	fi
+	${pkg_dir}/sbin/refresh_moddb.py
 	echo_cyan "Rebuilding exceptions documentation ${test_msg}"
 	start_time=$(date +%s)
 	for module in ${modules[@]}; do
@@ -205,13 +205,10 @@ if [ ${rebuild} == 1 ]; then
 			fi
 		done
 	done
+	${pkg_dir}/sbin/build_moddb.py
 	stop_time=$(date +%s)
 	ellapsed_time=$((stop_time-start_time))
 	show_time ${ellapsed_time}
-fi
-
-if [ ${test_mode} == 1 ]; then
-	exit 0
 fi
 
 echo "Performing module-specific actions"
@@ -260,19 +257,23 @@ for module in ${modules[@]}; do
 	done
 done
 
-file=${pkg_dir}/README.rst
-echo "Inserting files and updating dependencies into ${file}"
-if cog.py -e -x -o ${file}.tmp ${file}; then
-	mv -f ${file}.tmp ${file}
-	if cog.py -e -o ${file}.tmp ${file}; then
+files=(${pkg_dir}/README.rst ${pkg_dir}/docs/pcontracts.rst)
+echo "Inserting files documentation files"
+for file in "${files[@]}"; do
+	echo "   Processing file ${file}"
+	if cog.py -e -x -o ${file}.tmp ${file}; then
 		mv -f ${file}.tmp ${file}
+		if cog.py -e -o ${file}.tmp ${file}; then
+			mv -f ${file}.tmp ${file}
+		else
+			echo "Error inserting file output in ${file}"
+		fi
 	else
 		echo "Error inserting file output in ${file}"
 	fi
-else
-	echo "Error inserting file output in ${file}"
-fi
+done
 
 cd ${pkg_dir}/docs
 rm -rf _build
-make html
+# Build documentation turning warnings into errors
+make html SPHINXOPTS=-W

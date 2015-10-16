@@ -15,6 +15,8 @@
 
 import sys
 import os
+from mock import MagicMock
+RTD = os.environ.get('READTHEDOCS', False) == 'True'
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -354,3 +356,22 @@ def setup(app):
     app.connect('autodoc-process-signature', skip_private_parameter)
 
 autodoc_member_order = 'bysource'
+
+if RTD:
+    class Mock(MagicMock):
+        @classmethod
+        def __getattr__(cls, name):
+            return Mock()
+
+    MOCK_MODULES = [
+        'numpy',
+        'matplotlib',
+        'matplotlib.pyplot',
+        'matplotlib.path',
+        'matplotlib.backends',
+        'matplotlib.backends.backend_agg',
+        'scipy',
+        'scipy.stats',
+        'scipy.interpolate',
+    ]
+    sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

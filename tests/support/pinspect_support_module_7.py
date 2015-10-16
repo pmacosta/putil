@@ -12,7 +12,6 @@ def test_enclosure_class():
             self.f_code = MockFCode()
         def sub_enclosure_method(self):
             """ Test enclosed classes on enclosed classes """
-            import math
             class SubClosureClass(object):
                 """ Actual sub-closure class """
                 def __init__(self):

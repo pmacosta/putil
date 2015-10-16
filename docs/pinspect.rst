@@ -64,12 +64,14 @@ Functions
 .. autofunction:: putil.pinspect.get_module_name
 .. autofunction:: putil.pinspect.is_object_module
 .. autofunction:: putil.pinspect.is_special_method
+.. autofunction:: putil.pinspect.private_props
 
 *******
 Classes
 *******
 
 .. autoclass:: putil.pinspect.Callables
-	:members: trace, callables_db, reverse_callables_db, __add__, __copy__,
-			  __eq__, __iadd__, __nonzero__, __repr__, __str__
+	:members: load, refresh, save, trace, callables_db,
+                  reverse_callables_db, __add__, __copy__,
+                  __eq__, __iadd__, __nonzero__, __repr__, __str__
 	:show-inheritance:

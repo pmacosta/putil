@@ -19,7 +19,7 @@ from .constants import AXIS_LABEL_FONT_SIZE, AXIS_TICKS_FONT_SIZE, LEGEND_SCALE
 """
 [[[cog
 import os, sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__
@@ -815,8 +815,11 @@ class Panel(object):
             if self.secondary_axis_units not in ['', None] else
             'not specified'
         )
-        ret += 'Logarithmic dependent axis: {}\n'.format(self.log_dep_axis)
-        ret += 'Display independent axis: {}\n'.format(self.display_indep_axis)
+        ret += 'Logarithmic dependent axis: {0}\n'.format(self.log_dep_axis)
+        ret += (
+            'Display independent '
+            'axis: {0}\n'.format(self.display_indep_axis)
+        )
         ret += 'Legend properties:\n'
         iobj = enumerate(sorted(list(self.legend_props.items())))
         for num, (key, value) in iobj:

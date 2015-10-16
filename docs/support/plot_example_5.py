@@ -4,7 +4,7 @@
 # pylint: disable=C0111,E0611,F0401,R0903
 
 import putil.misc, putil.pcsv, sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
     from putil.compat3 import _write

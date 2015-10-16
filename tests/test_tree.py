@@ -196,12 +196,13 @@ class TestTreeNode(object):
         for item in items:
             obj._validate_nodes_with_data(item)
 
+    @pytest.mark.tree
     def test_validate_nodes_with_data_exceptions(self):
         """ Test _validate_nodes_with_data function exceptions """
         obj = putil.tree.Tree()
         items = [
             3,
-            [{'name', 'hello'},
+            [set(('name', 'hello')),
             {'name':5, 'data':'a'}],
             {'name':5, 'data':'a'},
             {'name':'a. b', 'data':None},
@@ -328,6 +329,7 @@ class TestTreeNode(object):
             id(tree4.get_data('root.leaf2'))
         )
 
+    @pytest.mark.tree
     def test_add_nodes_exceptions(self):
         """ Test that add_nodes method exceptions """
         items = [
@@ -434,6 +436,7 @@ class TestTreeNode(object):
             '└cnode/anode/leaf'
         )
 
+    @pytest.mark.tree
     def test_collapse_exceptions(self):
         """ Test collapse method exceptions """
         t1obj = putil.tree.Tree('/')
@@ -500,6 +503,7 @@ class TestTreeNode(object):
         assert (tree4.get_data('root.branch1.leaf2.subleaf2') ==
                tree4.get_data('root.branch2.branch3.leaf2.subleaf2'))
 
+    @pytest.mark.tree
     def test_copy_subtree_exceptions(self):
         """ Test copy_subtree method exceptions """
         obj = putil.tree.Tree()
@@ -562,6 +566,7 @@ class TestTreeNode(object):
             '  └leaf'
         )
 
+    @pytest.mark.tree
     def test_delete_prefix_exceptions(self):
         """ Test delete_prefix method exceptions """
         tobj = putil.tree.Tree('/')
@@ -612,6 +617,7 @@ class TestTreeNode(object):
         )
         assert tree2.root_name == 'root'
 
+    @pytest.mark.tree
     def test_delete_subtree_exceptions(self, default_trees):
         """ Test delete_subtree method exceptions """
         tree1, _, _, _ = default_trees
@@ -852,6 +858,7 @@ class TestTreeNode(object):
         assert not tree1.in_tree('x.x.x')
         assert tree1.in_tree('t1l1.t1l2b1')
 
+    @pytest.mark.tree
     def test_in_tree_exceptions(self, default_trees):
         """ Test in_tree method exceptions """
         tree1, _, _, _ = default_trees
@@ -927,12 +934,12 @@ class TestTreeNode(object):
             'Children: t1l2b1, t1l2b2\n'
             'Data: Tree 1, level 1'
         )
-        tree2.add_nodes({'name':'t2l1.t2l2b1.t2l3b1b', 'data':14.3})
+        tree2.add_nodes({'name':'t2l1.t2l2b1.t2l3b1b', 'data':14})
         assert tree2.print_node('t2l1.t2l2b1.t2l3b1b') == (
             "Name: t2l1.t2l2b1.t2l3b1b\n"
             "Parent: t2l1.t2l2b1\n"
             "Children: None\n"
-            "Data: ['Tree 2, level 3, branch 1, child b', 14.3]"
+            "Data: ['Tree 2, level 3, branch 1, child b', 14]"
         )
         assert tree3.print_node('t3l1') == (
             'Name: t3l1\n'
@@ -994,6 +1001,7 @@ class TestTreeNode(object):
             '└branch2'
         )
 
+    @pytest.mark.tree
     def test_rename_node_exceptions(self, default_trees):
         """ Test rename_node method exceptions """
         _, _, _, tree4 = default_trees
@@ -1076,6 +1084,7 @@ class TestTreeNode(object):
         tobj.add_nodes({'name':'anode', 'data':[]})
         assert tobj.search_tree('anode') == sorted(['anode'])
 
+    @pytest.mark.tree
     def test_search_tree_exceptions(self):
         """ Test search method exceptions """
         tobj = putil.tree.Tree('/')
@@ -1229,6 +1238,7 @@ class TestTreeNode(object):
         tree1, _, _, _ = default_trees
         assert tree1.node_separator == '.'
 
+    @pytest.mark.tree
     def test_node_separator_exceptions(self):
         """
         Check that validation for node_separator argument works as expected
@@ -1261,6 +1271,7 @@ class TestTreeNode(object):
         }
         assert tree4.root_node is None
 
+    @pytest.mark.tree
     def test_cannot_delete_attributes_exceptions(self, default_trees):
         """
         Test that del method raises an exception on all class attributes
@@ -1280,6 +1291,7 @@ class TestTreeNode(object):
         assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
 
     ### Miscellaneous
+    @pytest.mark.tree
     def test_single_node_function_exceptions(self):
         """
         Check that correct exceptions are raise for methods that have a single

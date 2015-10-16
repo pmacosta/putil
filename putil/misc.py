@@ -15,6 +15,9 @@ import time
 import types
 from fractions import Fraction
 
+import putil.eng
+
+
 ###
 # Global constants
 ###
@@ -32,8 +35,6 @@ _OCTAL_ALPHABET[10] = '\\n'  # Line feed
 _OCTAL_ALPHABET[11] = '\\v'  # Vertical tab
 _OCTAL_ALPHABET[12] = '\\f'  # Form feed
 _OCTAL_ALPHABET[13] = '\\r'  # Carriage return
-
-_PRIVATE_PROP_REGEXP = re.compile('_[^_]+')
 
 
 ###
@@ -210,7 +211,7 @@ class TmpFile(object):
         import sys, putil.misc
 
         def write_data(file_handle):
-            if sys.version_info.major == 2:
+            if sys.hexversion < 0x03000000:
                 file_handle.write('Hello world!')
             else:
                 file_handle.write(bytes('Hello world!', 'ascii'))
@@ -288,7 +289,7 @@ def binary_string_to_octal_string(text):
 
         >>> import putil.misc, struct, sys
         >>> def py23struct(num):
-        ...    if sys.version_info.major == 2:
+        ...    if sys.hexversion < 0x03000000:
         ...        return struct.pack('h', num)
         ...    else:
         ...        return struct.pack('h', num).decode('ascii')
@@ -353,7 +354,15 @@ def elapsed_time_string(start_time, stop_time):
     if start_time > stop_time:
         raise RuntimeError('Invalid time delta specification')
     delta_time = stop_time-start_time
-    tot_seconds = int(delta_time.total_seconds())
+    # Python 2.6 datetime objects do not have total_seconds() method
+    tot_seconds = int(
+        (
+            delta_time.microseconds+
+            (delta_time.seconds+delta_time.days*24*3600)*10**6
+        )
+        /
+        10**6
+    )
     years, remainder = divmod(tot_seconds, 365*24*60*60)
     months, remainder = divmod(remainder, 30*24*60*60)
     days, remainder = divmod(remainder, 24*60*60)
@@ -746,13 +755,13 @@ def pgcd(numa, numb):
         >>> import putil.misc, fractions
         >>> putil.misc.pgcd(10, 15)
         5
-        >>> putil.misc.pgcd(0.05, 0.02)
-        0.01
-        >>> putil.misc.pgcd(5/3.0, 2/3.0)
-        0.3333333333333333
+        >>> str(putil.misc.pgcd(0.05, 0.02))
+        '0.01'
+        >>> str(putil.misc.pgcd(5/3.0, 2/3.0))[:6]
+        '0.3333'
         >>> putil.misc.pgcd(
-        ...     fractions.Fraction(5/3.0),
-        ...     fractions.Fraction(2/3.0)
+        ...     fractions.Fraction(str(5/3.0)),
+        ...     fractions.Fraction(str(2/3.0))
         ... )
         Fraction(1, 3)
         >>> putil.misc.pgcd(
@@ -763,10 +772,11 @@ def pgcd(numa, numb):
     """
     int_args = isinstance(numa, int) and isinstance(numb, int)
     fraction_args = isinstance(numa, Fraction) and isinstance(numb, Fraction)
+    # Limit floating numbers to a "sane" fractional part resolution
     if (not int_args) and (not fraction_args):
         numa, numb = (
-            Fraction(numa).limit_denominator(),
-            Fraction(numb).limit_denominator()
+            Fraction(putil.eng.no_exp(numa)).limit_denominator(),
+            Fraction(putil.eng.no_exp(numb)).limit_denominator()
         )
     while numb:
         numa, numb = (
@@ -842,27 +852,6 @@ def pprint_ast_node(
     return _format(node)
 
 
-def private_props(obj):
-    """
-    Yields private properties of an object. A private property is
-    defined as one that has a single underscore (:code:`_`) before its name
-
-    :param obj: Object
-    :type  obj: object
-
-    :returns: iterator
-    """
-    # Get private properties but NOT magic methods
-    iobj = [
-        obj_name
-        for obj_name in dir(obj)
-        if _PRIVATE_PROP_REGEXP.match(obj_name) and
-            (not callable(getattr(obj, obj_name)))
-    ]
-    for obj_name in iobj:
-        yield obj_name
-
-
 def quote_str(obj):
     """
     Adds extra quotes to a string. If the argument is not a string it is
@@ -914,24 +903,24 @@ def strframe(obj, extended=False):
     # code [4], index of current line within list [5])
     ret = list()
     ret.append(
-        pcolor('Frame object ID: {}'.format(hex(id(obj[0]))), 'yellow')
+        pcolor('Frame object ID: {0}'.format(hex(id(obj[0]))), 'yellow')
     )
-    ret.append('File name......: {}'.format(obj[1]))
-    ret.append('Line number....: {}'.format(obj[2]))
-    ret.append('Function name..: {}'.format(obj[3]))
-    ret.append('Context........: {}'.format(obj[4]))
-    ret.append('Index..........: {}'.format(obj[5]))
+    ret.append('File name......: {0}'.format(obj[1]))
+    ret.append('Line number....: {0}'.format(obj[2]))
+    ret.append('Function name..: {0}'.format(obj[3]))
+    ret.append('Context........: {0}'.format(obj[4]))
+    ret.append('Index..........: {0}'.format(obj[5]))
     if extended:
-        ret.append('f_back ID......: {}'.format(hex(id(obj[0].f_back))))
-        ret.append('f_builtins.....: {}'.format(obj[0].f_builtins))
-        ret.append('f_code.........: {}'.format(obj[0].f_code))
-        ret.append('f_globals......: {}'.format(obj[0].f_globals))
-        ret.append('f_lasti........: {}'.format(obj[0].f_lasti))
-        ret.append('f_lineno.......: {}'.format(obj[0].f_lineno))
-        ret.append('f_locals.......: {}'.format(obj[0].f_locals))
+        ret.append('f_back ID......: {0}'.format(hex(id(obj[0].f_back))))
+        ret.append('f_builtins.....: {0}'.format(obj[0].f_builtins))
+        ret.append('f_code.........: {0}'.format(obj[0].f_code))
+        ret.append('f_globals......: {0}'.format(obj[0].f_globals))
+        ret.append('f_lasti........: {0}'.format(obj[0].f_lasti))
+        ret.append('f_lineno.......: {0}'.format(obj[0].f_lineno))
+        ret.append('f_locals.......: {0}'.format(obj[0].f_locals))
         if hasattr(obj[0], 'f_restricted'): # pragma: no cover
-            ret.append('f_restricted...: {}'.format(obj[0].f_restricted))
-        ret.append('f_trace........: {}'.format(obj[0].f_trace))
+            ret.append('f_restricted...: {0}'.format(obj[0].f_restricted))
+        ret.append('f_trace........: {0}'.format(obj[0].f_trace))
     return '\n'.join(ret)
 
 

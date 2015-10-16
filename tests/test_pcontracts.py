@@ -536,7 +536,7 @@ def test_contract():
         func2(2, 5, 10)
     ref = (
         'func2() takes exactly 1 argument (3 given)'
-        if sys.version_info.major == 2 else
+        if sys.hexversion < 0x03000000 else
         'func2() takes 1 positional argument but 3 were given'
     )
     assert putil.test.get_exmsg(excinfo) == ref

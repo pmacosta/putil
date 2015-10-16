@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# check-files-compliance.py
+# check_files_compliance.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,R0914
+# pylint: disable=C0103,C0111,R0912,R0914
 
 from __future__ import print_function
 import argparse
@@ -29,7 +29,7 @@ def which(name):
         fname = os.path.join(pdir, name)
         if os.path.isfile(fname) and os.access(fname, os.X_OK):
             result.append(fname)
-    return result[0]
+    return result[0] if result else None
 
 
 def load_excluded_words():
@@ -93,7 +93,7 @@ def content_lines(fname, comment='#'):
             coding_line = (
                 (num == 0)
                 and
-                (line == '{} -*- coding: utf-8 -*-'.format(comment))
+                (line == '{0} -*- coding: utf-8 -*-'.format(comment))
             )
             encoded = coding_line if not encoded else encoded
             shebang_line = (num == int(encoded)) and (line in skip_lines)
@@ -122,16 +122,19 @@ def check_header(files, no_print=False):
         comment = fdict[extension]
         header_lines = [
             '{0} {1}'.format(comment, basename),
-            '{} Copyright (c) 2013-2015 Pablo Acosta-Serafini'.format(comment),
-            '{} See LICENSE for details'.format(comment)
+            (
+                '{0} Copyright (c) 2013-2015 '
+                'Pablo Acosta-Serafini'.format(comment)
+            ),
+            '{0} See LICENSE for details'.format(comment)
         ]
         iobj = enumerate(zip(content_lines(fname, comment), header_lines))
         for num, (line, ref) in iobj:
             if line != ref:
                 msg = (
-                    'File {} does not have a standard header'
+                    'File {0} does not have a standard header'
                     if num == 0 else
-                    'File {} does not have a standard copyright notice'
+                    'File {0} does not have a standard copyright notice'
                 )
                 olist.append(fname)
                 errors = True
@@ -145,33 +148,41 @@ def check_header(files, no_print=False):
 def check_pylint(files, no_print=False):
     """ Check that there are no repeated Pylint codes per file """
     rec = re.compile
-    soline = rec(r'^\s*#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)')
-    token_regexp = rec(r'(.*)#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)')
+    soline = rec(r'(^\s*)#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)\s*')
+    # Regular expression to get a Pylint disable directive but only
+    # if it is not in a string
+    template = r'#\s*pylint:\s*disable\s*=\s*([\w|\s|\s*,\s*]+)'
+    quoted_eol = rec(r'(.*)(\'|")\s*'+template+r'\s*\2\s*')
+    eol = rec(r'(.*)\s*'+template+r'\s*')
     errors = False
     for fname in pkg_files(files, '.py'):
         with open(fname, 'r') as fobj:
             header = False
             output_lines = []
             file_tokens = []
+
             for num, input_line in enumerate(fobj):
                 line_match = soline.match(input_line)
-                token_match = token_regexp.match(input_line)
-                if token_match and (not line_match):
+                quoted_eol_match = quoted_eol.match(
+                    input_line.replace('\\n', '\n').replace('\\r', '\r')
+                )
+                eol_match = eol.match(input_line)
+                if eol_match and (not quoted_eol_match) and (not line_match):
                     if (not header) and (not no_print):
-                        print('File {}'.format(fname))
+                        print('File {0}'.format(fname))
                     header = errors = True
                     if not no_print:
-                        print('   Line {} (EOL)'.format(num+1))
-                if token_match:
-                    indent = token_match.groups()[0]
+                        print('   Line {0} (EOL)'.format(num+1))
+                if line_match:
+                    indent = line_match.groups()[0]
                     tokens = sorted(
-                        token_match.groups()[1].rstrip().split(',')
+                        line_match.groups()[1].rstrip().split(',')
                     )
                     if any([item in file_tokens for item in tokens]):
                         if (not header) and (not no_print):
-                            print('File {}'.format(fname))
+                            print('File {0}'.format(fname))
                         if not no_print:
-                            print('   Line {} (repeated)'.format(num+1))
+                            print('   Line {0} (repeated)'.format(num+1))
                         header = errors = True
                     file_tokens.extend(tokens)
                     output_lines.append(
@@ -191,30 +202,38 @@ def check_pylint(files, no_print=False):
 
 def check_aspell(files, no_print=False):
     """ Check files word spelling """
-    excluded_words = load_excluded_words()
     errors = False
-    for fname in pkg_files(files, ['.py', '.rst']):
-        lines = subprocess.check_output(['cat', fname])
-        pobj = subprocess.Popen(
-            ['aspell', '--lang=en', 'list'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE
-        )
-        raw_words, _ = pobj.communicate(lines)
-        raw_words = sorted(list(set(raw_words.split('\n'))))
-        raw_words = [item.strip() for item in raw_words]
-        words = [
-            item
-            for item in raw_words
-            if item and (item not in excluded_words)
-        ]
-        if words:
-            errors = True
-            if not no_print:
-                print('File {}'.format(fname))
-                print('\n'.join(words))
-    if (not errors) and (not no_print):
-        print('All files free of typos')
+    if which('aspell'):
+        excluded_words = load_excluded_words()
+        for fname in pkg_files(files, ['.py', '.rst']):
+            pobj = subprocess.Popen(
+                ['cat', fname],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            lines, _ = pobj.communicate()
+            pobj = subprocess.Popen(
+                ['aspell', '--lang=en', 'list'],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE
+            )
+            raw_words, _ = pobj.communicate(lines)
+            raw_words = sorted(list(set(raw_words.split('\n'))))
+            raw_words = [item.strip() for item in raw_words]
+            words = [
+                item
+                for item in raw_words
+                if item and (item not in excluded_words)
+            ]
+            if words:
+                errors = True
+                if not no_print:
+                    print('File {0}'.format(fname))
+                    print('\n'.join(words))
+        if (not errors) and (not no_print):
+            print('All files free of typos')
+    else:
+        print('Files spell check omitted, aspell could not be found')
     return errors
 
 
@@ -223,23 +242,23 @@ if __name__ == "__main__":
         description='Perform various checks on package files'
     )
     PARSER.add_argument(
-        '--aspell', help='Check files spelling', action="store_true"
+        '-s', '--spell', help='check files spelling', action="store_true"
     )
     PARSER.add_argument(
-        '--header', help='Check files headers', action="store_true"
+        '-t', '--top', help='check files top (headers)', action="store_true"
     )
     PARSER.add_argument(
-        '--pylint', help='Check files PyLint lines', action="store_true"
+        '-p', '--pylint', help='check files PyLint lines', action="store_true"
     )
     PARSER.add_argument(
-        '--quiet', help='Suppress messages', action="store_true"
+        '-q', '--quiet', help='suppress messages', action="store_true"
     )
     PARSER.add_argument('files', help='Files to check', nargs='*')
     ARGS = PARSER.parse_args()
     TERRORS = False
-    if ARGS.aspell:
+    if ARGS.spell:
         TERRORS = TERRORS or check_aspell(ARGS.files, ARGS.quiet)
-    if ARGS.header:
+    if ARGS.top:
         TERRORS = TERRORS or check_header(ARGS.files, ARGS.quiet)
     if ARGS.pylint:
         TERRORS = TERRORS or check_pylint(ARGS.files, ARGS.quiet)

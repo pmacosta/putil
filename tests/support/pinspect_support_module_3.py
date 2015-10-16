@@ -3,7 +3,6 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0212
 
-
 from __future__ import print_function
 
 
@@ -21,7 +20,9 @@ def another_class_enclosing_func():
     Test function to see if classes within enclosures are detected, in this
     case with property actions imported via 'from *'
     """
-    from tests.support.pinspect_support_module_1 import simple_property_generator
+    from tests.support.pinspect_support_module_9 import (
+        simple_property_generator
+    )
     class FromImportClosureClass(object):
         """ Actual class """
         # pylint: disable=R0903

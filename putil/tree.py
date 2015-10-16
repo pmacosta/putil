@@ -16,7 +16,7 @@ import putil.exh
 """
 [[[cog
 import os, sys
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__
@@ -54,7 +54,7 @@ class Tree(object):
         self._db = {}
         self._root = None
         self._root_hierarchy_length = None
-        ufunc = unichr if sys.version_info.major == 2 else chr
+        ufunc = unichr if sys.hexversion < 0x03000000 else chr
         # Characters from http://www.unicode.org/charts/PDF/U2500.pdf
         self._vertical = ufunc(0x2502)
         self._vertical_and_right = ufunc(0x251C)
@@ -158,7 +158,7 @@ class Tree(object):
             ret = self._prt(
                 name=self.root_name, lparent=-1, sep='', pre1='', pre2=''
             )
-        return ret.encode('utf-8') if sys.version_info.major == 2 else ret
+        return ret.encode('utf-8') if sys.hexversion < 0x03000000 else ret
 
     def _collapse_subtree(self, name, recursive=True):
         """ Collapse a sub-tree """

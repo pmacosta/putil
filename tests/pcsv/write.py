@@ -7,14 +7,14 @@ import os
 import pytest
 import sys
 import tempfile
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import mock
 else:
     import unittest.mock as mock
 
 import putil.pcsv
 import putil.test
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     from putil.compat2 import _read
 else:
     from putil.compat3 import _read

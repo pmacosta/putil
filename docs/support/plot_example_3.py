@@ -6,7 +6,7 @@
 import putil.misc, putil.pcsv, sys
 
 def cwrite(fobj, data):
-    if sys.version_info.major == 2:
+    if sys.hexversion < 0x03000000:
         fobj.write(data)
     else:
         fobj.write(bytes(data, 'ascii'))

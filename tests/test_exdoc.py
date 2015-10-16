@@ -11,7 +11,7 @@ import os
 import pytest
 import sys
 import tempfile
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     import __builtin__
     import mock
 else:
@@ -190,28 +190,49 @@ class TestExDocCxt(object):
             'Argument `exclude` is not valid'
         )
         #
-        with pytest.raises(RuntimeError) as excinfo:
-            with putil.exdoc.ExDocCxt(file_name=5):
-                putil.misc.pcolor('a', 'red')
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Argument `file_name` is not valid'
-        )
-        #
-        with pytest.raises(RuntimeError) as excinfo:
-            with putil.exdoc.ExDocCxt(file_name='test\0'):
-                func0()
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Argument `file_name` is not valid'
-        )
+        for item in [5, 'test\0']:
+            with pytest.raises(RuntimeError) as excinfo:
+                with putil.exdoc.ExDocCxt(pickle_fname=item):
+                    putil.misc.pcolor('a', 'red')
+            assert (
+                putil.test.get_exmsg(excinfo)
+                ==
+                'Argument `pickle_fname` is not valid'
+            )
         #
         with tempfile.NamedTemporaryFile(delete=True) as fobj:
-            with putil.exdoc.ExDocCxt(file_name=fobj.name):
+            with putil.exdoc.ExDocCxt(pickle_fname=fobj.name):
                 func0()
             assert os.path.isfile(fobj.name)
+        #
+        for item in [5, 'test\0']:
+            with pytest.raises(RuntimeError) as excinfo:
+                with putil.exdoc.ExDocCxt(in_callables_fname=item):
+                    func0()
+            assert (
+                putil.test.get_exmsg(excinfo)
+                ==
+                'Argument `in_callables_fname` is not valid'
+            )
+        #
+        with pytest.raises(OSError) as excinfo:
+            with putil.exdoc.ExDocCxt(in_callables_fname='_not_a_file_'):
+                func0()
+        assert (
+            putil.test.get_exmsg(excinfo)
+            ==
+            'File _not_a_file_ could not be found'
+        )
+        for item in [5, 'test\0']:
+            with pytest.raises(RuntimeError) as excinfo:
+                with putil.exdoc.ExDocCxt(out_callables_fname=item):
+                    func0()
+            assert (
+                putil.test.get_exmsg(excinfo)
+                ==
+                'Argument `out_callables_fname` is not valid'
+            )
+        #
 
     def test_multiple(self):
         """ Test multiple-CPU tracing behavior """
@@ -253,6 +274,24 @@ class TestExDocCxt(object):
         prev_exhobj = copy.copy(putil.exh.get_exh_obj())
         test_trace()
         assert prev_exhobj == putil.exh.get_exh_obj()
+
+    def test_save_callables(self):
+        """ Test traced modules information storage """
+        putil.exh.del_exh_obj()
+        cobj = putil.exdoc.ExDocCxt
+        with tempfile.NamedTemporaryFile(delete=True) as fobj:
+            out_callables_fname = fobj.name
+            with cobj(out_callables_fname=out_callables_fname) as tobj:
+                tests.support.exdoc_support_module_4.func('John')
+            pobj1 = putil.pinspect.Callables()
+            pobj1.load(out_callables_fname)
+        pobj2 = putil.pinspect.Callables(
+            [
+                __file__,
+                sys.modules['tests.support.exdoc_support_module_4'].__file__
+            ]
+        )
+        assert pobj1 == pobj2
 
 
 ###
@@ -457,7 +496,7 @@ class TestExDoc(object):
         mobj = sys.modules['putil.exdoc']
         delattr(mobj, 'sys')
         del sys.modules['sys']
-        if sys.version_info.major == 2:
+        if sys.hexversion < 0x03000000:
             nsys = imp.load_module('sys_patched', *imp.find_module('sys'))
         else:
             nsys = importlib.import_module('sys')

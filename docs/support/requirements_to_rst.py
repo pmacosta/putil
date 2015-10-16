@@ -90,6 +90,12 @@ def proc_requirements(mobj):
             'py27':False,
             'optional':False,
             'url':'http://www.scipy.org'
+        },
+        'six':{
+            'name':'Six',
+            'py27':False,
+            'optional':False,
+            'url':'https://pythonhosted.org/six'
         }
     }
     fname = os.path.join(pkg_dir, 'requirements.txt')
@@ -110,7 +116,7 @@ def proc_requirements(mobj):
         pkg_name = tokens[0]
         ver = tokens[1]
         url = (
-            ' <{}>'.format(deps[pkg_name]['url'])
+            ' <{0}>'.format(deps[pkg_name]['url'])
             if deps[pkg_name]['url'] else
             ''
         )

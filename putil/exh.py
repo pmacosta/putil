@@ -10,14 +10,13 @@ import imp
 import inspect
 import os
 import sys
-if sys.version_info.major == 2: # pragma: no cover
+if sys.hexversion < 0x03000000: # pragma: no cover
     import __builtin__
     from putil.compat2 import _ex_type_str, _get_ex_msg, _get_func_code, _rwtb
 else:   # pragma: no cover
     import builtins as __builtin__
     from putil.compat3 import _ex_type_str, _get_ex_msg, _get_func_code, _rwtb
 
-import putil.misc
 import putil.pinspect
 
 
@@ -97,6 +96,19 @@ def _invalid_frame(fobj):
     return invalid_module or (not os.path.isfile(fin))
 
 
+def _isiterable(obj):
+    """
+    Copied from putil.misc module, not included to avoid recursive inclusion
+    of putil.pcontracts module
+    """
+    try:
+        iter(obj)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
 def del_exh_obj():
     """
     Deletes global exception handler (if set)
@@ -117,7 +129,9 @@ def get_exh_obj():
     return getattr(__builtin__, '_EXH', None)
 
 
-def get_or_create_exh_obj(full_cname=False, exclude=None):
+def get_or_create_exh_obj(
+    full_cname=False, exclude=None, callables_fname=None
+):
     """
     Returns the global exception handler if it is set, otherwise creates a new
     global exception handler and returns it
@@ -139,15 +153,32 @@ def get_or_create_exh_obj(full_cname=False, exclude=None):
                     included
     :type  exclude: list of strings or None
 
+    :param callables_fname: File name that contains traced modules information.
+                            File can be produced by either the
+                            :py:meth:`putil.pinspect.Callables.save` or
+                            :py:meth:`putil.exh.ExHandle.save_callables`
+                            methods
+    :type  callables_fname: :ref:`FileNameExists` or None
+
     :rtype: :py:class:`putil.exh.ExHandle`
 
     :raises:
+     * OSError (File *[callables_fname]* could not be found
+
      * RuntimeError (Argument \\`exclude\\` is not valid)
+
+     * RuntimeError (Argument \\`callables_fname\\` is not valid)
 
      * RuntimeError (Argument \\`full_cname\\` is not valid)
     """
     if not hasattr(__builtin__, '_EXH'):
-        set_exh_obj(ExHandle(full_cname=full_cname, exclude=exclude))
+        set_exh_obj(
+            ExHandle(
+                full_cname=full_cname,
+                exclude=exclude,
+                callables_fname=callables_fname
+            )
+        )
     return get_exh_obj()
 
 
@@ -194,17 +225,30 @@ class ExHandle(object):
                     included
     :type  exclude: list of strings or None
 
+    :param callables_fname: File name that contains traced modules information.
+                            File can be produced by either the
+                            :py:meth:`putil.pinspect.Callables.save` or
+                            :py:meth:`putil.exh.ExHandle.save_callables`
+                            methods
+    :type  callables_fname: :ref:`FileNameExists` or None
+
     :rtype: :py:class:`putil.exh.ExHandle`
 
     :raises:
+     * OSError (File *[callables_fname]* could not be found
+
      * RuntimeError (Argument \\`exclude\\` is not valid)
+
+     * RuntimeError (Argument \\`callables_fname\\` is not valid)
 
      * RuntimeError (Argument \\`full_cname\\` is not valid)
 
      * ValueError (Source for module *[module_name]* could not be found)
     """
     # pylint: disable=R0902,W0703
-    def __init__(self, full_cname=False, exclude=None, _copy=False):
+    def __init__(
+        self, full_cname=False, exclude=None, callables_fname=None, _copy=False
+    ):
         if not isinstance(full_cname, bool):
             raise RuntimeError('Argument `full_cname` is not valid')
         if ((exclude and (not isinstance(exclude, list))) or
@@ -219,6 +263,8 @@ class ExHandle(object):
         self._exclude_list = []
         if not _copy:
             self._callables_obj = putil.pinspect.Callables()
+            if callables_fname is not None:
+                self._callables_obj.load(callables_fname)
             self._exclude_list = _build_exclusion_list(exclude)
 
     def __add__(self, other):
@@ -811,7 +857,7 @@ class ExHandle(object):
         """ Validate edata argument of raise_exception_if method """
         if edata is None:
             return True
-        if not (isinstance(edata, dict) or putil.misc.isiterable(edata)):
+        if not (isinstance(edata, dict) or _isiterable(edata)):
             return False
         edata = [edata] if isinstance(edata, dict) else edata
         for edict in edata:
@@ -933,6 +979,18 @@ class ExHandle(object):
         if condition:
             eobj['raised'][eobj['function'].index(edict['func_name'])] = True
             self._raise_exception(eobj, edata)
+
+    def save_callables(self, callables_fname):
+        """
+        Saves traced modules information to a `JSON <http://www.json.org>`_
+        file. If the file exists it is overwritten
+
+        :param callables_fname: File name
+        :type  callables_fname: :ref:`FileName`
+
+        :raises: RuntimeError (Argument \\`callables_fname\\` is not valid)
+        """
+        self._callables_obj.save(callables_fname)
 
     # Managed attributes
     callables_db = property(_get_callables_db, doc='Dictionary of callables')

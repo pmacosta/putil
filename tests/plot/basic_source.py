@@ -108,7 +108,7 @@ class TestBasicSource(object):
             obj.indep_min = item
             assert obj.indep_min == item
 
-    @pytest.mark.basicsource
+    @pytest.mark.basic_source
     def test_indep_min_exceptions(self):
         """ Tests indep_min property exceptions """
         # __init__ path
@@ -157,7 +157,7 @@ class TestBasicSource(object):
             obj.indep_max = item
             assert obj.indep_max == item
 
-    @pytest.mark.basicsource
+    @pytest.mark.basic_source
     def test_indep_max_exceptions(self):
         """ Tests indep_max property exceptions """
         # __init__ path
@@ -187,7 +187,7 @@ class TestBasicSource(object):
                 'Argument `indep_max` is not valid'
             )
 
-    @pytest.mark.basicsource
+    @pytest.mark.basic_source
     def test_indep_min_greater_than_indep_max_exceptions(self):
         """
         Test behavior when indep_min and indep_max are incongruous
@@ -239,7 +239,7 @@ class TestBasicSource(object):
         obj.indep_var = indep_var2
         assert (obj.indep_var == indep_var2).all()
 
-    @pytest.mark.basicsource
+    @pytest.mark.basic_source
     def test_indep_var_exceptions(self):
         """ Tests indep_var property exceptions """
         # __init__ path
@@ -329,7 +329,7 @@ class TestBasicSource(object):
         obj.dep_var = dep_var2
         assert (obj.dep_var == dep_var2).all()
 
-    @pytest.mark.basicsource
+    @pytest.mark.basic_source
     def test_dep_var_exceptions(self):
         """ Tests dep_var property exceptions """
         # __init__ path
@@ -352,7 +352,7 @@ class TestBasicSource(object):
                 obj.dep_var = item
             assert putil.test.get_exmsg(excinfo) == msg
 
-    @pytest.mark.basicsource
+    @pytest.mark.basic_source
     def test_indep_dep_var_not_same_number_of_elements_exceptions(self):
         """ Tests indep_var and dep_var vector congruency """
         msg = (
@@ -402,7 +402,7 @@ class TestBasicSource(object):
             obj.indep_var = numpy.array([10, 20, 30, 40, 50, 60])
         assert putil.test.get_exmsg(excinfo) == msg
 
-    @pytest.mark.basicsource
+    @pytest.mark.basic_source
     def test_cannot_delete_attributes_exceptions(self):
         """
         Test that del method raises an exception on all class attributes

@@ -358,13 +358,13 @@ def file_name(obj):
     if not isinstance(obj, str):
         raise ValueError(msg)
     # If file exists, argument is a valid file name, otherwise test
-    # if file # can be created. User may not have permission to
+    # if file can be created. User may not have permission to
     # write file, but call to os.access should not fail if the file
     # name is correct
     try:
         if not os.path.exists(obj):
             os.access(obj, os.W_OK)
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValueError(msg)
 
 
@@ -400,7 +400,7 @@ def file_name_exists(obj):
     # Check that file name is valid
     try:
         os.path.exists(obj)
-    except TypeError:
+    except (TypeError, ValueError):
         raise ValueError(msg)
     # Check that file exists
     if not os.path.exists(obj):

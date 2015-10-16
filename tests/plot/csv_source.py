@@ -9,7 +9,7 @@ import pytest
 import sys
 
 import putil.test
-if sys.version_info.major == 2:
+if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
     from putil.compat3 import _write
@@ -47,7 +47,7 @@ class TestCsvSource(object):
                 dep_col_label='Col3')
              )
             ref = (
-                'File name: {}\n'
+                'File name: {0}\n'
                 'Row filter: None\n'
                 'Independent column label: Col7\n'
                 'Dependent column label: Col3\n'
@@ -69,7 +69,7 @@ class TestCsvSource(object):
                 )
             )
             ref = (
-                'File name: {}\n'
+                'File name: {0}\n'
                 'Row filter: \n'
                 '   Col1: 0\n'
                 'Independent column label: Col2\n'
@@ -93,7 +93,7 @@ class TestCsvSource(object):
                 fproc=fproc1)
              )
             ref = (
-                'File name: {}\n'
+                'File name: {0}\n'
                 'Row filter: \n'
                 '   Col1: 0\n'
                 'Independent column label: Col2\n'
@@ -118,7 +118,7 @@ class TestCsvSource(object):
                 fproc_eargs={'par1':3, 'par2':4})
              )
             ref = (
-                'File name: {}\n'
+                'File name: {0}\n'
                 'Row filter: \n'
                 '   Col1: 0\n'
                 'Independent column label: Col2\n'
@@ -144,7 +144,7 @@ class TestCsvSource(object):
                 fproc_eargs={'par1':3, 'par2':4})
              )
             ref = (
-                'File name: {}\n''Row filter: \n'
+                'File name: {0}\n''Row filter: \n'
                 '   Col1: 0\n'
                 'Independent column label: Col2\n'
                 'Dependent column label: Col3\n'
@@ -170,7 +170,7 @@ class TestCsvSource(object):
                 fproc_eargs={'par1':3, 'par2':4})
              )
             ref = (
-                'File name: {}\n''Row filter: \n'
+                'File name: {0}\n''Row filter: \n'
                 '   Col1: 0\n'
                 'Independent column label: Col2\n'
                 'Dependent column label: Col3\n'
@@ -224,7 +224,7 @@ class TestCsvSource(object):
                 obj.indep_max = item
                 assert obj.indep_max == item
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_indep_max_exceptions(self):
         """ Tests indep_max property exceptions """
         msg = 'Argument `indep_max` is not valid'
@@ -276,7 +276,7 @@ class TestCsvSource(object):
                 obj.indep_min = item
                 assert obj.indep_min == item
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_indep_min_exceptions(self):
         """ Tests indep_min property exceptions """
         msg = 'Argument `indep_min` is not valid'
@@ -307,7 +307,7 @@ class TestCsvSource(object):
                     obj.indep_min = item
                 assert putil.test.get_exmsg(excinfo) == msg
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_indep_min_greater_than_indep_max_exceptions(self):
         """
         Test if object behaves correctly when indep_min and indep_max
@@ -345,7 +345,7 @@ class TestCsvSource(object):
                 dep_col_label='Col2'
             )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_fname_exceptions(self):
         """ Test constructor fname argument exceptions """
         # This assignment should raise an exception
@@ -362,10 +362,10 @@ class TestCsvSource(object):
             putil.plot.CsvSource,
             {'fname':fname, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
             OSError,
-            'File {} could not be found'.format(fname)
+            'File {0} could not be found'.format(fname)
         )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_indep_col_label_exceptions(self):
         """ Test constructor indep_col_label argument exceptions """
         items = [None, 5]
@@ -394,7 +394,7 @@ class TestCsvSource(object):
                 'in comma-separated file {0} header'.format(fname)
             )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_dep_col_label_exceptions(self):
         """ Test constructor indep_col_label argument exceptions """
         items = [None, 5]
@@ -423,7 +423,7 @@ class TestCsvSource(object):
                 'comma-separated file {0} header'.format(fname)
             )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_empty_indep_var_after_filter_exceptions(self):
         """ Test empty independent variable after rfilter exceptions """
         with putil.misc.TmpFile(write_csv_file) as fname:
@@ -439,7 +439,7 @@ class TestCsvSource(object):
                 'Filtered independent variable is empty'
             )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_empty_dep_var_after_filter_exceptions(self):
         """ Test empty dependent variable after rfilter exceptions """
         with putil.misc.TmpFile(write_csv_file) as fname:
@@ -517,7 +517,7 @@ class TestCsvSource(object):
                 fproc=fproc7
             )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_fproc_exceptions(self):
         """ Test fproc property exceptions """
         def fproc1():
@@ -562,7 +562,7 @@ class TestCsvSource(object):
                     fproc_eargs=item
                 )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_fproc_eargs_exceptions(self):
         """ Test fprog_eargs property exceptions """
         def fproc1(indep_var, dep_var):
@@ -608,7 +608,7 @@ class TestCsvSource(object):
                 '(function fproc2) definition'
             )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_data_processing_exceptions(self):
         """ Test data processing output exceptions """
         def fproc1(indep_var, dep_var):
@@ -797,7 +797,7 @@ class TestCsvSource(object):
                     rfilter=item
                 )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_rfilter_exceptions(self):
         """ Test constructor rfilter argument exceptions """
         with putil.misc.TmpFile(write_csv_file) as fname:
@@ -822,10 +822,10 @@ class TestCsvSource(object):
                 },
                 ValueError,
                 'Column Col99 in row filter not found in '
-                'comma-separated file {} header'.format(fname)
+                'comma-separated file {0} header'.format(fname)
             )
 
-    @pytest.mark.csvsource
+    @pytest.mark.csv_source
     def test_cannot_delete_attributes_exceptions(self):
         """
         Test that del method raises an exception on all class attributes

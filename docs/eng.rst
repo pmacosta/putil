@@ -25,8 +25,8 @@ This module provides engineering-related functions including:
 		1
 		>>> putil.eng.peng_frac(x)
 		35
-		>>> putil.eng.peng_mant(x)
-		1.35
+		>>> str(putil.eng.peng_mant(x))
+		'1.35'
 		>>> putil.eng.peng_power(x)
 		EngPower(suffix='k', exp=1000.0)
 		>>> putil.eng.peng_suffix(x)
@@ -80,6 +80,7 @@ Named tuples
 Functions
 *********
 
+.. autofunction:: putil.eng.no_exp
 .. autofunction:: putil.eng.peng
 .. autofunction:: putil.eng.peng_float
 .. autofunction:: putil.eng.peng_frac
