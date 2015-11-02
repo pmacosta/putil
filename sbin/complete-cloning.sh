@@ -39,6 +39,7 @@ done
 shift $((${OPTIND} - 1))
 
 # Set up pre-commit Git hooks
+echo "Installing Git hooks"
 source ${bin_dir}/setup-git-hooks.sh
 if [ "${check_email}" == 1 ]; then
 	sed -i -r 's/^check_email=[0|1]$/check_email=1/g' \

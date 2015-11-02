@@ -1,0 +1,120 @@
+# appveyor.yml
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+
+environment:
+
+  global:
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\sbin\\run_with_env.cmd"
+
+  matrix:
+    - JOB: "2.7"
+      PYTHON_MAJOR: "2"
+      INTERP: "py27"
+      PYVER: "2.7"
+
+init:
+  - cmd: echo "PYVER=%PYVER%"
+
+install:
+  ###
+  # Set up environment variables
+  ###
+  - cmd: set PYTHONCMD=python
+  - cmd: set PIPCMD=pip
+  - cmd: set REPO_DIR=%CD%
+  - cmd: set RESULTS_DIR=%REPO_DIR%\results
+  - cmd: set PKG_NAME=putil
+  - cmd: set PYTHON_SITE_PACKAGES=C:\Anaconda\envs\%INTERP%\lib\site-packages
+  - cmd: set SOURCE_DIR=%PYTHON_SITE_PACKAGES%\%PKG_NAME%
+  - cmd: set VIRTUALENV_DIR=\Anaconda\envs\%INTERP%
+  - cmd: set EXTRA_DIR=%VIRTUALENV_DIR%\usr\share\%PKG_NAME%
+  - cmd: set PYTHONPATH=%PYTHONPATH%;%PYTHON_SITE_PACKAGES%;%EXTRA_DIR%;%EXTRA_DIR%\tests;%EXTRA_DIR%\docs;%EXTRA_DIR%\docs\support
+  - cmd: set PYTESTCMD=py.test
+  - cmd: set COV_FILE=%SOURCE_DIR%\.coveragerc_ci_%INTERP%
+  - cmd: set MAIN_REQUIREMENTS_FILE=%REPO_DIR%\requirements\main_%INTERP%.pip
+  - cmd: set TESTS_REQUIREMENTS_FILE=%REPO_DIR%\requirements\tests_%INTERP%.pip
+    #  - "echo REPO_DIR=%REPO_DIR%"
+    #  - "echo RESULTS_DIR=%RESULTS_DIR%"
+    #  - "echo PKG_NAME=%PKG_NAME%"
+    #  - "echo INTERP=%INTERP%"
+    #  - "echo PYTHON_MAJOR=%PYTHON_MAJOR%"
+    #  - "echo PYTHONCMD=%PYTHONCMD%"
+    #  - "echo PIPCMD=%PIPCMD%"
+    #  - "echo PYTHON_SITE_PACKAGES=%PYTHON_SITE_PACKAGES%"
+    #  - "echo SOURCE_DIR=%SOURCE_DIR%"
+    #  - "echo EXTRA_DIR=%EXTRA_DIR%"
+    #  - "echo PYTHONPATH=%PYTHONPATH%"
+    #  - "echo PYTESTCMD=%PYTESTCMD%"
+    #  - "echo COV_FILE=%COV_FILE%"
+    #  - "echo MAIN_REQUIREMENTS_FILE=%MAIN_REQUIREMENTS_FILE%"
+    #  - "echo TESTS_REQUIREMENTS_FILE=%TESTS_REQUIREMENTS_FILE%"
+
+  ###
+  # Install tools and dependencies of package dependencies
+  ###
+  - ps: wget https://repo.continuum.io/archive/.winzip/Anaconda2-2.4.0-Windows-x86.zip -OutFile anaconda.zip
+  - cmd: 7z x anaconda.zip -o".\anaconda\" -y > nul
+  - cmd: ls .\anaconda\
+  - cmd: .\anaconda\Anaconda2-2.4.0-Windows-x86.exe /S /D=C:\Anaconda
+  - "set PATH=C:\\Anaconda;C:\\Anaconda\\Scripts;%PATH%"
+  # - "set PYTHONPATH=C:\\Anaconda\\Lib\site-packages;%PYTHONPATH%"
+  - cmd: conda --version
+  - cmd: conda update -y conda
+  - cmd: conda create -y --name %INTERP% python=%PYVER% numpy scipy matplotlib
+  - cmd: activate %INTERP%
+  - cmd: which python
+  - cmd: pip install --disable-pip-version-check --user --upgrade pip setuptools wheel
+  ###
+  # Install package dependencies
+  ###
+  - cmd: python %REPO_DIR%\sbin\gen_req_files.py win
+  - cmd: pip install --upgrade -r%MAIN_REQUIREMENTS_FILE%
+  - cmd: pip install --upgrade -r%TESTS_REQUIREMENTS_FILE%
+  - cmd: pip install --upgrade -r%REPO_DIR%\\requirements\docs.pip
+  - cmd: pip freeze
+  ###
+  # Create directories for reports and images
+  ###
+  - cmd: if not exist "%RESULTS_DIR%\\testresults" mkdir %RESULTS_DIR%\testresults
+  - cmd: if not exist "%RESULTS_DIR%\\codecoverage" mkdir %RESULTS_DIR%\codecoverage
+  - cmd: if not exist "%RESULTS_DIR%\\images" mkdir %RESULTS_DIR%\images
+
+build_script:
+  ###
+  # Install package
+  ###
+  - cmd: type %REPO_DIR%\MANIFEST.in
+  - cmd: python setup.py sdist
+  - dir %REPO_DIR%\dist
+  - cmd: set PKG_VERSION=0.9.0.5
+  - cmd: echo "PKG_VERSION=%PKG_VERSION%"
+  # Change directory away from repository, otherwise pip does not install package
+  - cd %PYTHON_SITE_PACKAGES%
+  - cmd: pip install %REPO_DIR%\dist\%PKG_NAME%-%PKG_VERSION%.tar.gz
+  ###
+  # Write coverage configuration file
+  ###
+  - cmd: python %EXTRA_DIR%\sbin\coveragerc_manager.py 'ci' 1 %INTERP% %PYTHON_SITE_PACKAGES%
+  - cmd: type %COV_FILE%
+  # - if [ "${INTERP}" == "py26" ]; then
+  #       ${EXTRA_DIR}/sbin/patch-pylint.sh ${PYTHON_SITE_PACKAGES};
+  #   fi
+  ###
+  # Change to tests sub-directory to mimic Tox conditions
+  ###
+  - cd %EXTRA_DIR%\tests
+
+test_script:
+  ###
+  # Run tests
+  ###
+  - cmd: python %EXTRA_DIR%\sbin\check_files_compliance.py -tps -d %SOURCE_DIR% -m %EXTRA_DIR%
+  - cmd: pylint --rcfile=%EXTRA_DIR%\.pylintrc -f colorized -r no %SOURCE_DIR%
+  - cmd: pylint --rcfile=%EXTRA_DIR%\.pylintrc -f colorized -r no %EXTRA_DIR%\sbin
+  - cmd: pylint --rcfile=%EXTRA_DIR%\.pylintrc -f colorized -r no %EXTRA_DIR%\tests
+  - cmd: pylint --rcfile=%EXTRA_DIR%\.pylintrc -f colorized -r no %EXTRA_DIR%\docs\support
+  - cmd: py.test --doctest-glob='*.rst' %EXTRA_DIR%\docs
+  - cmd: py.test --doctest-modules %SOURCE_DIR%
+  - cmd: py.test -s -vv --junitxml=%RESULTS_DIR%\testresults\pytest.xml
+  - cmd: py.test --cov-config %COV_FILE% --cov %SOURCE_DIR% --cov-report term

@@ -15,7 +15,29 @@ Putil Library
 .. mdir = os.path.realpath(
 ..     os.path.dirname(os.path.dirname(os.path.dirname(file_name)))
 .. )
+.. import docs.support.requirements_to_rst
+.. docs.support.requirements_to_rst.def_links(cog)
 .. ]]]
+.. _Cog: http://nedbatchelder.com/code/cog
+.. _Coverage: http://coverage.readthedocs.org/en/coverage-4.0a5
+.. _Decorator: https://pythonhosted.org/decorator
+.. _Funcsigs: https://pypi.python.org/pypi/funcsigs
+.. _Matplotlib: http://matplotlib.org
+.. _Mock: http://www.voidspace.org.uk/python/mock
+.. _Numpy: http://www.numpy.org
+.. _Pillow: https://python-pillow.github.io
+.. _PyContracts: https://andreacensi.github.io/contracts
+.. _Pylint: http://www.pylint.org
+.. _Py.test: http://pytest.org
+.. _Pytest-coverage: https://pypi.python.org/pypi/pytest-cov
+.. _Pytest-xdist: https://pypi.python.org/pypi/pytest-xdist
+.. _Scipy: http://www.scipy.org
+.. _Six: https://pythonhosted.org/six
+.. _Sphinx: http://sphinx-doc.org
+.. _ReadTheDocs Sphinx theme: https://github.com/snide/sphinx_rtd_theme
+.. _Inline Syntax Highlight Sphinx Extension:
+   https://bitbucket.org/klorenz/sphinxcontrib-inlinesyntaxhighlight
+.. _Tox: https://testrun.org/tox
 .. [[[end]]]
 
 This library provides a collection of utility modules to supplement the
@@ -30,7 +52,7 @@ Python standard library. The modules provided are:
 
 * **exdoc**: automatically generate exceptions documentation marked up in
   `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ with help from
-  `cog <http://nedbatchelder.com/code/cog/>`_ and the exh module
+  `Cog`_ and the exh module
 
 * **exh**: register exceptions and then raise them if a given condition is true
 
@@ -39,7 +61,7 @@ Python standard library. The modules provided are:
   an argument is of a given type), numerical functions and string functions
 
 * **pcontracts**: thin wrapper around the
-  `PyContracts <https://andreacensi.github.io/contracts/>`_ library that
+  `PyContracts`_ library that
   enables customization of the exception type raised and limited
   customization of the exception message
 
@@ -55,7 +77,7 @@ Python standard library. The modules provided are:
   and/or validated with custom contracts defined using the pcontracts module
 
 * **test**: functions to aid in the unit testing of modules in the package
-  (`py.test <http://www.pytest.org>`_-based)
+  (`Py.test`_-based)
 
 * **tree**: build, handle, process and search
   `tries <http://wikipedia.org/wiki/Trie>`_
@@ -63,7 +85,8 @@ Python standard library. The modules provided are:
 Interpreter
 ===========
 
-The package has been developed and tested with Python 2.7 and Python 3.4
+The package has been developed and tested with Python 2.6, 2.7, 3.3, 3.4
+and 3.5
 
 Installing
 ==========
@@ -81,26 +104,29 @@ Contributing
 ============
 
 1. The `repository <https://bitbucket.org/pacosta/putil>`_ may be forked from
-   Bitbucket; clone the forked repository recursively since the `Read the Docs
-   documentation theme <https://github.com/snide/sphinx_rtd_theme>`_ is a
-   repository sub-module [#f1]_:
+   Bitbucket [#f1]_:
 
 	.. code-block:: bash
 
-		$ git clone --recursive \
+		$ git clone \
 		      https://bitbucket.org/[bitbucket-user-name]/putil.git
+                Cloning into 'putil'...
+                ...
 		$ cd putil
 		$ export PUTIL_DIR=${PWD}
 
-2. Install the project's Git hooks. The pre-commit hook does some minor
-   consistency checks, namely trailing whitespace and
+2. Install the project's Git hooks and build the documentation. The pre-commit
+   hook does some minor consistency checks, namely trailing whitespace and
    `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ compliance via
    Pylint. Assuming the directory to which the repository was cloned is
    in the :bash:`$PUTIL_DIR` shell environment variable:
 
 	.. code-block:: bash
 
-		$ ${PUTIL_DIR}/sbin/setup-git-hooks.sh
+		$ ${PUTIL_DIR}/sbin/complete-cloning.sh
+                Installing Git hooks
+                Building putil package documentation
+                ...
 
 3. Ensure that the Python interpreter can find the package modules
    (update the :bash:`$PYTHONPATH` environment variable, or use
@@ -111,13 +137,6 @@ Contributing
 
 		$ export PYTHONPATH=${PYTHONPATH}:${PUTIL_DIR}
 
-   This is relevant only if it is desired to run unit tests, measure
-   test coverage and/or (re)build the documentation using the cloned
-   repository (and not a virtual environment). This option is attractive
-   as it allows for faster iterations, but final pre-commit validation
-   should be done using the `tox`_ flow (:bash:`pkg-validate.sh` script,
-   see below)
-
 4. Install the dependencies (if needed):
 
     .. [[[cog
@@ -125,53 +144,47 @@ Contributing
     .. docs.support.requirements_to_rst.proc_requirements(cog)
     .. ]]]
 
-    * `Cog`_
-      >= 2.4
 
-    * `Coverage <http://coverage.readthedocs.org/en/coverage-4.0a5>`_
-      >= 3.7.1
+    * `Cog`_ (2.4 or newer)
 
-    * `Decorator <https://pythonhosted.org/decorator>`_
-      >= 3.4.2
+    * `Coverage`_ (3.7.1 or newer)
 
-    * `Funcsigs <https://pypi.python.org/pypi/funcsigs>`_
-      >= 0.4 (only for Python 2.7)
+    * `Decorator`_ (3.4.2 or newer)
 
-    * `Matplotlib <http://matplotlib.org>`_
-      >= 1.3.1
+    * `Funcsigs`_ (Python 2.x only, 0.4 or newer)
 
-    * `Mock <http://www.voidspace.org.uk/python/mock>`_
-      >= 1.0.1 (only for Python 2.7)
+    * `Inline Syntax Highlight Sphinx Extension`_ (0.2 or newer)
 
-    * `Numpy <http://www.numpy.org>`_
-      >= 1.8.2
+    * `Matplotlib`_ (1.3.1 or newer)
 
-    * `Pillow <https://python-pillow.github.io>`_
-      >= 2.6.1
+    * `Mock`_ (Python 2.x only, 1.0.1 or newer)
 
-    * `PyContracts`_
-      >= 1.7.2
+    * `Numpy`_ (1.8.2 or newer)
 
-    * `Pytest-coverage <https://pypi.python.org/pypi/pytest-cov>`_
-      >= 1.8.0
+    * `Pillow`_ (2.6.1 or newer)
 
-    * `Pytest-xdist <https://pypi.python.org/pypi/pytest-xdist>`_
-      >= 1.8.0 (optional)
+    * `Py.test`_ (2.7.0 or newer)
 
-    * `Py.test`_
-      >= 2.7.0
+    * `PyContracts`_ (1.7.2 or newer except 1.7.7)
 
-    * `Scipy <http://www.scipy.org>`_
-      >= 0.13.3
+    * `Pylint`_ (Python 2.6: 1.3 or newer and older than 1.4, Python 2.7
+      or newer: 1.3.1 or newer)
 
-    * `Six <https://pythonhosted.org/six>`_
-      >= 1.4.0
+    * `Pytest-coverage`_ (1.8.0 or newer)
+
+    * `Pytest-xdist`_ (optional, 1.8.0 or newer)
+
+    * `ReadTheDocs Sphinx theme`_ (0.1.9 or newer)
+
+    * `Scipy`_ (0.13.3 or newer)
+
+    * `Six`_ (1.4.0 or newer)
+
+    * `Sphinx`_ (1.2.3 or newer)
+
+    * `Tox`_ (1.9.0 or newer)
 
     .. [[[end]]]
-
-    * `Sphinx <http://sphinx-doc.org>`_ >= 1.2.3
-
-    * `Tox <https://tox.readthedocs.org>`_ >= 1.9.0
 
 5. Write a unit test which shows that a bug was fixed or that a new feature
    or API works as expected. Run the package tests to ensure that the bug fix
@@ -188,12 +201,13 @@ Contributing
             writing putil.egg-info/PKG-INFO
             ...
 
-   Setuptools runs tox with its two default environments ``py27-pkg`` and
-   ``py34-pkg``. These use the Python 2.7 and 3.4 interpreters to test
+   Setuptools runs tox with its default environments: ``py26-pkg``,
+   ``py27-pkg``, ``py33-pkg``, ``py34-pkg`` and ``py35-pkg``. These use the
+   Python 2.6, 2.7, 3.3, 3.4 and 3.5 interpreters, respectively, to test
    all code in the documentation (both in Sphinx ``*.rst`` source files and in
    docstrings), run all unit tests and re-build the exceptions documentation.
-   To pass arguments to tox use the :code:`-a` option followed by a quoted
-   string. For example:
+   To pass arguments to tox use the :code:`-a` setuptools option followed by a
+   quoted string. For example:
 
 	.. code-block:: bash
 
@@ -203,14 +217,18 @@ Contributing
 
    There are other convenience environments defined for tox [#f2]_:
 
-    * ``py27-repl`` and ``py34-repl`` run the Python 2.7 or Python 3.4
-      interpreter in the appropriate virtual environment. The ``putil``
-      package is pip-installed by tox when the environments are created
+    * ``py26-repl``, ``py27-repl``, ``py33-repl``, ``py34-repl`` and
+      ``py35-repl`` run the Python 2.6, 2.7, 3.3, 3.4 or 3.5 interpreter,
+      respectively, in the appropriate virtual environment. The ``putil``
+      package is pip-installed by tox when the environments are created.
+      Arguments to the interpreter can be passed in the command line
+      after a double dash (``--``)
 
-    * ``py27-test`` and ``py34-test`` run py.test using the Python 2.7
-      or Python 3.4 interpreter in the appropriate virtual environment.
-      Arguments to py.test can be passed in the command line after a
-      double dash (``--``) , for example:
+    * ``py26-test``, ``py27-test``, ``py33-test``, ``py34-test`` and
+      ``py35-test`` run py.test using the Python 2.6, 2.7, 3.3, 3.4
+      or Python 3.5 interpreter, respectively, in the appropriate virtual
+      environment. Arguments to py.test can be passed in the command line
+      after a double dash (``--``) , for example:
 
 	.. code-block:: bash
 
@@ -223,13 +241,14 @@ Contributing
             platform linux -- Python 3.4.2 -- py-1.4.30 -- [...]
             ...
 
-    * ``py27-cov`` and ``py34-cov`` test code and branch coverage using
-      the Python 2.7 or Python 3.4 interpreter in the appropriate virtual
-      environment. Arguments to py.test can be passed in the command line
-      after a double dash (``--``). The report can be found in
-      :bash:`${PUTIL_DIR}/.tox/py27/usr/share/putil/tests/htmlcov/index.html`
-      or :bash:`${PUTIL_DIR}/.tox/py34/usr/share/putil/tests/htmlcovindex.html`
-      depending on the interpreter used.
+    * ``py26-cov``, ``py27-cov``, ``py33-cov``, ``py34-cov`` and
+      ``py35-cov`` test code and branch coverage using the Python 2.6,
+      2.7, 3.3, 3.4 or 3.5 interpreter, respectively, in the appropriate
+      virtual environment. Arguments to py.test can be passed in the command
+      line after a double dash (``--``). The report can be found in
+      :bash:`${PUTIL_DIR}/.tox/py[PV]/usr/share/putil/tests/htmlcov/index.html`
+      where ``[PV]`` stands for ``26``, ``27``, ``33``, ``34`` or ``35``
+      depending on the interpreter used
 
 6. The :bash:`${PUTIL_DIR}/sbin` directory contains other relevant development
    scripts:
@@ -249,16 +268,16 @@ Contributing
 		      build-docs.sh [-d dir] [module-name]
 
 		    Options:
-		      -h  Show this screen
-		      -r  Rebuild exceptions documentation. If no module name
+		      -h  show this help message and exit
+		      -r  rebuild exceptions documentation. If no module name
 		          is given all modules with auto-generated exceptions
 		          documentation are rebuilt
-		      -d  Specify source file directory
+		      -d  specify source file directory
 		          [default: (build-docs.sh directory)/../putil]
-		      -t  Diff original and rebuilt file(s) (exit code 0
+		      -t  diff original and rebuilt file(s) (exit code 0
 		          indicates file(s) are identical, exit code 1
 		          indicates file(s) are different)
-		      -n  Number of CPUs to use [default: 1]
+		      -n  number of CPUs to use [default: 1]
 
 
 		.. [[[end]]]
@@ -279,7 +298,7 @@ Contributing
 		      build-tags.sh
 
 		    Options:
-		      -h  Show this screen
+		      -h  show this help message and exit
 
 
 		.. [[[end]]]

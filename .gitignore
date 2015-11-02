@@ -17,6 +17,7 @@ tags
 *.pyc
 *.spell
 *.json
+.eggs
 dist
 putil.egg-info
 putil/htmlcov
@@ -27,3 +28,5 @@ build/
 !tests/support/ref_images/*.png
 !tests/support/ref_images_ci/*.png
 !docs/support/*.png
+!data/requirements.json
+!data/data_files.json

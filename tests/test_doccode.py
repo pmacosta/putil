@@ -263,7 +263,7 @@ def test_pcontracts_doccode():
 
 def test_plot_doccode(capsys):
     """ Test used in plot module """
-    # pylint: disable=R0915
+    # pylint: disable=E1103,R0915
     from tests.plot.fixtures import compare_images, IMGTOL
     script_dir = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -279,12 +279,7 @@ def test_plot_doccode(capsys):
     )
     stdout, stderr = proc.communicate()
     test_fname = output_file
-    ref_names = [
-        'plot_example_1_1.png',
-        'plot_example_1_2.png',
-        'plot_example_1_3.png',
-        'plot_example_1_4.png'
-    ]
+    ref_names = ['plot_example_1_{0}.png'.format(item) for item in range(1, 6)]
     ref_fnames = [os.path.join(script_dir, item) for item in ref_names]
     result = False
     for ref_fname in ref_fnames:

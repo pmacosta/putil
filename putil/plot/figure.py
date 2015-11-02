@@ -525,7 +525,7 @@ class Figure(object):
         for num, obj in enumerate(self.panels):
             self._exh.raise_exception_if(
                 exname='invalid_panel',
-                condition=type(obj) is not Panel
+                condition=not isinstance(obj, Panel)
             )
             self._exh.raise_exception_if(
                 exname='panel_not_fully_specified',

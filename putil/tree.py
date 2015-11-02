@@ -49,7 +49,7 @@ class Tree(object):
 
     .. [[[end]]]
     """
-    # pylint: disable=R0902,R0903
+    # pylint: disable=E0602,R0902,R0903
     def __init__(self, node_separator='.'):
         self._db = {}
         self._root = None

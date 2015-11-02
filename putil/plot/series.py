@@ -33,9 +33,9 @@ except ImportError: # pragma: no cover
         avec = dep_var[:]
         bvec = [0.0]*(npoints)
         dvec = [0.0]*(npoints)
-        hvec = [indep_var[i+1]-indep_var[i] for i in xrange(npoints)]
+        hvec = [indep_var[i+1]-indep_var[i] for i in range(npoints)]
         alpha = [0.0]*npoints
-        for i in xrange(1, npoints):
+        for i in range(1, npoints):
             alpha[i] = (
                 3/hvec[i]*(avec[i+1]-avec[i])-3/hvec[i-1]*(avec[i]-avec[i-1])
             )
@@ -45,20 +45,20 @@ except ImportError: # pragma: no cover
         zvec = [0.0]*np1
         lvec[0] = 1.0
         uvec[0] = zvec[0] = 0.0
-        for i in xrange(1, npoints):
+        for i in range(1, npoints):
             lvec[i] = 2*(indep_var[i+1]-indep_var[i-1])-hvec[i-1]*uvec[i-1]
             uvec[i] = hvec[i]/lvec[i]
             zvec[i] = (alpha[i]-hvec[i-1]*zvec[i-1])/lvec[i]
         lvec[npoints] = 1.0
         zvec[npoints] = cvec[npoints] = 0.0
-        for j in xrange(npoints-1, -1, -1):
+        for j in range(npoints-1, -1, -1):
             cvec[j] = zvec[j] - uvec[j]*cvec[j+1]
             bvec[j] = (
                 (avec[j+1]-avec[j])/hvec[j] - (hvec[j]*(cvec[j+1]+2*cvec[j]))/3
             )
             dvec[j] = (cvec[j+1]-cvec[j])/(3*hvec[j])
         splines = []
-        for i in xrange(npoints):
+        for i in range(npoints):
             splines.append((avec[i], bvec[i], cvec[i], dvec[i], indep_var[i]))
         return splines, indep_var[npoints]
 

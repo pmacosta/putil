@@ -17,22 +17,24 @@ python:
 
 before_install:
   ###
-  # Set up environment variable
+  # Set up environment variables
   ###
-  - export REPO_DIR=${TRAVIS_BUILD_DIR}
-  - export RESULTS_DIR=${REPO_DIR}/results
-  - export PKG_NAME=$(echo ${TRAVIS_REPO_SLUG} | sed -r "s|.*/(.*)|\1|g")
-  - export INTERP=py"${TRAVIS_PYTHON_VERSION//./}"
-  - export PYTHON_MAJOR=$(echo ${TRAVIS_PYTHON_VERSION} | sed -r 's/([0-9]).*/\1/g')
   - export PYTHONCMD=python
   - export PIPCMD=pip
-  - export PYTHON_SITE_PACKAGES=$(${PIPCMD} show pytest | grep "Location*" | sed -r "s/^.*Location\W (.*)/\1/g")
-  - export SOURCE_DIR=${PYTHON_SITE_PACKAGES}/${PKG_NAME}
+  - export PYTESTCMD=py.test
+  - export PYTHON_MAJOR=$(echo ${TRAVIS_PYTHON_VERSION} | sed -r 's/([0-9]).*/\1/g')
+  - export INTERP=py"${TRAVIS_PYTHON_VERSION//./}"
+  - export REPO_DIR=${TRAVIS_BUILD_DIR}
+  - export PKG_NAME=$(echo ${TRAVIS_REPO_SLUG} | sed -r "s|.*/(.*)|\1|g")
+  - export PYTHON_SITE_PACKAGES=$(${PIPCMD} show pip | grep "Location*" | sed -r "s/^.*Location\W (.*)/\1/g")
   - export VIRTUALENV_DIR=$(dirname $(dirname $(dirname ${PYTHON_SITE_PACKAGES})))
   - export EXTRA_DIR=${VIRTUALENV_DIR}/usr/share/${PKG_NAME}
-  - export PYTHONPATH=${PYTHONPATH}:${PYTHON_SITE_PACKAGES}:${SOURCE_DIR}:${EXTRA_DIR}:${EXTRA_DIR}/tests:${EXTRA_DIR}/docs:${EXTRA_DIR}/docs/support
-  - export PYTESTCMD=py.test
+  - export RESULTS_DIR=${REPO_DIR}/results
+  - export SOURCE_DIR=${PYTHON_SITE_PACKAGES}/${PKG_NAME}
+  - export PYTHONPATH=${PYTHONPATH}:${PYTHON_SITE_PACKAGES}:${EXTRA_DIR}:${EXTRA_DIR}/tests:${EXTRA_DIR}/docs:${EXTRA_DIR}/docs/support
   - export COV_FILE=${SOURCE_DIR}/.coveragerc_ci_${INTERP}
+  - export MAIN_REQUIREMENTS_FILE=${REPO_DIR}/requirements/main_${INTERP}.pip
+  - export TESTS_REQUIREMENTS_FILE=${REPO_DIR}/requirements/tests_${INTERP}.pip
   - echo "REPO_DIR=${REPO_DIR}"
   - echo "RESULTS_DIR=${RESULTS_DIR}"
   - echo "PKG_NAME=${PKG_NAME}"
@@ -46,8 +48,16 @@ before_install:
   - echo "PYTHONPATH=${PYTHONPATH}"
   - echo "PYTESTCMD=${PYTESTCMD}"
   - echo "COV_FILE=${COV_FILE}"
+  - echo "MAIN_REQUIREMENTS_FILE=${MAIN_REQUIREMENTS_FILE}"
+  - echo "TESTS_REQUIREMENTS_FILE=${TESTS_REQUIREMENTS_FILE}"
+  ###
+  # Install tools and dependencies of package dependencies
+  ###
   - sudo apt-get update
+  - sudo apt-get install -qq -y aspell
+  - sudo apt-get install -qq -y vim-common
   - sudo apt-get install -qq -y curl
+  - sudo apt-get install -qq -y imagemagick
   - sudo apt-get install -qq -y python-dev
   - sudo apt-get install -qq -y python2.7-dev
   - sudo apt-get install -qq -y libfreetype6-dev
@@ -64,13 +74,18 @@ before_install:
   - sudo apt-get install -qq -y python3-numpy
   - sudo apt-get install -qq -y python3-scipy
   - sudo apt-get install -qq -y python3-matplotlib
-  - if [ ! -f /usr/include/ft2build.h ]; then sudo ln -s /usr/include/freetype2/ft2build.h /usr/include/.; fi
+  - if [ ! -f /usr/include/ft2build.h ]; then
+        sudo ln -s /usr/include/freetype2/ft2build.h /usr/include/.;
+    fi
 
 install:
   ###
-  # Report version numbers for all dependencies
+  # Report version numbers for all compiled packages installed
   ###
+  - dpkg --status aspell
+  - dpkg --status vim-common
   - dpkg --status curl
+  - dpkg --status imagemagick
   - dpkg --status python-dev
   - dpkg --status python2.7-dev
   - dpkg --status libfreetype6-dev
@@ -87,11 +102,12 @@ install:
   - dpkg --status python3-numpy
   - dpkg --status python3-scipy
   - dpkg --status python3-matplotlib
-
-###
+  ###
   # Install package dependencies
   ###
-  - travis_wait $PIPCMD install --quiet --upgrade -r requirements.txt
+  - travis_wait $PIPCMD install --upgrade -r${MAIN_REQUIREMENTS_FILE}
+  - travis_wait $PIPCMD install --upgrade -r${TESTS_REQUIREMENTS_FILE}
+  - travis_wait $PIPCMD install --upgrade -r${REPO_DIR}/requirements/docs.pip
   - $PIPCMD freeze
 
 before_script:
@@ -106,15 +122,22 @@ script:
   ###
   # Install package
   ###
+  - cat ${REPO_DIR}/MANIFEST.in
   - $PYTHONCMD setup.py sdist
   - PKG_VERSION=$(grep __version__ ${REPO_DIR}/${PKG_NAME}/__init__.py | sed -e "s/.*__version__ = '\(.*\)'/\1/g")
   - echo "PKG_VERSION=${PKG_VERSION}"
-  - $PIPCMD install --quiet --upgrade --no-deps --force-reinstall dist/${PKG_NAME}-${PKG_VERSION}.tar.gz
+  # Change directory away from repository, otherwise pip does not install package
+  - cd ${PYTHON_SITE_PACKAGES}
+  - $PIPCMD install ${REPO_DIR}/dist/${PKG_NAME}-${PKG_VERSION}.tar.gz
   ###
   # Write coverage configuration file
   ###
-  - $PYTHONCMD ./sbin/coveragerc_manager.py 'ci' 1 ${INTERP} ${PYTHON_SITE_PACKAGES}
+  - $PYTHONCMD ${EXTRA_DIR}/sbin/coveragerc_manager.py 'ci' 1 ${INTERP} ${PYTHON_SITE_PACKAGES}
   - cat ${COV_FILE}
+  - ${EXTRA_DIR}/sbin/set-matplotlib-backend.sh ${EXTRA_DIR}/docs
+  - if [ "${INTERP}" == "py26" ]; then
+        ${EXTRA_DIR}/sbin/patch-pylint.sh ${PYTHON_SITE_PACKAGES};
+    fi
   ###
   # Change to tests sub-directory to mimic Tox conditions
   ###
@@ -122,11 +145,29 @@ script:
   ###
   # Run tests
   ###
+  - ${EXTRA_DIR}/sbin/cprint.sh line cyan "Testing project code compliance"
+  - ${EXTRA_DIR}/sbin/check_files_compliance.py -tps -d ${SOURCE_DIR} -m ${EXTRA_DIR}
+  - if [ "${INTERP}" != "py35" ]; then
+        ${EXTRA_DIR}/sbin/cprint.sh line cyan "Testing Pylint compliance";
+        pylint --rcfile=${EXTRA_DIR}/.pylintrc -f colorized -r no ${SOURCE_DIR};
+        pylint --rcfile=${EXTRA_DIR}/.pylintrc -f colorized -r no ${EXTRA_DIR}/sbin;
+        pylint --rcfile=${EXTRA_DIR}/.pylintrc -f colorized -r no ${EXTRA_DIR}/tests;
+        pylint --rcfile=${EXTRA_DIR}/.pylintrc -f colorized -r no ${EXTRA_DIR}/docs/support;
+    fi
+  - ${EXTRA_DIR}/sbin/cprint.sh line cyan "Testing reStructuredText files"
   - $PYTESTCMD --doctest-glob='*.rst' ${EXTRA_DIR}/docs
+  - ${EXTRA_DIR}/sbin/cprint.sh line cyan "Testing docstrings"
   - $PYTESTCMD --doctest-modules ${SOURCE_DIR}
+  - ${EXTRA_DIR}/sbin/cprint.sh line cyan "Testing code"
   - $PYTESTCMD -s -vv --junitxml=${RESULTS_DIR}/testresults/pytest.xml
+  - ${EXTRA_DIR}/sbin/cprint.sh line cyan "Testing coverage"
   - $PYTESTCMD --cov-config ${COV_FILE} --cov ${SOURCE_DIR} --cov-report term
+  - ${EXTRA_DIR}/sbin/cprint.sh line cyan "Testing documentation"
   - ${EXTRA_DIR}/sbin/build-docs.sh -r -t -d ${SOURCE_DIR}
+  ###
+  # Dump PNG files to console
+  ###
+  #- ${EXTRA_DIR}/sbin/png-to-console.sh /home/travis/virtualenv/python2.6.9/usr/share/putil/docs/support/test_image.png
 
 notifications:
   email:

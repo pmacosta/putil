@@ -4,6 +4,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,E1101,E1103,F0401,W0212
 
+from __future__ import print_function
 import re
 import sys
 import textwrap
@@ -44,7 +45,7 @@ def format_msg():
                 for item in wobj:
                     olines.append(item)
         ret = '\n'.join(olines)
-        print ret
+        print(ret)
 
 
 if __name__ == '__main__':

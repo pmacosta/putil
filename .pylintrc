@@ -1,3 +1,7 @@
+# pylintrc
+# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# See LICENSE for details
+
 [MASTER]
 
 # Specify a configuration file.
@@ -38,13 +42,14 @@ load-plugins=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-# I0011 Warning locally suppressed using disable
-# C0330 Wrong continued indentation
 # C0302 Too many lines in module
+# C0330 Wrong continued indentation
+# E0012: Bad option value
+# I0011 Warning locally suppressed using disable
+# R0801: Similar lines in X files
 # W0511 TODO:
 # W0142: Used * or ** magic
-# R0801: Similar lines in X files
-disable=I0011,C0330,W0511,W0142,C0302,R0801
+disable=C0302,C0330,E0012,I0011,R0801,W0511,W0142
 
 [REPORTS]
 

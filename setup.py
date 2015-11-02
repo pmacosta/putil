@@ -1,7 +1,7 @@
 # setup.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E1111,R0904,W0201
+# pylint: disable=C0111,E1111,R0904,W0201,W0621
 
 # Taken in large part from:
 #    http://www.jeffknupp.com/blog/2013/08/16/
@@ -14,15 +14,25 @@
 from __future__ import print_function
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-import glob
 import io
 import os
 import re
 import sys
 
+from sbin.functions import (
+    SUPPORTED_VERS, get_pkg_data_files, load_requirements, python_version
+)
 
-if sys.hexversion < 0x02060000:
-    sys.exit('Supported interpreter versions: 2.6, 2.7, 3.3, 3.4 and 3.5')
+
+###
+# Supported interpreter check
+###
+PYTHON_VER = python_version('{0:0x}'.format(sys.hexversion & 0xFFFF0000)[:-4])
+if PYTHON_VER not in SUPPORTED_VERS:
+    sys.exit(
+        'Supported interpreter versions: {0}'.format(', '.join(SUPPORTED_VERS))
+    )
+
 
 ###
 # Functions
@@ -51,26 +61,6 @@ def get_short_desc(long_desc):
         found = line == '.. [[[end]]]' if not found else found
 
 
-def load_requirements(pkg_dir, libs):
-    """ Get package names from requirements.txt file """
-    with open(os.path.join(pkg_dir, 'requirements.txt'), 'r') as fobj:
-        lines = [
-            item.strip()
-            for item in fobj.readlines()
-            if item.strip()
-        ]
-    regexps = [
-        re.compile('^{0}[>=]*'.format(item))
-        for item in libs
-        if not item.startswith('#')
-    ]
-    return [
-        item
-        for item in lines
-        if any([regexp.match(item) for regexp in regexps])
-    ]
-
-
 def read(*filenames, **kwargs):
     """ Read plain text file(s) """
     encoding = kwargs.get('encoding', 'utf-8')
@@ -95,95 +85,20 @@ LONG_DESCRIPTION = read(
     os.path.join(PKG_DIR, 'CHANGELOG.rst')
 )
 SHORT_DESC = get_short_desc(LONG_DESCRIPTION)
-RST_FILES = glob.glob(os.path.join(PKG_DIR, 'docs', '*.rst'))
 SHARE_DIR = os.path.join('usr', 'share', PKG_NAME)
-DOCS_DIR = os.path.join(SHARE_DIR, 'docs')
-TESTS_DIR = os.path.join(SHARE_DIR, 'tests')
-SBIN_DIR = os.path.join(SHARE_DIR, 'sbin')
-DEPS = ['decorator', 'matplotlib', 'numpy', 'Pillow', 'PyContracts', 'scipy']
-if sys.hexversion < 0x03000000:
-    DEPS.extend(['funcsigs', 'mock'])
-INSTALL_REQUIRES = load_requirements(PKG_DIR, DEPS)
-DATA_FILES = [
-    (
-        SHARE_DIR,
-        [os.path.join(PKG_DIR, 'README.rst')],
-    ),
-    (
-        SBIN_DIR,
-        glob.glob(os.path.join(PKG_DIR, 'sbin', '*')),
-    ),
-    (
-        DOCS_DIR,
-        RST_FILES+[
-            os.path.join(PKG_DIR, 'docs', '__init__.py'),
-            os.path.join(PKG_DIR, 'docs', 'conf.py'),
-            os.path.join(PKG_DIR, 'docs', 'make.bat'),
-            os.path.join(PKG_DIR, 'docs', 'Makefile'),
-        ],
-    ),
-    (
-        os.path.join(DOCS_DIR, '_static'),
-        [os.path.join(PKG_DIR, 'docs', '_static', '.keepdir')],
-    ),
-    (
-        os.path.join(DOCS_DIR, 'support'),
-        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.py'))
-    ),
-    (
-        os.path.join(DOCS_DIR, 'support'),
-        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.csv'))
-    ),
-    (
-        os.path.join(DOCS_DIR, 'support'),
-        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.png'))
-    ),
-    (
-        os.path.join(DOCS_DIR, 'support'),
-        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.odg'))
-    ),
-    (
-        os.path.join(DOCS_DIR, 'support'),
-        glob.glob(os.path.join(PKG_DIR, 'docs', 'support', '*.sh'))
-    ),
-    (
-        TESTS_DIR,
-        glob.glob(os.path.join(PKG_DIR, 'tests', 'pytest.ini'))
-    ),
-    (
-        TESTS_DIR,
-        glob.glob(os.path.join(PKG_DIR, 'tests', '*.py'))
-    ),
-    (
-        os.path.join(TESTS_DIR, 'plot'),
-        glob.glob(os.path.join(PKG_DIR, 'tests', 'plot', '*.py'))
-    ),
-    (
-        os.path.join(TESTS_DIR, 'pcsv'),
-        glob.glob(os.path.join(PKG_DIR, 'tests', 'pcsv', '*.py'))
-    ),
-    (
-        os.path.join(TESTS_DIR, 'support'),
-        glob.glob(os.path.join(PKG_DIR, 'tests', 'support', '*.py'))
-    ),
-    (
-        os.path.join(TESTS_DIR, 'support', 'ref_images'),
-        glob.glob(
-            os.path.join(
-                PKG_DIR, 'tests', 'support', 'ref_images', '*.png'
-            )
-        )
-    ),
-    (
-        os.path.join(TESTS_DIR, 'support', 'ref_images_ci'),
-        glob.glob(
-            os.path.join(
-                PKG_DIR, 'tests', 'support', 'ref_images_ci', '*.png'
-            )
-       )
-    ),
-]
-
+INSTALL_REQUIRES = load_requirements(PKG_DIR, PYTHON_VER, 'source')
+TESTING_REQUIRES = load_requirements(PKG_DIR, PYTHON_VER, 'testing')
+try:
+    DATA_FILES = get_pkg_data_files(SHARE_DIR)
+except IOError:
+    import glob
+    print('PKG_DIR: {0}'.format(PKG_DIR))
+    print('Contents:')
+    print(glob.glob(os.path.join(PKG_DIR, '*')))
+    print('PKG_DIR/data')
+    print('Contents:')
+    print(glob.glob(os.path.join(PKG_DIR, 'data', '*')))
+    raise
 
 ###
 # Classes
@@ -223,12 +138,11 @@ setup(
     url=REPO,
     license='MIT',
     author=AUTHOR,
-    tests_require=['tox>=1.9.0'],
+    tests_require=TESTING_REQUIRES,
     install_requires=INSTALL_REQUIRES,
     cmdclass={'tests':Tox},
     author_email=AUTHOR_EMAIL,
     description=SHORT_DESC,
-    include_package_data=True,
     long_description=LONG_DESCRIPTION,
     packages=[
         PKG_NAME,

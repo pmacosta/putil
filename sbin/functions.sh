@@ -130,11 +130,20 @@ validate_num_cpus () {
 	if [ "${num_cpus}" == "" ]; then
 		echo "${script_name}: number of CPUs has to be"\
 		     "an intenger greater than 0" >&2
+		echo "ERROR"
 		return 1
 	fi
 	if ! pip freeze | grep -q pytest-xdist; then
-		echo "${script_name}"': pytest-xdist needs to be installed'\
-		     'to use multiple CPUS' >&2
+		echo "${script_name}: pytest-xdist needs to be installed"\
+		     "to use multiple CPUS" >&2
+		echo "ERROR"
+		return 1
+	fi
+	max_cpus=$(grep -c ^processor /proc/cpuinfo)
+	if (( ${num_cpus} > ${max_cpus} )); then
+		echo "${script_name}: Requested CPUs (${num_cpus}) greater than"\
+		     "available CPUs (${max_cpus})" >&2
+		echo "ERROR"
 		return 1
 	fi
 	echo "-n ${num_cpus}"

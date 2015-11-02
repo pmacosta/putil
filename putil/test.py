@@ -53,7 +53,7 @@ def assert_exception(obj, args, extype, exmsg):
             ...
         RuntimeError: Test failed
     """
-    # pylint: disable=W0142,W0703
+    # pylint: disable=W0703
     regexp = re.compile(exmsg)
     try:
         with pytest.raises(extype) as excinfo:

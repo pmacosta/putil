@@ -11,7 +11,7 @@ print_usage_message () {
 	echo -e "  build-tags.sh -h" >&2
 	echo -e "  build-tags.sh\n" >&2
 	echo -e "Options:" >&2
-	echo -e "  -h  Show this screen" >&2
+	echo -e "  -h  show this help message and exit" >&2
 }
 
 pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))

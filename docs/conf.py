@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103,C0111,R0913,W0611,W0613,W0622
+# pylint: disable=C0103,C0111,F0401,R0913,W0611,W0613,W0622
 #
 # src documentation build configuration file, created by
 # sphinx-quickstart on Thu Oct 24 06:41:33 2013.
@@ -13,9 +13,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-from mock import MagicMock
+import sys
+if sys.hexversion < 0x03000000:
+    from mock import MagicMock
+else:
+    from unittest.mock import MagicMock
 RTD = os.environ.get('READTHEDOCS', False) == 'True'
 
 # If extensions (or modules to document with autodoc) are in another directory,

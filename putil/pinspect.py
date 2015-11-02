@@ -528,6 +528,7 @@ class Callables(object):
         Check that intersection of two objects is congruent, i.e. that they
         have identical information in the intersection
         """
+        # pylint: disable=W1504
         props = ['_callables_db', '_reverse_callables_db', '_modules_dict']
         for prop in props:
             self_dict = getattr(self, prop)

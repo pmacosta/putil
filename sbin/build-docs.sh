@@ -14,16 +14,16 @@ print_usage_message () {
 	echo -e "  build-docs.sh -r -t [-d dir] [-n num-cpus] [module-name]" >&2
 	echo -e "  build-docs.sh [-d dir] [module-name]\n" >&2
 	echo -e "Options:" >&2
-	echo -e "  -h  Show this screen" >&2
-	echo -e "  -r  Rebuild exceptions documentation. If no module name" >&2
+	echo -e "  -h  show this help message and exit" >&2
+	echo -e "  -r  rebuild exceptions documentation. If no module name" >&2
 	echo -e "      is given all modules with auto-generated exceptions" >&2
 	echo -e "      documentation are rebuilt" >&2
-	echo -e "  -d  Specify source file directory" >&2
+	echo -e "  -d  specify source file directory" >&2
 	echo -e "      [default: (build-docs.sh directory)/../putil]" >&2
-	echo -e "  -t  Diff original and rebuilt file(s) (exit code 0" >&2
+	echo -e "  -t  diff original and rebuilt file(s) (exit code 0" >&2
 	echo -e "      indicates file(s) are identical, exit code 1" >&2
 	echo -e "      indicates file(s) are different)" >&2
-	echo -e "  -n  Number of CPUs to use [default: 1]" >&2
+	echo -e "  -n  number of CPUs to use [default: 1]" >&2
 }
 
 cpwd=${PWD}
@@ -106,7 +106,7 @@ fi
 
 # Argument validation
 export NOPTION=$(validate_num_cpus "build-docs.sh" "${num_cpus}")
-if [ $? != 0 ]; then
+if [ $? != 0 ] || [ "${NOPTION}" == "ERROR" ]; then
 	exit 1
 fi
 
@@ -131,6 +131,7 @@ fi
 if [ ${test_mode} == 1 ]; then
 	rm -rf ${TRACER_DIR}/*.pkl ${TRACER_DIR}/plot/*.pkl
 fi
+echo "Building putil package documentation"
 if [ ${rebuild} == 1 ]; then
 	test_msg=""
 	if [ ${test_mode} == 1 ]; then

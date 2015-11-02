@@ -12,6 +12,11 @@ import re
 import subprocess
 import sys
 
+if sys.hexversion < 0x03000000: # pragma: no cover
+    from putil.compat2 import _readlines
+else:   # pragma: no cover
+    from putil.compat3 import _readlines
+
 
 ###
 # Functions
@@ -32,44 +37,46 @@ def which(name):
     return result[0] if result else None
 
 
-def load_excluded_words():
+def load_aspell_whitelist():
     """ Load words that are excluded from Aspell output """
-    pkgdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    efile = os.path.join(pkgdir, 'exclude.aspell')
-    with open(efile, 'r') as fobj:
-        words = fobj.readlines()
-    words = [item.strip() for item in words if item.strip()]
+    pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    efile = os.path.join(pkg_dir, 'data', 'aspell-whitelist')
+    words = [item.strip() for item in _readlines(efile) if item.strip()]
     return sorted(list(set(words)))
 
 
-def pkg_files(files, extensions):
+def pkg_files(sdir, mdir, files, extensions):
     """ Returns package files of a given extension """
     pkgdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     files = [os.path.join(pkgdir, item) for item in files]
     # Define directories to look files in
     fdirs = [
-        '',
-        'sbin',
-        'putil',
-        os.path.join('putil', 'pcsv'),
-        os.path.join('putil', 'plot'),
-        'tests',
-        os.path.join('tests', 'pcsv'),
-        os.path.join('tests', 'plot'),
-        os.path.join('tests', 'support'),
-        'docs',
-        os.path.join('docs', 'support')
+        os.path.join(mdir, ''),
+        os.path.join(mdir, 'sbin'),
+        os.path.join(sdir, 'putil'),
+        os.path.join(sdir, 'putil', 'pcsv'),
+        os.path.join(sdir, 'putil', 'plot'),
+        os.path.join(mdir, 'tests'),
+        os.path.join(mdir, 'tests', 'pcsv'),
+        os.path.join(mdir, 'tests', 'plot'),
+        os.path.join(mdir, 'tests', 'support'),
+        os.path.join(mdir, 'docs'),
+        os.path.join(mdir, 'docs', 'support')
     ]
     # Defines files to be excluded from check
     efiles = [
-        os.path.join(pkgdir, 'tags'),
-        os.path.join(pkgdir, 'LICENSE'),
-        os.path.join(pkgdir, 'docs', 'conf.py'),
-        os.path.join(pkgdir, 'docs', 'Makefile'),
+        os.path.join(mdir, 'tags'),
+        os.path.join(mdir, 'LICENSE'),
+        os.path.join(mdir, 'setup.cfg'),
+        os.path.join(mdir, 'docs', 'conf.py'),
+        os.path.join(mdir, 'docs', 'Makefile'),
+        os.path.join(mdir, 'sbin', 'aspell-whitelist'),
+        os.path.join(mdir, 'sbin', 'install.ps1'),
+        os.path.join(mdir, 'sbin', 'run_with_env.cmd'),
+        os.path.join(mdir, 'sbin', 'build_matplotlib_dep.cmd'),
     ]
     # Processing
     for fdir in fdirs:
-        fdir = os.path.join(pkgdir, fdir)
         for item in glob.glob(os.path.join(fdir, '*')):
             if ((os.path.splitext(item)[1] in extensions) and
                (not os.path.isdir(item)) and (item not in efiles)):
@@ -85,23 +92,20 @@ def content_lines(fname, comment='#'):
     ]
     encoding_dribble = '\xef\xbb\xbf'
     encoded = False
+    cregexp = re.compile(r'.*{0} -\*- coding: utf-8 -\*-\s*'.format(comment))
     with open(fname, 'r') as fobj:
         for num, line in enumerate(fobj):
             line = line.rstrip()
             if (not num) and line.startswith(encoding_dribble):
                 line = line[len(encoding_dribble):]
-            coding_line = (
-                (num == 0)
-                and
-                (line == '{0} -*- coding: utf-8 -*-'.format(comment))
-            )
+            coding_line = (num == 0) and (cregexp.match(line) is not None)
             encoded = coding_line if not encoded else encoded
             shebang_line = (num == int(encoded)) and (line in skip_lines)
             if line and (not coding_line) and (not shebang_line):
                 yield line
 
 
-def check_header(files, no_print=False):
+def check_header(sdir, mdir, files, no_print=False):
     """ Check that all files have header line and copyright notice """
     # Processing
     fdict = {
@@ -116,7 +120,7 @@ def check_header(files, no_print=False):
     }
     olist = []
     errors = False
-    for fname in pkg_files(files, list(fdict.keys())):
+    for fname in pkg_files(sdir, mdir, files, list(fdict.keys())):
         basename = os.path.basename(fname)
         extension = os.path.splitext(fname)[1]
         comment = fdict[extension]
@@ -129,23 +133,28 @@ def check_header(files, no_print=False):
             '{0} See LICENSE for details'.format(comment)
         ]
         iobj = enumerate(zip(content_lines(fname, comment), header_lines))
+        wheader = False
         for num, (line, ref) in iobj:
             if line != ref:
+                print(line)
+                print(ref)
                 msg = (
                     'File {0} does not have a standard header'
                     if num == 0 else
                     'File {0} does not have a standard copyright notice'
                 )
-                olist.append(fname)
                 errors = True
-                if not no_print:
+                if ((not no_print) and
+                   ((num == 0) or ((num > 0) and (not wheader)))):
                     print(msg.format(fname))
+                olist.append(fname)
+                wheader = num > 0
     if (not errors) and (not no_print):
         print('All files header compliant')
     return errors
 
 
-def check_pylint(files, no_print=False):
+def check_pylint(sdir, mdir, files, no_print=False):
     """ Check that there are no repeated Pylint codes per file """
     rec = re.compile
     soline = rec(r'(^\s*)#\s*pylint\s*:\s*disable\s*=\s*([\w|\s|,]+)\s*')
@@ -155,12 +164,11 @@ def check_pylint(files, no_print=False):
     quoted_eol = rec(r'(.*)(\'|")\s*'+template+r'\s*\2\s*')
     eol = rec(r'(.*)\s*'+template+r'\s*')
     errors = False
-    for fname in pkg_files(files, '.py'):
+    for fname in pkg_files(sdir, mdir, files, '.py'):
         with open(fname, 'r') as fobj:
             header = False
             output_lines = []
             file_tokens = []
-
             for num, input_line in enumerate(fobj):
                 line_match = soline.match(input_line)
                 quoted_eol_match = quoted_eol.match(
@@ -200,12 +208,12 @@ def check_pylint(files, no_print=False):
     return errors
 
 
-def check_aspell(files, no_print=False):
+def check_aspell(sdir, mdir, files, no_print=False):
     """ Check files word spelling """
     errors = False
     if which('aspell'):
-        excluded_words = load_excluded_words()
-        for fname in pkg_files(files, ['.py', '.rst']):
+        excluded_words = load_aspell_whitelist()
+        for fname in pkg_files(sdir, mdir, files, ['.py', '.rst']):
             pobj = subprocess.Popen(
                 ['cat', fname],
                 stdout=subprocess.PIPE,
@@ -218,7 +226,8 @@ def check_aspell(files, no_print=False):
                 stdout=subprocess.PIPE
             )
             raw_words, _ = pobj.communicate(lines)
-            raw_words = sorted(list(set(raw_words.split('\n'))))
+            raw_words = [item for item in raw_words.decode().split('\n')]
+            raw_words = sorted(list(set(raw_words)))
             raw_words = [item.strip() for item in raw_words]
             words = [
                 item
@@ -238,6 +247,7 @@ def check_aspell(files, no_print=False):
 
 
 if __name__ == "__main__":
+    PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     PARSER = argparse.ArgumentParser(
         description='Perform various checks on package files'
     )
@@ -253,14 +263,41 @@ if __name__ == "__main__":
     PARSER.add_argument(
         '-q', '--quiet', help='suppress messages', action="store_true"
     )
+    PARSER.add_argument(
+        '-d', '--source-dir', help='source files directory (default ../putil)',
+        nargs=1, default=PKG_DIR
+    )
+    PARSER.add_argument(
+        '-m', '--misc-dir', help='miscellaneous files directory (default ../)',
+        nargs=1, default=PKG_DIR
+    )
     PARSER.add_argument('files', help='Files to check', nargs='*')
     ARGS = PARSER.parse_args()
+    SOURCE_DIR = (
+        ARGS.source_dir[0]
+        if isinstance(ARGS.source_dir, list)
+        else ARGS.source_dir
+    )
+    MISC_DIR = (
+        ARGS.misc_dir[0]
+        if isinstance(ARGS.misc_dir, list)
+        else ARGS.misc_dir
+    )
     TERRORS = False
+    if not ARGS.quiet:
+        print('Source directory: {0}'.format(SOURCE_DIR))
+        print('Miscellaneous directory: {0}'.format(MISC_DIR))
     if ARGS.spell:
-        TERRORS = TERRORS or check_aspell(ARGS.files, ARGS.quiet)
+        TERRORS = TERRORS or check_aspell(
+            SOURCE_DIR, MISC_DIR, ARGS.files, ARGS.quiet
+        )
     if ARGS.top:
-        TERRORS = TERRORS or check_header(ARGS.files, ARGS.quiet)
+        TERRORS = TERRORS or check_header(
+            SOURCE_DIR, MISC_DIR, ARGS.files, ARGS.quiet
+        )
     if ARGS.pylint:
-        TERRORS = TERRORS or check_pylint(ARGS.files, ARGS.quiet)
+        TERRORS = TERRORS or check_pylint(
+            SOURCE_DIR, MISC_DIR, ARGS.files, ARGS.quiet
+        )
     if TERRORS:
         sys.exit(1)

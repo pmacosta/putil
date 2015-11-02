@@ -622,7 +622,6 @@ class ExHandle(object):
             # Decorator flag vector
             idv = [item[3] for item in stack]
             # Fully qualified callable path construction
-            fob, fin, uobj, _ = stack[-1]
             ret = [
                 self._get_callable_full_name(fob, fin, uobj)
                 for fob, fin, uobj, _ in stack

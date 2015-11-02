@@ -381,7 +381,7 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
 
 
 def _check_real_numpy_vector(obj):
-    if ((type(obj) == numpy.ndarray) and
+    if (isinstance(obj, numpy.ndarray) and
        (len(obj.shape) == 1) and (obj.shape[0] > 0) and
        ((obj.dtype.type == numpy.array([0]).dtype.type) or
        (obj.dtype.type == numpy.array([0.0]).dtype.type))):
@@ -391,8 +391,8 @@ def _check_real_numpy_vector(obj):
 
 def _check_increasing_real_numpy_vector(obj):
     # pylint: disable=C0103
-    if ((type(obj) != numpy.ndarray) or ((type(obj) == numpy.ndarray) and
-       ((len(obj.shape) > 1) or ((len(obj.shape) == 1) and
+    if ((not isinstance(obj, numpy.ndarray)) or (isinstance(obj, numpy.ndarray)
+       and ((len(obj.shape) > 1) or ((len(obj.shape) == 1) and
        (obj.shape[0] == 0))))):
         return True
     if (((obj.dtype.type == numpy.array([0]).dtype.type) or

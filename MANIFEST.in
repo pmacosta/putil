@@ -1,40 +1,38 @@
 # MANIFEST.in
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-
-# This file
-include MANIFEST.in
-
-# Top-level build scripts
-include setup.py
-
-# Project information and meta-data
 include AUTHORS.rst
 include CHANGELOG.rst
 include LICENSE
+include Makefile
 include MANIFEST.in
 include README.rst
+include setup.cfg
+include setup.py
 include TODO.rst
-
-# All documentation
-recursive-include docs *.rst
+include tox.ini
+include .travis.yml
+include .pylintrc
+recursive-include data *
 include docs/make.bat
 include docs/Makefile
 include docs/conf.py
 include docs/__init__.py
+recursive-include docs *.rst
 include docs/_static/.keepdir
-recursive-include docs/support *.py *.csv *.png *.odg *.sh
-
-# All build and testing tools
-include requirements.txt
-include shippable.yml
-include tox.ini
+recursive-include docs/support *.py
+recursive-include docs/support *.csv
+recursive-include docs/support *.png
+recursive-include docs/support *.odg
+recursive-include docs/support *.sh
+recursive-include docs/support *.txt
 include tests/pytest.ini
 recursive-include tests *.py
+recursive-include tests/pcsv *.py
 recursive-include tests/plot *.py
 recursive-include tests/support *.py
 recursive-include tests/support/ref_images *.png
 recursive-include tests/support/ref_images_ci *.png
-
-# All convenience scripts
-recursive-include sbin *
+recursive-include sbin *.sh
+recursive-include sbin *.py
+recursive-include requirements *
