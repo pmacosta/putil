@@ -355,7 +355,7 @@ def test_line_style_option_contract():
 
 def test_non_negative_integer():
     """ Test PosInteger pseudo-type """
-    items = ['b', -3, 5.2]
+    items = ['b', True, -3, 5.2]
     for item in items:
         putil.test.assert_exception(
             putil.ptypes.non_negative_integer,

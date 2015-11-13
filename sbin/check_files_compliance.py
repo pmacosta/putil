@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 import argparse
+import datetime
 import glob
 import os
 import re
@@ -120,6 +121,7 @@ def check_header(sdir, mdir, files, no_print=False):
     }
     olist = []
     errors = False
+    year = datetime.datetime.now().year
     for fname in pkg_files(sdir, mdir, files, list(fdict.keys())):
         basename = os.path.basename(fname)
         extension = os.path.splitext(fname)[1]
@@ -127,8 +129,8 @@ def check_header(sdir, mdir, files, no_print=False):
         header_lines = [
             '{0} {1}'.format(comment, basename),
             (
-                '{0} Copyright (c) 2013-2015 '
-                'Pablo Acosta-Serafini'.format(comment)
+                '{0} Copyright (c) 2013-{1} '
+                'Pablo Acosta-Serafini'.format(comment, year)
             ),
             '{0} See LICENSE for details'.format(comment)
         ]

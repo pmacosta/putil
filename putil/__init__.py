@@ -3,4 +3,4 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-__version__ = '0.9.0.5'
+from putil.version import __version__

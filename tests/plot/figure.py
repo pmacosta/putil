@@ -10,12 +10,12 @@ import os
 import pytest
 import re
 import sys
-import tempfile
 if sys.hexversion < 0x03000000:
     import mock
 else:
     import unittest.mock as mock
 
+import putil.misc
 import putil.plot
 from .fixtures import compare_images, IMGTOL
 sys.path.append('..')
@@ -138,10 +138,10 @@ class TestFigure(object):
         obj = putil.plot.Figure(
             panels=default_panel
         )
-        with tempfile.NamedTemporaryFile(delete=False) as fobj:
-            obj.save(fname=fobj.name, ftype='PNG')
-        with tempfile.NamedTemporaryFile(delete=False) as fobj:
-            obj.save(fname=fobj.name, ftype='EPS')
+        with putil.misc.TmpFile() as fname:
+            obj.save(fname=fname, ftype='PNG')
+        with putil.misc.TmpFile() as fname:
+            obj.save(fname=fname, ftype='EPS')
         # Test extension handling
         # No exception
         fname = os.path.join(os.path.dirname(__file__), 'test_file1')

@@ -246,7 +246,7 @@ class Figure(object):
 
         .. =[=cog
         .. import docs.support.incfile
-        .. docs.support.incfile.incfile('plot_example_7.py', cog)
+        .. docs.support.incfile.incfile('plot_example_7.py', cog.out)
         .. =]=
         .. code-block:: python
 

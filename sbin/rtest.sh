@@ -4,6 +4,7 @@
 # See LICENSE for details
 
 opath=${PATH}
-export PATH=/home/pacosta/python/python2.6/bin:/home/pacosta/python/python2.7/bin:/home/pacosta/python/python3.3/bin:/home/pacosta/python/python3.4/bin:/home/pacosta/python/python3.5/bin:${PATH}
-tox -- "$@"
+num_cpus=$(python -c "from __future__ import print_function; import multiprocessing; print(multiprocessing.cpu_count())")
+export PATH=${HOME}/python/python2.6/bin:${HOME}/python/python2.7/bin:${HOME}/python/python3.3/bin:${HOME}/python/python3.4/bin:${HOME}/python/python3.5/bin:${PATH}
+tox -- -n ${num_cpus} "$@"
 export PATH=${opath}

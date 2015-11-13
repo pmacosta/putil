@@ -1,7 +1,7 @@
 .. test.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _test-module:
+.. py:module:: putil.test
 
 ###########
 test module

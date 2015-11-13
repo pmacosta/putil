@@ -23,14 +23,15 @@ def freeze_pkg_vers(fnames):
         stderr=subprocess.STDOUT
     )
     lines, _ = pobj.communicate()
+    if sys.hexversion >= 0x03000000:
+        lines = lines.decode('utf-8')
     pkgs = {'numpy':'', 'scipy':'', 'matplotlib':''}
     for line in lines.split('\n'):
         for pkg in pkgs:
             if line.startswith(pkg):
                 pkgs[pkg] = line
     for fname in fnames:
-        with open(fname, 'r') as fobj:
-            ilines = fobj.readlines()
+        ilines = read_file(fname)
         olines = []
         for iline in ilines:
             iline = iline.rstrip()
@@ -57,7 +58,7 @@ def insert_element(items, item, pos):
 
 
 def gen_req_files(freeze_ver=False):
-    # pylint: disable=R0912
+    # pylint: disable=R0912,R0914
     """ Generate requirements files """
     fdict = json_load(os.path.join('data', 'requirements.json'))
     pyvers = ['py{0}'.format(item.replace('.', '')) for item in SUPPORTED_VERS]
@@ -130,8 +131,24 @@ def gen_req_files(freeze_ver=False):
         freeze_pkg_vers(fnames)
 
 
+def read_file(fname):
+    """ Read file in Python 2 or Python 3 """
+    if sys.hexversion < 0x03000000:
+        with open(fname, 'r') as fobj:
+            return fobj.readlines()
+    else:
+        try:
+            with open(fname, 'r') as fobj:
+                return fobj.readlines()
+        except UnicodeDecodeError:
+            with open(fname, 'r', encoding='utf-8') as fobj:
+                return fobj.readlines()
+        except:
+            raise
+
+
 if __name__ == '__main__':
     FREEZE_VER = False
-    if (len(sys.argv) > 1) and (sys.argv[1].lower() == 'win'):
+    if (len(sys.argv) > 1) and (sys.argv[1].lower() == 'freeze'):
         FREEZE_VER = True
     gen_req_files(FREEZE_VER)

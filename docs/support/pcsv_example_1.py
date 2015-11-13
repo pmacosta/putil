@@ -3,11 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0104
 
-import putil.pcsv, tempfile
+import putil.misc, putil.pcsv
 
 def main():
-    with tempfile.NamedTemporaryFile() as fobj:
-        fname = fobj.name
+    with putil.misc.TmpFile() as fname:
         ref_data = [
             ['Item', 'Cost'],
             [1, 9.99],

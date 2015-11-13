@@ -3,13 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0104
 
-import putil.pcsv, tempfile
+import putil.misc, putil.pcsv
 
 def main():
-    ctx = tempfile.NamedTemporaryFile
-    with ctx() as ifobj:
-        with ctx() as rfobj:
-            with ctx() as ofobj:
+    ctx = putil.misc.TmpFile
+    with ctx() as ifname:
+        with ctx() as rfname:
+            with ctx() as ofname:
                 # Create first (input) data file
                 input_data = [
                     ['Item', 'Cost'],
@@ -17,7 +17,6 @@ def main():
                     [2, 10000],
                     [3, 0.10]
                 ]
-                ifname = ifobj.name
                 putil.pcsv.write(ifname, input_data, append=False)
                 # Create second (replacement) data file
                 replacement_data = [
@@ -26,12 +25,10 @@ def main():
                     ['Sue', 20, 'Thursday'],
                     ['Pat', 15, 'Tuesday']
                 ]
-                rfname = rfobj.name
                 putil.pcsv.write(rfname, replacement_data, append=False)
                 # Replace "Cost" column of input file with "Rate" column
                 # of replacement file for "Items" 2 and 3 with "Staff" data
                 # from Joe and Pat. Save resulting data to another file
-                ofname = ofobj.name
                 putil.pcsv.replace(
                     ifname=ifname,
                     idfilter=('Cost', {'Item':[1, 3]}),

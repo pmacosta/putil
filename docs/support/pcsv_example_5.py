@@ -3,12 +3,12 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0104
 
-import putil.pcsv, tempfile
+import putil.misc, putil.pcsv
 
 def main():
-    ctx = tempfile.NamedTemporaryFile
-    with ctx() as ifobj:
-        with ctx() as ofobj:
+    ctx = putil.misc.TmpFile
+    with ctx() as ifname:
+        with ctx() as ofname:
             # Create first data file
             data = [
                 ['Ctrl', 'Ref', 'Result'],
@@ -18,8 +18,6 @@ def main():
                 [2, 5, 40],
                 [3, 5, 50]
             ]
-            ifname = ifobj.name
-            ofname = ofobj.name
             putil.pcsv.write(ifname, data, append=False)
             # Sort
             putil.pcsv.dsort(

@@ -10,7 +10,6 @@ import os
 import pytest
 import re
 import sys
-import tempfile
 from itertools import product
 if sys.hexversion < 0x03000000:
     import mock
@@ -26,6 +25,7 @@ TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
 sys.path.append(SUPPORT_DIR)
 import exh_support_module_1
+import exh_support_module_2
 
 if sys.hexversion > 0x03000000:
     def exec_function(source, filename, global_map):
@@ -106,8 +106,8 @@ def test_star_exh_obj():
     new_exh_obj._exclude = ['putil.eng']
     putil.exh.del_exh_obj()
     # callables_fname parameter
-    with tempfile.NamedTemporaryFile() as fobj:
-        callables_fname = fobj.name
+    with putil.misc.TmpFile() as fname:
+        callables_fname = fname
         pobj.save(callables_fname)
         new_exh_obj = putil.exh.get_or_create_exh_obj(
             callables_fname=callables_fname
@@ -182,8 +182,8 @@ class TestExHandle(object):
         pobj = putil.pinspect.Callables(
             [sys.modules['putil.eng'].__file__]
         )
-        with tempfile.NamedTemporaryFile() as fobj:
-            callables_fname = fobj.name
+        with putil.misc.TmpFile() as fname:
+            callables_fname = fname
             pobj.save(callables_fname)
             exobj = putil.exh.ExHandle(callables_fname=callables_fname)
         assert pobj == exobj._callables_obj
@@ -682,6 +682,22 @@ class TestExHandle(object):
             assert re.compile(r'\d+/class_exception').match(exname)
             assert sorted(erec.items()) == ref
         ###
+        # Test property search
+        ###
+        exobj = putil.exh.ExHandle(
+            full_cname=True,
+            exclude=['_pytest', 'tests.test_exh']
+        )
+        cobj = exh_support_module_2.MyClass(exobj)
+        cobj.value = 5
+        assert len(list(cobj._exhobj._ex_dict.keys())) == 1
+        key = list(cobj._exhobj._ex_dict.keys())[0]
+        item = cobj._exhobj._ex_dict[key]
+        assert item['function'][0].endswith(
+            'exh_support_module_2.MyClass.value(setter)'
+        )
+        assert item['msg'] == 'Illegal value'
+        ###
         # Test case where callable is dynamic and does not have a code ID
         ###
         def mock_get_code_id_from_obj(obj):
@@ -1089,10 +1105,10 @@ class TestExHandle(object):
         obj1 = putil.pinspect.Callables(
             [sys.modules['putil.eng'].__file__]
         )
-        with tempfile.NamedTemporaryFile() as fobj1:
-            with tempfile.NamedTemporaryFile() as fobj2:
-                callables_fname1 = fobj1.name
-                callables_fname2 = fobj2.name
+        with putil.misc.TmpFile() as fname1:
+            with putil.misc.TmpFile() as fname2:
+                callables_fname1 = fname1
+                callables_fname2 = fname2
                 obj1.save(callables_fname1)
                 obj2 = putil.exh.ExHandle(callables_fname=callables_fname1)
                 obj2.save_callables(callables_fname2)

@@ -5,4 +5,4 @@
 Changelog
 =========
 
-v0.9.0.6, 2015-04-02 -- Initial public release
+* 0.9.1rc1 [2015-11-30]: Initial public release

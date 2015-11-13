@@ -4,7 +4,6 @@
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
 import pytest
-import tempfile
 
 import putil.pcsv
 import putil.test
@@ -133,8 +132,7 @@ def test_concatenate():
         [9, 10, 11, 12]
     ]
     # Save to a different file
-    with tempfile.NamedTemporaryFile() as fwobj:
-        ofname = fwobj.name
+    with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_input_file) as fname1:
             with putil.misc.TmpFile(write_replacement_file) as fname2:
                 putil.pcsv.concatenate(fname1, fname2, ofname=ofname)
@@ -148,6 +146,19 @@ def test_concatenate():
             [5, 6, 7, 8],
             [9, 10, 11, 12]
         ]
+    # Starting row
+    with putil.misc.TmpFile() as ofname:
+        with putil.misc.TmpFile(write_input_file) as fname1:
+            with putil.misc.TmpFile(write_replacement_file) as fname2:
+                putil.pcsv.concatenate(
+                    fname1, fname2, ofname=ofname, frow1=4, frow2=3)
+            obj = putil.pcsv.CsvFile(fname=ofname, has_header=True)
+        assert obj.data() == [
+            ['low', 30, 300, 3000],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12]
+        ]
+
 
 @pytest.mark.concatenate
 def test_concatenate_exceptions():
@@ -316,6 +327,49 @@ def test_concatenate_exceptions():
                     'and output columns are different'
                 )
             )
+    # Starting row
+    with putil.misc.TmpFile(write_file) as fname1:
+        with putil.misc.TmpFile(write_file) as fname2:
+            # Invalid row_start
+            for item in ['a', True, -1]:
+                for par in ['frow1', 'frow2']:
+                    putil.test.assert_exception(
+                        putil.pcsv.concatenate,
+                        {
+                            'fname1':fname1,
+                            'dfilter1':['Ctrl'],
+                            'fname2':fname2,
+                            'dfilter2':['Ctrl'],
+                            par:item,
+                        },
+                        RuntimeError,
+                        'Argument `{0}` is not valid'.format(par)
+                    )
+            putil.test.assert_exception(
+                putil.pcsv.concatenate,
+                {
+                    'fname1':fname1,
+                    'dfilter1':['Ctrl'],
+                    'fname2':fname2,
+                    'dfilter2':['Ctrl'],
+                    'frow1':200,
+                },
+                RuntimeError,
+                'File {0} has no valid data'.format(fname1)
+            )
+            putil.test.assert_exception(
+                putil.pcsv.concatenate,
+                {
+                    'fname1':fname1,
+                    'dfilter1':['Ctrl'],
+                    'fname2':fname2,
+                    'dfilter2':['Ctrl'],
+                    'frow2':200,
+                },
+                RuntimeError,
+                'File {0} has no valid data'.format(fname2)
+            )
+
     # Output file exceptions
     with putil.misc.TmpFile(write_file) as fname1:
         with putil.misc.TmpFile(write_file) as fname2:

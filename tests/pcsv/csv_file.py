@@ -6,7 +6,6 @@
 import os
 import pytest
 import sys
-import tempfile
 if sys.hexversion < 0x03000000:
     import mock
 else:
@@ -72,9 +71,9 @@ class TestCsvFile(object):
         for extype, exmsg, fobj in func_pointers:
             with pytest.raises(extype) as excinfo:
                 with putil.misc.TmpFile(fobj) as fname:
-                    putil.pcsv.CsvFile(fname=fname)
+                    putil.pcsv.CsvFile(fname=os.path.normpath(fname))
             ref = (exmsg.format(fname) if '{0}' in exmsg else exmsg)
-            assert putil.test.get_exmsg(excinfo) == ref
+            assert putil.test.get_exmsg(excinfo) == os.path.normpath(ref)
         with putil.misc.TmpFile(write_file) as fname:
             putil.test.assert_exception(
                 putil.pcsv.CsvFile,
@@ -116,13 +115,11 @@ class TestCsvFile(object):
 
     def test_eq(self):
         """ Test __eq__ method behavior """
-        with tempfile.NamedTemporaryFile() as fobj:
-            fname = fobj.name
+        with putil.misc.TmpFile() as fname:
             putil.pcsv.write(fname, [['a'], [1]], append=False)
             obj1 = putil.pcsv.CsvFile(fname, dfilter='a')
             obj2 = putil.pcsv.CsvFile(fname, dfilter='a')
-        with tempfile.NamedTemporaryFile() as fobj:
-            fname = fobj.name
+        with putil.misc.TmpFile() as fname:
             putil.pcsv.write(fname, [['a'], [2]], append=False)
             obj3 = putil.pcsv.CsvFile(fname, dfilter='a')
         assert obj1 == obj2
@@ -133,20 +130,26 @@ class TestCsvFile(object):
         """ Test __repr__ method behavior """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        assert repr(obj) == "putil.pcsv.CsvFile(fname='{0}')".format(fname)
+        assert (
+            repr(obj)
+            ==
+            "putil.pcsv.CsvFile(fname=r'{0}')".format(os.path.normpath(fname))
+        )
         obj.dfilter = 'Ctrl'
         assert (
             repr(obj)
             ==
-            "putil.pcsv.CsvFile(fname='{0}', dfilter=['Ctrl'])".format(fname)
+            "putil.pcsv.CsvFile(fname=r'{0}', dfilter=['Ctrl'])".format(
+                os.path.normpath(fname)
+            )
         )
         obj.dfilter = {'Ctrl':2}
         assert (
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{0}', "
-                "dfilter={{'Ctrl': 2}})".format(fname)
+                "putil.pcsv.CsvFile(fname=r'{0}', "
+                "dfilter={{'Ctrl': 2}})".format(os.path.normpath(fname))
             )
         )
         obj.dfilter = ('Ctrl', {'Result': 40})
@@ -154,8 +157,10 @@ class TestCsvFile(object):
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{0}', "
-                "dfilter=({{'Result': 40}}, ['Ctrl']))".format(fname)
+                "putil.pcsv.CsvFile(fname=r'{0}', "
+                "dfilter=({{'Result': 40}}, ['Ctrl']))".format(
+                    os.path.normpath(fname)
+                )
             )
         )
         with putil.misc.TmpFile(write_file) as fname:
@@ -163,15 +168,19 @@ class TestCsvFile(object):
         assert (
             repr(obj)
             ==
-            "putil.pcsv.CsvFile(fname='{0}', has_header=False)".format(fname)
+            "putil.pcsv.CsvFile(fname=r'{0}', has_header=False)".format(
+                os.path.normpath(fname)
+            )
         )
         obj.dfilter = 0
         assert (
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{0}', "
-                "dfilter=[0], has_header=False)".format(fname)
+                "putil.pcsv.CsvFile(fname=r'{0}', "
+                "dfilter=[0], has_header=False)".format(
+                    os.path.normpath(fname)
+                )
             )
         )
         obj.dfilter = {0:2}
@@ -179,8 +188,10 @@ class TestCsvFile(object):
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{0}', "
-                "dfilter={{0: 2}}, has_header=False)".format(fname)
+                "putil.pcsv.CsvFile(fname=r'{0}', "
+                "dfilter={{0: 2}}, has_header=False)".format(
+                    os.path.normpath(fname)
+                )
             )
         )
         obj.dfilter = (0, {2: 40})
@@ -188,23 +199,23 @@ class TestCsvFile(object):
             repr(obj)
             ==
             (
-                "putil.pcsv.CsvFile(fname='{0}', "
+                "putil.pcsv.CsvFile(fname=r'{0}', "
                 "dfilter=({{2: 40}}, [0]), "
-                "has_header=False)".format(fname)
+                "has_header=False)".format(os.path.normpath(fname))
             )
         )
 
     def test_str(self):
         """ Test __str__ method behavior """
         with putil.misc.TmpFile(write_file) as fname:
-            obj = putil.pcsv.CsvFile(fname=fname)
+            obj = putil.pcsv.CsvFile(fname=os.path.normpath(fname))
         ref = (
             'File: {0}\n'
             "Header: ['Ctrl', 'Ref', 'Result']\n"
             'Row filter: None\n'
             'Column filter: None\n'
             'Rows: 5\n'
-            'Columns: 3'.format(fname)
+            'Columns: 3'.format(os.path.normpath(fname))
         )
         assert str(obj) == ref
         obj.cfilter = 'Ref'
@@ -214,7 +225,7 @@ class TestCsvFile(object):
             'Row filter: None\n'
             "Column filter: ['Ref']\n"
             'Rows: 5\n'
-            'Columns: 3 (1 filtered)'.format(fname)
+            'Columns: 3 (1 filtered)'.format(os.path.normpath(fname))
         )
         assert str(obj) == ref
         obj.rfilter = {'Ctrl':[1, 3]}
@@ -224,7 +235,7 @@ class TestCsvFile(object):
             "Row filter: {{'Ctrl': [1, 3]}}\n"
             "Column filter: ['Ref']\n"
             'Rows: 5 (3 filtered)\n'
-            'Columns: 3 (1 filtered)'.format(fname)
+            'Columns: 3 (1 filtered)'.format(os.path.normpath(fname))
         )
         assert str(obj) == ref
 
@@ -236,6 +247,29 @@ class TestCsvFile(object):
         with putil.misc.TmpFile(write_no_header_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
         assert obj.data() == [[1, 4, 7], [2, 5, 8], [3, 6, 9], [1, 6, 6]]
+        with putil.misc.TmpFile(write_data_start_file) as fname:
+            obj = putil.pcsv.CsvFile(fname=fname, frow=5)
+        assert obj.data() == [[2, 5, 40], [3, 5, 50]]
+        with putil.misc.TmpFile(write_no_header_file) as fname:
+            obj = putil.pcsv.CsvFile(fname=fname, has_header=False, frow=2)
+        assert obj.data() == [[2, 5, 8], [3, 6, 9], [1, 6, 6]]
+
+    def test_data_start_exceptions(self):
+        """ Test frow parameter exceptions """
+        with putil.misc.TmpFile(write_data_start_file) as fname:
+            for item in ['a', True, -1]:
+                putil.test.assert_exception(
+                    putil.pcsv.CsvFile,
+                    {'fname':fname, 'frow':item},
+                    RuntimeError,
+                    'Argument `frow` is not valid'
+                )
+            putil.test.assert_exception(
+                putil.pcsv.CsvFile,
+                {'fname':fname, 'frow':10},
+                RuntimeError,
+                'File {0} has no valid data'.format(fname)
+            )
 
     def test_add_dfilter(self):
         """ Test add_dfilter method behavior """
@@ -800,61 +834,66 @@ class TestCsvFile(object):
 
     def test_write(self):
         """ Test write method behavior """
+        lsep = '\r\n'
         # Check saving filtered data
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Ctrl':1})
         ofname = fname
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.cfilter = 'Result'
             obj.write(fname=fname, filtered=True, append=False)
             written_data = _read(fname)
-        assert written_data == 'Result\r\n10\r\n20\r\n'
+        assert written_data == 'Result{0}10{0}20{0}'.format(lsep)
         # Test default fname with renamed single column
         obj.rfilter = {'Ctrl':2}
         obj.write(filtered=True, append=False, header='MyCol')
         written_data = _read(ofname)
-        assert written_data == 'MyCol\r\n30\r\n40\r\n'
+        assert written_data == 'MyCol{0}30{0}40{0}'.format(lsep)
         obj.reset_dfilter()
         # Test repeated columns
         obj.rfilter = {'Ctrl':2}
         obj.cfilter = ['Result', 'Ref', 'Result']
         obj.write(filtered=True, append=False)
         written_data = _read(ofname)
-        assert written_data == 'Result,Ref,Result\r\n30,4,30\r\n40,5,40\r\n'
+        assert (
+            written_data
+            ==
+            'Result,Ref,Result{0}30,4,30{0}40,5,40{0}'.format(lsep)
+        )
         obj.reset_dfilter()
         # Test repeated columns with renamed header
         obj.reset_dfilter('c')
         obj.rfilter = {'Ctrl':2}
         obj.write(filtered=True, append=False, header=['A', 'B', 'C'])
         written_data = _read(ofname)
-        assert written_data == 'A,B,C\r\n2,4,30\r\n2,5,40\r\n'
+        assert written_data == 'A,B,C{0}2,4,30{0}2,5,40{0}'.format(lsep)
         obj.reset_dfilter('R')
         # Check saving unfiltered data column-sliced and also that
         # default for append argument is False
         obj.cfilter = 'Result'
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.write(fname=fname, filtered='c')
             written_data = _read(fname)
-        assert written_data == 'Result\r\n10\r\n20\r\n30\r\n40\r\n50\r\n'
+        assert (
+            written_data
+            ==
+            'Result{0}10{0}20{0}30{0}40{0}50{0}'.format(lsep)
+        )
         # Check saving all data
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.write(fname=fname, append=False)
             written_data = _read(fname)
         ref = (
-            'Ctrl,Ref,Result\r\n'
-            '1,3,10\r\n'
-            '1,4,20\r\n'
-            '2,4,30\r\n'
-            '2,5,40\r\n'
-            '3,5,50\r\n'
+            'Ctrl,Ref,Result{0}'
+            '1,3,10{0}'
+            '1,4,20{0}'
+            '2,4,30{0}'
+            '2,5,40{0}'
+            '3,5,50{0}'.format(lsep)
         )
         assert written_data == ref
         obj.cfilter = ['Ctrl', 'Result']
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.write(
                 fname=fname,
                 filtered=True,
@@ -862,10 +901,13 @@ class TestCsvFile(object):
                 append=False
             )
             written_data = _read(fname)
-        assert written_data == '1,10\r\n1,20\r\n2,30\r\n2,40\r\n3,50\r\n'
+        assert (
+            written_data
+            ==
+            '1,10{0}1,20{0}2,30{0}2,40{0}3,50{0}'.format(lsep)
+        )
         obj. cfilter = [0, 2]
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.write(
                 fname=fname,
                 filtered=True,
@@ -873,9 +915,12 @@ class TestCsvFile(object):
                 append=False
             )
             written_data = _read(fname)
-        assert written_data == '1,10\r\n1,20\r\n2,30\r\n2,40\r\n3,50\r\n'
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        assert (
+            written_data
+            ==
+            '1,10{0}1,20{0}2,30{0}2,40{0}3,50{0}'.format(lsep)
+        )
+        with putil.misc.TmpFile() as fname:
             obj.reset_dfilter()
             obj.rfilter = {'Result':[10, 30]}
             obj.write(fname=fname, filtered=True, header=True, append=False)
@@ -883,52 +928,55 @@ class TestCsvFile(object):
             obj.write(fname=fname, filtered=True, header=False, append=True)
             written_data = _read(fname)
         ref = (
-            'Ctrl,Ref,Result\r\n'
-            '1,3,10\r\n'
-            '2,4,30\r\n'
-            '1,4,20\r\n'
-            '3,5,50\r\n'
+            'Ctrl,Ref,Result{0}'
+            '1,3,10{0}'
+            '2,4,30{0}'
+            '1,4,20{0}'
+            '3,5,50{0}'.format(lsep)
         )
         assert written_data == ref
         with putil.misc.TmpFile(write_data_start_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-            with tempfile.NamedTemporaryFile() as fwobj:
-                fname = fwobj.name
+            with putil.misc.TmpFile() as fname:
                 obj.write(fname=fname)
                 written_data = _read(fname)
-        ref = "Ctrl,Ref,Result\r\n2,'',30\r\n2,5,40\r\n3,5,50\r\n"
+        ref = "Ctrl,Ref,Result{0}2,'',30{0}2,5,40{0}3,5,50{0}".format(lsep)
         assert written_data == ref
         # Check file without header
         with putil.misc.TmpFile(write_no_header_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
         ofname = fname
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.cfilter = 1
             obj.write(fname=fname, filtered=True)
             written_data = _read(fname)
-        assert written_data == '1\r\n4\r\n5\r\n6\r\n6\r\n'
+        assert written_data == '1{0}4{0}5{0}6{0}6{0}'.format(lsep)
         obj.rfilter = {0:1}
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.cfilter = [1, 2]
             obj.write(fname=fname, filtered=True, header=False)
             written_data = _read(fname)
-        assert written_data == '4,7\r\n6,6\r\n'
+        assert written_data == '4,7{0}6,6{0}'.format(lsep)
         # Check None round trip
         with putil.misc.TmpFile(write_empty_cols) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
         assert obj.data() == [[1, None, 10], [1, 4, None]]
-        with tempfile.NamedTemporaryFile() as fwobj:
-            fname = fwobj.name
+        with putil.misc.TmpFile() as fname:
             obj.write(fname, append=False)
-            with open(fname, 'r') as fobj:
-                data = ''.join([line for line in fobj])
-        sep = '\r\n' if sys.hexversion < 0x03000000 else '\n'
+            if sys.hexversion < 0x03000000:
+                with open(fname, 'r') as fobj:
+                    data = fobj.readlines()
+            else:
+                with open(fname, 'r', newline='') as fobj:
+                    data = fobj.readlines()
         assert (
             data
             ==
-            "Col1,Col2,Col3{sep}1,'',10{sep}1,4,''{sep}".format(sep=sep)
+            [
+                'Col1,Col2,Col3{0}'.format(lsep),
+                "1,'',10{0}".format(lsep),
+                "1,4,''{0}".format(lsep)
+            ]
         )
 
     @pytest.mark.csv_file

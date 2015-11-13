@@ -4,7 +4,7 @@
 # pylint: disable=C0111,W0105,W0611
 
 import putil.pcontracts
-from putil.ptypes import csv_col_sort, file_name_exists
+from putil.ptypes import csv_col_sort, file_name_exists, non_negative_integer
 from .csv_file import CsvFile
 from .write import write
 
@@ -30,10 +30,11 @@ exobj = trace_ex_pcsv_dsort.trace_module(no_print=True)
     fname='file_name_exists',
     order='csv_col_sort',
     has_header=bool,
+    frow='non_negative_integer',
     ofname='None|file_name',
 )
 def dsort(
-    fname, order, has_header=True, ofname=None):
+    fname, order, has_header=True, frow=0, ofname=None):
     r"""
     Sorts file data
 
@@ -48,6 +49,11 @@ def dsort(
                        (True) or not (False)
     :type  has_header: boolean
 
+    :param frow: First data row (starting from 1). If 0 the row where data
+                 starts is auto-detected as the first row that has a number
+                 (integer of float) in at least one of its columns
+    :type  frow: :ref:`NonNegativeInteger`
+
     :param ofname: Name of the output comma-separated values file, the file
                    that will contain the sorted data. If None the sorting is
                    done "in place"
@@ -61,6 +67,8 @@ def dsort(
 
      * RuntimeError (Argument \`fname\` is not valid)
 
+     * RuntimeError (Argument \`frow\` is not valid)
+
      * RuntimeError (Argument \`has_header\` is not valid)
 
      * RuntimeError (Argument \`ofname\` is not valid)
@@ -68,6 +76,8 @@ def dsort(
      * RuntimeError (Argument \`order\` is not valid)
 
      * RuntimeError (Column headers are not unique in file *[fname]*)
+
+     * RuntimeError (File *[fname]* has no valid data)
 
      * RuntimeError (File *[fname]* is empty)
 
@@ -78,6 +88,6 @@ def dsort(
     .. [[[end]]]
     """
     ofname = fname if ofname is None else ofname
-    obj = CsvFile(fname=fname, has_header=has_header)
+    obj = CsvFile(fname=fname, has_header=has_header, frow=frow)
     obj.dsort(order)
     obj.write(fname=ofname, header=has_header, append=False)

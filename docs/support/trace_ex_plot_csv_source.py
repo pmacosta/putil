@@ -24,8 +24,26 @@ def trace_module(no_print=True):
         'indep_var',
         'dep_var'
     )
+    module_exclude_list = ['putil.eng']
+    callable_exclude_list = [
+        'putil.pcsv.csv_file.CsvFile._set_cfilter',
+        'putil.pcsv.csv_file.CsvFile._set_dfilter',
+        'putil.pcsv.csv_file.CsvFile._set_has_header',
+        'putil.pcsv.csv_file.CsvFile._validate_frow',
+        'putil.pcsv.csv_file.CsvFile.data',
+        'putil.pcsv.csv_file.CsvFile.header',
+        'putil.pcsv.csv_file.CsvFile.cfilter',
+        'putil.pcsv.csv_file.CsvFile.dfilter',
+        'putil.pcsv.csv_file.CsvFile.reset_dfilter'
+    ]
     return docs.support.trace_support.run_trace(
-        mname, fname, module_prefix, callable_names, no_print, ['putil.eng']
+        mname,
+        fname,
+        module_prefix,
+        callable_names,
+        no_print,
+        module_exclude_list,
+        callable_exclude_list
     )
 
 

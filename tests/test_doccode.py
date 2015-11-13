@@ -1,7 +1,7 @@
 # test_doccode.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,R0914,W0212,W0640
+# pylint: disable=C0111,C0302,R0914,R0915,W0212,W0640
 
 from __future__ import print_function
 import matplotlib
@@ -42,34 +42,35 @@ def test_exdoc_doccode():
     proc = subprocess.Popen(['python', script_name], stdout=subprocess.PIPE)
     stdout, stderr = proc.communicate()
     actual_text = remove_header(stdout)
-    ref_text = (
-        'Callable: docs.support.my_module.func\n'
-        '.. Auto-generated exceptions documentation for\n'
-        '.. docs.support.my_module.func\n'
-        '\n'
-        ':raises: TypeError (Argument \\`name\\` is not valid)\n'
-        '\n'
-        '\n'
-        '\n'
-        '\n'
-        '\n'
-        'Callable: docs.support.my_module.MyClass.value\n'
-        '.. Auto-generated exceptions documentation for\n'
-        '.. docs.support.my_module.MyClass.value\n'
-        '\n'
-        ':raises:\n'
-        ' * When assigned\n'
-        '\n'
-        '   * RuntimeError (Argument \\`value\\` is not valid)\n'
-        '\n'
-        ' * When retrieved\n'
-        '\n'
-        '   * RuntimeError (Attribute \\`value\\` not set)\n'
-        '\n'
-        '\n'
-        '\n'
-        '\n'
-    )
+    ref_list = []
+    ref_list.append('Callable: docs.support.my_module.func')
+    ref_list.append('.. Auto-generated exceptions documentation for')
+    ref_list.append('.. docs.support.my_module.func')
+    ref_list.append('')
+    ref_list.append(':raises: TypeError (Argument \\`name\\` is not valid)')
+    ref_list.append('')
+    ref_list.append('')
+    ref_list.append('')
+    ref_list.append('')
+    ref_list.append('')
+    ref_list.append('Callable: docs.support.my_module.MyClass.value')
+    ref_list.append('.. Auto-generated exceptions documentation for')
+    ref_list.append('.. docs.support.my_module.MyClass.value')
+    ref_list.append('')
+    ref_list.append(':raises:')
+    ref_list.append(' * When assigned')
+    ref_list.append('')
+    ref_list.append('   * RuntimeError (Argument \\`value\\` is not valid)')
+    ref_list.append('')
+    ref_list.append(' * When retrieved')
+    ref_list.append('')
+    ref_list.append('   * RuntimeError (Attribute \\`value\\` not set)')
+    ref_list.append('')
+    ref_list.append('')
+    ref_list.append('')
+    ref_list.append('')
+    ref_list.append('')
+    ref_text = (os.linesep).join(ref_list)
     if actual_text != ref_text:
         print('STDOUT: {0}'.format(stdout))
         print('STDERR: {0}'.format(stderr))
@@ -84,12 +85,25 @@ def test_exdoc_doccode():
     script_name = os.path.join(script_dir, 'build-docs.sh')
     input_file = os.path.join(script_dir, 'my_module.py')
     output_file = os.path.join(script_dir, 'my_module_out.py')
+    with putil.misc.ignored(OSError):
+        os.remove(output_file)
+    bin_dir = os.environ['BIN_DIR']
     proc = subprocess.Popen(
-        [script_name, input_file, output_file],
+        [
+            'python',
+            os.path.join(bin_dir, 'cog.py'),
+            '-e',
+            '-o', output_file,
+            input_file
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT
     )
-    proc.communicate()
+    stdout, _ = proc.communicate()
+    retcode = proc.returncode
+    if retcode:
+        print(stdout)
+        raise RuntimeError('Tracing did not complete successfully')
     # Read reference
     ref_fname = os.path.join(script_dir, 'my_module_ref.py')
     with open(ref_fname, 'r') as fobj:
@@ -263,7 +277,7 @@ def test_pcontracts_doccode():
 
 def test_plot_doccode(capsys):
     """ Test used in plot module """
-    # pylint: disable=E1103,R0915
+    # pylint: disable=E1103
     from tests.plot.fixtures import compare_images, IMGTOL
     script_dir = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -279,7 +293,7 @@ def test_plot_doccode(capsys):
     )
     stdout, stderr = proc.communicate()
     test_fname = output_file
-    ref_names = ['plot_example_1_{0}.png'.format(item) for item in range(1, 6)]
+    ref_names = ['plot_example_1_{0}.png'.format(item) for item in range(1, 9)]
     ref_fnames = [os.path.join(script_dir, item) for item in ref_names]
     result = False
     for ref_fname in ref_fnames:
@@ -298,6 +312,25 @@ def test_plot_doccode(capsys):
                 )
             )
         print('Actual image: file://{0}'.format(os.path.realpath(test_fname)))
+        if os.environ.get('APPVEYOR', None):
+            proc = subprocess.Popen(
+                ['appveyor', 'PushArtifact', os.path.realpath(test_fname)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            proc.communicate()
+        elif os.environ.get('TRAVIS', None):
+            tdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            proc = subprocess.Popen(
+                [
+                    os.path.join(tdir, 'sbin', 'png-to-console.sh'),
+                    os.path.realpath(test_fname)
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            stdout, _ = proc.communicate()
+            print(stdout)
     assert result
     with putil.misc.ignored(OSError):
         os.remove(test_fname)

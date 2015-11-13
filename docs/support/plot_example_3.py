@@ -3,13 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,R0903
 
-import putil.misc, putil.pcsv, sys
+import putil.misc, putil.pcsv
 
 def cwrite(fobj, data):
-    if sys.hexversion < 0x03000000:
-        fobj.write(data)
-    else:
-        fobj.write(bytes(data, 'ascii'))
+    fobj.write(data)
 
 def write_csv_file(file_handle):
     cwrite(file_handle, 'Col1,Col2\n')

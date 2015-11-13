@@ -5,4 +5,5 @@
 To-do List
 ==========
 
-None
+* Make docs.support.incfile take a directory parameter, fall back on
+  $TRACER_DIR if defined, otherwise docs/support directory

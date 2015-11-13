@@ -6,12 +6,12 @@
 import os
 import pytest
 import sys
-import tempfile
 if sys.hexversion < 0x03000000:
     import mock
 else:
     import unittest.mock as mock
 
+import putil.misc
 import putil.pcsv
 import putil.test
 if sys.hexversion < 0x03000000:
@@ -91,17 +91,18 @@ def test_write_function_exceptions():
 
 def test_write_function_works():
     """ Test if write() method behaves properly """
-    with tempfile.NamedTemporaryFile() as fwobj:
-        fname = fwobj.name
+    lsep = '\r\n'
+    with putil.misc.TmpFile() as fname:
         putil.pcsv.write(
             fname,
             [['Input', 'Output'], [1, 2], [3, 4]],
             append=False
         )
         written_data = _read(fname)
-    assert written_data == 'Input,Output\r\n1,2\r\n3,4\r\n'
-    with tempfile.NamedTemporaryFile() as fwobj:
-        fname = fwobj.name
+    assert (
+        written_data == 'Input,Output{0}1,2{0}3,4{0}'.format(lsep)
+    )
+    with putil.misc.TmpFile() as fname:
         putil.pcsv.write(
             fname,
             [['Input', 'Output'], [1, 2], [3, 4]],
@@ -109,4 +110,8 @@ def test_write_function_works():
         )
         putil.pcsv.write(fname, [[5.0, 10]], append=True)
         written_data = _read(fname)
-    assert written_data == 'Input,Output\r\n1,2\r\n3,4\r\n5.0,10\r\n'
+    assert (
+        written_data
+        ==
+        'Input,Output{0}1,2{0}3,4{0}5.0,10{0}'.format(lsep)
+    )

@@ -1,4 +1,3 @@
-# putil .gitignore file
 tags
 .coverage
 .tox*
@@ -17,6 +16,7 @@ tags
 *.pyc
 *.spell
 *.json
+.idea
 .eggs
 dist
 putil.egg-info

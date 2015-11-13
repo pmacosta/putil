@@ -11,6 +11,19 @@ import putil.test
 ###
 # Test functions
 ###
+def test_comp_list_of_dicts():
+    """ Test comp_list_of_dicts function behavior """
+    list1 = []
+    list2 = [{'a':5, 'b':6}]
+    assert putil.test.comp_list_of_dicts(list1, list2) == False
+    list1 = [{'a':5}]
+    list2 = [{'a':5, 'b':6}]
+    assert putil.test.comp_list_of_dicts(list1, list2) == False
+    list1 = [{'a':5, 'b':6}]
+    list2 = [{'a':5, 'b':6}]
+    assert putil.test.comp_list_of_dicts(list1, list2) == True
+
+
 def test_exception_type_str():
     """ Test exception_type_str function behavior """
     class MyException(Exception):

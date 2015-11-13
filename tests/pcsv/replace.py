@@ -4,8 +4,8 @@
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
 import pytest
-import tempfile
 
+import putil.misc
 import putil.pcsv
 import putil.test
 from tests.pcsv.files import (
@@ -67,10 +67,9 @@ def test_replace_function():
             ]
     # Two-column replacement with new column names of output file
     # Separate output file generated
-    with tempfile.NamedTemporaryFile() as fwobj:
+    with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_input_file) as ifname:
             with putil.misc.TmpFile(write_replacement_file) as rfname:
-                ofname = fwobj.name
                 putil.pcsv.replace(
                     ifname,
                     ['Data2', 'Ref'],
@@ -87,10 +86,9 @@ def test_replace_function():
             ['low', 12, 300, 11],
         ]
     # Input and replacement files row filtering
-    with tempfile.NamedTemporaryFile() as fwobj:
+    with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_input_file) as ifname:
             with putil.misc.TmpFile(write_replacement_file) as rfname:
-                ofname = fwobj.name
                 putil.pcsv.replace(
                     ifname,
                     (['Data2', 'Ref'], {'Ref':[10, 30]}),
@@ -107,10 +105,9 @@ def test_replace_function():
             ['low', 12, 300, 11],
         ]
     # No header option
-    with tempfile.NamedTemporaryFile() as fwobj:
+    with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_input_file) as ifname:
             with putil.misc.TmpFile(write_replacement_file) as rfname:
-                ofname = fwobj.name
                 putil.pcsv.replace(
                     ifname,
                     ([3, 1], {1:[10, 30]}),
@@ -128,6 +125,17 @@ def test_replace_function():
             ['high', 20, 40, 60],
             ['low', 12, 300, 11],
         ]
+    # Starting row
+    with putil.misc.TmpFile(write_input_file) as ifname:
+        with putil.misc.TmpFile(write_replacement_file) as rfname:
+            putil.pcsv.replace(
+                ifname, ['Ref'], rfname, ['H4'], ifrow=3, rfrow=3)
+            obj = putil.pcsv.CsvFile(fname=ifname)
+            assert obj.header() == ['Ctrl', 'Ref', 'Data1', 'Data2']
+            assert obj.data() == [
+                ['high', 8, 40, 60],
+                ['low', 12, 300, 3000],
+            ]
 
 
 @pytest.mark.replace
@@ -270,6 +278,45 @@ def test_replace_function_exceptions():
                 )
     with putil.misc.TmpFile(write_file) as ifname:
         with putil.misc.TmpFile(write_file) as rfname:
+            # Invalid row_start
+            for item in ['a', True, -1]:
+                for par in ['ifrow', 'rfrow']:
+                    putil.test.assert_exception(
+                        putil.pcsv.replace,
+                        {
+                            'ifname':ifname,
+                            'idfilter':['Ctrl'],
+                            'rfname':rfname,
+                            'rdfilter':['Ctrl'],
+                            par:item,
+                        },
+                        RuntimeError,
+                        'Argument `{0}` is not valid'.format(par)
+                    )
+            putil.test.assert_exception(
+                putil.pcsv.replace,
+                {
+                    'ifname':ifname,
+                    'idfilter':['Ctrl'],
+                    'rfname':rfname,
+                    'rdfilter':['Ctrl'],
+                    'ifrow':200,
+                },
+                RuntimeError,
+                'File {0} has no valid data'.format(ifname)
+            )
+            putil.test.assert_exception(
+                putil.pcsv.replace,
+                {
+                    'ifname':ifname,
+                    'idfilter':['Ctrl'],
+                    'rfname':rfname,
+                    'rdfilter':['Ctrl'],
+                    'rfrow':200,
+                },
+                RuntimeError,
+                'File {0} has no valid data'.format(rfname)
+            )
             # Column numbers are different
             putil.test.assert_exception(
                 putil.pcsv.replace,

@@ -1,7 +1,7 @@
 # setup.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E1111,R0904,W0201,W0621
+# pylint: disable=C0111,E1111,R0904,W0122,W0201,W0621
 
 # Taken in large part from:
 #    http://www.jeffknupp.com/blog/2013/08/16/
@@ -16,7 +16,6 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 import io
 import os
-import re
 import sys
 
 from sbin.functions import (
@@ -37,17 +36,6 @@ if PYTHON_VER not in SUPPORTED_VERS:
 ###
 # Functions
 ###
-def find_version(*file_paths):
-    """ Get version number from package __init__.py file """
-    version_file = read(*file_paths)
-    version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
-    )
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string")
-
-
 def get_short_desc(long_desc):
     """ Get first sentence of first paragraph of long description """
     found = False
@@ -85,7 +73,8 @@ LONG_DESCRIPTION = read(
     os.path.join(PKG_DIR, 'CHANGELOG.rst')
 )
 SHORT_DESC = get_short_desc(LONG_DESCRIPTION)
-SHARE_DIR = os.path.join('usr', 'share', PKG_NAME)
+# Actual directory is os.join(sys.prefix, 'share', PKG_NAME)
+SHARE_DIR = os.path.join('share', PKG_NAME)
 INSTALL_REQUIRES = load_requirements(PKG_DIR, PYTHON_VER, 'source')
 TESTING_REQUIRES = load_requirements(PKG_DIR, PYTHON_VER, 'testing')
 try:
@@ -99,6 +88,24 @@ except IOError:
     print('Contents:')
     print(glob.glob(os.path.join(PKG_DIR, 'data', '*')))
     raise
+
+
+###
+# Extract version (from coveragepy)
+###
+VERSION_PY = os.path.join(PKG_DIR, 'putil/version.py')
+with open(VERSION_PY) as fobj:
+    __version__ = VERSION_INFO = ""
+    # Execute the code in version.py.
+    exec(compile(fobj.read(), VERSION_PY, 'exec'))
+if VERSION_INFO[3] == 'alpha':
+    DEVSTAT = "3 - Alpha"
+elif VERSION_INFO[3] in ['beta', 'candidate']:
+    DEVSTAT = "4 - Beta"
+else:
+    assert VERSION_INFO[3] == 'final'
+    DEVSTAT = "5 - Production/Stable"
+
 
 ###
 # Classes
@@ -134,7 +141,7 @@ class Tox(TestCommand):
 # $ python setup.py sdist ...
 setup(
     name=PKG_NAME,
-    version=find_version(os.path.join(PKG_DIR, PKG_NAME, '__init__.py')),
+    version=__version__,
     url=REPO,
     license='MIT',
     author=AUTHOR,
@@ -154,7 +161,7 @@ setup(
     platforms='any',
     classifiers=[
         'Programming Language :: Python',
-        'Development Status :: 4 - Beta',
+        'Development Status :: '+DEVSTAT,
         'Natural Language :: English',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',

@@ -4,15 +4,15 @@
 # pylint: disable=C0103,C0111,C0302,E0611,E1101,F0401,R0915,W0621
 
 from __future__ import print_function
-import ast
 import datetime
 import inspect
 import os
+import platform
 import pytest
 import re
 import struct
 import sys
-import tempfile
+import time
 from fractions import Fraction
 from numpy import array
 if sys.hexversion < 0x03000000:
@@ -23,9 +23,9 @@ else:
 import putil.misc
 import putil.test
 if sys.hexversion < 0x03000000:
-    from putil.compat2 import _write
+    from putil.compat2 import _unicode_to_ascii, _write
 else:
-    from putil.compat3 import _write
+    from putil.compat3 import _unicode_to_ascii, _write
 
 
 ###
@@ -33,19 +33,24 @@ else:
 ###
 def test_ignored():
     """ Test ignored context manager behavior """
-    with tempfile.NamedTemporaryFile(delete=False) as fobj:
-        with open(fobj.name, 'w') as output_obj:
+    with putil.misc.TmpFile() as fname:
+        with open(fname, 'w') as output_obj:
             output_obj.write('This is a test file')
-        assert os.path.exists(fobj.name)
+        assert os.path.exists(fname)
         with putil.misc.ignored(OSError):
-            os.remove(fobj.name)
-        assert not os.path.exists(fobj.name)
+            os.remove(fname)
+        assert not os.path.exists(fname)
     with putil.misc.ignored(OSError):
         os.remove('_some_file_')
     with pytest.raises(OSError) as excinfo:
         with putil.misc.ignored(RuntimeError):
             os.remove('_some_file_')
-    assert excinfo.value.strerror == "No such file or directory"
+
+    assert excinfo.value.strerror == (
+        'The system cannot find the file specified'
+        if platform.system().lower() == 'windows' else
+        'No such file or directory'
+    )
     assert excinfo.value.filename == '_some_file_'
     assert excinfo.value.errno == 2
 
@@ -64,13 +69,13 @@ def test_timer(capsys):
     assert putil.test.get_exmsg(excinfo) == 'Error in code'
     # Test normal operation
     with putil.misc.Timer() as tobj:
-        sum(range(100))
+        time.sleep(0.5)
     assert isinstance(tobj.elapsed_time, float) and (tobj.elapsed_time > 0)
     tregexp = re.compile(r'Elapsed time: [\d|\.]+\[msec\]')
     with putil.misc.Timer(verbose=True) as tobj:
-        sum(range(100))
+        time.sleep(0.5)
     out, _ = capsys.readouterr()
-    assert tregexp.match(out)
+    assert tregexp.match(out.rstrip())
 
 
 def test_tmp_file():
@@ -333,12 +338,16 @@ def test_make_dir(capsys):
     """ Test make_dir function behavior """
     def mock_os_makedir(file_path):
         print(file_path)
-    home_dir = os.environ['HOME']
+    home_dir = os.path.expanduser('~')
     with mock.patch('os.makedirs', side_effect=mock_os_makedir):
         fname = os.path.join(home_dir, 'some_dir', 'some_file.ext')
         putil.misc.make_dir(fname)
         stdout, _ = capsys.readouterr()
-        assert stdout == os.path.dirname(fname)+'\n'
+        assert (
+            repr(_unicode_to_ascii(stdout.rstrip()))[1:-1]
+            ==
+            repr(os.path.dirname(fname).rstrip())[1:-1]
+        )
         putil.misc.make_dir(
             os.path.join(os.path.abspath(os.sep), 'some_file.ext')
         )
@@ -380,6 +389,53 @@ def test_normalize():
     )
     assert putil.misc.normalize(15, [10, 20]) == 0.5
     assert putil.misc.normalize(15, [10, 20], 0.5) == 0.75
+
+
+def test_normalize_windows_fname():
+    """ Test normalize_windows_fname behavior """
+    obj = putil.misc.normalize_windows_fname
+    ref = (
+        'a/b/c//'
+        if platform.system().lower() != 'windows' else
+        r'a\b\c'
+    )
+    assert obj('a/b/c//') == ref
+    ref = (
+        'a/b/c'
+        if platform.system().lower() != 'windows' else
+        r'a\b\c'
+    )
+    assert obj('a/b/c//', True) == ref
+    ref = (
+        r'\\a\b\c'
+        if platform.system().lower() == 'windows' else
+        r'\\a\\b\\c'
+    )
+    assert (
+        obj(r'\\\\\\\\a\\\\b\\c', True)
+        ==
+        ref
+    )
+    ref = (
+        r'C:\a\b\c'
+        if platform.system().lower() == 'windows' else
+        r'C:\\a\\b\\c'
+    )
+    assert (
+        obj(r'C:\\\\\\\\a\\\\b\\c', True)
+        ==
+        ref
+    )
+    ref = (
+        '\\apps\\temp\\new\\file\\wire'
+        if platform.system().lower() == 'windows' else
+        r'\apps\temp\new\\file\\wire'
+    )
+    assert (
+        obj(r'\apps\temp\new\\\\file\\\\\\\\\\wire', True)
+        ==
+        ref
+    )
 
 
 def test_per():
@@ -466,44 +522,6 @@ def test_pgcd():
     assert putil.misc.pgcd(Fraction(5, 3), Fraction(2, 3)) == Fraction(1, 3)
 
 
-def test_pprint_ast_node():
-    """ Test pprint_ast_node function behavior """
-    putil.test.assert_exception(
-        putil.misc.pprint_ast_node,
-        {'node':5},
-        RuntimeError,
-        'Argument `node` is not valid'
-    )
-    # Rudimentary tests, just to make sure a reasonable output is produced
-    # Actual AST appears to have some variation from Python version to
-    # Python version
-    keywords = [
-        'Module(',
-        'ClassDef(',
-        'FunctionDef(',
-        'Name(',
-        'Load()',
-        'Attribute(',
-        'BinOp',
-    ]
-    ret = []
-    ret.append('class MyClass(object):')
-    ret.append('    def __init__(self, a, b):')
-    ret.append('        self._value = a+b')
-    act = putil.misc.pprint_ast_node(
-        ast.parse('\n'.join(ret)),
-        include_attributes=True,
-        annotate_fields=True
-    )
-    assert all([item in act for item in keywords])
-    act = putil.misc.pprint_ast_node(
-        ast.parse('\n'.join(ret)),
-        include_attributes=True,
-        annotate_fields=False
-    )
-    assert all([item in act for item in keywords])
-
-
 def test_quote_str():
     """ Test quote_str function behavior """
     assert putil.misc.quote_str(5) == 5
@@ -539,7 +557,7 @@ def test_strframe():
     assert lines[7].startswith('f_builtins.....: {')
     assert lines[8].startswith(
         'f_code.........: '
-        '<code object test_strframe at 0x'
+        '<code object test_strframe at '
     )
     assert lines[9].startswith('f_globals......: {')
     assert lines[10].startswith('f_lasti........: ')

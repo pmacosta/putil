@@ -4,13 +4,10 @@
 # pylint: disable=C0111,W0702
 
 from __future__ import print_function
-import sys, putil.misc
+import putil.misc
 
 def write_data(file_handle):
-    if sys.hexversion < 0x03000000:
-        file_handle.write('Hello world!')
-    else:
-        file_handle.write(bytes('Hello world!', 'ascii'))
+    file_handle.write('Hello world!')
 
 def show_tmpfile():
     with putil.misc.TmpFile(write_data) as fname:

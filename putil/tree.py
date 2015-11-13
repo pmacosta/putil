@@ -515,7 +515,7 @@ class Tree(object):
 
         .. =[=cog
         .. import docs.support.incfile
-        .. docs.support.incfile.incfile('tree_example.py', cog)
+        .. docs.support.incfile.incfile('tree_example.py', cog.out)
         .. =]=
         .. code-block:: python
 

@@ -1,7 +1,7 @@
 .. misc.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _misc-module:
+.. py:module:: putil.misc
 
 ###########
 misc module
@@ -28,6 +28,7 @@ File
 ****
 
 .. autofunction:: putil.misc.make_dir
+.. autofunction:: putil.misc.normalize_windows_fname
 
 **********
 Membership
@@ -44,7 +45,6 @@ Miscellaneous
 *************
 
 .. autofunction:: putil.misc.flatten_list
-.. autofunction:: putil.misc.pprint_ast_node
 
 *******
 Numbers

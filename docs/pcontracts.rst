@@ -1,7 +1,7 @@
 .. pcontracts.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _pcontracts-module:
+.. py:module:: putil.pcontracts
 
 #################
 pcontracts module
@@ -13,8 +13,9 @@ customization of the exception type raised and limited customization of the
 exception message. Additionally, custom contracts specified via
 :py:func:`putil.pcontracts.new_contract` and enforced via
 :py:func:`putil.pcontracts.contract` register exceptions using the
-:ref:`exh-module` , which means that the exceptions raised by these contracts
-can be automatically documented using the :ref:`exdoc-module`.
+:py:mod:`putil.exh` module, which means that the exceptions raised by these
+contracts can be automatically documented using the :py:mod:`putil.exdoc`
+module.
 
 The way a contract is specified is identical to the decorator way of specifying
 a contract with the `PyContracts <https://andreacensi.github.io/contracts/>`_
@@ -30,12 +31,12 @@ attached to). For example, the definitions of the custom contracts
 .. literalinclude:: ./support/ptypes.py
     :language: python
     :tab-width: 4
-    :lines: 341-368
+    :lines: 392-420
 
 .. literalinclude:: ./support/ptypes.py
     :language: python
     :tab-width: 4
-    :lines: 371-408
+    :lines: 423-462
 
 This is nearly identical to the way custom contracts are defined using the
 `PyContracts <https://andreacensi.github.io/contracts/>`_ library with two
@@ -154,7 +155,7 @@ Decorators
 
     .. [[[cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '9-17')
+    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog.out, '9-17')
     .. ]]]
     .. code-block:: python
 
@@ -177,7 +178,7 @@ Decorators
 
     .. [[[cog
     .. from docs.support.incfile import incfile
-    .. incfile('pcontracts_example_3.py', cog, '19-30')
+    .. incfile('pcontracts_example_3.py', cog.out, '19-30')
     .. ]]]
     .. code-block:: python
 
@@ -201,7 +202,7 @@ Decorators
 
     .. [[[cog
     .. from docs.support.incfile import incfile
-    .. incfile('pcontracts_example_3.py', cog, '32-40')
+    .. incfile('pcontracts_example_3.py', cog.out, '32-40')
     .. ]]]
     .. code-block:: python
 
@@ -223,7 +224,7 @@ Decorators
 
     .. [[[cog
     .. from docs.support.incfile import incfile
-    .. incfile('pcontracts_example_3.py', cog, '42-58')
+    .. incfile('pcontracts_example_3.py', cog.out, '42-57')
     .. ]]]
     .. code-block:: python
 
@@ -234,16 +235,15 @@ Decorators
             if not arg:
                 raise ValueError(putil.pcontracts.get_exdesc())
 
-        # Define contract that uses exception
-        # (RuntimeError, 'Invalid name')
         @putil.pcontracts.new_contract('Invalid name')
         def custom_contract8(arg):
             if not arg:
                 raise ValueError(putil.pcontracts.get_exdesc())
 
-        # Define contract that uses exception
-        # (TypeError, 'Argument `*[argument_name]*` is not valid')
         @putil.pcontracts.new_contract(TypeError)
+        def custom_contract9(arg):
+            if not arg:
+                raise ValueError(putil.pcontracts.get_exdesc())
 
     .. [[[end]]]
 
@@ -252,16 +252,14 @@ Decorators
 
     .. [[[cog
     .. from docs.support.incfile import incfile
-    .. incfile('pcontracts_example_3.py', cog, '60-65')
+    .. incfile('pcontracts_example_3.py', cog.out, '59-62')
     .. ]]]
     .. code-block:: python
 
+        @putil.pcontracts.new_contract()
+        def custom_contract10(arg):
             if not arg:
                 raise ValueError(putil.pcontracts.get_exdesc())
-
-        # Define contract that uses exception
-        # (RuntimeError, 'Argument `*[argument_name]*` is not valid')
-        @putil.pcontracts.new_contract()
 
     .. [[[end]]]
 
@@ -276,18 +274,15 @@ Decorators
     contract breach.
 
     The exception message can have substitution "tokens" of the form
-    :code:`*[token_name]*`. The token :code:`*[argument_name]*` it is
-    substituted with the argument name the contract is attached to.
+    :code:`*[token_name]*`. The token :code:`*[argument_name]*` is
+    substituted with the argument name the contract it is attached to.
     For example:
 
     .. [[[cog
     .. from docs.support.incfile import incfile
-    .. incfile('pcontracts_example_3.py', cog, '67-77')
+    .. incfile('pcontracts_example_3.py', cog.out, '64-74')
     .. ]]]
     .. code-block:: python
-
-            if not arg:
-                raise ValueError(putil.pcontracts.get_exdesc())
 
         @putil.pcontracts.new_contract((
             TypeError,
@@ -297,6 +292,9 @@ Decorators
             if not isinstance(city, str):
                 raise ValueError(putil.pcontracts.get_exdesc())
 
+        @putil.pcontracts.contract(city_name='custom_contract11')
+        def print_city_name(city_name):
+            return 'City: {0}'.format(city_name)
 
     .. [[[end]]]
 
@@ -315,12 +313,9 @@ Decorators
 
     .. [[[cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog, '79-')
+    .. docs.support.incfile.incfile('pcontracts_example_3.py', cog.out, '76-')
     .. ]]]
     .. code-block:: python
-
-        def print_city_name(city_name):
-            return 'City: {0}'.format(city_name)
 
         @putil.pcontracts.new_contract((
             OSError, 'File `*[fname]*` not found'

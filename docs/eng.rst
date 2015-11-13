@@ -1,7 +1,7 @@
 .. eng.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _eng-module:
+.. py:module:: putil.eng
 
 ##########
 eng module

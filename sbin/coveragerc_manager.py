@@ -44,16 +44,28 @@ def main(argv):
     """ Processing """
     # pylint: disable=R0912,R0914,R0915,W0702
     debug = True
-    env = argv[0]
+    env = argv[0].strip('"').strip("'")
     # Unpack command line arguments
+    print('Coverage manager')
+    print('Arguments received: {0}'.format(argv))
     if env == 'tox':
+        print('Tox mode')
         if len(argv[1:]) == 4:
             mode_flag, interp, _, site_pkg_dir, submodules, module = (
                 argv[1:]+[SUBMODULES_LIST, '']
             )
+            print('   mode_flag: {0}'.format(mode_flag))
+            print('   interp: {0}'.format(interp))
+            print('   site_pkg_dir: {0}'.format(site_pkg_dir))
+            print('   submodules: {0}'.format(submodules))
+            print('   module: {0}'.format(module))
         else:
             mode_flag, interp, _, module = argv[1:]+['']
+            print('   mode_flag: {0}'.format(mode_flag))
+            print('   interp: {0}'.format(interp))
+            print('   module: {0}'.format(module))
     elif env == 'ci':
+        print('Continuous integration mode')
         mode_flag, interp, _, site_pkg_dir, submodules, module = (
             argv[1],
             argv[2],
@@ -62,7 +74,13 @@ def main(argv):
             SUBMODULES_LIST,
             ''
         )
+        print('   mode_flag: {0}'.format(mode_flag))
+        print('   interp: {0}'.format(interp))
+        print('   site_pkg_dir: {0}'.format(site_pkg_dir))
+        print('   submodules: {0}'.format(submodules))
+        print('   module: {0}'.format(module))
     elif env == 'local':
+        print('Local mode')
         if len(argv[1:]) == 4:
             mode_flag, interp, _, site_pkg_dir, submodules, module = (
                 argv[1],
@@ -81,6 +99,11 @@ def main(argv):
                 [''],
                 ''
             )
+        print('   mode_flag: {0}'.format(mode_flag))
+        print('   interp: {0}'.format(interp))
+        print('   site_pkg_dir: {0}'.format(site_pkg_dir))
+        print('   submodules: {0}'.format(submodules))
+        print('   module: {0}'.format(module))
     # Generate .coveragerc file
     is_submodule = module in SUBMODULES_LIST
     source_dir = os.path.join(site_pkg_dir, 'putil')
@@ -116,6 +139,8 @@ def main(argv):
                 for item in source_files
                 if (env != 'local') or ((env == 'local') and
                    (not is_submodule) and (item == '{0}.py'.format(module)))]:
+            if file_name.endswith('version.py'):
+                continue
             start_flag, prefix = (
                 (False, 'include = ')
                 if start_flag else

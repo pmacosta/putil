@@ -1,15 +1,14 @@
 # functions.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E1111,R0904,W0201,W0621
+# pylint: disable=C0111,E0602,E1111,R0904,W0201,W0621
 
+from __future__ import print_function
 import glob
 import json
 import os
+import subprocess
 import sys
-
-if sys.hexversion < 0x03000000:
-    from putil.compat2 import _unicode_to_ascii
 
 
 ###
@@ -21,6 +20,66 @@ SUPPORTED_VERS = ['2.6', '2.7', '3.3', '3.4', '3.5']
 ###
 # Functions
 ###
+# This function is copied from putil.compat2 and putil.compat3
+# Repeated here so as make functions in this file self-contained
+if sys.hexversion < 0x03000000:
+    def _readlines(fname):
+        """ Read all lines from file """
+        with open(fname, 'r') as fobj:
+            return fobj.readlines()
+else:
+    def _readlines(fname, fpointer1=open, fpointer2=open):
+        """ Read all lines from file """
+        # fpointer1, fpointer2 arguments to ease testing
+        try:
+            with fpointer1(fname, 'r') as fobj:
+                return fobj.readlines()
+        except UnicodeDecodeError: # pragma: no cover
+            with fpointer2(fname, 'r', encoding='utf-8') as fobj:
+                return fobj.readlines()
+        except: # pragma: no cover
+            raise
+
+# This function is copied from putil.compat2 and putil.compat3
+# Repeated here so as make functions in this file self-contained
+if sys.hexversion < 0x03000000:
+    # Largely from From https://stackoverflow.com/questions/956867/
+    # how-to-get-string-objects-instead-of-unicode-ones-from-json-in-python
+    # with Python 2.6 compatibility changes
+    def _unicode_to_ascii(obj):
+        if isinstance(obj, dict):
+            return dict(
+                [
+                    (_unicode_to_ascii(key), _unicode_to_ascii(value))
+                    for key, value in obj.items()
+                ]
+            )
+        elif isinstance(obj, list):
+            return [_unicode_to_ascii(element) for element in obj]
+        elif isinstance(obj, unicode):
+            return obj.encode('utf-8')
+        else:
+            return obj
+else:
+    def _unicode_to_ascii(obj):
+        return obj
+
+
+def dir_tree(root, dir_exclude=None, ext_exclude=None):
+    """ Return all files at or under root directory """
+    ext_exclude = [] if ext_exclude is None else ext_exclude
+    ext_exclude = ['.'+item for item in ext_exclude]
+    dir_exclude = [] if dir_exclude is None else dir_exclude
+    dir_exclude = [os.path.join(root, item) for item in dir_exclude]
+    for dname, _, fnames in os.walk(root):
+        for fname in fnames:
+            _, ext = os.path.splitext(fname)
+            if any([dname.startswith(item) for item in dir_exclude]):
+                continue
+            if not ext in ext_exclude:
+                yield os.path.join(dname, fname)
+
+
 def get_pkg_data_files(share_dir):
     """ Create data_files setup.py argument """
     pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -91,10 +150,13 @@ def load_requirements(pkg_dir, pyver, cat='source'):
     pyver = pyver.replace('.', '')
     reqs_dir = os.path.join(pkg_dir, 'requirements')
     if cat.lower() == 'source':
-        reqs_files = ['main_py{0}.pip'.format(pyver)]
+        reqs_files = (
+            ['rtd.pip']
+            if os.environ.get('READTHEDOCS', None) == 'True' else
+            ['main_py{0}.pip'.format(pyver)]
+        )
     elif cat.lower() == 'testing':
         reqs_files = [
-            'main_py{0}.pip'.format(pyver),
             'tests_py{0}.pip'.format(pyver),
             'docs.pip',
         ]
@@ -115,3 +177,27 @@ def load_requirements(pkg_dir, pyver, cat='source'):
 def python_version(hver):
     """ Return Python version """
     return '{major}.{minor}'.format(major=int(hver[:-2]), minor=int(hver[-2:]))
+
+
+def shcmd(cmd_list, exmsg, async_stdout=False):
+    """ Execute command piping STDERR to STDOUT """
+    proc = subprocess.Popen(
+        cmd_list,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+    while async_stdout:
+        if sys.hexversion < 0x03000000:
+            line = proc.stdout.readline()
+        else:
+            line = proc.stdout.readline().decode('utf-8')
+        if (line == '') and (proc.poll() != None):
+            break
+        sys.stdout.write(line)
+        sys.stdout.flush()
+    stdout, _ = proc.communicate()
+    retcode = proc.returncode
+    if retcode:
+        print(stdout)
+        raise RuntimeError(exmsg)
+    return stdout

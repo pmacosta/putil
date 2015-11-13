@@ -6,6 +6,7 @@
 import inspect
 import numpy
 import os
+import platform
 
 import putil.pcontracts
 
@@ -50,12 +51,12 @@ def _check_csv_row_filter(obj):
         return 1
     for col_name, col_value in obj.items(): # pragma: no branch
         if ((not isinstance(obj[col_name], list)) and
-           (not putil.misc.isnumber(obj[col_name])) and
+           (not _isnumber(obj[col_name])) and
            (not isinstance(obj[col_name], str))):
             return 1
         if isinstance(col_value, list):
             for element in col_value:   # pragma: no branch
-                if ((not putil.misc.isnumber(element)) and
+                if ((not _isnumber(element)) and
                    (not isinstance(element, str))):
                     return 1
     return 0
@@ -111,6 +112,56 @@ def _homogenize_data_filter(dfilter):
     else:
         dfilter = (dfilter[1], dfilter[0])
     return dfilter
+
+
+def _isnumber(obj):
+    """
+    Function copied from putil.misc module to avoid
+    import loops
+    """
+    return (
+        (((obj is not None) and
+        (not isinstance(obj, bool)) and
+        (isinstance(obj, int) or
+        isinstance(obj, float) or
+        isinstance(obj, complex))))
+    )
+
+
+def _normalize_windows_fname(fname, _force=False):  # pragma: no cover
+    """
+    Function copied from putil.misc module to avoid
+    import loops
+    """
+    if ((platform.system().lower() != 'windows')
+       and (not _force)):   # pragma: no cover
+        return fname
+    # Replace unintended escape sequences that could be in
+    # the file name, like "C:\appdata"
+    rchars = {
+        '\x07': r'\\a',
+        '\x08': r'\\b',
+        '\x0C': r'\\f',
+        '\x0A': r'\\n',
+        '\x0D': r'\\r',
+        '\x09': r'\\t',
+        '\x0B': r'\\v',
+    }
+    ret = ''
+    for char in os.path.normpath(fname):
+        ret = ret+rchars.get(char, char)
+    # Remove superfluous double backslashes
+    network_share = False
+    tmp = None
+    while tmp != ret:
+        tmp, ret = ret, ret.replace('\\\\', '\\')
+        if ret.startswith(r'\\') and (len(ret) > 2) and (ret[2] != r'\\'):
+            network_share = True
+    ret = ret.replace('\\\\', '\\')
+    # Put back network share if needed
+    if network_share:
+        ret = r'\\'+ret.lstrip(r'\\')
+    return ret
 
 
 @putil.pcontracts.new_contract(
@@ -355,7 +406,8 @@ def file_name(obj):
     """
     msg = putil.pcontracts.get_exdesc()
     # Check that argument is a string
-    if not isinstance(obj, str):
+    if ((not isinstance(obj, str) or
+       (isinstance(obj, str) and ('\0' in obj)))):
         raise ValueError(msg)
     # If file exists, argument is a valid file name, otherwise test
     # if file can be created. User may not have permission to
@@ -364,7 +416,7 @@ def file_name(obj):
     try:
         if not os.path.exists(obj):
             os.access(obj, os.W_OK)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError): # pragma: no cover
         raise ValueError(msg)
 
 
@@ -395,14 +447,16 @@ def file_name_exists(obj):
     exdesc = putil.pcontracts.get_exdesc()
     msg = exdesc['argument_invalid']
     # Check that argument is a string
-    if not isinstance(obj, str):
+    if ((not isinstance(obj, str) or
+       (isinstance(obj, str) and ('\0' in obj)))):
         raise ValueError(msg)
     # Check that file name is valid
     try:
         os.path.exists(obj)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError): # pragma: no cover
         raise ValueError(msg)
     # Check that file exists
+    obj = _normalize_windows_fname(obj)
     if not os.path.exists(obj):
         msg = exdesc['file_not_found']
         raise ValueError(msg)
@@ -532,7 +586,7 @@ def non_negative_integer(obj):
 
     :rtype: None
     """
-    if isinstance(obj, int) and (obj >= 0):
+    if isinstance(obj, int) and (not isinstance(obj, bool)) and (obj >= 0):
         return None
     raise ValueError(putil.pcontracts.get_exdesc())
 

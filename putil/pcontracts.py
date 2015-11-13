@@ -221,7 +221,7 @@ def get_exdesc():
 
     .. =[=cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('pcontracts_example_2.py', cog)
+    .. docs.support.incfile.incfile('pcontracts_example_2.py', cog.out)
     .. =]=
     .. code-block:: python
 

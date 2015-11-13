@@ -9,11 +9,14 @@ import decorator
 import inspect
 import numpy
 import os
+import platform
 import re
 import tempfile
 import time
 import types
 from fractions import Fraction
+if os.environ.get('APPVEYOR', None):    # pragma: no cover
+    tempfile.tempdir = os.environ['CITMP']
 
 import putil.eng
 
@@ -56,7 +59,7 @@ def ignored(*exceptions):
 
     .. =[=cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('misc_example_1.py', cog)
+    .. docs.support.incfile.incfile('misc_example_1.py', cog.out)
     .. =]=
     .. code-block:: python
 
@@ -119,7 +122,7 @@ class Timer(object):
 
     .. =[=cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('misc_example_2.py', cog)
+    .. docs.support.incfile.incfile('misc_example_2.py', cog.out)
     .. =]=
     .. code-block:: python
 
@@ -151,19 +154,19 @@ class Timer(object):
     def __init__(self, verbose=False):
         if not isinstance(verbose, bool):
             raise RuntimeError('Argument `verbose` is not valid')
-        self.tstart = None
+        self._tstart = None
         self._tstop = None
         self._elapsed_time = None
         self._verbose = verbose
 
     def __enter__(self):
-        self.tstart = time.time()
+        self._tstart = time.time()
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         self._tstop = time.time()
         # time.time() returns time in seconds since the epoch
-        self._elapsed_time = 1000.0*(self._tstop-self.tstart)
+        self._elapsed_time = 1000.0*(self._tstop-self._tstart)
         if self._verbose:
             print('Elapsed time: {time}[msec]'.format(time=self._elapsed_time))
         if exc_type is not None:
@@ -188,33 +191,38 @@ class TmpFile(object):
 
     :param fpointer: Pointer to a function that writes data to file.
                      If the argument is not None the function pointed to
-                     receives exactly one argument, a file-like object as
-                     created by the `tempfile.NamedTemporaryFile
-                     <https://docs.python.org/2/library/tempfile.html#
-                     tempfile.NamedTemporaryFile>`_ function
+                     receives exactly one argument, a file-like object
     :type  fpointer: function object or None
 
     :returns:   temporary file name
 
     :raises:    RuntimeError (Argument \`fpointer\` is not valid)
 
+    .. warning:: The file name returned uses the forward slash (:code:`/`) as
+       the path separator regardless of the platform. This avoids
+       `problems <https://pythonconquerstheuniverse.wordpress.com/2008/06/04/
+       gotcha-%E2%80%94-backslashes-in-windows-filenames/>`_ with
+       escape sequences or mistaken Unicode character encodings (:code:`\\user`
+       for example). Many functions in the os module of the standard library (
+       `os.path.normpath()
+       <https://docs.python.org/2/library/os.path.html#os.path.normpath>`_ and
+       others) can change this path separator to the operating system path
+       separator if needed
+
     For example:
 
     .. =[=cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('misc_example_3.py', cog)
+    .. docs.support.incfile.incfile('misc_example_3.py', cog.out)
     .. =]=
     .. code-block:: python
 
         # misc_example_3.py
         from __future__ import print_function
-        import sys, putil.misc
+        import putil.misc
 
         def write_data(file_handle):
-            if sys.hexversion < 0x03000000:
-                file_handle.write('Hello world!')
-            else:
-                file_handle.write(bytes('Hello world!', 'ascii'))
+            file_handle.write('Hello world!')
 
         def show_tmpfile():
             with putil.misc.TmpFile(write_data) as fname:
@@ -239,9 +247,16 @@ class TmpFile(object):
         self._fpointer = fpointer
 
     def __enter__(self):
-        with tempfile.NamedTemporaryFile(delete=False) as fobj:
-            self._fname = fobj.name
-            if self._fpointer:
+        fdesc, fname = tempfile.mkstemp()
+        # fdesc is an OS-level file descriptor, see problems if this
+        # is not properly closed in this post:
+        # https://www.logilab.org/blogentry/17873
+        os.close(fdesc)
+        if platform.system().lower() == 'windows':  # pragma: no cover
+            fname = fname.replace(os.sep, '/')
+        self._fname = fname
+        if self._fpointer:
+            with open(self._fname, 'w') as fobj:
                 self._fpointer(fobj)
         return self._fname
 
@@ -614,6 +629,51 @@ def normalize(value, series, offset=0):
     )
 
 
+def normalize_windows_fname(fname, _force=False):
+    """
+    Fix potential problems with a Microsoft Windows file name. Superfluous
+    backslashes are removed and unintended escape sequences are converted
+    to their equivalent (presumably correct and intended) representation,
+    for example :code:`r'\\\\x07pps'` is transformed to
+    :code:`r'\\\\\\\\apps'`. A file name is considered network shares if
+    the file does not include a drive letter and they start with a double
+    backslash (:code:`'\\\\\\\\'`)
+
+    :param fname: File name
+    :type  fname: string
+
+    :rtype: string
+    """
+    if ((platform.system().lower() != 'windows')
+       and (not _force)):   # pragma: no cover
+        return fname
+    # Replace unintended escape sequences that could be in
+    # the file name, like "C:\appdata"
+    rchars = {
+        '\x07': r'\\a',
+        '\x08': r'\\b',
+        '\x0C': r'\\f',
+        '\x0A': r'\\n',
+        '\x0D': r'\\r',
+        '\x09': r'\\t',
+        '\x0B': r'\\v',
+    }
+    ret = ''
+    for char in os.path.normpath(fname):
+        ret = ret+rchars.get(char, char)
+    # Remove superfluous double backslashes
+    network_share = False
+    tmp = None
+    network_share = fname.startswith(r'\\')
+    while tmp != ret:
+        tmp, ret = ret, ret.replace(r'\\\\', r'\\')
+    ret = ret.replace(r'\\\\', r'\\')
+    # Put back network share if needed
+    if network_share:
+        ret = r'\\'+ret.lstrip(r'\\')
+    return ret
+
+
 def per(arga, argb, prec=10):
     r"""
     Calculates the percentage difference between two numbers or the
@@ -784,72 +844,6 @@ def pgcd(numa, numb):
             (numa % numb if int_args else (numa % numb).limit_denominator())
         )
     return int(numa) if int_args else (numa if fraction_args else float(numa))
-
-
-def pprint_ast_node(
-        node,
-        annotate_fields=True,
-        include_attributes=False,
-        indent='  '
-    ):
-    """
-    Emulates the AST module `dump
-    <https://docs.python.org/2/library/ast.html#ast.dump>`_ function but with
-    prettier printing. From `Alex Leone's blog
-    <http://alexleone.blogspot.co.uk/2010/01/python-ast-pretty-printer.html>`_
-
-    :param node: root abstract syntax tree node
-    :type  node: AST object
-
-    :param annotate_fields: Flag that indicates whether name and values for
-                            fields are shown (True) or not (False); the latter
-                            is required if code is to be evaluated
-    :type  annotate_fields: boolean
-
-    :param include_attributes: Flag that indicates whether line numbers and
-                               column offsets are dumped (True) or not (False)
-    :type  include_attributes: boolean
-
-    :param indent: Characters to use for indenting output sub-nodes and
-                   structures
-    :type  indent: string
-
-    :rtype: string
-
-    :raises: RuntimeError (Argument \\`node\\` is not valid)
-    """
-    # pylint: disable=W0212
-    def _format(node, level=0):
-        if isinstance(node, ast.AST):
-            fields = [(a, _format(b, level)) for a, b in ast.iter_fields(node)]
-            if include_attributes and node._attributes: # pragma: no branch
-                fields.extend(
-                    [
-                        (a, _format(getattr(node, a), level))
-                        for a in node._attributes
-                    ]
-                )
-            nname = node.__class__.__name__
-            if annotate_fields:
-                ttext = ', '.join(('%s=%s' % field for field in fields))
-            else:
-                ttext = ', '.join((b for a, b in fields))
-            return ''.join([nname, '(', ttext, ')'])    # pragma: no branch
-        elif isinstance(node, list):
-            lines = ['[']
-            lines.extend(
-                (indent*(level+2)+_format(x, level+2)+',' for x in node)
-            )
-            if len(lines) > 1:
-                lines.append(indent*(level+1)+']')
-            else:
-                lines[-1] += ']'
-            return '\n'.join(lines)
-        return repr(node)
-
-    if not isinstance(node, ast.AST):
-        raise RuntimeError('Argument `node` is not valid')
-    return _format(node)
 
 
 def quote_str(obj):

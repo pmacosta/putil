@@ -50,4 +50,4 @@ else
 fi
 
 # Build documentation
-source ${bin_dir}/build-docs.sh
+${bin_dir}/build_docs.py

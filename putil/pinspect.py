@@ -1,7 +1,7 @@
 # pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,E0611,F0401,R0912,W0212,W0631
+# pylint: disable=C0103,C0111,E0012,E0611,F0401,R0912,W0212,W0631,W1504
 
 from __future__ import print_function
 import ast
@@ -13,6 +13,7 @@ try:    # pragma: no cover
 except ImportError: # pragma: no cover
     from inspect import signature
 import os
+import platform
 import re
 import sys
 import types
@@ -528,7 +529,6 @@ class Callables(object):
         Check that intersection of two objects is congruent, i.e. that they
         have identical information in the intersection
         """
-        # pylint: disable=W1504
         props = ['_callables_db', '_reverse_callables_db', '_modules_dict']
         for prop in props:
             self_dict = getattr(self, prop)
@@ -614,7 +614,14 @@ class Callables(object):
         rdict = {}
         for key, value in fdict['_reverse_callables_db'].items():
             tokens = key[1:-1].split(',')
-            rdict[(tokens[0].strip()[1:-1], int(tokens[1]))] = value
+            key = tokens[0].strip()[1:-1]
+            if platform.system().lower() == 'windows': # pragma: no cover
+                while True:
+                    tmp = key
+                    key = key.replace('\\\\', '\\')
+                    if tmp == key:
+                        break
+            rdict[(key, int(tokens[1]))] = value
         self._reverse_callables_db.update(rdict)
         self._modules_dict.update(fdict['_modules_dict'])
         self._fnames.update(fdict['_fnames'])
@@ -706,8 +713,11 @@ class Callables(object):
                     for key, value in self._reverse_callables_db.items():
                         if key[0] == fname:
                             dlist.append(key)
-                            del self._callables_db[value]
-                    for item in dlist:
+                            try:
+                                del self._callables_db[value]
+                            except KeyError:
+                                pass
+                    for item in set(dlist):
                         del self._reverse_callables_db[item]
                 lines = _readlines(fname)
                 # Eliminate all Unicode characters till the first ASCII
@@ -873,10 +883,6 @@ class _AstTreeScanner(ast.NodeVisitor):
         #             'yellow'
         #         )
         #     )
-        #     try:
-        #         print(pprint_ast_node(node))
-        #     except:
-        #         pass
         # ###
         while count >= -len(self._indent_stack):
             element_full_name = self._indent_stack[count]['full_name']
@@ -1059,7 +1065,6 @@ class _AstTreeScanner(ast.NodeVisitor):
         # ### Print statements for debug
         # if self._debug:
         #     print(pcolor('Enter function visitor', 'magenta'))
-        #     print(pprint_ast_node(node))
         # ###
         in_class = self._in_class(node)
         decorator_list = [

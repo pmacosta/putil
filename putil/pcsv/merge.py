@@ -5,7 +5,11 @@
 
 import putil.pcontracts
 from putil.ptypes import (
-    csv_col_filter, csv_row_filter, file_name, file_name_exists
+    csv_col_filter,
+    csv_row_filter,
+    file_name,
+    file_name_exists,
+    non_negative_integer
 )
 from .csv_file import CsvFile
 from .write import write
@@ -31,13 +35,14 @@ exobj = trace_ex_pcsv_merge.trace_module(no_print=True)
 @putil.pcontracts.contract(
     fname1='file_name_exists', fname2='file_name_exists',
     dfilter1='csv_data_filter', dfilter2='csv_data_filter',
-    has_header1=bool, has_header2=bool,
+    has_header1=bool, frow1='non_negative_integer',
+    has_header2=bool, frow2='non_negative_integer',
     ofname='None|file_name', ocols='None|list(str)'
 )
 def merge(
     fname1, fname2,
     dfilter1=None, dfilter2=None,
-    has_header1=True, has_header2=True,
+    has_header1=True, frow1=0, has_header2=True, frow2=0,
     ofname=None, ocols=None):
     r"""
     Merges two comma-separated values files. Data columns from the second
@@ -65,10 +70,22 @@ def merge(
                         or not (False)
     :type  has_header1: boolean
 
+    :param frow1: First comma-separated values file first data row (starting
+                  from 1). If 0 the row where data starts is auto-detected as
+                  the first row that has a number (integer of float) in at
+                  least one of its columns
+    :type  frow1: :ref:`NonNegativeInteger`
+
     :param has_header2: Flag that indicates whether the second comma-separated
                         values file has column headers in its first line (True)
                         or not (False)
     :type  has_header2: boolean
+
+    :param frow2: Second comma-separated values file first data row (starting
+                  from 1). If 0 the row where data starts is auto-detected as
+                  the first row that has a number (integer of float) in at
+                  least one of its columns
+    :type  frow2: :ref:`NonNegativeInteger`
 
     :param ofname: Name of the output comma-separated values file, the file
                    that will contain the data from the first and second files.
@@ -99,6 +116,10 @@ def merge(
 
      * RuntimeError (Argument \`fname2\` is not valid)
 
+     * RuntimeError (Argument \`frow1\` is not valid)
+
+     * RuntimeError (Argument \`frow2\` is not valid)
+
      * RuntimeError (Argument \`ocols\` is not valid)
 
      * RuntimeError (Argument \`ofname\` is not valid)
@@ -107,6 +128,8 @@ def merge(
 
      * RuntimeError (Combined columns in data files and output columns are
        different)
+
+     * RuntimeError (File *[fname]* has no valid data)
 
      * RuntimeError (File *[fname]* is empty)
 
@@ -126,9 +149,13 @@ def merge(
         )
     )
     # Read and validate file 1
-    obj1 = CsvFile(fname=fname1, dfilter=dfilter1, has_header=has_header1)
+    obj1 = CsvFile(
+        fname=fname1, dfilter=dfilter1, has_header=has_header1, frow=frow1
+    )
     # Read and validate file 2
-    obj2 = CsvFile(fname=fname2, dfilter=dfilter2, has_header=has_header2)
+    obj2 = CsvFile(
+        fname=fname2, dfilter=dfilter2, has_header=has_header2, frow=frow2
+    )
     # Assign output data structure
     ofname = fname1 if ofname is None else ofname
     cfilter1 = obj1.header() if obj1.cfilter is None else obj1.cfilter

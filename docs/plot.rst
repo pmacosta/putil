@@ -1,7 +1,7 @@
 .. plot.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _plot-module:
+.. py:module:: putil.plot
 
 ###########
 plot module
@@ -145,9 +145,3 @@ Classes
                   indep_var_units, log_indep_axis, panels, save, show, title,
                   __bool__, __iter__, __nonzero__, __str__
 	:show-inheritance:
-
-.. .. automodule:: putil.plot
-..     :members: BasicSource, CsvSource, Series, Panel, Figure
-..     :undoc-members:
-..     :show-inheritance:
-.. 	:special-members:

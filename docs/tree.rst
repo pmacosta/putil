@@ -1,7 +1,7 @@
 .. tree.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _tree-module:
+.. py:module:: putil.tree
 
 ###########
 tree module

@@ -5,6 +5,8 @@
 
 import csv
 import operator
+import os
+import platform
 import sys
 
 import putil.exh
@@ -16,6 +18,7 @@ from putil.ptypes import (
     csv_row_filter,
     file_name,
     file_name_exists,
+    non_negative_integer
 )
 from .write import _write_int
 
@@ -92,6 +95,11 @@ class CsvFile(object):
                        (True) o not (False)
     :type  has_header: boolean
 
+    :param frow: First data row (starting from 1). If 0 the row where data
+                 starts is auto-detected as the first row that has a number
+                 (integer of float) in at least one of its columns
+    :type  frow: :ref:`NonNegativeInteger`
+
     :rtype: :py:class:`putil.pcsv.CsvFile` object
 
     .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
@@ -104,6 +112,8 @@ class CsvFile(object):
      * RuntimeError (Argument \`dfilter\` is not valid)
 
      * RuntimeError (Argument \`fname\` is not valid)
+
+     * RuntimeError (Argument \`frow\` is not valid)
 
      * RuntimeError (Argument \`has_header\` is not valid)
 
@@ -118,14 +128,12 @@ class CsvFile(object):
      * ValueError (Column *[column_identifier]* not found)
 
     .. [[[end]]]
-
-    .. note:: The row where data starts is auto-detected as the first row that
-              has a number (integer of float) in at least one of its columns
-
     """
     # pylint: disable=R0902,W0631
-    @putil.pcontracts.contract(fname='file_name_exists')
-    def __init__(self, fname, dfilter=None, has_header=True):
+    @putil.pcontracts.contract(
+        fname='file_name_exists'
+    )
+    def __init__(self, fname, dfilter=None, has_header=True, frow=0):
         self._header = None
         self._header_upper = None
         self._data = None
@@ -158,13 +166,18 @@ class CsvFile(object):
             exmsg='File *[fname]* has no valid data'
         )
         # Read data
-        with open(fname, 'rU') as file_handle:
-            self._raw_data = [row for row in csv.reader(file_handle)]
+        if sys.hexversion < 0x03000000: # pragma: no cover, no branch
+            fname = putil.misc.normalize_windows_fname(fname)
+            with open(fname, 'r') as file_handle:
+                self._raw_data = [row for row in csv.reader(file_handle)]
+        else: # pragma: no cover, no branch
+            with open(fname, 'r', newline='') as file_handle:
+                self._raw_data = [row for row in csv.reader(file_handle)]
         # Process header
         self._exh.raise_exception_if(
             exname='file_empty',
             condition=len(self._raw_data) == 0,
-            edata={'field':'fname', 'value':fname}
+            edata={'field':'fname', 'value':self._fname}
         )
         if has_header:
             self._header = self._raw_data[0]
@@ -174,22 +187,31 @@ class CsvFile(object):
                 condition=(
                     len(set(self._header_upper)) != len(self._header_upper)
                 ),
-                edata={'field':'fname', 'value':fname}
+                edata={'field':'fname', 'value':self._fname}
             )
         else:
             self._header = list(range(0, len(self._raw_data[0])))
             self._header_upper = self._header
-        # Find start of data row. A data row is defined as one that has at
-        # least one column with a number
-        for num, row in enumerate(self._raw_data[1 if has_header else 0:]):
-            if any([putil.misc.isnumber(_tofloat(col)) for col in row]):
-                break
+        frow = self._validate_frow(frow)
+        if frow == 0:
+            # Find start of data row. A data row is defined as one that has at
+            # least one column with a number
+            for num, row in enumerate(self._raw_data[1 if has_header else 0:]):
+                if any([putil.misc.isnumber(_tofloat(col)) for col in row]):
+                    break
+            else:
+                self._exh.raise_exception_if(
+                    exname='file_has_no_valid_data',
+                    condition=True,
+                    edata={'field':'fname', 'value':self._fname}
+                )
         else:
             self._exh.raise_exception_if(
                 exname='file_has_no_valid_data',
-                condition=True,
-                edata={'field':'fname', 'value':fname}
+                condition=frow > len(self._raw_data),
+                edata={'field':'fname', 'value':self._fname}
             )
+            num = frow-(2 if has_header else 1)
         # Set up class properties
         self._data = [
             [
@@ -210,15 +232,13 @@ class CsvFile(object):
         """
         Tests object equality. For example:
 
-            >>> import tempfile, putil.pcsv
-            >>> with tempfile.NamedTemporaryFile() as fobj:
-            ...     fname = fobj.name
+            >>> import putil.misc, putil.pcsv
+            >>> with putil.misc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a'], [1]], append=False)
             ...     obj1 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...     obj2 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...
-            >>> with tempfile.NamedTemporaryFile() as fobj:
-            ...     fname = fobj.name
+            >>> with putil.misc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a'], [2]], append=False)
             ...     obj3 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...
@@ -230,9 +250,13 @@ class CsvFile(object):
             False
         """
         # pylint: disable=W0212
-        return isinstance(other, CsvFile) and all(
+        if not isinstance(other, CsvFile):
+            return False
+        sfname = putil.misc.normalize_windows_fname(self._fname)
+        ofname = putil.misc.normalize_windows_fname(other._fname)
+        return all(
             [
-                self._fname == other._fname,
+                sfname == ofname,
                 self._rfilter == other._rfilter,
                 self._cfilter == other._cfilter,
                 self._has_header == other._has_header
@@ -244,16 +268,15 @@ class CsvFile(object):
         Returns a string with the expression needed to re-create the object.
         For example:
 
-            >>> import tempfile, putil.pcsv
-            >>> with tempfile.NamedTemporaryFile() as fobj:
-            ...     fname = fobj.name
+            >>> import putil.misc, putil.pcsv
+            >>> with putil.misc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a'], [1]], append=False)
             ...     obj1 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...     exec("obj2="+repr(obj1))
             >>> obj1 == obj2
             True
             >>> repr(obj1)
-            "putil.pcsv.CsvFile(fname='...', dfilter=['a'])"
+            "putil.pcsv.CsvFile(fname=r'...', dfilter=['a'])"
         """
         dfilter_list = (
             None,
@@ -266,7 +289,11 @@ class CsvFile(object):
             (self._cfilter is not None)
         ]
         has_header = self._has_header
-        ret = ["putil.pcsv.CsvFile(fname='{0}'".format(self._fname)]
+        ret = [
+            "putil.pcsv.CsvFile(fname=r'{0}'".format(
+                putil.misc.normalize_windows_fname(self._fname)
+            )
+        ]
         if dfilter:
             ret.append("dfilter={0}".format(dfilter))
         if not has_header:
@@ -280,13 +307,12 @@ class CsvFile(object):
         For example:
 
             >>> from __future__ import print_function
-            >>> import tempfile, putil.pcsv
-            >>> with tempfile.NamedTemporaryFile() as fobj:
-            ...     fname = fobj.name
+            >>> import putil.misc, putil.pcsv
+            >>> with putil.misc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a', 'b'], [1, 2], [3, 4]])
             ...     obj = putil.pcsv.CsvFile(fname, dfilter='a')
             ...
-            >>> print(str(obj))
+            >>> print(str(obj)) #doctest: +ELLIPSIS
             File: ...
             Header: ['a', 'b']
             Row filter: None
@@ -511,6 +537,22 @@ class CsvFile(object):
     def _set_has_header(self, has_header):
         self._has_header = has_header
 
+    def _validate_frow(self, frow):
+        """ Validate frow argument """
+        self._exh.add_exception(
+            exname='invalid_frow',
+            extype=RuntimeError,
+            exmsg='Argument `frow` is not valid'
+        )
+        self._exh.raise_exception_if(
+            exname='invalid_frow',
+            condition=not (
+                isinstance(frow, int) and
+                (not isinstance(frow, bool)) and (frow >= 0)
+            )
+        )
+        return frow
+
     def _validate_rfilter(self, rfilter, letter='d'):
         """ Validate that all columns in filter are in header """
         if letter == 'd':
@@ -675,6 +717,7 @@ class CsvFile(object):
         for (cindex, rvalue) in reversed(clist):
             fpointer = operator.itemgetter(cindex)
             self._data.sort(key=fpointer, reverse=rvalue)
+
 
     @putil.pcontracts.contract(filtered=bool)
     def header(self, filtered=False):

@@ -10,7 +10,6 @@ import copy
 import os
 import pytest
 import sys
-import tempfile
 if sys.hexversion < 0x03000000:
     import __builtin__
     import mock
@@ -200,10 +199,10 @@ class TestExDocCxt(object):
                 'Argument `pickle_fname` is not valid'
             )
         #
-        with tempfile.NamedTemporaryFile(delete=True) as fobj:
-            with putil.exdoc.ExDocCxt(pickle_fname=fobj.name):
+        with putil.misc.TmpFile() as fname:
+            with putil.exdoc.ExDocCxt(pickle_fname=fname):
                 func0()
-            assert os.path.isfile(fobj.name)
+            assert os.path.isfile(fname)
         #
         for item in [5, 'test\0']:
             with pytest.raises(RuntimeError) as excinfo:
@@ -279,8 +278,8 @@ class TestExDocCxt(object):
         """ Test traced modules information storage """
         putil.exh.del_exh_obj()
         cobj = putil.exdoc.ExDocCxt
-        with tempfile.NamedTemporaryFile(delete=True) as fobj:
-            out_callables_fname = fobj.name
+        with putil.misc.TmpFile() as fname:
+            out_callables_fname = fname
             with cobj(out_callables_fname=out_callables_fname) as tobj:
                 tests.support.exdoc_support_module_4.func('John')
             pobj1 = putil.pinspect.Callables()

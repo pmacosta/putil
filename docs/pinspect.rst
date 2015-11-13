@@ -1,7 +1,7 @@
 .. pinspect.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _pinspect-module:
+.. py:module:: putil.pinspect
 
 ###############
 pinspect module

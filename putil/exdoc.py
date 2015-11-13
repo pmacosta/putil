@@ -53,7 +53,8 @@ def _validate_fname(fname, arg_name):
     """ Validates that a string is a valid file name """
     if fname is not None:
         msg = 'Argument `{0}` is not valid'.format(arg_name)
-        if not isinstance(fname, str):
+        if ((not isinstance(fname, str)) or
+           (isinstance(fname, str) and ('\0' in fname))):
             raise RuntimeError(msg)
         try:
             if not os.path.exists(fname):
@@ -591,8 +592,8 @@ class ExDoc(object):
                 name_dict['exlist'] = list(set(exlist[:]))
             else:
                 # A callable can have registered exceptions but none of them
-                # might have been raised, in this case the entry should be
-                # deleted from the dictionary
+                # may meet the depth and exclude specification, in this case
+                # the entry should be deleted from the dictionary
                 dkeys.append(key)
         for key in dkeys:
             del callable_dict[key]
@@ -738,10 +739,11 @@ class ExDoc(object):
     """
     Gets or sets the default list of (potentially partial) module and callable
     names to exclude from exceptions per callable. For example,
-    :code:`['putil.ex']` excludes all exceptions from modules :code:`putil.exh`
-    and :code:`putil.exdoc` (it acts as :code:`r'putil.ex*'`).  In addition to
-    these modules, :code:`['putil.ex', 'putil.eng.peng']` excludes exceptions
-    from the function :code:`putil.eng.peng`.
+    :code:`['putil.ex']` excludes all exceptions from modules
+    :py:mod:`putil.exh` and :py:mod:`putil.exdoc` (it acts as
+    :code:`r'putil.ex*'`).  In addition to these modules,
+    :code:`['putil.ex', 'putil.eng.peng']` excludes exceptions from the
+    function :py:func:`putil.eng.peng`.
 
     :rtype: list
 

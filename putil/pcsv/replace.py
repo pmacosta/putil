@@ -5,7 +5,11 @@
 
 import putil.pcontracts
 from putil.ptypes import (
-    csv_col_filter, csv_row_filter, file_name, file_name_exists
+    csv_col_filter,
+    csv_row_filter,
+    file_name,
+    file_name_exists,
+    non_negative_integer
 )
 from .csv_file import CsvFile
 from .write import write
@@ -32,15 +36,17 @@ exobj = trace_ex_pcsv_replace.trace_module(no_print=True)
     ifname='file_name_exists',
     idfilter='csv_data_filter',
     ihas_header=bool,
+    ifrow='non_negative_integer',
     rfname='file_name_exists',
     rdfilter='csv_data_filter',
     rhas_header=bool,
+    rfrow='non_negative_integer',
     ofname='None|file_name',
     ocols='None|list(str)'
 )
 def replace(
     ifname, idfilter, rfname, rdfilter,
-    ihas_header=True, rhas_header=True,
+    ihas_header=True, ifrow=0, rhas_header=True, rfrow=0,
     ofname=None, ocols=None):
     r"""
     Replaces data in one file with data from another file
@@ -64,10 +70,22 @@ def replace(
                         or not (False)
     :type  ihas_header: boolean
 
+    :param ifrow: Input comma-separated values file first data row (starting
+                  from 1). If 0 the row where data starts is auto-detected as
+                  the first row that has a number (integer of float) in at
+                  least one of its columns
+    :type  ifrow: :ref:`NonNegativeInteger`
+
     :param rhas_header: Flag that indicates whether the replacement
                         comma-separated values file has column headers in its
                         first line (True) or not (False)
     :type  rhas_header: boolean
+
+    :param rfrow: Replacement comma-separated values file first data row
+                  (starting from 1). If 0 the row where data starts is
+                  auto-detected as the first row that has a number (integer of
+                  float) in at least one of its columns
+    :type  rfrow: :ref:`NonNegativeInteger`
 
     :param ofname: Name of the output comma-separated values file, the file
                    that will contain the input file data but with some columns
@@ -91,6 +109,8 @@ def replace(
 
      * RuntimeError (Argument \`ifname\` is not valid)
 
+     * RuntimeError (Argument \`ifrow\` is not valid)
+
      * RuntimeError (Argument \`ocols\` is not valid)
 
      * RuntimeError (Argument \`ofname\` is not valid)
@@ -99,7 +119,11 @@ def replace(
 
      * RuntimeError (Argument \`rfname\` is not valid)
 
+     * RuntimeError (Argument \`rfrow\` is not valid)
+
      * RuntimeError (Column headers are not unique in file *[fname]*)
+
+     * RuntimeError (File *[fname]* has no valid data)
 
      * RuntimeError (File *[fname]* is empty)
 
@@ -130,9 +154,13 @@ def replace(
         exmsg='Number of input and output columns are different'
     )
     # Read and validate input data
-    iobj = CsvFile(fname=ifname, dfilter=idfilter, has_header=ihas_header)
+    iobj = CsvFile(
+        fname=ifname, dfilter=idfilter, has_header=ihas_header, frow=ifrow
+    )
     # Read and validate replacement data
-    robj = CsvFile(fname=rfname, dfilter=rdfilter, has_header=rhas_header)
+    robj = CsvFile(
+        fname=rfname, dfilter=rdfilter, has_header=rhas_header, frow=rfrow
+    )
     # Assign output data structure
     ofname = ifname if ofname is None else ofname
     icfilter = iobj.header() if iobj.cfilter is None else iobj.cfilter

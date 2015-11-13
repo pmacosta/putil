@@ -5,6 +5,7 @@
 # pylint: disable=R0201,R0904,R0912,R0914,W0212,W0232,W0613
 
 import numpy
+import os
 import pytest
 import sys
 
@@ -42,7 +43,7 @@ class TestCsvSource(object):
         with putil.misc.TmpFile(write_csv_file) as fname:
             # No rfilter
             obj = str(putil.plot.CsvSource(
-                fname=fname,
+                fname=os.path.normpath(fname),
                 indep_col_label='Col7',
                 dep_col_label='Col3')
              )
@@ -56,13 +57,15 @@ class TestCsvSource(object):
                 'Independent variable minimum: -inf\n'
                 'Independent variable maximum: +inf\n'
                 'Independent variable: [ 1.0, 2.0, 3.0, 4.0, 5.0 ]\n'
-                'Dependent variable: [ 2.0, 4.0, 1.0, 5.0, 3.0 ]'.format(fname)
+                'Dependent variable: [ 2.0, 4.0, 1.0, 5.0, 3.0 ]'.format(
+                    os.path.normpath(fname)
+                )
             )
             assert obj == ref
             # rfilter
             obj = str(
                 putil.plot.CsvSource(
-                    fname=fname,
+                    fname=os.path.normpath(fname),
                     rfilter={'Col1':0},
                     indep_col_label='Col2',
                     dep_col_label='Col3'
@@ -79,12 +82,14 @@ class TestCsvSource(object):
                 'Independent variable minimum: -inf\n'
                 'Independent variable maximum: +inf\n'
                 'Independent variable: [ 1.0, 2.0, 3.0 ]\n'
-                'Dependent variable: [ 2.0, 4.0, 1.0 ]'.format(fname)
+                'Dependent variable: [ 2.0, 4.0, 1.0 ]'.format(
+                    os.path.normpath(fname)
+                )
             )
             assert obj == ref
             # fproc
             obj = str(putil.plot.CsvSource(
-                fname=fname,
+                fname=os.path.normpath(fname),
                 rfilter={'Col1':0},
                 indep_col_label='Col2',
                 dep_col_label='Col3',
@@ -103,12 +108,14 @@ class TestCsvSource(object):
                 'Independent variable minimum: 0.002\n'
                 'Independent variable maximum: 200\n'
                 'Independent variable: [ 0.002, 0.003 ]\n'
-                'Dependent variable: [ 5.0, 2.0 ]'.format(fname)
+                'Dependent variable: [ 5.0, 2.0 ]'.format(
+                    os.path.normpath(fname)
+                )
             )
             assert obj == ref
             # fproc_eargs
             obj = str(putil.plot.CsvSource(
-                fname=fname,
+                fname=os.path.normpath(fname),
                 rfilter={'Col1':0},
                 indep_col_label='Col2',
                 dep_col_label='Col3',
@@ -130,12 +137,14 @@ class TestCsvSource(object):
                 'Independent variable minimum: -2\n'
                 'Independent variable maximum: 200\n'
                 'Independent variable: [ 4.0, 5.0, 6.0 ]\n'
-                'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(fname)
+                'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(
+                    os.path.normpath(fname)
+                )
             )
             assert obj == ref
             # indep_min set
             obj = str(putil.plot.CsvSource(
-                fname=fname,
+                fname=os.path.normpath(fname),
                 rfilter={'Col1':0},
                 indep_col_label='Col2',
                 dep_col_label='Col3',
@@ -155,12 +164,14 @@ class TestCsvSource(object):
                 'Independent variable minimum: -2\n'
                 'Independent variable maximum: +inf\n'
                 'Independent variable: [ 4.0, 5.0, 6.0 ]\n'
-                'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(fname)
+                'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(
+                    os.path.normpath(fname)
+                )
             )
             assert obj == ref
             # indep_max set
             obj = str(putil.plot.CsvSource(
-                fname=fname,
+                fname=os.path.normpath(fname),
                 rfilter={'Col1':0},
                 indep_col_label='Col2',
                 dep_col_label='Col3',
@@ -181,7 +192,9 @@ class TestCsvSource(object):
                 'Independent variable minimum: -2\n'
                 'Independent variable maximum: 200\n'
                 'Independent variable: [ 4.0, 5.0, 6.0 ]\n'
-                'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(fname)
+                'Dependent variable: [ -2.0, 0.0, -3.0 ]'.format(
+                    os.path.normpath(fname)
+                )
             )
             assert obj == ref
 

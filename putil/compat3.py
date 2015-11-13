@@ -57,6 +57,11 @@ def _unicode_char(char):
     return False
 
 
+def _unicode_to_ascii(obj):
+    # pylint: disable=E0602
+    return obj
+
+
 def _write(fobj, data):
     """ Write data to file """
-    fobj.write(bytes(data, 'ascii'))
+    fobj.write(data)

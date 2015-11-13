@@ -46,22 +46,16 @@ def custom_contract7(arg):
     if not arg:
         raise ValueError(putil.pcontracts.get_exdesc())
 
-# Define contract that uses exception
-# (RuntimeError, 'Invalid name')
 @putil.pcontracts.new_contract('Invalid name')
 def custom_contract8(arg):
     if not arg:
         raise ValueError(putil.pcontracts.get_exdesc())
 
-# Define contract that uses exception
-# (TypeError, 'Argument `*[argument_name]*` is not valid')
 @putil.pcontracts.new_contract(TypeError)
 def custom_contract9(arg):
     if not arg:
         raise ValueError(putil.pcontracts.get_exdesc())
 
-# Define contract that uses exception
-# (RuntimeError, 'Argument `*[argument_name]*` is not valid')
 @putil.pcontracts.new_contract()
 def custom_contract10(arg):
     if not arg:

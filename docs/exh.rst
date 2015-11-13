@@ -1,7 +1,7 @@
 .. exh.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _exh-module:
+.. py:module:: putil.exh
 
 ##########
 exh module
@@ -32,9 +32,9 @@ an exception with :py:meth:`putil.exh.ExHandle.add_exception` and
 conditionally raising it with :py:meth:`putil.exh.ExHandle.raise_exception_if`
 takes the same number of lines of code as an exception raised inside an
 :code:`if` block and incurs a slight performance penalty, using the
-:ref:`exh-module` allows for automatic documentation of the exceptions raised
-by any function, method or class property with the help of the
-:ref:`exdoc-module`.
+:py:mod:`putil.exh` module allows for automatic documentation of the exceptions
+raised by any function, method or class property with the help of the
+:py:mod:`putil.exdoc` module.
 
 *********
 Functions

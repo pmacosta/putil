@@ -1,7 +1,7 @@
 .. pcsv.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _pcsv-module:
+.. py:module:: putil.pcsv
 
 ###########
 pcsv module

@@ -6,16 +6,51 @@
 import os
 
 
-def incfile(file_name, mobj, lrange='1,6-'):
+def incfile(fname, fpointer, lrange='1,6-'):
     """
-    Reads file ${TRACER_DIR}/file_name and passes lines (without file
-    header to a function
+    Includes a Python source file in a docstring formatted in
+    reStructuredText
+
+    :param fname: File name, relative to environment variable
+                  :bash:`${TRACER_DIR}`
+    :type  fname: string
+
+    :param fpointer: Output function pointer. Normally is :code:`cog.out` but
+                     :code:`print` or other functions can be used for
+                     debugging
+    :type  fpointer: function object
+
+    :param lrange: Line range to include, similar to Sphinx
+                   `literalinclude <http://sphinx-doc.org/markup/code.html
+                   #directive-literalinclude>`_ directive
+    :type  lrange: string
+
+    For example:
+
+    .. code-block:: python
+
+        def func():
+            \"\"\"
+            This is a docstring. This file shows how to use it:
+
+            .. =[=cog
+            .. import docs.support.incfile
+            .. docs.support.incfile.incfile('func_example.py', cog.out)
+            .. =]=
+            .. code-block:: python
+
+                # func_example.py
+                if __name__ == '__main__':
+                    func()
+
+            .. =[=end=]=
+            \"\"\"
+            return 'This is func output'
     """
     # Read file
-    fpointer = mobj.out
     file_dir = os.environ['TRACER_DIR']
-    file_name = os.path.join(file_dir, file_name)
-    with open(file_name) as fobj:
+    fname = os.path.join(file_dir, fname)
+    with open(fname) as fobj:
         lines = fobj.readlines()
     # Parse line specification
     tokens = [item.strip() for item in lrange.split(',')]

@@ -4,7 +4,6 @@
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
 import pytest
-import tempfile
 
 import putil.pcsv
 import putil.test
@@ -128,7 +127,7 @@ def test_merge():
         ['high', 20, 40, 60, 5, 6, 7, 8],
         ['low', 30, 300, 3000, 9, 10, 11, 12]
     ]
-    # # Output header when neither file1 nor file2 have headers
+    # Output header when neither file1 nor file2 have headers
     with putil.misc.TmpFile(write_input_file) as fname1:
         with putil.misc.TmpFile(write_replacement_file) as fname2:
             putil.pcsv.merge(
@@ -163,8 +162,7 @@ def test_merge():
         ['low', 30, 300, 3000, 9, 10, 11, 12]
     ]
     # Save to a different file
-    with tempfile.NamedTemporaryFile() as fwobj:
-        ofname = fwobj.name
+    with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_input_file) as fname1:
             with putil.misc.TmpFile(write_replacement_file) as fname2:
                 putil.pcsv.merge(fname1, fname2, ofname=ofname)
@@ -178,6 +176,20 @@ def test_merge():
         ['nom', 10, 20, 30, 1, 2, 3, 4],
         ['high', 20, 40, 60, 5, 6, 7, 8],
         ['low', 30, 300, 3000, 9, 10, 11, 12]
+    ]
+    # Starting row
+    with putil.misc.TmpFile(write_input_file) as fname1:
+        with putil.misc.TmpFile(write_replacement_file) as fname2:
+            putil.pcsv.merge(fname1, fname2, frow1=3, frow2=4)
+        obj = putil.pcsv.CsvFile(fname=fname1, has_header=True)
+    assert (
+        obj.header()
+        ==
+        ['Ctrl', 'Ref', 'Data1', 'Data2', 'H1', 'H2', 'H3', 'H4']
+    )
+    assert obj.data() == [
+        ['high', 20, 40, 60, 9, 10, 11, 12],
+        ['low', 30, 300, 3000, None, None, None, None]
     ]
 
 
@@ -319,6 +331,47 @@ def test_merge_exceptions():
                     RuntimeError,
                     'Invalid column specification'
                 )
+    with putil.misc.TmpFile(write_file) as fname1:
+        with putil.misc.TmpFile(write_file) as fname2:
+            # Invalid row_start
+            for item in ['a', True, -1]:
+                for par in ['frow1', 'frow2']:
+                    putil.test.assert_exception(
+                        putil.pcsv.merge,
+                        {
+                            'fname1':fname1,
+                            'dfilter1':['Ctrl'],
+                            'fname2':fname2,
+                            'dfilter2':['Ctrl'],
+                            par:item,
+                        },
+                        RuntimeError,
+                        'Argument `{0}` is not valid'.format(par)
+                    )
+            putil.test.assert_exception(
+                putil.pcsv.merge,
+                {
+                    'fname1':fname1,
+                    'dfilter1':['Ctrl'],
+                    'fname2':fname2,
+                    'dfilter2':['Ctrl'],
+                    'frow1':200,
+                },
+                RuntimeError,
+                'File {0} has no valid data'.format(fname1)
+            )
+            putil.test.assert_exception(
+                putil.pcsv.merge,
+                {
+                    'fname1':fname1,
+                    'dfilter1':['Ctrl'],
+                    'fname2':fname2,
+                    'dfilter2':['Ctrl'],
+                    'frow2':200,
+                },
+                RuntimeError,
+                'File {0} has no valid data'.format(fname2)
+            )
     with putil.misc.TmpFile(write_file) as fname1:
         with putil.misc.TmpFile(write_file) as fname2:
             putil.test.assert_exception(

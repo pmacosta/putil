@@ -44,28 +44,36 @@ def trace_pars(mname):
 
 
 def run_trace(
-    mname, fname, module_prefix, callable_names, no_print, exclude=None
+    mname,
+    fname,
+    module_prefix,
+    callable_names,
+    no_print,
+    module_exclude=None,
+    callable_exclude=None
 ):
     """ Run module tracing """
     # pylint: disable=R0913
-    exclude = [] if exclude is None else exclude
+    module_exclude = [] if module_exclude is None else module_exclude
+    callable_exclude = [] if callable_exclude is None else callable_exclude
     par = trace_pars(mname)
     start_time = datetime.datetime.now()
     with putil.exdoc.ExDocCxt(
-            exclude=par.exclude+exclude,
+            exclude=par.exclude+module_exclude,
             pickle_fname=par.pickle_fname,
             in_callables_fname=par.in_callables_fname,
-            out_callables_fname=par.out_callables_fname
+            out_callables_fname=par.out_callables_fname,
+            _no_print=no_print
     ) as exdoc_obj:
         if pytest.main('-q -x {noption}-m {mname} {file}'.format(
                 noption='{0} '.format(par.noption) if par.noption else '',
                 mname=mname,
-                file=os.path.realpath(os.path.join(
+                file=repr(os.path.realpath(os.path.join(
                     os.path.dirname(__file__),
                     '..',
                     '..',
                     'tests',
-                    'test_{0}.py'.format(fname))))):
+                    'test_{0}.py'.format(fname)))))):
             raise RuntimeError('Tracing did not complete successfully')
     stop_time = datetime.datetime.now()
     if not no_print:
@@ -75,6 +83,10 @@ def run_trace(
         for callable_name in callable_names:
             callable_name = module_prefix+callable_name
             print('\nCallable: {0}'.format(callable_name))
-            print(exdoc_obj.get_sphinx_doc(callable_name))
+            print(
+                exdoc_obj.get_sphinx_doc(
+                    callable_name, exclude=callable_exclude
+                )
+            )
             print('\n')
     return copy.copy(exdoc_obj)

@@ -10,18 +10,18 @@ Contents
 
 .. toctree::
 
-	README
-	eng
-	exdoc
-	exh
-	misc
-	pcsv
-	pcontracts
-	pinspect
-	plot
-	ptypes
-	test
-	tree
+   README
+   eng
+   exdoc
+   exh
+   misc
+   pcontracts
+   pcsv
+   pinspect
+   plot
+   ptypes
+   test
+   tree
 
 Indices and tables
 ==================

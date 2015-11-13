@@ -1,7 +1,7 @@
 .. ptypes.rst
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
-.. _ptypes-module:
+.. py:module:: putil.ptypes
 
 #############
 ptypes module
@@ -9,7 +9,7 @@ ptypes module
 
 This module provides several pseudo-type definitions which can be enforced
 and/or validated with custom contracts defined using the
-:ref:`pcontracts-module`
+:py:mod:`putil.pcontracts` module
 
 ************
 Pseudo-types
@@ -351,13 +351,13 @@ Contracts
 .. autofunction:: putil.ptypes.csv_row_filter
 .. autofunction:: putil.ptypes.engineering_notation_number
 .. autofunction:: putil.ptypes.engineering_notation_suffix
-.. autofunction:: putil.ptypes.non_negative_integer
 .. autofunction:: putil.ptypes.file_name
 .. autofunction:: putil.ptypes.file_name_exists
 .. autofunction:: putil.ptypes.function
 .. autofunction:: putil.ptypes.increasing_real_numpy_vector
 .. autofunction:: putil.ptypes.interpolation_option
 .. autofunction:: putil.ptypes.line_style_option
+.. autofunction:: putil.ptypes.non_negative_integer
 .. autofunction:: putil.ptypes.offset_range
 .. autofunction:: putil.ptypes.positive_real_num
 .. autofunction:: putil.ptypes.real_num

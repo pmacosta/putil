@@ -2,6 +2,7 @@ decorator>=3.4.2
 funcsigs>=0.4
 mock>=1.0.1
 pycontracts>=1.7.2,!=1.7.7
+pytest>=2.7.0
 six>=1.4.0
 sphinx>=1.2.3
 sphinxcontrib-inlinesyntaxhighlight>=0.2

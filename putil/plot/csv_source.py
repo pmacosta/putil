@@ -31,6 +31,7 @@ exclude_list = [
     'putil.pcsv.csv_file.CsvFile._set_cfilter',
     'putil.pcsv.csv_file.CsvFile._set_dfilter',
     'putil.pcsv.csv_file.CsvFile._set_has_header',
+    'putil.pcsv.csv_file.CsvFile._validate_frow',
     'putil.pcsv.csv_file.CsvFile.data',
     'putil.pcsv.csv_file.CsvFile.header',
     'putil.pcsv.csv_file.CsvFile.cfilter',
@@ -84,6 +85,10 @@ class CsvSource(DataSource):
     :type  fproc_eargs: dictionary or None
 
     :rtype: :py:class:`putil.plot.CsvSource`
+
+    .. note:: The row where data starts in the comma-separated file is
+              auto-detected as the first row that has a number (integer or
+              float) in at least one of its columns
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc(exclude=exclude_list)) ]]]
     .. Auto-generated exceptions documentation for
@@ -213,18 +218,15 @@ class CsvSource(DataSource):
 
         .. =[=cog
         .. import docs.support.incfile
-        .. docs.support.incfile.incfile('plot_example_3.py', cog)
+        .. docs.support.incfile.incfile('plot_example_3.py', cog.out)
         .. =]=
         .. code-block:: python
 
             # plot_example_3.py
-            import putil.misc, putil.pcsv, sys
+            import putil.misc, putil.pcsv
 
             def cwrite(fobj, data):
-                if sys.hexversion < 0x03000000:
-                    fobj.write(data)
-                else:
-                    fobj.write(bytes(data, 'ascii'))
+                fobj.write(data)
 
             def write_csv_file(file_handle):
                 cwrite(file_handle, 'Col1,Col2\n')
@@ -659,6 +661,8 @@ class CsvSource(DataSource):
 
     @putil.pcontracts.contract(fname='file_name_exists')
     def _set_fname(self, fname):
+        # Windows compatibility: repr() escapes the slashes, but need to take
+        # out explicit quotes
         self._fname = fname
         self._csv_obj = putil.pcsv.CsvFile(fname)
         self._apply_rfilter()   # This also gets indep_var,dep_var from file
@@ -978,7 +982,7 @@ class CsvSource(DataSource):
 
     .. =[=cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('plot_example_3.py', cog, '22-29')
+    .. docs.support.incfile.incfile('plot_example_3.py', cog.out, '19-26')
     .. =]=
     .. code-block:: python
 
@@ -1093,7 +1097,7 @@ class CsvSource(DataSource):
 
     .. =[=cog
     .. import docs.support.incfile
-    .. docs.support.incfile.incfile('plot_example_5.py', cog)
+    .. docs.support.incfile.incfile('plot_example_5.py', cog.out)
     .. =]=
     .. code-block:: python
 

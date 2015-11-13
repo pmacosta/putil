@@ -4,8 +4,8 @@
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
 import pytest
-import tempfile
 
+import putil.misc
 import putil.pcsv
 import putil.test
 from tests.pcsv.files import (
@@ -21,8 +21,7 @@ from tests.pcsv.files import (
 def test_dsort_function():
     """ Test dsort function behavior """
     # Input file name has headers, separate output file name
-    with tempfile.NamedTemporaryFile() as fwobj:
-        ofname = fwobj.name
+    with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_file) as fname:
             putil.pcsv.dsort(
                 fname=fname,
@@ -44,8 +43,7 @@ def test_dsort_function():
         ]
     )
     # Input file name does not have headers, separate output file name
-    with tempfile.NamedTemporaryFile() as fwobj:
-        ofname = fwobj.name
+    with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_file) as fname:
             putil.pcsv.dsort(
                 fname=fname,
@@ -84,6 +82,25 @@ def test_dsort_function():
             [2, 5, 40],
             [1, 3, 10],
             [1, 4, 20]
+        ]
+    )
+    # Starting row
+    with putil.misc.TmpFile(write_file) as fname:
+        putil.pcsv.dsort(
+            fname=fname,
+            order=[{0:'D'}, {1:'A'}],
+            has_header=False,
+            frow=4
+        )
+        obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
+    assert obj.header() == [0, 1, 2]
+    assert (
+        obj.data()
+        ==
+        [
+            [3, 5, 50],
+            [2, 4, 30],
+            [2, 5, 40],
         ]
     )
 
@@ -180,6 +197,20 @@ def test_dsort_function_exceptions():
             },
             RuntimeError,
             'Argument `has_header` is not valid'
+        )
+    with putil.misc.TmpFile(write_file) as fname:
+        for item in ['a', True, -1]:
+            putil.test.assert_exception(
+                putil.pcsv.dsort,
+                {'fname':fname, 'order':['A'], 'frow':item},
+                RuntimeError,
+                'Argument `frow` is not valid'
+            )
+        putil.test.assert_exception(
+            putil.pcsv.dsort,
+            {'fname':fname, 'order':['A'], 'frow':10},
+            RuntimeError,
+            'File {0} has no valid data'.format(fname)
         )
     # Output file exceptions
     with putil.misc.TmpFile(write_file) as fname:

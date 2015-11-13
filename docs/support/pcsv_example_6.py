@@ -3,14 +3,12 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0104
 
-import putil.pcsv, tempfile
+import putil.misc, putil.pcsv
 
 def main():
-    ctx = tempfile.NamedTemporaryFile
-    with ctx() as ifobj:
-        with ctx() as ofobj:
-            ifname = ifobj.name
-            ofname = ofobj.name
+    ctx = putil.misc.TmpFile
+    with ctx() as ifname:
+        with ctx() as ofname:
             # Create input data file
             data = [
                 ['Ctrl', 'Ref', 'Result'],

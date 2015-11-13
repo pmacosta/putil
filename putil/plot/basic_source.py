@@ -106,7 +106,7 @@ class BasicSource(DataSource):
 
         .. =[=cog
         .. import docs.support.incfile
-        .. docs.support.incfile.incfile('plot_example_4.py', cog)
+        .. docs.support.incfile.incfile('plot_example_4.py', cog.out)
         .. =]=
         .. code-block:: python
 
