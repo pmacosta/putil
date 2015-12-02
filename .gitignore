@@ -1,4 +1,7 @@
-# putil .gitignore file
+tags
+.coverage
+.tox*
+.pytest.restart
 *.cache
 *.pid
 *.ckt
@@ -11,4 +14,19 @@
 *.swo
 *.rot
 *.pyc
-doc/_build
+*.spell
+*.json
+.idea
+.eggs
+dist
+putil.egg-info
+putil/htmlcov
+docs/_build
+shippable/
+vdisks/
+build/
+!tests/support/ref_images/*.png
+!tests/support/ref_images_ci/*.png
+!docs/support/*.png
+!data/requirements.json
+!data/data_files.json
