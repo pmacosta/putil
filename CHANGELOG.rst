@@ -5,6 +5,7 @@
 Changelog
 =========
 
+* 0.9.1rc4 [2015-12-01]: Fixed bug in top-level README.rst verification
 * 0.9.1rc3 [2015-12-01]:
 
   * Documentation updates

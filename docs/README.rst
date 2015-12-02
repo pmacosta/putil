@@ -141,7 +141,7 @@ Installing
 Documentation
 =============
 
-Available at `Read the Docs <https://putil.readthedocs.org>`_
+Available at `Read the Docs <https://putil.readthedocs.org/en/latest>`_
 
 Contributing
 ============

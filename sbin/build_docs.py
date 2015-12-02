@@ -420,7 +420,7 @@ def generate_top_level_readme(pkg_dir):
         fobj.write('\n'.join(ret))
     # Check that generated file produces HTML version without errors
     sbin.functions.shcmd(
-        ['rst2html', '--exit-status=3', fname],
+        ['rst2html.py', '--exit-status=3', fname],
         'Error validating top-level README.rst HTML conversion',
     )
 
