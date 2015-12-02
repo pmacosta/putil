@@ -64,7 +64,7 @@ def read(*filenames, **kwargs):
 # Global variables
 ###
 PKG_NAME = 'putil'
-REPO = 'http://bitbucket.org/pacosta/{pkg_name}/'.format(pkg_name=PKG_NAME)
+REPO = 'http://github.com/pmacosta/{pkg_name}/'.format(pkg_name=PKG_NAME)
 AUTHOR = 'Pablo Acosta-Serafini'
 AUTHOR_EMAIL = 'pmacosta@yahoo.com'
 PKG_DIR = os.path.abspath(os.path.dirname(__file__))
