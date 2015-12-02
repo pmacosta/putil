@@ -373,10 +373,18 @@ def generate_top_level_readme(pkg_dir):
         lines = [item.rstrip() for item in fobj.readlines()]
     ref_regexp = re.compile('.*:py:mod:`(.+) <putil.(.+)>`.*')
     rst_cmd_regexp = re.compile('^\\s*.. \\S+::.*')
+    indent_regexp = re.compile('^(\\s*)\\S+')
     ret = []
+    autofunction = False
     for line in lines:
         match = ref_regexp.match(line)
-        if match:
+        if autofunction:
+            match = indent_regexp.match(line)
+            if (not match) or (match and len(match.group(1)) == 0):
+                autofunction = False
+                ret.append(line)
+        elif match:
+            # Remove cross-references
             label = match.group(1)
             mname = match.group(2)
             line = line.replace(
@@ -387,12 +395,17 @@ def generate_top_level_readme(pkg_dir):
             )
             ret.append(line)
         elif line.lstrip().startswith('.. include::'):
+            # Include files
             fname = os.path.join(docs_dir, line.split()[-1])
             for inc_line in sbin.functions._readlines(fname):
                 comment = inc_line.lstrip().startswith('.. ')
                 if ((not comment)
                    or (comment and rst_cmd_regexp.match(inc_line))):
                     ret.append(inc_line.rstrip())
+        elif line.lstrip().startswith('.. autofunction::'):
+            # Remove auto-functions, PyPI reStructuredText parser
+            # does not appear to like it
+            autofunction = True
         else:
             ret.append(line)
     fname = os.path.join(pkg_dir, 'README.rst')

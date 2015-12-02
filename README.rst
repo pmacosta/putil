@@ -346,17 +346,11 @@ Contributing
     Output of shell commands can be automatically included in reStructuredText
     source files with the help of Cog_ and the :code:`docs.support.term_echo` module.
 
-    .. autofunction:: docs.support.term_echo.ste
-        :noindex:
 
-    .. autofunction:: docs.support.term_echo.term_echo
-        :noindex:
 
     Similarly Python files can be included in docstrings with the help of Cog_
     and the :code:`docs.support.incfile` module
 
-    .. autofunction:: docs.support.incfile.incfile
-        :noindex:
 
 .. rubric:: Footnotes
 
@@ -382,6 +376,7 @@ Contributing
 Changelog
 =========
 
+* 0.9.1rc2 [2015-12-01]: Fixed top-level README.rst file
 * 0.9.1rc1 [2015-11-30]: Initial public release
 
 License
