@@ -31,6 +31,15 @@
 		"ver":">=3.4.2",
 		"pos":4
 	},
+	"docutils":{
+		"name":"Docutils",
+		"optional":false,
+		"url":"http://docutils.sourceforge.net/docs",
+		"cat":["tests"],
+		"ver":">=0.12",
+		"pos":5
+	},
+
 	"funcsigs":{
 		"name":"Funcsigs",
 		"optional":false,
@@ -40,7 +49,7 @@
 			"py26":">=0.4",
 			"py27":">=0.4"
 		},
-		"pos":5
+		"pos":6
 	},
 	"matplotlib":{
 		"name":"Matplotlib",
@@ -48,7 +57,7 @@
 		"url":"http://matplotlib.org",
 		"cat":["main"],
 		"ver":">=1.3.1",
-		"pos":6
+		"pos":7
 	},
 	"mock":{
 		"name":"Mock",
@@ -59,7 +68,7 @@
 			"py26":">=1.0.1",
 			"py27":">=1.0.1"
 		},
-		"pos":7
+		"pos":8
 	},
 	"numpy":{
 		"name":"Numpy",
@@ -75,7 +84,7 @@
 		"url":"https://python-pillow.github.io",
 		"cat":["main"],
 		"ver":">=2.6.1",
-		"pos":8
+		"pos":9
 	},
 	"pycontracts":{
 		"name":"PyContracts",
@@ -83,7 +92,7 @@
 		"url":"https://andreacensi.github.io/contracts",
 		"cat":["main", "rtd"],
 		"ver":">=1.7.2,!=1.7.7",
-		"pos":9
+		"pos":10
 	},
 	"pylint":{
 		"name":"Pylint",
@@ -97,7 +106,7 @@
 			"py34":">=1.3.1,<1.5",
 			"py35":">=1.3.1,<1.5"
 		},
-		"pos":10
+		"pos":11
 	},
 	"pytest":{
 		"name":"Py.test",
@@ -105,7 +114,7 @@
 		"url":"http://pytest.org",
 		"cat":["tests", "rtd"],
 		"ver":">=2.7.0",
-		"pos":11
+		"pos":12
 	},
 	"pytest-cov":{
 		"name":"Pytest-coverage",
@@ -113,7 +122,7 @@
 		"url":"https://pypi.python.org/pypi/pytest-cov",
 		"cat":["tests"],
 		"ver":">=1.8.0",
-		"pos":12
+		"pos":13
 	},
 	"pytest-xdist":{
 		"name":"Pytest-xdist",
@@ -121,7 +130,7 @@
 		"url":"https://pypi.python.org/pypi/pytest-xdist",
 		"cat":["tests"],
 		"ver":">=1.8.0",
-		"pos":13
+		"pos":14
 	},
 	"scipy":{
 		"name":"Scipy",
@@ -129,7 +138,7 @@
 		"url":"http://www.scipy.org",
 		"cat":["main"],
 		"ver":">=0.13.3",
-		"pos":14
+		"pos":15
 	},
 	"six":{
 		"name":"Six",
@@ -137,7 +146,7 @@
 		"url":"https://pythonhosted.org/six",
 		"cat":["main", "rtd"],
 		"ver":">=1.4.0",
-		"pos":15
+		"pos":16
 	},
 	"sphinx":{
 		"name":"Sphinx",
@@ -145,7 +154,7 @@
 		"url":"http://sphinx-doc.org",
 		"cat":["docs", "rtd"],
 		"ver":">=1.2.3",
-		"pos":16
+		"pos":17
 	},
 	"sphinxcontrib-inlinesyntaxhighlight":{
 		"name":"Inline Syntax Highlight Sphinx Extension",
@@ -153,7 +162,7 @@
 		"url":"https://bitbucket.org/klorenz/sphinxcontrib-inlinesyntaxhighlight",
 		"cat":["docs", "rtd"],
 		"ver":">=0.2",
-		"pos":17
+		"pos":18
 	},
 	"sphinx_rtd_theme":{
 		"name":"ReadTheDocs Sphinx theme",
@@ -161,7 +170,7 @@
 		"url":"https://github.com/snide/sphinx_rtd_theme",
 		"cat":["docs"],
 		"ver":">=0.1.9",
-		"pos":18
+		"pos":19
 	},
 	"tox":{
 		"name":"Tox",
@@ -169,7 +178,7 @@
 		"url":"https://testrun.org/tox",
 		"cat":["tests"],
 		"ver":">=1.9.0",
-		"pos":19
+		"pos":20
 	},
 	"virtualenv":{
 		"name":"Virtualenv",
@@ -177,6 +186,6 @@
 		"url":"http://docs.python-guide.org/en/latest/dev/virtualenvs",
 		"cat":["tests"],
 		"ver":">=13.1.2",
-		"pos":20
+		"pos":21
 	}
 }

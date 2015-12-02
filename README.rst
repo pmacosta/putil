@@ -2,21 +2,44 @@
 .. Copyright (c) 2013-2015 Pablo Acosta-Serafini
 .. See LICENSE for details
 
+
+.. image:: https://badge.fury.io/py/putil.svg
+    :target: https://pypi.python.org/pypi/putil
+    :alt: PyPI version
+
+.. image:: https://img.shields.io/pypi/l/putil.svg
+    :target: https://pypi.python.org/pypi/putil
+    :alt: License
+
+.. image:: https://img.shields.io/pypi/pyversions/putil.svg
+    :target: https://pypi.python.org/pypi/putil
+    :alt: Python versions supported
+
+.. image:: https://img.shields.io/pypi/format/putil.svg
+    :target: https://pypi.python.org/pypi/putil
+    :alt: Format
+
+|
+
 .. image::
    https://travis-ci.org/pmacosta/putil.svg?branch=develop
 
 .. image::
    https://ci.appveyor.com/api/projects/status/
    7dpk342kxs8kcg5t/branch/develop?svg=true
-
-.. image::
-   https://readthedocs.org/projects/pip/badge/?version=stable
-   :target: http://pip.readthedocs.org/en/stable/?badge=stable
-   :alt: Documentation Status
+   :alt: Windows continuous integration
 
 .. image::
    https://codecov.io/github/pmacosta/putil/coverage.svg?branch=develop
    :target: https://codecov.io/github/pmacosta/putil?branch=develop
+   :alt: Continuous integration coverage
+
+.. image::
+   https://readthedocs.org/projects/pip/badge/?version=stable
+   :target: http://pip.readthedocs.org/en/stable/?badge=stable
+   :alt: Documentation status
+
+|
 
 Putil Library
 =============
@@ -38,6 +61,7 @@ Putil Library
 .. _Cog: http://nedbatchelder.com/code/cog
 .. _Coverage: http://coverage.readthedocs.org/en/coverage-4.0a5
 .. _Decorator: https://pythonhosted.org/decorator
+.. _Docutils: http://docutils.sourceforge.net/docs
 .. _Funcsigs: https://pypi.python.org/pypi/funcsigs
 .. _Matplotlib: http://matplotlib.org
 .. _Mock: http://www.voidspace.org.uk/python/mock
@@ -174,6 +198,8 @@ Contributing
     * `Coverage`_ (3.7.1 or newer)
 
     * `Decorator`_ (3.4.2 or newer)
+
+    * `Docutils`_ (0.12 or newer)
 
     * `Funcsigs`_ (Python 2.x only, 0.4 or newer)
 
@@ -372,12 +398,6 @@ Contributing
    `Ionel's codelog <http://blog.ionelmc.ro/2015/04/14/
    tox-tricks-and-patterns/>`_
 
-
-Changelog
-=========
-
-* 0.9.1rc2 [2015-12-01]: Fixed top-level README.rst file
-* 0.9.1rc1 [2015-11-30]: Initial public release
 
 License
 =======

@@ -396,12 +396,19 @@ def generate_top_level_readme(pkg_dir):
             ret.append(line)
         elif line.lstrip().startswith('.. include::'):
             # Include files
-            fname = os.path.join(docs_dir, line.split()[-1])
-            for inc_line in sbin.functions._readlines(fname):
-                comment = inc_line.lstrip().startswith('.. ')
-                if ((not comment)
-                   or (comment and rst_cmd_regexp.match(inc_line))):
-                    ret.append(inc_line.rstrip())
+            base_fname = line.split()[-1].strip()
+            fname = os.path.basename(base_fname)
+            # Do not include the change log, PyPI adds it at the end
+            # of the README.rst file by default and in a hosted Git
+            # repository there is a much more detailed built-in change
+            # log in the commit message history
+            if fname != 'CHANGELOG.rst':
+                fname = os.path.join(docs_dir, base_fname)
+                for inc_line in sbin.functions._readlines(fname):
+                    comment = inc_line.lstrip().startswith('.. ')
+                    if ((not comment)
+                       or (comment and rst_cmd_regexp.match(inc_line))):
+                        ret.append(inc_line.rstrip())
         elif line.lstrip().startswith('.. autofunction::'):
             # Remove auto-functions, PyPI reStructuredText parser
             # does not appear to like it
@@ -411,6 +418,11 @@ def generate_top_level_readme(pkg_dir):
     fname = os.path.join(pkg_dir, 'README.rst')
     with open(fname, 'w') as fobj:
         fobj.write('\n'.join(ret))
+    # Check that generated file produces HTML version without errors
+    sbin.functions.shcmd(
+        ['rst2html', '--exit-status=3', fname],
+        'Error validating top-level README.rst HTML conversion',
+    )
 
 
 def valid_dir(value):
