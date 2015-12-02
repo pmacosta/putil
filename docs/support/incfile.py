@@ -6,7 +6,7 @@
 import os
 
 
-def incfile(fname, fpointer, lrange='1,6-'):
+def incfile(fname, fpointer, lrange='1,6-', sdir=None):
     """
     Includes a Python source file in a docstring formatted in
     reStructuredText
@@ -24,6 +24,12 @@ def incfile(fname, fpointer, lrange='1,6-'):
                    `literalinclude <http://sphinx-doc.org/markup/code.html
                    #directive-literalinclude>`_ directive
     :type  lrange: string
+
+    :param sdir: Source file directory. If None the :bash:`${TRACER_DIR}`
+                 environment variable is used if it is defined, otherwise
+                 the directory where the :code:`docs.support.incfile` module
+                 is located is used
+    :type  sdir: string
 
     For example:
 
@@ -48,7 +54,13 @@ def incfile(fname, fpointer, lrange='1,6-'):
             return 'This is func output'
     """
     # Read file
-    file_dir = os.environ['TRACER_DIR']
+    file_dir = (
+        sdir
+        if sdir else
+        os.environ.get(
+            'TRACER_DIR', os.path.abspath(os.path.dirname(__file__))
+        )
+    )
     fname = os.path.join(file_dir, fname)
     with open(fname) as fobj:
         lines = fobj.readlines()
