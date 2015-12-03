@@ -3,11 +3,12 @@
 # See LICENSE for details
 # pylint: disable=C0111,E0611,W0621
 
+# PyPI imports
 import numpy
-import scipy
 import pytest
+import scipy
 from scipy.misc import imread
-
+# Putil imports
 import putil.plot
 
 

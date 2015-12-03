@@ -3,9 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111
 
-import numpy
+# Standard library imports
 import sys
-
+import numpy
+# Putil imports
 import putil.ptypes
 import putil.test
 

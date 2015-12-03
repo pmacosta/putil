@@ -4,8 +4,8 @@
 # See LICENSE for details
 # pylint: disable=C0111,F0401,R0914,W0141
 
+# Standard library imports
 from __future__ import print_function
-from cogapp import Cog
 import argparse
 import difflib
 import glob
@@ -14,7 +14,9 @@ import os
 import re
 import shutil
 import sys
-
+# PyPI imports
+from cogapp import Cog
+# Putil imports
 import sbin.refresh_moddb
 import sbin.build_moddb
 import sbin.functions

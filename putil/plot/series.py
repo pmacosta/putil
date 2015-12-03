@@ -1,14 +1,46 @@
 # series.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,E0611,W0105
+# pylint: disable=C0111,C0302,E0102,E0611,W0105
 
-import numpy
+# PyPI imports
 import matplotlib.path
 import matplotlib.pyplot as plt
+import numpy
 try:
     from scipy.stats import linregress
+    from scipy.interpolate import interp1d
+    NO_SCIPY = False
 except ImportError: # pragma: no cover
+    NO_SCIPY = True
+# Putil imports
+import putil.misc
+import putil.pcontracts
+from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
+
+
+###
+# Exception tracing initialization code
+###
+"""
+[[[cog
+import os, sys
+if sys.hexversion < 0x03000000:
+    import __builtin__
+else:
+    import builtins as __builtin__
+sys.path.append(os.environ['TRACER_DIR'])
+import trace_ex_plot_series
+exobj_plot = trace_ex_plot_series.trace_module(no_print=True)
+]]]
+[[[end]]]
+"""
+
+
+###
+# Functions
+###
+if NO_SCIPY: # pragma: no cover
     def linregress(indep_var, dep_var):
         """ Substitute linear regression for when SciPy is not available """
         npoints = len(indep_var)
@@ -19,9 +51,7 @@ except ImportError: # pragma: no cover
         )
         offset = (sum(dep_var)-slope*sum(indep_var))/npoints
         return slope, offset, False, False, False
-try:
-    from scipy.interpolate import interp1d
-except ImportError: # pragma: no cover
+
     # Code adapted from https://jayemmcee.wordpress.com/cubic-splines
     def create_splines(data):
         # pylint: disable=R0914
@@ -87,27 +117,6 @@ except ImportError: # pragma: no cover
             )
             return new_dep_var
         return rfunc
-import putil.misc
-import putil.pcontracts
-from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
-
-
-###
-# Exception tracing initialization code
-###
-"""
-[[[cog
-import os, sys
-if sys.hexversion < 0x03000000:
-    import __builtin__
-else:
-    import builtins as __builtin__
-sys.path.append(os.environ['TRACER_DIR'])
-import trace_ex_plot_series
-exobj_plot = trace_ex_plot_series.trace_module(no_print=True)
-]]]
-[[[end]]]
-"""
 
 
 ###
@@ -371,7 +380,7 @@ class Series(object):
         )
         self._exh.raise_exception_if(
             exname='invalid_color',
-            condition=not (True in check_list)
+            condition=True not in check_list
         )
 
     def _get_marker(self):

@@ -1,7 +1,7 @@
 # pcontracts_example_3.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,W0613,W0702
+# pylint: disable=C0111,C0410,W0613,W0702
 
 from __future__ import print_function
 import os, putil.pcontracts

@@ -4,6 +4,7 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+# Standard library imports
 from __future__ import print_function
 import os
 import sys
@@ -191,11 +192,11 @@ def main(argv):
         # Generate conftest.py files to selectively
         # skip Python 2 or Python 3 files
         skip_file = (
-            "# pylint: disable=C0103,C0111\n"
+            "# pylint: disable=E0012,C0103,C0111,C0411\n"
             "import sys\n"
-            "collect_ignore = []\n"
             "import matplotlib\n"
             "matplotlib.rcParams['backend'] = 'Agg'\n"
+            "collect_ignore = []\n"
             "if sys.hexversion < 0x03000000:\n"
             "    collect_ignore.append('compat3.py')\n"
             "else:\n"

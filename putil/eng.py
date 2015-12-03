@@ -3,12 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0105,W0611
 
+# Standard library imports
 import collections
-import numpy
 import textwrap
 import decimal
 from decimal import Decimal
-
+# PyPI imports
+import numpy
+# Putil imports
 import putil.exh
 from putil.ptypes import (
     engineering_notation_number,

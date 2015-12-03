@@ -3,8 +3,9 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,W0105,W0212
 
+# PyPI imports
 import numpy
-
+# Putil imports
 import putil.exh
 import putil.pcontracts
 from .constants import PRECISION

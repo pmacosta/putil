@@ -1,19 +1,22 @@
 # test_doccode.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,R0914,R0915,W0212,W0640
+# pylint: disable=C0111,C0302,E1129,R0914,R0915,W0212,W0640
 
+# Standard library imports
 from __future__ import print_function
-import matplotlib
 import os
 import subprocess
 import sys
+# PyPI imports
+import matplotlib
+# Putil imports
+import putil.misc
+import putil.test
+
 # Default to non-interactive PNG to avoid any
 # matplotlib back-end misconfiguration
 matplotlib.rcParams['backend'] = 'Agg'
-
-import putil.misc
-import putil.test
 
 
 def test_exdoc_doccode():
@@ -277,7 +280,7 @@ def test_pcontracts_doccode():
 
 def test_plot_doccode(capsys):
     """ Test used in plot module """
-    # pylint: disable=E1103
+    # pylint: disable=E1103,R0204
     from tests.plot.fixtures import compare_images, IMGTOL
     script_dir = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -335,7 +338,8 @@ def test_plot_doccode(capsys):
     with putil.misc.ignored(OSError):
         os.remove(test_fname)
     # Test ABC example
-    import numpy, docs.support.plot_example_2
+    import numpy
+    import docs.support.plot_example_2
     obj = docs.support.plot_example_2.MySource()
     obj.indep_var = numpy.array([1, 2, 3])
     obj.dep_var = numpy.array([-1, 1, -1])

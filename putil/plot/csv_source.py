@@ -3,8 +3,9 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,E0602,W0105,W0212,W0611
 
+# PyPI imports
 import numpy
-
+# Putil imports
 import putil.exh
 import putil.pcsv
 from putil.ptypes import csv_row_filter
@@ -1102,7 +1103,7 @@ class CsvSource(DataSource):
     .. code-block:: python
 
         # plot_example_5.py
-        import putil.misc, putil.pcsv, sys
+        import sys, putil.misc, putil.pcsv
         if sys.hexversion < 0x03000000:
             from putil.compat2 import _write
         else:

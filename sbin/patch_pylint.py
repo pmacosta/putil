@@ -4,10 +4,14 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+# Standard library imports
 import os
 import sys
 
 
+###
+# Functions
+###
 def main(pkg_dir):
     """ Processing """
     fname = os.path.join(pkg_dir, 'astroid', 'brain', 'pysix_moves.py')

@@ -1,22 +1,26 @@
 # exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0201,R0912,R0914,R0915
-# pylint: disable=W0122,W0212,W0613,W0631
+# pylint: disable=C0111,C0411,E0012,E0611,E1101,E1103,F0401
+# pylint: disable=R0201,R0912,R0914,R0915,W0122,W0212,W0613,W0631
 
+# Standard library imports
 import copy
-import decorator
 import imp
 import inspect
 import os
 import sys
 if sys.hexversion < 0x03000000: # pragma: no cover
     import __builtin__
+else: # pragma: no cover
+    import builtins as __builtin__
+# PyPI imports
+import decorator
+# Putil imports
+if sys.hexversion < 0x03000000: # pragma: no cover
     from putil.compat2 import _ex_type_str, _get_ex_msg, _get_func_code, _rwtb
 else:   # pragma: no cover
-    import builtins as __builtin__
     from putil.compat3 import _ex_type_str, _get_ex_msg, _get_func_code, _rwtb
-
 import putil.pinspect
 
 
@@ -854,6 +858,7 @@ class ExHandle(object):
 
     def _validate_edata(self, edata):
         """ Validate edata argument of raise_exception_if method """
+        # pylint: disable=R0916
         if edata is None:
             return True
         if not (isinstance(edata, dict) or _isiterable(edata)):

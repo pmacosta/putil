@@ -4,15 +4,16 @@
 # pylint: disable=C0111,W0613
 
 from __future__ import print_function
-import matplotlib
-import numpy
 import os
 import sys
+import matplotlib
+import numpy
+
+import putil.plot
+
 # Default to non-interactive PNG to avoid any
 # matplotlib back-end misconfiguration
 matplotlib.rcParams['backend'] = 'Agg'
-
-import putil.plot
 
 def main(fname, no_print):
     """

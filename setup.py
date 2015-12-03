@@ -11,13 +11,16 @@
 # The function to get the version number from __init__.py is from:
 #     https://python-packaging-user-guide.readthedocs.org/
 #     en/latest/single_source_version/
+# Standard library imports
 from __future__ import print_function
-from setuptools import setup
-from setuptools.command.test import test as TestCommand
 import io
+import glob
 import os
 import sys
-
+# PyPI imports
+from setuptools import setup
+from setuptools.command.test import test as TestCommand
+# Putil imports
 from sbin.functions import (
     SUPPORTED_VERS, get_pkg_data_files, load_requirements, python_version
 )
@@ -80,7 +83,6 @@ TESTING_REQUIRES = load_requirements(PKG_DIR, PYTHON_VER, 'testing')
 try:
     DATA_FILES = get_pkg_data_files(SHARE_DIR)
 except IOError:
-    import glob
     print('PKG_DIR: {0}'.format(PKG_DIR))
     print('Contents:')
     print(glob.glob(os.path.join(PKG_DIR, '*')))

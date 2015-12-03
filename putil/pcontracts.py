@@ -1,23 +1,25 @@
 # pcontracts.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0102,E0611,F0401,R0912,R0914,W0212,W0613
+# pylint: disable=C0103,C0111,E0102,E0611,E1101,F0401,R0912,R0914,W0212,W0613
 
-import decorator
-try:    # pragma: no cover
-    from funcsigs import signature, Parameter
-except ImportError: # pragma: no cover
-    from inspect import signature, Parameter
+# Standard library imports
 import inspect
 import os
 import re
 import sys
-RTD = os.environ.get('READTHEDOCS', False) == 'True'
-if not RTD: # pragma: no branch
+# PyPI imports
+try:    # pragma: no cover
+    from funcsigs import signature, Parameter
+except ImportError: # pragma: no cover
+    signature = inspect.signature
+    Parameter = inspect.Parameter
+import decorator
+if os.environ.get('READTHEDOCS', False) != 'True': # pragma: no branch
     # The PyContracts module imports numpy, which is not allowed in
     # the ReadTheDocs environment
     import contracts
-
+# Putil imports
 import putil.exh
 if sys.hexversion < 0x03000000: # pragma: no cover
     from putil.compat2 import _raise_exception
@@ -28,6 +30,7 @@ else:   # pragma: no cover
 ###
 # Global variables
 ###
+RTD = os.environ.get('READTHEDOCS', False) == 'True'
 _CUSTOM_CONTRACTS = dict()
 
 

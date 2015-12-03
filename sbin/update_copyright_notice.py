@@ -4,12 +4,13 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+# Standard library imports
 from __future__ import print_function
 import datetime
 import os
 import re
 import sys
-
+# Putil imports
 import sbin.functions
 
 ###

@@ -3,10 +3,12 @@
 # See LICENSE for details
 # pylint: disable=C0111,E0611,F0401
 
-import pytest
+# Standard library imports
 import re
 import sys
-
+# PyPI imports
+import pytest
+# Putil imports
 if sys.hexversion < 0x03000000: # pragma: no cover
     from putil.compat2 import _ex_type_str, _get_ex_msg
 else:   # pragma: no cover

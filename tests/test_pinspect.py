@@ -3,18 +3,21 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,E0611,F0401,R0201,R0903,R0913,R0915,W0104,W0212,W0232,W0612,W0613,W0621
 
+# Standard library imports
 from __future__ import print_function
 import copy
 import os
-import pytest
 import sys
 import time
 import types
+# PyPI imports
+import pytest
 if sys.hexversion == 0x03000000:
     from putil.compat3 import _readlines
-
+# Putil imports
 import putil.pinspect
 import putil.test
+
 
 ###
 # Helper functions
@@ -206,7 +209,7 @@ class TestCallables(object):
         )
         obj1._callables_db = {'call1':1, 'call2':'a'}
         obj2._callables_db = {'call1':1, 'call2':'a'}
-        assert obj1._check_intersection(obj2) == None
+        assert obj1._check_intersection(obj2) is None
 
     def test_init_exceptions(self):
         """ Test constructor exceptions """
@@ -411,7 +414,7 @@ class TestCallables(object):
         )
         obj3.trace([sys.modules['putil.test'].__file__])
         assert (obj1 == obj2) and (obj1 != obj3)
-        assert 5 != obj1
+        assert obj1 != 5
 
     def test_repr(self):
         """ Test __repr__ method behavior """
@@ -458,10 +461,10 @@ class TestCallables(object):
             '   putil.pit.MyClass\n'
             'putil.pit.MyClass: class (1-2)\n'
             'putil.pit.func1: func (3-4)\n'
-            'putil.test.assert_exception: func (19-88)\n'
-            'putil.test.comp_list_of_dicts: func (89-93)\n'
-            'putil.test.exception_type_str: func (94-111)\n'
-            'putil.test.get_exmsg: func (112-114)'
+            'putil.test.assert_exception: func (21-90)\n'
+            'putil.test.comp_list_of_dicts: func (91-95)\n'
+            'putil.test.exception_type_str: func (96-113)\n'
+            'putil.test.get_exmsg: func (114-116)'
         )
         assert str(obj) == rtext
         os.remove(src)
@@ -475,10 +478,10 @@ class TestCallables(object):
             '   putil.pit\n'
             '   putil.test\n'
             'putil.pit.my_func: func (1-2)\n'
-            'putil.test.assert_exception: func (19-88)\n'
-            'putil.test.comp_list_of_dicts: func (89-93)\n'
-            'putil.test.exception_type_str: func (94-111)\n'
-            'putil.test.get_exmsg: func (112-114)'
+            'putil.test.assert_exception: func (21-90)\n'
+            'putil.test.comp_list_of_dicts: func (91-95)\n'
+            'putil.test.exception_type_str: func (96-113)\n'
+            'putil.test.get_exmsg: func (114-116)'
         )
         assert str(obj) == rtext
         ## Test malformed JSON file
@@ -623,40 +626,40 @@ class TestCallables(object):
         ref.append('   {0}'.format(mname))
         ref.append('Classes:')
         ref.append('   {0}'.format(cname))
-        ref.append('{0}._homogenize_data_filter: func (43-65)'.format(mname))
-        ref.append('{0}._tofloat: func (66-81)'.format(mname))
-        ref.append('{0}: class (82-1049)'.format(cname))
-        ref.append('{0}.__init__: meth (133-230)'.format(cname))
-        ref.append('{0}.__eq__: meth (231-265)'.format(cname))
-        ref.append('{0}.__repr__: meth (266-303)'.format(cname))
-        ref.append('{0}.__str__: meth (304-348)'.format(cname))
-        ref.append('{0}._format_rfilter: meth (349-365)'.format(cname))
-        ref.append('{0}._gen_col_index: meth (366-378)'.format(cname))
-        ref.append('{0}._get_cfilter: meth (379-381)'.format(cname))
-        ref.append('{0}._get_dfilter: meth (382-384)'.format(cname))
-        ref.append('{0}._get_rfilter: meth (385-387)'.format(cname))
-        ref.append('{0}._reset_dfilter_int: meth (388-393)'.format(cname))
-        ref.append('{0}._in_header: meth (394-446)'.format(cname))
-        ref.append('{0}._set_cfilter: meth (447-451)'.format(cname))
-        ref.append('{0}._set_dfilter: meth (452-457)'.format(cname))
-        ref.append('{0}._set_rfilter: meth (458-462)'.format(cname))
-        ref.append('{0}._add_dfilter_int: meth (463-505)'.format(cname))
-        ref.append('{0}._apply_filter: meth (506-535)'.format(cname))
-        ref.append('{0}._set_has_header: meth (536-539)'.format(cname))
-        ref.append('{0}._validate_frow: meth (540-555)'.format(cname))
-        ref.append('{0}._validate_rfilter: meth (556-601)'.format(cname))
-        ref.append('{0}.add_dfilter: meth (602-625)'.format(cname))
-        ref.append('{0}.cols: meth (626-645)'.format(cname))
-        ref.append('{0}.data: meth (646-667)'.format(cname))
-        ref.append('{0}.dsort: meth (668-721)'.format(cname))
-        ref.append('{0}.header: meth (722-753)'.format(cname))
-        ref.append('{0}.replace: meth (754-848)'.format(cname))
-        ref.append('{0}.reset_dfilter: meth (849-866)'.format(cname))
-        ref.append('{0}.rows: meth (867-886)'.format(cname))
-        ref.append('{0}.write: meth (887-972)'.format(cname))
-        ref.append('{0}.cfilter: prop (973-997)'.format(cname))
-        ref.append('{0}.dfilter: prop (998-1023)'.format(cname))
-        ref.append('{0}.rfilter: prop (1024-1049)'.format(cname))
+        ref.append('{0}._homogenize_data_filter: func (44-66)'.format(mname))
+        ref.append('{0}._tofloat: func (67-82)'.format(mname))
+        ref.append('{0}: class (83-1050)'.format(cname))
+        ref.append('{0}.__init__: meth (134-231)'.format(cname))
+        ref.append('{0}.__eq__: meth (232-266)'.format(cname))
+        ref.append('{0}.__repr__: meth (267-304)'.format(cname))
+        ref.append('{0}.__str__: meth (305-349)'.format(cname))
+        ref.append('{0}._format_rfilter: meth (350-366)'.format(cname))
+        ref.append('{0}._gen_col_index: meth (367-379)'.format(cname))
+        ref.append('{0}._get_cfilter: meth (380-382)'.format(cname))
+        ref.append('{0}._get_dfilter: meth (383-385)'.format(cname))
+        ref.append('{0}._get_rfilter: meth (386-388)'.format(cname))
+        ref.append('{0}._reset_dfilter_int: meth (389-394)'.format(cname))
+        ref.append('{0}._in_header: meth (395-447)'.format(cname))
+        ref.append('{0}._set_cfilter: meth (448-452)'.format(cname))
+        ref.append('{0}._set_dfilter: meth (453-458)'.format(cname))
+        ref.append('{0}._set_rfilter: meth (459-463)'.format(cname))
+        ref.append('{0}._add_dfilter_int: meth (464-506)'.format(cname))
+        ref.append('{0}._apply_filter: meth (507-536)'.format(cname))
+        ref.append('{0}._set_has_header: meth (537-540)'.format(cname))
+        ref.append('{0}._validate_frow: meth (541-556)'.format(cname))
+        ref.append('{0}._validate_rfilter: meth (557-602)'.format(cname))
+        ref.append('{0}.add_dfilter: meth (603-626)'.format(cname))
+        ref.append('{0}.cols: meth (627-646)'.format(cname))
+        ref.append('{0}.data: meth (647-668)'.format(cname))
+        ref.append('{0}.dsort: meth (669-722)'.format(cname))
+        ref.append('{0}.header: meth (723-754)'.format(cname))
+        ref.append('{0}.replace: meth (755-849)'.format(cname))
+        ref.append('{0}.reset_dfilter: meth (850-867)'.format(cname))
+        ref.append('{0}.rows: meth (868-887)'.format(cname))
+        ref.append('{0}.write: meth (888-973)'.format(cname))
+        ref.append('{0}.cfilter: prop (974-998)'.format(cname))
+        ref.append('{0}.dfilter: prop (999-1024)'.format(cname))
+        ref.append('{0}.rfilter: prop (1025-1050)'.format(cname))
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
         if actual_txt != ref_txt:
@@ -758,67 +761,66 @@ class TestCallables(object):
         ref.append('   tests.test_exdoc.MockGetFrame')
         ref.append('   tests.test_exdoc.TestExDoc')
         ref.append('   tests.test_exdoc.TestExDocCxt')
-        ref.append('tests.test_exdoc.exdocobj: func (46-79)')
-        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (51-56)')
-        ref.append('tests.test_exdoc.exdocobj_raised: func (80-93)')
-        ref.append('tests.test_exdoc.exdocobj_single: func (94-103)')
-        ref.append('tests.test_exdoc.simple_exobj: func (104-121)')
-        ref.append('tests.test_exdoc.simple_exobj.func1: func (109-114)')
-        ref.append('tests.test_exdoc.mock_getframe: func (122-125)')
-        ref.append('tests.test_exdoc.trace_error_class: func (126-137)')
-        ref.append('tests.test_exdoc.MockFCode: class (138-143)')
-        ref.append('tests.test_exdoc.MockFCode.__init__: meth (139-143)')
-        ref.append('tests.test_exdoc.MockGetFrame: class (144-151)')
-        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (145-151)')
-        ref.append('tests.test_exdoc.TestExDocCxt: class (152-298)')
-        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (154-235)')
+        ref.append('tests.test_exdoc.exdocobj: func (50-83)')
+        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (55-60)')
+        ref.append('tests.test_exdoc.exdocobj_raised: func (84-97)')
+        ref.append('tests.test_exdoc.exdocobj_single: func (98-107)')
+        ref.append('tests.test_exdoc.simple_exobj: func (108-125)')
+        ref.append('tests.test_exdoc.simple_exobj.func1: func (113-118)')
+        ref.append('tests.test_exdoc.mock_getframe: func (126-129)')
+        ref.append('tests.test_exdoc.trace_error_class: func (130-141)')
+        ref.append('tests.test_exdoc.MockFCode: class (142-147)')
+        ref.append('tests.test_exdoc.MockFCode.__init__: meth (143-147)')
+        ref.append('tests.test_exdoc.MockGetFrame: class (148-155)')
+        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (149-155)')
+        ref.append('tests.test_exdoc.TestExDocCxt: class (156-302)')
+        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (158-239)')
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_init.func0: func (156-165)'
+            'tests.test_exdoc.TestExDocCxt.test_init.func0: func (160-169)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_multiple: meth (236-276)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple: meth (240-280)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_multiple.func1: func (238-247)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple.func1: func (242-251)'
         )
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_multiple.test_trace: '
-            'func (248-265)'
+            'func (252-269)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_save_callables: '
-            'meth (277-298)'
+            'tests.test_exdoc.TestExDocCxt.test_save_callables: meth (281-302)'
         )
-        ref.append('tests.test_exdoc.TestExDoc: class (299-890)')
-        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (301-350)')
-        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (351-364)')
+        ref.append('tests.test_exdoc.TestExDoc: class (303-894)')
+        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (305-354)')
+        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (355-368)')
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_build_ex_tree: meth (365-472)'
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree: meth (369-476)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.func1: '
-            'func (372-377)'
+            'func (376-381)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes1: '
-            'func (379-380)'
+            'func (383-384)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes2: '
-            'func (381-382)'
+            'func (385-386)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes3: '
-            'func (383-384)'
+            'func (387-388)'
         )
-        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (473-482)')
-        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (483-492)')
+        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (477-486)')
+        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (487-496)')
         ref.append(
             'tests.test_exdoc.TestExDoc.test_get_sphinx_autodoc: '
-            'meth (493-520)'
+            'meth (497-524)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: meth (521-890)'
+            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: meth (525-894)'
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)

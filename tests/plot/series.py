@@ -1,15 +1,17 @@
 # series.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,F0401,R0201,R0903,W0201,W0212,W0232,W0621
+# pylint: disable=C0103,C0111,F0401,R0201,R0204,R0903,W0201,W0212,W0232,W0621
 
+# Standard library imports
 from __future__ import print_function
+import os
+import sys
+# PyPI imports
 import matplotlib
 import numpy
-import os
 import pytest
-import sys
-
+# Putil imports
 import putil.plot
 from .fixtures import compare_images, IMGTOL
 sys.path.append('..')
@@ -295,7 +297,7 @@ class TestSeries(object):
             label='test',
             marker=None
         )
-        assert obj.marker == None
+        assert obj.marker is None
         obj = putil.plot.Series(
             data_source=default_source,
             label='test',

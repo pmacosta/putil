@@ -3,11 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,R0903,W0611
 
+# Standard library imports
 from __future__ import print_function
 import ast
-import decorator
 import inspect
-import numpy
 import os
 import platform
 import re
@@ -15,10 +14,14 @@ import tempfile
 import time
 import types
 from fractions import Fraction
+# PyPI imports
+import decorator
+import numpy
+# Putil imports
+import putil.eng
+
 if os.environ.get('APPVEYOR', None):    # pragma: no cover
     tempfile.tempdir = os.environ['CITMP']
-
-import putil.eng
 
 
 ###
@@ -238,6 +241,7 @@ class TmpFile(object):
         >>> show_tmpfile()
         Hello world!
     """
+    # pylint: disable=E1129
     def __init__(self, fpointer=None):
         if (fpointer and
            (not isinstance(fpointer, types.FunctionType)) and

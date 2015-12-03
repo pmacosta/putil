@@ -4,12 +4,16 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,R0914
 
+# Standard library imports
 import glob
 import os
-
+# Putil imports
 import putil.pinspect
 
 
+###
+# Functions
+###
 def build_moddb():
     """
     Combine all individual traced modules information into as single

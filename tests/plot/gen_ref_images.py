@@ -4,13 +4,15 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,R0912,R0914,R0915
 
+# Standard library imports
 from __future__ import print_function
 import itertools
 import math
-import numpy
 import os
 import sys
-
+# PyPI imports
+import numpy
+# Putil imports
 import putil.misc
 import putil.plot
 

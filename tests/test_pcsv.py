@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0611
 
+# Putil imports
 from tests.pcsv.concatenate import (
     test_concatenate,
     test_concatenate_exceptions

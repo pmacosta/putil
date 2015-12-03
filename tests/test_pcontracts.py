@@ -3,12 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,E1121,W0212,W0232,W0611,W0612,W0613
 
-import contracts
+# Standard library imports
 import copy
 import functools
-import pytest
 import sys
-
+# PyPI imports
+import contracts
+import pytest
+# Putil imports
 import putil.exh
 import putil.pcontracts
 import putil.test
@@ -686,6 +688,7 @@ def test_get_exdesc():
 
 def test_new_contract():
     """ Tests for new_contract decorator behavior """
+    # pylint: disable=R0204
     original_custom_contracts = copy.deepcopy(
         putil.pcontracts._CUSTOM_CONTRACTS
     )

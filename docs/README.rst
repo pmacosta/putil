@@ -191,7 +191,8 @@ Contributing
     .. ]]]
 
 
-    * `Astroid`_ (older than 1.4)
+    * `Astroid`_ (Python 2.6: older than 1.4, Python 2.7 or newer: 1.3.8
+      or newer)
 
     * `Cog`_ (2.4 or newer)
 
@@ -218,7 +219,7 @@ Contributing
     * `PyContracts`_ (1.7.2 or newer except 1.7.7)
 
     * `Pylint`_ (Python 2.6: 1.3 or newer and older than 1.4, Python 2.7
-      or newer: 1.3.1 or newer and older than 1.5)
+      or newer: 1.3.1 or newer)
 
     * `Pytest-coverage`_ (1.8.0 or newer)
 

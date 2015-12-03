@@ -1,20 +1,22 @@
 # figure.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,E0611,F0401,R0201,W0212,W0621
+# pylint: disable=C0103,C0111,E0611,E1129,F0401,R0201,W0212,W0621
 
+# Standard library imports
 from __future__ import print_function
-import matplotlib
-import numpy
 import os
-import pytest
 import re
 import sys
+if sys.hexversion >= 0x03000000:
+    import unittest.mock as mock
+# PyPI imports
+import matplotlib
+import numpy
+import pytest
 if sys.hexversion < 0x03000000:
     import mock
-else:
-    import unittest.mock as mock
-
+# Putil imports
 import putil.misc
 import putil.plot
 from .fixtures import compare_images, IMGTOL
@@ -227,14 +229,14 @@ class TestFigure(object):
     def test_fig(self, default_panel):
         """ Test fig property behavior """
         obj = putil.plot.Figure(panels=None)
-        assert obj.fig == None
+        assert obj.fig is None
         obj = putil.plot.Figure(panels=default_panel)
         assert isinstance(obj.fig, matplotlib.figure.Figure)
 
     def test_fig_width(self, default_panel):
         """ Test figure width attributes """
         obj = putil.plot.Figure(panels=None)
-        assert obj.fig_width == None
+        assert obj.fig_width is None
         obj = putil.plot.Figure(panels=default_panel)
         assert (
             (obj.fig_width-5.6 < 1e-10) or
@@ -257,7 +259,7 @@ class TestFigure(object):
     def test_fig_height(self, default_panel):
         """ Test figure height property behavior """
         obj = putil.plot.Figure(panels=None)
-        assert obj.fig_height == None
+        assert obj.fig_height is None
         obj = putil.plot.Figure(panels=default_panel)
         assert obj.fig_height-4.31 < 1e-10
         obj.fig_height = 5
@@ -276,7 +278,7 @@ class TestFigure(object):
     def test_indep_axis_scale(self, default_panel):
         """ Test indep_axis_scale property """
         obj = putil.plot.Figure(panels=None)
-        assert obj.indep_axis_scale == None
+        assert obj.indep_axis_scale is None
         obj = putil.plot.Figure(panels=default_panel)
         assert obj.indep_axis_scale == 1
 
@@ -317,7 +319,7 @@ class TestFigure(object):
     def test_indep_axis_ticks_exceptions(self, default_panel):
         """ Test indep_axis_ticks exceptions """
         obj = putil.plot.Figure(panels=None)
-        assert obj.indep_axis_ticks == None
+        assert obj.indep_axis_ticks is None
         putil.test.assert_exception(
             putil.plot.Figure,
             {

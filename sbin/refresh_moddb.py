@@ -4,11 +4,15 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+# Standard library imports
 import os
-
+# Putil imports
 import putil.pinspect
 
 
+###
+# Functions
+###
 def refresh_moddb():
     """
     Refresh traced modules information database

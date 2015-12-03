@@ -3,13 +3,15 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,F0401,R0914,W0105,W0212,W0611
 
+# Standard library imports
 import abc
 import math
-import numpy
-import matplotlib.pyplot as plt
-import six
 import sys
-
+# PyPI imports
+import matplotlib.pyplot as plt
+import numpy
+import six
+# Putil imports
 import putil.exh
 import putil.eng
 import putil.misc
@@ -398,7 +400,7 @@ def _check_increasing_real_numpy_vector(obj):
     if (((obj.dtype.type == numpy.array([0]).dtype.type) or
        (obj.dtype.type == numpy.array([0.0]).dtype.type)) and
        ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and
-       (not min(numpy.diff(obj)) <= 0)))):
+       (min(numpy.diff(obj)) > 0)))):
         return False
     return True
 
@@ -448,7 +450,7 @@ class DataSource(object):
                  in a child class
 
     """
-    # pylint: disable=R0903,R0921
+    # pylint: disable=E0012,R0903,R0921
     def __init__(self):
         self._exh = putil.exh.get_or_create_exh_obj()
         self._dep_var, self._indep_var = None, None

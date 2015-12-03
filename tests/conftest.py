@@ -1,17 +1,19 @@
 # conftest.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E1101,E1103,F0401,W0212
+# pylint: disable=C0111,C0411,E0012,E1101,E1103,F0401,W0212
 
+# Standard library imports
 import os
 import pickle
-import pytest
 import sys
 if sys.hexversion < 0x03000000:
     import __builtin__
 else:
     import builtins as __builtin__
-
+# PyPI imports
+import pytest
+# Putil imports
 import putil.exh
 
 

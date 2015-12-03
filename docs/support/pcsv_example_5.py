@@ -1,7 +1,7 @@
 # pcsv_example_5.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,W0104
+# pylint: disable=C0111,C0410,W0104
 
 import putil.misc, putil.pcsv
 

@@ -1,16 +1,18 @@
 # csv_file.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
+# pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0204,R0915,W0232
 
+# Standard library imports
 import os
-import pytest
 import sys
+if sys.hexversion >= 0x03000000:
+    import unittest.mock as mock
+# PyPI imports
+import pytest
 if sys.hexversion < 0x03000000:
     import mock
-else:
-    import unittest.mock as mock
-
+# Putil imports
 import putil.misc
 import putil.pcsv
 import putil.test
@@ -115,6 +117,7 @@ class TestCsvFile(object):
 
     def test_eq(self):
         """ Test __eq__ method behavior """
+        # pylint: disable=C0113
         with putil.misc.TmpFile() as fname:
             putil.pcsv.write(fname, [['a'], [1]], append=False)
             obj1 = putil.pcsv.CsvFile(fname, dfilter='a')
@@ -123,8 +126,8 @@ class TestCsvFile(object):
             putil.pcsv.write(fname, [['a'], [2]], append=False)
             obj3 = putil.pcsv.CsvFile(fname, dfilter='a')
         assert obj1 == obj2
-        assert not obj1 == obj3
-        assert not 5 == obj3
+        assert obj1 != obj3
+        assert not obj3 == 5
 
     def test_repr(self):
         """ Test __repr__ method behavior """
@@ -1052,7 +1055,7 @@ class TestCsvFile(object):
         """ Test cfilter property behavior """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        assert obj.cfilter == None
+        assert obj.cfilter is None
         obj.cfilter = 'Ctrl'
         assert obj.cfilter == ['Ctrl']
 
