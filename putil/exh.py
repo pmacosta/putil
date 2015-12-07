@@ -63,31 +63,6 @@ def _build_exclusion_list(exclude):
     return mod_files
 
 
-def _get_class_obj(frame_obj):
-    """ Extract class object from a frame object """
-    scontext = frame_obj.f_locals.get('self', None)
-    return scontext.__class__ if scontext is not None else None
-
-
-def _get_class_props_obj(class_obj):
-    """ Extract property objects from a class object """
-    return [(member_name, member_obj)
-            for member_name, member_obj in inspect.getmembers(class_obj)
-            if isinstance(member_obj, property)]
-
-
-def _get_code_id_from_obj(obj):
-    """ Return unique identity tuple to individualize callable object """
-    # pylint: disable=W0702
-    try:
-        return (inspect.getfile(obj).replace('.pyc', 'py'),
-               inspect.getsourcelines(obj)[1])
-    except (TypeError, OSError):
-        # TypeError: getfile, object is a built-in module, class or function
-        # OSError: getsourcelines, code cannot be retrieved
-        return None
-
-
 def _invalid_frame(fobj):
     """ Selects valid stack frame to process """
     fin = fobj.f_code.co_filename
@@ -555,10 +530,18 @@ class ExHandle(object):
                 fin,
                 fob.f_lineno
             )
-        code_id = _get_code_id_from_obj(uobj)
-        if code_id:
+        try:
+            code_id = (
+                inspect.getfile(uobj).replace('.pyc', 'py'),
+                inspect.getsourcelines(uobj)[1]
+            )
             self._callables_obj.trace([code_id[0]])
             return self._callables_obj.reverse_callables_db[code_id]
+        except (TypeError, OSError):
+            # TypeError: getfile, object is a built-in module,
+            #            class or function
+            # OSError: getsourcelines, code cannot be retrieved
+            pass
         return 'dynamic'
 
     if (hasattr(sys.modules['decorator'], '__version__') and
@@ -626,10 +609,10 @@ class ExHandle(object):
             # Decorator flag vector
             idv = [item[3] for item in stack]
             # Fully qualified callable path construction
-            ret = [
+            ret = (
                 self._get_callable_full_name(fob, fin, uobj)
                 for fob, fin, uobj, _ in stack
-            ]
+            )
             # Eliminate callables that are in a decorator chain
             iobj = enumerate(zip(ret[1:], ret, idv[1:]))
             num_del_items = 0
@@ -762,43 +745,22 @@ class ExHandle(object):
         )
         return {'func_name':func_name, 'ex_name':ex_name}
 
-    def _get_prop_actions(self, prop_obj):
-        """
-        Extract property action objects (deleter, setter, getter)
-        from a class object
-        """
-        prop_dict = {'fdel':None, 'fget':None, 'fset':None}
-        for action in prop_dict.keys():
-            action_obj = getattr(prop_obj, action)
-            if action_obj:
-                # Unwrap action object. Contracts match the wrapped
-                # code object while exceptions registered in the
-                # body of the function/method which has decorators
-                # match the unwrapped object
-                prev_func_obj, next_func_obj = (
-                    action_obj,
-                    getattr(action_obj, '__wrapped__', None)
-                )
-                while next_func_obj:
-                    prev_func_obj, next_func_obj = (
-                        next_func_obj,
-                        getattr(next_func_obj, '__wrapped__', None)
-                    )
-                prop_dict[action] = [
-                    id(_get_func_code(action_obj)),
-                    id(_get_func_code(prev_func_obj))
-                ]
-        return prop_dict
-
     def _property_search(self, fobj):
         """
         Check if object is a class property and if so return full name,
         otherwise return None
         """
-        class_obj = _get_class_obj(fobj)
+        # Get class object
+        scontext = fobj.f_locals.get('self', None)
+        class_obj = scontext.__class__ if scontext is not None else None
         if not class_obj:
             return
-        class_props = _get_class_props_obj(class_obj)
+        # Get class properties objects
+        class_props = [
+            (member_name, member_obj)
+            for member_name, member_obj in inspect.getmembers(class_obj)
+            if isinstance(member_obj, property)
+        ]
         if not class_props:
             return
         class_file = inspect.getfile(class_obj).replace('.pyc', '.py')
@@ -806,9 +768,32 @@ class ExHandle(object):
             class_file,
             inspect.getsourcelines(class_obj)[1]
         )
+        # Get properties actions
         prop_actions_dicts = {}
         for prop_name, prop_obj in class_props:
-            prop_actions_dicts[prop_name] = self._get_prop_actions(prop_obj)
+            prop_dict = {'fdel':None, 'fget':None, 'fset':None}
+            for action in prop_dict.keys():
+                action_obj = getattr(prop_obj, action)
+                if action_obj:
+                    # Unwrap action object. Contracts match the wrapped
+                    # code object while exceptions registered in the
+                    # body of the function/method which has decorators
+                    # match the unwrapped object
+                    prev_func_obj, next_func_obj = (
+                        action_obj,
+                        getattr(action_obj, '__wrapped__', None)
+                    )
+                    while next_func_obj:
+                        prev_func_obj, next_func_obj = (
+                            next_func_obj,
+                            getattr(next_func_obj, '__wrapped__', None)
+                        )
+                    prop_dict[action] = [
+                        id(_get_func_code(action_obj)),
+                        id(_get_func_code(prev_func_obj))
+                    ]
+            prop_actions_dicts[prop_name] = prop_dict
+        # Create properties directory
         func_id = id(fobj.f_code)
         desc_dict = {
             'fget':'getter',

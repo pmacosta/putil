@@ -700,29 +700,6 @@ class TestExHandle(object):
         )
         assert item['msg'] == 'Illegal value'
         ###
-        # Test case where callable is dynamic and does not have a code ID
-        ###
-        def mock_get_code_id_from_obj(obj):
-            """
-            Return unique identity tuple to individualize callable object
-            """
-            return None
-        assert putil.exh._get_code_id_from_obj(None) is None
-        obj = putil.exh.ExHandle(True)
-        gmap = locals()
-        exec_function('def efunc(): pass', '<exec_function>', gmap)
-        efunc = gmap['efunc']
-        fobj = efunc
-        patch_name = 'putil.exh._get_code_id_from_obj'
-        patch_obj = mock_get_code_id_from_obj
-        with mock.patch(patch_name, side_effect=patch_obj):
-            frobj = sys._getframe(0)
-            assert (
-                obj._get_callable_full_name(frobj, '<module>', fobj)
-                ==
-                'dynamic'
-            )
-        ###
         # Test exclude: test without exclusion and with exclusion,
         # the function name should be 'None'
         ###

@@ -7,6 +7,7 @@
 # Standard library imports
 from __future__ import print_function
 import argparse
+import datetime
 import difflib
 import glob
 import multiprocessing
@@ -64,11 +65,18 @@ def build_pkg_docs(args):
                 ' (test mode)' if test else ''
             ),
         )
+        start_time = datetime.datetime.today()
         for module in modules:
             tmp_retcode = rebuild_module_doc(
                 test, src_dir, tracer_dir, cog_exe, module
             )
             retcode = tmp_retcode if not retcode else retcode
+        stop_time = datetime.datetime.today()
+        print(
+            'Elapsed time: {0}'.format(
+                elapsed_time_string(start_time, stop_time)
+            )
+        )
         sbin.build_moddb.build_moddb()
     print('Performing module-specific actions')
     for module in modules:
@@ -141,6 +149,45 @@ def diff(file1, file2):
     return list(
         difflib.unified_diff(flines1, flines2, fromfile=file1, tofile=file2)
     )
+
+
+def elapsed_time_string(start_time, stop_time):
+    """
+    Returns a formatted string with the elapsed time between two time points
+    """
+    delta_time = stop_time-start_time
+    tot_seconds = int(
+        (
+            delta_time.microseconds+
+            (delta_time.seconds+delta_time.days*24*3600)*10**6
+        )
+        /
+        10**6
+    )
+    years, remainder = divmod(tot_seconds, 365*24*60*60)
+    months, remainder = divmod(remainder, 30*24*60*60)
+    days, remainder = divmod(remainder, 24*60*60)
+    hours, remainder = divmod(remainder, 60*60)
+    minutes, seconds = divmod(remainder, 60)
+    token_iter = zip(
+        [years, months, days, hours, minutes, seconds],
+        ['year', 'month', 'day', 'hour', 'minute', 'second']
+    )
+    ret_list = [
+        '{token} {token_name}{plural}'.format(
+            token=num,
+            token_name=desc,
+            plural='s' if num > 1 else ''
+        ) for num, desc in token_iter if num > 0
+    ]
+    if len(ret_list) == 0:
+        return 'None'
+    elif len(ret_list) == 1:
+        return ret_list[0]
+    elif len(ret_list) == 2:
+        return ret_list[0]+' and '+ret_list[1]
+    else:
+        return (', '.join(ret_list[0:-1]))+' and '+ret_list[-1]
 
 
 def insert_files_in_docstrings(src_dir, cog_exe):

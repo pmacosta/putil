@@ -70,12 +70,7 @@ def _intelligent_ticks(series, series_min, series_max,
     """
     # pylint: disable=E1103,R0912,R0913,R0915
     if tick_list is not None:
-        tick_list = (
-            numpy.array(tick_list)
-            if isinstance(tick_list, list) else
-            tick_list
-        )
-        tick_list = numpy.sort(tick_list)
+        tick_list = numpy.sort(numpy.asarray(tick_list))
     elif len(series) == 1:
         # Handle 1-point series
         series_min = series_max = series[0]
@@ -88,67 +83,76 @@ def _intelligent_ticks(series, series_min, series_max,
         tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
         tight = tight_left = tight_right = log_axis = False
     else:
+        min_series = min(series)
+        max_series = max(series)
+        rounded_min_series = putil.eng.round_mantissa(min_series, PRECISION)
+        rounded_max_series = putil.eng.round_mantissa(max_series, PRECISION)
         if log_axis:
-            dec_start = int(math.log10(min(series)))
-            dec_stop = int(math.ceil(math.log10(max(series))))
+            dec_start = int(math.log10(min_series))
+            dec_stop = int(math.ceil(math.log10(max_series)))
             tick_list = [10**num for num in range(dec_start, dec_stop+1)]
-            tight_left = not ((not tight) and (tick_list[0] >= min(series)))
-            tight_right = not ((not tight) and (tick_list[-1] <= max(series)))
+            tight_left = not ((not tight) and (tick_list[0] >= min_series))
+            tight_right = not ((not tight) and (tick_list[-1] <= max_series))
             tick_list = numpy.array(tick_list)
         else:
             # Try to find the tick spacing that will have the most number of
             # data points on grid. Otherwise, place max_ticks uniformly
             # distributed across the data rage
             series_delta = putil.eng.round_mantissa(
-                max(series)-min(series), PRECISION
+                max_series-min_series, PRECISION
             )
-            working_series = series[:].tolist()
+            working_series = numpy.array(series[:])
             tick_list = list()
             num_ticks = SUGGESTED_MAX_TICKS
             while (num_ticks >= MIN_TICKS) and (len(working_series) > 1):
-                data_spacing = [
-                    putil.eng.round_mantissa(element, PRECISION)
-                    for element in numpy.diff(working_series)
-                ]
-                tick_spacing = putil.misc.gcd(data_spacing)
-                num_ticks = (
-                    (series_delta/tick_spacing)+1
-                    if tick_spacing else
-                    MIN_TICKS
-                )
-                if ((num_ticks >= MIN_TICKS) and
-                   (num_ticks <= SUGGESTED_MAX_TICKS)):
-                    tick_list = numpy.linspace(
-                        putil.eng.round_mantissa(min(series), PRECISION),
-                        putil.eng.round_mantissa(max(series), PRECISION),
-                        num_ticks
-                    ).tolist()
-                    break
+                # Round mantissa of spacings so as to not confuse greatest
+                # common denominator algorithm
+                sdiff = numpy.diff(working_series)
+                nzero_indexes = numpy.nonzero(sdiff)
+                nzero = sdiff[nzero_indexes]
+                exp = numpy.power(10, numpy.floor(numpy.log10(nzero)))
+                nzero = numpy.round(nzero/exp, PRECISION)*exp
+                sdiff[nzero_indexes] = nzero
+                # numpy.unique return list is sorted in ascending order
+                data_spacing = numpy.unique(nzero)
+                # Calculation of greatest common denominator (GCD) is
+                # computationally (and time) expensive, only do it when the
+                # minimum spacing would generate a number of ticks less than
+                # the suggested maximum number of ticks, since the GCD of
+                # all the data point spacings is at most as big as the minimum
+                # data spacing
+                if (series_delta/data_spacing[0])+1 < SUGGESTED_MAX_TICKS:
+                    tick_spacing = putil.misc.gcd(data_spacing)
+                    num_ticks = (
+                        (series_delta/tick_spacing)+1
+                        if tick_spacing else
+                        MIN_TICKS
+                    )
+                    if MIN_TICKS <= num_ticks <= SUGGESTED_MAX_TICKS:
+                        tick_list = numpy.linspace(
+                            rounded_min_series,
+                            rounded_max_series,
+                            num_ticks
+                        ).tolist()
+                        break
                 # Remove elements that cause minimum spacing, to see if with
                 # those elements removed the number of tick marks can be
                 # withing the acceptable range
-                min_data_spacing = min(data_spacing)
+                min_data_spacing = data_spacing[0]
+                indexes = numpy.concatenate(
+                    ([True], (sdiff != min_data_spacing))
+                )
                 # Account for fact that if minimum spacing is between last two
                 # elements, the last element cannot be removed (it is the end
                 # of the range), but rather the next-to-last has to be removed
-                if ((data_spacing[-1] == min_data_spacing) and
-                   (len(working_series) > 2)):
-                    working_series = working_series[:-2]+[working_series[-1]]
-                    data_spacing = [
-                        putil.eng.round_mantissa(element, PRECISION)
-                        for element in numpy.diff(working_series)
-                    ]
-                iobj = zip(working_series[1:], data_spacing)
-                working_series = [working_series[0]]+[
-                    element
-                    for element, spacing in iobj
-                    if spacing != min_data_spacing
-                ]
+                if (not indexes[-1]) and (len(working_series) > 2):
+                    indexes[-2], indexes[-1] = False, True
+                working_series = working_series[indexes]
             tick_list = (tick_list
                         if len(tick_list) > 0 else
                         numpy.linspace(
-                            min(series),
-                            max(series),
+                            min_series,
+                            max_series,
                             SUGGESTED_MAX_TICKS
                         ).tolist())
             tick_spacing = putil.eng.round_mantissa(

@@ -5,6 +5,7 @@
 
 # Standard library imports
 import collections
+import math
 import textwrap
 import decimal
 from decimal import Decimal
@@ -283,32 +284,30 @@ def peng(number, frac_length, rjust=True):
     # Low-bound number
     sign = +1 if number >= 0 else -1
     ssign = '-' if sign == -1 else ''
-    number = sign*max(1e-24, abs(number))
+    anumber = abs(number)
+    if anumber < 1e-24:
+        anumber = 1e-24
+        number = sign*1e-24
     # Round fractional part if requested frac_length is less than length
     # of fractional part. Rounding method is to add a '5' at the decimal
     # position just after the end of frac_length digits
-    mant, exp = _to_eng_tuple(number)
-    ppos = mant.find('.')
-    if (ppos != -1) and (len(mant)-ppos-1 > frac_length):
-        rounder = Decimal(
-            '{sign}0.{frac}5E{exp}'.format(
-                sign=ssign, frac='0'*frac_length, exp=exp
-            )
-        )
-        mant, exp = _to_eng_tuple(
-            Decimal('{mant}E{exp}'.format(mant=mant, exp=exp))+rounder
-        )
-        ppos = mant.find('.')
+    exp = 3.0*math.floor(math.floor(math.log10(anumber))/3.0)
+    mant = number/10**(exp)
+    # Because exponent is a float, mantissa is a float and its string
+    # representation always includes a period
+    smant = str(mant)
+    ppos = smant.find('.')
+    if len(smant)-ppos-1 > frac_length:
+        mant += sign*5*10**(-frac_length-1)
+        if abs(mant) >= 1000:
+            exp += 3
+            mant = mant/1E3
+        smant = str(mant)
+        ppos = smant.find('.')
     # Make fractional part have frac_length digits
-    if ppos == -1:
-        new_mant = (
-            '{itg}.{frac}'.format(itg=mant, frac='0'*frac_length)
-            if frac_length else
-            mant
-        )
-    else:
-        flength = ppos-(not bool(frac_length))+frac_length+1
-        new_mant = mant[:flength].ljust(flength, '0')
+    bfrac_length = bool(frac_length)
+    flength = ppos-(not bfrac_length)+frac_length+1
+    new_mant = smant[:flength].ljust(flength, '0')
     # Upper-bound number
     if exp > 24:
         new_mant, exp = (
@@ -318,7 +317,7 @@ def peng(number, frac_length, rjust=True):
     # a 3-digit integer part and a period, and a fractional part of length
     # frac_length, so the length of the number to the left of the
     # period is 4
-    new_mant = new_mant.rjust(rjust*(4+bool(frac_length)+frac_length))
+    new_mant = new_mant.rjust(rjust*(4+bfrac_length+frac_length))
     # Format number
     num = '{mant}{suffix}'.format(
         mant=new_mant,

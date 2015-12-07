@@ -19,6 +19,9 @@ import putil.test
 matplotlib.rcParams['backend'] = 'Agg'
 
 
+###
+# Functions
+###
 def test_exdoc_doccode():
     """ Test code used in exdoc module """
     def remove_header(stdout):
@@ -296,11 +299,19 @@ def test_plot_doccode(capsys):
     )
     stdout, stderr = proc.communicate()
     test_fname = output_file
-    ref_names = ['plot_example_1_{0}.png'.format(item) for item in range(1, 9)]
+    ref_names = [
+        'plot_example_1_{0}.png'.format(item) for item in range(1, 8)
+    ]
     ref_fnames = [os.path.join(script_dir, item) for item in ref_names]
     result = False
     for ref_fname in ref_fnames:
-        metrics = compare_images(ref_fname, test_fname)
+        try:
+            metrics = compare_images(ref_fname, test_fname)
+        except IOError:
+            print('Error comparing images')
+            print('STDOUT: {0}'.format(stdout))
+            print('STDERR: {0}'.format(stderr))
+            raise
         result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
         if result:
             break
