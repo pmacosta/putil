@@ -31,8 +31,13 @@ recursive-include tests *.py
 recursive-include tests/pcsv *.py
 recursive-include tests/plot *.py
 recursive-include tests/support *.py
-recursive-include tests/support/ref_images *.png
-recursive-include tests/support/ref_images_ci *.png
+recursive-include tests/support/ref_images_1 *.png
+recursive-include tests/support/ref_images_2 *.png
+recursive-include tests/support/ref_images_3 *.png
+recursive-include tests/support/ref_images_4 *.png
+recursive-include tests/support/ref_images_5 *.png
+recursive-include tests/support/ref_images_6 *.png
+recursive-include tests/support/ref_images_7 *.png
 recursive-include sbin *.sh
 recursive-include sbin *.py
 recursive-include requirements *

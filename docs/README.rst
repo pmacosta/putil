@@ -22,16 +22,16 @@
 |
 
 .. image::
-   https://travis-ci.org/pmacosta/putil.svg?branch=develop
+   https://travis-ci.org/pmacosta/putil.svg?branch=master
 
 .. image::
    https://ci.appveyor.com/api/projects/status/
-   7dpk342kxs8kcg5t/branch/develop?svg=true
+   7dpk342kxs8kcg5t/branch/master?svg=true
    :alt: Windows continuous integration
 
 .. image::
-   https://codecov.io/github/pmacosta/putil/coverage.svg?branch=develop
-   :target: https://codecov.io/github/pmacosta/putil?branch=develop
+   https://codecov.io/github/pmacosta/putil/coverage.svg?branch=master
+   :target: https://codecov.io/github/pmacosta/putil?branch=master
    :alt: Continuous integration coverage
 
 .. image::
@@ -206,7 +206,7 @@ Contributing
 
     * `Inline Syntax Highlight Sphinx Extension`_ (0.2 or newer)
 
-    * `Matplotlib`_ (1.3.1 or newer except 1.4.0)
+    * `Matplotlib`_ (1.4.1 or newer)
 
     * `Mock`_ (Python 2.x only, 1.0.1 or newer)
 

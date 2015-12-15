@@ -63,7 +63,7 @@ def _get_yaxis_size(fig_obj, tick_labels, axis_label):
     # Minimum of one line spacing between vertical ticks
     axis_height = axis_width = 0
     label_index = _first_label(tick_labels)
-    if label_index:
+    if label_index is not None:
         label_height = _get_text_prop(
             fig_obj, tick_labels[label_index]
         )['height']

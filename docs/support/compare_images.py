@@ -5,6 +5,7 @@
 # pylint: disable=C0111
 
 from __future__ import print_function
+import argparse
 import os
 import sys
 import numpy
@@ -38,8 +39,12 @@ def compare_images(image_file_name1, image_file_name2):
     return (m_norm, z_norm)
 
 
-def main(img1, img2):
+def main(no_print, img1, img2):
     """ Compare two images """
+    if not os.path.exists(img1):
+        raise IOError('File {0} could not be found'.format(img1))
+    if not os.path.exists(img2):
+        raise IOError('File {0} could not be found'.format(img2))
     img1 = os.path.abspath(img1)
     img2 = os.path.abspath(img2)
     metrics = compare_images(img1, img2)
@@ -51,8 +56,22 @@ def main(img1, img2):
             img1, img2, 'identical' if result else 'different'
         )
     )
-    print(msg)
+    if not no_print:
+        print(msg)
+    sys.exit(1 if not result else 0)
 
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    PARSER = argparse.ArgumentParser(
+        description='Compare images'
+    )
+    PARSER.add_argument(
+        '-q', '--quiet',
+        help='suppress messages',
+        action="store_true",
+        default=False
+    )
+    PARSER.add_argument('file1', help='File 1 to check', nargs=1)
+    PARSER.add_argument('file2', help='File 2 to check', nargs=1)
+    ARGS = PARSER.parse_args()
+    main(ARGS.quiet, ARGS.file1[0], ARGS.file2[0])

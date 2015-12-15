@@ -20,27 +20,50 @@ import putil.plot
 ###
 # Global variables
 ###
-SCALE = 4
+# Relative figure size
+SCALE = 5
+# Number of reference image sets
+SETS = 7
 
 
 ###
 # Functions
 ###
-def unittest_series_images(mode=None, test_dir=None, _timeit=False):
-    """ Images for Series() class """
+def def_file_names(mode, ref_dir, test_dir, img_name, olist):
+    """ Generate image file names """
+    test_fname = os.path.realpath(os.path.join(test_dir, img_name))
+    if mode == 'ref':
+        ref_fname = os.path.realpath(os.path.join(ref_dir, img_name))
+    else:
+        ref_fname = [
+            os.path.realpath(
+                os.path.join(ref_dir.format(num), img_name)
+            )
+            for num in range(1, SETS+1)
+        ]
+    olist.append(
+        {
+            'ref_fname':ref_fname,
+            'test_fname':test_fname
+        }
+    )
+    print(
+        'Generating image {0}'.format(
+            ref_fname if mode == 'ref' else test_fname
+        )
+    )
+    return ref_fname if mode == 'ref' else test_fname
+
+
+def setup_env(mode, test_dir):
+    """ Define directories """
     mode = 'ref' if mode is None else mode.lower()
     ref_dir = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         '..',
         'support',
-        'ref_images'
-    ) if mode == 'ref' else test_dir
-    ref_ci_dir = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        '..',
-        'support',
-        'ref_images_ci'
-    )
+        'ref_images{0}'.format('_{0}' if mode == 'test' else '')
+    ) if (mode == 'test') or (not test_dir) else test_dir
     test_dir = (
         os.path.abspath(
             os.path.join(
@@ -52,40 +75,31 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):
         if test_dir is None else
         test_dir
     )
+    return mode, ref_dir, test_dir
+
+
+def unittest_series_images(mode=None, test_dir=None, _timeit=False):
+    """ Images for Series() class """
+    mode, ref_dir, test_dir = setup_env(mode, test_dir)
+    #
     marker_list = [False, True]
     interp_list = ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
     line_style_list = [None, '-', '--', '-.', ':']
     line_style_desc = {'-':'solid', '--':'dashed', '-.':'dash-dot', ':':'dot'}
     master_list = [marker_list, interp_list, line_style_list]
     comb_list = itertools.product(*master_list)
-    output_list = list()
+    olist = []
     print('')
     for marker, interp, line_style in comb_list:
         #if (not marker) and (not line_style):
         #   continue
-        image_name = 'series_marker_{0}_interp_{1}_line_style_{2}.png'.format(
+        img_name = 'series_marker_{0}_interp_{1}_line_style_{2}.png'.format(
             'true' if marker else 'false',
             interp.lower(),
             'none' if not line_style else line_style_desc[line_style]
         )
-        ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
-        ref_ci_file_name = os.path.realpath(
-            os.path.join(ref_ci_dir, image_name)
-        )
-        test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
-        output_list.append(
-            {
-                'ref_file_name':ref_file_name,
-                'ref_ci_file_name':ref_ci_file_name,
-                'test_file_name':test_file_name
-            }
-        )
-        print(
-            'Generating image {0}'.format(
-                ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-            )
-        )
-        series1 = putil.plot.Series(
+        fname = def_file_names(mode, ref_dir, test_dir, img_name, olist)
+        series_obj = putil.plot.Series(
             data_source=putil.plot.BasicSource(
                 indep_var=numpy.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
                 dep_var=numpy.array(
@@ -98,7 +112,7 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):
             line_style=line_style
         )
         panel_obj = putil.plot.Panel(
-            series=series1,
+            series=series_obj,
             primary_axis_label='Dependent axis',
             primary_axis_units='-',
         )
@@ -115,51 +129,21 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):
                 line_style
             ),
         )
-        if mode in ['ref', 'ci']:
-            putil.misc.make_dir(ref_file_name)
-        fig_obj.save(
-            ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-        )
+        fig_obj.save(fname)
         if _timeit:
             break
-    return output_list
+    return olist
 
 
 def unittest_panel_images(mode=None, test_dir=None):
     """ Images for Panel() class """
-    mode = 'ref' if mode is None else mode.lower()
-    ref_dir = (
-        os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            '..',
-            'support',
-            'ref_images'
-        )
-        if mode == 'ref' else
-        test_dir
-    )
-    ref_ci_dir = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        '..',
-        'support',
-        'ref_images_ci'
-    )
-    test_dir = (
-        os.path.abspath(
-            os.path.join(
-                '.',
-                os.path.abspath(os.sep),
-                'test_images'
-            )
-        )
-        if test_dir is None else
-        test_dir
-    )
+    mode, ref_dir, test_dir = setup_env(mode, test_dir)
+    #
     axis_type_list = ['single', 'linear', 'log', 'filter']
     series_in_axis_list = ['primary', 'secondary', 'both']
     master_list = [axis_type_list, series_in_axis_list]
     comb_list = itertools.product(*master_list)
-    output_list = list()
+    olist = []
     ds1_obj = putil.plot.BasicSource(
         indep_var=numpy.array([100, 200, 300, 400]),
         dep_var=numpy.array([1, 2, 3, 4])
@@ -296,29 +280,13 @@ def unittest_panel_images(mode=None, test_dir=None):
         color='m', secondary_axis=True
     )
     for axis_type, series_in_axis in comb_list:
-        image_name = 'panel_{0}_axis_series_in_{1}_axis.png'.format(
+        img_name = 'panel_{0}_axis_series_in_{1}_axis.png'.format(
             axis_type,
             series_in_axis
         )
-        ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
-        ref_ci_file_name = os.path.realpath(
-            os.path.join(ref_ci_dir, image_name)
-        )
-        test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
         if ((axis_type != 'filter') or
            ((axis_type == 'filter') and (series_in_axis == 'primary'))):
-            output_list.append({
-                'ref_file_name':ref_file_name,
-                'ref_ci_file_name':ref_ci_file_name,
-                'test_file_name':test_file_name
-            })
-            print(
-                'Generating image {0}'.format(
-                    ref_file_name
-                    if (mode in ['ref', 'ci']) else
-                    test_file_name
-                )
-            )
+            fname = def_file_names(mode, ref_dir, test_dir, img_name, olist)
         if axis_type == 'linear':
             if series_in_axis == 'both':
                 series_obj = [
@@ -376,21 +344,10 @@ def unittest_panel_images(mode=None, test_dir=None):
                     series_in_axis
                 )
             )
-            if mode in ['ref', 'ci']:
-                putil.misc.make_dir(ref_file_name)
-            fig_obj.save(
-                ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-            )
+            fig_obj.save(fname)
     # Panel with multiple series but no labels, should not print legend panel
-    image_name = 'panel_no_legend.png'
-    ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
-    ref_ci_file_name = os.path.realpath(os.path.join(ref_ci_dir, image_name))
-    test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
-    print(
-        'Generating image {0}'.format(
-            ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-        )
-    )
+    img_name = 'panel_no_legend.png'
+    fname = def_file_names(mode, ref_dir, test_dir, img_name, olist)
     series_obj = [seriesA_obj, seriesB_obj]
     panel_obj = putil.plot.Panel(
         series=series_obj,
@@ -409,41 +366,15 @@ def unittest_panel_images(mode=None, test_dir=None):
         fig_height=SCALE*3,
         title='Panel no legend'
     )
-    fig_obj.save(ref_file_name if (mode in ['ref', 'ci']) else test_file_name)
-    return output_list
+    fig_obj.save(fname)
+    return olist
 
 
 def unittest_figure_images(mode=None, test_dir=None):
     """ Images for Figure() class """
-    mode = 'ref' if mode is None else mode.lower()
-    ref_dir = (
-        os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            '..',
-            'support',
-            'ref_images'
-        )
-        if mode == 'ref' else
-        test_dir
-    )
-    ref_ci_dir = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        '..',
-        'support',
-        'ref_images_ci'
-    )
-    test_dir = (
-        os.path.abspath(
-            os.path.join(
-                '.',
-                os.path.abspath(os.sep),
-                'test_images'
-            )
-        )
-        if test_dir is None else
-        test_dir
-    )
-    output_list = list()
+    mode, ref_dir, test_dir = setup_env(mode, test_dir)
+    #
+    olist = []
     ds1_obj = putil.plot.BasicSource(
         indep_var=numpy.array([100, 200, 300, 400]),
         dep_var=numpy.array([1, 2, 3, 4])
@@ -513,7 +444,7 @@ def unittest_figure_images(mode=None, test_dir=None):
         panel1_flabel = 'yes' if panel1_obj.display_indep_axis else 'no'
         panel2_flabel = 'yes' if panel2_obj.display_indep_axis else 'no'
         panel4_flabel = 'yes' if panel4_obj.display_indep_axis else 'no'
-        image_name = (
+        img_name = (
             'figure_multiple_indep_axis_panel1_'
             '{0}_panel2_{1}_panel3_{2}.png'.format(
                 panel1_flabel,
@@ -521,11 +452,7 @@ def unittest_figure_images(mode=None, test_dir=None):
                 panel4_flabel
             )
         )
-        ref_file_name = os.path.realpath(os.path.join(ref_dir, image_name))
-        ref_ci_file_name = os.path.realpath(
-            os.path.join(ref_ci_dir, image_name)
-        )
-        test_file_name = os.path.realpath(os.path.join(test_dir, image_name))
+        fname = def_file_names(mode, ref_dir, test_dir, img_name, olist)
         fig_obj = putil.plot.Figure(
             panels=[panel1_obj, panel2_obj, panel4_obj],
             indep_var_label='Independent axis' if not num else '',
@@ -542,24 +469,20 @@ def unittest_figure_images(mode=None, test_dir=None):
                 )
             )
         )
-        if mode in ['ref', 'ci']:
-            putil.misc.make_dir(ref_file_name)
-        output_list.append(
-            {
-                'ref_file_name':ref_file_name,
-                'ref_ci_file_name':ref_ci_file_name,
-                'test_file_name':test_file_name
-            }
-        )
-        print(
-            'Generating image {0}'.format(
-                ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-            )
-        )
-        fig_obj.save(
-            ref_file_name if (mode in ['ref', 'ci']) else test_file_name
-        )
-    return output_list
+        fig_obj.save(fname)
+    # Figure without anything but tick marks and series without
+    # predetermined size
+    img_name = 'figure_basic.png'
+    fname = def_file_names(mode, ref_dir, test_dir, img_name, olist)
+    source_obj = putil.plot.BasicSource(
+        numpy.array(list(range(1, 6))),
+        numpy.array([1, 2, 3, 10, 4])
+    )
+    series_obj = putil.plot.Series(source_obj, label='')
+    panel_obj = putil.plot.Panel(series_obj)
+    figure_obj = putil.plot.Figure(panel_obj)
+    figure_obj.save(fname)
+    return olist
 
 
 def main(argv):
@@ -569,13 +492,9 @@ def main(argv):
         unittest_panel_images(mode='ref')
         unittest_figure_images(mode='ref')
     else:
-        ref_dir = os.path.join(
-            os.path.dirname(os.path.realpath(os.path.dirname(__file__))),
-            argv[0]
-        )
-        unittest_series_images(mode='ci', test_dir=ref_dir)
-        unittest_panel_images(mode='ci', test_dir=ref_dir)
-        unittest_figure_images(mode='ci', test_dir=ref_dir)
+        unittest_series_images(mode='ref', test_dir=argv[0])
+        unittest_panel_images(mode='ref', test_dir=argv[0])
+        unittest_figure_images(mode='ref', test_dir=argv[0])
 
 
 if __name__ == '__main__':
