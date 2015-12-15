@@ -3,11 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-import inspect
-import numpy
+# Standard library imports
 import os
 import platform
-
+import inspect
+# PyPI imports
+import numpy
+# Putil imports
 import putil.pcontracts
 
 
@@ -25,6 +27,7 @@ _SUFFIX_TUPLE = (
 # Functions
 ###
 def _check_csv_col_filter(obj):
+    # pylint: disable=R0916
     if (not isinstance(obj, bool)) and ((obj is None) or
        isinstance(obj, str) or isinstance(obj, int) or
        (isinstance(obj, list) and (len(obj) > 0) and
@@ -71,7 +74,7 @@ def _check_increasing_real_numpy_vector(obj):
     if (((obj.dtype.type == numpy.array([0]).dtype.type) or
        (obj.dtype.type == numpy.array([0.0]).dtype.type)) and
        ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and
-       (not min(numpy.diff(obj)) <= 0)))):
+       (min(numpy.diff(obj)) > 0)))):
         return False
     return True
 

@@ -3,11 +3,12 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0105,W0611
 
+# Standard library imports
 import csv
 import os
 import platform
 import sys
-
+# Putil imports
 import putil.exh
 import putil.pcontracts
 from putil.ptypes import file_name
@@ -32,6 +33,7 @@ exobj = trace_ex_pcsv_write.trace_module(no_print=True)
 ###
 def _write_int(fname, data, append=True):
     """ Write data to CSV file with validation """
+    # pylint: disable=W0705
     _exh = putil.exh.get_or_create_exh_obj()
     _exh.add_exception(
         exname='data_is_empty',

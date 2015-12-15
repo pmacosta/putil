@@ -3,8 +3,9 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,R0201,R0903,W0621
 
+# PyPI imports
 import pytest
-
+# Putil imports
 import putil.plot
 
 
@@ -13,7 +14,7 @@ import putil.plot
 ###
 class TestDataSource(object):
     """ Tests for DataSource abstract base class """
-    # pylint: disable=R0912,W0223
+    # pylint: disable=E0110,R0912,W0223
     def test_compliance(self):
         class Test1(putil.plot.DataSource):
             pass

@@ -1,25 +1,27 @@
 # test_misc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0302,E0611,E1101,F0401,R0915,W0621
+# pylint: disable=C0103,C0111,C0302,E0611,E1101,E1129,F0401,R0915,W0621
 
+# Standard library imports
 from __future__ import print_function
 import datetime
 import inspect
 import os
 import platform
-import pytest
 import re
 import struct
 import sys
 import time
 from fractions import Fraction
+if sys.hexversion >= 0x03000000:
+    import unittest.mock as mock
+# PyPI imports
 from numpy import array
+import pytest
 if sys.hexversion < 0x03000000:
     import mock
-else:
-    import unittest.mock as mock
-
+# Putil imports
 import putil.misc
 import putil.test
 if sys.hexversion < 0x03000000:

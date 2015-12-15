@@ -4,11 +4,13 @@
 # pylint: disable=C0103,C0111,E0611,F0401
 # pylint: disable=R0201,R0904,R0912,R0914,W0212,W0232,W0613
 
-import numpy
+# Standard library imports
 import os
-import pytest
 import sys
-
+# PyPI imports
+import numpy
+import pytest
+# Putil imports
 import putil.test
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _write

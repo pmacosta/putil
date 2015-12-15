@@ -3,13 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
+# Standard library imports
 from __future__ import print_function
 
 
 ###
 # Global variables
 ###
-VERSION_INFO = (0, 9, 1, 'final', 0)
+VERSION_INFO = (0, 9, 2, 'final', 0)
 
 ###
 # Functions

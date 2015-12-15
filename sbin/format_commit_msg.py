@@ -4,15 +4,22 @@
 # See LICENSE for details
 # pylint: disable=C0111,E1101,E1103,F0401,W0212
 
+# Standard library imports
 from __future__ import print_function
 import re
 import sys
 import textwrap
 
 
+###
+# Global variables
+###
 LINE_WIDTH = 72
 
 
+###
+# Functions
+###
 def format_msg():
     """ Wrap commit message in 72-character lines """
     msg = sys.stdin.read()

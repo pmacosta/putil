@@ -1,92 +1,15 @@
 # series.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,E0611,W0105
+# pylint: disable=C0111,C0302,E0102,E0611,W0105
 
-import numpy
+# PyPI imports
 import matplotlib.path
 import matplotlib.pyplot as plt
-try:
-    from scipy.stats import linregress
-except ImportError: # pragma: no cover
-    def linregress(indep_var, dep_var):
-        """ Substitute linear regression for when SciPy is not available """
-        npoints = len(indep_var)
-        slope = (
-            ((npoints*sum((indep_var*dep_var)))-(sum(indep_var)*sum(dep_var)))
-            /
-            (npoints*sum((indep_var**2))-(sum(indep_var)**2))
-        )
-        offset = (sum(dep_var)-slope*sum(indep_var))/npoints
-        return slope, offset, False, False, False
-try:
-    from scipy.interpolate import interp1d
-except ImportError: # pragma: no cover
-    # Code adapted from https://jayemmcee.wordpress.com/cubic-splines
-    def create_splines(data):
-        # pylint: disable=R0914
-        np1 = len(data)
-        npoints = np1-1
-        indep_var, dep_var = zip(*data)
-        indep_var = numpy.array(indep_var).astype(float)
-        dep_var = numpy.array(dep_var).astype(float)
-        avec = dep_var[:]
-        bvec = [0.0]*(npoints)
-        dvec = [0.0]*(npoints)
-        hvec = [indep_var[i+1]-indep_var[i] for i in range(npoints)]
-        alpha = [0.0]*npoints
-        for i in range(1, npoints):
-            alpha[i] = (
-                3/hvec[i]*(avec[i+1]-avec[i])-3/hvec[i-1]*(avec[i]-avec[i-1])
-            )
-        cvec = [0.0]*np1
-        lvec = [0.0]*np1
-        uvec = [0.0]*np1
-        zvec = [0.0]*np1
-        lvec[0] = 1.0
-        uvec[0] = zvec[0] = 0.0
-        for i in range(1, npoints):
-            lvec[i] = 2*(indep_var[i+1]-indep_var[i-1])-hvec[i-1]*uvec[i-1]
-            uvec[i] = hvec[i]/lvec[i]
-            zvec[i] = (alpha[i]-hvec[i-1]*zvec[i-1])/lvec[i]
-        lvec[npoints] = 1.0
-        zvec[npoints] = cvec[npoints] = 0.0
-        for j in range(npoints-1, -1, -1):
-            cvec[j] = zvec[j] - uvec[j]*cvec[j+1]
-            bvec[j] = (
-                (avec[j+1]-avec[j])/hvec[j] - (hvec[j]*(cvec[j+1]+2*cvec[j]))/3
-            )
-            dvec[j] = (cvec[j+1]-cvec[j])/(3*hvec[j])
-        splines = []
-        for i in range(npoints):
-            splines.append((avec[i], bvec[i], cvec[i], dvec[i], indep_var[i]))
-        return splines, indep_var[npoints]
-
-
-    def interp1d(indep_var, dep_var, kind):
-        """ Substitute cubic spline fit for when SciPy is not available """
-        # pylint: disable=W0613
-        data = zip(indep_var, dep_var)
-        splines, _ = create_splines(data)
-        indep_var = numpy.array([item[4] for item in splines])
-        avector = numpy.array([item[0] for item in splines])
-        bvector = numpy.array([item[1] for item in splines])
-        cvector = numpy.array([item[2] for item in splines])
-        dvector = numpy.array([item[3] for item in splines])
-        def rfunc(new_indep_var):
-            """ Spline function for given data """
-            indexes = numpy.searchsorted(
-                indep_var, new_indep_var, side='right'
-            )-1
-            hvector = new_indep_var-indep_var[indexes]
-            new_dep_var = (
-                avector[indexes]+
-                (bvector[indexes]*hvector)+
-                (cvector[indexes]*(hvector**2))+
-                (dvector[indexes]*(hvector**3))
-            )
-            return new_dep_var
-        return rfunc
+import numpy
+from scipy.stats import linregress
+from scipy.interpolate import InterpolatedUnivariateSpline
+# Putil imports
 import putil.misc
 import putil.pcontracts
 from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
@@ -371,7 +294,7 @@ class Series(object):
         )
         self._exh.raise_exception_if(
             exname='invalid_color',
-            condition=not (True in check_list)
+            condition=True not in check_list
         )
 
     def _get_marker(self):
@@ -474,11 +397,13 @@ class Series(object):
 
     def _validate_marker(self, marker):
         """ Validate if marker specification is valid """
-        # pylint: disable=R0201,R0911,W0702
+        # pylint: disable=R0201
         try:
             plt.plot(range(10), marker=marker)
-        except:
+        except ValueError:
             return False
+        except: # pragma: no cover
+            raise
         return True
 
     def _print_marker(self):
@@ -542,11 +467,23 @@ class Series(object):
            (self.indep_var is not None) and
            (self.dep_var is not None)):
             if self.interp == 'CUBIC':
-                self.interp_indep_var = numpy.linspace(
-                    min(self.indep_var), max(self.indep_var), 500
+                # Add 20 points between existing points
+                self.interp_indep_var = numpy.array([])
+                iobj = zip(self.indep_var[:-1], self.indep_var[1:])
+                for start, stop in iobj:
+                    self.interp_indep_var = numpy.concatenate(
+                        (
+                            self.interp_indep_var,
+                            numpy.linspace(start, stop, 20, endpoint=False)
+                        )
+                    )
+                self.interp_indep_var = numpy.concatenate(
+                    (self.interp_indep_var, [self.indep_var[-1]])
                 )
-                finterp = interp1d(self.indep_var, self.dep_var, kind='cubic')
-                self.interp_dep_var = finterp(self.interp_indep_var)
+                spl = InterpolatedUnivariateSpline(
+                    self.indep_var, self.dep_var
+                )
+                self.interp_dep_var = spl(self.interp_indep_var)
             elif self.interp == 'LINREG':
                 slope, intercept, _, _, _ = linregress(
                     self.indep_var, self.dep_var

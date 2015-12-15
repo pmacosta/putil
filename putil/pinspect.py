@@ -1,23 +1,25 @@
 # pinspect.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,E0012,E0611,F0401,R0912,W0212,W0631,W1504
+# pylint: disable=C0103,C0111,E0012,E0611,F0401,R0912,R0916,W0212,W0631,W1504
 
+# Standard library imports
 from __future__ import print_function
 import ast
 import collections
 import copy
 import json
-try:    # pragma: no cover
-    from funcsigs import signature
-except ImportError: # pragma: no cover
-    from inspect import signature
 import os
 import platform
 import re
 import sys
 import types
-
+# PyPI imports
+try:    # pragma: no cover
+    from inspect import signature
+except ImportError: # pragma: no cover
+    from funcsigs import signature
+# Putil imports
 if sys.hexversion < 0x03000000: # pragma: no cover
     from putil.compat2 import _unicode_to_ascii, _readlines, _unicode_char
 else:   # pragma: no cover
@@ -529,6 +531,7 @@ class Callables(object):
         Check that intersection of two objects is congruent, i.e. that they
         have identical information in the intersection
         """
+        # pylint: disable=C0123
         props = ['_callables_db', '_reverse_callables_db', '_modules_dict']
         for prop in props:
             self_dict = getattr(self, prop)
@@ -683,7 +686,7 @@ class Callables(object):
 
          * RuntimeError (Argument \`fnames\` is not valid)
         """
-        # pylint: disable=R0914
+        # pylint: disable=R0101,R0914
         if fnames and (not isinstance(fnames, list)):
             raise RuntimeError('Argument `fnames` is not valid')
         if fnames and any([not isinstance(item, str) for item in fnames]):

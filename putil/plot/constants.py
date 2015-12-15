@@ -4,6 +4,9 @@
 # pylint: disable=C0111,C0302,W0105
 
 
+###
+# Global variables
+###
 AXIS_TICKS_FONT_SIZE = 14
 """
 Axis tick labels font size in points

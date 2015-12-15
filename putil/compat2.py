@@ -4,6 +4,9 @@
 # pylint: disable=C0111,W0122,W0613
 
 
+###
+# Functions
+###
 def _ex_type_str(exobj):
     """ Returns a string corresponding to the exception type """
     return str(exobj).split('.')[-1][:-2]

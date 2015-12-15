@@ -3,9 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,R0912,R0913,R0914,R0915,W0105,W0212
 
-import numpy
+# PyPI imports
 import matplotlib.pyplot as plt
-
+import numpy
+# Putil imports
 import putil.exh
 import putil.pcontracts
 from .series import Series

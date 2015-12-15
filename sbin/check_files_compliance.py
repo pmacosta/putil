@@ -4,6 +4,7 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,R0912,R0914
 
+# Standard library imports
 from __future__ import print_function
 import argparse
 import datetime
@@ -12,10 +13,10 @@ import os
 import re
 import subprocess
 import sys
-
-if sys.hexversion < 0x03000000: # pragma: no cover
+# Putil imports
+if sys.hexversion < 0x03000000:
     from putil.compat2 import _readlines
-else:   # pragma: no cover
+else:
     from putil.compat3 import _readlines
 
 

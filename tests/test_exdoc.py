@@ -2,22 +2,26 @@
 # test_exdoc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,F0401,R0201,R0903,W0104,W0212,W0612,W0613,W0621
+# pylint: disable=C0111,C0411,E0012,E0611,F0401,R0201,R0903,W0104,W0212,W0612,W0613,W0621
 
+# Standard library imports
 from __future__ import print_function
 import imp
 import copy
 import os
-import pytest
 import sys
-if sys.hexversion < 0x03000000:
-    import __builtin__
-    import mock
-else:
-    import builtins as __builtin__
+if sys.hexversion >= 0x03000000:
     import importlib
     import unittest.mock as mock
-
+if sys.hexversion < 0x03000000:
+    import __builtin__
+else:
+    import builtins as __builtin__
+# PyPI imports
+import pytest
+if sys.hexversion < 0x03000000:
+    import mock
+# Putil imports
 import putil.exdoc
 import putil.exh
 import putil.misc

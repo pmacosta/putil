@@ -3,12 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0111,F0401,R0915,W0212
 
+# Standard library imports
 from __future__ import print_function
-import numpy
 import os
-import pytest
 import sys
-
+# PyPI imports
+import numpy
+import pytest
+# Putil imports
 import putil.plot
 from .fixtures import compare_images, IMGTOL
 sys.path.append('..')
@@ -729,7 +731,7 @@ class TestPanel(object):
     def test_primary_axis_ticks(self, default_source, default_series):
         """ Test primary_axis_ticks property behavior """
         obj = putil.plot.Panel(series=None)
-        assert obj.primary_axis_ticks == None
+        assert obj.primary_axis_ticks is None
         obj = putil.plot.Panel(
             series=default_series,
             primary_axis_ticks=[
@@ -758,7 +760,7 @@ class TestPanel(object):
                 1000, 2000, 3000, 3500
             ]
         )
-        assert obj.primary_axis_ticks == None
+        assert obj.primary_axis_ticks is None
         # Logarithmic independent axis tick marks
         # cannot be overridden
         obj = putil.plot.Panel(
@@ -829,7 +831,7 @@ class TestPanel(object):
     def test_secondary_axis_ticks(self, default_source, default_series):
         """ Test secondary_axis_ticks attribute behavior """
         obj = putil.plot.Panel(series=None)
-        assert obj.secondary_axis_ticks == None
+        assert obj.secondary_axis_ticks is None
         series_obj = putil.plot.Series(
             data_source=default_source,
             label='test series',
@@ -859,7 +861,7 @@ class TestPanel(object):
                 1000, 2000, 3000, 3500
             ]
         )
-        assert obj.secondary_axis_ticks == None
+        assert obj.secondary_axis_ticks is None
         # Logarithmic independent axis tick marks
         # cannot be overridden
         obj = putil.plot.Panel(
@@ -1058,8 +1060,8 @@ class TestPanel(object):
             panel_obj._primary_dep_var_div,
             panel_obj._primary_dep_var_unit_scale
         ) == (1, ' ')
-        assert panel_obj._secondary_dep_var_locs == None
-        assert panel_obj._secondary_dep_var_labels == None
+        assert panel_obj._secondary_dep_var_locs is None
+        assert panel_obj._secondary_dep_var_labels is None
         assert (
             panel_obj._secondary_dep_var_min,
             panel_obj._secondary_dep_var_max
@@ -1074,8 +1076,8 @@ class TestPanel(object):
             panel_obj._panel_has_primary_axis,
             panel_obj._panel_has_secondary_axis
         ) == (False, True)
-        assert panel_obj._primary_dep_var_locs == None
-        assert panel_obj._primary_dep_var_labels == None
+        assert panel_obj._primary_dep_var_locs is None
+        assert panel_obj._primary_dep_var_labels is None
         assert (
             panel_obj._primary_dep_var_min,
             panel_obj._primary_dep_var_max
@@ -1148,8 +1150,8 @@ class TestPanel(object):
             panel_obj._primary_dep_var_div,
             panel_obj._primary_dep_var_unit_scale
         ) == (1, ' ')
-        assert panel_obj._secondary_dep_var_locs == None
-        assert panel_obj._secondary_dep_var_labels == None
+        assert panel_obj._secondary_dep_var_locs is None
+        assert panel_obj._secondary_dep_var_labels is None
         assert (
             panel_obj._secondary_dep_var_min,
             panel_obj._secondary_dep_var_max
@@ -1164,8 +1166,8 @@ class TestPanel(object):
             panel_obj._panel_has_primary_axis,
             panel_obj._panel_has_secondary_axis
         ) == (False, True)
-        assert panel_obj._primary_dep_var_locs == None
-        assert panel_obj._primary_dep_var_labels == None
+        assert panel_obj._primary_dep_var_locs is None
+        assert panel_obj._primary_dep_var_labels is None
         assert (
             panel_obj._primary_dep_var_min,
             panel_obj._primary_dep_var_max
@@ -1200,8 +1202,8 @@ class TestPanel(object):
             panel_obj._primary_dep_var_div,
             panel_obj._primary_dep_var_unit_scale
         ) == (1, ' ')
-        assert panel_obj._secondary_dep_var_locs == None
-        assert panel_obj._secondary_dep_var_labels == None
+        assert panel_obj._secondary_dep_var_locs is None
+        assert panel_obj._secondary_dep_var_labels is None
         assert (
             panel_obj._secondary_dep_var_min,
             panel_obj._secondary_dep_var_max
@@ -1226,8 +1228,8 @@ class TestPanel(object):
             panel_obj._primary_dep_var_div,
             panel_obj._primary_dep_var_unit_scale
         ) == (1, ' ')
-        assert panel_obj._secondary_dep_var_locs == None
-        assert panel_obj._secondary_dep_var_labels == None
+        assert panel_obj._secondary_dep_var_locs is None
+        assert panel_obj._secondary_dep_var_labels is None
         assert (
             panel_obj._secondary_dep_var_min,
             panel_obj._secondary_dep_var_max
@@ -1252,8 +1254,8 @@ class TestPanel(object):
             panel_obj._primary_dep_var_div,
             panel_obj._primary_dep_var_unit_scale
         ) == (1, ' ')
-        assert panel_obj._secondary_dep_var_locs == None
-        assert panel_obj._secondary_dep_var_labels == None
+        assert panel_obj._secondary_dep_var_locs is None
+        assert panel_obj._secondary_dep_var_labels is None
         assert (
             panel_obj._secondary_dep_var_min,
             panel_obj._secondary_dep_var_max
@@ -1295,7 +1297,7 @@ class TestPanel(object):
             (abs(tobj[0].scaled_dep_var-[0, -2.5, 1.25, 1]) < 1e-10).all(),
             (abs(tobj[1].scaled_dep_var-[0.84, 1.6, 2, 0.8]) < 1e-10).all()
         ) == (True, True)
-        assert panel1_obj.primary_axis_scale == None
+        assert panel1_obj.primary_axis_scale is None
         assert panel1_obj.secondary_axis_scale == 1
         assert panel2_obj.primary_axis_scale == 1
         assert panel2_obj.secondary_axis_scale == 1

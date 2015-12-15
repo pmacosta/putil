@@ -4,9 +4,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,R0913,W0105,W0212
 
+# Standard library imports
 import copy
 import sys
-
+# Putil imports
 import putil.exh
 
 

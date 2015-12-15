@@ -77,7 +77,7 @@ Example
 .. literalinclude:: ./support/plot_example_1.py
     :language: python
     :tab-width: 4
-    :lines: 1,6,8-10,15-115
+    :lines: 1,6-10,19-119
 
 |
 

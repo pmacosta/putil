@@ -3,10 +3,11 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,C0302,R0915,W0212
 
+# Standard library imports
+import sys
 import numpy
 import pytest
-import sys
-
+# Putil imports
 import putil.test
 import putil.eng
 

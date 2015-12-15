@@ -2,9 +2,10 @@
 # exdoc.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,E1101,E1103,F0401,R0201,R0903,R0913
+# pylint: disable=C0111,C0411,E0012,E0611,E1101,E1103,F0401,R0201,R0903,R0913
 # pylint: disable=W0105,W0122,W0212,W0611,W0613
 
+# Standard library imports
 from __future__ import print_function
 import bisect
 import copy
@@ -14,11 +15,13 @@ import sys
 import textwrap
 if sys.hexversion < 0x03000000: # pragma: no cover
     import __builtin__
-    from putil.compat2 import _rwtb
 else:   # pragma: no cover
     import builtins as __builtin__
+# Putil imports
+if sys.hexversion >= 0x03000000: # pragma: no cover
     from putil.compat3 import _rwtb
-
+else: # pragma: no cover
+    from putil.compat2 import _rwtb
 import putil.exh
 import putil.misc
 import putil.tree
@@ -515,7 +518,7 @@ class ExDoc(object):
 
          * RuntimeError (Callable not found in exception list: *[name]*)
         """
-        # pylint: disable=R0912,R0914,R0915
+        # pylint: disable=R0101,R0204,R0912,R0914,R0915,R0916
         if depth and ((not isinstance(depth, int)) or
            (isinstance(depth, int) and (depth < 0))):
             raise RuntimeError('Argument `depth` is not valid')

@@ -1,7 +1,7 @@
 # trace_my_module_1.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111
+# pylint: disable=C0111,C0410
 
 ##
 # Option 1: use already written test bench

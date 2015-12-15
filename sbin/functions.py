@@ -3,6 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,E0602,E1111,R0904,W0201,W0621
 
+# Standard library imports
 from __future__ import print_function
 import glob
 import json
@@ -76,7 +77,7 @@ def dir_tree(root, dir_exclude=None, ext_exclude=None):
             _, ext = os.path.splitext(fname)
             if any([dname.startswith(item) for item in dir_exclude]):
                 continue
-            if not ext in ext_exclude:
+            if ext not in ext_exclude:
                 yield os.path.join(dname, fname)
 
 

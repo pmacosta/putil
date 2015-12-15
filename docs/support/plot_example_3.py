@@ -1,7 +1,7 @@
 # plot_example_3.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0903
+# pylint: disable=C0111,C0410,R0903
 
 import putil.misc, putil.pcsv
 

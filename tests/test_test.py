@@ -3,8 +3,9 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0212
 
+# PyPI imports
 import pytest
-
+# Putil imports
 import putil.test
 
 
@@ -15,13 +16,13 @@ def test_comp_list_of_dicts():
     """ Test comp_list_of_dicts function behavior """
     list1 = []
     list2 = [{'a':5, 'b':6}]
-    assert putil.test.comp_list_of_dicts(list1, list2) == False
+    assert not putil.test.comp_list_of_dicts(list1, list2)
     list1 = [{'a':5}]
     list2 = [{'a':5, 'b':6}]
-    assert putil.test.comp_list_of_dicts(list1, list2) == False
+    assert not putil.test.comp_list_of_dicts(list1, list2)
     list1 = [{'a':5, 'b':6}]
     list2 = [{'a':5, 'b':6}]
-    assert putil.test.comp_list_of_dicts(list1, list2) == True
+    assert putil.test.comp_list_of_dicts(list1, list2)
 
 
 def test_exception_type_str():

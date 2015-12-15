@@ -3,12 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0105,W0611
 
+# Standard library imports
 import csv
 import operator
 import os
 import platform
 import sys
-
+# Putil imports
 import putil.exh
 import putil.misc
 import putil.pcontracts

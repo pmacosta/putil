@@ -1,21 +1,23 @@
 # test_exh.py
 # Copyright (c) 2013-2015 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0903,R0912,R0915
+# pylint: disable=C0103,C0111,C0302,C0413,E0611,F0401,R0201,R0903,R0912,R0915
 # pylint: disable=W0122,W0123,W0212,W0612,W0640
 
+# Standard library imports
 from __future__ import print_function
 import copy
 import os
-import pytest
 import re
 import sys
 from itertools import product
+if sys.hexversion >= 0x03000000:
+    import unittest.mock as mock
+# PyPI imports
+import pytest
 if sys.hexversion < 0x03000000:
     import mock
-else:
-    import unittest.mock as mock
-
+# Putil imports
 import putil.eng
 import putil.exh
 import putil.misc
@@ -225,7 +227,7 @@ class TestExHandle(object):
 
     def test_add_exception(self):
         """ Test add_exception() function behavior """
-        # pylint: disable=E0602,R0914,W0613
+        # pylint: disable=E0602,R0204,R0914,W0613
         exobj = putil.exh.ExHandle(
             full_cname=True,
             exclude=['_pytest', 'tests.test_exh']
@@ -698,29 +700,6 @@ class TestExHandle(object):
         )
         assert item['msg'] == 'Illegal value'
         ###
-        # Test case where callable is dynamic and does not have a code ID
-        ###
-        def mock_get_code_id_from_obj(obj):
-            """
-            Return unique identity tuple to individualize callable object
-            """
-            return None
-        assert putil.exh._get_code_id_from_obj(None) is None
-        obj = putil.exh.ExHandle(True)
-        gmap = locals()
-        exec_function('def efunc(): pass', '<exec_function>', gmap)
-        efunc = gmap['efunc']
-        fobj = efunc
-        patch_name = 'putil.exh._get_code_id_from_obj'
-        patch_obj = mock_get_code_id_from_obj
-        with mock.patch(patch_name, side_effect=patch_obj):
-            frobj = sys._getframe(0)
-            assert (
-                obj._get_callable_full_name(frobj, '<module>', fobj)
-                ==
-                'dynamic'
-            )
-        ###
         # Test exclude: test without exclusion and with exclusion,
         # the function name should be 'None'
         ###
@@ -911,7 +890,7 @@ class TestExHandle(object):
                 assert erec['function'].endswith('{0}'.format(mname))
                 assert erec['type'] == RuntimeError
                 assert erec['msg'] == 'This is an exception'
-                assert erec['raised'] == True
+                assert erec['raised']
             if exname.endswith('/{0}.my_exception2'.format(mname)):
                 assert erec['function'].endswith('{0}'.format(mname))
                 assert erec['type'] == OSError
@@ -920,7 +899,7 @@ class TestExHandle(object):
                     ==
                     'This is an exception with a *[fname]* field'
                 )
-                assert erec['raised'] == True
+                assert erec['raised']
         exobj = putil.exh.ExHandle(full_cname=True)
         def func_base(exobj, cond):
             """ Test raised field """
@@ -1470,7 +1449,7 @@ class TestExHandle(object):
         obj1 = putil.exh.get_exh_obj()
         obj2 = copy.copy(obj1)
         assert obj1 == obj2
-        assert 5 != obj1
+        assert obj1 != 5
 
     def test_nonzero(self):
         """ Test __nonzero__ method behavior """

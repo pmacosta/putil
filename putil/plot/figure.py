@@ -3,12 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302,R0201,R0914,W0105,W0212
 
+# Standard library imports
 from __future__ import print_function
-import numpy
 import os
+# PyPI imports
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-
+import numpy
+# Putil imports
 import putil.exh
 import putil.misc
 import putil.pcontracts

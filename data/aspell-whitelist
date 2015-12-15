@@ -13,6 +13,7 @@ Agg
 aguments
 aliceblue
 antiquewhite
+anumber
 aobj
 api
 API
@@ -61,6 +62,7 @@ bbox
 bc
 bcd
 bdist
+bfrac
 bgrcmykw
 BinOp
 Bitbucket
@@ -137,6 +139,7 @@ consts
 contextmanager
 ContractNotRespected
 ContractSyntaxError
+copysign
 copytree
 cornflowerblue
 cornsilk
@@ -441,6 +444,7 @@ init
 Init
 instantiation
 interp
+InterpolatedUnivariateSpline
 InterpolationOption
 io
 iobj
@@ -656,6 +660,7 @@ Numpy
 nums
 nuniq
 nvar
+nzero
 ocols
 oct
 odata
@@ -868,11 +873,13 @@ schar
 scipy
 Scipy
 SciPy
+SCIPY
 Scipy's
 scontext
 sdeps
 sdict
 sdicts
+sdiff
 sdir
 sdist
 seagreen
@@ -906,13 +913,16 @@ slategray
 slaveinput
 slaveoutput
 slist
+smant
 smf
 snum
 sobj
 soline
 somefile
+spacings
 spartacus
 SPHINXOPTS
+spl
 springgreen
 sqrt
 src

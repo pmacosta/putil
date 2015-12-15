@@ -97,6 +97,7 @@ def term_echo(command, nindent=0, env=None, fpointer=None, cols=60):
     :param cols: Number of columns of output
     :type  cols: integer
     """
+    # pylint: disable=R0204
     # Set argparse width so that output does not need horizontal scroll
     # bar in narrow windows or displays
     os.environ['COLUMNS'] = str(cols)
