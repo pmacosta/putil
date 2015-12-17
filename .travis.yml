@@ -22,8 +22,6 @@ python:
 env:
   # - JNAME="2.6"
   # - JNAME="2.7"
-  
-  
 
 before_install:
   - env
@@ -111,12 +109,6 @@ before_install:
     fi
   - if [ "${TRAVIS_OS_NAME}" == "linux" ] && [ ! -f /usr/include/ft2build.h ]; then
         sudo ln -s /usr/include/freetype2/ft2build.h /usr/include/.;
-    fi
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ] && [ "$TRAVIS_SECURE_ENV_VARS" == "true" ]; then
-       echo "Creating Dropbox configuration";
-       openssl aes-256-cbc -K $encrypted_28396a62e614_key -iv $encrypted_28396a62e614_iv -in .dropbox_uploader.enc -out ~/.dropbox_uploader -d;
-    else
-       echo "Dropbox configuration could not be created";
     fi
 
 install:
@@ -224,17 +216,19 @@ notifications:
     on_failure: always
 
 after_success:
-  - cd ${REPO_DIR}
-  - cp ${RESULTS_DIR}/codecoverage/coverage.xml ${REPO_DIR}/.
-  - export DOT_SOURCE_DIR=${SOURCE_DIR//\//.}
-  - export DOT_REPO_DIR=${REPO_DIR//\//.}
-  - sed -r -i -e "s|${SOURCE_DIR}|${REPO_DIR}/${PKG_NAME}|g" coverage.xml
-  - sed -r -i -e "s|${DOT_SOURCE_DIR}|${DOT_REPO_DIR}.${PKG_NAME}|g" coverage.xml
-  - codecov --token=${CODECOV_TOKEN} --file=${REPO_DIR}/coverage.xml
+  - if [ "${CODECOV_TOKEN}" != "" ]; then
+        cd ${REPO_DIR};
+        cp ${RESULTS_DIR}/codecoverage/coverage.xml ${REPO_DIR}/.;
+        export DOT_SOURCE_DIR=${SOURCE_DIR//\//.};
+        export DOT_REPO_DIR=${REPO_DIR//\//.};
+        sed -r -i -e "s|${SOURCE_DIR}|${REPO_DIR}/${PKG_NAME}|g" coverage.xml;
+        sed -r -i -e "s|${DOT_SOURCE_DIR}|${DOT_REPO_DIR}.${PKG_NAME}|g" coverage.xml;
+        codecov --token=${CODECOV_TOKEN} --file=${REPO_DIR}/coverage.xml;
+    fi
 
 after_failure:
   - ${EXTRA_DIR}/sbin/zip-artifacts.sh ${INTERP}
-  - if [ -f ~/.dropbox_uploader ] && [ -f ${AFILE} ]; then
+  - if [ -f "${AFILE}" ]; then
         ${REPO_DIR}/sbin/dropbox_uploader.sh upload ${AFILE} .;
     else
         echo "Artifacts could not be exported";

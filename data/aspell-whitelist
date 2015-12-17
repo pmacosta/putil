@@ -18,6 +18,8 @@ aobj
 api
 API
 appdata
+APPKEY
+APPSECRET
 appveyor
 Appveyor
 arg
@@ -122,6 +124,7 @@ CNAME
 cnode
 cobj
 Codecov
+CODECOV
 codecoverage
 codelog
 cogapp
@@ -193,6 +196,7 @@ darkturquoise
 darkviolet
 DataSource
 datetime
+DBU
 ddir
 dec
 decfunc
@@ -239,6 +243,7 @@ dodgerblue
 dpk
 drawstyle
 dropbox
+Dropbox
 ds
 dsort
 dst
@@ -664,6 +669,7 @@ nums
 nuniq
 nvar
 nzero
+OAUTH
 ocols
 oct
 odata
@@ -1054,6 +1060,7 @@ unittest
 unsupp
 uobj
 uploader
+Uploader
 uret
 url
 urows
