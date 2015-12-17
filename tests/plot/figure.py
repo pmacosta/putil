@@ -19,7 +19,7 @@ if sys.hexversion < 0x03000000:
 # Putil imports
 import putil.misc
 import putil.plot
-from .fixtures import compare_images, IMGTOL
+from .fixtures import compare_images, export_image, IMGTOL
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_figure_images
 
@@ -124,15 +124,19 @@ class TestFigure(object):
             'Independent variable units: Amps\n'
             'Logarithmic independent axis: False\n'
             'Title: My graph\n'
-            'Figure width: (5\\.6|6\\.2).*\n'
-            'Figure height: 2.6.*\n'
+            'Figure width: (6\\.08|6\\.71).*\n'
+            'Figure height: 4.99.*\n'
         )
         actual = str(obj)
         ref_invariant = '\n'.join(ref.split('\n')[:-3])
         actual_invariant = '\n'.join(actual.split('\n')[:-3])
         assert ref_invariant == actual_invariant
         regexp = re.compile('\n'.join(ref.split('\n')[-3:]))
-        assert regexp.match('\n'.join(actual.split('\n')[-3:]))
+        actual = '\n'.join(actual.split('\n')[-3:])
+        comp = regexp.match(actual)
+        if not comp:
+            print(actual)
+        assert comp
 
     ### Public methods
     def test_save(self, default_panel):
@@ -239,9 +243,7 @@ class TestFigure(object):
         assert obj.fig_width is None
         obj = putil.plot.Figure(panels=default_panel)
         assert (
-            (obj.fig_width-5.6 < 1e-10) or
-            (obj.fig_width-5.61 < 1e-10) or
-            (obj.fig_width-6.2 < 1e-10)
+            (obj.fig_width-6.71 < 1e-10)
         )
         obj.fig_width = 5
         assert obj.fig_width == 5
@@ -535,29 +537,29 @@ class TestFigure(object):
         images_dict_list = unittest_figure_images(
             mode='test', test_dir=str(tmpdir)
         )
+        global_result = True
         for images_dict in images_dict_list:
-            ref_file_name = images_dict['ref_file_name']
-            ref_ci_file_name = images_dict['ref_ci_file_name']
-            test_file_name = images_dict['test_file_name']
-            metrics = compare_images(ref_file_name, test_file_name)
-            result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-            metrics_ci = compare_images(ref_ci_file_name, test_file_name)
-            result_ci = (metrics_ci[0] < IMGTOL) and (metrics_ci[1] < IMGTOL)
-            if (not result) and (not result_ci):
-                print('Images do not match')
-                print(
-                    'Reference image: file://{0}'.format(
+            ref_file_name_list = images_dict['ref_fname']
+            test_file_name = images_dict['test_fname']
+            print('Reference images:')
+            for ref_file_name in ref_file_name_list:
+                print('   file://{0}'.format(
                         os.path.realpath(ref_file_name)
                     )
                 )
-                print(
-                    'Reference CI image: file://{0}'.format(
-                        os.path.realpath(ref_ci_file_name)
-                    )
+            print('Actual image:')
+            print('   file://{0}'.format(
+                    os.path.realpath(test_file_name)
                 )
-                print(
-                    'Actual image: file://{0}'.format(
-                        os.path.realpath(test_file_name)
-                    )
-                )
-            assert result or result_ci
+            )
+            for ref_file_name in ref_file_name_list:
+                metrics = compare_images(ref_file_name, test_file_name)
+                result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
+                if result:
+                    break
+            else:
+                print('Images do not match')
+                global_result = False
+                export_image(test_file_name)
+            print('')
+        assert global_result

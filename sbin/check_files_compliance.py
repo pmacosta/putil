@@ -76,6 +76,7 @@ def pkg_files(sdir, mdir, files, extensions):
         os.path.join(mdir, 'sbin', 'install.ps1'),
         os.path.join(mdir, 'sbin', 'run_with_env.cmd'),
         os.path.join(mdir, 'sbin', 'build_matplotlib_dep.cmd'),
+        os.path.join(mdir, 'sbin', 'dropbox_uploader.sh'),
     ]
     # Processing
     for fdir in fdirs:

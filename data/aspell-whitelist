@@ -139,6 +139,7 @@ consts
 contextmanager
 ContractNotRespected
 ContractSyntaxError
+copyfile
 copysign
 copytree
 cornflowerblue
@@ -237,8 +238,10 @@ Docutils
 dodgerblue
 dpk
 drawstyle
+dropbox
 ds
 dsort
+dst
 dtree
 dvar
 dvec
@@ -1050,6 +1053,7 @@ uniquify
 unittest
 unsupp
 uobj
+uploader
 uret
 url
 urows

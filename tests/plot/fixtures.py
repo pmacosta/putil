@@ -3,6 +3,11 @@
 # See LICENSE for details
 # pylint: disable=C0111,E0611,W0621
 
+# Standard library imports
+from __future__ import print_function
+import os
+import shutil
+import subprocess
 # PyPI imports
 import numpy
 import pytest
@@ -75,3 +80,40 @@ def default_panel(default_series):
         secondary_axis_label='Secondary axis',
         secondary_axis_units='B'
     )
+
+
+def export_image(fname, method=True):
+    tdir = os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))
+        )
+    )
+    artifact_dir = os.path.join(tdir, 'artifacts')
+    if not os.path.exists(artifact_dir):
+        os.makedirs(artifact_dir)
+    if method:
+        src = fname
+        dst = os.path.join(artifact_dir, os.path.basename(fname))
+        shutil.copyfile(src, dst)
+    else:
+        if os.environ.get('APPVEYOR', None):
+            proc = subprocess.Popen(
+                ['appveyor', 'PushArtifact', os.path.realpath(fname)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            proc.communicate()
+        elif os.environ.get('TRAVIS', None):
+            # If only a few binary files need to be exported a hex dump works,
+            # otherwise the log can grow past 4MB and the process is terminated
+            # by Travis
+            proc = subprocess.Popen(
+                [
+                    os.path.join(tdir, 'sbin', 'png-to-console.sh'),
+                    os.path.realpath(fname)
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            stdout, _ = proc.communicate()
+            print(stdout)

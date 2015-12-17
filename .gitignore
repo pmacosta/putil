@@ -25,8 +25,13 @@ docs/_build
 shippable/
 vdisks/
 build/
-!tests/support/ref_images/*.png
-!tests/support/ref_images_ci/*.png
+!tests/support/ref_images_1/*.png
+!tests/support/ref_images_2/*.png
+!tests/support/ref_images_3/*.png
+!tests/support/ref_images_4/*.png
+!tests/support/ref_images_5/*.png
+!tests/support/ref_images_6/*.png
+!tests/support/ref_images_7/*.png
 !docs/support/*.png
 !data/requirements.json
 !data/data_files.json

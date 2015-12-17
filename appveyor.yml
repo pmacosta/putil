@@ -144,3 +144,7 @@ test_script:
   # Re-building exceptions auto-documentation takes a long time in Appveyor.
   # They have (and should be) spot-checked every now and then
   # - python %EXTRA_DIR%\sbin\build_docs.py -r -t -d %SOURCE_DIR%
+
+on_failure:
+  - 7z a %EXTRA_DIR%\actual_images.zip %EXTRA_DIR%\artifacts\*.png
+  - appveyor PushArtifact %EXTRA_DIR%\actual_images.zip
