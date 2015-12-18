@@ -5,8 +5,10 @@
 Changelog
 =========
 
+* 0.9.4 [2015-12-18]: Minor documentation update regarding continuous
+  integration setup
 * 0.9.3 [2015-12-17]: Fixed critical bug in plot module that prevented figures
-                      without any axis labels from being generated
+  without any axis labels from being generated
 * 0.9.2 [2015-12-15]: Speed improvements in plot module
 * 0.9.1 [2015-12-01]: Final release of 0.9.1 branch
 * 0.9.1rc5 [2015-12-01]: Fixed documentation URL in top-level README.rst
