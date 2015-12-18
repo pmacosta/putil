@@ -83,20 +83,7 @@ def build_wheel_cache():
         if not pipcmd:
             print('pip {0} not found'.format(pyver))
             continue
-        interp_path = os.path.dirname(os.path.dirname(pycmd))
-        os.environ['PYTHONPATH'] = (
-            os.path.join(
-                interp_path, 'lib', 'python{0}'.format(pyver)
-            )
-            +
-            ':'+old_python_path
-        )
-        print(
-            _pcolor(
-                'PYTHONPATH set to {0}'.format(os.environ['PYTHONPATH']),
-                'cyan'
-            )
-        )
+        os.environ['PYTHONPATH'] = ''
         lines = load_requirements(pkg_dir, pyver)
         for line in lines:
             if 'numpy' in line:

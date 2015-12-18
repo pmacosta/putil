@@ -329,7 +329,21 @@ Contributing
    integration configured for Linux (via `Travis <http://www.travis-ci.org>`_)
    and for Microsoft Windows (via `Appveyor <http://www.appveyor.com>`_).
    Aggregation/cloud code coverage is configured via
-   `Codecov <https://codecov.io>`_
+   `Codecov <https://codecov.io>`_. It is assumed that the Codecov repository
+   upload token in the Travis build is stored in the :bash:`${CODECOV_TOKEN}`
+   environment variable (securely defined in the Travis repository settings
+   page). Travis build artifacts can be transferred to Dropbox using the
+   `Dropbox Uploader <https://github.com/andreafabrizi/Dropbox-Uploader>`_
+   script (included for convenience in the :bash:`${PUTIL_DIR}/sbin` directory).
+   For an automatic transfer that does not require manual entering of
+   authentication credentials place the APPKEY, APPSECRET, ACCESS_LEVEL,
+   OAUTH_ACCESS_TOKEN and OAUTH_ACCESS_TOKEN_SECRET values required by
+   Dropbox Uploader in the in the :bash:`${DBU_APPKEY}`,
+   :bash:`${DBU_APPSECRET}`, :bash:`${DBU_ACCESS_LEVEL}`,
+   :bash:`${DBU_OAUTH_ACCESS_TOKEN}` and
+   :bash:`${DBU_OAUTH_ACCESS_TOKEN_SECRET}` environment variables,
+   respectively (also securely defined in Travis repository settings page)
+
 
 9. Document the new feature or bug fix (if needed). The script
    :bash:`${PUTIL_DIR}/sbin/build_docs.py` re-builds the whole package
