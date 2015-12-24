@@ -609,7 +609,7 @@ class ExHandle(object):
             # Decorator flag vector
             idv = [item[3] for item in stack]
             # Fully qualified callable path construction
-            ret = (
+            ret = list(
                 self._get_callable_full_name(fob, fin, uobj)
                 for fob, fin, uobj, _ in stack
             )
@@ -620,8 +620,7 @@ class ExHandle(object):
                 if in_decorator and (name == prev_name):
                     del ret[num-num_del_items]
                     num_del_items += 1
-            ret = self._callables_separator.join(ret)
-            return callable_id, ret
+            return callable_id, self._callables_separator.join(ret)
     else:   # pragma: no cover
         # Method works with decorator 4.x series
         def _get_callable_path(self):

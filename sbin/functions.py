@@ -198,6 +198,8 @@ def shcmd(cmd_list, exmsg, async_stdout=False):
         sys.stdout.flush()
     stdout, _ = proc.communicate()
     retcode = proc.returncode
+    if sys.hexversion >= 0x03000000:
+        stdout = stdout.decode('utf-8')
     if retcode:
         print(stdout)
         raise RuntimeError(exmsg)
