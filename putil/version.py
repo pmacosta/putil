@@ -1,5 +1,5 @@
 # version.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111
 
@@ -10,7 +10,7 @@ from __future__ import print_function
 ###
 # Global variables
 ###
-VERSION_INFO = (0, 9, 4, 'final', 0)
+VERSION_INFO = (0, 9, 5, 'final', 0)
 
 ###
 # Functions

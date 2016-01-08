@@ -1,5 +1,5 @@
 # functions.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,E0602,E1111,R0904,W0201,W0621
 
@@ -106,7 +106,7 @@ def gen_manifest(make_wheel=False):
     fdata = json_load(os.path.join('data', 'data_files.json'))
     ret = [
         '# MANIFEST.in',
-        '# Copyright (c) 2013-2015 Pablo Acosta-Serafini',
+        '# Copyright (c) 2013-2016 Pablo Acosta-Serafini',
         '# See LICENSE for details'
     ]
     if not make_wheel:
@@ -198,6 +198,8 @@ def shcmd(cmd_list, exmsg, async_stdout=False):
         sys.stdout.flush()
     stdout, _ = proc.communicate()
     retcode = proc.returncode
+    if sys.hexversion >= 0x03000000:
+        stdout = stdout.decode('utf-8')
     if retcode:
         print(stdout)
         raise RuntimeError(exmsg)

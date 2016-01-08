@@ -1,5 +1,5 @@
 # exh.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,C0411,E0012,E0611,E1101,E1103,F0401
 # pylint: disable=R0201,R0912,R0914,R0915,W0122,W0212,W0613,W0631
@@ -609,7 +609,7 @@ class ExHandle(object):
             # Decorator flag vector
             idv = [item[3] for item in stack]
             # Fully qualified callable path construction
-            ret = (
+            ret = list(
                 self._get_callable_full_name(fob, fin, uobj)
                 for fob, fin, uobj, _ in stack
             )
@@ -620,8 +620,7 @@ class ExHandle(object):
                 if in_decorator and (name == prev_name):
                     del ret[num-num_del_items]
                     num_del_items += 1
-            ret = self._callables_separator.join(ret)
-            return callable_id, ret
+            return callable_id, self._callables_separator.join(ret)
     else:   # pragma: no cover
         # Method works with decorator 4.x series
         def _get_callable_path(self):

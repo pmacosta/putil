@@ -1,10 +1,11 @@
 .. CHANGELOG.rst
-.. Copyright (c) 2013-2015 Pablo Acosta-Serafini
+.. Copyright (c) 2013-2016 Pablo Acosta-Serafini
 .. See LICENSE for details
 
 Changelog
 =========
 
+* 0.9.5 [2016-01-08]: Bug fixes
 * 0.9.4 [2015-12-18]: Minor documentation update regarding continuous
   integration setup
 * 0.9.3 [2015-12-17]: Fixed critical bug in plot module that prevented figures

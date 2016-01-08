@@ -1,5 +1,5 @@
 # pcontracts.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,E0102,E0611,E1101,F0401,R0912,R0914,W0212,W0613
 
@@ -447,9 +447,14 @@ def contract(**contract_args):
                             )
                         }
                     ]
+                func_module = (
+                    getattr(func, '__module__')
+                    if hasattr(func, '__module__') else
+                    'unknown'
+                )
                 for exdict in contracts_dicts:
-                    exname = 'contract_{0}_{1}_{2}'.format(
-                        func.__name__,
+                    exname = 'contract:{0}.{1}_{2}'.format(
+                        '{0}.{1}'.format(func_module, func.__name__),
                         param_name,
                         exdict['num']
                     )
@@ -487,8 +492,13 @@ def contract(**contract_args):
             param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]
             # Raise exception
             exdict = _get_contract_exception_dict(eobj.error)
-            exname = 'contract_{0}_{1}_{2}'.format(
-                func.__name__,
+            func_module = (
+                getattr(func, '__module__')
+                if hasattr(func, '__module__') else
+                'unknown'
+            )
+            exname = 'contract:{0}.{1}_{2}'.format(
+                '{0}.{1}'.format(func_module, func.__name__),
                 param_name,
                 exdict['num']
             )

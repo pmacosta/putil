@@ -1,5 +1,5 @@
 # test_pcontracts.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,E1121,W0212,W0232,W0611,W0612,W0613
 
@@ -571,26 +571,26 @@ def test_contract():
         )
     ref = [
         {
-            'name':'contract_func5_flag_0',
+            'name':'contract:tests.test_pcontracts.func5.flag_0',
             'type':RuntimeError, 'msg':'Argument `flag` is not valid'
         },
         {
-            'name':'contract_func5_fudge_0',
+            'name':'contract:tests.test_pcontracts.func5.fudge_0',
             'type':RuntimeError,
             'msg':'Argument `fudge` is not valid'
         },
         {
-            'name':'contract_func5_num_0',
+            'name':'contract:tests.test_pcontracts.func5.num_0',
             'type':RuntimeError,
             'msg':'Illegal number: unity'
         },
         {
-            'name':'contract_func4_fname_0',
+            'name':'contract:tests.test_pcontracts.func4.fname_0',
             'type':OSError,
             'msg':'File name `*[file_name]*` not found'
         },
         {
-            'name':'contract_func4_fname_1',
+            'name':'contract:tests.test_pcontracts.func4.fname_1',
             'type':RuntimeError,
             'msg':'The argument fname is wrong'
         }

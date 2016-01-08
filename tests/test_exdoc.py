@@ -1,6 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 # test_exdoc.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,C0411,E0012,E0611,F0401,R0201,R0903,W0104,W0212,W0612,W0613,W0621
 
