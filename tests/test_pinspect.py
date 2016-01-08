@@ -433,7 +433,7 @@ class TestCallables(object):
         assert repr(xobj) == ref
 
     def test_str_empty(self):
-        """ Test __str__() magic method when object is empty """
+        """ Test __str__ magic method when object is empty """
         obj = putil.pinspect.Callables()
         assert str(obj) == ''
 
@@ -461,11 +461,16 @@ class TestCallables(object):
             '   putil.pit.MyClass\n'
             'putil.pit.MyClass: class (1-2)\n'
             'putil.pit.func1: func (3-4)\n'
-            'putil.test.assert_exception: func (21-90)\n'
-            'putil.test.comp_list_of_dicts: func (91-95)\n'
-            'putil.test.exception_type_str: func (96-113)\n'
-            'putil.test.get_exmsg: func (114-116)'
+            'putil.test.assert_exception: func (22-91)\n'
+            'putil.test.comp_list_of_dicts: func (92-106)\n'
+            'putil.test.exception_type_str: func (107-124)\n'
+            'putil.test.get_exmsg: func (125-127)'
         )
+        if str(obj) != rtext:
+            print('Actual text:')
+            print(obj)
+            print('Reference text:')
+            print(rtext)
         assert str(obj) == rtext
         os.remove(src)
         time.sleep(0.5)
@@ -478,11 +483,16 @@ class TestCallables(object):
             '   putil.pit\n'
             '   putil.test\n'
             'putil.pit.my_func: func (1-2)\n'
-            'putil.test.assert_exception: func (21-90)\n'
-            'putil.test.comp_list_of_dicts: func (91-95)\n'
-            'putil.test.exception_type_str: func (96-113)\n'
-            'putil.test.get_exmsg: func (114-116)'
+            'putil.test.assert_exception: func (22-91)\n'
+            'putil.test.comp_list_of_dicts: func (92-106)\n'
+            'putil.test.exception_type_str: func (107-124)\n'
+            'putil.test.get_exmsg: func (125-127)'
         )
+        if str(obj) != rtext:
+            print('Actual text:')
+            print(obj)
+            print('Reference text:')
+            print(rtext)
         assert str(obj) == rtext
         ## Test malformed JSON file
         obj = putil.pinspect.Callables()

@@ -4,6 +4,7 @@
 # pylint: disable=C0111,E0611,F0401
 
 # Standard library imports
+from __future__ import print_function
 import re
 import sys
 # PyPI imports
@@ -90,7 +91,17 @@ def assert_exception(obj, args, extype, exmsg):
 
 def comp_list_of_dicts(list1, list2):
     """ Compare list of dictionaries """
-    return all([item in list1 for item in list2])
+    for item in list1:
+        if item not in list2:
+            print('List1 item not in list2:')
+            print(item)
+            return False
+    for item in list2:
+        if item not in list1:
+            print('List2 item not in list1:')
+            print(item)
+            return False
+    return True
 
 
 def exception_type_str(exobj):

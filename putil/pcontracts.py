@@ -447,9 +447,14 @@ def contract(**contract_args):
                             )
                         }
                     ]
+                func_module = (
+                    getattr(func, '__module__')
+                    if hasattr(func, '__module__') else
+                    'unknown'
+                )
                 for exdict in contracts_dicts:
-                    exname = 'contract_{0}_{1}_{2}'.format(
-                        func.__name__,
+                    exname = 'contract:{0}.{1}_{2}'.format(
+                        '{0}.{1}'.format(func_module, func.__name__),
                         param_name,
                         exdict['num']
                     )
@@ -487,8 +492,13 @@ def contract(**contract_args):
             param_name = re.search(r"'\w+'", eobj.error).group()[1:-1]
             # Raise exception
             exdict = _get_contract_exception_dict(eobj.error)
-            exname = 'contract_{0}_{1}_{2}'.format(
-                func.__name__,
+            func_module = (
+                getattr(func, '__module__')
+                if hasattr(func, '__module__') else
+                'unknown'
+            )
+            exname = 'contract:{0}.{1}_{2}'.format(
+                '{0}.{1}'.format(func_module, func.__name__),
                 param_name,
                 exdict['num']
             )
