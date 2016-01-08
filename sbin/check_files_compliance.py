@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # check_files_compliance.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0103,C0111,R0912,R0914
 

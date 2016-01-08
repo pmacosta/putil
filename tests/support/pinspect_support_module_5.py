@@ -1,5 +1,5 @@
 # pinspect_support_module_5.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,F0401,W0125,W0212,W0611
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # gen_pkg_manifest.py
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111
 

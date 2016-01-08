@@ -1,6 +1,6 @@
 #!/bin/bash
 # functions.sh
-# Copyright (c) 2013-2015 Pablo Acosta-Serafini
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 
 # Find directory where script is
