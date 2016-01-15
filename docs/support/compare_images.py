@@ -21,7 +21,7 @@ IMGTOL = 1e-3
 ###
 # Functions
 ###
-def compare_images(image_file_name1, image_file_name2):
+def compare_images(image_file_name1, image_file_name2, no_print=True):
     """ Compare two images by calculating Manhattan and Zero norms """
     # Source: http://stackoverflow.com/questions/189943/
     # how-can-i-quantify-difference-between-two-images
@@ -36,6 +36,13 @@ def compare_images(image_file_name1, image_file_name2):
         m_norm = scipy.sum(numpy.abs(diff))
         # Zero norm
         z_norm = scipy.linalg.norm(diff.ravel(), 0)
+    result = bool((m_norm < IMGTOL) and (z_norm < IMGTOL))
+    if not no_print:
+        print(
+            'Image 1: {0}, Image 2: {1} -> ({2}, {3}) [{4}]'.format(
+                image_file_name1, image_file_name2, m_norm, z_norm, result
+            )
+        )
     return (m_norm, z_norm)
 
 

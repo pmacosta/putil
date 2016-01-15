@@ -906,40 +906,12 @@ def test_to_scientific_string():
     assert obj(-9999999999.999, 1, 1, sign_always=True) == '-1.0E+10'
 
 
-@pytest.mark.eng
-def test_pprint_vector_exceptions():
-    """ Test pprint_vector function exceptions """
-    putil.test.assert_exception(
-        putil.eng.pprint_vector,
-        {
-            'vector':[1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
-            'width':5, 'eng':True, 'frac_length':1, 'limit':True
-        },
-        ValueError,
-        'Argument `width` is too small'
-    )
-
-
-def test_round_mantissa():
-    """ Test round_mantissa function behavior """
-    obj = putil.eng.round_mantissa
-    assert obj(None) is None
-    assert obj(1.3333, 2) == 1.33
-    assert obj(1.5555E-12, 2) == 1.56E-12
-    assert obj(3, 2) == 3
-    ref = numpy.array([1.33, 2.67])
-    assert (obj(numpy.array([1.3333, 2.666666]), 2) == ref).all()
-    ref = numpy.array([1.33E-12, 2.67E-12])
-    assert (obj(numpy.array([1.3333E-12, 2.666666E-12]), 2) == ref).all()
-    ref = numpy.array([1, 3])
-    assert (obj(numpy.array([1, 3]), 2) == ref).all()
-
-
 def test_pprint_vector():
     """ Test pprint_vector function behavior """
     obj = putil.eng.pprint_vector
     ref = 'None'
     assert obj(None) == ref
+    # Float and integer items
     ref = '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
     assert obj([1, 2, 3, 4, 5, 6, 7, 8]) == ref
     ref = '[ 1, 2, 3, 4, 5, 6, 7, 8 ]'
@@ -1047,7 +1019,13 @@ def test_pprint_vector():
         ==
         ref
     )
-    ref = '[ 1, 2,\n  3, 4,\n  5, 6,\n  7, 8 ]'
+    ref = (
+        #12345678
+        '[ 1, 2,\n'
+        '  3, 4,\n'
+        '  5, 6,\n'
+        '  7, 8 ]'
+    )
     assert obj([1, 2, 3, 4, 5, 6, 7, 8], width=8) == ref
     ref = '[ 1, 2, 3,\n  4, 5, 6,\n  7, 8 ]'
     assert obj([1, 2, 3, 4, 5, 6, 7, 8], width=10) == ref
@@ -1153,3 +1131,260 @@ def test_pprint_vector():
         ==
         ref
     )
+    ref = (
+        'Independent variable: [ 1.23456789, 2.45678901, 3.45678901,\n'
+        '                                        ...\n'
+        '                        5.67890123, 6.78901234, 7.89012345 ]'
+    )
+    assert (
+        'Independent variable: '+putil.eng.pprint_vector(
+            [
+                1.23456789,
+                2.45678901,
+                3.45678901,
+                4.56789012,
+                5.67890123,
+                6.78901234,
+                7.89012345
+            ],
+            limit=True,
+            width=80-22,
+            indent=22
+        )
+        ==
+        ref
+    )
+    ref = (
+        'Independent var: [ 1.23456789, 2.45678901, 3.45678901, 4.56789012,\n'
+        '                   5.67890123, 6.78901234, 7.89012345 ]'
+    )
+    assert (
+        'Independent var: '+putil.eng.pprint_vector(
+            [
+                1.23456789,
+                2.45678901,
+                3.45678901,
+                4.56789012,
+                5.67890123,
+                6.78901234,
+                7.89012345
+            ],
+            width=49,
+            indent=17
+        )
+        ==
+        ref
+    )
+    # Complex items
+    cf = complex
+    ref = '[ -1+2j, 3+4j, 5+6j, 7+8j, 9-10j, 11+12j, -13+14j, 15678-16j ]'
+    vector = [
+        cf(-1, 2),
+        cf(3, 4),
+        cf(5, 6),
+        cf(7, 8),
+        cf(9, -10),
+        cf(11, 12),
+        cf(-13, 14),
+        cf(15678, -16)
+    ]
+    assert obj(vector) == ref
+    assert obj(vector, indent=20) == ref
+    ref = '[ -1+2j, 3+4j, 5+6j, ..., 11+12j, -13+14j, 15678-16j ]'
+    assert obj(vector, limit=True) == ref
+    ref = '[ -1+2j, 3+4j, 5+6j, ..., 11+12j, -13+14j, 15678-16j ]'
+    assert obj(vector, limit=True, indent=20) == ref
+    ref = (
+        '[   -1.000 +   2.000 j,    3.000 +   4.000 j,    5.000 +   6.000 j,'
+        '    7.000 +   8.000 j,    9.000 -  10.000 j,   11.000 +  12.000 j,'
+        '  -13.000 +  14.000 j,   15.678k-  16.000 j ]'
+    )
+    assert obj(vector, eng=True) == ref
+    assert obj(vector, eng=True, indent=20) == ref
+    ref = (
+        '[   -1.000 +   2.000 j,    3.000 +   4.000 j,    5.000 +   6.000 j,'
+        ' ...,   11.000 +  12.000 j,  -13.000 +  14.000 j,'
+        '   15.678k-  16.000 j ]'
+    )
+    assert obj(vector, limit=True, eng=True) == ref
+    assert obj(vector, limit=True, eng=True, indent=20) == ref
+    ref = (
+        '[   -1.0 +   2.0 j,    3.0 +   4.0 j,    5.0 +   6.0 j,'
+        '    7.0 +   8.0 j,    9.0 -  10.0 j,   11.0 +  12.0 j,'
+        '  -13.0 +  14.0 j,   15.7k-  16.0 j ]'
+    )
+    assert obj(vector, eng=True, frac_length=1) == ref
+    assert obj(vector, eng=True, frac_length=1, indent=20) == ref
+    ref = (
+        '[   -1.0 +   2.0 j,    3.0 +   4.0 j,    5.0 +   6.0 j,'
+        ' ...,   11.0 +  12.0 j,  -13.0 +  14.0 j,   15.7k-  16.0 j ]'
+    )
+    assert obj(vector, limit=True, eng=True, frac_length=1) == ref
+    assert obj(vector, limit=True, eng=True, frac_length=1, indent=20) == ref
+    ref = (
+        '[ -1+2j, 3+4j, 5+6j,\n'
+        '  7+8j, 9-10j, 11+12j,\n'
+        '  -13+14j, 15678-16j ]'
+    )
+    assert obj(vector, width=22) == ref
+    ref = (
+        '[ -1+2j, 3+4j, 5+6j,\n'
+        '  7+8j, 9-10j,\n'
+        '  11+12j, -13+14j,\n'
+        '  15678-16j ]'
+    )
+    assert obj(vector, width=20) == ref
+    ref = (
+        '[   -1 +   2 j,    3 +   4 j,\n'
+        '     5 +   6 j,    7 +   8 j,\n'
+        '     9 -  10 j,   11 +  12 j,\n'
+        '   -13 +  14 j,   16k-  16 j ]'
+    )
+    assert obj(vector, width=29, eng=True, frac_length=0) == ref
+    ref = (
+        '[   -1.0 +   2.0 j,    3.0 +   4.0 j,\n'
+        '     5.0 +   6.0 j,    7.0 +   8.0 j,\n'
+        '     9.0 -  10.0 j,   11.0 +  12.0 j,\n'
+        '   -13.0 +  14.0 j,   15.7k-  16.0 j ]'
+    )
+    assert obj(vector, width=37, eng=True, frac_length=1) == ref
+    ref = (
+        '[   -1 +   2 j,\n'
+        '     3 +   4 j,\n'
+        '     5 +   6 j,\n'
+        '     7 +   8 j,\n'
+        '     9 -  10 j,\n'
+        '    11 +  12 j,\n'
+        '   -13 +  14 j,\n'
+        '    16k-  16 j ]'
+    )
+    assert obj(vector, width=16, eng=True, frac_length=0) == ref
+    ref = (
+        '[   -1 +   2 j,\n'
+        '     3 +   4 j,\n'
+        '     5 +   6 j,\n'
+        '       ...\n'
+        '    11 +  12 j,\n'
+        '   -13 +  14 j,\n'
+        '    16k-  16 j ]'
+    )
+    assert obj(vector, width=16, eng=True, frac_length=0, limit=True) == ref
+    ref = (
+        '[   -1.0 +   2.0 j,    3.0 +   4.0 j,    5.0 +   6.0 j,\n'
+        '                           ...\n'
+        '    11.0 +  12.0 j,  -13.0 +  14.0 j,   15.7k-  16.0 j ]'
+    )
+    assert obj(vector, width=56, eng=True, frac_length=1, limit=True) == ref
+    ref = (
+        'Vector: [   -1.0 +   2.0 j,    3.0 +   4.0 j,    5.0 +   6.0 j,\n'
+        '                                   ...\n'
+        '            11.0 +  12.0 j,  -13.0 +  14.0 j,   15.7k-  16.0 j ]'
+    )
+    header = 'Vector: '
+    assert (
+        header+obj(
+            vector,
+            width=64,
+            eng=True,
+            frac_length=1,
+            limit=True,
+            indent=len(header)
+        )
+        ==
+        ref
+    )
+    ref = (
+        'Vector: [ -1+2j, 3+4j, 5+6j,\n'
+        '          7+8j, 9-10j,\n'
+        '          11+12j, -13+14j,\n'
+        '          15678-16j ]'
+    )
+    assert (
+        header+obj(
+            vector,
+            width=20,
+            indent=len(header)
+        )
+        ==
+        ref
+    )
+    ref = (
+        'Vector: [ -1+2j, 3+4j, 5+6j,\n'
+        '                 ...\n'
+        '          11+12j, -13+14j, 15678-16j ]'
+    )
+    assert (
+        header+obj(
+            vector,
+            width=30,
+            indent=len(header),
+            limit=True
+        )
+        ==
+        ref
+    )
+    ref = (
+        'Vector: [ -1+2j,\n'
+        '          3+4j,\n'
+        '          5+6j,\n'
+        '           ...\n'
+        '          11+12j,\n'
+        '          -13+14j,\n'
+        '          15678-16j ]'
+    )
+    assert (
+        header+obj(
+            vector,
+            width=20,
+            indent=len(header),
+            limit=True
+        )
+        ==
+        ref
+    )
+
+
+@pytest.mark.eng
+def test_pprint_vector_exceptions():
+    """ Test pprint_vector function exceptions """
+    putil.test.assert_exception(
+        putil.eng.pprint_vector,
+        {
+            'vector':[1e-3, 20e-6, 300e+6, 4e-12, 5.25e3, -6e-9, 700, 8, 9],
+            'width':5, 'eng':True, 'frac_length':1, 'limit':True
+        },
+        ValueError,
+        'Argument `width` is too small'
+    )
+    cf = complex
+    vector = [
+        cf(-1, 2),
+        cf(3, 4),
+        cf(5, 6),
+        cf(7, 8),
+        cf(9, -10),
+        cf(11, 12),
+        cf(-13, 14),
+        cf(15678, -16)
+    ]
+    putil.test.assert_exception(
+        putil.eng.pprint_vector,
+        {'vector':vector, 'width':8, 'limit':True},
+        ValueError,
+        'Argument `width` is too small'
+    )
+
+
+def test_round_mantissa():
+    """ Test round_mantissa function behavior """
+    obj = putil.eng.round_mantissa
+    assert obj(None) is None
+    assert obj(1.3333, 2) == 1.33
+    assert obj(1.5555E-12, 2) == 1.56E-12
+    assert obj(3, 2) == 3
+    ref = numpy.array([1.33, 2.67])
+    assert (obj(numpy.array([1.3333, 2.666666]), 2) == ref).all()
+    ref = numpy.array([1.33E-12, 2.67E-12])
+    assert (obj(numpy.array([1.3333E-12, 2.666666E-12]), 2) == ref).all()
+    ref = numpy.array([1, 3])
+    assert (obj(numpy.array([1, 3]), 2) == ref).all()

@@ -19,7 +19,7 @@ if sys.hexversion < 0x03000000:
 # Putil imports
 import putil.misc
 import putil.plot
-from .fixtures import compare_images, export_image, IMGTOL
+from .fixtures import compare_image_set
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_figure_images
 
@@ -537,29 +537,4 @@ class TestFigure(object):
         images_dict_list = unittest_figure_images(
             mode='test', test_dir=str(tmpdir)
         )
-        global_result = True
-        for images_dict in images_dict_list:
-            ref_file_name_list = images_dict['ref_fname']
-            test_file_name = images_dict['test_fname']
-            print('Reference images:')
-            for ref_file_name in ref_file_name_list:
-                print('   file://{0}'.format(
-                        os.path.realpath(ref_file_name)
-                    )
-                )
-            print('Actual image:')
-            print('   file://{0}'.format(
-                    os.path.realpath(test_file_name)
-                )
-            )
-            for ref_file_name in ref_file_name_list:
-                metrics = compare_images(ref_file_name, test_file_name)
-                result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-                if result:
-                    break
-            else:
-                print('Images do not match')
-                global_result = False
-                export_image(test_file_name)
-            print('')
-        assert global_result
+        assert compare_image_set(tmpdir, images_dict_list, 'figure')

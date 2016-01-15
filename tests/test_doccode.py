@@ -284,7 +284,7 @@ def test_pcontracts_doccode():
 def test_plot_doccode(capsys):
     """ Test used in plot module """
     # pylint: disable=E1103,R0204
-    from tests.plot.fixtures import compare_images, IMGTOL
+    from tests.plot.fixtures import compare_images
     script_dir = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         'docs',
@@ -300,22 +300,19 @@ def test_plot_doccode(capsys):
     stdout, stderr = proc.communicate()
     test_fname = output_file
     ref_names = [
-        'plot_example_1_{0}.png'.format(item) for item in range(1, 8)
+        'plot_example_1_{0}.png'.format(item) for item in range(1, 9)
     ]
     ref_fnames = [os.path.join(script_dir, item) for item in ref_names]
-    result = False
+    result = []
     for ref_fname in ref_fnames:
         try:
-            metrics = compare_images(ref_fname, test_fname)
+            result.append(compare_images(ref_fname, test_fname))
         except IOError:
             print('Error comparing images')
             print('STDOUT: {0}'.format(stdout))
             print('STDERR: {0}'.format(stderr))
             raise
-        result = (metrics[0] < IMGTOL) and (metrics[1] < IMGTOL)
-        if result:
-            break
-    else:
+    if not any(result):
         print('Images do not match')
         print('STDOUT: {0}'.format(stdout))
         print('STDERR: {0}'.format(stderr))

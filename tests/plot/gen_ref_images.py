@@ -23,7 +23,7 @@ import putil.plot
 # Relative figure size
 SCALE = 5
 # Number of reference image sets
-SETS = 7
+SETS = 8
 
 
 ###
