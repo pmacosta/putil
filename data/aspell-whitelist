@@ -435,7 +435,9 @@ ihas
 iheader
 iline
 ilines
+imag
 img
+imgtol
 IMGTOL
 ImportError
 importlib
@@ -627,6 +629,7 @@ ncol
 ndarray
 ndata
 ndict
+nimages
 nindent
 ninterp
 nitem

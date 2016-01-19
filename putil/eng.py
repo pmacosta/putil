@@ -726,7 +726,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
         width=width-2,
     )
     wrapped_text = wobj.wrap(uret_left.lstrip())
-    # Construct candidate wrappped and indented list of vector elements
+    # Construct candidate wrapped and indented list of vector elements
     rlist = [first_line]+[
         (' '*(indent+2))+item.rstrip()
         for item in wrapped_text

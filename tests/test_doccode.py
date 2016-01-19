@@ -6,6 +6,7 @@
 # Standard library imports
 from __future__ import print_function
 import os
+import shutil
 import subprocess
 import sys
 # PyPI imports
@@ -22,6 +23,41 @@ matplotlib.rcParams['backend'] = 'Agg'
 ###
 # Functions
 ###
+def export_image(fname, method=True):
+    tdir = os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+    artifact_dir = os.path.join(tdir, 'artifacts')
+    if not os.path.exists(artifact_dir):
+        os.makedirs(artifact_dir)
+    if method:
+        src = fname
+        dst = os.path.join(artifact_dir, os.path.basename(fname))
+        shutil.copyfile(src, dst)
+    else:
+        if os.environ.get('APPVEYOR', None):
+            proc = subprocess.Popen(
+                ['appveyor', 'PushArtifact', os.path.realpath(fname)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            proc.communicate()
+        elif os.environ.get('TRAVIS', None):
+            # If only a few binary files need to be exported a hex dump works,
+            # otherwise the log can grow past 4MB and the process is terminated
+            # by Travis
+            proc = subprocess.Popen(
+                [
+                    os.path.join(tdir, 'sbin', 'png-to-console.sh'),
+                    os.path.realpath(fname)
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            stdout, _ = proc.communicate()
+            print(stdout)
+
+
 def test_exdoc_doccode():
     """ Test code used in exdoc module """
     def remove_header(stdout):
@@ -299,8 +335,9 @@ def test_plot_doccode(capsys):
     )
     stdout, stderr = proc.communicate()
     test_fname = output_file
+    nimages = 10
     ref_names = [
-        'plot_example_1_{0}.png'.format(item) for item in range(1, 9)
+        'plot_example_1_{0}.png'.format(item) for item in range(1, nimages+1)
     ]
     ref_fnames = [os.path.join(script_dir, item) for item in ref_names]
     result = []
@@ -323,25 +360,7 @@ def test_plot_doccode(capsys):
                 )
             )
         print('Actual image: file://{0}'.format(os.path.realpath(test_fname)))
-        if os.environ.get('APPVEYOR', None):
-            proc = subprocess.Popen(
-                ['appveyor', 'PushArtifact', os.path.realpath(test_fname)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
-            )
-            proc.communicate()
-        elif os.environ.get('TRAVIS', None):
-            tdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            proc = subprocess.Popen(
-                [
-                    os.path.join(tdir, 'sbin', 'png-to-console.sh'),
-                    os.path.realpath(test_fname)
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
-            )
-            stdout, _ = proc.communicate()
-            print(stdout)
+        export_image(test_fname)
     assert result
     with putil.misc.ignored(OSError):
         os.remove(test_fname)

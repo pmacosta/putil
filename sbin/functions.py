@@ -175,6 +175,34 @@ def load_requirements(pkg_dir, pyver, cat='source'):
     return ret
 
 
+def pcolor(text, color, indent=0):
+    """
+    Returns a string that once printed is colorized (copied from putil.misc)
+    """
+    esc_dict = {
+        'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35,
+        'cyan':36, 'white':37, 'none':-1
+    }
+    if not isinstance(text, str):
+        raise RuntimeError('Argument `text` is not valid')
+    if not isinstance(color, str):
+        raise RuntimeError('Argument `color` is not valid')
+    if not isinstance(indent, int):
+        raise RuntimeError('Argument `indent` is not valid')
+    color = color.lower()
+    if color not in esc_dict:
+        raise ValueError('Unknown color {color}'.format(color=color))
+    if esc_dict[color] != -1:
+        return (
+            '\033[{color_code}m{indent}{text}\033[0m'.format(
+                color_code=esc_dict[color],
+                indent=' '*indent,
+                text=text
+            )
+        )
+    return '{indent}{text}'.format(indent=' '*indent, text=text)
+
+
 def python_version(hver):
     """ Return Python version """
     return '{major}.{minor}'.format(major=int(hver[:-2]), minor=int(hver[-2:]))
