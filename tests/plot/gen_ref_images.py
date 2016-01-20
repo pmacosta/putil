@@ -23,7 +23,7 @@ import putil.plot
 # Relative figure size
 SCALE = 5
 # Number of reference image sets
-SETS = 7
+SETS = 12
 
 
 ###
@@ -35,11 +35,16 @@ def def_file_names(mode, ref_dir, test_dir, img_name, olist):
     if mode == 'ref':
         ref_fname = os.path.realpath(os.path.join(ref_dir, img_name))
     else:
-        ref_fname = [
+        # Support incomplete sets of reference images to reduce size
+        # of source tar ball
+        temp_ref_fname = [
             os.path.realpath(
                 os.path.join(ref_dir.format(num), img_name)
             )
             for num in range(1, SETS+1)
+        ]
+        ref_fname = [
+            item for item in temp_ref_fname if os.path.exists(item)
         ]
     olist.append(
         {

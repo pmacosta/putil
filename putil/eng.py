@@ -665,46 +665,82 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     # pylint: disable=R0912,R0913,R0914
     def _str(*args):
         """
-        Converts numbers to string, optionally represented
-        in engineering notation
+        Converts numbers (integers, float or complex) to string, optionally
+        represented in engineering notation
         """
         ret = [
-            str(element)
-            if not eng else
-            putil.eng.peng(element, frac_length, True)
+            (
+                str(element)
+                if not eng else
+                putil.eng.peng(element, frac_length, True)
+            )
+            if not isinstance(element, complex) else
+            (
+                str(element)[1:-1]
+                if not eng else
+                '{real}{sign}{imag}j'.format(
+                    real=putil.eng.peng(element.real, frac_length, True),
+                    imag=putil.eng.peng(abs(element.imag), frac_length, True),
+                    sign='+' if element.imag >= 0 else '-'
+                )
+            )
             for element in args
         ]
         return ret[0] if len(ret) == 1 else ret
     if vector is None:
         return 'None'
     if (not limit) or (limit and (len(vector) < 7)):
-        uret = '[ {0} ]'.format(', '.join(_str(*vector)))
+        items = _str(*vector)
+        uret = '[ {0} ]'.format(', '.join(items))
     else:
+        items = _str(*(vector[:3]+vector[-3:]))
         uret = '[ {0}, ..., {1} ]'.format(
-            ', '.join(_str(*vector[:3])), ', '.join(_str(*vector[-3:])),
+            ', '.join(items[:3]), ', '.join(items[-3:]),
         )
     if (width is None) or (len(uret) < width):
         return uret
+    # -4 comes from the fact that an opening '[ ' and a closing ' ]'
+    # are added to the multi-line vector string
+    if any([len(item) > width-4 for item in items]):
+        raise ValueError('Argument `width` is too small')
+    # Text needs to be wrapped in multiple lines
     # Figure out how long the first line needs to be
     wobj = textwrap.TextWrapper(
         initial_indent='[ ',
         width=width,
-        subsequent_indent=' '*(indent+2)
     )
     # uret[2:] -> do not include initial '[ ' as this is specified as
     # the initial indent to the text wrapper
     rlist = wobj.wrap(uret[2:])
     first_line = rlist[0]
-    elements_per_row = first_line.count(',')
-    if elements_per_row == 0:
-        raise ValueError('Argument `width` is too small')
+    first_line_elements = first_line.count(',')
+    #if first_line_elements == 0:
+    #    raise ValueError('Argument `width` is too small')
+    # Reconstruct string representation of vector excluding first line
+    # Remove ... from text to be wrapped because it is placed in a single
+    # line centered with the content
+    uret_left = (
+        ','.join(uret.split(',')[first_line_elements:])
+    ).replace('...,', '')
+    wobj = textwrap.TextWrapper(
+        width=width-2,
+    )
+    wrapped_text = wobj.wrap(uret_left.lstrip())
+    # Construct candidate wrapped and indented list of vector elements
+    rlist = [first_line]+[
+        (' '*(indent+2))+item.rstrip()
+        for item in wrapped_text
+    ]
+    last_line = rlist[-1]
+    last_line_elements = last_line.count(',')+1
     # "Manually" format limit output so that it is either 3 lines, first and
     # last line with 3 elements and the middle with '...' or 7 lines, each with
     # 1 element and the middle with '...'
     # If numbers are not to be aligned at commas (variable width) then use the
     # existing results of the wrap() function
     if limit:
-        if elements_per_row < 3:
+        if ((first_line_elements < 3) or
+           ((first_line_elements == 3) and (last_line_elements < 3))):
             rlist = [
                 '[ {0},'.format(_str(vector[0])),
                 _str(vector[1]),
@@ -714,7 +750,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
                 _str(vector[-2]),
                 '{0} ]'.format(_str(vector[-1]))
             ]
-            elements_per_row = 1
+            first_line_elements = 1
         else:
             rlist = [
                 '[ {0},'.format(', '.join(_str(*vector[:3]))),
@@ -722,8 +758,35 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
                 '{0} ]'.format(', '.join(_str(*vector[-3:]))),
             ]
         first_line = rlist[0]
+    first_comma_index = first_line.find(',')
+    actual_width = len(first_line)-2
     if not eng:
-        return '\n'.join(rlist)
+        if not limit:
+            return '\n'.join(rlist)
+        else:
+            num_elements = len(rlist)
+            return '\n'.join(
+                [
+                    '{spaces}{line}{comma}'.format(
+                        spaces=(' '*(indent+2)) if indent else '',
+                        line=(
+                            line.center(actual_width).rstrip()
+                            if line.strip() == '...' else
+                            line
+                        ),
+                        comma=(
+                            ','
+                            if ((num < num_elements-1) and
+                               (not line.endswith(',')) and
+                               (line.strip() != '...')) else
+                            ''
+                        )
+                    )
+                    if num > 0 else
+                    line
+                    for num, line in enumerate(rlist)
+                ]
+            )
     # Align elements across multiple lines
     if limit:
         remainder_list = [line.lstrip() for line in rlist[1:]]
@@ -731,11 +794,9 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
         remainder_list = _split_every(
             text=uret[len(first_line):],
             sep=',',
-            count=elements_per_row,
+            count=first_line_elements,
             lstrip=True
         )
-    first_comma_index = first_line.find(',')
-    actual_width = len(first_line)-2
     new_wrapped_lines_list = [first_line]
     for line in remainder_list[:-1]:
         new_wrapped_lines_list.append(

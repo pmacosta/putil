@@ -25,7 +25,7 @@ IMGTOL = 1e-3
 ###
 # Fixtures
 ###
-def compare_images(image_file_name1, image_file_name2):
+def compare_images(image_file_name1, image_file_name2, no_print=True):
     """ Compare two images by calculating Manhattan and Zero norms """
     # Source: http://stackoverflow.com/questions/189943/
     # how-can-i-quantify-difference-between-two-images
@@ -40,7 +40,52 @@ def compare_images(image_file_name1, image_file_name2):
         m_norm = scipy.sum(numpy.abs(diff))
         # Zero norm
         z_norm = scipy.linalg.norm(diff.ravel(), 0)
-    return (m_norm, z_norm)
+    result = bool((m_norm < IMGTOL) and (z_norm < IMGTOL))
+    if not no_print:
+        print(
+            'Image 1: {0}, Image 2: {1} -> ({2}, {3}) [{4}]'.format(
+                image_file_name1, image_file_name2, m_norm, z_norm, result
+            )
+        )
+    return result
+
+
+def compare_image_set(tmpdir, images_dict_list, section):
+    """ Compare image sets """
+    subdir = 'test_images_{0}'.format(section)
+    tmpdir.mkdir(subdir)
+    global_result = True
+    for images_dict in images_dict_list:
+        ref_file_name_list = images_dict['ref_fname']
+        test_file_name = images_dict['test_fname']
+        print('Reference images:')
+        for ref_file_name in ref_file_name_list:
+            print('   file://{0}'.format(
+                    os.path.realpath(ref_file_name)
+                )
+            )
+        print('Actual image:')
+        print('   file://{0}'.format(
+                os.path.realpath(test_file_name)
+            )
+        )
+        partial_result = []
+        for ref_file_name in ref_file_name_list:
+            partial_result.append(
+                compare_images(ref_file_name, test_file_name)
+            )
+        result = any(partial_result)
+        global_result = global_result and partial_result
+        if not result:
+            print('Images do not match')
+            export_image(test_file_name)
+        print('')
+    if global_result:
+        try:
+            tmpdir.remove(subdir)
+        except OSError: # pragma: no cover
+            pass
+    return global_result
 
 
 @pytest.fixture

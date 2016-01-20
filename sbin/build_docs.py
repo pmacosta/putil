@@ -32,7 +32,7 @@ PLOT_SUBMODULES = [
 PCSV_SUBMODULES = [
     'concatenate', 'csv_file', 'dsort', 'merge', 'replace', 'write'
 ]
-VALID_MODULES = ['eng', 'pcsv', 'plot', 'tree']
+VALID_MODULES = ['pcsv', 'plot', 'tree']
 
 
 ###
