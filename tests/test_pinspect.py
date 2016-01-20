@@ -801,7 +801,7 @@ class TestCallables(object):
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_save_callables: meth (281-302)'
         )
-        ref.append('tests.test_exdoc.TestExDoc: class (303-894)')
+        ref.append('tests.test_exdoc.TestExDoc: class (303-918)')
         ref.append('tests.test_exdoc.TestExDoc.test_init: meth (305-354)')
         ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (355-368)')
         ref.append(
@@ -830,7 +830,7 @@ class TestCallables(object):
             'meth (497-524)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: meth (525-894)'
+            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: meth (525-918)'
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
