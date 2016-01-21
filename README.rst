@@ -87,11 +87,8 @@ This library provides a collection of utility modules to supplement the
 Python standard library. The modules provided are:
 
 * **eng**: engineering-related functions including a) handling numbers
-  represented in engineering notation, obtaining their constituent
-  components and converting to and from regular floats; b) pretty printing
-  Numpy vectors; and c) formatting numbers represented in scientific
-  notation with a greater degree of control and options than standard
-  Python string formatting
+  represented in engineering or scientific notation, b) pretty printing
+  Numpy vectors; and c) a waveform class
 
 * **exdoc**: automatically generate exceptions documentation marked up in
   `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ with help from

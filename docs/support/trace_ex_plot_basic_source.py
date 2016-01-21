@@ -18,8 +18,14 @@ def trace_module(no_print=True):
         'indep_var',
         'dep_var'
     )
+    module_exclude_list = ['putil.eng.functions']
     return docs.support.trace_support.run_trace(
-        mname, fname, module_prefix, callable_names, no_print, ['putil.eng']
+        mname,
+        fname,
+        module_prefix,
+        callable_names,
+        no_print,
+        module_exclude_list
     )
 
 

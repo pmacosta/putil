@@ -1,4 +1,4 @@
-# trace_ex_eng.py
+# trace_ex_eng_functions.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,W0212
@@ -7,11 +7,12 @@ import docs.support.trace_support
 
 
 def trace_module(no_print=True):
-    """ Trace eng module exceptions """
-    mname = 'eng'
+    """ Trace eng functions module exceptions """
+    mname = 'functions'
     fname = 'eng'
-    module_prefix = 'putil.{0}.'.format(mname)
+    module_prefix = 'putil.eng.{0}.'.format(mname)
     callable_names = (
+        'no_exp',
         'peng',
         'peng_float',
         'peng_frac',

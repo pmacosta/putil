@@ -7,7 +7,9 @@
 eng module
 ##########
 
-This module provides engineering-related functions including:
+This module provides engineering-related classes and functions.
+
+The functions include:
 
 * Handling numbers represented in engineering notation, obtaining
   their constituent components and converting to and from regular
@@ -70,6 +72,41 @@ This module provides engineering-related functions including:
 		... )
 		'+1.0E+02'
 
+The classes include:
+
+* A waveform class that is a first-class object. For example:
+
+	.. doctest::
+
+		>>> import copy, numpy, putil.eng
+		>>> obj_a=putil.eng.Waveform(
+		...     indep_vector=numpy.array([1, 2, 3]),
+                ...     dep_vector=numpy.array([10, 20, 30]),
+                ...     indep_name='obj_a'
+		... )
+                >>> obj_b = obj_a*2
+                >>> print(obj_b)
+                Waveform: obj_a*2
+                Independent variable: [ 1, 2, 3 ]
+                Dependent variable: [ 20, 40, 60 ]
+                Independent variable scale: LINEAR
+                Dependent variable scale: LINEAR
+                Independent variable units: (None)
+                Dependent variable units: (None)
+                Interpolating function: CONTINUOUS
+                >>> obj_c = copy.copy(obj_b)
+                >>> obj_a == obj_b
+                False
+                >>> obj_b == obj_c
+                True
+
+****************
+Global variables
+****************
+
+.. autodata:: putil.eng.FP_ATOL
+.. autodata:: putil.eng.FP_RTOL
+
 ************
 Named tuples
 ************
@@ -94,3 +131,49 @@ Functions
 .. autofunction:: putil.eng.round_mantissa
 .. autofunction:: putil.eng.to_scientific_string
 .. autofunction:: putil.eng.to_scientific_tuple
+
+
+*******
+Classes
+*******
+
+ .. autoclass:: putil.eng.Waveform
+	:members: __add__,
+                  __bool__,
+                  __copy__,
+                  __div__,
+                  __eq__,
+                  __floordiv__,
+                  __ge__,
+                  __gt__,
+                  __le__,
+                  __len__,
+                  __lshift__,
+                  __lt__,
+                  __mod__,
+                  __mul__,
+                  __ne__,
+                  __nonzero__,
+                  __pow__,
+                  __sub__,
+                  __radd__,
+                  __repr__,
+                  __rfloordiv__,
+                  __rlshift__,
+                  __rmod__,
+                  __rmul__,
+                  __rpow__,
+                  __rrshift__,
+                  __rshift__,
+                  __rsub__,
+                  __str__,
+                  __truediv__,
+                  vectors,
+                  dep_scale,
+                  dep_units,
+                  dep_vector,
+                  indep_scale,
+                  indep_units,
+                  indep_vector,
+                  interp
+	:show-inheritance:

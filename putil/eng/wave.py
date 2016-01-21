@@ -1,0 +1,1405 @@
+﻿# wave.py
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,C0302,E0611,W0105
+
+# Standard library imports
+import copy
+# PyPI imports
+import numpy
+import scipy.interpolate
+# Putil imports
+import putil.pcontracts
+from .functions import pprint_vector
+from .constants import FP_ATOL, FP_RTOL
+
+###
+# Exception tracing initialization code
+###
+"""
+[[[cog
+import os, sys
+if sys.hexversion < 0x03000000:
+    import __builtin__
+else:
+    import builtins as __builtin__
+sys.path.append(os.environ['TRACER_DIR'])
+import trace_ex_eng_wave
+exobj_eng = trace_ex_eng_wave.trace_module(no_print=True)
+cname = (
+    'putil.eng.wave.Waveform.__div__'
+    if sys.hexversion < 0x03000000 else
+    'putil.eng.wave.Waveform.__truediv__'
+)
+]]]
+[[[end]]]
+"""
+
+
+###
+# Functions
+###
+def _homogenize_waves(wave_a, wave_b):
+    """
+    Generate the combined independent variable vector from
+    two waveforms and the (possibly interpolated) dependent
+    variable vectors of these two waveforms
+    """
+    indep_vector = _get_indep_vector(wave_a, wave_b)
+    dep_vector_a = _interp_dep_vector(wave_a, indep_vector)
+    dep_vector_b = _interp_dep_vector(wave_b, indep_vector)
+    return (indep_vector, dep_vector_a, dep_vector_b)
+
+
+def _interp_dep_vector(wave, indep_vector):
+    """ Create new dependent variable vector """
+    dep_vector_is_int = wave.dep_vector.dtype.name.startswith('int')
+    dep_vector_is_complex = wave.dep_vector.dtype.name.startswith('complex')
+    if (wave.interp, wave.indep_scale) == ('CONTINUOUS', 'LOG'):
+        wave_interp_func = scipy.interpolate.interp1d(
+            numpy.log10(wave.indep_vector), wave.dep_vector
+        )
+        ret = wave_interp_func(numpy.log10(indep_vector))
+    elif (wave.interp, wave.indep_scale) == ('CONTINUOUS', 'LINEAR'):
+        dep_vector = (
+            wave.dep_vector.astype(numpy.float64)
+            if not dep_vector_is_complex else
+            wave.dep_vector
+        )
+        wave_interp_func = scipy.interpolate.interp1d(
+            wave.indep_vector, dep_vector
+        )
+        ret = wave_interp_func(indep_vector)
+    else:   # wave.interp == 'STAIRCASE'
+        wave_interp_func = scipy.interpolate.interp1d(
+            wave.indep_vector, wave.dep_vector, kind='zero'
+        )
+        # Interpolator does not return the right value for the last
+        # data point, it gives the previous "stair" value
+        ret = wave_interp_func(indep_vector)
+        eq_comp = numpy.all(
+            numpy.isclose(
+                wave.indep_vector[-1],
+                indep_vector[-1],
+                FP_RTOL,
+                FP_ATOL
+            )
+        )
+        if eq_comp:
+            ret[-1] = wave.dep_vector[-1]
+    round_ret = numpy.round(ret, 0)
+    return (
+        round_ret.astype('int')
+        if (
+                dep_vector_is_int and
+                numpy.all(numpy.isclose(round_ret, ret, FP_RTOL, FP_ATOL))
+        ) else
+        ret
+    )
+
+
+def _get_indep_vector(wave_a, wave_b):
+    """ Create new independent variable vector """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='non_overlapping_ranges',
+        extype=RuntimeError,
+        exmsg='Independent variable ranges do not overlap'
+    )
+    min_bound = max(
+        numpy.min(wave_a.indep_vector),
+        numpy.min(wave_b.indep_vector)
+    )
+    max_bound = min(
+        numpy.max(wave_a.indep_vector),
+        numpy.max(wave_b.indep_vector)
+    )
+    exh.raise_exception_if(
+        exname='non_overlapping_ranges',
+        condition=bool(min_bound > max_bound)
+    )
+    raw_range = numpy.unique(
+        numpy.concatenate(
+            (wave_a.indep_vector, wave_b.indep_vector)
+        )
+    )
+    return raw_range[
+        numpy.logical_and(
+            min_bound <= raw_range,
+            raw_range <= max_bound
+        )
+    ]
+
+
+def _verify_compatibility(wave_a, wave_b):
+    """
+    Verify that two waveforms can be combined with various
+    mathematical functions
+    """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='incompatible_waveforms',
+        extype=RuntimeError,
+        exmsg='Waveforms are not compatible'
+    )
+    ctuple = (
+        bool(wave_a.indep_scale != wave_b.indep_scale),
+        bool(wave_a.dep_scale != wave_b.dep_scale),
+        bool(wave_a.indep_units != wave_b.indep_units),
+        bool(wave_a.dep_units != wave_b.dep_units),
+        bool(wave_a.interp != wave_b.interp)
+    )
+    exh.raise_exception_if(
+        exname='incompatible_waveforms',
+        condition=any(ctuple)
+    )
+
+
+###
+# Class
+###
+class Waveform(object):
+    r"""
+    Creates a waveform; an object that bind together an independent variable
+    vector with a corresponding dependent variable vector and other relevant
+    meta data (independent and dependent variable scale, units and type of
+    function to be used for interpolating between given independent variable
+    data points).
+
+    All standard mathematical operators (:code:`+`, :code:`-`, :code:`*`,
+    :code:`//`, :code:`%`, :code:`**`, :code:`<<`, :code:`>>`, :code:`&`,
+    :code:`^`, :code:`\|`) are supported between waveform objects and between
+    a number (integer, float or complex) and a waveform object. An integer
+    dependent variable vector preserves its type through any operation unless
+    an interpolated dependent variable item results in a floating point value.
+
+    :param indep_vector: Independent variable vector
+    :type  indep_vector: :ref:`IncreasingRealNumpyVector`
+
+    :param dep_vector: Dependent variable vector
+    :type  dep_vector: :ref:`NumberNumpyVector`
+
+    :param  indep_name: Independent variable name
+    :type   indep_name: :ref:`NonNullString`
+
+    :param  indep_scale: Independent variable scale
+    :type   indep_scale: :ref:`WaveScaleOption`
+
+    :param  dep_scale: Dependent variable scale
+    :type   dep_scale: :ref:`WaveScaleOption`
+
+    :param  indep_units: Independent variable units
+    :type   indep_units: string
+
+    :param  dep_units: Dependent variable units
+    :type   dep_units: string
+
+    :param  interp: Interpolation function used between dependent variable
+                    vector elements
+    :type   interp: :ref:`WaveInterpOption`
+
+    :rtype: :py:class:`putil.eng.Waveform()`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.__init__
+
+    :raises:
+     * RuntimeError (Argument \`dep_scale\` is not valid)
+
+     * RuntimeError (Argument \`dep_units\` is not valid)
+
+     * RuntimeError (Argument \`dep_vector\` is not valid)
+
+     * RuntimeError (Argument \`indep_name\` is not valid)
+
+     * RuntimeError (Argument \`indep_scale\` is not valid)
+
+     * RuntimeError (Argument \`indep_units\` is not valid)
+
+     * RuntimeError (Argument \`indep_vector\` is not valid)
+
+     * RuntimeError (Argument \`interp\` is not valid)
+
+     * ValueError (Independent and dependent vectors must have the same
+       number of elements)
+
+    .. [[[end]]]
+
+    .. note:: Waveforms are "homogenized" before they are used in mathematical
+              operations, comparisons, or any other manipulation involving two
+              waveforms. First a new independent variable vector is created,
+              which is the ordered set resulting from the intersection of the
+              independent variable vectors of the two waveforms. An exception
+              is raised if there is no overlap (null intersection) between the
+              two independent variable vectors. Then the dependent variable
+              vector of each waveform is regenerated for the new independent
+              variable vector, computing values for elements that are not in
+              the waveform's independent variable vector using the specified
+              waveform's interpolation function.
+
+              The two waveforms must have identical independent variable scale,
+              dependent variable scale, independent variable units, dependent
+              variable units and interpolation function.
+    """
+    # pylint: disable=R0902,R0903,R0913
+    # pylint: disable=W0613
+    def __init__(self, indep_vector, dep_vector, indep_name,
+        indep_scale='LINEAR', dep_scale='LINEAR', indep_units='', dep_units='',
+        interp='CONTINUOUS'):
+        self._exh = putil.exh.get_or_create_exh_obj()
+        self._indep_vector = None
+        self._dep_vector = None
+        self._indep_name = None
+        self._indep_scale = None
+        self._dep_scale = None
+        self._indep_units = None
+        self._dep_units = None
+        self._interp = None
+        self._set_indep_vector(indep_vector, check=False)
+        self._set_dep_vector(dep_vector, check=True)
+        self._set_indep_name(indep_name)
+        self._set_indep_scale(indep_scale)
+        self._set_dep_scale(dep_scale)
+        self._set_indep_units(indep_units)
+        self._set_dep_units(dep_units)
+        self._set_interp(interp)
+
+    def __add__(self, other):
+        """
+        Adds two waveforms or a waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a+obj_b)
+            Waveform: obj_a+obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 12, 7, 10 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__add__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '+')
+
+    def __bool__(self): # pragma: no cover
+        """
+        Returns :code:`False` if the waveform dependent vector is zero for all
+        its elements, :code:`True` otherwise. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([4, 5, 6])
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj_a')
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: True
+            >>> dep_vector = numpy.zeros(3)
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj_a')
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: False
+        """
+        return not bool(
+            numpy.all(
+                numpy.isclose(
+                    self._dep_vector,
+                    numpy.zeros(len(self._dep_vector)),
+                    FP_RTOL,
+                    FP_ATOL
+                )
+            )
+        )
+
+    def __copy__(self):
+        """
+        Copies object. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([4, 5, 6])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector, 'obj_a')
+            >>> obj_b = copy.copy(obj_a)
+            >>> obj_a == obj_b
+            True
+            >>> obj_a is obj_b
+            False
+        """
+        return Waveform(
+            indep_vector=numpy.copy(self.indep_vector),
+            dep_vector=numpy.copy(self.dep_vector),
+            indep_name=copy.copy(self.indep_name),
+            indep_scale=self.indep_scale,
+            dep_scale=self.dep_scale,
+            indep_units=self.indep_units,
+            dep_units=self.dep_units,
+            interp=self.interp
+    )
+
+    def __div__(self, other):  # pragma: no cover
+        """
+        Divides two waveforms or a waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8.0, 2.0, 4.0])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a/obj_b)
+            Waveform: obj_a/obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 0.5, 2.5, 1.5 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_doc(cname, no_comment=True)) ]]]
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '/')
+
+    def __eq__(self, other):
+        """
+        Tests waveform equality. Two waveforms are equal if their independent
+        variable vectors are the same with :py:data:`putil.eng.FP_ATOL`
+        absolute tolerance and :py:data:`putil.eng.FP_RTOL` relative tolerance,
+        their dependent variable vectors are the same with
+        :py:data:`putil.eng.FP_ATOL` absolute tolerance and
+        :py:data:`putil.eng.FP_RTOL` relative tolerance, their independent
+        variable scales are the same, their dependent variable scales are the
+        same, their independent variable units are the same, their dependent
+        variable units are the same and they have the same interpolation
+        function. Thus if two waveforms are constructed such that they are
+        identical but for their variable name, they are considered equal.
+        For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([4, 5, 6])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector, 'obj_b')
+            >>> obj_a == obj_b
+            True
+            >>> obj_a != obj_b
+            False
+            >>> dep_vector = obj_a.dep_vector+5
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector, 'obj_b')
+            >>> obj_a == obj_b
+            False
+            >>> obj_a != obj_b
+            True
+
+        A waveform is considered equal to a real number when its dependent
+        variable vector is equal to that number for all of its elements. For
+        example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = 12.5*numpy.ones(len(indep_vector))
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj_a')
+            >>> 5 == obj
+            False
+            >>> obj == 12.5
+            True
+        """
+        if (isinstance(other, float) or (isinstance(other, int) and
+           (not isinstance(other, bool))) or isinstance(other, complex)):
+            return numpy.all(
+                numpy.isclose(
+                    self._dep_vector,
+                    other*numpy.ones(len(self._dep_vector)),
+                    FP_RTOL,
+                    FP_ATOL
+                )
+            )
+        if not isinstance(other, Waveform):
+            return False
+        _, dep_vector_a, dep_vector_b = _homogenize_waves(self, other)
+        ctuple = (
+            numpy.all(
+                numpy.isclose(dep_vector_a, dep_vector_b, FP_RTOL, FP_ATOL)
+            ),
+            bool(self.indep_scale == other.indep_scale),
+            bool(self.dep_scale == other.dep_scale),
+            bool(self.indep_units == other.indep_units),
+            bool(self.dep_units == other.dep_units),
+            bool(self.interp == other.interp)
+        )
+        return bool(all(ctuple))
+
+    def __floordiv__(self, other):
+        """
+        Floor-divides two waveforms or a waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a//obj_b)
+            Waveform: obj_a//obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 0, 2, 1 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__floordiv__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, 'fdiv')
+
+    def __ge__(self, other):
+        """
+        Tests whether a waveform is greater than another waveform or a real
+        number for all elements of its dependent variable vector or equal to
+        another waveform or a real number with :py:data:`putil.eng.FP_ATOL`
+        absolute tolerance and :py:data:`putil.eng.FP_RTOL` relative tolerance
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__ge__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '>=')
+
+    def __gt__(self, other):
+        """
+        Tests whether a waveform is greater than another waveform or a real
+        number for all elements of its dependent variable vector
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__gt__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '>')
+
+    def __le__(self, other):
+        """
+        Tests whether a waveform is less than another waveform or a real
+        number for all elements of its dependent variable vector or equal to
+        another waveform or a real number with :py:data:`putil.eng.FP_ATOL`
+        absolute tolerance and :py:data:`putil.eng.FP_RTOL` relative tolerance
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__le__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '<=')
+
+    def __len__(self):
+        """
+        Returns number of elements in independent (or dependent) variable
+        vectors
+        """
+        return len(self._indep_vector)
+
+    def __lshift__(self, other):
+        """
+        Left shifts a waveform  or waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a<<obj_b)
+            Waveform: obj_a<<obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 1024, 20, 96 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__lshift__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '<<')
+
+    def __lt__(self, other):
+        """
+        Tests whether a waveform is less than another waveform or a real number
+        for all elements of its dependent variable vector
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__lt__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '<')
+
+    def __mod__(self, other):
+        r"""
+        Division reminder between two waveforms or a waveform by a number.
+        For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a%obj_b)
+            Waveform: obj_a%obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 4, 1, 2 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__mod__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '%')
+
+    def __mul__(self, other):
+        """
+        Multiplies two waveforms or a waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a*obj_b)
+            Waveform: obj_a*obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 32, 10, 24 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__mul__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '*')
+
+    def __ne__(self, other):
+        """
+        Tests waveform inequality. Two waveforms are considered unequal if
+        their independent variable vectors are different with
+        :py:data:`putil.eng.FP_ATOL` absolute tolerance and
+        :py:data:`putil.eng.FP_RTOL` relative tolerance, and/or their dependent
+        variable vectors are different with :py:data:`putil.eng.FP_ATOL`
+        absolute tolerance and :py:data:`putil.eng.FP_RTOL` relative tolerance,
+        and/or their independent variable scales are not the same, and/or their
+        dependent variable scales are not the, and/or their independent
+        variable units are not the same, and/or their dependent variable units
+        are not the same and/or they do not have the same interpolation
+        function.
+
+        A waveform is considered unequal to a real number when its dependent
+        variable is not equal to that number at least in one element.
+        """
+        return not self.__eq__(other)
+
+    def __nonzero__(self):  # pragma: no cover
+        """
+        Returns :code:`False` if the waveform dependent vector is zero for all
+        its elements, :code:`True` otherwise. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([4, 5, 6])
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj_a')
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: True
+            >>> dep_vector = numpy.zeros(3)
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj_a')
+            >>> if obj:
+            ...     print('Boolean test returned: True')
+            ... else:
+            ...     print('Boolean test returned: False')
+            Boolean test returned: False
+        """
+        return not bool(
+            numpy.all(
+                numpy.isclose(
+                    self._dep_vector,
+                    numpy.zeros(len(self._dep_vector)),
+                    FP_RTOL,
+                    FP_ATOL
+                )
+            )
+        )
+
+    def __pow__(self, other):
+        """
+        Power of two waveforms or a waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a**obj_b)
+            Waveform: obj_a**obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 65536, 25, 1296 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__pow__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '**')
+
+    def __radd__(self, other):
+        """
+        Reflected addition of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__add__` for more details
+        """
+        return self._operation(other, '+')
+
+    def __rdiv__(self, other):  # pragma: no cover
+        """
+        Reflected division of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__div__` for more details
+        """
+        return self._operation(other, '/', reflected=True)
+
+    def __repr__(self):
+        """
+        Returns a string with the expression needed to re-create the object.
+        For example:
+
+            >>> import numpy, putil.eng
+            >>> obj = putil.eng.Waveform(
+            ...     numpy.array([1, 2, 3]),
+            ...     numpy.array([4, 5, 6]),
+            ...     'test'
+            ... )
+            >>> repr(obj)
+            "putil.eng.Waveform(\
+indep_vector=array([1, 2, 3]), \
+dep_vector=array([4, 5, 6]), \
+indep_name='test', \
+indep_scale='LINEAR', \
+dep_scale='LINEAR', \
+indep_units='', \
+dep_units='', \
+interp='CONTINUOUS')"
+        """
+        template = (
+            "putil.eng.Waveform("
+            "indep_vector={0}, "
+            "dep_vector={1}, "
+            "indep_name={2}, "
+            "indep_scale={3}, "
+            "dep_scale={4}, "
+            "indep_units={5}, "
+            "dep_units={6}, "
+            "interp={7})"
+        )
+        return template.format(
+            repr(self._indep_vector),
+            repr(self._dep_vector),
+            repr(self._indep_name),
+            repr(self._indep_scale),
+            repr(self._dep_scale),
+            repr(self._indep_units),
+            repr(self._dep_units),
+            repr(self._interp)
+        )
+
+    def __rfloordiv__(self, other):
+        """
+        Reflected floor division of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__floordiv__` for more details
+        """
+        return self._operation(other, 'fdiv', reflected=True)
+
+    def __rlshift__(self, other):
+        """
+        Reflected left shift a waveform.
+        See :py:meth:`putil.eng.Waveform.__lshift__` for more details
+        """
+        return self._operation(other, '<<', reflected=True)
+
+    def __rmod__(self, other):
+        """
+        Reflected division reminder of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__mod__` for more details
+        """
+        return self._operation(other, '%', reflected=True)
+
+    def __rmul__(self, other):
+        """
+        Reflected multiplication of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__mul__` for more details
+        """
+        return self._operation(other, '*')
+
+    def __rpow__(self, other):
+        """
+        Reflected power of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__pow__` for more details
+        """
+        return self._operation(other, '**', reflected=True)
+
+    def __rrshift__(self, other):
+        """
+        Reflected right shift a waveform.
+        See :py:meth:`putil.eng.Waveform.__rshift__` for more details
+        """
+        return self._operation(other, '>>', reflected=True)
+
+    def __rshift__(self, other):
+        r"""
+        Right shifts a waveform  or waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([1, 2, 1])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a>>obj_b)
+            Waveform: obj_a>>obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 2, 1, 3 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__rshift__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '>>')
+
+    def __rsub__(self, other):
+        """
+        Reflected subtraction of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__sub__` for more details
+        """
+        return self._operation(other, '-')
+
+    def __rtruediv__(self, other):  # pragma: no cover
+        """
+        Reflected division of a number and a waveform.
+        See :py:meth:`putil.eng.Waveform.__truediv__` for more details
+        """
+        return self._operation(other, '/', reflected=True)
+
+    def __str__(self):
+        """
+        Returns a string with a detailed description of the object's contents.
+        For example:
+
+            >>> from __future__ import print_function
+            >>> import numpy, putil.eng
+            >>> obj = putil.eng.Waveform(
+            ...     numpy.array([1, 2, 3]),
+            ...     numpy.array([4, 5, 6]),
+            ...     'test'
+            ... )
+            >>> print(obj)
+            Waveform: test
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 4, 5, 6 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+        """
+        ret = ''
+        ret += 'Waveform: {0}\n'.format(self._indep_name)
+        ret += 'Independent variable: '+pprint_vector(
+            vector=self._indep_vector,
+            width=80-22,
+            limit=True,
+            indent=22
+        )+'\n'
+        ret += 'Dependent variable: '+pprint_vector(
+            vector=self._dep_vector,
+            width=80-20,
+            limit=True,
+            indent=20
+        )+'\n'
+        ret += 'Independent variable scale: {0}\n'.format(self._indep_scale)
+        ret += 'Dependent variable scale: {0}\n'.format(self._dep_scale)
+        ret += 'Independent variable units: {0}\n'.format(
+            self._indep_units if self._indep_units else '(None)'
+        )
+        ret += 'Dependent variable units: {0}\n'.format(
+            self._dep_units if self._dep_units else '(None)'
+        )
+        ret += 'Interpolating function: {0}'.format(self._interp)
+        return ret
+
+    def __sub__(self, other):
+        """
+        Subtracts two waveforms or a waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a-obj_b)
+            Waveform: obj_a-obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ -4, 3, 2 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__sub__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '-')
+
+    def __truediv__(self, other):   # pragma: no cover
+        """
+        Divides two waveforms or a waveform by a number. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8.0, 2.0, 4.0])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a/obj_b)
+            Waveform: obj_a/obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 0.5, 2.5, 1.5 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_doc(cname, no_comment=True)) ]]]
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '/')
+
+    def _operation(self, other, operand, reflected=False):
+        # pylint: disable=R0912,R0915
+        cop_list = [
+            '>', '>=', '<', '<=', '%', '<<', '>>', '&', '^', '|', 'fdiv'
+        ]
+        self._exh.add_exception(
+            exname='unsupported_type',
+            extype=TypeError,
+            exmsg='Data type not supported'
+        )
+        if operand in cop_list:
+            self._exh.add_exception(
+                exname='complex_not_supported',
+                extype=TypeError,
+                exmsg='Complex operands not supported'
+            )
+        if (isinstance(other, complex) or isinstance(other, float)
+           or (isinstance(other, int) and (not isinstance(other, bool)))):
+            dep_vector = other*(
+                numpy.ones(len(self._dep_vector)).astype('int')
+            )
+            other = Waveform(
+                indep_vector=self._indep_vector,
+                dep_vector=dep_vector,
+                indep_name=str(other),
+                indep_scale=self._indep_scale,
+                dep_scale=self._dep_scale,
+                indep_units=self._indep_units,
+                dep_units=self._dep_units,
+                interp=self._interp
+            )
+        self._exh.raise_exception_if(
+            exname='unsupported_type',
+            condition=not isinstance(other, Waveform)
+        )
+        if operand in cop_list:
+            self._exh.raise_exception_if(
+                exname='complex_not_supported',
+                condition=(
+                    self.dep_vector.dtype.name.startswith('complex') or
+                    other.dep_vector.dtype.name.startswith('complex')
+                )
+            )
+        _verify_compatibility(self, other)
+        indep_vector, dep_vector_a, dep_vector_b = _homogenize_waves(
+            self, other
+        )
+        if operand == '<':
+            return (dep_vector_a < dep_vector_b).all()
+        elif operand == '<=':
+            ne_test = numpy.isclose(
+                dep_vector_a, dep_vector_b, FP_RTOL, FP_ATOL
+            )
+            comp_test = dep_vector_a < dep_vector_b
+            return numpy.logical_or(ne_test, comp_test).all()
+        elif operand == '>':
+            return (dep_vector_a > dep_vector_b).all()
+        elif operand == '>=':
+            ne_test = numpy.isclose(
+                dep_vector_a, dep_vector_b, FP_RTOL, FP_ATOL
+            )
+            comp_test = dep_vector_a > dep_vector_b
+            return numpy.logical_or(ne_test, comp_test).all()
+        if operand == '+':
+            dep_vector = dep_vector_a+dep_vector_b
+        elif operand == '-':
+            dep_vector = dep_vector_a-dep_vector_b
+        elif operand == '*':
+            dep_vector = numpy.multiply(dep_vector_a, dep_vector_b)
+        elif operand == 'fdiv':
+            dep_vector = numpy.floor_divide(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+            operand = '//'
+        elif operand == '%':
+            dep_vector = numpy.mod(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        elif operand == '**':
+            dep_vector = numpy.power(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        elif operand == '/':
+            dep_vector = numpy.divide(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        elif operand == '<<':
+            dep_vector = numpy.left_shift(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        else: #elif operand == '>>':
+            dep_vector = numpy.right_shift(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        indep_name = '{wave1}{op}{wave2}'.format(
+            wave1=self.indep_name, wave2=other.indep_name, op=operand)
+        return Waveform(
+            indep_vector=indep_vector,
+            dep_vector=dep_vector,
+            indep_name=indep_name,
+            indep_scale=self._indep_scale,
+            dep_scale=self._dep_scale,
+            indep_units=self._indep_units,
+            dep_units=self._dep_units,
+            interp=self._interp
+        )
+
+    def _get_dep_scale(self):
+        return self._dep_scale
+
+    def _get_dep_units(self):
+        return self._dep_units
+
+    def _get_dep_vector(self):
+        return self._dep_vector
+
+    def _get_indep_name(self):
+        return self._indep_name
+
+    def _get_indep_scale(self):
+        return self._indep_scale
+
+    def _get_indep_units(self):
+        return self._indep_units
+
+    def _get_indep_vector(self):
+        return self._indep_vector
+
+    def _get_interp(self):
+        return self._interp
+
+    def _get_vectors(self):
+        return (self._indep_vector, self._dep_vector)
+
+    @putil.pcontracts.contract(dep_scale='wave_scale_option')
+    def _set_dep_scale(self, dep_scale):
+        self._dep_scale = dep_scale.upper()
+
+    @putil.pcontracts.contract(dep_units=str)
+    def _set_dep_units(self, dep_units):
+        self._dep_units = dep_units
+
+    @putil.pcontracts.contract(dep_vector='number_numpy_vector')
+    def _set_dep_vector(self, dep_vector, check=True):
+        self._set_vectors_int(dep_vector=dep_vector, check=check)
+
+    @putil.pcontracts.contract(indep_name='non_null_string')
+    def _set_indep_name(self, indep_name):
+        self._indep_name = indep_name
+
+    @putil.pcontracts.contract(indep_scale='wave_scale_option')
+    def _set_indep_scale(self, indep_scale):
+        self._indep_scale = indep_scale.upper()
+
+    @putil.pcontracts.contract(indep_units=str)
+    def _set_indep_units(self, indep_units):
+        self._indep_units = indep_units
+
+    @putil.pcontracts.contract(indep_vector='increasing_real_numpy_vector')
+    def _set_indep_vector(self, indep_vector, check=True):
+        self._set_vectors_int(indep_vector=indep_vector, check=check)
+
+    @putil.pcontracts.contract(interp='wave_interp_option')
+    def _set_interp(self, interp):
+        self._interp = interp.upper()
+
+    @putil.pcontracts.contract(vectors='wave_vectors')
+    def _set_vectors(self, vectors):
+        self._set_vectors_int(vectors[0], vectors[1])
+
+    def _set_vectors_int(self, indep_vector=None, dep_vector=None, check=True):
+        self._exh.add_exception(
+            exname='vectors_element_mismatch',
+            extype=ValueError,
+            exmsg=(
+                'Independent and dependent vectors must '
+                'have the same number of elements'
+            )
+        )
+        self._exh.raise_exception_if(
+            exname='vectors_element_mismatch',
+            condition=check and (
+                len(
+                    indep_vector
+                    if indep_vector is not None else
+                    self._indep_vector
+                )
+                !=
+                len(
+                    dep_vector
+                    if dep_vector is not None else
+                    self._dep_vector
+                )
+            )
+        )
+        if indep_vector is not None:
+            self._indep_vector = copy.copy(indep_vector)
+        if dep_vector is not None:
+            self._dep_vector = copy.copy(dep_vector)
+
+    # Managed attributes
+    dep_scale = property(
+        _get_dep_scale, _set_dep_scale, doc='Dependent variable scale'
+    )
+    r"""
+    Gets or sets the waveform dependent variable scale
+
+    :type: :ref:`WaveScaleOption`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.dep_scale
+
+    :raises: (when assigned) RuntimeError (Argument \`dep_scale\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
+    dep_units = property(
+        _get_dep_units, _set_dep_units, doc='Dependent variable units'
+    )
+    r"""
+    Gets or sets the waveform dependent variable units
+
+    :type: string
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.dep_units
+
+    :raises: (when assigned) RuntimeError (Argument \`dep_units\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
+    dep_vector = property(
+        _get_dep_vector, _set_dep_vector, doc='Dependent variable vector'
+    )
+    r"""
+    Gets or sets the waveform dependent variable vector
+
+    :type: :ref:`NumberNumpyVector`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.dep_vector
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`dep_vector\` is not valid)
+
+     * ValueError (Independent and dependent vectors must have the same
+       number of elements)
+
+    .. [[[end]]]
+    """
+
+    indep_name = property(
+        _get_indep_name, _set_indep_name, doc='Independent variable name'
+    )
+    r"""
+    Gets or sets the waveform independent variable name
+
+    :type: string
+    """
+
+    indep_scale = property(
+        _get_indep_scale, _set_indep_scale, doc='Independent variable scale'
+    )
+    r"""
+    Gets or sets the waveform independent variable scale
+
+    :type: :ref:`WaveScaleOption`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.indep_scale
+
+    :raises: (when assigned) RuntimeError (Argument \`indep_scale\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
+    indep_units = property(
+        _get_indep_units, _set_indep_units, doc='Independent variable units'
+    )
+    r"""
+    Gets or sets the waveform independent variable units
+
+    :type: string
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.indep_units
+
+    :raises: (when assigned) RuntimeError (Argument \`indep_units\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
+    indep_vector = property(
+        _get_indep_vector, _set_indep_vector, doc='Independent variable vector'
+    )
+    r"""
+    Gets the waveform independent variable vector
+
+    :type: :ref:`IncreasingRealNumpyVector`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.indep_vector
+
+    :raises: (when assigned)
+
+     * RuntimeError (Argument \`indep_vector\` is not valid)
+
+     * ValueError (Independent and dependent vectors must have the same
+       number of elements)
+
+    .. [[[end]]]
+    """
+
+    interp = property(
+        _get_interp, _set_interp, doc='Interpolation function'
+    )
+    r"""
+    Gets or sets the interpolation function used between dependent
+    variable vector elements
+
+    :type: :ref:`WaveInterpOption`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.interp
+
+    :raises: (when assigned) RuntimeError (Argument \`interp\` is not
+     valid)
+
+    .. [[[end]]]
+    """
+
+    vectors = property(
+        _get_vectors,
+        _set_vectors,
+        doc='Independent and dependent variable vectors'
+    )
+    r"""
+    Gets or sets the independent and dependent variable vectors. The first
+    tuple item is the independent variable vector and the second tuple item is
+    the dependent variable vector
+
+    :type: :ref:`WaveVectors`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave.Waveform.vectors
+
+    :raises: (when assigned) RuntimeError (Argument \`vectors\` is not
+     valid)
+
+    .. [[[end]]]
+    """

@@ -309,11 +309,23 @@ keys:
 The node data should be an empty list to create a node without data, for
 example: :code:`{'name':'a.b.c', 'data':[]}`
 
+.. _NumberNumpyVector:
+
+NumberNumpyVector
+-----------------
+Numpy vector in which all elements are integers and/or floats and/or complex
+
 .. _NonNegativeInteger:
 
 NonNegativeInteger
 ------------------
 Integer greater or equal to zero
+
+.. _NonNullString:
+
+NonNullString
+-------------
+String of length 1 or higher
 
 .. _OffsetRange:
 
@@ -339,6 +351,30 @@ RealNumpyVector
 ---------------
 Numpy vector in which all elements are real (integers and/or floats)
 
+.. _WaveInterpOption:
+
+WaveInterpOption
+----------------
+String representing a waveform interpolation type, one of :code:`'CONTINUOUS'`
+or :code:`'STAIRCASE'` (case insensitive)
+
+.. _WaveScaleOption:
+
+WaveScaleOption
+---------------
+String representing a waveform scale type, one of :code:`'LINEAR'`
+or :code:`'LOG'` (case insensitive)
+
+.. _WaveVectors:
+
+WaveVectors
+-----------
+Tuple whose first item is a vector of :ref:`IncreasingRealNumpyVector`
+pseudo-type, whose second item is a vector of :ref:`RealNumpyVector`
+pseudo-type and whose two items have the same (non-zero) length. It represents
+a waveform's independent variable vector (first tuple item) and dependent
+variable vector (second tuple item)
+
 *********
 Contracts
 *********
@@ -358,7 +394,12 @@ Contracts
 .. autofunction:: putil.ptypes.interpolation_option
 .. autofunction:: putil.ptypes.line_style_option
 .. autofunction:: putil.ptypes.non_negative_integer
+.. autofunction:: putil.ptypes.non_null_string
+.. autofunction:: putil.ptypes.number_numpy_vector
 .. autofunction:: putil.ptypes.offset_range
 .. autofunction:: putil.ptypes.positive_real_num
 .. autofunction:: putil.ptypes.real_num
 .. autofunction:: putil.ptypes.real_numpy_vector
+.. autofunction:: putil.ptypes.wave_interp_option
+.. autofunction:: putil.ptypes.wave_scale_option
+.. autofunction:: putil.ptypes.wave_vectors

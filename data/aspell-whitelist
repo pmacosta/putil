@@ -53,6 +53,7 @@ Astroid
 AstTreeScanner
 astype
 async
+ATOL
 atto
 attr
 AttributeError
@@ -156,6 +157,7 @@ congruency
 const
 consts
 contextmanager
+cOnTiNuOuS
 ContractNotRespected
 ContractSyntaxError
 copyfile
@@ -190,6 +192,7 @@ ctags
 ctext
 CTNAME
 Ctrl
+ctuple
 ctx
 ctxt
 ctype
@@ -364,6 +367,7 @@ fdesc
 fdict
 fdir
 fdirs
+fdiv
 femto
 fex
 fexh
@@ -387,6 +391,7 @@ flength
 flim
 flines
 flist
+floordiv
 floralwhite
 fmant
 fname
@@ -403,6 +408,7 @@ fontsize
 forestgreen
 fos
 fp
+FP
 fpart
 fplot
 fpointer
@@ -438,6 +444,7 @@ gainsboro
 gcd
 GCD
 gcf
+ge
 genindex
 getattr
 getcwd
@@ -507,6 +514,8 @@ instantiation
 interp
 InterpolatedUnivariateSpline
 InterpolationOption
+interpolator
+Interpolator
 io
 iobj
 IOError
@@ -520,6 +529,7 @@ iro
 isalpha
 isclass
 isdflt
+isclose
 isdigit
 isexception
 isf
@@ -535,6 +545,7 @@ itemgetter
 iter
 iterable
 itertools
+itf
 itg
 itoken
 itokens
@@ -560,6 +571,7 @@ lang
 lavenderblush
 lawngreen
 ldig
+le
 Leftarrow
 lemonchiffon
 len
@@ -582,6 +594,7 @@ lightyellow
 lim
 limegreen
 lin
+LiNeAr
 lineno
 linestyle
 LineStyleOption
@@ -602,6 +615,7 @@ lname
 lobj
 loc
 locs
+lOg
 loglog
 loren
 lparent
@@ -610,7 +624,9 @@ lprops
 lrange
 lsec
 lsep
+lshift
 lstrip
+lt
 ltr
 lue
 lvars
@@ -676,6 +692,7 @@ msec
 msg
 msgs
 mtxt
+mul
 multi
 Multi
 multialignment
@@ -708,11 +725,14 @@ ndata
 ndict
 nflip
 nfunction
+ndv
+ne
 nimages
 nindent
 ninterp
 nis
 nitem
+niv
 nldig
 nline
 nlist
@@ -731,6 +751,7 @@ NoNe
 None's
 NONINFRINGEMENT
 NonNegativeInteger
+NonNullString
 noption
 NOPTION
 norder
@@ -749,6 +770,7 @@ ntree
 num
 NUM
 numa
+NumberNumpyVector
 NumComp
 NUMCOMP
 numpoints
@@ -759,6 +781,7 @@ nuniq
 nvar
 nvdata
 nworld
+nVectors
 nzero
 OAUTH
 objs
@@ -768,10 +791,12 @@ oct
 odata
 odg
 odict
+odv
 OffsetRange
 ofname
 ofobj
 ofproc
+oiv
 oldlace
 oline
 olines
@@ -860,6 +885,7 @@ pps
 pragma
 pre
 prec
+PREC
 prf
 priv
 proc
@@ -920,6 +946,7 @@ rcParams
 rdata
 rdfilter
 rdict
+rdiv
 RdPu
 RDVAR
 readlines
@@ -953,6 +980,7 @@ rfile
 r'File
 rfilter
 rfind
+rfloordiv
 rfname
 rfobj
 rfrow
@@ -968,27 +996,37 @@ rl
 rlevel
 rline
 rlist
+rlshift
 rmatch
 rmfiles
+rmod
 rmtree
+rmul
 rnode
 rnum
 ro
 robj
+r'obj
 rosybrown
 royalblue
+rpow
 r'putil
 rrows
+rrshift
+rshift
 rst
 RST
 rstart
 rstr
 rstrip
 rsts
+rsub
 rtd
 RTD
 rtext
 r'The
+RTOL
+rtruediv
 rtype
 rU
 runtests
@@ -1064,6 +1102,8 @@ sqrt
 src
 ssid
 ssign
+sTaiRcAsE
+STAIRcase
 starargs
 startswith
 stderr
@@ -1133,6 +1173,7 @@ TestParameterizedColorSpace
 TestSeries
 TestSource
 TestTreeNode
+TestWaveform
 teto
 textwrap
 TextWrapper
@@ -1164,6 +1205,7 @@ traceback
 Traceback
 tregexp
 trie
+truediv
 tstart
 tstop
 tstr
@@ -1171,6 +1213,7 @@ ttext
 ttuple
 tup
 tuple
+Tuple
 TUPLE
 tuples
 turquois
@@ -1211,6 +1254,13 @@ versa
 verticalalignment
 Virtualenv
 vv
+waveforms
+waveform's
+Waveforms
+WaveInterpolationOption
+WaveInterpOption
+WaveScaleOption
+WaveVectors
 wb
 wdir
 wheader
@@ -1229,15 +1279,19 @@ xdist
 xef
 xFFFF
 xflist
+xinterp
 xlim
 xml
 xobj
 xoffset
 xrange
+xstart
+xstop
 xyz
 yaxis
 yellowgreen
 yflist
+yinterp
 YlGn
 YlGnBu
 ylim
@@ -1246,6 +1300,8 @@ YlOrRd
 yml
 yocto
 yotta
+ystart
+ystop
 YY
 yzafpnum
 zepto

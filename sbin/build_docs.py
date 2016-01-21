@@ -25,6 +25,9 @@ import sbin.functions
 ###
 # Global variables
 ###
+ENG_SUBMODULES = [
+    'functions', 'wave'
+]
 PLOT_SUBMODULES = [
     'basic_source', 'csv_source', 'figure', 'functions', 'panel', 'series'
 ]
@@ -142,6 +145,8 @@ def del_pkl_files(test, tracer_dir):
     if test:
         pkl_files = (
             glob.glob(os.path.join(tracer_dir, '*.pkl'))
+            +
+            glob.glob(os.path.join(tracer_dir, 'eng', '*.pkl'))
             +
             glob.glob(os.path.join(tracer_dir, 'plot', '*.pkl'))
             +
@@ -379,7 +384,10 @@ def rebuild_module_doc(test, src_dir, tracer_dir, cog_exe, module, debug):
     # pylint: disable=R0913
     retcode = 0
     pkl_dir = tracer_dir
-    if module == 'plot':
+    if module == 'eng':
+        module_dir = os.path.join(src_dir, 'eng')
+        submodules = ENG_SUBMODULES
+    elif module == 'plot':
         module_dir = os.path.join(src_dir, 'plot')
         submodules = PLOT_SUBMODULES
     elif module == 'pcsv':

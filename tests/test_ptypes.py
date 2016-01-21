@@ -256,7 +256,7 @@ def test_line_style_option_contract():
 
 
 def test_non_negative_integer():
-    """ Test PosInteger pseudo-type """
+    """ Test NonNegativeInteger pseudo-type """
     obj = putil.ptypes.non_negative_integer
     items = ['b', True, -3, 5.2]
     for item in items:
@@ -264,6 +264,46 @@ def test_non_negative_integer():
     items = [0, 2]
     for item in items:
         obj(item)
+
+
+def test_non_null_string():
+    """ Test NonNullString pseudo-type """
+    exmsg = (
+        '[START CONTRACT MSG: non_null_string]'
+        'Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]'
+    )
+    items = ['', True, -3, 5.2]
+    for item in items:
+        AE(putil.ptypes.non_null_string, ValueError, exmsg, item)
+    items = ['a', 'hello']
+    for item in items:
+        putil.ptypes.non_null_string(item)
+
+
+def test_number_numpy_vector_contract():
+    """ Tests for NumberNumpyVector pseudo-type """
+    exmsg = (
+        '[START CONTRACT MSG: number_numpy_vector]Argument '
+        '`*[argument_name]*` is not valid[STOP CONTRACT MSG]'
+    )
+    items = [
+        'a',
+        [1, 2, 3],
+        numpy.array([]),
+        numpy.array([[1, 2, 3], [4, 5, 6]]),
+        numpy.array(['a', 'b']),
+    ]
+    for item in items:
+        AE(putil.ptypes.number_numpy_vector, ValueError, exmsg, item)
+    items = [
+        numpy.array([1, 2, 3]),
+        numpy.array([10.0, 8.0, 2.0]),
+        numpy.array([10.0]),
+        numpy.array([complex(1, 1), complex(2, 2)])
+    ]
+    for item in items:
+        putil.ptypes.number_numpy_vector(item)
+
 
 
 def test_offset_range_contract():
@@ -316,3 +356,59 @@ def test_real_numpy_vector_contract():
     ]
     for item in items:
         obj(item)
+
+
+def test_wave_interp_option_contract():
+    """ Tests for WaveInterpolationOption pseudo-type """
+    exmsg = (
+        '[START CONTRACT MSG: wave_interp_option]Argument '
+        '`*[argument_name]*` is not valid'
+        '[STOP CONTRACT MSG]'
+    )
+    items = [None, True, 'a', 5.0, []]
+    for item in items:
+        AE(putil.ptypes.wave_interp_option, ValueError, exmsg, item)
+    items = [
+            'STAIRCASE', 'CONTINUOUS',
+            'staircase', 'continuous',
+            'sTaiRcAsE', 'cOnTiNuOuS'
+    ]
+    for item in items:
+        putil.ptypes.wave_interp_option(item)
+
+
+def test_wave_scale_option_contract():
+    """ Tests for WaveScaleOption pseudo-type """
+    exmsg = (
+        '[START CONTRACT MSG: wave_scale_option]Argument '
+        '`*[argument_name]*` is not valid'
+        '[STOP CONTRACT MSG]'
+    )
+    items = [None, True, 'a', 5.0, []]
+    for item in items:
+        AE(putil.ptypes.wave_scale_option, ValueError, exmsg, item)
+    for item in ['LINEAR', 'LOG', 'linear', 'log', 'LiNeAr', 'lOg']:
+        putil.ptypes.wave_scale_option(item)
+
+
+def test_wave_vectors_contract():
+    """ Tests for WaveVectors pseudo-type """
+    exmsg = (
+        '[START CONTRACT MSG: wave_vectors]Argument '
+        '`*[argument_name]*` is not valid'
+        '[STOP CONTRACT MSG]'
+    )
+
+    items = [
+        'a',
+        True,
+        None,
+        (None, None),
+        (None, numpy.array([1, 2])),
+        (numpy.array([1, 2]), None),
+        (numpy.array([]), numpy.array([])),
+        (numpy.array([1, 2, 3]), numpy.array([4, 5]))
+    ]
+    for item in items:
+        AE(putil.ptypes.wave_vectors, ValueError, exmsg, item)
+    putil.ptypes.wave_vectors((numpy.array([1, 2, 3]), numpy.array([4, 5, 6])))

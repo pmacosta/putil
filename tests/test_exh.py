@@ -446,7 +446,7 @@ class TestExHandle(object):
             assert item['function'][0]
         putil.exh.set_exh_obj(
             putil.exh.ExHandle(
-                full_cname=True, exclude=['_pytest', 'putil.eng']
+                full_cname=True, exclude=['_pytest', 'putil.eng.functions']
             )
         )
         _ = putil.eng.peng(15, 3, False)
@@ -868,6 +868,7 @@ class TestExHandle(object):
 
     def test_add(self):
         """ Test __add__ method behavior """
+        exclude_list = ['putil.eng.functions']
         scomp = lambda a, b: bool(sorted(a) == sorted(b))
         def check_add(sobj):
             ex_dict_ref = {
@@ -899,14 +900,21 @@ class TestExHandle(object):
                 CTNAME+'.test_add.func2': '3',
                 CTNAME+'.test_add.func3': '2'
             }
+            if obj._clut != ref:
+                print('Reference')
+                print('---------')
+                print(ref)
+                print('Actual')
+                print('------')
+                print(obj._clut)
             assert obj._clut == ref
             nref = [
                 'copy_exception_1',
                 'copy_exception_2',
                 'copy_exception_3',
-                'contract:putil.eng.peng.frac_length_0',
-                'contract:putil.eng.peng.number_0',
-                'contract:putil.eng.peng.rjust_0',
+                'contract:putil.eng.functions.peng.frac_length_0',
+                'contract:putil.eng.functions.peng.number_0',
+                'contract:putil.eng.functions.peng.rjust_0',
             ]
             alist = [
                 item.split(obj._callables_separator)[1]
@@ -981,8 +989,8 @@ class TestExHandle(object):
         assert GET_EXMSG(excinfo) == msg
         obj2._exclude = None
         # Test re-mapping of callables look-up table
-        obj1 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
-        obj2 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
+        obj1 = putil.exh.ExHandle(full_cname=True, exclude=exclude_list)
+        obj2 = putil.exh.ExHandle(full_cname=True, exclude=exclude_list)
         def func1(exhobj):
             exhobj.add_exception(
                 'copy_exception_1', TypeError, 'Copy exception #1'
@@ -997,7 +1005,7 @@ class TestExHandle(object):
             )
             putil.exh.del_exh_obj()
             putil.exh.get_or_create_exh_obj(
-                full_cname=True, exclude=['putil.eng']
+                full_cname=True, exclude=exclude_list
             )
             putil.eng.peng(1, 3, False)
             exhobj += putil.exh.get_exh_obj()
@@ -1017,8 +1025,8 @@ class TestExHandle(object):
         assert obj2_ref == obj2
         comp_objs(obj3)
         # Test __iadd__
-        obj1 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
-        obj2 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
+        obj1 = putil.exh.ExHandle(full_cname=True, exclude=exclude_list)
+        obj2 = putil.exh.ExHandle(full_cname=True, exclude=exclude_list)
         func1(obj1)
         func3(obj1)
         func1(obj2)

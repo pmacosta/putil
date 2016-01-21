@@ -26,6 +26,7 @@
 	{"dir":"docs/support", "file":"*.txt"},
 	{"dir":"tests", "file":"pytest.ini"},
 	{"dir":"tests", "file":"*.py"},
+	{"dir":"tests/eng", "file":"*.py"},
 	{"dir":"tests/pcsv", "file":"*.py"},
 	{"dir":"tests/plot", "file":"*.py"},
 	{"dir":"tests/support", "file":"*.py"},

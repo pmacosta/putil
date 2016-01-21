@@ -28,6 +28,7 @@ recursive-include docs/support *.sh
 recursive-include docs/support *.txt
 include tests/pytest.ini
 recursive-include tests *.py
+recursive-include tests/eng *.py
 recursive-include tests/pcsv *.py
 recursive-include tests/plot *.py
 recursive-include tests/support *.py

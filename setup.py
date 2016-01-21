@@ -155,6 +155,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     packages=[
         PKG_NAME,
+        '{pkg_name}.eng'.format(pkg_name=PKG_NAME),
         '{pkg_name}.plot'.format(pkg_name=PKG_NAME),
         '{pkg_name}.pcsv'.format(pkg_name=PKG_NAME),
     ],

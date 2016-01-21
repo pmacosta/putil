@@ -118,9 +118,10 @@ class ExDocCxt(object):
         >>> from __future__ import print_function
         >>> import putil.eng, putil.exdoc
         >>> with putil.exdoc.ExDocCxt() as exdoc_obj:
-        ...     value = putil.eng.peng(1e6, 3, False)
-        >>> print(exdoc_obj.get_sphinx_doc('putil.eng.peng'))
-        .. Auto-generated exceptions documentation for putil.eng.peng
+        ...     value = putil.eng.functions.peng(1e6, 3, False)
+        >>> print(exdoc_obj.get_sphinx_doc('putil.eng.functions.peng'))
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.functions.peng
         <BLANKLINE>
         :raises:
          * RuntimeError (Argument \`frac_length\` is not valid)

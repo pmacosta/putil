@@ -1,7 +1,7 @@
 # ptypes.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111
+# pylint: disable=C0111,R0916
 
 # Standard library imports
 import os
@@ -27,7 +27,6 @@ _SUFFIX_TUPLE = (
 # Functions
 ###
 def _check_csv_col_filter(obj):
-    # pylint: disable=R0916
     if (not isinstance(obj, bool)) and ((obj is None) or
        isinstance(obj, str) or isinstance(obj, int) or
        (isinstance(obj, list) and (len(obj) > 0) and
@@ -75,6 +74,16 @@ def _check_increasing_real_numpy_vector(obj):
        (obj.dtype.type == numpy.array([0.0]).dtype.type)) and
        ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and
        (min(numpy.diff(obj)) > 0)))):
+        return False
+    return True
+
+
+def _check_number_numpy_vector(obj):
+    if (isinstance(obj, numpy.ndarray) and
+       (len(obj.shape) == 1) and (obj.shape[0] > 0) and
+       ((obj.dtype.type == numpy.array([0]).dtype.type) or
+       (obj.dtype.type == numpy.array([0.0]).dtype.type) or
+       (obj.dtype.type == numpy.array([complex(0, 0)]).dtype.type))):
         return False
     return True
 
@@ -595,6 +604,43 @@ def non_negative_integer(obj):
 
 
 @putil.pcontracts.new_contract()
+def non_null_string(obj):
+    r"""
+    Validates if an object is a non-null string
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the *name* of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    if isinstance(obj, str) and (len(obj) > 0):
+        return None
+    raise ValueError(putil.pcontracts.get_exdesc())
+
+
+@putil.pcontracts.new_contract()
+def number_numpy_vector(obj):
+    r"""
+    Validates if an object is a NumberNumpyVector pseudo-type object
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the name of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    if _check_number_numpy_vector(obj):
+        raise ValueError(putil.pcontracts.get_exdesc())
+
+
+@putil.pcontracts.new_contract()
 def offset_range(obj):
     r"""
     Validates if an object is a number in the [0, 1] range
@@ -672,3 +718,71 @@ def real_numpy_vector(obj):
     """
     if _check_real_numpy_vector(obj):
         raise ValueError(putil.pcontracts.get_exdesc())
+
+
+@putil.pcontracts.new_contract()
+def wave_interp_option(obj):
+    r"""
+    Validates if an object is a WaveInterpOption pseudo-type object
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the name of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    exdesc = putil.pcontracts.get_exdesc()
+    if not isinstance(obj, str):
+        raise ValueError(exdesc)
+    if obj.upper() in ['CONTINUOUS', 'STAIRCASE']:
+        return None
+    raise ValueError(exdesc)
+
+
+@putil.pcontracts.new_contract()
+def wave_scale_option(obj):
+    r"""
+    Validates if an object is a WaveScaleOption pseudo-type object
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the name of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    exdesc = putil.pcontracts.get_exdesc()
+    if not isinstance(obj, str):
+        raise ValueError(exdesc)
+    if obj.upper() in ['LINEAR', 'LOG']:
+        return None
+    raise ValueError(exdesc)
+
+@putil.pcontracts.new_contract()
+def wave_vectors(obj):
+    r"""
+    Validates if an object is a WaveVectors pseudo-type object
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the name of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    exdesc = putil.pcontracts.get_exdesc()
+    if not isinstance(obj, tuple):
+        raise ValueError(exdesc)
+    if _check_increasing_real_numpy_vector(obj[0]):
+        raise ValueError(exdesc)
+    if _check_real_numpy_vector(obj[1]):
+        raise ValueError(exdesc)
+    if len(obj[0]) != len(obj[1]):
+        raise ValueError(exdesc)

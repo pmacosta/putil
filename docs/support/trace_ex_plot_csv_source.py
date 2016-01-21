@@ -24,7 +24,7 @@ def trace_module(no_print=True):
         'indep_var',
         'dep_var'
     )
-    module_exclude_list = ['putil.eng']
+    module_exclude_list = ['putil.eng.functions']
     callable_exclude_list = [
         'putil.pcsv.csv_file.CsvFile._set_cfilter',
         'putil.pcsv.csv_file.CsvFile._set_dfilter',
