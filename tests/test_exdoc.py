@@ -579,6 +579,12 @@ class TestExDoc(object):
             RuntimeError,
             'Argument `raised` is not valid'
         )
+        putil.test.assert_exception(
+            exdocobj.get_sphinx_doc,
+            {'name':'callable', 'no_comment':5},
+            RuntimeError,
+            'Argument `raised` is not valid'
+        )
         minwidth = putil.exdoc._MINWIDTH
         assert exdocobj.get_sphinx_doc('_not_found_') == ''
         assert (
@@ -594,6 +600,24 @@ class TestExDoc(object):
         assert tstr == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.read\n'
+            '\n'
+            ':raises: TypeError (Cannot call read)\n'
+            '\n'
+        )
+        assert (
+            exdocobj.get_sphinx_doc(
+                'tests.support.exdoc_support_module_1.read',
+                raised=True,
+                no_comment=True
+            )
+            ==
+            ''
+        )
+        tstr = exdocobj.get_sphinx_doc(
+            'tests.support.exdoc_support_module_1.read',
+            no_comment=True
+        )
+        assert tstr == (
             '\n'
             ':raises: TypeError (Cannot call read)\n'
             '\n'

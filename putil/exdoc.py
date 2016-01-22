@@ -3,7 +3,7 @@
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,C0411,E0012,E0611,E1101,E1103,F0401,R0201,R0903,R0913
-# pylint: disable=W0105,W0122,W0212,W0611,W0613
+# pylint: disable=,R0914,W0105,W0122,W0212,W0611,W0613
 
 # Standard library imports
 from __future__ import print_function
@@ -397,7 +397,8 @@ class ExDoc(object):
         self._exclude = exclude
 
     def get_sphinx_autodoc(self, depth=None, exclude=None,
-                           width=72, error=False, raised=False):
+                           width=72, error=False, raised=False,
+                           no_comment=False):
         """
         Returns an exception list marked up in `reStructuredText`_
         automatically determining callable name
@@ -430,6 +431,12 @@ class ExDoc(object):
 
         :type  raised: boolean
 
+        :param no_comment: Flag that indicates whether a reStructuredText
+                           comment labeling the callable (method, function or
+                           class property) should be printed (False) or not
+                           (True) before the exceptions documentation
+        :type  no_comment: boolean
+
         :raises:
 
          * RuntimeError (Argument \\`depth\\` is not valid)
@@ -437,6 +444,8 @@ class ExDoc(object):
          * RuntimeError (Argument \\`error\\` is not valid)
 
          * RuntimeError (Argument \\`exclude\\` is not valid)
+
+         * RuntimeError (Argument \\`no_comment\\` is not valid)
 
          * RuntimeError (Argument \\`raised\\` is not valid)
 
@@ -466,11 +475,12 @@ class ExDoc(object):
             exclude=exclude,
             width=width,
             error=error,
-            raised=raised
+            raised=raised,
+            no_comment=no_comment
         )
 
     def get_sphinx_doc(self, name, depth=None, exclude=None,
-                       width=72, error=False, raised=False):
+                       width=72, error=False, raised=False, no_comment=False):
         """
         Returns an exception list marked up in `reStructuredText`_
 
@@ -505,6 +515,12 @@ class ExDoc(object):
                        should be documented (False)
         :type  raised: boolean
 
+        :param no_comment: Flag that indicates whether a reStructuredText
+                           comment labeling the callable (method, function or
+                           class property) should be printed (False) or not
+                           (True) before the exceptions documentation
+        :type  no_comment: boolean
+
         :raises:
          * RuntimeError (Argument \\`depth\\` is not valid)
 
@@ -512,13 +528,15 @@ class ExDoc(object):
 
          * RuntimeError (Argument \\`exclude\\` is not valid)
 
+         * RuntimeError (Argument \\`no_comment\\` is not valid)
+
          * RuntimeError (Argument \\`raised\\` is not valid)
 
          * RuntimeError (Argument \\`width\\` is not valid)
 
          * RuntimeError (Callable not found in exception list: *[name]*)
         """
-        # pylint: disable=R0101,R0204,R0912,R0914,R0915,R0916
+        # pylint: disable=R0101,R0204,R0912,R0915,R0916
         if depth and ((not isinstance(depth, int)) or
            (isinstance(depth, int) and (depth < 0))):
             raise RuntimeError('Argument `depth` is not valid')
@@ -532,6 +550,8 @@ class ExDoc(object):
         if not isinstance(error, bool):
             raise RuntimeError('Argument `error` is not valid')
         if not isinstance(raised, bool):
+            raise RuntimeError('Argument `raised` is not valid')
+        if not isinstance(no_comment, bool):
             raise RuntimeError('Argument `raised` is not valid')
         depth = self._depth if depth is None else depth
         exclude = self._exclude if not exclude else exclude
@@ -605,11 +625,18 @@ class ExDoc(object):
             # was raised
             return ''
         # Generate final output
-        template = '.. Auto-generated exceptions documentation for {callable}'
-        exoutput = [
-            _format_msg(template.format(callable=name), width, prefix='.. ')
-        ]
-        exoutput.extend([''])
+        if no_comment:
+            exoutput = ['']
+        else:
+            template = (
+                '.. Auto-generated exceptions documentation for {callable}'
+            )
+            exoutput = [
+                _format_msg(
+                    template.format(callable=name), width, prefix='.. '
+                )
+            ]
+            exoutput.extend([''])
         desc_dict = {
             'getter':'retrieved',
             'setter':'assigned',

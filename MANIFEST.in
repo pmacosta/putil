@@ -42,7 +42,6 @@ recursive-include tests/support/ref_images_8 *.png
 recursive-include tests/support/ref_images_9 *.png
 recursive-include tests/support/ref_images_10 *.png
 recursive-include tests/support/ref_images_11 *.png
-recursive-include tests/support/ref_images_12 *.png
 recursive-include sbin *.sh
 recursive-include sbin *.py
 recursive-include requirements *
