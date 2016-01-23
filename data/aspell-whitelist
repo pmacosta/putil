@@ -528,8 +528,8 @@ irmm
 iro
 isalpha
 isclass
-isdflt
 isclose
+isdflt
 isdigit
 isexception
 isf
@@ -723,10 +723,10 @@ ncruel
 ndarray
 ndata
 ndict
-nflip
-nfunction
 ndv
 ne
+nflip
+nfunction
 nimages
 nindent
 ninterp
@@ -780,8 +780,8 @@ nums
 nuniq
 nvar
 nvdata
-nworld
 nVectors
+nworld
 nzero
 OAUTH
 objs
@@ -817,6 +817,7 @@ OSI
 othercontract
 otoken
 otokens
+otype
 ovalue
 pacakges
 palegoldenrod

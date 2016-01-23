@@ -66,34 +66,43 @@ def _check_csv_row_filter(obj):
 
 def _check_increasing_real_numpy_vector(obj):
     # pylint: disable=C0103
-    if ((not isinstance(obj, numpy.ndarray)) or (isinstance(obj, numpy.ndarray)
-       and ((len(obj.shape) > 1) or ((len(obj.shape) == 1) and
-       (obj.shape[0] == 0))))):
-        return True
-    if (((obj.dtype.type == numpy.array([0]).dtype.type) or
-       (obj.dtype.type == numpy.array([0.0]).dtype.type)) and
-       ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and
-       (min(numpy.diff(obj)) > 0)))):
-        return False
+    if (isinstance(obj, numpy.ndarray) and
+       (len(obj.shape) == 1) and (obj.shape[0] > 0)):
+        otype = obj.dtype.name
+        result = any(
+            [otype.startswith(item) for item in ('int', 'float')]
+        )
+        return not (
+            bool(result)
+            and
+            (
+                (obj.shape[0] == 1)
+                or
+                ((obj.shape[0] > 1) and (min(numpy.diff(obj)) > 0))
+            )
+        )
     return True
 
 
 def _check_number_numpy_vector(obj):
     if (isinstance(obj, numpy.ndarray) and
-       (len(obj.shape) == 1) and (obj.shape[0] > 0) and
-       ((obj.dtype.type == numpy.array([0]).dtype.type) or
-       (obj.dtype.type == numpy.array([0.0]).dtype.type) or
-       (obj.dtype.type == numpy.array([complex(0, 0)]).dtype.type))):
-        return False
+       (len(obj.shape) == 1) and (obj.shape[0] > 0)):
+        otype = obj.dtype.name
+        result = any(
+            [otype.startswith(item) for item in ('int', 'float', 'complex')]
+        )
+        return not bool(result)
     return True
 
 
 def _check_real_numpy_vector(obj):
     if (isinstance(obj, numpy.ndarray) and
-       (len(obj.shape) == 1) and (obj.shape[0] > 0) and
-       ((obj.dtype.type == numpy.array([0]).dtype.type) or
-       (obj.dtype.type == numpy.array([0.0]).dtype.type))):
-        return False
+       (len(obj.shape) == 1) and (obj.shape[0] > 0)):
+        otype = obj.dtype.name
+        result = any(
+            [otype.startswith(item) for item in ('int', 'float')]
+        )
+        return not bool(result)
     return True
 
 
