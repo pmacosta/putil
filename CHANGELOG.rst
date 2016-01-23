@@ -5,6 +5,7 @@
 Changelog
 =========
 
+* 0.9.8 [2016-01-22]: Bug fixes
 * 0.9.7 [2016-01-22]: Enhanced control of exceptions automatic documentation
   output
 * 0.9.6 [2016-01-20]: Bug fixes

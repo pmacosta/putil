@@ -676,7 +676,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
             )
             if not isinstance(element, complex) else
             (
-                str(element)[1:-1]
+                str(element).lstrip('(').rstrip(')')
                 if not eng else
                 '{real}{sign}{imag}j'.format(
                     real=putil.eng.peng(element.real, frac_length, True),
@@ -689,7 +689,8 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
         return ret[0] if len(ret) == 1 else ret
     if vector is None:
         return 'None'
-    if (not limit) or (limit and (len(vector) < 7)):
+    lvector = len(vector)
+    if (not limit) or (limit and (lvector < 7)):
         items = _str(*vector)
         uret = '[ {0} ]'.format(', '.join(items))
     else:
@@ -714,8 +715,6 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     rlist = wobj.wrap(uret[2:])
     first_line = rlist[0]
     first_line_elements = first_line.count(',')
-    #if first_line_elements == 0:
-    #    raise ValueError('Argument `width` is too small')
     # Reconstruct string representation of vector excluding first line
     # Remove ... from text to be wrapped because it is placed in a single
     # line centered with the content
@@ -738,7 +737,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
     # 1 element and the middle with '...'
     # If numbers are not to be aligned at commas (variable width) then use the
     # existing results of the wrap() function
-    if limit:
+    if limit and (lvector > 6):
         if ((first_line_elements < 3) or
            ((first_line_elements == 3) and (last_line_elements < 3))):
             rlist = [
@@ -758,6 +757,8 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
                 '{0} ]'.format(', '.join(_str(*vector[-3:]))),
             ]
         first_line = rlist[0]
+    elif limit:
+        rlist = [item.lstrip() for item in rlist]
     first_comma_index = first_line.find(',')
     actual_width = len(first_line)-2
     if not eng:
@@ -768,7 +769,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
             return '\n'.join(
                 [
                     '{spaces}{line}{comma}'.format(
-                        spaces=(' '*(indent+2)) if indent else '',
+                        spaces=(' '*(indent+2)) if num > 0 else '',
                         line=(
                             line.center(actual_width).rstrip()
                             if line.strip() == '...' else

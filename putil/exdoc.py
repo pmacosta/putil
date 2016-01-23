@@ -3,7 +3,7 @@
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,C0411,E0012,E0611,E1101,E1103,F0401,R0201,R0903,R0913
-# pylint: disable=,R0914,W0105,W0122,W0212,W0611,W0613
+# pylint: disable=R0914,W0105,W0122,W0212,W0611,W0613
 
 # Standard library imports
 from __future__ import print_function
