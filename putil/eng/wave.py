@@ -4,6 +4,7 @@
 # pylint: disable=C0111,C0302,E0611,W0105
 
 # Standard library imports
+import collections
 import copy
 # PyPI imports
 import numpy
@@ -33,6 +34,17 @@ cname = (
 )
 ]]]
 [[[end]]]
+"""
+
+
+###
+# Global variables
+###
+POINT = collections.namedtuple('Point', ['indep_var', 'dep_var'])
+"""
+Constructor for a waveform data point. The first item is the
+independent variable data and the second item is the dependent variable
+data
 """
 
 
@@ -166,9 +178,9 @@ class Waveform(object):
     function to be used for interpolating between given independent variable
     data points).
 
-    All standard mathematical operators (:code:`+`, :code:`-`, :code:`*`,
-    :code:`//`, :code:`%`, :code:`**`, :code:`<<`, :code:`>>`, :code:`&`,
-    :code:`^`, :code:`\|`) are supported between waveform objects and between
+    All standard mathematical operators (``+``, ``-``, ``*``,
+    ``//``, ``%``, ``**``, ``<<``, ``>>``, ``&``,
+    ``^``, ``|``) are supported between waveform objects and between
     a number (integer, float or complex) and a waveform object. An integer
     dependent variable vector preserves its type through any operation unless
     an interpolated dependent variable item results in a floating point value.
@@ -265,9 +277,34 @@ class Waveform(object):
         self._set_dep_units(dep_units)
         self._set_interp(interp)
 
+    def __abs__(self):
+        """
+        Absolute value of waveform's dependent variable vector. For example:
+
+            >>> import math, numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([4, -5, complex(1, math.sqrt(3))])
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj')
+            >>> print(abs(obj))
+            Waveform: abs(obj)
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 4+0j, 5+0j, 2+0j ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        """
+        obj = copy.copy(self)
+        obj.indep_name = 'abs({0})'.format(obj.indep_name)
+        obj.dep_vector = numpy.abs(obj.dep_vector).astype(obj.dep_vector.dtype)
+        return obj
+
     def __add__(self, other):
         """
-        Adds two waveforms or a waveform by a number. For example:
+        Adds dependent variable vectors of two waveforms or the dependent
+        variable vector of a waveform and a number. For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -298,10 +335,47 @@ class Waveform(object):
         """
         return self._operation(other, '+')
 
+    def __and__(self, other):
+        """
+        Bit-wise logic and between the dependent variable vectors of two
+        waveforms or the dependent variable vector of a waveform and a number.
+        For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a&obj_b)
+            Waveform: obj_a&obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 0, 0, 4 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__and__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '&')
+
     def __bool__(self): # pragma: no cover
         """
-        Returns :code:`False` if the waveform dependent vector is zero for all
-        its elements, :code:`True` otherwise. For example:
+        Returns :code:`False` if the waveform dependent variable vector is
+        zero for all its elements, :code:`True` otherwise. For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -358,7 +432,11 @@ class Waveform(object):
 
     def __div__(self, other):  # pragma: no cover
         """
-        Divides two waveforms or a waveform by a number. For example:
+        Divides the dependent variable vector of a waveform by the dependent
+        variable vector of another waveform, the dependent variable vector of
+        a waveform by a number, or a number by the dependent variable vector of
+        a waveform. In the latter case a :py:class:`putil.eng.Waveform()`
+        object is returned with the result. For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -458,7 +536,12 @@ class Waveform(object):
 
     def __floordiv__(self, other):
         """
-        Floor-divides two waveforms or a waveform by a number. For example:
+        Floor-divides (integer division) the dependent variable vector of a
+        waveform by the dependent variable vector of another waveform, the
+        dependent variable vector of a waveform by a number, or a number by
+        the dependent variable vector of a waveform. In the latter case a
+        :py:class:`putil.eng.Waveform()` object is returned with the result.
+        For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -513,6 +596,26 @@ class Waveform(object):
         """
         return self._operation(other, '>=')
 
+    def __getitem__(self, key):
+        """
+        Slices waveform
+
+        :returns: :py:data:`putil.eng.POINT` named tuple or list of
+                  :py:data:`putil.eng.POINT` named tuples
+
+        :raises: Same exceptions as an invalid Numpy array slicing operation
+        """
+        try:
+            ivector = self._indep_vector[key]
+            dvector = self._dep_vector[key]
+            return (
+                [POINT(iitem, ditem) for iitem, ditem in zip(ivector, dvector)]
+                if isinstance(ivector, numpy.ndarray) else
+                POINT(ivector, dvector)
+            )
+        except:
+            raise
+
     def __gt__(self, other):
         """
         Tests whether a waveform is greater than another waveform or a real
@@ -532,6 +635,49 @@ class Waveform(object):
         .. [[[end]]]
         """
         return self._operation(other, '>')
+
+    def __invert__(self):
+        """
+        Bit-wise inversion of the dependent variable vector of a waveform.
+        For example:
+
+            >>> import math, numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([6, 5, 4])
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj')
+            >>> print(~obj)
+            Waveform: ~obj
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ -7, -6, -5 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__invert__
+
+        :raises: TypeError (Complex operand not supported)
+
+        .. [[[end]]]
+        """
+        self._exh.add_exception(
+            exname='complex_not_supported',
+            extype=TypeError,
+            exmsg='Complex operand not supported'
+        )
+        self._exh.raise_exception_if(
+            exname='complex_not_supported',
+            condition=self._dep_vector.dtype.name.startswith('complex')
+        )
+        obj = copy.copy(self)
+        obj.indep_name = '~'+obj.indep_name
+        obj.dep_vector = (
+            numpy.invert(obj.dep_vector).astype(obj.dep_vector.dtype)
+        )
+        return obj
 
     def __le__(self, other):
         """
@@ -558,13 +704,15 @@ class Waveform(object):
     def __len__(self):
         """
         Returns number of elements in independent (or dependent) variable
-        vectors
+        vector
         """
         return len(self._indep_vector)
 
     def __lshift__(self, other):
         """
-        Left shifts a waveform  or waveform by a number. For example:
+        Left shifts the dependent variable vector of a waveform according to
+        the dependent variable vector of another waveform or a number. For
+        example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -619,8 +767,11 @@ class Waveform(object):
 
     def __mod__(self, other):
         r"""
-        Division reminder between two waveforms or a waveform by a number.
-        For example:
+        Division reminder between the dependent variable vectors of two
+        waveforms, between the dependent variable vector of a waveform and
+        a number, or a number by the dependent variable vector of
+        a waveform. In the latter case a :py:class:`putil.eng.Waveform()`
+        object is returned with the result. For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -655,7 +806,8 @@ class Waveform(object):
 
     def __mul__(self, other):
         """
-        Multiplies two waveforms or a waveform by a number. For example:
+        Multiplies the dependent variable vector of two waveforms or the
+        dependent variable vector of a waveform by a number. For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -705,6 +857,30 @@ class Waveform(object):
         """
         return not self.__eq__(other)
 
+    def __neg__(self):
+        """
+        Multiplies the dependent variable vector by -1. For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([4, -5, 6])
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj')
+            >>> print(-obj)
+            Waveform: -obj
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ -4, 5, -6 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        """
+        obj = copy.copy(self)
+        obj.indep_name = '-'+obj.indep_name
+        obj.dep_vector = -1*obj.dep_vector
+        return obj
+
     def __nonzero__(self):  # pragma: no cover
         """
         Returns :code:`False` if the waveform dependent vector is zero for all
@@ -738,9 +914,74 @@ class Waveform(object):
             )
         )
 
+    def __or__(self, other):
+        """
+        Bit-wise logic or between the dependent variable vectors of two
+        waveforms or the dependent variable vector of a waveform and a number.
+        For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a|obj_b)
+            Waveform: obj_a|obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 12, 7, 6 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__or__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '|')
+
+    def __pos__(self):
+        """
+        Multiplies the dependent variable vector of a waveform by +1.
+        For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector = numpy.array([4, 5, 6])
+            >>> obj = putil.eng.Waveform(indep_vector, dep_vector, 'obj')
+            >>> print(+obj)
+            Waveform: obj
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 4, 5, 6 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        """
+        return copy.copy(self)
+
     def __pow__(self, other):
         """
-        Power of two waveforms or a waveform by a number. For example:
+        Raises the dependent variable vector of a waveform to the power
+        specified by the dependent variable vector of another waveform, the
+        dependent variable vector of a waveform to the power specified by
+        a number, or a number by the power specified by the dependent
+        variable vector of a waveform. In the latter case a
+        :py:class:`putil.eng.Waveform()` object is returned with the result.
+        For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -773,14 +1014,21 @@ class Waveform(object):
 
     def __radd__(self, other):
         """
-        Reflected addition of a number and a waveform.
+        Reflected addition.
         See :py:meth:`putil.eng.Waveform.__add__` for more details
         """
         return self._operation(other, '+')
 
+    def __rand__(self, other):  # pragma: no cover
+        """
+        Reflected bit-wise logic and.
+        See :py:meth:`putil.eng.Waveform.__and__` for more details
+        """
+        return self._operation(other, '&', reflected=True)
+
     def __rdiv__(self, other):  # pragma: no cover
         """
-        Reflected division of a number and a waveform.
+        Reflected division.
         See :py:meth:`putil.eng.Waveform.__div__` for more details
         """
         return self._operation(other, '/', reflected=True)
@@ -831,49 +1079,58 @@ interp='CONTINUOUS')"
 
     def __rfloordiv__(self, other):
         """
-        Reflected floor division of a number and a waveform.
+        Reflected floor (integer) division.
         See :py:meth:`putil.eng.Waveform.__floordiv__` for more details
         """
         return self._operation(other, 'fdiv', reflected=True)
 
     def __rlshift__(self, other):
         """
-        Reflected left shift a waveform.
+        Reflected left shift.
         See :py:meth:`putil.eng.Waveform.__lshift__` for more details
         """
         return self._operation(other, '<<', reflected=True)
 
     def __rmod__(self, other):
         """
-        Reflected division reminder of a number and a waveform.
+        Reflected division.
         See :py:meth:`putil.eng.Waveform.__mod__` for more details
         """
         return self._operation(other, '%', reflected=True)
 
     def __rmul__(self, other):
         """
-        Reflected multiplication of a number and a waveform.
+        Reflected multiplication.
         See :py:meth:`putil.eng.Waveform.__mul__` for more details
         """
         return self._operation(other, '*')
 
+    def __ror__(self, other):  # pragma: no cover
+        """
+        Reflected bit-wise logic or.
+        See :py:meth:`putil.eng.Waveform.__or__` for more details
+        """
+        return self._operation(other, '|', reflected=True)
+
     def __rpow__(self, other):
         """
-        Reflected power of a number and a waveform.
+        Reflected power.
         See :py:meth:`putil.eng.Waveform.__pow__` for more details
         """
         return self._operation(other, '**', reflected=True)
 
     def __rrshift__(self, other):
         """
-        Reflected right shift a waveform.
+        Reflected right shift.
         See :py:meth:`putil.eng.Waveform.__rshift__` for more details
         """
         return self._operation(other, '>>', reflected=True)
 
     def __rshift__(self, other):
-        r"""
-        Right shifts a waveform  or waveform by a number. For example:
+        """
+        Right shifts the dependent variable vector of a waveform according to
+        the dependent variable vector of another waveform or a number. For
+        example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -908,17 +1165,24 @@ interp='CONTINUOUS')"
 
     def __rsub__(self, other):
         """
-        Reflected subtraction of a number and a waveform.
+        Reflected subtraction.
         See :py:meth:`putil.eng.Waveform.__sub__` for more details
         """
         return self._operation(other, '-')
 
     def __rtruediv__(self, other):  # pragma: no cover
         """
-        Reflected division of a number and a waveform.
+        Reflected true (floating) division.
         See :py:meth:`putil.eng.Waveform.__truediv__` for more details
         """
         return self._operation(other, '/', reflected=True)
+
+    def __rxor__(self, other):  # pragma: no cover
+        """
+        Reflected bit-wise logic exclusive or .
+        See :py:meth:`putil.eng.Waveform.__xor__` for more details
+        """
+        return self._operation(other, '^', reflected=True)
 
     def __str__(self):
         """
@@ -969,7 +1233,8 @@ interp='CONTINUOUS')"
 
     def __sub__(self, other):
         """
-        Subtracts two waveforms or a waveform by a number. For example:
+        Subtracts two waveforms, waveform by a number or a number by
+        a waveform. For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -1002,7 +1267,12 @@ interp='CONTINUOUS')"
 
     def __truediv__(self, other):   # pragma: no cover
         """
-        Divides two waveforms or a waveform by a number. For example:
+        Performs true (floating) division between the dependent variable vector
+        of a waveform by the dependent variable vector of another waveform,
+        the dependent variable vector of a waveform by a number, or a number by
+        the dependent variable vector of a waveform. In the latter case a
+        :py:class:`putil.eng.Waveform()` object is returned with the result.
+        For example:
 
             >>> import numpy, putil.eng
             >>> indep_vector = numpy.array([1, 2, 3])
@@ -1030,6 +1300,43 @@ interp='CONTINUOUS')"
         .. [[[end]]]
         """
         return self._operation(other, '/')
+
+    def __xor__(self, other):
+        """
+        Bit-wise logic exclusive or between the dependent variable vectors of
+        two waveforms or the dependent variable vector of a waveform and a
+        number.  For example:
+
+            >>> import numpy, putil.eng
+            >>> indep_vector = numpy.array([1, 2, 3])
+            >>> dep_vector_a = numpy.array([4, 5, 6])
+            >>> dep_vector_b = numpy.array([8, 2, 4])
+            >>> obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+            >>> obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+            >>> print(obj_a^obj_b)
+            Waveform: obj_a^obj_b
+            Independent variable: [ 1, 2, 3 ]
+            Dependent variable: [ 12, 7, 2 ]
+            Independent variable scale: LINEAR
+            Dependent variable scale: LINEAR
+            Independent variable units: (None)
+            Dependent variable units: (None)
+            Interpolating function: CONTINUOUS
+
+        .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+        .. Auto-generated exceptions documentation for
+        .. putil.eng.wave.Waveform.__xor__
+
+        :raises:
+         * RuntimeError (Waveforms are not compatible)
+
+         * TypeError (Complex operands not supported)
+
+         * TypeError (Data type not supported)
+
+        .. [[[end]]]
+        """
+        return self._operation(other, '^')
 
     def _operation(self, other, operand, reflected=False):
         # pylint: disable=R0912,R0915
@@ -1126,8 +1433,23 @@ interp='CONTINUOUS')"
                 dep_vector_a if not reflected else dep_vector_b,
                 dep_vector_b if not reflected else dep_vector_a,
             )
-        else: #elif operand == '>>':
+        elif operand == '>>':
             dep_vector = numpy.right_shift(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        elif operand == '&':
+            dep_vector = numpy.bitwise_and(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        elif operand == '|':
+            dep_vector = numpy.bitwise_or(
+                dep_vector_a if not reflected else dep_vector_b,
+                dep_vector_b if not reflected else dep_vector_a,
+            )
+        else: #elif operand == '^':
+            dep_vector = numpy.bitwise_xor(
                 dep_vector_a if not reflected else dep_vector_b,
                 dep_vector_b if not reflected else dep_vector_a,
             )

@@ -21,5 +21,5 @@ from .functions import (
     to_scientific_string,
     to_scientific_tuple
 )
-from .wave import Waveform
+from .wave import POINT, Waveform
 from .constants import FP_ATOL, FP_RTOL

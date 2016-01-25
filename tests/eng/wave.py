@@ -387,6 +387,26 @@ class TestWaveform(object):
         arg = (array([1, 2, 3]), array([4, 5]))
         APROP(obj, 'vectors', arg, RuntimeError, msg)
 
+    def test_abs(self):
+        """ Test __abs__ method behavior """
+        indep_vector = numpy.array([1, 2, 3])
+        dep_vector_a = numpy.array([4, -5, complex(1, math.sqrt(3))])
+        obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+        dep_vector_b = numpy.array([4, 5, 2])
+        obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+        obj_c = abs(obj_a)
+        assert obj_c.indep_name == 'abs(obj_a)'
+        assert obj_c == obj_b
+        indep_vector = numpy.array([1, 2, 3])
+        dep_vector_a = numpy.array([4, -5, 6])
+        obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
+        dep_vector_b = numpy.array([4, 5, 6])
+        obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
+        obj_c = abs(obj_a)
+        assert obj_c.indep_name == 'abs(obj_a)'
+        assert obj_c == obj_b
+        assert obj_c.dep_vector.dtype.name.startswith('int')
+
     def test_add(self):
         """ Test __add__ method behavior """
         # Float and integer dependent variable vector
@@ -445,6 +465,50 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b + obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+
+    def test_and(self):
+        """ Test __and__ method behavior """
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_vector=numpy.array([7, 1, 4]))
+        obj_c = std_obj('obj_c', dep_vector=numpy.array([6, 1, 4]))
+        aobj = obj_a & obj_b
+        assert aobj == obj_c
+        assert aobj.indep_name == 'obj_a&obj_b'
+        assert ((2&obj_a).dep_vector == numpy.array([2, 0, 0])).all()
+        assert ((obj_a&2).dep_vector == numpy.array([2, 0, 0])).all()
+        obj_a &= 2
+        assert (obj_a.dep_vector == numpy.array([2, 0, 0])).all()
+
+    @pytest.mark.wave
+    def test_and_exceptions(self):
+        """ Test __and__ method exceptions """
+        obj_a = std_obj('obj_a')
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a & True
+        assert GET_EXMSG(excinfo) == 'Data type not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = True & obj_a
+        assert GET_EXMSG(excinfo) == 'Data type not supported'
+        obj_b = std_obj('obj_b', interp='CONTINUOUS')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a & obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_b & obj_a
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+        obj_b = std_obj('obj_b', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a & obj_b
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_b & obj_a
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a & 1+1j
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = 1+1j & obj_a
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
 
     def test_bool(self):
         """ Test __bool__ and __nonzero__ methods behavior """
@@ -713,6 +777,24 @@ class TestWaveform(object):
             _ = obj_a >= 5
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
 
+
+    def test_getitem(self):
+        """ Test __getitem__ method behavior """
+        obj_a = std_obj('obj_a')
+        assert obj_a[0] == (1, 6)
+        assert obj_a[-1] == (3, 4)
+        assert obj_a[0:2] == [(1, 6), (2, 5)]
+
+    def test_getitem_exceptions(self):
+        """ Test __getitem__ method exceptions """
+        # pylint: disable=E1127
+        obj_a = std_obj('obj_a')
+        with pytest.raises(IndexError) as excinfo:
+            _ = obj_a[1:'a']
+        assert GET_EXMSG(excinfo) == (
+            'failed to coerce slice entry of type str to integer'
+        )
+
     def test_gt(self):
         """ Test __gt__ method behavior """
         obj_a = std_obj('obj_a')
@@ -751,6 +833,21 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a > 5
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+
+    def test_invert(self):
+        """ Test __invert__ method behavior """
+        ref = std_obj('ref')
+        obj = ~ref
+        assert obj.indep_name == '~ref'
+        assert (obj.dep_vector == numpy.array([-7, -6, -5])).all()
+
+    @pytest.mark.wave
+    def test_invert_exceptions(self):
+        """ Test __invert__ method exceptions """
+        obj = std_obj('obj', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        with pytest.raises(TypeError) as excinfo:
+            _ = ~obj
+        assert GET_EXMSG(excinfo) == 'Complex operand not supported'
 
     def test_le(self):
         """ Test __le__ method behavior """
@@ -960,6 +1057,66 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b * obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+
+    def test_neg(self):
+        """ Test __neg__ method behavior """
+        ref = std_obj('ref')
+        obj = -ref
+        assert obj.indep_name == '-ref'
+        assert (obj.dep_vector == numpy.array([-6, -5, -4])).all()
+        ref = std_obj('obj', dep_vector=numpy.array([1, 2+2j, 3+3j]))
+        assert ((-ref).dep_vector == numpy.array([-1, -2-2j, -3-3j])).all()
+
+    def test_or(self):
+        """ Test __or__ method behavior """
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_vector=numpy.array([7, 1, 4]))
+        obj_c = std_obj('obj_c', dep_vector=numpy.array([7, 5, 4]))
+        aobj = obj_a | obj_b
+        assert aobj == obj_c
+        assert aobj.indep_name == 'obj_a|obj_b'
+        assert ((2|obj_a).dep_vector == numpy.array([6, 7, 6])).all()
+        assert ((obj_a|2).dep_vector == numpy.array([6, 7, 6])).all()
+        obj_a |= 2
+        assert (obj_a.dep_vector == numpy.array([6, 7, 6])).all()
+
+    @pytest.mark.wave
+    def test_or_exceptions(self):
+        """ Test __or__ method exceptions """
+        obj_a = std_obj('obj_a')
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a | True
+        assert GET_EXMSG(excinfo) == 'Data type not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = True | obj_a
+        assert GET_EXMSG(excinfo) == 'Data type not supported'
+        obj_b = std_obj('obj_b', interp='CONTINUOUS')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a | obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_b | obj_a
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+        obj_b = std_obj('obj_b', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a | obj_b
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_b | obj_a
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a | 1+1j
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = 1+1j | obj_a
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+
+    def test_pos(self):
+        """ Test __pos__ method behavior """
+        ref = std_obj('ref')
+        obj = +ref
+        assert ref is not obj
+        assert ref == obj
 
     def test_pow(self):
         """ Test __pow__ method behavior """
@@ -1179,3 +1336,47 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b - obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+
+    def test_xor(self):
+        """ Test __xor__ method behavior """
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_vector=numpy.array([7, 1, 4]))
+        obj_c = std_obj('obj_c', dep_vector=numpy.array([1, 4, 0]))
+        aobj = obj_a ^ obj_b
+        assert aobj == obj_c
+        assert aobj.indep_name == 'obj_a^obj_b'
+        assert ((2^obj_a).dep_vector == numpy.array([4, 7, 6])).all()
+        assert ((obj_a^2).dep_vector == numpy.array([4, 7, 6])).all()
+        obj_a ^= 2
+        assert (obj_a.dep_vector == numpy.array([4, 7, 6])).all()
+
+    @pytest.mark.wave
+    def test_xor_exceptions(self):
+        """ Test __xor__ method exceptions """
+        obj_a = std_obj('obj_a')
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a ^ True
+        assert GET_EXMSG(excinfo) == 'Data type not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = True ^ obj_a
+        assert GET_EXMSG(excinfo) == 'Data type not supported'
+        obj_b = std_obj('obj_b', interp='CONTINUOUS')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a ^ obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_b ^ obj_a
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+        obj_b = std_obj('obj_b', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a ^ obj_b
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_b ^ obj_a
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = obj_a ^ 1+1j
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        with pytest.raises(TypeError) as excinfo:
+            _ = 1+1j ^ obj_a
+        assert GET_EXMSG(excinfo) == 'Complex operands not supported'

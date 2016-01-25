@@ -80,6 +80,7 @@ bfrac
 bgrcmykw
 BinOp
 Bitbucket
+bitwise
 blanchedalmond
 BLANKLINE
 blueviolet
@@ -258,6 +259,7 @@ dir
 dirname
 dirs
 distutils
+ditem
 divmod
 dkeys
 dlist
@@ -490,6 +492,7 @@ ifrow
 iftxt
 ihas
 iheader
+iitem
 iline
 ilines
 imag
@@ -550,6 +553,7 @@ itg
 itoken
 itokens
 ivar
+ivector
 IXUSR
 izip
 json
@@ -1008,6 +1012,7 @@ rnum
 ro
 robj
 r'obj
+ror
 rosybrown
 royalblue
 rpow
@@ -1034,6 +1039,7 @@ runtests
 RuntimeError
 rvalue
 rwtb
+rxor
 saddlebrown
 sandybrown
 sarg

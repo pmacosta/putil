@@ -113,6 +113,7 @@ Named tuples
 
 .. autofunction:: putil.eng.ENGPOWER
 .. autofunction:: putil.eng.NUMCOMP
+.. autofunction:: putil.eng.POINT
 
 *********
 Functions
@@ -139,13 +140,16 @@ Classes
 
  .. autoclass:: putil.eng.Waveform
 	:members: __add__,
+                  __and__,
                   __bool__,
                   __copy__,
                   __div__,
                   __eq__,
                   __floordiv__,
                   __ge__,
+                  __getitem__,
                   __gt__,
+                  __invert__,
                   __le__,
                   __len__,
                   __lshift__,
@@ -153,21 +157,29 @@ Classes
                   __mod__,
                   __mul__,
                   __ne__,
+                  __neg__,
                   __nonzero__,
+                  __or__,
+                  __pos__,
                   __pow__,
                   __sub__,
                   __radd__,
+                  __rand__,
                   __repr__,
                   __rfloordiv__,
                   __rlshift__,
                   __rmod__,
                   __rmul__,
+                  __ror__,
                   __rpow__,
                   __rrshift__,
                   __rshift__,
                   __rsub__,
+                  __rtruediv__,
+                  __rxor__,
                   __str__,
                   __truediv__,
+                  __xor__,
                   vectors,
                   dep_scale,
                   dep_units,
