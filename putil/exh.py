@@ -878,7 +878,7 @@ class ExHandle(object):
                       ends with the characters :code:`']\*'`, the field name
                       follows the same rules as variable names and is between
                       these two sets of characters. For example,
-                      :code:`\*[fname]\*` defines the :code:`fname` field
+                      :code:`'\*[fname]\*'` defines the fname field
         :type  exmsg: string
 
         :raises:
