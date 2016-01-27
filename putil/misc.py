@@ -201,11 +201,11 @@ class TmpFile(object):
 
     :raises:    RuntimeError (Argument \`fpointer\` is not valid)
 
-    .. warning:: The file name returned uses the forward slash (:code:`/`) as
+    .. warning:: The file name returned uses the forward slash (``/``) as
        the path separator regardless of the platform. This avoids
        `problems <https://pythonconquerstheuniverse.wordpress.com/2008/06/04/
        gotcha-%E2%80%94-backslashes-in-windows-filenames/>`_ with
-       escape sequences or mistaken Unicode character encodings (:code:`\\user`
+       escape sequences or mistaken Unicode character encodings (``\\user``
        for example). Many functions in the os module of the standard library (
        `os.path.normpath()
        <https://docs.python.org/2/library/os.path.html#os.path.normpath>`_ and

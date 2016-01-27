@@ -13,7 +13,8 @@ This module provides engineering-related functions including:
   their constituent components and converting to and from regular
   floats. For example:
 
-	.. doctest::
+    .. code-block:: python
+
 
 		>>> import putil.eng
 		>>> x = putil.eng.peng(1346, 2, True)
@@ -34,7 +35,7 @@ This module provides engineering-related functions including:
 
 * Pretty printing Numpy vectors. For example:
 
-	.. doctest::
+    .. code-block:: python
 
 		>>> from __future__ import print_function
 		>>> import putil.eng
@@ -58,7 +59,7 @@ This module provides engineering-related functions including:
   degree of control and options than standard Python string formatting.
   For example:
 
-	.. doctest::
+    .. code-block:: python
 
 		>>> import putil.eng
 		>>> putil.eng.to_scientific_string(
