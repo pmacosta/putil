@@ -5,6 +5,8 @@
 Changelog
 =========
 
+* 0.9.9 [2016-01-27]: Fixed documentation bugs that were causing errors with
+  Sphinx 1.3.5+
 * 0.9.8 [2016-01-22]: Bug fixes
 * 0.9.7 [2016-01-22]: Enhanced control of exceptions automatic documentation
   output
