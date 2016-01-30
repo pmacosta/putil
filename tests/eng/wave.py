@@ -118,7 +118,7 @@ def interp_iter():
 
 
 def std_obj(indep_name, indep_vector=None, dep_vector=None,
-    interp='STAIRCASE'):
+    interp='STAIRCASE', dep_units='Volts'):
     """ Return a waveform with fixed parameters and given name """
     indep_vector = (
         array([1, 2, 3]) if indep_vector is None else indep_vector
@@ -133,7 +133,7 @@ def std_obj(indep_name, indep_vector=None, dep_vector=None,
         indep_scale='LOG',
         dep_scale='LINEAR',
         indep_units='Sec',
-        dep_units='Volts',
+        dep_units=dep_units,
         interp=interp
     )
 
@@ -282,10 +282,10 @@ class TestWaveform(object):
         # Float dependent variable vector
         obj.vectors = [(5, 1.1), (6, 1.2), (7, 1.3)]
         indep_vector, dep_vector = zip(*(obj.vectors))
-        assert (numpy.array(indep_vector) == numpy.array([5, 6, 7])).all()
-        assert (numpy.array(dep_vector) == numpy.array([1.1, 1.2, 1.3])).all()
-        assert (obj.indep_vector == numpy.array([5, 6, 7])).all()
-        assert (obj.dep_vector == numpy.array([1.1, 1.2, 1.3])).all()
+        assert (array(indep_vector) == array([5, 6, 7])).all()
+        assert (array(dep_vector) == array([1.1, 1.2, 1.3])).all()
+        assert (obj.indep_vector == array([5, 6, 7])).all()
+        assert (obj.dep_vector == array([1.1, 1.2, 1.3])).all()
         # Complex dependent variable vector
         obj.dep_vector = array([1+1j, 2+2j, 3+3j])
         assert (obj.dep_vector == array([1+1j, 2+2j, 3+3j])).all()
@@ -393,21 +393,22 @@ class TestWaveform(object):
 
     def test_abs(self):
         """ Test __abs__ method behavior """
-        indep_vector = numpy.array([1, 2, 3])
-        dep_vector_a = numpy.array([4, -5, complex(1, math.sqrt(3))])
+        indep_vector = array([1, 2, 3])
+        dep_vector_a = array([4, -5, complex(1, math.sqrt(3))])
         obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
-        dep_vector_b = numpy.array([4, 5, 2])
+        dep_vector_b = array([4, 5, 2])
         obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
         obj_c = abs(obj_a)
         assert obj_c.indep_name == 'abs(obj_a)'
         assert obj_c == obj_b
-        indep_vector = numpy.array([1, 2, 3])
-        dep_vector_a = numpy.array([4, -5, 6])
+        indep_vector = array([1, 2, 3])
+        dep_vector_a = array([4, -5, 6])
         obj_a = putil.eng.Waveform(indep_vector, dep_vector_a, 'obj_a')
-        dep_vector_b = numpy.array([4, 5, 6])
+        dep_vector_b = array([4, 5, 6])
         obj_b = putil.eng.Waveform(indep_vector, dep_vector_b, 'obj_b')
         obj_c = abs(obj_a)
         assert obj_c.indep_name == 'abs(obj_a)'
+        assert obj_c.dep_units == obj_a.dep_units
         assert obj_c == obj_b
         assert obj_c.dep_vector.dtype.name.startswith('int')
 
@@ -420,6 +421,7 @@ class TestWaveform(object):
         aobj = obj_a+obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a+obj_b'
+        assert obj_c.dep_units == obj_a.dep_units
         assert ((5+obj_a).dep_vector == array([11, 10, 9])).all()
         assert ((obj_a+2).dep_vector == array([8, 7, 6])).all()
         obj_a += 2
@@ -469,19 +471,24 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b + obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a + obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_and(self):
         """ Test __and__ method behavior """
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=numpy.array([7, 1, 4]))
-        obj_c = std_obj('obj_c', dep_vector=numpy.array([6, 1, 4]))
+        obj_b = std_obj('obj_b', dep_vector=array([7, 1, 4]))
+        obj_c = std_obj('obj_c', dep_vector=array([6, 1, 4]))
         aobj = obj_a & obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a&obj_b'
-        assert ((2&obj_a).dep_vector == numpy.array([2, 0, 0])).all()
-        assert ((obj_a&2).dep_vector == numpy.array([2, 0, 0])).all()
+        assert aobj.dep_units == obj_a.dep_units
+        assert ((2&obj_a).dep_vector == array([2, 0, 0])).all()
+        assert ((obj_a&2).dep_vector == array([2, 0, 0])).all()
         obj_a &= 2
-        assert (obj_a.dep_vector == numpy.array([2, 0, 0])).all()
+        assert (obj_a.dep_vector == array([2, 0, 0])).all()
 
     @pytest.mark.wave
     def test_and_exceptions(self):
@@ -500,7 +507,7 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b & obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
-        obj_b = std_obj('obj_b', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        obj_b = std_obj('obj_b', dep_vector=array([1+1j, 2+2j, 3+3j]))
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a & obj_b
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
@@ -513,6 +520,10 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = 1+1j & obj_a
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a & obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_bool(self):
         """ Test __bool__ and __nonzero__ methods behavior """
@@ -575,54 +586,75 @@ class TestWaveform(object):
 
     def test_div(self):
         """ Test __div__ method behavior """
+        # pylint: disable=R0915
         ref = array([0.8333333333333333333, 1.0, 1.25])
         if sys.hexversion < 0x03000000:
             # Integer division
             obj_a = std_obj('obj_a')
-            obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]))
+            obj_b = std_obj(
+                'obj_b', dep_vector=array([8, -1, -4]), dep_units='A'
+            )
             obj_c = std_obj(
-                'obj_c', dep_vector=array([0, -5, -1])
+                'obj_c',
+                dep_vector=array([0, -5, -1]),
+                dep_units='Volts/A'
             )
             aobj = obj_a/obj_b
             assert aobj == obj_c
             assert aobj.indep_name == 'obj_a/obj_b'
             assert ((5/obj_a).dep_vector == array([0, 1, 1])).all()
+            assert (5/obj_a).dep_units == '1/Volts'
             assert ((obj_a/2).dep_vector == array([3, 2, 2])).all()
+            assert (obj_a/2).dep_units == 'Volts'
             obj_a /= 2
             assert (obj_a.dep_vector == array([3, 2, 2])).all()
         else:
             # True division
             obj_a = std_obj('obj_a')
-            obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]))
+            obj_b = std_obj(
+                'obj_b', dep_vector=array([8, -1, -4]), dep_units='A'
+            )
             obj_c = std_obj(
-                'obj_c', dep_vector=array([0.75, -5.0, -1.0])
+                'obj_c',
+                dep_vector=array([0.75, -5.0, -1.0]),
+                dep_units='Volts/A'
             )
             aobj = obj_a/obj_b
             assert aobj == obj_c
             assert aobj.indep_name == 'obj_a/obj_b'
             assert ((5/obj_a).dep_vector == ref).all()
+            assert (5/obj_a).dep_units == '1/Volts'
             assert ((obj_a/2).dep_vector == array([3.0, 2.5, 2.0])).all()
+            assert (obj_a/2).dep_units == 'Volts'
             obj_a /= 2
             assert (obj_a.dep_vector == array([3.0, 2.5, 2.0])).all()
         # Floating point division
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=array([8.0, -1.0, -4.0]))
-        obj_c = std_obj('obj_c', dep_vector=array([0.75, -5.0, -1.0]))
+        obj_b = std_obj(
+            'obj_b', dep_vector=array([8.0, -1.0, -4.0]), dep_units='A'
+        )
+        obj_c = std_obj(
+            'obj_c',
+            dep_vector=array([0.75, -5.0, -1.0]), dep_units='Volts/A'
+        )
         aobj = obj_a/obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a/obj_b'
         assert ((5.0/obj_a).dep_vector == ref).all()
+        assert (5.0/obj_a).dep_units == '1/Volts'
         assert ((obj_a/2.0).dep_vector == array([3.0, 2.5, 2.0])).all()
+        assert (obj_a/2.0).dep_units == 'Volts'
         obj_a /= 2.0
         assert (obj_a.dep_vector == array([3.0, 2.5, 2.0])).all()
         # Complex operands
         obj_a = std_obj('obj_a')
         obj_b = std_obj(
-            'obj_b', dep_vector=array([10+20j, 5+5j, 6-2j])
+            'obj_b', dep_vector=array([10+20j, 5+5j, 6-2j]), dep_units='Ohms'
         )
         obj_c = std_obj(
             'obj_c',
-            dep_vector=array([0.12-0.24j, 0.5-0.5j, 0.6+0.2j])
+            dep_vector=array([0.12-0.24j, 0.5-0.5j, 0.6+0.2j]),
+            dep_units='Volts/Ohms'
         )
         aobj = obj_a/obj_b
         assert aobj == obj_c
@@ -697,17 +729,25 @@ class TestWaveform(object):
         )
         assert obj_b == 1+1j
         assert obj_b != 1+2j
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        assert not obj_a == obj_b
+        assert obj_a != obj_b
 
     def test_floordiv(self):
         """ Test __floordiv__ method behavior """
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]))
-        obj_c = std_obj('obj_c', dep_vector=array([0, -5, -1]))
+        obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]), dep_units='C')
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([0, -5, -1]), dep_units='Volts/C'
+        )
         aobj = obj_a//obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a//obj_b'
         assert ((10//obj_a).dep_vector == array([1, 2, 2])).all()
+        assert (10//obj_a).dep_units == '1/Volts'
         assert ((obj_a//2).dep_vector == array([3, 2, 2])).all()
+        assert (obj_a//2).dep_units == 'Volts'
         obj_a //= 2
         assert (obj_a.dep_vector == array([3, 2, 2])).all()
 
@@ -780,7 +820,11 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a >= 5
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
-
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a >= obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_getitem(self):
         """ Test __getitem__ method behavior """
@@ -837,18 +881,23 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a > 5
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a > obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_invert(self):
         """ Test __invert__ method behavior """
         ref = std_obj('ref')
         obj = ~ref
         assert obj.indep_name == '~ref'
-        assert (obj.dep_vector == numpy.array([-7, -6, -5])).all()
+        assert (obj.dep_vector == array([-7, -6, -5])).all()
 
     @pytest.mark.wave
     def test_invert_exceptions(self):
         """ Test __invert__ method exceptions """
-        obj = std_obj('obj', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        obj = std_obj('obj', dep_vector=array([1+1j, 2+2j, 3+3j]))
         with pytest.raises(TypeError) as excinfo:
             _ = ~obj
         assert GET_EXMSG(excinfo) == 'Complex operand not supported'
@@ -891,6 +940,11 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a <= 5
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a <= obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_len(self):
         """ Test __len__ method behavior """
@@ -942,6 +996,11 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = 1+1j << obj_a
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a << obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_lt(self):
         """ Test __lt__ method behavior """
@@ -981,6 +1040,11 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a < 5
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a < obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_mod(self):
         """ Test __mod__ method behavior """
@@ -1034,13 +1098,17 @@ class TestWaveform(object):
     def test_mul(self):
         """ Test __mul__ method behavior """
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]))
-        obj_c = std_obj('obj_c', dep_vector=array([48, -5, -16]))
+        obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]), dep_units='A')
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([48, -5, -16]), dep_units='Volts*A'
+        )
         aobj = obj_a*obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a*obj_b'
         assert ((5*obj_a).dep_vector == array([30, 25, 20])).all()
+        assert (5*obj_a).dep_units == 'Volts'
         assert ((obj_a*2).dep_vector == array([12, 10, 8])).all()
+        assert (obj_a*2).dep_units == 'Volts'
         obj_a *= 2
         assert (obj_a.dep_vector == array([12, 10, 8])).all()
 
@@ -1067,22 +1135,22 @@ class TestWaveform(object):
         ref = std_obj('ref')
         obj = -ref
         assert obj.indep_name == '-ref'
-        assert (obj.dep_vector == numpy.array([-6, -5, -4])).all()
-        ref = std_obj('obj', dep_vector=numpy.array([1, 2+2j, 3+3j]))
-        assert ((-ref).dep_vector == numpy.array([-1, -2-2j, -3-3j])).all()
+        assert (obj.dep_vector == array([-6, -5, -4])).all()
+        ref = std_obj('obj', dep_vector=array([1, 2+2j, 3+3j]))
+        assert ((-ref).dep_vector == array([-1, -2-2j, -3-3j])).all()
 
     def test_or(self):
         """ Test __or__ method behavior """
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=numpy.array([7, 1, 4]))
-        obj_c = std_obj('obj_c', dep_vector=numpy.array([7, 5, 4]))
+        obj_b = std_obj('obj_b', dep_vector=array([7, 1, 4]))
+        obj_c = std_obj('obj_c', dep_vector=array([7, 5, 4]))
         aobj = obj_a | obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a|obj_b'
-        assert ((2|obj_a).dep_vector == numpy.array([6, 7, 6])).all()
-        assert ((obj_a|2).dep_vector == numpy.array([6, 7, 6])).all()
+        assert ((2|obj_a).dep_vector == array([6, 7, 6])).all()
+        assert ((obj_a|2).dep_vector == array([6, 7, 6])).all()
         obj_a |= 2
-        assert (obj_a.dep_vector == numpy.array([6, 7, 6])).all()
+        assert (obj_a.dep_vector == array([6, 7, 6])).all()
 
     @pytest.mark.wave
     def test_or_exceptions(self):
@@ -1101,7 +1169,7 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b | obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
-        obj_b = std_obj('obj_b', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        obj_b = std_obj('obj_b', dep_vector=array([1+1j, 2+2j, 3+3j]))
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a | obj_b
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
@@ -1114,6 +1182,10 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = 1+1j | obj_a
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a | obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_pos(self):
         """ Test __pos__ method behavior """
@@ -1125,19 +1197,25 @@ class TestWaveform(object):
     def test_pow(self):
         """ Test __pow__ method behavior """
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]))
-        obj_c = std_obj('obj_c', dep_vector=array([1679616, 0, 0]))
+        obj_b = std_obj('obj_b', dep_vector=array([8, -1, -4]), dep_units='A')
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1679616, 0, 0]), dep_units='Volts**A'
+        )
         aobj = obj_a**obj_b
         assert aobj == obj_c
         obj_a.dep_vector = obj_a.dep_vector.astype('float')
         obj_c = std_obj(
-            'obj_c', dep_vector=array([1679616, 0.2, 0.00390625])
+            'obj_c',
+            dep_vector=array([1679616, 0.2, 0.00390625]),
+            dep_units='Volts**A'
         )
         aobj = obj_a**obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a**obj_b'
         assert ((5**obj_a).dep_vector == array([15625, 3125, 625])).all()
+        assert (5**obj_a).dep_units == '1**Volts'
         assert ((obj_a**2).dep_vector == array([36, 25, 16])).all()
+        assert (obj_a**2).dep_units == 'Volts**2'
         obj_a **= 2
         assert (obj_a.dep_vector == array([36, 25, 16])).all()
         obj_a = std_obj('obj_a', dep_vector=array([1+1j, 2+2j, 3+3j]))
@@ -1150,7 +1228,8 @@ class TestWaveform(object):
                     0.018754229185649937+0.017142783560861786j,
                     0+18j
                 ]
-            )
+            ),
+            dep_units='Volts**Volts'
         )
         aobj = obj_a**obj_b
         assert aobj == obj_c
@@ -1233,6 +1312,10 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = 1+1j >> obj_a
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a >> obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
     def test_str(self):
         """ Test __str__ method behavior """
@@ -1344,15 +1427,15 @@ class TestWaveform(object):
     def test_xor(self):
         """ Test __xor__ method behavior """
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=numpy.array([7, 1, 4]))
-        obj_c = std_obj('obj_c', dep_vector=numpy.array([1, 4, 0]))
+        obj_b = std_obj('obj_b', dep_vector=array([7, 1, 4]))
+        obj_c = std_obj('obj_c', dep_vector=array([1, 4, 0]))
         aobj = obj_a ^ obj_b
         assert aobj == obj_c
         assert aobj.indep_name == 'obj_a^obj_b'
-        assert ((2^obj_a).dep_vector == numpy.array([4, 7, 6])).all()
-        assert ((obj_a^2).dep_vector == numpy.array([4, 7, 6])).all()
+        assert ((2^obj_a).dep_vector == array([4, 7, 6])).all()
+        assert ((obj_a^2).dep_vector == array([4, 7, 6])).all()
         obj_a ^= 2
-        assert (obj_a.dep_vector == numpy.array([4, 7, 6])).all()
+        assert (obj_a.dep_vector == array([4, 7, 6])).all()
 
     @pytest.mark.wave
     def test_xor_exceptions(self):
@@ -1371,7 +1454,7 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b ^ obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
-        obj_b = std_obj('obj_b', dep_vector=numpy.array([1+1j, 2+2j, 3+3j]))
+        obj_b = std_obj('obj_b', dep_vector=array([1+1j, 2+2j, 3+3j]))
         with pytest.raises(TypeError) as excinfo:
             _ = obj_a ^ obj_b
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
@@ -1384,3 +1467,7 @@ class TestWaveform(object):
         with pytest.raises(TypeError) as excinfo:
             _ = 1+1j ^ obj_a
         assert GET_EXMSG(excinfo) == 'Complex operands not supported'
+        obj_b = std_obj('obj_b', dep_units='unknown')
+        with pytest.raises(RuntimeError) as excinfo:
+            _ = obj_a ^ obj_b
+        assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'

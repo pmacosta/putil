@@ -143,7 +143,7 @@ def _get_indep_vector(wave_a, wave_b):
     ]
 
 
-def _verify_compatibility(wave_a, wave_b):
+def _verify_compatibility(wave_a, wave_b, check_dep_units=True):
     """
     Verify that two waveforms can be combined with various
     mathematical functions
@@ -158,8 +158,12 @@ def _verify_compatibility(wave_a, wave_b):
         bool(wave_a.indep_scale != wave_b.indep_scale),
         bool(wave_a.dep_scale != wave_b.dep_scale),
         bool(wave_a.indep_units != wave_b.indep_units),
-        bool(wave_a.dep_units != wave_b.dep_units),
-        bool(wave_a.interp != wave_b.interp)
+        (
+            bool(wave_a.dep_units != wave_b.dep_units)
+            if check_dep_units else
+            False
+        ),
+        bool(wave_a.interp != wave_b.interp),
     )
     exh.raise_exception_if(
         exname='incompatible_waveforms',
@@ -1339,7 +1343,7 @@ interp='CONTINUOUS')"
         return self._operation(other, '^')
 
     def _operation(self, other, operand, reflected=False):
-        # pylint: disable=R0912,R0915
+        # pylint: disable=R0912,R0914,R0915
         cop_list = [
             '>', '>=', '<', '<=', '%', '<<', '>>', '&', '^', '|', 'fdiv'
         ]
@@ -1354,8 +1358,10 @@ interp='CONTINUOUS')"
                 extype=TypeError,
                 exmsg='Complex operands not supported'
             )
+        scalar = False
         if (isinstance(other, complex) or isinstance(other, float)
            or (isinstance(other, int) and (not isinstance(other, bool)))):
+            scalar_value = other
             dep_vector = other*(
                 numpy.ones(len(self._dep_vector)).astype('int')
             )
@@ -1369,6 +1375,7 @@ interp='CONTINUOUS')"
                 dep_units=self._dep_units,
                 interp=self._interp
             )
+            scalar = True
         self._exh.raise_exception_if(
             exname='unsupported_type',
             condition=not isinstance(other, Waveform)
@@ -1381,10 +1388,14 @@ interp='CONTINUOUS')"
                     other.dep_vector.dtype.name.startswith('complex')
                 )
             )
-        _verify_compatibility(self, other)
+        check_units_list = [
+            '<', '<=', '>', '>=', '+', '-', '<<', '>>', '&', '|', '^'
+        ]
+        _verify_compatibility(self, other, operand in check_units_list)
         indep_vector, dep_vector_a, dep_vector_b = _homogenize_waves(
             self, other
         )
+        dep_units = self._dep_units
         if operand == '<':
             return (dep_vector_a < dep_vector_b).all()
         elif operand == '<=':
@@ -1407,6 +1418,11 @@ interp='CONTINUOUS')"
             dep_vector = dep_vector_a-dep_vector_b
         elif operand == '*':
             dep_vector = numpy.multiply(dep_vector_a, dep_vector_b)
+            if not scalar:
+                dep_units = '{0}*{1}'.format(
+                    self._dep_units if not reflected else other._dep_units,
+                    other._dep_units if not reflected else self._dep_units
+                )
         elif operand == 'fdiv':
             dep_vector = numpy.floor_divide(
                 dep_vector_a if not reflected else dep_vector_b,
@@ -1423,6 +1439,15 @@ interp='CONTINUOUS')"
                 dep_vector_a if not reflected else dep_vector_b,
                 dep_vector_b if not reflected else dep_vector_a,
             )
+            if scalar and (not reflected):
+                dep_units = '{0}**{1}'.format(self._dep_units, scalar_value)
+            elif scalar:
+                dep_units = '1**{0}'.format(self._dep_units)
+            else:
+                dep_units = '{0}**{1}'.format(
+                    self._dep_units if not reflected else other._dep_units,
+                    other._dep_units if not reflected else self._dep_units
+                )
         elif operand == '/':
             dep_vector = numpy.divide(
                 dep_vector_a if not reflected else dep_vector_b,
@@ -1455,6 +1480,18 @@ interp='CONTINUOUS')"
             )
         indep_name = '{wave1}{op}{wave2}'.format(
             wave1=self.indep_name, wave2=other.indep_name, op=operand)
+        if operand in ['/', '//']:
+            alt_operand = '/'
+            if scalar and (not reflected):
+                dep_units = self._dep_units
+            elif scalar:
+                dep_units = '1{0}{1}'.format(alt_operand, self._dep_units)
+            else:
+                dep_units = '{0}{1}{2}'.format(
+                    self._dep_units if not reflected else other._dep_units,
+                    alt_operand,
+                    other._dep_units if not reflected else self._dep_units
+                )
         return Waveform(
             indep_vector=indep_vector,
             dep_vector=dep_vector,
@@ -1462,7 +1499,7 @@ interp='CONTINUOUS')"
             indep_scale=self._indep_scale,
             dep_scale=self._dep_scale,
             indep_units=self._indep_units,
-            dep_units=self._dep_units,
+            dep_units=dep_units,
             interp=self._interp
         )
 

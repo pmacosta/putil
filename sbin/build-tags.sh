@@ -15,7 +15,7 @@ print_usage_message () {
 }
 
 pkg_dir=$(dirname $(current_dir "${BASH_SOURCE[0]}"))
-pkg_name=$(basename ${pkg_dir})
+pkg_name=$(basename "${pkg_dir}")
 
 # Read command line options
 while getopts ":h" opt; do
@@ -31,15 +31,23 @@ while getopts ":h" opt; do
 			;;
 	esac
 done
-shift $((${OPTIND} - 1))
+shift $((OPTIND - 1))
 if [ "$#" != 0 ]; then
 	echo "build-tags.sh: too many command line arguments" >&2
 	exit 1
 fi
 
 ctags -V --tag-relative \
-      -f ${pkg_dir}/tags \
-      -R ${pkg_dir}/${pkg_name}/*.py \
-         ${pkg_dir}/${pkg_name}/plot/*.py \
-	 ${pkg_dir}/tests/*.py \
-	 ${pkg_dir}/tests/plot/*.py
+      -f "${pkg_dir}"/tags \
+      -R "${pkg_dir}"/"${pkg_name}"/*.py \
+         "${pkg_dir}"/"${pkg_name}"/csv/*.py \
+         "${pkg_dir}"/"${pkg_name}"/eng/*.py \
+         "${pkg_dir}"/"${pkg_name}"/plot/*.py \
+	 "${pkg_dir}"/docs/*.py \
+	 "${pkg_dir}"/docs/support/*.py \
+	 "${pkg_dir}"/sbin/*.py \
+	 "${pkg_dir}"/tests/*.py \
+	 "${pkg_dir}"/tests/eng/*.py
+	 "${pkg_dir}"/tests/csv/*.py
+	 "${pkg_dir}"/tests/plot/*.py
+	 "${pkg_dir}"/tests/support/*.py
