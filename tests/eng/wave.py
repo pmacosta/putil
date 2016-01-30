@@ -666,6 +666,31 @@ class TestWaveform(object):
         obj_a /= 8+4j
         ref = array([0.6-0.3j, 0.5-0.25j, 0.4-0.2j])
         assert cmp_vectors(obj_a.dep_vector, ref)
+        # Test units handling with waveforms
+        # Both without units
+        obj_a = std_obj('obj_a', dep_units='')
+        obj_b = std_obj(
+            'obj_b', dep_vector=array([6, 5, 4]), dep_units=''
+        )
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1, 1, 1]), dep_units=''
+        )
+        aobj = obj_a/obj_b
+        assert aobj == obj_c
+        assert aobj.dep_units == ''
+        # First term with units
+        obj_a = std_obj('obj_a', dep_units='Amps')
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1, 1, 1]), dep_units='Amps'
+        )
+        aobj = obj_a/obj_b
+        assert aobj == obj_c
+        # Second term with units
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1, 1, 1]), dep_units='1/Amps'
+        )
+        aobj = obj_b/obj_a
+        assert aobj == obj_c
 
     @pytest.mark.wave
     def test_div_exceptions(self):
@@ -750,6 +775,31 @@ class TestWaveform(object):
         assert (obj_a//2).dep_units == 'Volts'
         obj_a //= 2
         assert (obj_a.dep_vector == array([3, 2, 2])).all()
+        # Test units handling with waveforms
+        # Both without units
+        obj_a = std_obj('obj_a', dep_units='')
+        obj_b = std_obj(
+            'obj_b', dep_vector=array([6, 5, 4]), dep_units=''
+        )
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1, 1, 1]), dep_units=''
+        )
+        aobj = obj_a//obj_b
+        assert aobj == obj_c
+        assert aobj.dep_units == ''
+        # First term with units
+        obj_a = std_obj('obj_a', dep_units='Amps')
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1, 1, 1]), dep_units='Amps'
+        )
+        aobj = obj_a//obj_b
+        assert aobj == obj_c
+        # Second term with units
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1, 1, 1]), dep_units='1/Amps'
+        )
+        aobj = obj_b//obj_a
+        assert aobj == obj_c
 
     @pytest.mark.wave
     def test_floordiv_exceptions(self):
@@ -1111,6 +1161,31 @@ class TestWaveform(object):
         assert (obj_a*2).dep_units == 'Volts'
         obj_a *= 2
         assert (obj_a.dep_vector == array([12, 10, 8])).all()
+        # Test units handling with waveforms
+        # Both without units
+        obj_a = std_obj('obj_a', dep_units='')
+        obj_b = std_obj(
+            'obj_b', dep_vector=array([1, 1, 1]), dep_units=''
+        )
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([6, 5, 4]), dep_units=''
+        )
+        aobj = obj_a*obj_b
+        assert aobj == obj_c
+        assert aobj.dep_units == ''
+        # First term with units
+        obj_a = std_obj('obj_a', dep_units='Amps')
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([6, 5, 4]), dep_units='Amps'
+        )
+        aobj = obj_a*obj_b
+        assert aobj == obj_c
+        # Second term with units
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([6, 5, 4]), dep_units='Amps'
+        )
+        aobj = obj_b*obj_a
+        assert aobj == obj_c
 
     @pytest.mark.wave
     def test_mul_exceptions(self):
@@ -1232,6 +1307,33 @@ class TestWaveform(object):
             dep_units='Volts**Volts'
         )
         aobj = obj_a**obj_b
+        assert aobj == obj_c
+        # Test units handling with waveforms
+        # Both without units
+        obj_a = std_obj('obj_a', dep_units='')
+        obj_b = std_obj(
+            'obj_b', dep_vector=array([0, 0, 0]), dep_units=''
+        )
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([1, 1, 1]), dep_units=''
+        )
+        aobj = obj_a**obj_b
+        assert aobj == obj_c
+        assert aobj.dep_units == ''
+        # First term with units
+        obj_a = std_obj('obj_a', dep_units='Amps')
+        obj_c = std_obj(
+            'obj_c',
+            dep_vector=array([1, 1, 1]),
+            dep_units='Amps**obj_b'
+        )
+        aobj = obj_a**obj_b
+        assert aobj == obj_c
+        # Second term with units
+        obj_c = std_obj(
+            'obj_c', dep_vector=array([0, 0, 0]), dep_units='1**Amps'
+        )
+        aobj = obj_b**obj_a
         assert aobj == obj_c
 
     @pytest.mark.wave

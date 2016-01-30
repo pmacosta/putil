@@ -1343,7 +1343,7 @@ interp='CONTINUOUS')"
         return self._operation(other, '^')
 
     def _operation(self, other, operand, reflected=False):
-        # pylint: disable=R0912,R0914,R0915
+        # pylint: disable=R0912,R0914,R0915,W0212
         cop_list = [
             '>', '>=', '<', '<=', '%', '<<', '>>', '&', '^', '|', 'fdiv'
         ]
@@ -1358,9 +1358,20 @@ interp='CONTINUOUS')"
                 extype=TypeError,
                 exmsg='Complex operands not supported'
             )
-        scalar = False
+        scalar = (
+            isinstance(other, Waveform) and other.dep_units in ['', '-']
+            or
+            self._dep_units in ['', '-']
+        )
+        scalar_value = None
+        ureflected = (
+            not reflected
+            if self._dep_units in ['', '-'] else
+            reflected
+        )
         if (isinstance(other, complex) or isinstance(other, float)
            or (isinstance(other, int) and (not isinstance(other, bool)))):
+            scalar = True
             scalar_value = other
             dep_vector = other*(
                 numpy.ones(len(self._dep_vector)).astype('int')
@@ -1375,7 +1386,6 @@ interp='CONTINUOUS')"
                 dep_units=self._dep_units,
                 interp=self._interp
             )
-            scalar = True
         self._exh.raise_exception_if(
             exname='unsupported_type',
             condition=not isinstance(other, Waveform)
@@ -1395,7 +1405,14 @@ interp='CONTINUOUS')"
         indep_vector, dep_vector_a, dep_vector_b = _homogenize_waves(
             self, other
         )
-        dep_units = self._dep_units
+        proc_self_units = self._dep_units.strip() not in ['', '-']
+        proc_other_units = other._dep_units.strip() not in ['', '-']
+        proc_units = (
+            (proc_self_units and proc_other_units)
+            if operand in check_units_list else
+            (proc_self_units or proc_other_units)
+        )
+        dep_units = self._dep_units if proc_units else ''
         if operand == '<':
             return (dep_vector_a < dep_vector_b).all()
         elif operand == '<=':
@@ -1418,10 +1435,14 @@ interp='CONTINUOUS')"
             dep_vector = dep_vector_a-dep_vector_b
         elif operand == '*':
             dep_vector = numpy.multiply(dep_vector_a, dep_vector_b)
-            if not scalar:
+            if proc_units and (not scalar):
                 dep_units = '{0}*{1}'.format(
-                    self._dep_units if not reflected else other._dep_units,
-                    other._dep_units if not reflected else self._dep_units
+                    self._dep_units if not ureflected else other._dep_units,
+                    other._dep_units if not ureflected else self._dep_units
+                )
+            elif proc_units:
+                dep_units = (
+                    self._dep_units if self._dep_units else other._dep_units
                 )
         elif operand == 'fdiv':
             dep_vector = numpy.floor_divide(
@@ -1439,14 +1460,19 @@ interp='CONTINUOUS')"
                 dep_vector_a if not reflected else dep_vector_b,
                 dep_vector_b if not reflected else dep_vector_a,
             )
-            if scalar and (not reflected):
-                dep_units = '{0}**{1}'.format(self._dep_units, scalar_value)
-            elif scalar:
-                dep_units = '1**{0}'.format(self._dep_units)
-            else:
+            if proc_units and scalar and (not ureflected):
                 dep_units = '{0}**{1}'.format(
-                    self._dep_units if not reflected else other._dep_units,
-                    other._dep_units if not reflected else self._dep_units
+                    self._dep_units,
+                    scalar_value if scalar_value else other._indep_name
+                )
+            elif proc_units and scalar:
+                dep_units = '1**{0}'.format(
+                    self._dep_units if self._dep_units else other._dep_units
+                )
+            elif proc_units:
+                dep_units = '{0}**{1}'.format(
+                    self._dep_units if not ureflected else other._dep_units,
+                    other._dep_units if not ureflected else self._dep_units
                 )
         elif operand == '/':
             dep_vector = numpy.divide(
@@ -1480,17 +1506,20 @@ interp='CONTINUOUS')"
             )
         indep_name = '{wave1}{op}{wave2}'.format(
             wave1=self.indep_name, wave2=other.indep_name, op=operand)
-        if operand in ['/', '//']:
+        if proc_units and (operand in ['/', '//']):
             alt_operand = '/'
-            if scalar and (not reflected):
+            if scalar and (not ureflected):
                 dep_units = self._dep_units
             elif scalar:
-                dep_units = '1{0}{1}'.format(alt_operand, self._dep_units)
+                dep_units = '1{0}{1}'.format(
+                    alt_operand,
+                    self._dep_units if self._dep_units else other._dep_units
+                )
             else:
                 dep_units = '{0}{1}{2}'.format(
-                    self._dep_units if not reflected else other._dep_units,
+                    self._dep_units if not ureflected else other._dep_units,
                     alt_operand,
-                    other._dep_units if not reflected else self._dep_units
+                    other._dep_units if not ureflected else self._dep_units
                 )
         return Waveform(
             indep_vector=indep_vector,
@@ -1539,7 +1568,7 @@ interp='CONTINUOUS')"
 
     @putil.pcontracts.contract(dep_units=str)
     def _set_dep_units(self, dep_units):
-        self._dep_units = dep_units
+        self._dep_units = dep_units.strip()
 
     @putil.pcontracts.contract(dep_vector='number_numpy_vector')
     def _set_dep_vector(self, dep_vector, check=True):
@@ -1555,7 +1584,7 @@ interp='CONTINUOUS')"
 
     @putil.pcontracts.contract(indep_units=str)
     def _set_indep_units(self, indep_units):
-        self._indep_units = indep_units
+        self._indep_units = indep_units.strip()
 
     @putil.pcontracts.contract(indep_vector='increasing_real_numpy_vector')
     def _set_indep_vector(self, indep_vector, check=True):
