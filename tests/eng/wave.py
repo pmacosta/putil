@@ -280,11 +280,12 @@ class TestWaveform(object):
         obj.dep_vector = array([45, 2, 100])
         assert (obj.dep_vector == array([45, 2, 100])).all()
         # Float dependent variable vector
-        obj.vectors = (array([5, 6, 7]), array([1.1, 1.2, 1.3]))
-        assert (obj.vectors[0] == array([5, 6, 7])).all()
-        assert (obj.vectors[1] == array([1.1, 1.2, 1.3])).all()
-        assert (obj.indep_vector == array([5, 6, 7])).all()
-        assert (obj.dep_vector == array([1.1, 1.2, 1.3])).all()
+        obj.vectors = [(5, 1.1), (6, 1.2), (7, 1.3)]
+        indep_vector, dep_vector = zip(*(obj.vectors))
+        assert (numpy.array(indep_vector) == numpy.array([5, 6, 7])).all()
+        assert (numpy.array(dep_vector) == numpy.array([1.1, 1.2, 1.3])).all()
+        assert (obj.indep_vector == numpy.array([5, 6, 7])).all()
+        assert (obj.dep_vector == numpy.array([1.1, 1.2, 1.3])).all()
         # Complex dependent variable vector
         obj.dep_vector = array([1+1j, 2+2j, 3+3j])
         assert (obj.dep_vector == array([1+1j, 2+2j, 3+3j])).all()
@@ -381,11 +382,14 @@ class TestWaveform(object):
         )
         APROP(obj, 'indep_vector', array([1, 2]), ValueError, msg)
         APROP(obj, 'dep_vector', array([1, 2]), ValueError, msg)
-        arg = (array([1, 2]), array([4, 5, 6]))
         msg = 'Argument `vectors` is not valid'
-        APROP(obj, 'vectors', arg, RuntimeError, msg)
-        arg = (array([1, 2, 3]), array([4, 5]))
-        APROP(obj, 'vectors', arg, RuntimeError, msg)
+        items = [
+            [(1, 0), (2, 2), ('a', 5)],
+            [(1, 0), (2, 2), (5, 'a')],
+            [(1, 0), (2, 2), (3, 4, 5)],
+        ]
+        for item in items:
+            APROP(obj, 'vectors', item, RuntimeError, msg)
 
     def test_abs(self):
         """ Test __abs__ method behavior """
@@ -791,9 +795,9 @@ class TestWaveform(object):
         obj_a = std_obj('obj_a')
         with pytest.raises(IndexError) as excinfo:
             _ = obj_a[1:'a']
-        assert GET_EXMSG(excinfo) == (
-            'failed to coerce slice entry of type str to integer'
-        )
+        exmsg1 = 'failed to coerce slice entry of type str to integer'
+        exmsg2 = 'invalid slice'
+        assert GET_EXMSG(excinfo) in [exmsg1, exmsg2]
 
     def test_gt(self):
         """ Test __gt__ method behavior """

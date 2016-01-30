@@ -403,12 +403,17 @@ def test_wave_vectors_contract():
         'a',
         True,
         None,
+        {},
+        [],
         (None, None),
-        (None, numpy.array([1, 2])),
-        (numpy.array([1, 2]), None),
-        (numpy.array([]), numpy.array([])),
-        (numpy.array([1, 2, 3]), numpy.array([4, 5]))
+        [(None, None)],
+        [(None, 1)],
+        [(1, None)],
+        [(1, 2, 3)],
+        [(1, 100), (2, 200), (0, 300)],
+        [(1, 100), (2, 200), (0, 'a')],
+        [(1, 100), ('b', 200), (0, 300)],
     ]
     for item in items:
         AE(putil.ptypes.wave_vectors, ValueError, exmsg, item)
-    putil.ptypes.wave_vectors((numpy.array([1, 2, 3]), numpy.array([4, 5, 6])))
+    putil.ptypes.wave_vectors([(0, 100), (1, 200), (2, 300)])

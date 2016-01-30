@@ -787,11 +787,12 @@ def wave_vectors(obj):
     :rtype: None
     """
     exdesc = putil.pcontracts.get_exdesc()
-    if not isinstance(obj, tuple):
+    if not isinstance(obj, list) or (isinstance(obj, list) and not len(obj)):
         raise ValueError(exdesc)
-    if _check_increasing_real_numpy_vector(obj[0]):
+    if any([not (isinstance(item, tuple) and len(item) == 2) for item in obj]):
         raise ValueError(exdesc)
-    if _check_real_numpy_vector(obj[1]):
+    indep_vector, dep_vector = zip(*obj)
+    if _check_increasing_real_numpy_vector(numpy.array(indep_vector)):
         raise ValueError(exdesc)
-    if len(obj[0]) != len(obj[1]):
+    if _check_real_numpy_vector(numpy.array(dep_vector)):
         raise ValueError(exdesc)

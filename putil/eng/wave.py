@@ -1491,7 +1491,10 @@ interp='CONTINUOUS')"
         return self._interp
 
     def _get_vectors(self):
-        return (self._indep_vector, self._dep_vector)
+        return [
+            POINT(iitem, ditem)
+            for iitem, ditem in zip(self._indep_vector, self._dep_vector)
+        ]
 
     @putil.pcontracts.contract(dep_scale='wave_scale_option')
     def _set_dep_scale(self, dep_scale):
@@ -1527,7 +1530,8 @@ interp='CONTINUOUS')"
 
     @putil.pcontracts.contract(vectors='wave_vectors')
     def _set_vectors(self, vectors):
-        self._set_vectors_int(vectors[0], vectors[1])
+        indep_vector, dep_vector = zip(*copy.copy(vectors))
+        self._set_vectors_int(indep_vector, dep_vector)
 
     def _set_vectors_int(self, indep_vector=None, dep_vector=None, check=True):
         self._exh.add_exception(

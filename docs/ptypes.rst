@@ -369,11 +369,12 @@ or :code:`'LOG'` (case insensitive)
 
 WaveVectors
 -----------
-Tuple whose first item is a vector of :ref:`IncreasingRealNumpyVector`
-pseudo-type, whose second item is a vector of :ref:`RealNumpyVector`
-pseudo-type and whose two items have the same (non-zero) length. It represents
-a waveform's independent variable vector (first tuple item) and dependent
-variable vector (second tuple item)
+Non-empty list of tuples in which each tuple is a waveform point. The first
+item of a point tuple is its independent variable and the second item of a
+point tuple is its dependent variable. The vector formed by the first item
+of the point tuples is of :ref:`IncreasingRealNumpyVector` pseudo-type; the
+vector formed by the second item of the point tuples is of
+:ref:`RealNumpyVector` pseudo-type
 
 *********
 Contracts
