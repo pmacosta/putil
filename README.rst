@@ -70,6 +70,7 @@ Putil Library
 .. _Pillow: https://python-pillow.github.io
 .. _PyContracts: https://andreacensi.github.io/contracts
 .. _Pylint: http://www.pylint.org
+.. _PyParsing: http://pyparsing.wikispaces.com/
 .. _Py.test: http://pytest.org
 .. _Pytest-coverage: https://pypi.python.org/pypi/pytest-cov
 .. _Pytest-xdist: https://pypi.python.org/pypi/pytest-xdist
@@ -217,6 +218,8 @@ Contributing
     * `Py.test`_ (2.7.0 or newer)
 
     * `PyContracts`_ (1.7.2 or newer except 1.7.7)
+
+    * `PyParsing`_ (2.0.7 or newer)
 
     * `Pylint`_ (Python 2.6: 1.3 or newer and older than 1.4, Python 2.7
       or newer: 1.3.1 or newer)

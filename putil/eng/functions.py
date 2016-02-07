@@ -1,7 +1,7 @@
 # functions.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,W0105,W0611
+# pylint: disable=C0111,E0611,R0914,W0105,W0611,W0631
 
 # Standard library imports
 import collections
@@ -16,6 +16,7 @@ else: # pragma: no cover
     from itertools import zip_longest
 # PyPI imports
 import numpy
+import pyparsing
 # Putil imports
 import putil.exh
 from putil.ptypes import (
@@ -23,6 +24,7 @@ from putil.ptypes import (
     engineering_notation_suffix,
     non_negative_integer
 )
+pyparsing.ParserElement.enablePackrat()
 
 
 ###
@@ -46,6 +48,16 @@ exobj_eng = trace_ex_eng_functions.trace_module(no_print=True)
 ###
 # Global variables
 ###
+_OP_PREC = [
+    '|',
+    '^',
+    '&',
+    ['<<', '>>'],
+    ['+', '-'],
+    ['*', '/', '//', '%'],
+    ['+', '-', '~'],
+    '**'
+]
 _POWER_TO_SUFFIX_DICT = dict(
     (exp, prf) for exp, prf in zip(range(-24, 27, 3), 'yzafpnum kMGTPEZY')
 )
@@ -70,6 +82,163 @@ Constructor for number components representation
 ###
 # Functions
 ###
+def _build_expr(tokens, higher_oplevel=-1, ldelim='(', rdelim=')'):
+    """ Build mathematical expression from hierarchical list """
+    # Numbers
+    if isinstance(tokens, str):
+        return tokens
+    # Unary operators
+    if len(tokens) == 2:
+        return ''.join(tokens)
+    # Multi-term operators
+    oplevel = _get_op_level(tokens[1])
+    stoken = ''
+    for num, item in enumerate(tokens):
+        if num % 2 == 0:
+            stoken += _build_expr(item, oplevel, ldelim=ldelim, rdelim=rdelim)
+        else:
+            stoken += item
+    if ((oplevel < higher_oplevel) or
+       ((oplevel == higher_oplevel) and (oplevel in _OP_PREC_PAR))):
+        stoken = ldelim+stoken+rdelim
+    return stoken
+
+
+def _get_op_level(operator, nops=2):
+    for num, item in enumerate(_OP_PREC):
+        if operator in item:
+            if operator not in ['+', '-']:
+                return num
+            if (nops == 2) and item == ['+', '-']:
+                return num
+            if (nops == 1) and item == ['+', '-', '~']:
+                return num
+    raise RuntimeError('Operator not supported')
+
+
+# Operators that need parenthesis around expression if lower in parse tree and
+# next level up has the same operator precedence level
+_OP_PREC_PAR = [_get_op_level('<<'), _get_op_level('*')]
+
+
+def _next_rdelim(items, pos):
+    """ Return position of next matching closing delimiter """
+    for num, item in enumerate(items):
+        if item > pos:
+            break
+    else:
+        raise RuntimeError('Mismatched delimiters')
+    del items[num]
+    return item
+
+
+def _get_functions(expr, ldelim='(', rdelim=')'):
+    """ Parse function calls """
+    tpars = _pair_delims(expr, ldelim=ldelim, rdelim=rdelim)
+    alphas = (
+        'abcdefghijklmnopqrstuvwxyz'
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    )
+    fchars = (
+        'abcdefghijklmnopqrstuvwxyz'
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        '0123456789'
+        '_'
+    )
+    tfuncs = []
+    for lnum, rnum in tpars:
+        if lnum and expr[lnum-1] in fchars:
+            for cnum, char in enumerate(reversed(expr[:lnum])):
+                if char not in fchars:
+                    break
+            else:
+                cnum = lnum
+            tfuncs.append(
+                {
+                    'fname':expr[lnum-cnum:lnum],
+                    'expr':expr[lnum+1:rnum],
+                    'start':lnum-cnum,
+                    'stop':rnum
+                }
+            )
+            if expr[lnum-cnum] not in alphas:
+                raise RuntimeError(
+                    'Function name `{0}` is not valid'.format(
+                        expr[lnum-cnum:lnum]
+                    )
+                )
+    return tfuncs
+
+
+def _pair_delims(expr, ldelim='(', rdelim=')'):
+    """ Pair delimiters """
+    # Find where remaining delimiters are
+    lindex = reversed([num for num, item in enumerate(expr) if item == ldelim])
+    rindex = [num for num, item in enumerate(expr) if item == rdelim]
+    # Pair remaining delimiters
+    tpars = [(lpos, _next_rdelim(rindex, lpos)) for lpos in lindex][::-1]
+    if any([lpos > rpos for lpos, rpos in tpars]):
+        raise RuntimeError('Unmatched delimiters')
+    return tpars
+
+
+def _parse_expr(text, ldelim='(', rdelim=')'):
+    """ Parse mathematical expression using PyParsing """
+    var = pyparsing.Word(pyparsing.alphanums+'_').setResultsName('var')
+    point = pyparsing.Literal('.')
+    exp = pyparsing.CaselessLiteral('E')
+    number = pyparsing.Combine(
+        pyparsing.Word('+-'+pyparsing.nums, pyparsing.nums)+
+        pyparsing.Optional(
+            point+pyparsing.Optional(pyparsing.Word(pyparsing.nums))
+        )+
+        pyparsing.Optional(
+            exp+pyparsing.Word('+-'+pyparsing.nums, pyparsing.nums)
+        )
+    )
+    atom = var | number
+    oplist = [
+        (pyparsing.oneOf('+ - ~'), 1, pyparsing.opAssoc.RIGHT),
+        (pyparsing.oneOf('* / // %'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.oneOf('+ -'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.oneOf('<< >>'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.oneOf('&'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.oneOf('^'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.oneOf('|'), 2, pyparsing.opAssoc.LEFT),
+    ]
+    # Get functions
+    expr = pyparsing.infixNotation(
+        atom,
+        oplist,
+        lpar=pyparsing.Suppress(ldelim),
+        rpar=pyparsing.Suppress(rdelim)
+    )
+    return expr.parseString(text)[0]
+
+
+def _remove_extra_delims(expr, ldelim='(', rdelim=')'):
+    """ Removes consecutive delimiters """
+    # Remove extra outer parenthesis
+    lexpr = len(expr)
+    lcount = lexpr-len(expr.lstrip(ldelim))
+    rcount = lexpr-len(expr.rstrip(rdelim))
+    extra_pars = min(lcount, rcount)
+    expr = expr[extra_pars:-extra_pars] if extra_pars else expr
+    # Find where remaining delimiters are
+    tpars = _pair_delims(expr, ldelim=ldelim, rdelim=rdelim)
+    # Flag superfluous delimiters
+    ddelim = []
+    for ctuple, ntuple in zip(tpars, tpars[1:]):
+        if ctuple == (ntuple[0]-1, ntuple[1]+1):
+            ddelim.extend(ntuple)
+    ddelim.sort()
+    # Actually remove delimiters from expression
+    for num, item in enumerate(ddelim):
+        expr = expr[:item-num]+expr[item-num+1:]
+    # Get functions
+    return expr
+
+
 def _split_every(text, sep, count, lstrip=False, rstrip=False):
     """
     Returns a list of the words in the string, using a count of a separator as
@@ -524,6 +693,80 @@ def peng_suffix_math(suffix, offset):
         eobj(True)
 
 
+def remove_extra_delims(expr, ldelim='(', rdelim=')'):
+    r"""
+    Removes unnecessary delimiters (parenthesis, brackets, etc.) in
+    mathematical expressions, either because there are multiple consecutive
+    delimiters enclosing a single expressions or because the delimiters are
+    implied by operator precedence rules. Function names must start with a
+    letter and then can contain alphanumeric characters and a maximum of
+    one underscore
+
+    :param expr: Mathematical expression
+    :type  expr: string
+
+    :param ldelim: Single character left delimiter
+    :type  ldelim: string
+
+    :param rdelim: Single character right delimiter
+    :type  rdelim: string
+
+    :rtype: string
+
+    :raises:
+     * RuntimeError (Argument \`expr\` is not valid)
+
+     * RuntimeError (Argument \`ldelim\` is not valid)
+
+     * RuntimeError (Argument \`rdelim\` is not valid)
+
+     * RuntimeError (Function name `*[function_name]*` is not valid)
+    """
+    iobj = zip([expr, ldelim, rdelim], ['expr', 'ldelim', 'rdelim'])
+    for item, desc in iobj:
+        if not isinstance(item, str):
+            raise RuntimeError('Argument `{0}` is not valid'.format(desc))
+    if len(ldelim) != 1:
+        raise RuntimeError('Argument `ldelim` is not valid')
+    if len(rdelim) != 1:
+        raise RuntimeError('Argument `rdelim` is not valid')
+    if expr.count(ldelim) != expr.count(rdelim):
+        raise RuntimeError('Unmatched delimiters')
+    vchars = (
+        'abcdefghijklmnopqrstuvwxyz'
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        '0123456789'
+        '_|^&<>+-*/%~()[]{}'+rdelim+ldelim
+    )
+    if any([item not in vchars for item in expr]) or ('__' in expr):
+        raise RuntimeError('Argument `expr` is not valid')
+    expr = _remove_extra_delims(expr, ldelim=ldelim, rdelim=rdelim)
+    tfuncs = _get_functions(expr, ldelim=ldelim, rdelim=rdelim)
+    # Replace function call with tokens
+    for fnum, fdict in enumerate(tfuncs):
+        fdict['token'] = '__'+str(fnum)
+        expr = (
+            expr[:fdict['start']]+fdict['token']+expr[fdict['stop']+1:]
+        )
+        fdict['expr'] = _build_expr(
+            _parse_expr(fdict['expr'], ldelim=ldelim, rdelim=rdelim),
+            ldelim=ldelim,
+            rdelim=rdelim
+        )
+    # Parse expression with function calls removed
+    expr = _build_expr(
+        _parse_expr(expr, ldelim=ldelim, rdelim=rdelim),
+        ldelim=ldelim,
+        rdelim=rdelim
+    )
+    # Insert cleaned-up function calls
+    for fdict in tfuncs:
+        expr = expr.replace(
+            fdict['token'], fdict['fname']+ldelim+fdict['expr']+rdelim
+        )
+    return expr
+
+
 def round_mantissa(arg, decimals=0):
     """
     Rounds the fractional part of a floating point number mantissa or Numpy
@@ -638,7 +881,7 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
         >>> print(putil.eng.pprint_vector(data, limit=True))
         [ 0.001, 2e-05, 300000000.0, ..., 700, 8, 9 ]
     """
-    # pylint: disable=R0912,R0913,R0914
+    # pylint: disable=R0912,R0913
     def _str(*args):
         """
         Converts numbers (integers, float or complex) to string, optionally

@@ -4,6 +4,7 @@ funcsigs>=0.4
 matplotlib>=1.4.1
 pillow>=2.6.1
 pycontracts>=1.7.2,!=1.7.7
+pyparsing>=2.0.7
 scipy>=0.13.3
 six>=1.4.0
 nose>=1.0.0

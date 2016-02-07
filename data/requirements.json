@@ -114,13 +114,21 @@
 		},
 		"pos":11
 	},
+	"pyparsing":{
+		"name":"PyParsing",
+		"optional":false,
+		"url":"http://pyparsing.wikispaces.com/",
+		"cat":["main"],
+		"ver":">=2.0.7",
+		"pos":12
+	},
 	"pytest":{
 		"name":"Py.test",
 		"optional":false,
 		"url":"http://pytest.org",
 		"cat":["tests", "rtd"],
 		"ver":">=2.7.0",
-		"pos":12
+		"pos":13
 	},
 	"pytest-cov":{
 		"name":"Pytest-coverage",
@@ -128,7 +136,7 @@
 		"url":"https://pypi.python.org/pypi/pytest-cov",
 		"cat":["tests"],
 		"ver":">=1.8.0",
-		"pos":13
+		"pos":14
 	},
 	"pytest-xdist":{
 		"name":"Pytest-xdist",
@@ -136,7 +144,7 @@
 		"url":"https://pypi.python.org/pypi/pytest-xdist",
 		"cat":["tests"],
 		"ver":">=1.8.0",
-		"pos":14
+		"pos":15
 	},
 	"scipy":{
 		"name":"Scipy",
@@ -144,7 +152,7 @@
 		"url":"http://www.scipy.org",
 		"cat":["main"],
 		"ver":">=0.13.3",
-		"pos":15
+		"pos":16
 	},
 	"six":{
 		"name":"Six",
@@ -152,7 +160,7 @@
 		"url":"https://pythonhosted.org/six",
 		"cat":["main", "rtd"],
 		"ver":">=1.4.0",
-		"pos":16
+		"pos":17
 	},
 	"sphinx":{
 		"name":"Sphinx",
@@ -160,7 +168,7 @@
 		"url":"http://sphinx-doc.org",
 		"cat":["docs", "rtd"],
 		"ver":">=1.2.3",
-		"pos":17
+		"pos":18
 	},
 	"sphinxcontrib-inlinesyntaxhighlight":{
 		"name":"Inline Syntax Highlight Sphinx Extension",
@@ -168,7 +176,7 @@
 		"url":"https://bitbucket.org/klorenz/sphinxcontrib-inlinesyntaxhighlight",
 		"cat":["docs", "rtd"],
 		"ver":">=0.2",
-		"pos":18
+		"pos":19
 	},
 	"sphinx_rtd_theme":{
 		"name":"ReadTheDocs Sphinx theme",
@@ -176,7 +184,7 @@
 		"url":"https://github.com/snide/sphinx_rtd_theme",
 		"cat":["docs"],
 		"ver":">=0.1.9",
-		"pos":19
+		"pos":20
 	},
 	"tox":{
 		"name":"Tox",
@@ -184,7 +192,7 @@
 		"url":"https://testrun.org/tox",
 		"cat":["tests"],
 		"ver":">=1.9.0",
-		"pos":20
+		"pos":21
 	},
 	"virtualenv":{
 		"name":"Virtualenv",

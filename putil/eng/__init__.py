@@ -17,6 +17,7 @@ from .functions import (
     peng_suffix,
     peng_suffix_math,
     pprint_vector,
+    remove_extra_delims,
     round_mantissa,
     to_scientific_string,
     to_scientific_tuple

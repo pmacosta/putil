@@ -3,6 +3,8 @@ aaa
 abc
 abcd
 ABCDEF
+abcdefghijklmnopqrstuvwxyz
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
 ABCDEX
 ABCMeta
 abstractmethod
@@ -103,6 +105,7 @@ callable's
 Callables
 CALLABLES
 capsys
+CaselessLiteral
 ccontract
 ccontracts
 cd
@@ -140,6 +143,7 @@ cmp
 cname
 CNAME
 cnode
+cnum
 cobj
 Codecov
 CODECOV
@@ -225,6 +229,7 @@ darkviolet
 DataSource
 datetime
 DBU
+ddelim
 ddir
 dec
 decfunc
@@ -237,6 +242,7 @@ del
 delattr
 deleter
 Deleter
+delims
 delitem
 dep
 DEP
@@ -359,10 +365,12 @@ exnum
 exobj
 ExObj
 exoutput
+expr
 extb
 extype
 exvalue
 fargs
+fchars
 fdata
 fdel
 fdesc
@@ -510,6 +518,7 @@ Indep
 INDEP
 IndexError
 indianred
+infixNotation
 ini
 init
 Init
@@ -574,12 +583,15 @@ LambdaType
 lang
 lavenderblush
 lawngreen
+lcount
+ldelim
 ldig
 le
 Leftarrow
 lemonchiffon
 len
 Leone's
+lexpr
 lfpart
 libs
 lightblue
@@ -598,6 +610,7 @@ lightyellow
 lim
 limegreen
 lin
+lindex
 LiNeAr
 lineno
 linestyle
@@ -616,13 +629,16 @@ llist
 lmax
 lmin
 lname
+lnum
 lobj
 loc
 locs
 lOg
 loglog
 loren
+lpar
 lparent
+lpos
 lprim
 lprops
 lrange
@@ -756,6 +772,7 @@ None's
 NONINFRINGEMENT
 NonNegativeInteger
 NonNullString
+nops
 noption
 NOPTION
 norder
@@ -771,6 +788,7 @@ ntest
 nthe
 nthis
 ntree
+ntuple
 num
 NUM
 numa
@@ -807,7 +825,10 @@ olines
 olist
 olivedrab
 oname
+oneOf
 oper
+oplevel
+oplist
 oprec
 orangered
 ord
@@ -835,6 +856,7 @@ parameterized
 params
 parg
 pargs
+parseString
 partuple
 ParTuple
 pb
@@ -925,6 +947,8 @@ Pylint
 PyLint
 pylintrc
 PyPA
+pyparsing
+PyParsing
 PyPI
 pyplot
 pysix
@@ -947,8 +971,10 @@ rcdb
 rcfilter
 rchars
 rcols
+rcount
 rcParams
 rdata
+rdelim
 rdfilter
 rdict
 rdiv
@@ -1015,6 +1041,8 @@ r'obj
 ror
 rosybrown
 royalblue
+rpar
+rpos
 rpow
 r'putil
 rrows
@@ -1121,6 +1149,7 @@ STDOUT
 ste
 steelblue
 StEp
+stoken
 str
 strerror
 strframe
@@ -1184,6 +1213,7 @@ TestWaveform
 teto
 textwrap
 TextWrapper
+tfuncs
 th
 tHrEe
 thresholding
@@ -1207,6 +1237,7 @@ tofloat
 tolist
 tox
 Tox
+tpars
 tpl
 traceback
 Traceback
@@ -1231,6 +1262,7 @@ TypeError
 ucols
 ufin
 ufunc
+Unary
 undoc
 unhashable
 unichr
@@ -1254,6 +1286,7 @@ va
 ValueError
 vararg
 varargs
+vchars
 ver
 VER
 vers
