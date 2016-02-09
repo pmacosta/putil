@@ -21,6 +21,8 @@ from tests.eng.functions import (
     test_pprint_vector,
     test_pprint_vector_exceptions,
     test_round_mantissa,
+    test_remove_extra_delims,
+    test_remove_extra_delims_exceptions,
     test_split_every,
     test_to_sci_string,
     test_to_scientific_string,

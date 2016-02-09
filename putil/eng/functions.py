@@ -58,6 +58,7 @@ _OP_PREC = [
     ['+', '-', '~'],
     '**'
 ]
+
 _POWER_TO_SUFFIX_DICT = dict(
     (exp, prf) for exp, prf in zip(range(-24, 27, 3), 'yzafpnum kMGTPEZY')
 )
@@ -105,6 +106,10 @@ def _build_expr(tokens, higher_oplevel=-1, ldelim='(', rdelim=')'):
 
 
 def _get_op_level(operator, nops=2):
+    # There is no error checking that operator is not in the
+    # operator precedence group, it is assumed that only valid
+    # operators are in mathematical expression at higher function
+    # levels and/or at API entry point
     for num, item in enumerate(_OP_PREC):
         if operator in item:
             if operator not in ['+', '-']:
@@ -116,8 +121,8 @@ def _get_op_level(operator, nops=2):
     raise RuntimeError('Operator not supported')
 
 
-# Operators that need parenthesis around expression if lower in parse tree and
-# next level up has the same operator precedence level
+# Operators groups that need parenthesis around expression if lower in parse
+# tree and next level up has the same operator precedence level
 _OP_PREC_PAR = [_get_op_level('<<'), _get_op_level('*')]
 
 
@@ -176,10 +181,7 @@ def _pair_delims(expr, ldelim='(', rdelim=')'):
     lindex = reversed([num for num, item in enumerate(expr) if item == ldelim])
     rindex = [num for num, item in enumerate(expr) if item == rdelim]
     # Pair remaining delimiters
-    tpars = [(lpos, _next_rdelim(rindex, lpos)) for lpos in lindex][::-1]
-    if any([lpos > rpos for lpos, rpos in tpars]):
-        raise RuntimeError('Unmatched delimiters')
-    return tpars
+    return [(lpos, _next_rdelim(rindex, lpos)) for lpos in lindex][::-1]
 
 
 def _parse_expr(text, ldelim='(', rdelim=')'):
@@ -721,22 +723,31 @@ def remove_extra_delims(expr, ldelim='(', rdelim=')'):
      * RuntimeError (Argument \`rdelim\` is not valid)
 
      * RuntimeError (Function name `*[function_name]*` is not valid)
+
+     * RuntimeError (Mismatched delimiters)
     """
+    op_group = ''
+    for item1 in _OP_PREC:
+        if isinstance(item1, list):
+            for item2 in item1:
+                op_group += item2
+        else:
+            op_group += item1
     iobj = zip([expr, ldelim, rdelim], ['expr', 'ldelim', 'rdelim'])
     for item, desc in iobj:
         if not isinstance(item, str):
             raise RuntimeError('Argument `{0}` is not valid'.format(desc))
-    if len(ldelim) != 1:
+    if (len(ldelim) != 1) or ((len(ldelim) == 1) and (ldelim in op_group)):
         raise RuntimeError('Argument `ldelim` is not valid')
-    if len(rdelim) != 1:
+    if (len(rdelim) != 1) or ((len(rdelim) == 1) and (rdelim in op_group)):
         raise RuntimeError('Argument `rdelim` is not valid')
     if expr.count(ldelim) != expr.count(rdelim):
-        raise RuntimeError('Unmatched delimiters')
+        raise RuntimeError('Mismatched delimiters')
     vchars = (
         'abcdefghijklmnopqrstuvwxyz'
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         '0123456789'
-        '_|^&<>+-*/%~()[]{}'+rdelim+ldelim
+        r'()[]\{\}'+rdelim+ldelim+op_group
     )
     if any([item not in vchars for item in expr]) or ('__' in expr):
         raise RuntimeError('Argument `expr` is not valid')

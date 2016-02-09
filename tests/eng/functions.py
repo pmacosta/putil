@@ -1109,6 +1109,44 @@ def test_pprint_vector_exceptions(args):
     AE(putil.eng.pprint_vector, ValueError, msg, **args)
 
 
+def test_remove_extra_delims():
+    """ Test remove_extra_delims function behavior """
+    fobj = putil.eng.remove_extra_delims
+    assert fobj('(((45+35)))') == '45+35'
+    assert fobj('(((45+(25/20)-((5<<2))%35)))') == '45+25/20-(5<<2)%35'
+    assert (
+        fobj('-1*a+((3<<2)>>5)-(2+3)/((5-2)*3)')
+        ==
+        '-1*a+((3<<2)>>5)-(2+3)/((5-2)*3)'
+    )
+
+def test_remove_extra_delims_exceptions():
+    """ Test remove_extra_delims function exceptions """
+    items = [None, 5, True, '34!34', '45+__2-34']
+    obj = putil.eng.remove_extra_delims
+    for item in items:
+        AI(obj, 'expr', expr=item)
+    items = [None, 5, True, '()', '+']
+    for item in items:
+        AI(obj, 'ldelim', expr='5', ldelim=item)
+    for item in items:
+        AI(obj, 'rdelim', expr='5', rdelim=item)
+    items = [
+        '45(+47()',             # Different number of delimiters
+        '4+db(5)+sinh())',      # Different number of delimiters
+        ')45(+47()',            # Mismatched delimiters
+        '115+db))45+sinh(3(',   # Mismatched delimiters
+        '115+db))45+sinh((3',   # Mismatched delimiters
+        '115+db()45+sinh)3(',   # Mismatched delimiters
+    ]
+    for item in items:
+        AE(obj, RuntimeError, 'Mismatched delimiters', expr=item)
+        exmsg = 'Function name `0db` is not valid'
+        AE(obj, RuntimeError, exmsg, expr='0db(5)+sinh(3)')
+        exmsg = 'Function name `34sinh` is not valid'
+        AE(obj, RuntimeError, exmsg, expr='db(5)+34sinh(3)')
+
+
 @pytest.mark.parametrize(
     'num, dec, ref', [
         (None, DFLT, None),
