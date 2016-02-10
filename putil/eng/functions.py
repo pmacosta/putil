@@ -5,6 +5,7 @@
 
 # Standard library imports
 import collections
+import copy
 import math
 import textwrap
 import decimal
@@ -110,7 +111,7 @@ def _get_op_level(operator, nops=2):
     # operator precedence group, it is assumed that only valid
     # operators are in mathematical expression at higher function
     # levels and/or at API entry point
-    for num, item in enumerate(_OP_PREC):
+    for num, item in enumerate(_OP_PREC):   # pragma: no cover
         if operator in item:
             if operator not in ['+', '-']:
                 return num
@@ -118,7 +119,6 @@ def _get_op_level(operator, nops=2):
                 return num
             if (nops == 1) and item == ['+', '-', '~']:
                 return num
-    raise RuntimeError('Operator not supported')
 
 
 # Operators groups that need parenthesis around expression if lower in parse
@@ -186,7 +186,7 @@ def _pair_delims(expr, ldelim='(', rdelim=')'):
 
 def _parse_expr(text, ldelim='(', rdelim=')'):
     """ Parse mathematical expression using PyParsing """
-    var = pyparsing.Word(pyparsing.alphanums+'_').setResultsName('var')
+    var = pyparsing.Word(pyparsing.alphas+'_', pyparsing.alphanums+'_')
     point = pyparsing.Literal('.')
     exp = pyparsing.CaselessLiteral('E')
     number = pyparsing.Combine(
@@ -200,13 +200,14 @@ def _parse_expr(text, ldelim='(', rdelim=')'):
     )
     atom = var | number
     oplist = [
+        (pyparsing.Literal('**'), 2, pyparsing.opAssoc.RIGHT),
         (pyparsing.oneOf('+ - ~'), 1, pyparsing.opAssoc.RIGHT),
         (pyparsing.oneOf('* / // %'), 2, pyparsing.opAssoc.LEFT),
         (pyparsing.oneOf('+ -'), 2, pyparsing.opAssoc.LEFT),
         (pyparsing.oneOf('<< >>'), 2, pyparsing.opAssoc.LEFT),
-        (pyparsing.oneOf('&'), 2, pyparsing.opAssoc.LEFT),
-        (pyparsing.oneOf('^'), 2, pyparsing.opAssoc.LEFT),
-        (pyparsing.oneOf('|'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.Literal('&'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.Literal('^'), 2, pyparsing.opAssoc.LEFT),
+        (pyparsing.Literal('|'), 2, pyparsing.opAssoc.LEFT),
     ]
     # Get functions
     expr = pyparsing.infixNotation(
@@ -218,15 +219,8 @@ def _parse_expr(text, ldelim='(', rdelim=')'):
     return expr.parseString(text)[0]
 
 
-def _remove_extra_delims(expr, ldelim='(', rdelim=')'):
+def _remove_consecutive_delims(expr, ldelim='(', rdelim=')'):
     """ Removes consecutive delimiters """
-    # Remove extra outer parenthesis
-    lexpr = len(expr)
-    lcount = lexpr-len(expr.lstrip(ldelim))
-    rcount = lexpr-len(expr.rstrip(rdelim))
-    extra_pars = min(lcount, rcount)
-    expr = expr[extra_pars:-extra_pars] if extra_pars else expr
-    # Find where remaining delimiters are
     tpars = _pair_delims(expr, ldelim=ldelim, rdelim=rdelim)
     # Flag superfluous delimiters
     ddelim = []
@@ -238,6 +232,37 @@ def _remove_extra_delims(expr, ldelim='(', rdelim=')'):
     for num, item in enumerate(ddelim):
         expr = expr[:item-num]+expr[item-num+1:]
     # Get functions
+    return expr
+
+
+def _remove_extra_delims(expr, ldelim='(', rdelim=')', fcount=None):
+    """
+    Removes unnecessary delimiters (parenthesis, brackets, etc.). Internal
+    function that can be recursed
+    """
+    fcount = [0] if fcount is None else fcount
+    tfuncs = _get_functions(expr, ldelim=ldelim, rdelim=rdelim)
+    # Replace function call with tokens
+    for fdict in reversed(tfuncs):
+        fcount[0] += 1
+        fdict['token'] = '__'+str(fcount[0])
+        expr = (
+            expr[:fdict['start']]+fdict['token']+expr[fdict['stop']+1:]
+        )
+        fdict['expr'] = _remove_extra_delims(
+            fdict['expr'], ldelim=ldelim, rdelim=rdelim, fcount=fcount
+        )
+    # Parse expression with function calls removed
+    expr = _build_expr(
+        _parse_expr(expr, ldelim=ldelim, rdelim=rdelim),
+        ldelim=ldelim,
+        rdelim=rdelim
+    )
+    # Insert cleaned-up function calls
+    for fdict in tfuncs:
+        expr = expr.replace(
+            fdict['token'], fdict['fname']+ldelim+fdict['expr']+rdelim
+        )
     return expr
 
 
@@ -743,39 +768,22 @@ def remove_extra_delims(expr, ldelim='(', rdelim=')'):
         raise RuntimeError('Argument `rdelim` is not valid')
     if expr.count(ldelim) != expr.count(rdelim):
         raise RuntimeError('Mismatched delimiters')
+    if not expr:
+        return expr
     vchars = (
         'abcdefghijklmnopqrstuvwxyz'
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        '0123456789'
-        r'()[]\{\}'+rdelim+ldelim+op_group
+        '.0123456789'
+        r'_()[]\{\}'+rdelim+ldelim+op_group
     )
     if any([item not in vchars for item in expr]) or ('__' in expr):
         raise RuntimeError('Argument `expr` is not valid')
-    expr = _remove_extra_delims(expr, ldelim=ldelim, rdelim=rdelim)
-    tfuncs = _get_functions(expr, ldelim=ldelim, rdelim=rdelim)
-    # Replace function call with tokens
-    for fnum, fdict in enumerate(tfuncs):
-        fdict['token'] = '__'+str(fnum)
-        expr = (
-            expr[:fdict['start']]+fdict['token']+expr[fdict['stop']+1:]
-        )
-        fdict['expr'] = _build_expr(
-            _parse_expr(fdict['expr'], ldelim=ldelim, rdelim=rdelim),
-            ldelim=ldelim,
-            rdelim=rdelim
-        )
-    # Parse expression with function calls removed
-    expr = _build_expr(
-        _parse_expr(expr, ldelim=ldelim, rdelim=rdelim),
+    expr = _remove_consecutive_delims(expr, ldelim=ldelim, rdelim=rdelim)
+    return _remove_extra_delims(
+        _remove_consecutive_delims(expr, ldelim=ldelim, rdelim=rdelim),
         ldelim=ldelim,
         rdelim=rdelim
     )
-    # Insert cleaned-up function calls
-    for fdict in tfuncs:
-        expr = expr.replace(
-            fdict['token'], fdict['fname']+ldelim+fdict['expr']+rdelim
-        )
-    return expr
 
 
 def round_mantissa(arg, decimals=0):

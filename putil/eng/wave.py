@@ -11,7 +11,7 @@ import numpy
 import scipy.interpolate
 # Putil imports
 import putil.pcontracts
-from .functions import pprint_vector
+from .functions import pprint_vector, remove_extra_delims
 from .constants import FP_ATOL, FP_RTOL
 
 ###
@@ -1436,7 +1436,7 @@ interp='CONTINUOUS')"
         elif operand == '*':
             dep_vector = numpy.multiply(dep_vector_a, dep_vector_b)
             if proc_units and (not scalar):
-                dep_units = '{0}*{1}'.format(
+                dep_units = '({0})*({1})'.format(
                     self._dep_units if not ureflected else other._dep_units,
                     other._dep_units if not ureflected else self._dep_units
                 )
@@ -1461,16 +1461,16 @@ interp='CONTINUOUS')"
                 dep_vector_b if not reflected else dep_vector_a,
             )
             if proc_units and scalar and (not ureflected):
-                dep_units = '{0}**{1}'.format(
+                dep_units = '({0})**({1})'.format(
                     self._dep_units,
                     scalar_value if scalar_value else other._indep_name
                 )
             elif proc_units and scalar:
-                dep_units = '1**{0}'.format(
+                dep_units = '1**({0})'.format(
                     self._dep_units if self._dep_units else other._dep_units
                 )
             elif proc_units:
-                dep_units = '{0}**{1}'.format(
+                dep_units = '({0})**({1})'.format(
                     self._dep_units if not ureflected else other._dep_units,
                     other._dep_units if not ureflected else self._dep_units
                 )
@@ -1504,19 +1504,19 @@ interp='CONTINUOUS')"
                 dep_vector_a if not reflected else dep_vector_b,
                 dep_vector_b if not reflected else dep_vector_a,
             )
-        indep_name = '{wave1}{op}{wave2}'.format(
+        indep_name = '({wave1}){op}({wave2})'.format(
             wave1=self.indep_name, wave2=other.indep_name, op=operand)
         if proc_units and (operand in ['/', '//']):
             alt_operand = '/'
             if scalar and (not ureflected):
                 dep_units = self._dep_units
             elif scalar:
-                dep_units = '1{0}{1}'.format(
+                dep_units = '1{0}({1})'.format(
                     alt_operand,
                     self._dep_units if self._dep_units else other._dep_units
                 )
             else:
-                dep_units = '{0}{1}{2}'.format(
+                dep_units = '({0}){1}({2})'.format(
                     self._dep_units if not ureflected else other._dep_units,
                     alt_operand,
                     other._dep_units if not ureflected else self._dep_units
@@ -1524,11 +1524,11 @@ interp='CONTINUOUS')"
         return Waveform(
             indep_vector=indep_vector,
             dep_vector=dep_vector,
-            indep_name=indep_name,
+            indep_name=remove_extra_delims(indep_name, '(', ')'),
             indep_scale=self._indep_scale,
             dep_scale=self._dep_scale,
             indep_units=self._indep_units,
-            dep_units=dep_units,
+            dep_units=remove_extra_delims(dep_units, '(', ')'),
             interp=self._interp
         )
 

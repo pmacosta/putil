@@ -6,6 +6,7 @@
 # Standard library imports
 import functools
 import sys
+# PyPI imports
 import pytest
 from numpy import array, ndarray
 # Putil imports
@@ -1112,13 +1113,24 @@ def test_pprint_vector_exceptions(args):
 def test_remove_extra_delims():
     """ Test remove_extra_delims function behavior """
     fobj = putil.eng.remove_extra_delims
-    assert fobj('(((45+35)))') == '45+35'
+    assert fobj('') == ''
+    assert fobj('(((45.3+35)))') == '45.3+35'
     assert fobj('(((45+(25/20)-((5<<2))%35)))') == '45+25/20-(5<<2)%35'
     assert (
         fobj('-1*a+((3<<2)>>5)-(2+3)/((5-2)*3)')
         ==
         '-1*a+((3<<2)>>5)-(2+3)/((5-2)*3)'
     )
+    assert fobj('(((45+db(((5+2))*25/20))))') == '45+db((5+2)*25/20)'
+    # Recursive functions
+    assert fobj('sinh((db(0.1/20)))') == 'sinh(db(0.1/20))'
+    assert (
+        fobj('sinh((3+db(0.1/20)/log((37-exp((5))))))')
+        ==
+        'sinh(3+db(0.1/20)/log(37-exp(5)))'
+    )
+    assert fobj('Volts**A') == 'Volts**A'
+
 
 def test_remove_extra_delims_exceptions():
     """ Test remove_extra_delims function exceptions """
