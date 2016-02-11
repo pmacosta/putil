@@ -1205,6 +1205,27 @@ class TestWaveform(object):
             _ = obj_b * obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
 
+    def test_multiple_operations(self):
+        """ Test indep_name and dep_units after multiple operations """
+        obj_a = std_obj('obj_a')
+        obj_b = std_obj('obj_b', dep_vector=numpy.array([8, 7, 1]))
+        obj_c = std_obj(
+            'obj_c',
+            dep_vector=numpy.array([1.0, 10.0, 2.0]),
+            dep_units='Ohm'
+        )
+        result = std_obj('result', dep_vector=numpy.array([14, 1.2, 2.5]))
+        result.indep_name = '(obj_a+obj_b)/obj_c'
+        result.dep_units = 'Volts/Ohm'
+        assert (obj_a+obj_b)/obj_c == result
+        assert ((obj_a+obj_b)/obj_c).indep_name == result.indep_name
+        obj_a.dep_units = 'Volts/Ohm'
+        result = std_obj('result', dep_vector=numpy.array([14, 5.7, 4.5]))
+        result.indep_name = 'obj_a+obj_b/obj_c'
+        result.dep_units = 'Volts/Ohm'
+        assert obj_a+(obj_b/obj_c) == result
+        assert (obj_a+(obj_b/obj_c)).indep_name == result.indep_name
+
     def test_neg(self):
         """ Test __neg__ method behavior """
         ref = std_obj('ref')
