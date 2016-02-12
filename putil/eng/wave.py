@@ -1,7 +1,7 @@
 ﻿# wave.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,E0611,W0105
+# pylint: disable=C0111,C0302,E0611,R0912,W0105
 
 # Standard library imports
 import collections
@@ -40,7 +40,7 @@ cname = (
 ###
 # Global variables
 ###
-POINT = collections.namedtuple('Point', ['indep_var', 'dep_var'])
+Point = collections.namedtuple('Point', ['indep_var', 'dep_var'])
 """
 Constructor for a waveform data point. The first item is the
 independent variable data and the second item is the dependent variable
@@ -434,6 +434,23 @@ class Waveform(object):
             interp=self.interp
     )
 
+    def __delitem__(self, key):
+        """
+        Deletes a waveform slice
+
+        :param key: Slice key
+        :type  key: integer or slice object
+
+        :raises: Same exceptions as an invalid Numpy array slicing operation
+        """
+        try:
+            self._indep_vector = numpy.delete(self._indep_vector, key)
+            self._dep_vector = numpy.delete(self._dep_vector, key)
+        except:
+            raise
+        if not self._indep_vector.size:
+            raise RuntimeError('Empty waveform after deletion')
+
     def __div__(self, other):  # pragma: no cover
         """
         Divides the dependent variable vector of a waveform by the dependent
@@ -604,8 +621,11 @@ class Waveform(object):
         """
         Slices waveform
 
-        :returns: :py:data:`putil.eng.POINT` named tuple or list of
-                  :py:data:`putil.eng.POINT` named tuples
+        :param key: Slice key
+        :type  key: integer or slice object
+
+        :returns: :py:data:`putil.eng.Point` named tuple or list of
+                  :py:data:`putil.eng.Point` named tuples
 
         :raises: Same exceptions as an invalid Numpy array slicing operation
         """
@@ -613,9 +633,9 @@ class Waveform(object):
             ivector = self._indep_vector[key]
             dvector = self._dep_vector[key]
             return (
-                [POINT(iitem, ditem) for iitem, ditem in zip(ivector, dvector)]
+                [Point(iitem, ditem) for iitem, ditem in zip(ivector, dvector)]
                 if isinstance(ivector, numpy.ndarray) else
-                POINT(ivector, dvector)
+                Point(ivector, dvector)
             )
         except:
             raise
@@ -1188,6 +1208,83 @@ interp='CONTINUOUS')"
         """
         return self._operation(other, '^', reflected=True)
 
+    def __setitem__(self, key, value):
+        """
+        Assigns a waveform slice
+
+        :param key: Slice key
+        :type  key: integer or slice object
+
+        :param value: Slice value
+        :type  value: 2-item tuple or list of 2-item tuples
+
+        :raises:
+         * Argument `value` is not valid
+
+         * Same exceptions as an invalid Numpy array slicing operation
+        """
+        value = [value] if isinstance(value, tuple) else value
+        if ((value is None) or (not isinstance(value, list)) or
+           (isinstance(value, list) and (not value))):
+            raise RuntimeError('Slice value is not valid')
+        if not all([isinstance(item, tuple) for item in value]):
+            raise RuntimeError('Slice value is not valid')
+        if not all([len(item) == 2 for item in value]):
+            raise RuntimeError('Slice value is not valid')
+        ivector, dvector = zip(*value)
+        ivector = numpy.array(ivector)
+        itype = ivector.dtype.name
+        valid_types = ['int', 'float']
+        if not any([itype.startswith(item) for item in valid_types]):
+            raise RuntimeError('Slice value is not valid')
+        valid_types = ['int', 'float', 'complex']
+        dvector = numpy.array(dvector)
+        dtype = dvector.dtype.name
+        if not any([dtype.startswith(item) for item in valid_types]):
+            raise RuntimeError('Slice value is not valid')
+        # Promote types otherwise Numpy truncates float assigning
+        # slices to an integer vector for example. Not abstracted
+        # in a function for speed
+        # Independent vector promotion
+        valid_types = ['int', 'float']
+        stype = self._indep_vector.dtype.name
+        vnum = 0
+        for vnum, item in enumerate(valid_types):   # pragma: no branch
+            if itype.startswith(item):
+                break
+        snum = 0
+        for snum, item in enumerate(valid_types):   # pragma: no branch
+            if stype.startswith(item):
+                break
+        nresult = max(snum, vnum)
+        if nresult > snum:
+            ntype = [numpy.int, numpy.float, numpy.complex][nresult]
+            self._indep_vector = self._indep_vector.astype(ntype)
+        # Dependent vector promotion
+        valid_types = ['int', 'float', 'complex']
+        stype = self._dep_vector.dtype.name
+        vnum = 0
+        for vnum, item in enumerate(valid_types):   # pragma: no branch
+            if dtype.startswith(item):
+                break
+        snum = 0
+        for snum, item in enumerate(valid_types):   # pragma: no branch
+            if stype.startswith(item):
+                break
+        nresult = max(snum, vnum)
+        if nresult > snum:
+            ntype = [numpy.int, numpy.float, numpy.complex][nresult]
+            self._dep_vector = self._dep_vector.astype(ntype)
+        try:
+            self._indep_vector[key] = (
+                ivector if len(ivector) > 1 else ivector[0]
+            )
+            if min(numpy.diff(self._indep_vector)) <= 0:
+                raise RuntimeError('Slice value is not valid')
+            self._dep_vector[key] = dvector if len(dvector) > 1 else dvector[0]
+        except:
+            raise
+
     def __str__(self):
         """
         Returns a string with a detailed description of the object's contents.
@@ -1343,7 +1440,7 @@ interp='CONTINUOUS')"
         return self._operation(other, '^')
 
     def _operation(self, other, operand, reflected=False):
-        # pylint: disable=R0912,R0914,R0915,W0212
+        # pylint: disable=R0914,W0212
         cop_list = [
             '>', '>=', '<', '<=', '%', '<<', '>>', '&', '^', '|', 'fdiv'
         ]
@@ -1558,7 +1655,7 @@ interp='CONTINUOUS')"
 
     def _get_vectors(self):
         return [
-            POINT(iitem, ditem)
+            Point(iitem, ditem)
             for iitem, ditem in zip(self._indep_vector, self._dep_vector)
         ]
 

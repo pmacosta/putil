@@ -5,8 +5,8 @@
 
 # Putil imports
 from .functions import (
-    ENGPOWER,
-    NUMCOMP,
+    EngPower,
+    NumComp,
     no_exp,
     peng,
     peng_float,
@@ -22,5 +22,5 @@ from .functions import (
     to_scientific_string,
     to_scientific_tuple
 )
-from .wave import POINT, Waveform
+from .wave import Point, Waveform
 from .constants import FP_ATOL, FP_RTOL

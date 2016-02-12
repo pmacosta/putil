@@ -21,6 +21,7 @@ ai
 aliceblue
 aline
 alist
+alphanums
 antiquewhite
 anumber
 aobj
@@ -291,6 +292,7 @@ ds
 dsort
 dst
 dtree
+dtype
 dvar
 dvec
 dvector
@@ -371,6 +373,7 @@ extype
 exvalue
 fargs
 fchars
+fcount
 fdata
 fdel
 fdesc
@@ -561,6 +564,7 @@ itf
 itg
 itoken
 itokens
+itype
 ivar
 ivector
 IXUSR
@@ -781,6 +785,7 @@ npoints
 npz
 nref
 nReference
+nresult
 nsep
 nSeries
 nsys
@@ -789,6 +794,7 @@ nthe
 nthis
 ntree
 ntuple
+ntype
 num
 NUM
 numa
@@ -990,6 +996,7 @@ RealNumber
 RealNumpyVector
 rebase
 Rebase
+recursed
 regtext
 reinstall
 r'Elapsed
@@ -1114,6 +1121,7 @@ shlex
 shutil
 SimpleClass
 sindent
+sinh
 sitem
 skeys
 skyblue
@@ -1294,6 +1302,7 @@ VERS
 versa
 verticalalignment
 Virtualenv
+vnum
 vv
 waveforms
 waveform's

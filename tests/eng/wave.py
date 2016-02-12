@@ -1,7 +1,7 @@
 # wave.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0113,C0122,E0611,E1101,R0201,W0212
+# pylint: disable=C0103,C0111,C0113,C0122,E0611,E1101,E1127,R0201,W0212
 
 # Standard library imports
 from __future__ import print_function
@@ -22,6 +22,13 @@ from putil.test import AE, AI, APROP, AROPROP, GET_EXMSG, compare_strings
 # Global variables
 ###
 FP_PREC = 1E-10
+EXMSG1 = 'failed to coerce slice entry of type str to integer'
+EXMSG2 = 'invalid slice'
+EXMSG3 = (
+    'slice indices must be integers or None or have an __index__ method'
+)
+EXMSG4 = 'Slice value is not valid'
+INVALID_SLICE_LIST = [EXMSG1, EXMSG2, EXMSG3, EXMSG4]
 
 
 ###
@@ -584,6 +591,27 @@ class TestWaveform(object):
         assert obj_b.interp == 'STAIRCASE'
         assert obj_a.interp == obj_b.interp
 
+    def test_delitem(self):
+        """ Test __delitem__ method behavior """
+        obj_a = putil.eng.Waveform(
+            indep_vector=array([1, 2, 3, 5, 6]),
+            dep_vector=array([2, 8, 3, 10, 0]),
+            indep_name='obj_b'
+        )
+        del obj_a[0:5:2]
+        assert (obj_a.indep_vector == array([2, 5])).all()
+        assert (obj_a.dep_vector == array([8, 10])).all()
+
+    def test_delitem_exceptions(self):
+        """ Test __delitem__ method exceptions """
+        obj_a = std_obj('obj_a')
+        with pytest.raises(TypeError) as excinfo:
+            del obj_a[1:'a']
+        assert GET_EXMSG(excinfo) in INVALID_SLICE_LIST
+        with pytest.raises(RuntimeError) as excinfo:
+            del obj_a[0:4]
+        assert  GET_EXMSG(excinfo) == 'Empty waveform after deletion'
+
     def test_div(self):
         """ Test __div__ method behavior """
         # pylint: disable=R0915
@@ -882,16 +910,21 @@ class TestWaveform(object):
         assert obj_a[0] == (1, 6)
         assert obj_a[-1] == (3, 4)
         assert obj_a[0:2] == [(1, 6), (2, 5)]
+        obj_b = putil.eng.Waveform(
+            indep_vector=array([1, 2, 3, 4, 6]),
+            dep_vector=array([2, 8, 3, 5, 0]),
+            indep_name='obj_b'
+        )
+        assert obj_b[slice(0, 5, 2)] == [
+            (1, 2), (3, 3), (6, 0)
+        ]
 
     def test_getitem_exceptions(self):
         """ Test __getitem__ method exceptions """
-        # pylint: disable=E1127
         obj_a = std_obj('obj_a')
         with pytest.raises(IndexError) as excinfo:
             _ = obj_a[1:'a']
-        exmsg1 = 'failed to coerce slice entry of type str to integer'
-        exmsg2 = 'invalid slice'
-        assert GET_EXMSG(excinfo) in [exmsg1, exmsg2]
+        assert GET_EXMSG(excinfo) in INVALID_SLICE_LIST
 
     def test_gt(self):
         """ Test __gt__ method behavior """
@@ -1208,19 +1241,19 @@ class TestWaveform(object):
     def test_multiple_operations(self):
         """ Test indep_name and dep_units after multiple operations """
         obj_a = std_obj('obj_a')
-        obj_b = std_obj('obj_b', dep_vector=numpy.array([8, 7, 1]))
+        obj_b = std_obj('obj_b', dep_vector=array([8, 7, 1]))
         obj_c = std_obj(
             'obj_c',
-            dep_vector=numpy.array([1.0, 10.0, 2.0]),
+            dep_vector=array([1.0, 10.0, 2.0]),
             dep_units='Ohm'
         )
-        result = std_obj('result', dep_vector=numpy.array([14, 1.2, 2.5]))
+        result = std_obj('result', dep_vector=array([14, 1.2, 2.5]))
         result.indep_name = '(obj_a+obj_b)/obj_c'
         result.dep_units = 'Volts/Ohm'
         assert (obj_a+obj_b)/obj_c == result
         assert ((obj_a+obj_b)/obj_c).indep_name == result.indep_name
         obj_a.dep_units = 'Volts/Ohm'
-        result = std_obj('result', dep_vector=numpy.array([14, 5.7, 4.5]))
+        result = std_obj('result', dep_vector=array([14, 5.7, 4.5]))
         result.indep_name = 'obj_a+obj_b/obj_c'
         result.dep_units = 'Volts/Ohm'
         assert obj_a+(obj_b/obj_c) == result
@@ -1439,6 +1472,60 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_a >> obj_b
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+
+    def test_setitem(self):
+        """ Test __setitem__ method behavior """
+        obj_a = std_obj('obj_a')
+        assert obj_a.indep_vector.dtype.name.startswith('int')
+        assert obj_a.dep_vector.dtype.name.startswith('int')
+        obj_a[0] = (0.5, 60)
+        assert obj_a[0] == (0.5, 60)
+        assert obj_a.indep_vector.dtype.name.startswith('float')
+        assert obj_a.dep_vector.dtype.name.startswith('int')
+        obj_a[-1] = (40, 4)
+        assert obj_a[-1] == putil.eng.Point(40, 4)
+        obj_a[0:2] = [(0.75, -1), (2.1, 5-4j)]
+        assert obj_a[0:2] == [(0.75, -1), (2.1, 5-4j)]
+        assert obj_a.indep_vector.dtype.name.startswith('float')
+        assert obj_a.dep_vector.dtype.name.startswith('complex')
+        obj_a[1] = (2.2, 1-1j)
+        assert obj_a[1] == (2.2, 1-1j)
+        assert obj_a.indep_vector.dtype.name.startswith('float')
+        assert obj_a.dep_vector.dtype.name.startswith('complex')
+        obj_b = putil.eng.Waveform(
+            indep_vector=array([1, 2, 3, 5, 6]),
+            dep_vector=array([2, 8, 3, 5, 0]),
+            indep_name='obj_b'
+        )
+        obj_b[slice(0, 5, 2)] = [
+            (-1, 20), (4, 30), (60, -20)
+        ]
+        assert cmp_vectors(obj_b.indep_vector, array([-1, 2, 4, 5, 60]))
+        assert cmp_vectors(obj_b.dep_vector, array([20, 8, 30, 5, -20]))
+        assert obj_b.indep_vector.dtype.name.startswith('int')
+        assert obj_b.dep_vector.dtype.name.startswith('int')
+
+    def test_setitem_exceptions(self):
+        """ Test __setitem__ method exceptions """
+        obj_a = std_obj('obj_a')
+        with pytest.raises(IndexError) as excinfo:
+            obj_a[1:'a'] = [(1, 2)]
+        assert GET_EXMSG(excinfo) in INVALID_SLICE_LIST
+        items = [
+            None,
+            [],
+            [34, 35],
+            ['a', 'b'],
+            (1, 2, 3),
+            [(1, 2, 3)],
+            (100, 5),
+            ('a', 5),
+            (2, 'a'),
+        ]
+        for item in items:
+            with pytest.raises(RuntimeError) as excinfo:
+                obj_a[1] = item
+            assert GET_EXMSG(excinfo) in INVALID_SLICE_LIST
 
     def test_str(self):
         """ Test __str__ method behavior """

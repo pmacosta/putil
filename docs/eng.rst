@@ -111,9 +111,9 @@ Global variables
 Named tuples
 ************
 
-.. autofunction:: putil.eng.ENGPOWER
-.. autofunction:: putil.eng.NUMCOMP
-.. autofunction:: putil.eng.POINT
+.. autofunction:: putil.eng.EngPower
+.. autofunction:: putil.eng.NumComp
+.. autofunction:: putil.eng.Point
 
 *********
 Functions
@@ -144,6 +144,7 @@ Classes
                   __and__,
                   __bool__,
                   __copy__,
+                  __delitem__,
                   __div__,
                   __eq__,
                   __floordiv__,
@@ -178,6 +179,7 @@ Classes
                   __rsub__,
                   __rtruediv__,
                   __rxor__,
+                  __setitem__,
                   __str__,
                   __truediv__,
                   __xor__,

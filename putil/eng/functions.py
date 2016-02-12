@@ -70,12 +70,12 @@ _SUFFIX_POWER_DICT = dict(
     (key, float(10**value)) for key, value in _SUFFIX_TO_POWER_DICT.items()
 )
 
-ENGPOWER = collections.namedtuple('EngPower', ['suffix', 'exp'])
+EngPower = collections.namedtuple('EngPower', ['suffix', 'exp'])
 """
 Constructor for engineering notation suffix
 """
 
-NUMCOMP = collections.namedtuple('NumComp', ['mant', 'exp'])
+NumComp = collections.namedtuple('NumComp', ['mant', 'exp'])
 """
 Constructor for number components representation
 """
@@ -322,7 +322,7 @@ def _to_eng_tuple(number):
     # New values
     new_mant = '.'.join(filter(None, split(mant, 1+(exp%3)+neg)))
     new_exp = int(3*math.floor(exp/3))
-    return NUMCOMP(new_mant, new_exp)
+    return NumComp(new_mant, new_exp)
 
 
 @putil.pcontracts.contract(number='number')
@@ -648,7 +648,7 @@ def peng_power(snum):
         EngPower(suffix='M', exp=1000000.0)
     """
     suffix = ' ' if snum[-1].isdigit() else snum[-1]
-    return ENGPOWER(suffix, _SUFFIX_POWER_DICT[suffix])
+    return EngPower(suffix, _SUFFIX_POWER_DICT[suffix])
 
 
 @putil.pcontracts.contract(snum='engineering_notation_number')
@@ -1176,4 +1176,4 @@ def to_scientific_tuple(number):
         )
     ).rstrip('0').rstrip('.')
     exp += len(digits)-1
-    return NUMCOMP(mant, exp)
+    return NumComp(mant, exp)
