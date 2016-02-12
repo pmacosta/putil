@@ -703,6 +703,17 @@ class Waveform(object):
         )
         return obj
 
+    def __iter__(self):
+        """
+        Returns iterable over independent and dependent variable vectors.
+        Each item returned by an iterator is a :py:data:`putil.eng.Point`
+        named tuple
+
+        :rtype: iterable object
+        """
+        for iitem, ditem in zip(self._indep_vector, self._dep_vector):
+            yield iitem, ditem
+
     def __le__(self, other):
         """
         Tests whether a waveform is less than another waveform or a real

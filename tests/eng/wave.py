@@ -985,6 +985,25 @@ class TestWaveform(object):
             _ = ~obj
         assert GET_EXMSG(excinfo) == 'Complex operand not supported'
 
+    def test_iter(self):
+        """ Test __iter__ method behavior """
+        obj_a = std_obj('obj_a')
+        iobj = iter(obj_a)
+        assert next(iobj) == (1, 6)
+        assert next(iobj) == (2, 5)
+        assert next(iobj) == (3, 4)
+        assert (
+            list(obj_a)
+            ==
+            [(1, 6), (2, 5), (3, 4)]
+        )
+        iobj1 = iter(obj_a)
+        iobj2 = iter(obj_a)
+        next(iobj1)
+        next(iobj1)
+        assert next(iobj1) == (3, 4)
+        assert next(iobj2) == (1, 6)
+
     def test_le(self):
         """ Test __le__ method behavior """
         obj_a = std_obj('obj_a')

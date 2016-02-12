@@ -152,6 +152,7 @@ Classes
                   __getitem__,
                   __gt__,
                   __invert__,
+                  __iter__,
                   __le__,
                   __len__,
                   __lshift__,
