@@ -176,7 +176,7 @@ def _verify_compatibility(wave_a, wave_b, check_dep_units=True):
 ###
 class Waveform(object):
     r"""
-    Creates a waveform; an object that bind together an independent variable
+    Creates a waveform; an object that binds together an independent variable
     vector with a corresponding dependent variable vector and other relevant
     meta data (independent and dependent variable scale, units and type of
     function to be used for interpolating between given independent variable
@@ -188,6 +188,11 @@ class Waveform(object):
     a number (integer, float or complex) and a waveform object. An integer
     dependent variable vector preserves its type through any operation unless
     an interpolated dependent variable item results in a floating point value.
+
+    Additionally waveform slicing, iteration and data point membership in the
+    waveform are supported. The object(s) expected, returned or tested against
+    are 2-item tuples that meet the characteristics of the
+    :py:data:`putil.eng.Point` named tuple
 
     :param indep_vector: Independent variable vector
     :type  indep_vector: :ref:`IncreasingRealNumpyVector`
@@ -411,7 +416,12 @@ class Waveform(object):
 
     def __contains__(self, item):
         """
-        Evaluates if an item is a data point in the waveform
+        Evaluates if an item is a data point in the waveform. An item is in a
+        waveform when it is a tuple with the characteristics of the
+        :py:data:`putil.eng.Point` named tuple and its independent and
+        dependent values match a waveform's data point with
+        :py:data:`putil.eng.FP_ATOL` absolute tolerance and
+        :py:data:`putil.eng.FP_RTOL` relative tolerance
 
         :param item: Object
         :type  item: any
@@ -741,11 +751,11 @@ class Waveform(object):
 
     def __iter__(self):
         """
-        Returns iterable over independent and dependent variable vectors.
-        Each item returned by an iterator is a :py:data:`putil.eng.Point`
-        named tuple
+        Returns an iterable over the independent and dependent variable
+        vectors.  Each item returned by an iterator is a
+        :py:data:`putil.eng.Point` named tuple
 
-        :rtype: iterable object
+        :rtype: iterable
         """
         for iitem, ditem in zip(self._indep_vector, self._dep_vector):
             yield iitem, ditem
