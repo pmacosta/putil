@@ -409,6 +409,42 @@ class Waveform(object):
             )
         )
 
+    def __contains__(self, item):
+        """
+        Evaluates if an item is a data point in the waveform
+
+        :param item: Object
+        :type  item: any
+        """
+        if ((not isinstance(item, tuple)) or
+           (isinstance(item, tuple) and (len(item) != 2))):
+            return False
+        tchk = any([isinstance(item[0], typ) for typ in [int, float]])
+        if not tchk:
+            return False
+        tchk = any([isinstance(item[1], typ) for typ in [int, float, complex]])
+        if not tchk:
+            return False
+        indices = [numpy.where(self._indep_vector >= item[0])[0][0]]
+        if indices[0]:
+            indices.append(indices[0]-1)
+        for index in indices:
+            icmp = numpy.isclose(
+                numpy.array([self._indep_vector[index]]),
+                numpy.array([item[0]]),
+                FP_RTOL,
+                FP_ATOL
+            )
+            dcmp = numpy.isclose(
+                numpy.array([self._dep_vector[index]]),
+                numpy.array([item[1]]),
+                FP_RTOL,
+                FP_ATOL
+            )
+            if icmp and dcmp:
+                return True
+        return False
+
     def __copy__(self):
         """
         Copies object. For example:

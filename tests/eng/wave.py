@@ -558,6 +558,24 @@ class TestWaveform(object):
         if obj:
             pytest.fail('__bool__ failed')
 
+    def test_contains(self):
+        """ Test __contains__ method behavior """
+        obj_a = putil.eng.Waveform(
+            indep_vector=numpy.array([1.0, 2.0, 3.0, 5.0, 6.0]),
+            dep_vector=numpy.array([2, 8, 3, 10, 0]),
+            indep_name='obj_a'
+        )
+        assert 'a' not in obj_a
+        assert (1, 2, 3) not in obj_a
+        assert ('a', 2) not in obj_a
+        assert (2, 'a') not in obj_a
+        assert (2, 8) in obj_a
+        assert (1, 8) not in obj_a
+        assert (1.5, 8) not in obj_a
+        assert (0.99999999999, 2.00000000001) in obj_a
+        assert (1.00000000001, 2.00000000001) in obj_a
+        assert (5.99999999999, 0.00000000001) in obj_a
+
     def test_copy(self):
         """ Test __copy__ method behavior """
         obj_a = std_obj('test')

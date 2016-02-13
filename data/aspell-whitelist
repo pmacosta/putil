@@ -230,6 +230,7 @@ darkviolet
 DataSource
 datetime
 DBU
+dcmp
 ddelim
 ddir
 dec
@@ -492,6 +493,7 @@ hvector
 hver
 iadd
 icfilter
+icmp
 icol
 idata
 idfilter
@@ -1191,6 +1193,7 @@ sys
 sysconfig
 tb
 tbobj
+tchk
 tdata
 tdict
 tdir
@@ -1266,6 +1269,7 @@ turquois
 twinx
 TwO
 txt
+typ
 TypeError
 ucols
 ufin

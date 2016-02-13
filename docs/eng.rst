@@ -143,6 +143,7 @@ Classes
 	:members: __add__,
                   __and__,
                   __bool__,
+                  __contains__,
                   __copy__,
                   __delitem__,
                   __div__,
