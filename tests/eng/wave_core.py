@@ -1,7 +1,7 @@
-# wave.py
+# wave_core.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0113,C0122,E0611,E1101,E1127,R0201,W0212
+# pylint: disable=C0103,C0111,C0113,C0122,E0611,E1101,E1127,R0201,R0915,W0212
 
 # Standard library imports
 from __future__ import print_function
@@ -150,7 +150,7 @@ def std_obj(indep_name, indep_vector=None, dep_vector=None,
 ###
 def test_get_indep_vector():
     """ Test _get_indep_vector method behavior """
-    fut = putil.eng.wave._get_indep_vector
+    fut = putil.eng.wave_core._get_indep_vector
     obj_a = putil.eng.Waveform(
         array([1, 2, 3, 4]), array([10, 20, 30, 40]), 'obj_a'
     )
@@ -182,7 +182,7 @@ def test_homogenize_waves():
         array([100, 200, 300, 400, 500, 600, 700]),
         'obj_b'
     )
-    fut = putil.eng.wave._homogenize_waves
+    fut = putil.eng.wave_core._homogenize_waves
     indep_vector, dep_vector_a, dep_vector_b = fut(obj_a, obj_b)
     assert cmp_vectors(
         indep_vector,
@@ -209,11 +209,12 @@ def test_interp_dep_vector():
             interp=case['itf']
         )
         assert cmp_vectors(
-            putil.eng.wave._interp_dep_vector(obj, case['niv']), case['ndv']
+            putil.eng.wave_core._interp_dep_vector(obj, case['niv']),
+            case['ndv']
         )
 
 
-@pytest.mark.wave
+@pytest.mark.wave_core
 def test_get_indep_vector_exceptions():
     """ Test _get_indep_vector method exceptions """
     obj_a = putil.eng.Waveform(
@@ -224,7 +225,7 @@ def test_get_indep_vector_exceptions():
     )
     msg = 'Independent variable ranges do not overlap'
     args = dict(wave_a=obj_a, wave_b=obj_b)
-    AE(putil.eng.wave._get_indep_vector, RuntimeError, msg, **args)
+    AE(putil.eng.wave_core._get_indep_vector, RuntimeError, msg, **args)
 
 
 ###
@@ -233,7 +234,7 @@ def test_get_indep_vector_exceptions():
 class TestWaveform(object):
     """ Tests for Waveform class """
     # pylint: disable=R0903,R0904
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     @pytest.mark.parametrize(
         'prop', [
             'indep_vector', 'dep_vector', 'indep_name', 'indep_scale',
@@ -297,7 +298,7 @@ class TestWaveform(object):
         obj.dep_vector = array([1+1j, 2+2j, 3+3j])
         assert (obj.dep_vector == array([1+1j, 2+2j, 3+3j])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_init_exceptions(self):
         """ Test constructor exceptions """
         items = [
@@ -461,7 +462,7 @@ class TestWaveform(object):
         obj_a += 7+1j
         assert (obj_a.dep_vector == array([8+2j, 10+6j])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_add_exceptions(self):
         """ Test __add__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -497,7 +498,7 @@ class TestWaveform(object):
         obj_a &= 2
         assert (obj_a.dep_vector == array([2, 0, 0])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_and_exceptions(self):
         """ Test __and__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -632,7 +633,6 @@ class TestWaveform(object):
 
     def test_div(self):
         """ Test __div__ method behavior """
-        # pylint: disable=R0915
         ref = array([0.8333333333333333333, 1.0, 1.25])
         if sys.hexversion < 0x03000000:
             # Integer division
@@ -738,7 +738,7 @@ class TestWaveform(object):
         aobj = obj_b/obj_a
         assert aobj == obj_c
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_div_exceptions(self):
         """ Test __div__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -847,7 +847,7 @@ class TestWaveform(object):
         aobj = obj_b//obj_a
         assert aobj == obj_c
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_floordiv_exceptions(self):
         """ Test __floordiv__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -892,7 +892,7 @@ class TestWaveform(object):
         assert obj_a >= 3
         assert not obj_a >= 6
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_ge_exceptions(self):
         """ Test __ge__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -958,7 +958,7 @@ class TestWaveform(object):
         assert obj_a > 3
         assert not obj_a > 7
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_gt_exceptions(self):
         """ Test __gt__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -995,7 +995,7 @@ class TestWaveform(object):
         assert obj.indep_name == '~ref'
         assert (obj.dep_vector == array([-7, -6, -5])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_invert_exceptions(self):
         """ Test __invert__ method exceptions """
         obj = std_obj('obj', dep_vector=array([1+1j, 2+2j, 3+3j]))
@@ -1036,7 +1036,7 @@ class TestWaveform(object):
         assert obj_a <= 7
         assert not obj_a <= 4
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_le_exceptions(self):
         """ Test __le__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1086,7 +1086,7 @@ class TestWaveform(object):
         obj_a <<= 2
         assert (obj_a.dep_vector == array([24, 20, 16])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_lshift_exceptions(self):
         """ Test __lshift__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1136,7 +1136,7 @@ class TestWaveform(object):
         assert obj_a < 7
         assert not obj_a < 6
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_lt_exceptions(self):
         """ Test __lt__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1179,7 +1179,7 @@ class TestWaveform(object):
         obj_a %= 2
         assert (obj_a.dep_vector == array([0, 1, 0])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_mod_exceptions(self):
         """ Test __mod__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1257,7 +1257,7 @@ class TestWaveform(object):
         aobj = obj_b*obj_a
         assert aobj == obj_c
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_mul_exceptions(self):
         """ Test __mul__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1318,7 +1318,7 @@ class TestWaveform(object):
         obj_a |= 2
         assert (obj_a.dep_vector == array([6, 7, 6])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_or_exceptions(self):
         """ Test __or__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1427,7 +1427,7 @@ class TestWaveform(object):
         aobj = obj_b**obj_a
         assert aobj == obj_c
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_pow_exceptions(self):
         """ Test __pow__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1475,7 +1475,7 @@ class TestWaveform(object):
         obj_a >>= 1
         assert (obj_a.dep_vector == array([3, 2, 2])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_rshift_exceptions(self):
         """ Test __rshift__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1653,7 +1653,7 @@ class TestWaveform(object):
         obj_a -= 2
         assert (obj_a.dep_vector == array([4, 3, 2])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_sub_exceptions(self):
         """ Test __sub__ method exceptions """
         obj_a = std_obj('obj_a')
@@ -1684,7 +1684,7 @@ class TestWaveform(object):
         obj_a ^= 2
         assert (obj_a.dep_vector == array([4, 7, 6])).all()
 
-    @pytest.mark.wave
+    @pytest.mark.wave_core
     def test_xor_exceptions(self):
         """ Test __xor__ method exceptions """
         obj_a = std_obj('obj_a')

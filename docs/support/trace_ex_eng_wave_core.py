@@ -1,4 +1,4 @@
-# trace_ex_eng_wave.py
+# trace_ex_eng_wave_core.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,W0212
@@ -8,7 +8,7 @@ import docs.support.trace_support
 
 def trace_module(no_print=True):
     """ Trace eng wave module exceptions """
-    mname = 'wave'
+    mname = 'wave_core'
     fname = 'eng'
     module_prefix = 'putil.{0}.{1}.Waveform'.format(fname, mname)
     callable_names = (

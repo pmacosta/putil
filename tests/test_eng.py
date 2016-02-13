@@ -27,7 +27,7 @@ from tests.eng.functions import (
     test_to_sci_string,
     test_to_scientific_string,
 )
-from tests.eng.wave import (
+from tests.eng.wave_core import (
     test_get_indep_vector,
     test_get_indep_vector_exceptions,
     test_homogenize_waves,

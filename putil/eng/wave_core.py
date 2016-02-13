@@ -1,7 +1,7 @@
-﻿# wave.py
+﻿# wave_core.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,E0611,R0912,W0105
+# pylint: disable=C0111,C0302,E0611,R0912,R0915,W0105
 
 # Standard library imports
 import collections
@@ -25,12 +25,12 @@ if sys.hexversion < 0x03000000:
 else:
     import builtins as __builtin__
 sys.path.append(os.environ['TRACER_DIR'])
-import trace_ex_eng_wave
-exobj_eng = trace_ex_eng_wave.trace_module(no_print=True)
+import trace_ex_eng_wave_core
+exobj_eng = trace_ex_eng_wave_core.trace_module(no_print=True)
 cname = (
-    'putil.eng.wave.Waveform.__div__'
+    'putil.eng.wave_core.Waveform.__div__'
     if sys.hexversion < 0x03000000 else
-    'putil.eng.wave.Waveform.__truediv__'
+    'putil.eng.wave_core.Waveform.__truediv__'
 )
 ]]]
 [[[end]]]
@@ -223,7 +223,7 @@ class Waveform(object):
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.__init__
+    .. putil.eng.wave_core.Waveform.__init__
 
     :raises:
      * RuntimeError (Argument \`dep_scale\` is not valid)
@@ -333,7 +333,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__add__
+        .. putil.eng.wave_core.Waveform.__add__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -368,7 +368,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__and__
+        .. putil.eng.wave_core.Waveform.__and__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -628,7 +628,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__floordiv__
+        .. putil.eng.wave_core.Waveform.__floordiv__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -650,7 +650,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__ge__
+        .. putil.eng.wave_core.Waveform.__ge__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -693,7 +693,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__gt__
+        .. putil.eng.wave_core.Waveform.__gt__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -727,7 +727,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__invert__
+        .. putil.eng.wave_core.Waveform.__invert__
 
         :raises: TypeError (Complex operand not supported)
 
@@ -769,7 +769,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__le__
+        .. putil.eng.wave_core.Waveform.__le__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -813,7 +813,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__lshift__
+        .. putil.eng.wave_core.Waveform.__lshift__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -833,7 +833,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__lt__
+        .. putil.eng.wave_core.Waveform.__lt__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -872,7 +872,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__mod__
+        .. putil.eng.wave_core.Waveform.__mod__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -908,7 +908,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__mul__
+        .. putil.eng.wave_core.Waveform.__mul__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -1019,7 +1019,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__or__
+        .. putil.eng.wave_core.Waveform.__or__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -1082,7 +1082,7 @@ class Waveform(object):
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__pow__
+        .. putil.eng.wave_core.Waveform.__pow__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -1231,7 +1231,7 @@ interp='CONTINUOUS')"
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__rshift__
+        .. putil.eng.wave_core.Waveform.__rshift__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -1412,7 +1412,7 @@ interp='CONTINUOUS')"
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__sub__
+        .. putil.eng.wave_core.Waveform.__sub__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -1483,7 +1483,7 @@ interp='CONTINUOUS')"
 
         .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
         .. Auto-generated exceptions documentation for
-        .. putil.eng.wave.Waveform.__xor__
+        .. putil.eng.wave_core.Waveform.__xor__
 
         :raises:
          * RuntimeError (Waveforms are not compatible)
@@ -1794,7 +1794,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.dep_scale
+    .. putil.eng.wave_core.Waveform.dep_scale
 
     :raises: (when assigned) RuntimeError (Argument \`dep_scale\` is not
      valid)
@@ -1812,7 +1812,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.dep_units
+    .. putil.eng.wave_core.Waveform.dep_units
 
     :raises: (when assigned) RuntimeError (Argument \`dep_units\` is not
      valid)
@@ -1830,7 +1830,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.dep_vector
+    .. putil.eng.wave_core.Waveform.dep_vector
 
     :raises: (when assigned)
 
@@ -1861,7 +1861,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.indep_scale
+    .. putil.eng.wave_core.Waveform.indep_scale
 
     :raises: (when assigned) RuntimeError (Argument \`indep_scale\` is not
      valid)
@@ -1879,7 +1879,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.indep_units
+    .. putil.eng.wave_core.Waveform.indep_units
 
     :raises: (when assigned) RuntimeError (Argument \`indep_units\` is not
      valid)
@@ -1897,7 +1897,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.indep_vector
+    .. putil.eng.wave_core.Waveform.indep_vector
 
     :raises: (when assigned)
 
@@ -1920,7 +1920,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.interp
+    .. putil.eng.wave_core.Waveform.interp
 
     :raises: (when assigned) RuntimeError (Argument \`interp\` is not
      valid)
@@ -1942,7 +1942,7 @@ interp='CONTINUOUS')"
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave.Waveform.vectors
+    .. putil.eng.wave_core.Waveform.vectors
 
     :raises: (when assigned) RuntimeError (Argument \`vectors\` is not
      valid)
