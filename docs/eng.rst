@@ -141,6 +141,14 @@ Waveform pseudo-type
 
 .. autofunction:: putil.eng.acos
 .. autofunction:: putil.eng.acosh
+.. autofunction:: putil.eng.asin
+.. autofunction:: putil.eng.asinh
+.. autofunction:: putil.eng.atan
+.. autofunction:: putil.eng.atanh
+.. autofunction:: putil.eng.ceil
+.. autofunction:: putil.eng.cos
+.. autofunction:: putil.eng.cosh
+.. autofunction:: putil.eng.db
 .. autofunction:: putil.eng.to_complex
 .. autofunction:: putil.eng.to_int
 .. autofunction:: putil.eng.to_float

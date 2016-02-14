@@ -112,6 +112,223 @@ def acosh(wave):
 
 
 @putil.pcontracts.contract(wave=Waveform)
+def asin(wave):
+    r"""
+    Returns the arc sine of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.asin
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Math domain error)
+
+    .. [[[end]]]
+    """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='domain_error',
+        extype=ValueError,
+        exmsg='Math domain error'
+    )
+    exh.raise_exception_if(
+        exname='domain_error',
+        condition=bool(
+            (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
+        )
+    )
+    return _operation(wave, 'asin', 'rad', numpy.arcsin)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def asinh(wave):
+    r"""
+    Returns the hyperbolic arc sine of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.asinh
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'asinh', '', numpy.arcsinh)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def atan(wave):
+    r"""
+    Returns the arc tangent of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.atan
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'atan', 'rad', numpy.arctan)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def atanh(wave):
+    r"""
+    Returns the hyperbolic arc tangent of a waveform's dependent variable
+    vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.atanh
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Math domain error)
+
+    .. [[[end]]]
+    """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='domain_error',
+        extype=ValueError,
+        exmsg='Math domain error'
+    )
+    exh.raise_exception_if(
+        exname='domain_error',
+        condition=bool(
+            (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
+        )
+    )
+    return _operation(wave, 'atanh', '', numpy.arctanh)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def ceil(wave):
+    r"""
+    Returns the ceiling of the waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.ceil
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'ceil', wave.dep_units, numpy.ceil)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def cos(wave):
+    r"""
+    Returns the cosine of the waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.cos
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'cos', '', numpy.cos)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def cosh(wave):
+    r"""
+    Returns the hyperbolic cosine of the waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.cosh
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'cosh', '', numpy.cosh)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def db(wave):
+    r"""
+    Returns the waveform's dependent variable vector expressed in decibels
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.db
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Math domain error)
+
+    .. [[[end]]]
+    """
+    # pylint: disable=C0103
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='domain_error',
+        extype=ValueError,
+        exmsg='Math domain error'
+    )
+    exh.raise_exception_if(
+        exname='domain_error',
+        condition=bool((min(wave._dep_vector) <= 0))
+    )
+    ret = copy.copy(wave)
+    ret.dep_units = 'dB'
+    ret.indep_name = 'db({0})'.format(ret.indep_name)
+    ret._dep_vector = 20.0*numpy.log10(ret._dep_vector)
+    return ret
+
+
+@putil.pcontracts.contract(wave=Waveform)
 def to_complex(wave):
     r"""
     Converts the waveform's dependent variable vector to complex
