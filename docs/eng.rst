@@ -140,6 +140,10 @@ Waveform pseudo-type
 ********************
 
 .. autofunction:: putil.eng.acos
+.. autofunction:: putil.eng.acosh
+.. autofunction:: putil.eng.to_complex
+.. autofunction:: putil.eng.to_int
+.. autofunction:: putil.eng.to_float
 
 .. autoclass:: putil.eng.Waveform
 	:members: __add__,

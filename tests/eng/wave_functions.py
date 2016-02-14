@@ -66,3 +66,78 @@ def test_acosh_exceptions():
     putil.test.assert_exception(
         putil.eng.acosh, {'wave':obj}, ValueError, 'Math domain error'
     )
+
+
+def test_to_complex():
+    """ Test to_to_complex method behavior """
+    obj_a = putil.eng.Waveform(
+        indep_vector=numpy.array([1, 2]),
+        dep_vector=numpy.array([3, 4]),
+        indep_name='obj_b'
+    )
+    obj_b = putil.eng.to_complex(obj_a)
+    assert cmp_vectors(obj_b.dep_vector, numpy.array([3+0j, 4+0j]))
+    assert obj_b.dep_vector.dtype.name.startswith('complex')
+
+
+@pytest.mark.wave_functions
+def test_to_complex_exceptions():
+    """ Test to_complex function exceptions """
+    putil.test.assert_exception(
+        putil.eng.to_complex,
+        {'wave':'a'},
+        RuntimeError,
+        'Argument `wave` is not valid'
+    )
+
+
+def test_to_float():
+    """ Test to_float method behavior """
+    obj_a = std_obj('obj_a')
+    obj_b = putil.eng.to_float(obj_a)
+    assert cmp_vectors(obj_b.dep_vector, numpy.array([6.0, 5.0, 4.0]))
+    assert obj_b.dep_vector.dtype.name.startswith('float')
+
+
+@pytest.mark.wave_functions
+def test_to_float_exceptions():
+    """ Test to_float function exceptions """
+    putil.test.assert_exception(
+        putil.eng.to_complex,
+        {'wave':'a'},
+        RuntimeError,
+        'Argument `wave` is not valid'
+    )
+    dep_vector = numpy.array([0.99, 1+3j, 0.5])
+    obj = std_obj(indep_name='obj_a', dep_vector=dep_vector)
+    putil.test.assert_exception(
+        putil.eng.to_float,
+        {'wave':obj},
+        TypeError,
+        'Cannot convert complex to float'
+    )
+
+
+def test_to_int():
+    """ Test to_int method behavior """
+    obj_a = std_obj('obj_a', dep_vector=numpy.array([5.5, 1.3, 3.4]))
+    assert (putil.eng.to_int(obj_a).dep_vector == numpy.array([5, 1, 3])).all()
+
+
+@pytest.mark.wave_functions
+def test_to_int_exceptions():
+    """ Test to_int function exceptions """
+    putil.test.assert_exception(
+        putil.eng.to_complex,
+        {'wave':'a'},
+        RuntimeError,
+        'Argument `wave` is not valid'
+    )
+    dep_vector = numpy.array([0.99, 1+3j, 0.5])
+    obj = std_obj(indep_name='obj_a', dep_vector=dep_vector)
+    putil.test.assert_exception(
+        putil.eng.to_int,
+        {'wave':obj},
+        TypeError,
+        'Cannot convert complex to integer'
+    )

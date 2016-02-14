@@ -10,6 +10,8 @@ ABCMeta
 abstractmethod
 abstractproperty
 AClass
+acos
+acosh
 actmsg
 addai
 addex
@@ -34,6 +36,8 @@ APPSECRET
 appveyor
 Appveyor
 APROP
+arccos
+arccosh
 arg
 arga
 argb

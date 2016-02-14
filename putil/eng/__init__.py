@@ -26,5 +26,8 @@ from .wave_core import Point, Waveform
 from .wave_functions import (
     acos,
     acosh,
+    to_complex,
+    to_int,
+    to_float,
 )
 from .constants import FP_ATOL, FP_RTOL

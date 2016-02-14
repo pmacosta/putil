@@ -14,6 +14,9 @@ def trace_module(no_print=True):
     callable_names = (
         'acos',
         'acosh',
+        'to_complex',
+        'to_float',
+        'to_int',
     )
     return docs.support.trace_support.run_trace(
         mname, fname, module_prefix, callable_names, no_print,

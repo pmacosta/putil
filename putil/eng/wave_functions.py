@@ -44,7 +44,7 @@ def _operation(wave, desc, units, fpointer):
 
 @putil.pcontracts.contract(wave=Waveform)
 def acos(wave):
-    """
+    r"""
     Returns the arc cosine of a waveform's dependent variable vector
 
     :param wave: Waveform
@@ -80,7 +80,7 @@ def acos(wave):
 
 @putil.pcontracts.contract(wave=Waveform)
 def acosh(wave):
-    """
+    r"""
     Returns the hyperbolic arc cosine of a waveform's dependent variable vector
 
     :param wave: Waveform
@@ -109,3 +109,98 @@ def acosh(wave):
         exname='domain_error', condition=bool(min(wave._dep_vector) < 1)
     )
     return _operation(wave, 'acosh', '', numpy.arccosh)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def to_complex(wave):
+    r"""
+    Converts the waveform's dependent variable vector to complex
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.to_complex
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    ret._dep_vector = ret._dep_vector.astype(numpy.complex)
+    return ret
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def to_float(wave):
+    r"""
+    Converts the waveform's dependent variable vector to float
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.to_float
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * TypeError (Cannot convert complex to float)
+
+    .. [[[end]]]
+    """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='complex_not_supported',
+        extype=TypeError,
+        exmsg='Cannot convert complex to float'
+    )
+    exh.raise_exception_if(
+        exname='complex_not_supported',
+        condition=wave._dep_vector.dtype.name.startswith('complex')
+    )
+    ret = copy.copy(wave)
+    ret._dep_vector = ret._dep_vector.astype(numpy.float)
+    return ret
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def to_int(wave):
+    r"""
+    Converts the waveform's dependent variable vector to integer
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.to_int
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * TypeError (Cannot convert complex to integer)
+
+    .. [[[end]]]
+    """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='complex_not_supported',
+        extype=TypeError,
+        exmsg='Cannot convert complex to integer'
+    )
+    exh.raise_exception_if(
+        exname='complex_not_supported',
+        condition=wave._dep_vector.dtype.name.startswith('complex')
+    )
+    ret = copy.copy(wave)
+    ret._dep_vector = ret._dep_vector.astype(numpy.int)
+    return ret

@@ -40,4 +40,10 @@ from tests.eng.wave_functions import (
     test_acos_exceptions,
     test_acosh,
     test_acosh_exceptions,
+    test_to_complex,
+    test_to_complex_exceptions,
+    test_to_int,
+    test_to_int_exceptions,
+    test_to_float,
+    test_to_float_exceptions,
 )
