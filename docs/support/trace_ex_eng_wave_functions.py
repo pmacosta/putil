@@ -1,4 +1,4 @@
-# trace_ex_eng_wave_core.py
+# trace_ex_eng_wave_functions.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,W0212
@@ -22,6 +22,11 @@ def trace_module(no_print=True):
         'cos',
         'cosh',
         'db',
+        'exp',
+        'floor',
+        'imag',
+        'log',
+        'log10',
         'to_complex',
         'to_float',
         'to_int',

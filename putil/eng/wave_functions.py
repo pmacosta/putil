@@ -1,7 +1,7 @@
 # wave_functions.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,W0212
+# pylint: disable=C0103,C0111,W0212
 
 # Standard library imports
 import copy
@@ -229,7 +229,7 @@ def atanh(wave):
 @putil.pcontracts.contract(wave=Waveform)
 def ceil(wave):
     r"""
-    Returns the ceiling of the waveform's dependent variable vector
+    Returns the ceiling of a waveform's dependent variable vector
 
     :param wave: Waveform
     :type  wave: :py:class:`putil.eng.Waveform`
@@ -250,7 +250,7 @@ def ceil(wave):
 @putil.pcontracts.contract(wave=Waveform)
 def cos(wave):
     r"""
-    Returns the cosine of the waveform's dependent variable vector
+    Returns the cosine of a waveform's dependent variable vector
 
     :param wave: Waveform
     :type  wave: :py:class:`putil.eng.Waveform`
@@ -271,7 +271,7 @@ def cos(wave):
 @putil.pcontracts.contract(wave=Waveform)
 def cosh(wave):
     r"""
-    Returns the hyperbolic cosine of the waveform's dependent variable vector
+    Returns the hyperbolic cosine of a waveform's dependent variable vector
 
     :param wave: Waveform
     :type  wave: :py:class:`putil.eng.Waveform`
@@ -292,7 +292,7 @@ def cosh(wave):
 @putil.pcontracts.contract(wave=Waveform)
 def db(wave):
     r"""
-    Returns the waveform's dependent variable vector expressed in decibels
+    Returns a waveform's dependent variable vector expressed in decibels
 
     :param wave: Waveform
     :type  wave: :py:class:`putil.eng.Waveform`
@@ -302,6 +302,141 @@ def db(wave):
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
     .. putil.eng.wave_functions.db
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Math domain error)
+
+    .. [[[end]]]
+    """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='domain_error',
+        extype=ValueError,
+        exmsg='Math domain error'
+    )
+    exh.raise_exception_if(
+        exname='domain_error',
+        condition=bool((min(wave._dep_vector) <= 0))
+    )
+    ret = copy.copy(wave)
+    ret.dep_units = 'dB'
+    ret.indep_name = 'db({0})'.format(ret.indep_name)
+    ret._dep_vector = 20.0*numpy.log10(ret._dep_vector)
+    return ret
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def exp(wave):
+    r"""
+    Returns the natural exponent of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.exp
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'exp', '', numpy.exp)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def floor(wave):
+    r"""
+    Returns the floor of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.floor
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'floor', wave.dep_units, numpy.floor)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def imag(wave):
+    r"""
+    Returns the imaginary part of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.imag
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'imag', wave.dep_units, numpy.imag)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def log(wave):
+    r"""
+    Returns the natural logarithm of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.log
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Math domain error)
+
+    .. [[[end]]]
+    """
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='domain_error',
+        extype=ValueError,
+        exmsg='Math domain error'
+    )
+    exh.raise_exception_if(
+        exname='domain_error',
+        condition=bool((min(wave._dep_vector) <= 0))
+    )
+    return _operation(wave, 'log', '', numpy.log)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def log10(wave):
+    r"""
+    Returns the base 10 logarithm of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.log10
 
     :raises:
      * RuntimeError (Argument \`wave\` is not valid)
@@ -321,17 +456,13 @@ def db(wave):
         exname='domain_error',
         condition=bool((min(wave._dep_vector) <= 0))
     )
-    ret = copy.copy(wave)
-    ret.dep_units = 'dB'
-    ret.indep_name = 'db({0})'.format(ret.indep_name)
-    ret._dep_vector = 20.0*numpy.log10(ret._dep_vector)
-    return ret
+    return _operation(wave, 'log10', '', numpy.log10)
 
 
 @putil.pcontracts.contract(wave=Waveform)
 def to_complex(wave):
     r"""
-    Converts the waveform's dependent variable vector to complex
+    Converts a waveform's dependent variable vector to complex
 
     :param wave: Waveform
     :type  wave: :py:class:`putil.eng.Waveform`
@@ -354,7 +485,7 @@ def to_complex(wave):
 @putil.pcontracts.contract(wave=Waveform)
 def to_float(wave):
     r"""
-    Converts the waveform's dependent variable vector to float
+    Converts a waveform's dependent variable vector to float
 
     :param wave: Waveform
     :type  wave: :py:class:`putil.eng.Waveform`
@@ -390,7 +521,7 @@ def to_float(wave):
 @putil.pcontracts.contract(wave=Waveform)
 def to_int(wave):
     r"""
-    Converts the waveform's dependent variable vector to integer
+    Converts a waveform's dependent variable vector to integer
 
     :param wave: Waveform
     :type  wave: :py:class:`putil.eng.Waveform`

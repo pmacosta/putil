@@ -149,6 +149,11 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.cos
 .. autofunction:: putil.eng.cosh
 .. autofunction:: putil.eng.db
+.. autofunction:: putil.eng.exp
+.. autofunction:: putil.eng.floor
+.. autofunction:: putil.eng.imag
+.. autofunction:: putil.eng.log
+.. autofunction:: putil.eng.log10
 .. autofunction:: putil.eng.to_complex
 .. autofunction:: putil.eng.to_int
 .. autofunction:: putil.eng.to_float

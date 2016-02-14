@@ -38,6 +38,10 @@ Appveyor
 APROP
 arccos
 arccosh
+arcsin
+arcsinh
+arctan
+arctanh
 arg
 arga
 argb
@@ -51,6 +55,8 @@ ArgumentTypeError
 argv
 AROPROP
 ascii
+asin
+asinh
 aspell
 AssertionError
 ast
@@ -60,6 +66,8 @@ Astroid
 AstTreeScanner
 astype
 async
+atan
+atanh
 ATOL
 atto
 attr
@@ -116,6 +124,7 @@ ccontracts
 cd
 cdb
 cdicts
+ceil
 cfg
 cfiles
 cfilter
@@ -452,6 +461,7 @@ func
 funca
 funcb
 funcion
+funcs
 funcsigs
 Funcsigs
 FunctionDef

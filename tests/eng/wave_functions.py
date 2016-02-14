@@ -3,8 +3,6 @@
 # See LICENSE for details
 # pylint: disable=C0111
 
-# Standard library imports
-import math
 # PyPI imports
 import numpy
 import pytest
@@ -166,18 +164,76 @@ def test_db_exceptions():
     )
 
 
+def test_exp():
+    """ Test exp function behavior """
+    dep_vector = numpy.array([10.41, 1.98, 1.0])
+    obj = putil.eng.exp(std_obj(indep_name='obj', dep_vector=dep_vector))
+    assert cmp_vectors(obj.dep_vector, numpy.exp(dep_vector))
+    assert obj.indep_name == 'exp(obj)'
+    assert obj.dep_units == ''
+
+
+def test_floor():
+    """ Test floor function behavior """
+    dep_vector = numpy.array([10.41, 1.98, 1.0])
+    obj = putil.eng.floor(std_obj(indep_name='obj', dep_vector=dep_vector))
+    assert cmp_vectors(obj.dep_vector, numpy.array([10.0, 1.0, 1.0]))
+    assert obj.indep_name == 'floor(obj)'
+    assert obj.dep_units == 'Volts'
+
+
 @pytest.mark.wave_functions
 def test_funcs_exceptions():
     """ Test argument wave not valid exception for multiple functions """
     items = [
         putil.eng.acos, putil.eng.acosh, putil.eng.asin, putil.eng.asinh,
-        putil.eng.atan, putil.eng.atanh, putil.eng.ceil,
-        putil.eng.cos, putil.eng.cosh, putil.eng.db, putil.eng.to_complex,
+        putil.eng.atan, putil.eng.atanh, putil.eng.ceil, putil.eng.cos,
+        putil.eng.cosh, putil.eng.db, putil.eng.exp, putil.eng.floor,
+        putil.eng.imag, putil.eng.log, putil.eng.log10, putil.eng.to_complex,
         putil.eng.to_float, putil.eng.to_int
     ]
     for item in items:
         putil.test.assert_exception(
             item, {'wave':'a'}, RuntimeError, 'Argument `wave` is not valid'
+        )
+
+
+def test_imag():
+    """ Test imag function behavior """
+    dep_vector = numpy.array([10.41, 1+3j, 10-0.5j])
+    obj = putil.eng.imag(std_obj(indep_name='obj', dep_vector=dep_vector))
+    assert cmp_vectors(obj.dep_vector, numpy.array([0, 3, -0.5]))
+    assert obj.indep_name == 'imag(obj)'
+    assert obj.dep_units == 'Volts'
+
+
+def test_log():
+    """ Test log function behavior """
+    dep_vector = numpy.array([10.41, 1.98, 1.0])
+    obj = putil.eng.log(std_obj(indep_name='obj', dep_vector=dep_vector))
+    assert cmp_vectors(obj.dep_vector, numpy.log(dep_vector))
+    assert obj.indep_name == 'log(obj)'
+    assert obj.dep_units == ''
+
+
+def test_log10():
+    """ Test log function behavior """
+    dep_vector = numpy.array([10.41, 1.98, 1.0])
+    obj = putil.eng.log10(std_obj(indep_name='obj', dep_vector=dep_vector))
+    assert cmp_vectors(obj.dep_vector, numpy.log10(dep_vector))
+    assert obj.indep_name == 'log10(obj)'
+    assert obj.dep_units == ''
+
+
+@pytest.mark.wave_functions
+def test_log_exceptions():
+    """ Test log and log10 function exceptions """
+    dep_vector = numpy.array([0, 0.98, 0.5])
+    obj = std_obj(indep_name='obj', dep_vector=dep_vector)
+    items = [putil.eng.log, putil.eng.log10]
+    for item in items:
+        putil.test.assert_exception(
+            item, {'wave':obj}, ValueError, 'Math domain error'
         )
 
 
