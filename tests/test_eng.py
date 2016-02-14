@@ -34,3 +34,10 @@ from tests.eng.wave_core import (
     test_interp_dep_vector,
     TestWaveform
 )
+
+from tests.eng.wave_functions import (
+    test_acos,
+    test_acos_exceptions,
+    test_acosh,
+    test_acosh_exceptions,
+)

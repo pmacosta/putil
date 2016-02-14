@@ -14,8 +14,8 @@ from numpy import array
 import pytest
 # Putil imports
 import putil.eng
-import putil.test
 from putil.test import AE, AI, APROP, AROPROP, GET_EXMSG, compare_strings
+from .support import cmp_vectors, std_obj
 
 
 ###
@@ -34,20 +34,6 @@ INVALID_SLICE_LIST = [EXMSG1, EXMSG2, EXMSG3, EXMSG4]
 ###
 # Helper functions
 ###
-def cmp_vectors(vector_a, vector_b):
-    """ Compare two floating point vectors to a given precision """
-    flag = (
-        (numpy.abs(vector_a-vector_b) <= FP_PREC).all()
-        if len(vector_a) == len(vector_b) else
-        False
-    )
-    if not flag:
-        print('\nVectors do not match:')
-        print('Vector A: {0}'.format(vector_a))
-        print('Vector B: {0}'.format(vector_b))
-    return flag
-
-
 def interp_iter():
     """ Test values for dependent axis interpolator """
     ystart = 3
@@ -122,27 +108,6 @@ def interp_iter():
     ]
     for case in cases:
         yield case
-
-
-def std_obj(indep_name, indep_vector=None, dep_vector=None,
-    interp='STAIRCASE', dep_units='Volts'):
-    """ Return a waveform with fixed parameters and given name """
-    indep_vector = (
-        array([1, 2, 3]) if indep_vector is None else indep_vector
-    )
-    dep_vector = (
-        array([6, 5, 4]) if dep_vector is None else dep_vector
-    )
-    return putil.eng.Waveform(
-        indep_vector=indep_vector,
-        dep_vector=dep_vector,
-        indep_name=indep_name,
-        indep_scale='LOG',
-        dep_scale='LINEAR',
-        indep_units='Sec',
-        dep_units=dep_units,
-        interp=interp
-    )
 
 
 ###

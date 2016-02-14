@@ -135,11 +135,13 @@ Functions
 .. autofunction:: putil.eng.to_scientific_tuple
 
 
-*******
-Classes
-*******
+********************
+Waveform pseudo-type
+********************
 
- .. autoclass:: putil.eng.Waveform
+.. autofunction:: putil.eng.acos
+
+.. autoclass:: putil.eng.Waveform
 	:members: __add__,
                   __and__,
                   __bool__,

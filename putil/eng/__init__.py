@@ -23,4 +23,8 @@ from .functions import (
     to_scientific_tuple
 )
 from .wave_core import Point, Waveform
+from .wave_functions import (
+    acos,
+    acosh,
+)
 from .constants import FP_ATOL, FP_RTOL

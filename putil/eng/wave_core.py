@@ -14,6 +14,7 @@ import putil.pcontracts
 from .functions import pprint_vector, remove_extra_delims
 from .constants import FP_ATOL, FP_RTOL
 
+
 ###
 # Exception tracing initialization code
 ###
