@@ -36,6 +36,7 @@ APPSECRET
 appveyor
 Appveyor
 APROP
+arange
 arccos
 arccosh
 arcsin
@@ -983,6 +984,7 @@ pyver
 pyvers
 r'a
 radd
+radians
 radix
 raiex
 rb
@@ -1205,6 +1207,7 @@ symlinks
 SyntaxError
 sys
 sysconfig
+tanh
 tb
 tbobj
 tchk
@@ -1330,14 +1333,18 @@ WaveInterpOption
 WaveScaleOption
 WaveVectors
 wb
+wcomplex
 wdir
+wfloat
 wheader
 whitelist
 whitesmoke
 whitespace
+wint
 wobj
 writelines
 writerows
+wround
 wsindent
 wsregexp
 xaxis

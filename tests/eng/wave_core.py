@@ -153,11 +153,11 @@ def test_homogenize_waves():
         indep_vector,
         array([1, 1.5, 2, 2.25, 3, 3.75, 4])
     )
-    assert cmp_vectors(
+    cmp_vectors(
         dep_vector_a,
         array([10, 15, 20, 22.5, 30, 37.5, 40]),
     )
-    assert cmp_vectors(
+    cmp_vectors(
         dep_vector_b,
         array([100, 200, 300, 400, 500, 600, 700])
     )
@@ -173,7 +173,7 @@ def test_interp_dep_vector():
             indep_scale=case['ids'],
             interp=case['itf']
         )
-        assert cmp_vectors(
+        cmp_vectors(
             putil.eng.wave_core._interp_dep_vector(obj, case['niv']),
             case['ndv']
         )
@@ -527,8 +527,8 @@ class TestWaveform(object):
     def test_contains(self):
         """ Test __contains__ method behavior """
         obj_a = putil.eng.Waveform(
-            indep_vector=numpy.array([1.0, 2.0, 3.0, 5.0, 6.0]),
-            dep_vector=numpy.array([2, 8, 3, 10, 0]),
+            indep_vector=array([1.0, 2.0, 3.0, 5.0, 6.0]),
+            dep_vector=array([2, 8, 3, 10, 0]),
             indep_name='obj_a'
         )
         assert 'a' not in obj_a

@@ -445,7 +445,6 @@ def log10(wave):
 
     .. [[[end]]]
     """
-    # pylint: disable=C0103
     exh = putil.exh.get_or_create_exh_obj()
     exh.add_exception(
         exname='domain_error',
@@ -459,8 +458,158 @@ def log10(wave):
     return _operation(wave, 'log10', '', numpy.log10)
 
 
+@putil.pcontracts.contract(wave=Waveform, unwrap=bool, rad=bool)
+def phase(wave, unwrap=True, rad=True):
+    r"""
+    Returns the phase of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param unwrap: Flag that indicates whether phase should change phase shifts
+                   to their :code:`2*pi` complement (True) or not (False)
+    :type  unwrap: boolean
+
+    :param rad: Flag that indicates whether phase should be returned in radians
+                (True) or degrees (False)
+    :type  rad: boolean
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.phase
+
+    :raises:
+     * RuntimeError (Argument \`rad\` is not valid)
+
+     * RuntimeError (Argument \`unwrap\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    ret.dep_units = 'rad' if rad else 'deg'
+    ret.indep_name = 'phase({0})'.format(ret.indep_name)
+    ret._dep_vector = (
+        numpy.unwrap(numpy.angle(ret._dep_vector))
+        if unwrap else
+        numpy.angle(ret._dep_vector)
+    )
+    if not rad:
+        ret._dep_vector = numpy.rad2deg(ret._dep_vector)
+    return ret
+
+
 @putil.pcontracts.contract(wave=Waveform)
-def to_complex(wave):
+def sin(wave):
+    r"""
+    Returns the sine of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.sin
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'sin', '', numpy.sin)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def sinh(wave):
+    r"""
+    Returns the hyperbolic sine of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.sinh
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'sinh', '', numpy.sinh)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def sqrt(wave):
+    r"""
+    Returns the square root of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.sqrt
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    dep_units = '{0}**0.5'.format(wave.dep_units)
+    return _operation(wave, 'sqrt', dep_units, numpy.sqrt)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def tan(wave):
+    r"""
+    Returns the tangent of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.tan
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'tan', '', numpy.tan)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def tanh(wave):
+    r"""
+    Returns the hyperbolic tangent of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.tanh
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'tanh', '', numpy.tanh)
+
+
+@putil.pcontracts.contract(wave=Waveform)
+def wcomplex(wave):
     r"""
     Converts a waveform's dependent variable vector to complex
 
@@ -471,7 +620,7 @@ def to_complex(wave):
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave_functions.to_complex
+    .. putil.eng.wave_functions.wcomplex
 
     :raises: RuntimeError (Argument \`wave\` is not valid)
 
@@ -483,7 +632,7 @@ def to_complex(wave):
 
 
 @putil.pcontracts.contract(wave=Waveform)
-def to_float(wave):
+def wfloat(wave):
     r"""
     Converts a waveform's dependent variable vector to float
 
@@ -494,7 +643,7 @@ def to_float(wave):
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave_functions.to_float
+    .. putil.eng.wave_functions.wfloat
 
     :raises:
      * RuntimeError (Argument \`wave\` is not valid)
@@ -519,7 +668,7 @@ def to_float(wave):
 
 
 @putil.pcontracts.contract(wave=Waveform)
-def to_int(wave):
+def wint(wave):
     r"""
     Converts a waveform's dependent variable vector to integer
 
@@ -530,7 +679,7 @@ def to_int(wave):
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
-    .. putil.eng.wave_functions.to_int
+    .. putil.eng.wave_functions.wint
 
     :raises:
      * RuntimeError (Argument \`wave\` is not valid)
@@ -551,4 +700,45 @@ def to_int(wave):
     )
     ret = copy.copy(wave)
     ret._dep_vector = ret._dep_vector.astype(numpy.int)
+    return ret
+
+@putil.pcontracts.contract(wave=Waveform, decimals='int,>=0')
+def wround(wave, decimals=0):
+    r"""
+    Rounds a waveform's dependent variable vector to a given number of decimal
+    places
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param decimals: Number of decimals to round to
+    :type  decimals: integer
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.wround
+
+    :raises:
+     * RuntimeError (Argument \`decimals\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    # pylint: disable=W0622
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='complex_not_supported',
+        extype=TypeError,
+        exmsg='Cannot convert complex to integer'
+    )
+    exh.raise_exception_if(
+        exname='complex_not_supported',
+        condition=wave._dep_vector.dtype.name.startswith('complex')
+    )
+    ret = copy.copy(wave)
+    ret.indep_name = 'round({0}, {1})'.format(ret.indep_name, decimals)
+    ret._dep_vector = numpy.round(wave._dep_vector, decimals)
     return ret

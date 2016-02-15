@@ -39,8 +39,15 @@ from .wave_functions import (
     imag,
     log,
     log10,
-    to_complex,
-    to_int,
-    to_float,
+    phase,
+    sin,
+    sinh,
+    sqrt,
+    tan,
+    tanh,
+    wcomplex,
+    wint,
+    wfloat,
+    wround,
 )
 from .constants import FP_ATOL, FP_RTOL

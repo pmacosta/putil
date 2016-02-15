@@ -28,7 +28,7 @@ def cmp_vectors(vector_a, vector_b):
         print('\nVectors do not match:')
         print('Vector A: {0}'.format(vector_a))
         print('Vector B: {0}'.format(vector_b))
-    return flag
+    assert flag
 
 
 def std_obj(indep_name, indep_vector=None, dep_vector=None,
