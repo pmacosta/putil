@@ -1,7 +1,7 @@
 # wave_functions.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,W0212
+# pylint: disable=C0103,C0111,W0105,W0212
 
 # Standard library imports
 import copy
