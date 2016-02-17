@@ -145,6 +145,7 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.asinh
 .. autofunction:: putil.eng.atan
 .. autofunction:: putil.eng.atanh
+.. autofunction:: putil.eng.average
 .. autofunction:: putil.eng.ceil
 .. autofunction:: putil.eng.cos
 .. autofunction:: putil.eng.cosh

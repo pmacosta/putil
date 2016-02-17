@@ -46,6 +46,8 @@ from tests.eng.wave_functions import (
     test_atan,
     test_atanh,
     test_atanh_exceptions,
+    test_average,
+    test_bound_exceptions,
     test_ceil,
     test_cos,
     test_cosh,

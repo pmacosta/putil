@@ -30,6 +30,7 @@ from .wave_functions import (
     asinh,
     atan,
     atanh,
+    average,
     ceil,
     cos,
     cosh,

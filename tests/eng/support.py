@@ -32,8 +32,9 @@ def cmp_vectors(vector_a, vector_b):
 
 
 def std_obj(indep_name, indep_vector=None, dep_vector=None,
-    interp='STAIRCASE', dep_units='Volts'):
+    interp='STAIRCASE', dep_units='Volts', indep_scale='LOG'):
     """ Return a waveform with fixed parameters and given name """
+    # pylint: disable=R0913
     indep_vector = (
         numpy.array([1, 2, 3])
         if indep_vector is None else
@@ -48,7 +49,7 @@ def std_obj(indep_name, indep_vector=None, dep_vector=None,
         indep_vector=indep_vector,
         dep_vector=dep_vector,
         indep_name=indep_name,
-        indep_scale='LOG',
+        indep_scale=indep_scale,
         dep_scale='LINEAR',
         indep_units='Sec',
         dep_units=dep_units,

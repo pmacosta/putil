@@ -9,7 +9,8 @@ import copy
 import numpy
 # Putil imports
 import putil.pcontracts
-from .wave_core import Waveform
+from .constants import FP_ATOL, FP_RTOL
+from .wave_core import _interp_dep_vector, Waveform
 
 
 ###
@@ -33,6 +34,23 @@ exobj_eng = trace_ex_eng_wave_functions.trace_module(no_print=True)
 ###
 # Functions
 ###
+def _add_bounds(wave, indep_min, indep_max):
+    """ Add independent variable vector bounds if they are not in vector """
+    indep_vector = copy.copy(wave._indep_vector)
+    if ((isinstance(indep_min, float) or isinstance(indep_max, float)) and
+        indep_vector.dtype.name.startswith('int')):
+        indep_vector = indep_vector.astype(float)
+    min_pos = numpy.searchsorted(indep_vector, indep_min)
+    if not numpy.isclose(indep_min, indep_vector[min_pos], FP_RTOL, FP_ATOL):
+        indep_vector = numpy.insert(indep_vector, min_pos, indep_min)
+    max_pos = numpy.searchsorted(indep_vector, indep_max)
+    if not numpy.isclose(indep_max, indep_vector[max_pos], FP_RTOL, FP_ATOL):
+        indep_vector = numpy.insert(indep_vector, max_pos, indep_max)
+    dep_vector = _interp_dep_vector(wave, indep_vector)
+    wave._indep_vector = indep_vector[min_pos:max_pos+1]
+    wave._dep_vector = dep_vector[min_pos:max_pos+1]
+
+
 def _operation(wave, desc, units, fpointer):
     """ Generic operation on a waveform object """
     ret = copy.copy(wave)
@@ -40,6 +58,65 @@ def _operation(wave, desc, units, fpointer):
     ret.indep_name = '{0}({1})'.format(desc, ret.indep_name)
     ret._dep_vector = fpointer(ret._dep_vector)
     return ret
+
+
+def _validate_min_max(wave, indep_min, indep_max):
+    """
+    Validate that minimum and maximum bounds are within the waveform's
+    independent variable vector
+    """
+    imin, imax = False, False
+    if indep_min is None:
+        indep_min = wave._indep_vector[0]
+        imin = True
+    if indep_max is None:
+        indep_max = wave._indep_vector[-1]
+        imax = True
+    if imin and imax:
+        return indep_min, indep_max
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='min_max_not_valid',
+        extype=RuntimeError,
+        exmsg='Incongruent `indep_min` and `indep_max` arguments'
+    )
+    exh.add_exception(
+        exname='min_not_valid',
+        extype=RuntimeError,
+        exmsg='Argument `indep_min` is not valid'
+    )
+    exh.add_exception(
+        exname='max_not_valid',
+        extype=RuntimeError,
+        exmsg='Argument `indep_max` is not valid'
+    )
+    exh.raise_exception_if(
+        exname='min_max_not_valid',
+        condition=bool(indep_min >= indep_max)
+    )
+    exh.raise_exception_if(
+        exname='min_not_valid',
+        condition=bool(
+            (indep_min < wave._indep_vector[0]) and
+            (
+                not numpy.isclose(
+                    indep_min, wave._indep_vector[0], FP_RTOL, FP_ATOL
+                )
+            )
+        )
+    )
+    exh.raise_exception_if(
+        exname='max_not_valid',
+        condition=bool(
+            (indep_max > wave._indep_vector[-1]) and
+            (
+                not numpy.isclose(
+                    indep_max, wave._indep_vector[-1], FP_RTOL, FP_ATOL
+                )
+            )
+        )
+    )
+    return indep_min, indep_max
 
 
 @putil.pcontracts.contract(wave=Waveform)
@@ -224,6 +301,50 @@ def atanh(wave):
         )
     )
     return _operation(wave, 'atanh', '', numpy.arctanh)
+
+
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def average(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the running average of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.average
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    indep_min, indep_max = _validate_min_max(ret, indep_min, indep_max)
+    _add_bounds(ret, indep_min, indep_max)
+    ret._dep_vector = (
+        numpy.cumsum(ret._dep_vector)/numpy.arange(1.0, ret._dep_vector.size+1)
+    )
+    ret.indep_name = 'average({0})'.format(ret._indep_name)
+    return ret
 
 
 @putil.pcontracts.contract(wave=Waveform)

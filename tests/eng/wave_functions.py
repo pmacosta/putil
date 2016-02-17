@@ -120,6 +120,59 @@ def test_atanh_exceptions():
         )
 
 
+def test_average():
+    """ Test average function behavior """
+    obj = std_obj(indep_name='obj', interp='CONTINUOUS', indep_scale='LINEAR')
+    act = putil.eng.average(obj)
+    cmp_vectors(act.dep_vector, numpy.array([6.0, 5.5, 5.0]))
+    assert act.indep_name == 'average(obj)'
+    assert act.dep_units == 'Volts'
+    act = putil.eng.average(obj, indep_min=1.5)
+    cmp_vectors(act.dep_vector, numpy.array([5.5, 5.25, 4.8333333333333]))
+    act = putil.eng.average(obj, indep_max=2.5)
+    cmp_vectors(act.dep_vector, numpy.array([6, 5.5, 5.166666666666]))
+    act = putil.eng.average(obj, indep_min=1.5, indep_max=2.5)
+    cmp_vectors(act.dep_vector, numpy.array([5.5, 5.25, 5.0]))
+
+
+@pytest.mark.wave_functions
+def test_bound_exceptions():
+    """ Test exceptions of functions that have range bounding """
+    obj = std_obj(indep_name='obj')
+    items = [putil.eng.average]
+    for item in items:
+        putil.test.assert_exception(
+            item,
+            {'wave':obj, 'indep_min':'a'},
+            RuntimeError,
+            'Argument `indep_min` is not valid'
+        )
+        putil.test.assert_exception(
+            item,
+            {'wave':obj, 'indep_max':'a'},
+            RuntimeError,
+            'Argument `indep_max` is not valid'
+        )
+        putil.test.assert_exception(
+            item,
+            {'wave':obj, 'indep_min':1.5, 'indep_max':1},
+            RuntimeError,
+            'Incongruent `indep_min` and `indep_max` arguments'
+        )
+        putil.test.assert_exception(
+            item,
+            {'wave':obj, 'indep_min':0},
+            RuntimeError,
+            'Argument `indep_min` is not valid'
+        )
+        putil.test.assert_exception(
+            item,
+            {'wave':obj, 'indep_max':10},
+            RuntimeError,
+            'Argument `indep_max` is not valid'
+        )
+
+
 def test_ceil():
     """ Test ceil function behavior """
     dep_vector = numpy.array([10.41, 1.98, 1.0])
@@ -186,15 +239,15 @@ def test_floor():
 
 @pytest.mark.wave_functions
 def test_funcs_exceptions():
-    """ Test argument wave not valid exception for multiple functions """
+    """ Test argument wave not valid exception """
     items = [
         putil.eng.acos, putil.eng.acosh, putil.eng.asin, putil.eng.asinh,
-        putil.eng.atan, putil.eng.atanh, putil.eng.ceil, putil.eng.cos,
-        putil.eng.cosh, putil.eng.db, putil.eng.exp, putil.eng.floor,
-        putil.eng.imag, putil.eng.log, putil.eng.log10, putil.eng.phase,
-        putil.eng.sin, putil.eng.sinh, putil.eng.sqrt, putil.eng.tan,
-        putil.eng.tanh, putil.eng.wcomplex, putil.eng.wfloat, putil.eng.wint,
-        putil.eng.wround
+        putil.eng.atan, putil.eng.atanh, putil.eng.average, putil.eng.ceil,
+        putil.eng.cos, putil.eng.cosh, putil.eng.db, putil.eng.exp,
+        putil.eng.floor, putil.eng.imag, putil.eng.log, putil.eng.log10,
+        putil.eng.phase, putil.eng.sin, putil.eng.sinh, putil.eng.sqrt,
+        putil.eng.tan, putil.eng.tanh, putil.eng.wcomplex, putil.eng.wfloat,
+        putil.eng.wint, putil.eng.wround
     ]
     for item in items:
         putil.test.assert_exception(

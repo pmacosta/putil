@@ -18,6 +18,7 @@ def trace_module(no_print=True):
         'asinh',
         'atan',
         'atanh',
+        'average',
         'ceil',
         'cos',
         'cosh',

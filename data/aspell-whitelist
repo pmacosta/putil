@@ -524,14 +524,17 @@ iitem
 iline
 ilines
 imag
+imax
 img
 imgtol
 IMGTOL
+imin
 ImportError
 importlib
 imread
 iname
 incfile
+Incongruent
 IncreasingRealNumpyVector
 indep
 Indep
