@@ -68,10 +68,11 @@ from tests.eng.wave_functions import (
     test_tanh,
     test_phase_exceptions,
     test_wcomplex,
-    test_wint,
-    test_wint_exceptions,
     test_wfloat,
     test_wfloat_exceptions,
+    test_wint,
+    test_wint_exceptions,
+    test_wintegral,
     test_wround,
     test_wround_exceptions,
 )

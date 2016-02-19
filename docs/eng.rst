@@ -153,6 +153,7 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.exp
 .. autofunction:: putil.eng.floor
 .. autofunction:: putil.eng.imag
+.. autofunction:: putil.eng.integral
 .. autofunction:: putil.eng.log
 .. autofunction:: putil.eng.log10
 .. autofunction:: putil.eng.phase
@@ -162,8 +163,9 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.tan
 .. autofunction:: putil.eng.tanh
 .. autofunction:: putil.eng.wcomplex
-.. autofunction:: putil.eng.wint
 .. autofunction:: putil.eng.wfloat
+.. autofunction:: putil.eng.wint
+.. autofunction:: putil.eng.wintegral
 .. autofunction:: putil.eng.wround
 
 .. autoclass:: putil.eng.Waveform

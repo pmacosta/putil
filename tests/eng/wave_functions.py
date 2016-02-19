@@ -139,7 +139,7 @@ def test_average():
 def test_bound_exceptions():
     """ Test exceptions of functions that have range bounding """
     obj = std_obj(indep_name='obj')
-    items = [putil.eng.average]
+    items = [putil.eng.average, putil.eng.integral, putil.eng.wintegral]
     for item in items:
         putil.test.assert_exception(
             item,
@@ -244,10 +244,10 @@ def test_funcs_exceptions():
         putil.eng.acos, putil.eng.acosh, putil.eng.asin, putil.eng.asinh,
         putil.eng.atan, putil.eng.atanh, putil.eng.average, putil.eng.ceil,
         putil.eng.cos, putil.eng.cosh, putil.eng.db, putil.eng.exp,
-        putil.eng.floor, putil.eng.imag, putil.eng.log, putil.eng.log10,
-        putil.eng.phase, putil.eng.sin, putil.eng.sinh, putil.eng.sqrt,
-        putil.eng.tan, putil.eng.tanh, putil.eng.wcomplex, putil.eng.wfloat,
-        putil.eng.wint, putil.eng.wround
+        putil.eng.floor, putil.eng.imag, putil.eng.integral, putil.eng.log,
+        putil.eng.log10, putil.eng.phase, putil.eng.sin, putil.eng.sinh,
+        putil.eng.sqrt, putil.eng.tan, putil.eng.tanh, putil.eng.wcomplex,
+        putil.eng.wfloat, putil.eng.wint, putil.eng.wintegral, putil.eng.wround
     ]
     for item in items:
         putil.test.assert_exception(
@@ -446,6 +446,24 @@ def test_wint_exceptions():
         {'wave':obj},
         TypeError,
         'Cannot convert complex to integer'
+    )
+
+
+def test_wintegral():
+    """ Test wintegral method behavior """
+    obj = std_obj(
+        'obj',
+        indep_vector=numpy.array([1, 2.5, 3, 4.75]),
+        dep_vector=numpy.array([6, 5, 5.5, 1])
+    )
+    act = putil.eng.wintegral(obj)
+    cmp_vectors(
+        act.dep_vector,
+        numpy.array([0.0, 8.25, 10.875, 16.5625])
+    )
+    cmp_vectors(
+        numpy.array([act.dep_vector[-1]]),
+        numpy.array([putil.eng.integral(obj)])
     )
 
 

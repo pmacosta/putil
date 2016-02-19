@@ -38,6 +38,7 @@ from .wave_functions import (
     exp,
     floor,
     imag,
+    integral,
     log,
     log10,
     phase,
@@ -47,8 +48,9 @@ from .wave_functions import (
     tan,
     tanh,
     wcomplex,
-    wint,
     wfloat,
+    wint,
+    wintegral,
     wround,
 )
 from .constants import FP_ATOL, FP_RTOL

@@ -26,6 +26,7 @@ def trace_module(no_print=True):
         'exp',
         'floor',
         'imag',
+        'integral',
         'log',
         'log10',
         'phase',
@@ -37,6 +38,7 @@ def trace_module(no_print=True):
         'wcomplex',
         'wfloat',
         'wint',
+        'wintegral',
         'wround',
     )
     return docs.support.trace_support.run_trace(

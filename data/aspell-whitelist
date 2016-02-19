@@ -216,6 +216,7 @@ ctuple
 ctx
 ctxt
 ctype
+cumsum
 customizations
 cvec
 cvector
@@ -1017,6 +1018,7 @@ RealNumber
 RealNumpyVector
 rebase
 Rebase
+rect
 recursed
 regtext
 reinstall
@@ -1273,6 +1275,7 @@ tpl
 traceback
 Traceback
 tregexp
+triang
 trie
 truediv
 tstart
@@ -1344,6 +1347,7 @@ whitelist
 whitesmoke
 whitespace
 wint
+wintegral
 wobj
 writelines
 writerows

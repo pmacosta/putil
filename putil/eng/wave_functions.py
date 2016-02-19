@@ -34,8 +34,9 @@ exobj_eng = trace_ex_eng_wave_functions.trace_module(no_print=True)
 ###
 # Functions
 ###
-def _add_bounds(wave, indep_min, indep_max):
+def _bound_waveform(wave, indep_min, indep_max):
     """ Add independent variable vector bounds if they are not in vector """
+    indep_min, indep_max = _validate_min_max(wave, indep_min, indep_max)
     indep_vector = copy.copy(wave._indep_vector)
     if ((isinstance(indep_min, float) or isinstance(indep_max, float)) and
         indep_vector.dtype.name.startswith('int')):
@@ -338,8 +339,7 @@ def average(wave, indep_min=None, indep_max=None):
     .. [[[end]]]
     """
     ret = copy.copy(wave)
-    indep_min, indep_max = _validate_min_max(ret, indep_min, indep_max)
-    _add_bounds(ret, indep_min, indep_max)
+    _bound_waveform(ret, indep_min, indep_max)
     ret._dep_vector = (
         numpy.cumsum(ret._dep_vector)/numpy.arange(1.0, ret._dep_vector.size+1)
     )
@@ -509,6 +509,47 @@ def imag(wave):
     .. [[[end]]]
     """
     return _operation(wave, 'imag', wave.dep_units, numpy.imag)
+
+
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def integral(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the numerical integral of a waveform's dependent variable vector
+    using the
+    `trapezoidal method <https://en.wikipedia.org/wiki/Trapezoidal_rule>`_
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: float
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.integral
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    return numpy.trapz(ret._dep_vector, ret._indep_vector)
 
 
 @putil.pcontracts.contract(wave=Waveform)
@@ -822,6 +863,57 @@ def wint(wave):
     ret = copy.copy(wave)
     ret._dep_vector = ret._dep_vector.astype(numpy.int)
     return ret
+
+
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def wintegral(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the running integral of a waveform's dependent variable vector
+    using the
+    `trapezoidal method <https://en.wikipedia.org/wiki/Trapezoidal_rule>`_
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.wintegral
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    rect_height = numpy.minimum(ret._dep_vector[:-1], ret._dep_vector[1:])
+    rect_base = numpy.diff(ret._indep_vector)
+    rect_area = numpy.multiply(rect_height, rect_base)
+    triang_height = numpy.abs(numpy.diff(ret._dep_vector))
+    triang_area = 0.5*numpy.multiply(triang_height, rect_base)
+    ret._dep_vector = numpy.cumsum(
+        numpy.concatenate((numpy.array([0.0]), triang_area+rect_area))
+    )
+    ret.indep_name = 'wintegral({0})'.format(ret._indep_name)
+    return ret
+
 
 @putil.pcontracts.contract(wave=Waveform, decimals='int,>=0')
 def wround(wave, decimals=0):
