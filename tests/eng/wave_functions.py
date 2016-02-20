@@ -169,7 +169,7 @@ def test_bound_exceptions():
     obj = std_obj(indep_name='obj')
     items = [
         putil.eng.average, putil.eng.derivative, putil.eng.integral,
-        putil.eng.wintegral
+        putil.eng.nintegral, putil.eng.nmax, putil.eng.nmin,
     ]
     for item in items:
         putil.test.assert_exception(
@@ -288,10 +288,10 @@ def test_funcs_exceptions():
         putil.eng.atan, putil.eng.atanh, putil.eng.average, putil.eng.ceil,
         putil.eng.cos, putil.eng.cosh, putil.eng.db, putil.eng.derivative,
         putil.eng.exp, putil.eng.floor, putil.eng.imag, putil.eng.integral,
-        putil.eng.log, putil.eng.log10, putil.eng.phase, putil.eng.sin,
+        putil.eng.log, putil.eng.log10, putil.eng.nintegral, putil.eng.nmax,
+        putil.eng.nmin, putil.eng.phase, putil.eng.round, putil.eng.sin,
         putil.eng.sinh, putil.eng.sqrt, putil.eng.tan, putil.eng.tanh,
-        putil.eng.wcomplex, putil.eng.wfloat, putil.eng.wint,
-        putil.eng.wintegral, putil.eng.wround
+        putil.eng.wcomplex, putil.eng.wfloat, putil.eng.wint
     ]
     for item in items:
         putil.test.assert_exception(
@@ -304,6 +304,26 @@ def test_imag():
     dep_vector = numpy.array([10.41, 1+3j, 10-0.5j])
     strict_compare_waves(
         dep_vector, putil.eng.imag, 'imag', 'Volts', numpy.imag
+    )
+
+
+def test_integral():
+    """ Test integral and nintegral methods behavior """
+    indep_vector = numpy.array([1, 2.5, 3, 4.75])
+    dep_vector = numpy.array([6, 5, 5.5, 1])
+    strict_compare_waves(
+        dep_vector,
+        putil.eng.integral,
+        'integral',
+        'Volts*Sec',
+        numpy.array([0.0, 8.25, 10.875, 16.5625]),
+        indep_vector
+    )
+    obj = std_obj('obj', indep_vector, dep_vector)
+    act = putil.eng.integral(obj)
+    cmp_vectors(
+        numpy.array([act.dep_vector[-1]]),
+        numpy.array([putil.eng.nintegral(obj)])
     )
 
 
@@ -333,6 +353,20 @@ def test_log_exceptions():
         putil.test.assert_exception(
             item, {'wave':obj}, ValueError, 'Math domain error'
         )
+
+
+def test_nmax():
+    """ Test nmax method behavior """
+    obj = std_obj('obj', indep_scale='LINEAR', interp='CONTINUOUS')
+    assert putil.eng.nmax(obj) == 6
+    assert putil.eng.nmax(obj, 1.5) == 5.5
+
+
+def test_nmin():
+    """ Test nmax method behavior """
+    obj = std_obj('obj', indep_scale='LINEAR', interp='CONTINUOUS')
+    assert putil.eng.nmin(obj) == 4
+    assert putil.eng.nmin(obj, indep_max=2.5) == 4.5
 
 
 def test_phase():
@@ -391,6 +425,34 @@ def test_phase_exceptions():
             putil.eng.phase,
             {'wave':obj, 'rad':item},
             RuntimeError, 'Argument `rad` is not valid'
+        )
+
+
+def test_round():
+    """ Test wround method behavior """
+    obj_a = std_obj('obj', dep_vector=numpy.array([5.4, 1.6, 0]))
+    ref = std_obj('round(obj, 0)', dep_vector=numpy.array([5, 2, 0]))
+    act = putil.eng.round(obj_a)
+    assert ref == act
+    assert ref.indep_name == act.indep_name
+    obj_b = std_obj('obj', dep_vector=numpy.array([5.47, 1.61, 0]))
+    ref = std_obj('round(obj, 1)', dep_vector=numpy.array([5.5, 1.6, 0.0]))
+    act = putil.eng.round(obj_b, 1)
+    assert ref == act
+    assert ref.indep_name == act.indep_name
+
+
+@pytest.mark.wave_functions
+def test_round_exceptions():
+    """ Test wround function exceptions """
+    obj = std_obj(indep_name='obj')
+    items = [-1, -0.0001, 'a', 3.5]
+    for item in items:
+        putil.test.assert_exception(
+            putil.eng.round,
+            {'wave':obj, 'decimals':item},
+            RuntimeError,
+            'Argument `decimals` is not valid'
         )
 
 
@@ -497,51 +559,3 @@ def test_wint_exceptions():
         TypeError,
         'Cannot convert complex to integer'
     )
-
-
-def test_wintegral():
-    """ Test wintegral method behavior """
-    indep_vector = numpy.array([1, 2.5, 3, 4.75])
-    dep_vector = numpy.array([6, 5, 5.5, 1])
-    strict_compare_waves(
-        dep_vector,
-        putil.eng.wintegral,
-        'wintegral',
-        'Volts*Sec',
-        numpy.array([0.0, 8.25, 10.875, 16.5625]),
-        indep_vector
-    )
-    obj = std_obj('obj', indep_vector, dep_vector)
-    act = putil.eng.wintegral(obj)
-    cmp_vectors(
-        numpy.array([act.dep_vector[-1]]),
-        numpy.array([putil.eng.integral(obj)])
-    )
-
-
-def test_wround():
-    """ Test wround method behavior """
-    obj_a = std_obj('obj', dep_vector=numpy.array([5.4, 1.6, 0]))
-    ref = std_obj('round(obj, 0)', dep_vector=numpy.array([5, 2, 0]))
-    act = putil.eng.wround(obj_a)
-    assert ref == act
-    assert ref.indep_name == act.indep_name
-    obj_b = std_obj('obj', dep_vector=numpy.array([5.47, 1.61, 0]))
-    ref = std_obj('round(obj, 1)', dep_vector=numpy.array([5.5, 1.6, 0.0]))
-    act = putil.eng.wround(obj_b, 1)
-    assert ref == act
-    assert ref.indep_name == act.indep_name
-
-
-@pytest.mark.wave_functions
-def test_wround_exceptions():
-    """ Test wround function exceptions """
-    obj = std_obj(indep_name='obj')
-    items = [-1, -0.0001, 'a', 3.5]
-    for item in items:
-        putil.test.assert_exception(
-            putil.eng.wround,
-            {'wave':obj, 'decimals':item},
-            RuntimeError,
-            'Argument `decimals` is not valid'
-        )

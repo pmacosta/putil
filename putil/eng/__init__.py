@@ -1,7 +1,7 @@
 # __init__.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302
+# pylint: disable=C0111,C0302,W0622
 
 # Putil imports
 from .functions import (
@@ -42,7 +42,11 @@ from .wave_functions import (
     integral,
     log,
     log10,
+    nintegral,
+    nmax,
+    nmin,
     phase,
+    round,
     sin,
     sinh,
     sqrt,
@@ -51,7 +55,5 @@ from .wave_functions import (
     wcomplex,
     wfloat,
     wint,
-    wintegral,
-    wround,
 )
 from .constants import FP_ATOL, FP_RTOL

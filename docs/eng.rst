@@ -157,7 +157,11 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.integral
 .. autofunction:: putil.eng.log
 .. autofunction:: putil.eng.log10
+.. autofunction:: putil.eng.nintegral
+.. autofunction:: putil.eng.nmax
+.. autofunction:: putil.eng.nmin
 .. autofunction:: putil.eng.phase
+.. autofunction:: putil.eng.round
 .. autofunction:: putil.eng.sin
 .. autofunction:: putil.eng.sinh
 .. autofunction:: putil.eng.sqrt
@@ -166,8 +170,6 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.wcomplex
 .. autofunction:: putil.eng.wfloat
 .. autofunction:: putil.eng.wint
-.. autofunction:: putil.eng.wintegral
-.. autofunction:: putil.eng.wround
 
 .. autoclass:: putil.eng.Waveform
 	:members: __add__,

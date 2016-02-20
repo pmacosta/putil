@@ -572,7 +572,7 @@ def imag(wave):
 )
 def integral(wave, indep_min=None, indep_max=None):
     r"""
-    Returns the numerical integral of a waveform's dependent variable vector
+    Returns the running integral of a waveform's dependent variable vector
     using the
     `trapezoidal method <https://en.wikipedia.org/wiki/Trapezoidal_rule>`_
 
@@ -585,7 +585,7 @@ def integral(wave, indep_min=None, indep_max=None):
     :param indep_max: Independent vector stop point of computation
     :type  indep_max: integer or float
 
-    :rtype: float
+    :rtype: :py:class:`putil.eng.Waveform`
 
     .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
     .. Auto-generated exceptions documentation for
@@ -605,7 +605,19 @@ def integral(wave, indep_min=None, indep_max=None):
     """
     ret = copy.copy(wave)
     _bound_waveform(ret, indep_min, indep_max)
-    return numpy.trapz(ret._dep_vector, ret._indep_vector)
+    rect_height = numpy.minimum(ret._dep_vector[:-1], ret._dep_vector[1:])
+    rect_base = numpy.diff(ret._indep_vector)
+    rect_area = numpy.multiply(rect_height, rect_base)
+    triang_height = numpy.abs(numpy.diff(ret._dep_vector))
+    triang_area = 0.5*numpy.multiply(triang_height, rect_base)
+    ret._dep_vector = numpy.cumsum(
+        numpy.concatenate((numpy.array([0.0]), triang_area+rect_area))
+    )
+    ret.indep_name = 'integral({0})'.format(ret._indep_name)
+    ret.dep_units = remove_extra_delims(
+        '({0})*({1})'.format(ret.dep_units, ret.indep_units)
+    )
+    return ret
 
 
 @putil.pcontracts.contract(wave=Waveform)
@@ -676,6 +688,125 @@ def log10(wave):
     return _operation(wave, 'log10', '', numpy.log10)
 
 
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def nintegral(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the numerical integral of a waveform's dependent variable vector
+    using the
+    `trapezoidal method <https://en.wikipedia.org/wiki/Trapezoidal_rule>`_
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: float
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.nintegral
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    return numpy.trapz(ret._dep_vector, ret._indep_vector)
+
+
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def nmax(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the maximum of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: float
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.nmax
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    return numpy.max(ret._dep_vector)
+
+
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def nmin(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the minimum of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: float
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.nmin
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    return numpy.min(ret._dep_vector)
+
+
 @putil.pcontracts.contract(wave=Waveform, unwrap=bool, rad=bool)
 def phase(wave, unwrap=True, rad=True):
     r"""
@@ -717,6 +848,48 @@ def phase(wave, unwrap=True, rad=True):
     )
     if not rad:
         ret._dep_vector = numpy.rad2deg(ret._dep_vector)
+    return ret
+
+
+@putil.pcontracts.contract(wave=Waveform, decimals='int,>=0')
+def round(wave, decimals=0):
+    r"""
+    Rounds a waveform's dependent variable vector to a given number of decimal
+    places
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param decimals: Number of decimals to round to
+    :type  decimals: integer
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.round
+
+    :raises:
+     * RuntimeError (Argument \`decimals\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    # pylint: disable=W0622
+    exh = putil.exh.get_or_create_exh_obj()
+    exh.add_exception(
+        exname='complex_not_supported',
+        extype=TypeError,
+        exmsg='Cannot convert complex to integer'
+    )
+    exh.raise_exception_if(
+        exname='complex_not_supported',
+        condition=wave._dep_vector.dtype.name.startswith('complex')
+    )
+    ret = copy.copy(wave)
+    ret.indep_name = 'round({0}, {1})'.format(ret.indep_name, decimals)
+    ret._dep_vector = numpy.round(wave._dep_vector, decimals)
     return ret
 
 
@@ -918,99 +1091,4 @@ def wint(wave):
     )
     ret = copy.copy(wave)
     ret._dep_vector = ret._dep_vector.astype(numpy.int)
-    return ret
-
-
-@putil.pcontracts.contract(
-    wave=Waveform, indep_min='None|number', indep_max='None|number'
-)
-def wintegral(wave, indep_min=None, indep_max=None):
-    r"""
-    Returns the running integral of a waveform's dependent variable vector
-    using the
-    `trapezoidal method <https://en.wikipedia.org/wiki/Trapezoidal_rule>`_
-
-    :param wave: Waveform
-    :type  wave: :py:class:`putil.eng.Waveform`
-
-    :param indep_min: Independent vector start point of computation
-    :type  indep_min: integer or float
-
-    :param indep_max: Independent vector stop point of computation
-    :type  indep_max: integer or float
-
-    :rtype: :py:class:`putil.eng.Waveform`
-
-    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.eng.wave_functions.wintegral
-
-    :raises:
-     * RuntimeError (Argument \`indep_max\` is not valid)
-
-     * RuntimeError (Argument \`indep_min\` is not valid)
-
-     * RuntimeError (Argument \`wave\` is not valid)
-
-     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
-       arguments)
-
-    .. [[[end]]]
-    """
-    ret = copy.copy(wave)
-    _bound_waveform(ret, indep_min, indep_max)
-    rect_height = numpy.minimum(ret._dep_vector[:-1], ret._dep_vector[1:])
-    rect_base = numpy.diff(ret._indep_vector)
-    rect_area = numpy.multiply(rect_height, rect_base)
-    triang_height = numpy.abs(numpy.diff(ret._dep_vector))
-    triang_area = 0.5*numpy.multiply(triang_height, rect_base)
-    ret._dep_vector = numpy.cumsum(
-        numpy.concatenate((numpy.array([0.0]), triang_area+rect_area))
-    )
-    ret.indep_name = 'wintegral({0})'.format(ret._indep_name)
-    ret.dep_units = remove_extra_delims(
-        '({0})*({1})'.format(ret.dep_units, ret.indep_units)
-    )
-    return ret
-
-
-@putil.pcontracts.contract(wave=Waveform, decimals='int,>=0')
-def wround(wave, decimals=0):
-    r"""
-    Rounds a waveform's dependent variable vector to a given number of decimal
-    places
-
-    :param wave: Waveform
-    :type  wave: :py:class:`putil.eng.Waveform`
-
-    :param decimals: Number of decimals to round to
-    :type  decimals: integer
-
-    :rtype: :py:class:`putil.eng.Waveform`
-
-    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
-    .. Auto-generated exceptions documentation for
-    .. putil.eng.wave_functions.wround
-
-    :raises:
-     * RuntimeError (Argument \`decimals\` is not valid)
-
-     * RuntimeError (Argument \`wave\` is not valid)
-
-    .. [[[end]]]
-    """
-    # pylint: disable=W0622
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='complex_not_supported',
-        extype=TypeError,
-        exmsg='Cannot convert complex to integer'
-    )
-    exh.raise_exception_if(
-        exname='complex_not_supported',
-        condition=wave._dep_vector.dtype.name.startswith('complex')
-    )
-    ret = copy.copy(wave)
-    ret.indep_name = 'round({0}, {1})'.format(ret.indep_name, decimals)
-    ret._dep_vector = numpy.round(wave._dep_vector, decimals)
     return ret

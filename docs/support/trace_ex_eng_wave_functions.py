@@ -30,7 +30,11 @@ def trace_module(no_print=True):
         'integral',
         'log',
         'log10',
+        'nintegral',
+        'nmin',
+        'nmax',
         'phase',
+        'round',
         'sin',
         'sinh',
         'sqrt',
@@ -39,8 +43,6 @@ def trace_module(no_print=True):
         'wcomplex',
         'wfloat',
         'wint',
-        'wintegral',
-        'wround',
     )
     return docs.support.trace_support.run_trace(
         mname, fname, module_prefix, callable_names, no_print,

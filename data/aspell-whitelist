@@ -774,6 +774,7 @@ nflip
 nfunction
 nimages
 nindent
+nintegral
 ninterp
 nis
 nitem
@@ -781,6 +782,8 @@ niv
 nldig
 nline
 nlist
+nmax
+nmin
 nname
 nobj
 NoCol
