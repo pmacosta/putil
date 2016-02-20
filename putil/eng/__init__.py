@@ -35,6 +35,7 @@ from .wave_functions import (
     cos,
     cosh,
     db,
+    derivative,
     exp,
     floor,
     imag,

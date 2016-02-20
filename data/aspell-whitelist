@@ -1003,6 +1003,7 @@ rcount
 rcParams
 rdata
 rdelim
+rdesc
 rdfilter
 rdict
 rdiv

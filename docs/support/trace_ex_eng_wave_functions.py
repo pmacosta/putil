@@ -23,6 +23,7 @@ def trace_module(no_print=True):
         'cos',
         'cosh',
         'db',
+        'derivative',
         'exp',
         'floor',
         'imag',

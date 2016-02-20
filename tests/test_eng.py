@@ -53,6 +53,7 @@ from tests.eng.wave_functions import (
     test_cosh,
     test_db,
     test_db_exceptions,
+    test_derivative,
     test_exp,
     test_floor,
     test_funcs_exceptions,

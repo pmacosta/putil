@@ -9,6 +9,7 @@ import copy
 import numpy
 # Putil imports
 import putil.pcontracts
+from .functions import remove_extra_delims
 from .constants import FP_ATOL, FP_RTOL
 from .wave_core import _interp_dep_vector, Waveform
 
@@ -445,6 +446,61 @@ def db(wave):
     ret.dep_units = 'dB'
     ret.indep_name = 'db({0})'.format(ret.indep_name)
     ret._dep_vector = 20.0*numpy.log10(ret._dep_vector)
+    return ret
+
+
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def derivative(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the numerical derivative of a waveform's dependent variable vector
+    using
+    `backwards differences <https://en.wikipedia.org/wiki/
+    Finite_difference#Forward.2C_backward.2C_and_central_differences>`_
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: float
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.derivative
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    delta_indep = numpy.diff(ret._indep_vector)
+    delta_dep = numpy.diff(ret._dep_vector)
+    delta_indep = numpy.concatenate(
+        (numpy.array([delta_indep[0]]), delta_indep)
+    )
+    delta_dep = numpy.concatenate(
+        (numpy.array([delta_dep[0]]), delta_dep)
+    )
+    ret._dep_vector = numpy.divide(delta_dep, delta_indep)
+    ret.indep_name = 'derivative({0})'.format(ret._indep_name)
+    ret.dep_units = remove_extra_delims(
+        '({0})/({1})'.format(ret.dep_units, ret.indep_units)
+    )
     return ret
 
 
@@ -912,6 +968,9 @@ def wintegral(wave, indep_min=None, indep_max=None):
         numpy.concatenate((numpy.array([0.0]), triang_area+rect_area))
     )
     ret.indep_name = 'wintegral({0})'.format(ret._indep_name)
+    ret.dep_units = remove_extra_delims(
+        '({0})*({1})'.format(ret.dep_units, ret.indep_units)
+    )
     return ret
 
 
