@@ -129,7 +129,7 @@ Interpreter
 ===========
 
 The package has been developed and tested with Python 2.6, 2.7, 3.3, 3.4
-and 3.5 under Linux (Debian, Ubuntu) and Microsoft Windows
+and 3.5 under Linux (Debian, Ubuntu), Apple OS X and Microsoft Windows
 
 Installing
 ==========

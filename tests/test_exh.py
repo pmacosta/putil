@@ -1,8 +1,8 @@
 # test_exh.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0302,C0413,E0611,F0401,R0201,R0903,R0912,R0915
-# pylint: disable=W0122,W0123,W0212,W0612,W0640
+# pylint: disable=C0103,C0111,C0302,C0413,E0611,F0401,R0201,R0903,R0912,R0914
+# pylint: disable=R0915,W0122,W0123,W0212,W0612,W0640
 
 # Standard library imports
 from __future__ import print_function
@@ -227,7 +227,7 @@ class TestExHandle(object):
 
     def test_add_exception(self):
         """ Test add_exception() function behavior """
-        # pylint: disable=E0602,R0204,R0914,W0613
+        # pylint: disable=E0602,R0204,W0613
         exobj = putil.exh.ExHandle(
             full_cname=True,
             exclude=['_pytest', 'tests.test_exh']
@@ -484,7 +484,7 @@ class TestExHandle(object):
                         )
                     else:
                         assert False
-                    assert erec['function'][0] == ttuple[0]
+                    assert erec['function'][0] == exobj._encode_call(ttuple[0])
                     assert erec['type'] == ttuple[1]
                     assert erec['msg'] == ttuple[2]
                 else:
@@ -659,6 +659,9 @@ class TestExHandle(object):
                 }.items()
             )
             assert re.compile(r'\d+/total_exception_F').match(exname)
+            erec['function'] = [
+                exobj._decode_call(call) for call in erec['function']
+            ]
             assert sorted(erec.items()) == ref
             # Test property search
             exobj = putil.exh.ExHandle(full_cname=True, exclude=['_pytest'])
@@ -682,6 +685,9 @@ class TestExHandle(object):
                 }.items()
             )
             assert re.compile(r'\d+/class_exception').match(exname)
+            erec['function'] = [
+                exobj._decode_call(call) for call in erec['function']
+            ]
             assert sorted(erec.items()) == ref
         ###
         # Test property search
@@ -695,7 +701,7 @@ class TestExHandle(object):
         assert len(list(cobj._exhobj._ex_dict.keys())) == 1
         key = list(cobj._exhobj._ex_dict.keys())[0]
         item = cobj._exhobj._ex_dict[key]
-        assert item['function'][0].endswith(
+        assert cobj._exhobj._decode_call(item['function'][0]).endswith(
             'exh_support_module_2.MyClass.value(setter)'
         )
         assert item['msg'] == 'Illegal value'
@@ -929,7 +935,7 @@ class TestExHandle(object):
         entry = exobj._ex_dict[list(exobj._ex_dict.keys())[0]]
         root = 'tests.test_exh.TestExHandle.test_raise_exception_if_exceptions'
         assert (
-            entry['function']
+            [exobj._decode_call(item) for item in entry['function']]
             ==
             [
                 '{0}/{0}.func_top/{0}.func_mid/{0}.func_base'.format(root),
@@ -1258,6 +1264,8 @@ class TestExHandle(object):
         assert id(source_obj._ex_dict) != id(dest_obj._ex_dict)
         assert source_obj._callables_obj == dest_obj._callables_obj
         assert id(source_obj._callables_obj) != id(dest_obj._callables_obj)
+        assert source_obj._clut == dest_obj._clut
+        assert id(source_obj._clut) != id(dest_obj._clut)
         assert source_obj._full_cname == dest_obj._full_cname
         assert putil.test.comp_list_of_dicts(
             source_obj.exceptions_db,
@@ -1310,6 +1318,37 @@ class TestExHandle(object):
 
     def test_add(self):
         """ Test __add__ method behavior """
+        def comp_objs(obj):
+            ref = {
+                'tests.test_exh.TestExHandle.test_add': '0',
+                'tests.test_exh.TestExHandle.test_add.func1': '1',
+                'tests.test_exh.TestExHandle.test_add.func2': '3',
+                'tests.test_exh.TestExHandle.test_add.func3': '2'
+            }
+            assert obj._clut == ref
+            nref = [
+                'copy_exception_1',
+                'copy_exception_2',
+                'copy_exception_3',
+                'contract:putil.eng.peng.frac_length_0',
+                'contract:putil.eng.peng.number_0',
+                'contract:putil.eng.peng.rjust_0',
+            ]
+            alist = [
+                item.split(obj._callables_separator)[1]
+                for item in obj._ex_dict
+            ]
+            assert sorted(alist) == sorted(nref)
+            for key, value in obj._ex_dict.items():
+                name = key.split(obj._callables_separator)[1]
+                if name == 'copy_exception_1':
+                    assert value['function'] == ['0/1']
+                elif name == 'copy_exception_2':
+                    assert value['function'] == ['0/3']
+                elif name == 'copy_exception_3':
+                    assert value['function'] == ['0/2']
+                else:
+                    assert value['function'] == [None]
         # pylint: disable=W0104
         obj1 = putil.exh.ExHandle(_copy=True)
         obj1._ex_dict = {'id1':5, 'ssid1':10}
@@ -1441,6 +1480,55 @@ class TestExHandle(object):
             'Incompatible exception handlers'
         )
         obj2._exclude = None
+        # Test re-mapping of callables look-up table
+        obj1 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
+        obj2 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
+        def func1(exhobj):
+            exhobj.add_exception(
+                'copy_exception_1', TypeError, 'Copy exception #1'
+            )
+        def func2(exhobj):
+            exhobj.add_exception(
+                'copy_exception_2', RuntimeError, 'Copy exception #2'
+            )
+        def func3(exhobj):
+            exhobj.add_exception(
+                'copy_exception_3', ValueError, 'Copy exception #3'
+            )
+            putil.exh.del_exh_obj()
+            putil.exh.get_or_create_exh_obj(
+                full_cname=True, exclude=['putil.eng']
+            )
+            putil.eng.peng(1, 3, False)
+            exhobj += putil.exh.get_exh_obj()
+            putil.exh.del_exh_obj()
+        # Test __add__
+        func1(obj1)
+        func3(obj1)
+        func1(obj2)
+        func2(obj2)
+        func3(obj2)
+        obj1_ref = copy.copy(obj1)
+        obj2_ref = copy.copy(obj2)
+        assert obj1_ref == obj1
+        assert obj2_ref == obj2
+        obj3 = obj1+obj2
+        assert obj1_ref == obj1
+        assert obj2_ref == obj2
+        comp_objs(obj3)
+        # Test __iadd__
+        obj1 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
+        obj2 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
+        func1(obj1)
+        func3(obj1)
+        func1(obj2)
+        func2(obj2)
+        func3(obj2)
+        obj2_ref = copy.copy(obj2)
+        assert obj2_ref == obj2
+        obj1 += obj2
+        assert obj2_ref == obj2
+        comp_objs(obj1)
 
     def test_eq(self):
         """ Test __eq__ method behavior """

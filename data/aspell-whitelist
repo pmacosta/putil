@@ -12,6 +12,7 @@ addfinalizer
 Agg
 aguments
 aliceblue
+alist
 antiquewhite
 anumber
 aobj
@@ -94,6 +95,7 @@ ccontract
 ccontracts
 cd
 cdb
+cdicts
 cfg
 cfiles
 cfilter
@@ -116,6 +118,7 @@ ClosureClass
 cls
 Clsc
 clsvar
+clut
 cmd
 CMD
 cmdclass
@@ -379,6 +382,7 @@ fstring
 ftest
 fticklabels
 fticks
+ftime
 ftype
 fuc
 fui
@@ -485,6 +489,8 @@ iter
 iterable
 itertools
 itg
+itoken
+itokens
 ivar
 IXUSR
 json
@@ -661,6 +667,7 @@ norder
 np
 npoints
 npz
+nref
 nReference
 nsep
 nSeries
@@ -679,6 +686,7 @@ nuniq
 nvar
 nzero
 OAUTH
+objs
 obranch
 ocols
 oct
@@ -707,6 +715,8 @@ os
 OSError
 OSI
 othercontract
+otoken
+otokens
 pacakges
 palegoldenrod
 palegreen

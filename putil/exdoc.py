@@ -300,7 +300,17 @@ class ExDoc(object):
             _no_print=self._no_print
         )
         cobj._exh_obj = copy.copy(self._exh_obj)
+
+        existing_exhobj = (
+            copy.copy(putil.exh.get_exh_obj())
+            if putil.exh.get_exh_obj() is not None else
+            None
+        )
         cobj._tobj = copy.copy(self._tobj)
+        if existing_exhobj is None:
+            putil.exh.del_exh_obj()
+        else:
+            putil.exh.set_exh_obj(existing_exhobj)
         cobj._module_obj_db = copy.deepcopy(self._module_obj_db)
         return cobj
 

@@ -5,6 +5,8 @@
 Changelog
 =========
 
+* 0.9.10rc1 [2016-03-09]: Apple OS X compatibility changes. Reduced memory
+  consumption during exception auto-documentation process. Bug fixes
 * 0.9.9 [2016-01-27]: Fixed documentation bugs that were causing errors with
   Sphinx 1.3.5+
 * 0.9.8 [2016-01-22]: Bug fixes

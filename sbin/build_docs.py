@@ -22,7 +22,6 @@ import sbin.refresh_moddb
 import sbin.build_moddb
 import sbin.functions
 
-
 ###
 # Global variables
 ###
@@ -41,6 +40,7 @@ VALID_MODULES = ['pcsv', 'plot', 'tree']
 def build_pkg_docs(args):
     """ Build documentation """
     # pylint: disable=R0912,R0915
+    debug = False
     retcode = 0
     pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     src_dir = args.directory
@@ -58,6 +58,17 @@ def build_pkg_docs(args):
     # Processing
     del_pkl_files(test, tracer_dir)
     print('Rebuilding documentation')
+    if debug:
+        print('Python: {0}'.format(sys.executable))
+        print('PATH: {0}'.format(os.environ['PATH']))
+        print('PYTHONPATH: {0}'.format(os.environ['PYTHONPATH']))
+        print('Cog: {0}'.format(cog_exe))
+        print('sbin.functions: {0}'.format(sbin.functions.__file__))
+        print(
+            'sbin.functions.subprocess: {0}'.format(
+                sbin.functions.subprocess.__file__
+            )
+        )
     if rebuild or test:
         sbin.refresh_moddb.refresh_moddb()
         print_cyan(
@@ -68,7 +79,7 @@ def build_pkg_docs(args):
         start_time = datetime.datetime.today()
         for module in modules:
             tmp_retcode = rebuild_module_doc(
-                test, src_dir, tracer_dir, cog_exe, module
+                test, src_dir, tracer_dir, cog_exe, module, debug
             )
             retcode = tmp_retcode if not retcode else retcode
         stop_time = datetime.datetime.today()
@@ -364,7 +375,8 @@ def process_module(tracer_dir, module):
         )
 
 
-def rebuild_module_doc(test, src_dir, tracer_dir, cog_exe, module):
+def rebuild_module_doc(test, src_dir, tracer_dir, cog_exe, module, debug):
+    # pylint: disable=R0913
     retcode = 0
     pkl_dir = tracer_dir
     if module == 'plot':
@@ -389,6 +401,7 @@ def rebuild_module_doc(test, src_dir, tracer_dir, cog_exe, module):
                 'Error generating exceptions documentation '
                 'in module {0}'.format(smf)
             ),
+            async_stdout=debug
         )
         move_file(smf+'.tmp', smf)
         if test:

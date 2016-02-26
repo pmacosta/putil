@@ -91,6 +91,7 @@ def content_lines(fname, comment='#'):
     """ Returns non-empty lines of a package """
     skip_lines = [
         '#!/bin/bash',
+        '#!/usr/bin/env bash',
         '#!/usr/bin/env python',
     ]
     encoding_dribble = '\xef\xbb\xbf'
