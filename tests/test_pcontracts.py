@@ -499,6 +499,9 @@ def test_contract():
     @putil.pcontracts.contract(fname='not_a_valid_contract')
     def func6(fname):
         return fname
+    @putil.pcontracts.contract(value=int)
+    def func7(value):
+        return value
     putil.test.assert_exception(
         func1,
         {'number':'a string'},
@@ -632,6 +635,12 @@ def test_contract():
         {'fname':5},
         contracts.interface.ContractSyntaxError,
         ''
+    )
+    putil.test.assert_exception(
+        func7,
+        {'value':'a'},
+        RuntimeError,
+        'Argument `value` is not valid'
     )
     putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(
         original_custom_contracts

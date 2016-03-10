@@ -183,7 +183,7 @@ def main(argv):
             )))
         # Write file
         with open(output_file_name, 'w') as fobj:
-            _write(fobj, '\n'.join(lines))
+            _write(fobj, ('\n'.join(lines))+'\n')
         # Echo file
         if debug:
             print('File: {0}'.format(output_file_name))

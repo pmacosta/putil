@@ -50,7 +50,8 @@ def run_trace(
     callable_names,
     no_print,
     module_exclude=None,
-    callable_exclude=None
+    callable_exclude=None,
+    debug=False
 ):
     """ Run module tracing """
     # pylint: disable=R0913
@@ -65,7 +66,10 @@ def run_trace(
             out_callables_fname=par.out_callables_fname,
             _no_print=no_print
     ) as exdoc_obj:
-        if pytest.main('-q -x {noption}-m {mname} {file}'.format(
+        debug_msg = '-s -vv' if debug else '-q'
+        test_cmd = (
+            '--color=yes {debug_msg} -x {noption}-m {mname} {file}'.format(
+                debug_msg=debug_msg,
                 noption='{0} '.format(par.noption) if par.noption else '',
                 mname=mname,
                 file=repr(os.path.realpath(os.path.join(
@@ -73,7 +77,11 @@ def run_trace(
                     '..',
                     '..',
                     'tests',
-                    'test_{0}.py'.format(fname)))))):
+                    'test_{0}.py'.format(fname)
+                )))
+            )
+        )
+        if pytest.main(test_cmd):
             raise RuntimeError('Tracing did not complete successfully')
     stop_time = datetime.datetime.now()
     if not no_print:

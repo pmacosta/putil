@@ -18,14 +18,15 @@ check: FORCE
 
 clean: FORCE
 	@echo "Cleaning package"
-	@find $(PKG_DIR) -name '*.pyc' -exec rm -rf "$(readlink {})" \;
-	@find $(PKG_DIR) -name '__pycache__' -exec rm -rf "$(readlink {})" \;
-	@find $(PKG_DIR) -name '.coverage*' -exec rm -rf "$(readlink {})" \;
-	@find $(PKG_DIR) -name '*.tmp' -exec rm -rf "$(readlink {})" \;
-	@find $(PKG_DIR) -name '*.pkl' -exec rm -rf "$(readlink {})" \;
+	@find $(PKG_DIR) -name '*.pyc' -delete
+	@find $(PKG_DIR) -name '__pycache__' -delete
+	@find $(PKG_DIR) -name '.coverage*' -delete
+	@find $(PKG_DIR) -name '*.tmp' -delete
+	@find $(PKG_DIR) -name '*.pkl' -delete
+	@find $(PKG_DIR) -name '*.error' -delete
 	@rm -rf $(PKG_DIR)/build
 	@rm -rf	$(PKG_DIR)/dist
-	@rm	-rf $(PKG_DIR)/putil.egg-info
+	@rm -rf $(PKG_DIR)/putil.egg-info
 	@rm -rf $(PKG_DIR)/.eggs
 	@rm -rf $(PKG_DIR)/.cache
 	@rm -rf $(PKG_DIR)/docs/_build

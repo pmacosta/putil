@@ -472,10 +472,13 @@ class TestCallables(object):
             print('Reference text:')
             print(rtext)
         assert str(obj) == rtext
+        ftime = int(os.path.getmtime(src))
+        while int(time.time()) <= ftime:
+            time.sleep(0.1)
         os.remove(src)
-        time.sleep(0.5)
+        content = 'def my_func():\n    pass'
         with open(src, 'w') as fobj:
-            fobj.write('def my_func():\n    pass')
+            fobj.write(content)
         obj.refresh()
         assert obj._fnames[src] != tmod
         rtext = (

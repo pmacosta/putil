@@ -88,6 +88,34 @@ def _isiterable(obj):
         return True
 
 
+def _merge_cdicts(self, clut, exdict, separator):
+    """ Merge exception dictionaries from two objects """
+    if not self._full_cname:
+        return
+    # Find all callables that are not in self exceptions dictionary
+    # and create new tokens for them
+    repl_dict = {}
+    for key, value in clut.items():
+        otoken = self._clut.get(key, None)
+        if not otoken:
+            otoken = str(len(self._clut))
+            self._clut[key] = otoken
+        repl_dict[value] = otoken
+    # Update other dictionaries to the mapping to self
+    # exceptions dictionary
+    for entry in exdict.values():
+        olist = []
+        for item in entry['function']:
+            if item is None:
+                # Callable name is None when callable is part of exclude list
+                olist.append(None)
+            else:
+                itokens = item.split(separator)
+                itokens = [repl_dict.get(itoken) for itoken in itokens]
+                olist.append(separator.join(itokens))
+        entry['function'] = olist
+
+
 def del_exh_obj():
     """
     Deletes global exception handler (if set)
@@ -235,6 +263,7 @@ class ExHandle(object):
            any([not isinstance(item, str) for item in exclude]))):
             raise RuntimeError('Argument `exclude` is not valid')
         self._ex_dict = {}
+        self._clut = {}
         self._callables_separator = '/'
         self._full_cname = full_cname
         self._exclude = exclude
@@ -295,8 +324,11 @@ class ExHandle(object):
             exclude=self._exclude,
             _copy=True
         )
+        ex_dict = copy.deepcopy(other._ex_dict)
         robj._ex_dict = copy.deepcopy(self._ex_dict)
-        robj._ex_dict.update(copy.deepcopy(other._ex_dict))
+        robj._clut = copy.deepcopy(self._clut)
+        _merge_cdicts(robj, other._clut, ex_dict, other._callables_separator)
+        robj._ex_dict.update(ex_dict)
         robj._callables_obj = (
             copy.copy(self._callables_obj)+
             copy.copy(other._callables_obj)
@@ -350,6 +382,7 @@ class ExHandle(object):
             _copy=True
         )
         cobj._ex_dict = copy.deepcopy(self._ex_dict)
+        cobj._clut = copy.deepcopy(self._clut)
         cobj._exclude_list = self._exclude_list[:]
         cobj._callables_obj = copy.copy(self._callables_obj)
         return cobj
@@ -372,7 +405,8 @@ class ExHandle(object):
         return (
             isinstance(other, ExHandle) and
             (sorted(self._ex_dict) == sorted(other._ex_dict)) and
-            (self._callables_obj == other._callables_obj)
+            (self._callables_obj == other._callables_obj) and
+            (sorted(self._clut) == sorted(other._clut))
         )
 
     def __iadd__(self, other):
@@ -420,7 +454,9 @@ class ExHandle(object):
         if ((self._full_cname != other._full_cname) or
            (self._exclude != other._exclude)):
             raise RuntimeError('Incompatible exception handlers')
-        self._ex_dict.update(copy.deepcopy(other._ex_dict))
+        ex_dict = copy.deepcopy(other._ex_dict)
+        _merge_cdicts(self, other._clut, ex_dict, other._callables_separator)
+        self._ex_dict.update(ex_dict)
         self._callables_obj += copy.copy(other._callables_obj)
         return self
 
@@ -480,9 +516,13 @@ class ExHandle(object):
             # can be called multiple times following different calling paths,
             # so there could potentially be multiple items in the
             # self._ex_dict[key]['function'] list
-            iobj = enumerate(sorted(self._ex_dict[key]['function']))
+            flist = [
+                self._decode_call(item)
+                for item in self._ex_dict[key]['function']
+            ]
+            iobj = enumerate(sorted(flist))
             for fnum, func_name in iobj:
-                rindex = self._ex_dict[key]['function'].index(func_name)
+                rindex = flist.index(func_name)
                 rstr.append(
                    '{callable_type}{callable_name}{rtext}'.format(
                        callable_type='Function: ' if fnum == 0 else ' '*10,
@@ -496,6 +536,38 @@ class ExHandle(object):
                 )
             ret.append('\n'.join(rstr))
         return '\n\n'.join(ret)
+
+    def _decode_call(self, call):
+        """ Replace call tokens with callable names """
+        # Callable name is None when callable is part of exclude list
+        if call is None:
+            return
+        itokens = call.split(self._callables_separator)
+        odict = {}
+        for key, value in self._clut.items():
+            if value in itokens:
+                odict[itokens[itokens.index(value)]] = key
+        return self._callables_separator.join(
+            [odict[itoken] for itoken in itokens]
+        )
+
+    def _encode_call(self, call):
+        """
+        Replace call with tokens from look-up table to reduce
+        object memory footprint
+        """
+        # Callable name is None when callable is part of exclude list
+        if call is None:
+            return
+        itokens = call.split(self._callables_separator)
+        otokens = []
+        for itoken in itokens:
+            otoken = self._clut.get(itoken, None)
+            if not otoken:
+                otoken = str(len(self._clut))
+                self._clut[itoken] = otoken
+            otokens.append(otoken)
+        return self._callables_separator.join(otokens)
 
     def _format_msg(self, msg, edata):
         """ Substitute parameters in exception message """
@@ -524,18 +596,22 @@ class ExHandle(object):
         # Check if object is a class property
         name = self._property_search(fob)
         if name:
+            del fob
+            del uobj
             return name
         if os.path.isfile(fin):
-            return self._callables_obj.get_callable_from_line(
-                fin,
-                fob.f_lineno
-            )
+            lineno = fob.f_lineno
+            del fob
+            del uobj
+            return self._callables_obj.get_callable_from_line(fin, lineno)
         try:
             code_id = (
                 inspect.getfile(uobj).replace('.pyc', 'py'),
                 inspect.getsourcelines(uobj)[1]
             )
             self._callables_obj.trace([code_id[0]])
+            del fob
+            del uobj
             return self._callables_obj.reverse_callables_db[code_id]
         except (TypeError, OSError):
             # TypeError: getfile, object is a built-in module,
@@ -561,6 +637,7 @@ class ExHandle(object):
                 frame = sys._getframe(fnum)
             callable_id = id(frame.f_code)
             if not self._full_cname:
+                del frame
                 return callable_id, None
             # Filter stack to omit frames that are part of the exception
             # handling module, argument validation, or top level (tracing)
@@ -576,6 +653,8 @@ class ExHandle(object):
             fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
             uobj, ufin = self._unwrap_obj(frame, fun)
             if ufin in self._exclude_list:
+                del uobj
+                del frame
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
@@ -600,6 +679,9 @@ class ExHandle(object):
                 fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
                 uobj, ufin = self._unwrap_obj(frame, fun)
                 if ufin in self._exclude_list:
+                    del uobj
+                    del frame
+                    del stack
                     return callable_id, None
                 tokens = frame.f_code.co_filename.split(os.sep)
                 ###
@@ -620,6 +702,9 @@ class ExHandle(object):
                 if in_decorator and (name == prev_name):
                     del ret[num-num_del_items]
                     num_del_items += 1
+            del uobj
+            del frame
+            del stack
             return callable_id, self._callables_separator.join(ret)
     else:   # pragma: no cover
         # Method works with decorator 4.x series
@@ -637,6 +722,7 @@ class ExHandle(object):
                 frame = sys._getframe(fnum)
             callable_id = id(frame.f_code)
             if not self._full_cname:
+                del frame
                 return callable_id, None
             # Filter stack to omit frames that are part of the exception
             # handling module, argument validation, or top level (tracing)
@@ -652,6 +738,8 @@ class ExHandle(object):
             fin, _, fun, _, _ = inspect.getframeinfo(frame)
             uobj, ufin = self._unwrap_obj(frame, fun)
             if ufin in self._exclude_list:
+                del uobj
+                del frame
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
@@ -669,6 +757,9 @@ class ExHandle(object):
                 fin, _, fun, _, _ = inspect.getframeinfo(frame)
                 uobj, ufin = self._unwrap_obj(frame, fun)
                 if ufin in self._exclude_list:
+                    del uobj
+                    del frame
+                    del stack
                     return callable_id, None
                 tokens = frame.f_code.co_filename.split(os.sep)
                 ###
@@ -688,6 +779,10 @@ class ExHandle(object):
                         skip = 3
                     else:
                         ret.append(item)
+            del fob
+            del uobj
+            del frame
+            del stack
             return callable_id, self._callables_separator.join(ret)
 
     def _get_callables_separator(self):
@@ -722,7 +817,7 @@ class ExHandle(object):
                 raised = self._ex_dict[key]['raised'][rindex]
                 ret.append(
                     {
-                        'name':func_name,
+                        'name':self._decode_call(func_name),
                         'data':template.format(
                             extype=_ex_type_str(self._ex_dict[key]['type']),
                             exmsg=self._ex_dict[key]['msg'],
@@ -742,6 +837,8 @@ class ExHandle(object):
                 name if name is not None else ''
             ]
         )
+        if self._full_cname:
+            func_name = self._encode_call(func_name)
         return {'func_name':func_name, 'ex_name':ex_name}
 
     def _property_search(self, fobj):
@@ -753,6 +850,9 @@ class ExHandle(object):
         scontext = fobj.f_locals.get('self', None)
         class_obj = scontext.__class__ if scontext is not None else None
         if not class_obj:
+            del fobj
+            del scontext
+            del class_obj
             return
         # Get class properties objects
         class_props = [
@@ -761,6 +861,9 @@ class ExHandle(object):
             if isinstance(member_obj, property)
         ]
         if not class_props:
+            del fobj
+            del scontext
+            del class_obj
             return
         class_file = inspect.getfile(class_obj).replace('.pyc', '.py')
         class_name = self._callables_obj.get_callable_from_line(
@@ -803,6 +906,10 @@ class ExHandle(object):
             for action_name, action_id_list in prop_actions_dict.items():
                 if action_id_list and (func_id in action_id_list):
                     prop_name = '.'.join([class_name, prop_name])
+                    del fobj
+                    del scontext
+                    del class_obj
+                    del class_props
                     return '{prop_name}({prop_action})'.format(
                         prop_name=prop_name,
                         prop_action=desc_dict[action_name]

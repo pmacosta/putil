@@ -124,7 +124,7 @@ class TestFigure(object):
             'Independent variable units: Amps\n'
             'Logarithmic independent axis: False\n'
             'Title: My graph\n'
-            'Figure width: (6\\.08|6\\.71).*\n'
+            'Figure width: (6\\.08|6\\.71|6\\.67).*\n'
             'Figure height: 4.99.*\n'
         )
         actual = str(obj)
