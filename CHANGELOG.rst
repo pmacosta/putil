@@ -5,6 +5,7 @@
 Changelog
 =========
 
+* 0.9.10 [2016-03-10]: Final release of 0.9.10 branch
 * 0.9.10rc1 [2016-03-09]: Apple OS X compatibility changes. Reduced memory
   consumption during exception auto-documentation process. Bug fixes
 * 0.9.9 [2016-01-27]: Fixed documentation bugs that were causing errors with
