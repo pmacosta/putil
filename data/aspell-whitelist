@@ -9,6 +9,7 @@ abstractmethod
 abstractproperty
 actmsg
 addfinalizer
+AE
 Agg
 aguments
 aliceblue
@@ -155,6 +156,7 @@ cornsilk
 cov
 coveragepy
 coveragerc
+cpath
 cpu
 cpus
 CPUs
@@ -176,9 +178,11 @@ ctags
 ctext
 Ctrl
 ctx
+ctxt
 customizations
 cvec
 cvector
+CVECTOR
 cwd
 cwrite
 darg
@@ -210,6 +214,7 @@ dedent
 deepcopy
 deeppink
 deepskyblue
+defaultdict
 del
 delattr
 deleter
@@ -227,6 +232,7 @@ DEVSTAT
 df
 dfile
 dfilter
+DFLT
 dicts
 difflib
 dimgray
@@ -238,12 +244,14 @@ divmod
 dkeys
 dlist
 dmark
+dmsg
 dname
 dobj
 doccode
 docstring
 docstrings
 doctest
+doctests
 doctrees
 Docutils
 dodgerblue
@@ -336,6 +344,7 @@ fdict
 fdir
 fdirs
 femto
+fexh
 fexlist
 fget
 fgrid
@@ -348,6 +357,7 @@ filenames
 FinalClass
 finterp
 FIve
+fkeys
 flabel
 flength
 flim
@@ -366,6 +376,7 @@ foi
 fontdict
 fontsize
 forestgreen
+fp
 fpart
 fplot
 fpointer
@@ -399,6 +410,7 @@ fwobj
 gainsboro
 gcd
 GCD
+gcf
 genindex
 getattr
 getcwd
@@ -473,6 +485,7 @@ ipsum
 irmm
 isalpha
 isclass
+isdflt
 isdigit
 isexception
 isf
@@ -574,6 +587,7 @@ markerfacecolor
 markersize
 matplotlib
 Matplotlib
+mdict
 mdir
 mediumaquamarine
 mediumblue
@@ -601,6 +615,7 @@ mistyrose
 mkdir
 mkstemp
 mlmdfunc
+mmsg
 mname
 mobj
 MockFCode
@@ -614,6 +629,7 @@ mopen
 msec
 msg
 msgs
+mtxt
 multi
 Multi
 multialignment
@@ -647,6 +663,7 @@ ninterp
 nitem
 nldig
 nline
+nlist
 nname
 nobj
 NoCol
@@ -732,6 +749,7 @@ pargs
 partuple
 ParTuple
 pcolor
+pcond
 pcontract
 pcontracts
 pcsv
@@ -743,6 +761,7 @@ Peform
 peng
 peru
 peta
+pexceptions
 pexlist
 pflag
 pgcd
@@ -758,6 +777,7 @@ plist
 plottable
 plst
 plt
+pmsg
 png
 PNG
 pobj
@@ -780,6 +800,7 @@ prf
 proc
 prt
 ps
+ptxt
 ptypes
 PuBu
 PuBuGn
@@ -788,6 +809,7 @@ PushArtifact
 putil
 Putil
 PUTIL
+pv
 PV
 pver
 pwd
@@ -901,6 +923,7 @@ rvalue
 rwtb
 saddlebrown
 sandybrown
+sarg
 sbin
 SBIN
 schar

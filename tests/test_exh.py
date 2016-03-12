@@ -1,12 +1,13 @@
 # test_exh.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,C0302,C0413,E0611,F0401,R0201,R0903,R0912,R0914
-# pylint: disable=R0915,W0122,W0123,W0212,W0612,W0640
+# pylint: disable=C0103,C0111,C0302,C0413,E0611,F0401,R0201,R0204,R0903,R0912
+# pylint: disable=R0914,R0915,W0108,W0122,W0123,W0212,W0612,W0631,W0640
 
 # Standard library imports
 from __future__ import print_function
 import copy
+import functools
 import os
 import re
 import sys
@@ -49,19 +50,28 @@ def exec_function(source, filename, global_map):
 
 
 ###
+# Global variables
+###
+AE = functools.partial(putil.test.assert_exception, extype=RuntimeError)
+
+
+###
+# Helper functions
+###
+sarg = lambda msg: 'Argument `{0}` is not valid'.format(msg)
+
+
+###
 # Test functions
 ###
 def test_star_exh_obj():
     """ Test [get|set|del]_exh_obj() function behavior """
-    putil.test.assert_exception(
-        putil.exh.set_exh_obj,
-        {'obj':5},
-        RuntimeError,
-        'Argument `obj` is not valid'
-    )
+    AE(putil.exh.set_exh_obj, {'obj':5}, exmsg=sarg('obj'))
+    # set_exh_obj function
     exobj = putil.exh.ExHandle()
     putil.exh.set_exh_obj(exobj)
     assert id(putil.exh.get_exh_obj()) == id(exobj)
+    # del_exh_obj function
     putil.exh.del_exh_obj()
     assert putil.exh.get_exh_obj() is None
     # Test that nothing happens if del_exh_obj is called when there
@@ -70,100 +80,65 @@ def test_star_exh_obj():
     new_exh_obj = putil.exh.get_or_create_exh_obj()
     assert id(new_exh_obj) != id(exobj)
     assert not new_exh_obj._full_cname
+    # If there is a global exception handler the arguments passed
+    # should not have any effect
     assert id(putil.exh.get_or_create_exh_obj(True)) == id(new_exh_obj)
     assert not new_exh_obj._full_cname
+    # Test passed arguments are correctly assigned
     putil.exh.del_exh_obj()
     new_exh_obj = putil.exh.get_or_create_exh_obj(True)
     assert new_exh_obj._full_cname
     putil.exh.del_exh_obj()
-    putil.test.assert_exception(
-        putil.exh.get_or_create_exh_obj,
-        {'full_cname':5},
-        RuntimeError,
-        'Argument `full_cname` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.exh.get_or_create_exh_obj,
-        {'exclude':5},
-        RuntimeError,
-        'Argument `exclude` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.exh.get_or_create_exh_obj,
-        {'callables_fname':True},
-        RuntimeError,
-        'Argument `callables_fname` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.exh.get_or_create_exh_obj,
-        {'callables_fname':'_not_an_existing_file_'},
-        OSError,
-        'File _not_an_existing_file_ could not be found'
-    )
-    pobj = putil.pinspect.Callables(
-        [sys.modules['putil.eng'].__file__]
-    )
+    # get_or_create_exh_obj function
+    obj = putil.exh.get_or_create_exh_obj
+    AE(obj, {'full_cname':5}, exmsg=sarg('full_cname'))
+    AE(obj, {'exclude':5}, exmsg=sarg('exclude'))
+    AE(obj, {'callables_fname':True}, exmsg=sarg('callables_fname'))
+    args = {'callables_fname':'_not_a_file_'}
+    msg = 'File _not_a_file_ could not be found'
+    putil.test.assert_exception(obj, args, OSError, msg)
     # exclude parameter
+    putil_eng_fname = sys.modules['putil.eng'].__file__
+    pobj = putil.pinspect.Callables([putil_eng_fname])
     new_exh_obj = putil.exh.get_or_create_exh_obj(exclude=['putil.eng'])
     new_exh_obj._exclude = ['putil.eng']
     putil.exh.del_exh_obj()
     # callables_fname parameter
     with putil.misc.TmpFile() as fname:
-        callables_fname = fname
-        pobj.save(callables_fname)
-        new_exh_obj = putil.exh.get_or_create_exh_obj(
-            callables_fname=callables_fname
-        )
+        pobj.save(fname)
+        new_exh_obj = putil.exh.get_or_create_exh_obj(callables_fname=fname)
         assert pobj == new_exh_obj._callables_obj
     putil.exh.del_exh_obj()
 
 
-def test_ex_type_str():
+@pytest.mark.parametrize(
+    'arg, ref',
+    [
+        (RuntimeError, 'RuntimeError'),
+        (OSError, 'OSError')
+    ]
+)
+def test_ex_type_str(arg, ref):
     """ test _ex_type_str() function behavior """
-    assert putil.exh._ex_type_str(RuntimeError) == 'RuntimeError'
-    assert putil.exh._ex_type_str(OSError) == 'OSError'
+    assert putil.exh._ex_type_str(arg) == ref
 
 
 class TestExHandle(object):
     """ Tests for ExHandle class """
     def test_init(self):
         """ Test constructor behavior """
-        putil.test.assert_exception(
-            putil.exh.ExHandle,
-            {'full_cname':5},
-            RuntimeError,
-            'Argument `full_cname` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.exh.ExHandle,
-            {'exclude':5},
-            RuntimeError,
-            'Argument `exclude` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.exh.ExHandle,
-            {'exclude':['p', 'a', 5, 'c']},
-            RuntimeError,
-            'Argument `exclude` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.exh.ExHandle,
-            {'exclude':['sys', '_not_a_module_']},
-            ValueError,
-            'Source for module _not_a_module_ could not be found'
-        )
-        putil.test.assert_exception(
-            putil.exh.ExHandle,
-            {'callables_fname':True},
-            RuntimeError,
-            'Argument `callables_fname` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.exh.ExHandle,
-            {'callables_fname':'_not_an_existing_file_'},
-            OSError,
-            'File _not_an_existing_file_ could not be found'
-        )
+        # Exceptions
+        obj = putil.exh.ExHandle
+        AE(obj, {'full_cname':5}, exmsg=sarg('full_cname'))
+        AE(obj, {'exclude':5}, exmsg=sarg('exclude'))
+        AE(obj, {'exclude':['p', 'a', 5, 'c']}, exmsg=sarg('exclude'))
+        AE(obj, {'callables_fname':True}, exmsg=sarg('callables_fname'))
+        arg = {'exclude':['sys', '_not_a_module_']}
+        msg = 'Source for module _not_a_module_ could not be found'
+        putil.test.assert_exception(obj, arg, ValueError, msg)
+        arg = {'callables_fname':'_not_an_existing_file_'}
+        msg = 'File _not_an_existing_file_ could not be found'
+        # Functionality
         exobj = putil.exh.ExHandle()
         assert not exobj._full_cname
         assert exobj._exclude is None
@@ -185,162 +160,123 @@ class TestExHandle(object):
             [sys.modules['putil.eng'].__file__]
         )
         with putil.misc.TmpFile() as fname:
-            callables_fname = fname
-            pobj.save(callables_fname)
-            exobj = putil.exh.ExHandle(callables_fname=callables_fname)
+            pobj.save(fname)
+            exobj = putil.exh.ExHandle(callables_fname=fname)
         assert pobj == exobj._callables_obj
 
-    def test_add_exception_exceptions(self):
-        """ Test add_exception() method exceptions """
-        for full_cname in [True, False]:
-            obj = putil.exh.ExHandle(full_cname)
-            putil.test.assert_exception(
-                obj.add_exception,
+    @pytest.mark.parametrize(
+        'args, extype, exname',
+        [
+            (
                 {'exname':5, 'extype':RuntimeError, 'exmsg':'Message'},
                 RuntimeError,
                 'Argument `exname` is not valid'
-            )
-            putil.test.assert_exception(
-                obj.add_exception,
+            ),
+            (
                 {'exname':'exception', 'extype':5, 'exmsg':'Message'},
                 RuntimeError,
                 'Argument `extype` is not valid'
-            )
-            putil.test.assert_exception(
-                obj.add_exception,
+            ),
+            (
                 {'exname':'exception', 'extype':RuntimeError, 'exmsg':True},
                 RuntimeError,
                 'Argument `exmsg` is not valid'
-            )
-            # These should not raise an exception
-            obj = putil.exh.ExHandle(full_cname)
-            obj.add_exception(
-                exname='exception name',
-                extype=RuntimeError,
-                exmsg='exception message for exception #1'
-            )
-            obj.add_exception(
-                exname='exception name',
-                extype=TypeError,
-                exmsg='exception message for exception #2'
-            )
+            ),
+        ]
+    )
+    @pytest.mark.parametrize('full_cname', [True, False])
+    def test_add_exception_exceptions(self, full_cname, args, extype, exname):
+        """ Test add_exception() method exceptions """
+        obj = putil.exh.ExHandle(full_cname).add_exception
+        putil.test.assert_exception(obj, args, extype, exname)
+        # These should not raise an exception
+        obj = putil.exh.ExHandle(full_cname)
+        obj.add_exception(exname='name1', extype=RuntimeError, exmsg='desc1')
+        obj.add_exception(exname='name2', extype=TypeError, exmsg='desc2')
 
     def test_add_exception(self):
         """ Test add_exception() function behavior """
-        # pylint: disable=E0602,R0204,W0613
+        # pylint: disable=E0602,W0613
+        # Helper functions
+        dmsg = lambda msg: 'This is the {0} exception'.format(msg)
+        emsg = lambda num: 'total_exception_{0}'.format(num)
+        mmsg = lambda num: 'Total exception #{0}'.format(num)
+        pmsg = lambda msg: '{0} function exception'.format(msg)
+        root = 'tests.test_exh.TestExHandle.test_add_exception'
+        # Assertions
         exobj = putil.exh.ExHandle(
             full_cname=True,
             exclude=['_pytest', 'tests.test_exh']
         )
         assert exobj.exceptions_db == []
+        # Generate all possible combinations of full_cname and exclude options
+        #                       full_cname     exclude
         combinations = product([True, False], [None, ['_pytest', 'execnet']])
         for full_cname, exclude in combinations:
             exobj = putil.exh.ExHandle(full_cname=full_cname, exclude=exclude)
+            aobj = exobj.add_exception
+            # Functions that are going to be traced
             def func1():
-                exobj.add_exception(
-                    'first_exception',
-                    TypeError,
-                    'This is the first exception'
-                )
+                aobj('first_exception', TypeError, dmsg('first'))
                 print("Hello")
             def prop_decorator(func):
                 return func
             @putil.pcontracts.contract(text=str)
             @prop_decorator
             def func2(text):
-                exobj.add_exception(
-                    'second_exception',
-                    ValueError,
-                    'This is the second exception'
-                )
-                exobj.add_exception(
-                    'third_exception',
-                    OSError,
-                    'This is the third exception'
-                )
+                aobj('second_exception', ValueError, dmsg('second'))
+                aobj('third_exception', OSError, dmsg('third'))
                 print(text)
             class Class1(object):
                 def __init__(self, exobj):
                     self._value = None
-                    self._exobj = exobj
+                    self._aobj = exobj.add_exception
                 @property
                 def value3(self):
-                    self._exobj.add_exception(
-                        'getter_exception',
-                        TypeError,
-                        'Get function exception'
-                    )
+                    self._aobj('getter_exception', TypeError, pmsg('Get'))
                     return self._value
                 @value3.setter
                 @putil.pcontracts.contract(value=int)
                 def value3(self, value):
-                    self._exobj.add_exception(
-                        'setter_exception',
-                        TypeError,
-                        'Set function exception'
-                    )
+                    self._aobj('setter_exception', TypeError, pmsg('Set'))
                     self._value = value
                 @value3.deleter
                 def value3(self):
-                    self._exobj.add_exception(
-                        'deleter_exception',
-                        TypeError,
-                        'Delete function exception'
-                    )
+                    self._aobj('deleter_exception', TypeError, pmsg('Delete'))
                     print('Cannot delete attribute')
                 def _get_value4_int(self):
-                    self._exobj.add_exception(
-                        'dummy_exception',
-                        OSError,
-                        'Pass-through exception'
+                    self._aobj(
+                        'dummy_exception', OSError, 'Pass-through exception'
                     )
                     return self._value
                 def _get_value4(self):
                     return self._get_value4_int()
                 value4 = property(_get_value4)
             def func7():
-                exobj.add_exception(
-                    'total_exception_7', TypeError, 'Total exception #7'
-                )
+                aobj(emsg(7), TypeError, mmsg(7))
             def func8():
-                exobj.add_exception(
-                    'total_exception_8', TypeError, 'Total exception #8'
-                )
+                aobj(emsg(8), TypeError, mmsg(8))
             def func9():
-                exobj.add_exception(
-                    'total_exception_9', TypeError, 'Total exception #9'
-                )
+                aobj(emsg(9), TypeError, mmsg(9))
             def func10():
-                exobj.add_exception(
-                    'total_exception_10', TypeError, 'Total exception #10'
-                )
+                aobj(emsg(10), TypeError, mmsg(10))
             def func11():
-                exobj.add_exception(
-                    'total_exception_11', TypeError, 'Total exception #11'
-                )
+                aobj(emsg(11), TypeError, mmsg(11))
             def func12():
-                exobj.add_exception(
-                    'total_exception_12', TypeError, 'Total exception #12'
-                )
+                aobj(emsg(12), TypeError, mmsg(12))
             def func13():
-                exobj.add_exception(
-                    'total_exception_13', TypeError, 'Total exception #13'
-                )
+                aobj(emsg(13), TypeError, mmsg(13))
             def func14():
-                exobj.add_exception(
-                    'total_exception_14', TypeError, 'Total exception #14'
-                )
+                aobj(emsg(14), TypeError, mmsg(14))
+            # Add a function via exec
             iftxt = (
                 "def func15(exobj):"
-                "   exobj.add_exception("
-                "       'total_exception_15',"
-                "       TypeError,"
-                "       'Total exception #15'"
-                "   )"
+                "   aobj(emsg(15), TypeError, mmsg(15))"
             )
             gmap = locals()
             exec_function(iftxt, '<exec_function>', gmap)
             func15 = gmap['func15']
+            # Trace functions
             dobj = Class1(exobj)
             dobj.value3 = 5
             print(dobj.value3)
@@ -358,287 +294,101 @@ class TestExHandle(object):
             func14()
             func15(exobj)
             exh_support_module_1.func16(exobj)
-            if not cdb:
-                assert False
+            # Define references
+            cpath = lambda msg: 'Class1.value3({0})'.format(msg)
+            fkeys = [
+                'first_exception', 'second_exception', 'third_exception',
+                'setter_exception', 'getter_exception', 'deleter_exception',
+                emsg(7), emsg(8), emsg(9), emsg(10), emsg(11), emsg(12),
+                emsg(13), emsg(14), emsg(15), emsg(16), 'dummy_exception'
+            ]
+            fnames = [
+                'func1', 'func2', 'func2',
+                cpath('setter'), cpath('getter'), cpath('deleter'),
+                'func7', 'func8', 'func9', 'func10', 'func11', 'func12',
+                'func13', 'func14', '', '/exh_support_module_1.func16',
+                'Class1.value4(getter)',
+            ]
+            if full_cname and exclude:
+                template = root+'/tests.test_exh.TestExHandle.'
+                func_name = 'test_add_exception.'
+                fnames = (
+                    [template+func_name+item for item in fnames[0:14]]+
+                    [root, root+'/exh_support_module_1.func16']+
+                    [template+func_name+item for item in fnames[-1]]
+                )
+            fexh = [TypeError, ValueError, OSError]+13*[TypeError]+[OSError]
+            fdesc = [
+                dmsg('first'), dmsg('second'), dmsg('third'),
+                pmsg('Set'), pmsg('Get'), pmsg('Delete'),
+                mmsg(7), mmsg(8), mmsg(9), mmsg(10), mmsg(11), mmsg(12),
+                mmsg(13), mmsg(14), mmsg(15), mmsg(16),
+                'Pass-through exception'
+            ]
+            # Test that exceptions have been added correctly to handler
+            assert cdb
             for exname in cdb:
                 erec = cdb[exname]
-                if full_cname and exclude:
-                    template = (
-                        'tests.test_exh.TestExHandle.test_add_exception/'
-                        'tests.test_exh.TestExHandle.{0}'
-                    )
-                    if re.compile(r'\d+/first_exception').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func1'),
-                            TypeError,
-                            'This is the first exception'
-                        )
-                    elif re.compile(r'\d+/second_exception').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func2'),
-                            ValueError,
-                            'This is the second exception'
-                        )
-                    elif re.compile(r'\d+/third_exception').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func2'),
-                            OSError,
-                            'This is the third exception'
-                        )
-                    elif re.compile(r'\d+/setter_exception').match(exname):
-                        ttuple = (
-                            template.format(
-                                'test_add_exception.'
-                                'Class1.value3(setter)'
-                            ),
-                            TypeError,
-                            'Set function exception'
-                        )
-                    elif re.compile(r'\d+/getter_exception').match(exname):
-                        ttuple = (
-                            template.format(
-                                'test_add_exception.'
-                                'Class1.value3(getter)'
-                            ),
-                            TypeError,
-                            'Get function exception'
-                        )
-                    elif re.compile(r'\d+/deleter_exception').match(exname):
-                        ttuple = (
-                            template.format(
-                                'test_add_exception.'
-                                'Class1.value3(deleter)'
-                            ),
-                            TypeError,
-                            'Delete function exception'
-                        )
-                    elif re.compile(r'\d+/total_exception_7').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func7'),
-                            TypeError,
-                            'Total exception #7'
-                        )
-                    elif re.compile(r'\d+/total_exception_8').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func8'),
-                            TypeError,
-                            'Total exception #8'
-                        )
-                    elif re.compile(r'\d+/total_exception_9').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func9'),
-                            TypeError,
-                            'Total exception #9'
-                        )
-                    elif re.compile(r'\d+/total_exception_10').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func10'),
-                            TypeError,
-                            'Total exception #10'
-                        )
-                    elif re.compile(r'\d+/total_exception_11').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func11'),
-                            TypeError,
-                            'Total exception #11'
-                        )
-                    elif re.compile(r'\d+/total_exception_12').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func12'),
-                            TypeError,
-                            'Total exception #12'
-                        )
-                    elif re.compile(r'\d+/total_exception_13').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func13'),
-                            TypeError,
-                            'Total exception #13'
-                        )
-                    elif re.compile(r'\d+/total_exception_14').match(exname):
-                        ttuple = (
-                            template.format('test_add_exception.func14'),
-                            TypeError,
-                            'Total exception #14'
-                        )
-                    elif re.compile(r'\d+/total_exception_15').match(exname):
-                        ttuple = (
-                            'tests.test_exh.TestExHandle.test_add_exception',
-                            TypeError,
-                            'Total exception #15'
-                        )
-                    elif re.compile(r'\d+/total_exception_16').match(exname):
-                        ttuple = (
-                            'tests.test_exh.TestExHandle.test_add_exception/'
-                            'exh_support_module_1.func16',
-                            TypeError,
-                            'Total exception #16'
-                        )
-                    elif re.compile(r'\d+/dummy_exception').match(exname):
-                        ttuple = (
-                            template.format(
-                                'test_add_exception.'
-                                'Class1.value4(getter)'
-                            ),
-                            OSError,
-                            'Pass-through exception'
-                        )
-                    else:
-                        assert False
-                    assert erec['function'][0] == exobj._encode_call(ttuple[0])
-                    assert erec['type'] == ttuple[1]
-                    assert erec['msg'] == ttuple[2]
+                iobj = zip(fnames, fexh, fdesc)
+                match_dict = dict(
+                    [(key, value) for key, value in zip(fkeys, iobj)]
+                )
+                for key, ttuple in match_dict.items():
+                    if re.compile(r'\d+/'+key).match(exname):
+                        break
                 else:
-                    ctext = 'tests.test_exh.TestExHandle.test_add_exception'
-                    if re.compile(r'\d+/first_exception').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func1'.format(ctext),
-                            TypeError,
-                            'This is the first exception'
-                        )
-                    elif re.compile(r'\d+/second_exception').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func2'.format(ctext),
-                            ValueError,
-                            'This is the second exception'
-                        )
-                    elif re.compile(r'\d+/third_exception').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func2'.format(ctext),
-                            OSError,
-                            'This is the third exception'
-                        )
-                    elif re.compile(r'\d+/setter_exception').match(exname):
-                        ttuple = (
-                            r'.+/{0}.Class1.value3\(setter\)'.format(ctext),
-                            TypeError,
-                            'Set function exception'
-                        )
-                    elif re.compile(r'\d+/getter_exception').match(exname):
-                        ttuple = (
-                            r'.+/{0}.Class1.value3\(getter\)'.format(ctext),
-                            TypeError,
-                            'Get function exception'
-                        )
-                    elif re.compile(r'\d+/deleter_exception').match(exname):
-                        ttuple = (
-                            r'.+/{0}.Class1.value3\(deleter\)'.format(ctext),
-                            TypeError,
-                            'Delete function exception'
-                        )
-                    elif re.compile(r'\d+/total_exception_7').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func7'.format(ctext),
-                            TypeError,
-                            'Total exception #7'
-                        )
-                    elif re.compile(r'\d+/total_exception_8').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func8'.format(ctext),
-                            TypeError,
-                            'Total exception #8'
-                        )
-                    elif re.compile(r'\d+/total_exception_9').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func9'.format(ctext),
-                            TypeError,
-                            'Total exception #9'
-                        )
-                    elif re.compile(r'\d+/total_exception_10').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func10'.format(ctext),
-                            TypeError,
-                            'Total exception #10'
-                        )
-                    elif re.compile(r'\d+/total_exception_11').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func11'.format(ctext),
-                            TypeError,
-                            'Total exception #11'
-                        )
-                    elif re.compile(r'\d+/total_exception_12').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func12'.format(ctext),
-                            TypeError,
-                            'Total exception #12'
-                        )
-                    elif re.compile(r'\d+/total_exception_13').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func13'.format(ctext),
-                            TypeError,
-                            'Total exception #13'
-                        )
-                    elif re.compile(r'\d+/total_exception_14').match(exname):
-                        ttuple = (
-                            r'.+/{0}.func14'.format(ctext),
-                            TypeError,
-                            'Total exception #14'
-                        )
-                    elif re.compile(r'\d+/total_exception_15').match(exname):
-                        ttuple = (
-                            r'.+/{0}'.format(ctext),
-                            TypeError,
-                            'Total exception #15'
-                        )
-                    elif re.compile(r'\d+/total_exception_16').match(exname):
-                        ttuple = (
-                            (
-                                r'.+/{0}/exh_support_module_1'
-                                '.func16'.format(ctext)
-                            ),
-                            TypeError,
-                            'Total exception #16'
-                        )
-                    elif re.compile(r'\d+/dummy_exception').match(exname):
-                        ttuple = (
-                            r'.+/{0}.Class1.value4\(getter\)'.format(ctext),
-                            OSError,
-                            'Pass-through exception'
-                        )
-                    else:
-                        assert False
+                    raise RuntimeError('Callable not found')
+                if full_cname and exclude:
+                    assert erec['function'][0] == exobj._encode_call(ttuple[0])
+                else:
                     if not full_cname:
                         assert erec['function'][0] is None
                     else:
-                        assert re.compile(ttuple[0])
-                    assert erec['type'] == ttuple[1]
-                    assert erec['msg'] == ttuple[2]
+                        assert re.compile(('.+/{0}'+ttuple[0]).format(root))
+                assert erec['type'] == ttuple[1]
+                assert erec['msg'] == ttuple[2]
             # Test that function IDs are unique
             repeated_found = False
             exlist = []
+            nlist = ['/second_exception', '/third_exception']
+            match = lambda name: any([name.endswith(item) for item in nlist])
             for exname in cdb:
-                if ((exname.endswith('/second_exception') or
-                    exname.endswith('/third_exception')) and
-                   (not repeated_found)):
+                if match(exname) and (not repeated_found):
                     func_id = exname.split('/')[0]
                     repeated_found = True
                     exlist.append(func_id)
-                elif (exname.endswith('/second_exception') or
-                     exname.endswith('/third_exception')):
+                elif match(exname):
                     if exname.split('/')[0] != func_id:
                         assert False
                 else:
                     exlist.append(exname.split('/')[0])
+            mdict = {}
+            import collections
+            mdict = collections.defaultdict(lambda: [])
+            for exname in cdb:
+                func_id = exname.split('/')[0]
+                mdict[exname] = mdict[exname].append(func_id)
+            exlist = []
+            for exname, value in mdict.items():
+                if value and match(exname) and (len(set(value)) != len(value)):
+                    raise RuntimeError('Functions do not have unique IDs')
+                exlist = exlist+value if value else exlist
             assert len(set(exlist)) == len(exlist)
             # Test that exec code gets correctly flagged
             frobj = sys._getframe(0)
-            assert (
-                exobj._get_callable_full_name(frobj, '<module>', None)
-                ==
-                'dynamic'
-            )
+            gcf = exobj._get_callable_full_name
+            for item in [func15, None]:
+                assert gcf(frobj, '<module>', item) == 'dynamic'
             # Test what happens when top of stack is reached
             exobj = putil.exh.ExHandle(full_cname=True, exclude=['_pytest'])
+            obj = exobj.add_exception
             def func_f():
-                exobj.add_exception(
-                    'total_exception_F',
-                    TypeError,
-                    'Total exception #F'
-                )
-            frobj = sys._getframe(0)
+                obj(emsg('F'), TypeError, mmsg('F'))
             def mock_get_frame(num):
                 if num < 4:
                     return frobj
                 raise ValueError('Top of the stack')
+            frobj = sys._getframe(0)
             cname = 'putil.exh.sys._getframe'
             with mock.patch(cname, side_effect=mock_get_frame):
                 func_f()
@@ -647,18 +397,13 @@ class TestExHandle(object):
             erec = ecb[exname]
             ref = sorted(
                 {
-                    'function': [
-                        'tests.test_exh.TestExHandle.test_add_exception/'
-                        'tests.test_exh.TestExHandle.test_add_exception/'
-                        'tests.test_exh.TestExHandle.test_add_exception/'
-                        'tests.test_exh.TestExHandle.test_add_exception'
-                    ],
+                    'function': [root+'/'+root+'/'+root+'/'+root],
                     'type':TypeError,
-                    'msg':'Total exception #F',
+                    'msg':mmsg('F'),
                     'raised': [False]
                 }.items()
             )
-            assert re.compile(r'\d+/total_exception_F').match(exname)
+            assert re.compile(r'\d+/'+emsg('F')).match(exname)
             erec['function'] = [
                 exobj._decode_call(call) for call in erec['function']
             ]
@@ -674,11 +419,10 @@ class TestExHandle(object):
             ecb = exobj._ex_dict
             exname = list(ecb.keys())[0]
             erec = ecb[exname]
-            mname = 'tests.test_exh.TestExHandle.test_add_exception'
-            template = '{mname}/{mname}.MyClass.__init__'
+            template = '{root}/{root}.MyClass.__init__'
             ref = sorted(
                 {
-                    'function':[template.format(mname=mname)],
+                    'function':[template.format(root=root)],
                     'type':OSError,
                     'msg':'Init exception',
                     'raised': [False]
@@ -711,10 +455,7 @@ class TestExHandle(object):
         ###
         # Test with function that has a contract decorator
         putil.exh.set_exh_obj(
-            putil.exh.ExHandle(
-                full_cname=True,
-                exclude=['_pytest']
-            )
+            putil.exh.ExHandle(full_cname=True, exclude=['_pytest'])
         )
         _ = putil.eng.peng(15, 3, False)
         for item in putil.exh.get_exh_obj()._ex_dict.values():
@@ -731,10 +472,7 @@ class TestExHandle(object):
         # Test with function that has an exception in body
         import tests.support.exh_support_module_1
         putil.exh.set_exh_obj(
-            putil.exh.ExHandle(
-                full_cname=True,
-                exclude=['_pytest']
-            )
+            putil.exh.ExHandle(full_cname=True, exclude=['_pytest'])
         )
         tests.support.exh_support_module_1.simple_exception()
         for item in putil.exh.get_exh_obj()._ex_dict.values():

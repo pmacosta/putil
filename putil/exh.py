@@ -596,29 +596,27 @@ class ExHandle(object):
         # Check if object is a class property
         name = self._property_search(fob)
         if name:
-            del fob
-            del uobj
+            del fob, fin, uobj
             return name
         if os.path.isfile(fin):
             lineno = fob.f_lineno
-            del fob
-            del uobj
-            return self._callables_obj.get_callable_from_line(fin, lineno)
-        try:
-            code_id = (
-                inspect.getfile(uobj).replace('.pyc', 'py'),
-                inspect.getsourcelines(uobj)[1]
-            )
-            self._callables_obj.trace([code_id[0]])
-            del fob
-            del uobj
-            return self._callables_obj.reverse_callables_db[code_id]
-        except (TypeError, OSError):
-            # TypeError: getfile, object is a built-in module,
-            #            class or function
-            # OSError: getsourcelines, code cannot be retrieved
-            pass
-        return 'dynamic'
+            ret = self._callables_obj.get_callable_from_line(fin, lineno)
+            del fob, fin, uobj, name, lineno
+            return ret
+        # Code executed in doctests does not have an actual callable object
+        # exec-based callables do not have a valid file name
+        fname = uobj and _get_func_code(uobj).co_filename
+        if (not fname) or (fname and (not os.path.isfile(fname))):
+            del fob, fin, uobj, name, fname
+            return 'dynamic'
+        code_id = (
+            inspect.getfile(uobj).replace('.pyc', 'py'),
+            inspect.getsourcelines(uobj)[1]
+        )
+        self._callables_obj.trace([code_id[0]])
+        ret = self._callables_obj.reverse_callables_db[code_id]
+        del fob, fin, uobj, name, fname, code_id
+        return ret
 
     if (hasattr(sys.modules['decorator'], '__version__') and
        (int(decorator.__version__.split('.')[0]) == 3)):   # pragma: no cover
@@ -653,8 +651,7 @@ class ExHandle(object):
             fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
             uobj, ufin = self._unwrap_obj(frame, fun)
             if ufin in self._exclude_list:
-                del uobj
-                del frame
+                del uobj, frame
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
@@ -679,9 +676,7 @@ class ExHandle(object):
                 fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
                 uobj, ufin = self._unwrap_obj(frame, fun)
                 if ufin in self._exclude_list:
-                    del uobj
-                    del frame
-                    del stack
+                    del uobj, frame, stack
                     return callable_id, None
                 tokens = frame.f_code.co_filename.split(os.sep)
                 ###
@@ -702,9 +697,7 @@ class ExHandle(object):
                 if in_decorator and (name == prev_name):
                     del ret[num-num_del_items]
                     num_del_items += 1
-            del uobj
-            del frame
-            del stack
+            del uobj, frame, stack
             return callable_id, self._callables_separator.join(ret)
     else:   # pragma: no cover
         # Method works with decorator 4.x series
@@ -738,8 +731,7 @@ class ExHandle(object):
             fin, _, fun, _, _ = inspect.getframeinfo(frame)
             uobj, ufin = self._unwrap_obj(frame, fun)
             if ufin in self._exclude_list:
-                del uobj
-                del frame
+                del uobj, frame
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
@@ -757,9 +749,7 @@ class ExHandle(object):
                 fin, _, fun, _, _ = inspect.getframeinfo(frame)
                 uobj, ufin = self._unwrap_obj(frame, fun)
                 if ufin in self._exclude_list:
-                    del uobj
-                    del frame
-                    del stack
+                    del uobj, frame, stack
                     return callable_id, None
                 tokens = frame.f_code.co_filename.split(os.sep)
                 ###
@@ -779,10 +769,7 @@ class ExHandle(object):
                         skip = 3
                     else:
                         ret.append(item)
-            del fob
-            del uobj
-            del frame
-            del stack
+            del fob, uobj, frame, stack
             return callable_id, self._callables_separator.join(ret)
 
     def _get_callables_separator(self):
@@ -850,9 +837,7 @@ class ExHandle(object):
         scontext = fobj.f_locals.get('self', None)
         class_obj = scontext.__class__ if scontext is not None else None
         if not class_obj:
-            del fobj
-            del scontext
-            del class_obj
+            del fobj, scontext, class_obj
             return
         # Get class properties objects
         class_props = [
@@ -861,9 +846,7 @@ class ExHandle(object):
             if isinstance(member_obj, property)
         ]
         if not class_props:
-            del fobj
-            del scontext
-            del class_obj
+            del fobj, scontext, class_obj
             return
         class_file = inspect.getfile(class_obj).replace('.pyc', '.py')
         class_name = self._callables_obj.get_callable_from_line(
@@ -906,10 +889,7 @@ class ExHandle(object):
             for action_name, action_id_list in prop_actions_dict.items():
                 if action_id_list and (func_id in action_id_list):
                     prop_name = '.'.join([class_name, prop_name])
-                    del fobj
-                    del scontext
-                    del class_obj
-                    del class_props
+                    del fobj, scontext, class_obj, class_props
                     return '{prop_name}({prop_action})'.format(
                         prop_name=prop_name,
                         prop_action=desc_dict[action_name]
