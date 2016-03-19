@@ -23,7 +23,7 @@ if sys.hexversion < 0x03000000:
     import mock
 # Putil imports
 import putil.misc
-import putil.test
+from putil.test import AE, AI, GET_EXMSG
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _unicode_to_ascii, _write
 else:
@@ -63,12 +63,12 @@ def test_timer(capsys):
     with pytest.raises(RuntimeError) as excinfo:
         with putil.misc.Timer(5):
             pass
-    assert putil.test.get_exmsg(excinfo) == 'Argument `verbose` is not valid'
+    assert GET_EXMSG(excinfo) == 'Argument `verbose` is not valid'
     # Test that exceptions within the with statement are re-raised
     with pytest.raises(RuntimeError) as excinfo:
         with putil.misc.Timer():
             raise RuntimeError('Error in code')
-    assert putil.test.get_exmsg(excinfo) == 'Error in code'
+    assert GET_EXMSG(excinfo) == 'Error in code'
     # Test normal operation
     with putil.misc.Timer() as tobj:
         time.sleep(0.5)
@@ -88,7 +88,7 @@ def test_tmp_file():
     with pytest.raises(RuntimeError) as excinfo:
         with putil.misc.TmpFile(5) as fname:
             pass
-    assert putil.test.get_exmsg(excinfo) == 'Argument `fpointer` is not valid'
+    assert GET_EXMSG(excinfo) == 'Argument `fpointer` is not valid'
     # Test behavior when no function pointer is given
     with putil.misc.TmpFile() as fname:
         assert isinstance(fname, str) and (len(fname) > 0)
@@ -98,7 +98,7 @@ def test_tmp_file():
     with pytest.raises(OSError) as excinfo:
         with putil.misc.TmpFile(write_data) as fname:
             raise OSError('No data')
-    assert putil.test.get_exmsg(excinfo) == 'No data'
+    assert GET_EXMSG(excinfo) == 'No data'
     assert not os.path.exists(fname)
     # Test behaviour under "normal" circumstances
     with putil.misc.TmpFile(write_data) as fname:
@@ -155,14 +155,10 @@ def test_elapsed_time_string():
     assert obj(
         datetime.datetime(2015, 1, 1),
         datetime.datetime(2015, 1, 1)) == 'None'
-    putil.test.assert_exception(
-        obj,
-        {
-            'start_time':datetime.datetime(2015, 2, 1),
-            'stop_time':datetime.datetime(2015, 1, 1)
-        },
-        RuntimeError,
-        'Invalid time delta specification'
+    AE(
+        obj, RuntimeError, 'Invalid time delta specification',
+        start_time=datetime.datetime(2015, 2, 1),
+        stop_time=datetime.datetime(2015, 1, 1)
     )
     assert (
         obj(
@@ -359,36 +355,14 @@ def test_make_dir(capsys):
 
 def test_normalize():
     """ Test normalize function behavior """
-    putil.test.assert_exception(
-        putil.misc.normalize,
-        {'value':'a', 'series':[2, 5], 'offset':10},
-        RuntimeError,
-        'Argument `value` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.misc.normalize,
-        {'value':5, 'series':[2, 5], 'offset':'a'},
-        RuntimeError,
-        'Argument `offset` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.misc.normalize,
-        {'value':5, 'series':['a', 'b']},
-        RuntimeError,
-        'Argument `series` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.misc.normalize,
-        {'value':5, 'series':[2, 5], 'offset':10},
-        ValueError,
-        'Argument `offset` has to be in the [0.0, 1.0] range'
-    )
-    putil.test.assert_exception(
-        putil.misc.normalize,
-        {'value':0, 'series':[2, 5], 'offset':0},
-        ValueError,
-        'Argument `value` has to be within the bounds of argument `series`'
-    )
+    obj = putil.misc.normalize
+    AI(obj, 'value', value='a', series=[2, 5], offset=10)
+    AI(obj, 'offset', value=5, series=[2, 5], offset='a')
+    AI(obj, 'series', value=5, series=['a', 'b'])
+    exmsg = 'Argument `offset` has to be in the [0.0, 1.0] range'
+    AE(obj, ValueError, exmsg, value=5, series=[2, 5], offset=10)
+    exmsg = 'Argument `value` has to be within the bounds of argument `series`'
+    AE(obj, ValueError, exmsg, value=0, series=[2, 5], offset=0)
     assert putil.misc.normalize(15, [10, 20]) == 0.5
     assert putil.misc.normalize(15, [10, 20], 0.5) == 0.75
 
@@ -443,30 +417,11 @@ def test_normalize_windows_fname():
 def test_per():
     """ Test per function behavior """
     obj = putil.misc.per
-    putil.test.assert_exception(
-        obj,
-        {'arga':5, 'argb':7, 'prec':'Hello'},
-        RuntimeError,
-        'Argument `prec` is not valid'
-    )
-    putil.test.assert_exception(
-        obj,
-        {'arga':'Hello', 'argb':7, 'prec':1},
-        RuntimeError,
-        'Argument `arga` is not valid'
-    )
-    putil.test.assert_exception(
-        obj,
-        {'arga':5, 'argb':'Hello', 'prec':1},
-        RuntimeError,
-        'Argument `argb` is not valid'
-    )
-    putil.test.assert_exception(
-        obj,
-        {'arga':5, 'argb':[5, 7], 'prec':1},
-        TypeError,
-        'Arguments are not of the same type'
-    )
+    AI(obj, 'prec', arga=5, argb=7, prec='Hello')
+    AI(obj, 'arga', arga='Hello', argb=7, prec=1)
+    AI(obj, 'argb', arga=5, argb='Hello', prec=1)
+    exmsg = 'Arguments are not of the same type'
+    AE(obj, TypeError, exmsg, arga=5, argb=[5, 7], prec=1)
     assert obj(3, 2, 1) == 0.5
     assert obj(3.1, 3.1, 1) == 0
     ttuple = zip(obj([3, 1.1, 5], [2, 1.1, 2], 1), [0.5, 0, 1.5])
@@ -484,30 +439,12 @@ def test_per():
 
 def test_pcolor():
     """ Test pcolor function behavior """
-    putil.test.assert_exception(
-        putil.misc.pcolor,
-        {'text':5, 'color':'red', 'indent':0},
-        RuntimeError,
-        'Argument `text` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.misc.pcolor,
-        {'text':'hello', 'color':5, 'indent':0},
-        RuntimeError,
-        'Argument `color` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.misc.pcolor,
-        {'text':'hello', 'color':'red', 'indent':5.1},
-        RuntimeError,
-        'Argument `indent` is not valid'
-    )
-    putil.test.assert_exception(
-        putil.misc.pcolor,
-        {'text':'hello', 'color':'hello', 'indent':5},
-        ValueError,
-        'Unknown color hello'
-    )
+    obj = putil.misc.pcolor
+    AI(obj, 'text', text=5, color='red', indent=0)
+    AI(obj, 'color', text='hello', color=5, indent=0)
+    AI(obj, 'indent', text='hello', color='red', indent=5.1)
+    exmsg = 'Unknown color hello'
+    AE(obj, ValueError, exmsg, text='hello', color='hello', indent=5)
     assert putil.misc.pcolor('Text', 'none', 5) == '     Text'
     assert putil.misc.pcolor('Text', 'blue', 2) == '\033[34m  Text\033[0m'
     # These statements should not raise any exception
@@ -590,14 +527,9 @@ def test_cidict():
     assert obj == {'aa':10, 'bb':20, 'cc':30}
     with pytest.raises(TypeError) as excinfo:
         putil.misc.CiDict(zip(['aa', 'bb', [1, 2]], [10, 20, 30]))
-    assert putil.test.get_exmsg(excinfo) == "unhashable type: 'list'"
+    assert GET_EXMSG(excinfo) == "unhashable type: 'list'"
     with pytest.raises(ValueError) as excinfo:
         putil.misc.CiDict(['Prop1', 'Prop2', 'Prop3', 'Prop4'])
-    assert (
-        putil.test.get_exmsg(excinfo)
-        ==
-        (
-            'dictionary update sequence '
-            'element #0 has length 5; 2 is required'
-        )
+    assert GET_EXMSG(excinfo) == (
+        'dictionary update sequence element #0 has length 5; 2 is required'
     )

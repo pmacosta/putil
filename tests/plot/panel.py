@@ -11,10 +11,16 @@ import numpy
 import pytest
 # Putil imports
 import putil.plot
+from putil.test import AE, AI, AROPROP, GET_EXMSG, RE
 from .fixtures import compare_image_set
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_panel_images
 
+
+###
+# Global variables
+###
+FOBJ = putil.plot.Panel
 
 ###
 # Test classes
@@ -614,31 +620,20 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_log_dep_axis_exceptions(self, default_series):
         """ Test log_dep_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'log_dep_axis':5},
-            RuntimeError,
-            'Argument `log_dep_axis` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'log_dep_axis':True},
-            ValueError,
+        AI(FOBJ, 'log_dep_axis', default_series, log_dep_axis=5)
+        exmsg = (
             'Series item 0 cannot be plotted in a logarithmic axis because '
             'it contains negative data points'
         )
+        AE(FOBJ, ValueError, exmsg, default_series, log_dep_axis=True)
         # Trigger execution of self._series function to
         # pick up exceptions there
         obj = putil.plot.Panel(series=default_series)
         with pytest.raises(ValueError) as excinfo:
             obj.log_dep_axis = True
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            (
-                'Series item 0 cannot be plotted in a logarithmic axis '
-                'because it contains negative data points'
-            )
+        assert GET_EXMSG(excinfo) == (
+            'Series item 0 cannot be plotted in a logarithmic axis '
+            'because it contains negative data points'
         )
 
     def test_display_indep_axis(self, default_series):
@@ -655,12 +650,7 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_display_indep_axis_exceptions(self, default_series):
         """ Test display_indep_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'display_indep_axis':5},
-            RuntimeError,
-            'Argument `display_indep_axis` is not valid'
-        )
+        AI(FOBJ, 'display_indep_axis', default_series, display_indep_axis=5)
 
     def test_legend_props(self, default_series):
         """ Test legend_props attribute """
@@ -677,36 +667,19 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_legend_props_exceptions(self, default_series):
         """ Test legend_props property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':5},
-            RuntimeError,
-            'Argument `legend_props` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':{'not_a_valid_prop':5}},
-            ValueError,
-            'Illegal legend property `not_a_valid_prop`'
-        )
-        msg = (
+        AI(FOBJ, 'legend_props', default_series, legend_props=5)
+        exmsg = 'Illegal legend property `not_a_valid_prop`'
+        lprops = {'not_a_valid_prop':5}
+        AE(FOBJ, ValueError, exmsg, default_series, legend_props=lprops)
+        exmsg = (
             "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
             "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
             "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', 'UPPER CENTER', "
             "'CENTER'] (case insensitive)"
         )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':{'pos':5}},
-            TypeError,
-            msg
-        )
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'legend_props':{'cols':-1}},
-            RuntimeError,
-            'Legend property `cols` is not valid'
-        )
+        AE(FOBJ, TypeError, exmsg, default_series, legend_props={'pos':5})
+        exmsg = 'Legend property `cols` is not valid'
+        AE(FOBJ, RE, exmsg, default_series, legend_props={'cols':-1})
 
     def test_primary_axis_label(self, default_series):
         """ Test panel_primary_axis attribute """
@@ -720,12 +693,7 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_primary_axis_label_exceptions(self, default_series):
         """ Test panel_primary_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'primary_axis_label':5},
-            RuntimeError,
-            'Argument `primary_axis_label` is not valid'
-        )
+        AI(FOBJ, 'primary_axis_label', default_series, primary_axis_label=5)
 
     def test_primary_axis_ticks(self, default_source, default_series):
         """ Test primary_axis_ticks property behavior """
@@ -781,15 +749,7 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_primary_axis_ticks_exceptions(self, default_series):
         """ Test primary_axis_ticks property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {
-                'series':default_series,
-                'primary_axis_ticks':5
-            },
-            RuntimeError,
-            'Argument `primary_axis_ticks` is not valid'
-        )
+        AI(FOBJ, 'primary_axis_ticks', default_series, primary_axis_ticks=5)
 
     def test_primary_axis_units(self, default_series):
         """ Test panel_primary_axis attribute """
@@ -802,12 +762,7 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_primary_axis_units_exceptions(self, default_series):
         """ Test panel_primary_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'primary_axis_units':5},
-            RuntimeError,
-            'Argument `primary_axis_units` is not valid'
-        )
+        AI(FOBJ, 'primary_axis_units', default_series, primary_axis_units=5)
 
     def test_secondary_axis_label(self, default_series):
         """ Test panel_secondary_axis attribute """
@@ -820,12 +775,8 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_secondary_axis_label_exceptions(self, default_series):
         """ Test panel_secondary_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'secondary_axis_label':5},
-            RuntimeError,
-            'Argument `secondary_axis_label` is not valid'
-        )
+        kwargs = dict(secondary_axis_label=5)
+        AI(FOBJ, 'secondary_axis_label', default_series, **kwargs)
 
     def test_secondary_axis_ticks(self, default_source, default_series):
         """ Test secondary_axis_ticks attribute behavior """
@@ -883,15 +834,8 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_secondary_axis_ticks_exceptions(self, default_series):
         """ Test secondary_axis_ticks property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {
-                'series':default_series,
-                'secondary_axis_ticks':5
-            },
-            RuntimeError,
-            'Argument `secondary_axis_ticks` is not valid'
-        )
+        kwargs = dict(secondary_axis_ticks=5)
+        AI(FOBJ, 'secondary_axis_ticks', default_series, **kwargs)
 
     def test_secondary_axis_units(self, default_series):
         """ Test panel_secondary_axis attribute """
@@ -904,12 +848,8 @@ class TestPanel(object):
     @pytest.mark.panel
     def test_secondary_axis_units_exceptions(self, default_series):
         """ Test panel_secondary_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Panel,
-            {'series':default_series, 'secondary_axis_units':5},
-            RuntimeError,
-            'Argument `secondary_axis_units` is not valid'
-        )
+        kwargs = dict(secondary_axis_units=5)
+        AI(FOBJ, 'secondary_axis_units', default_series, **kwargs)
 
     ### Miscellaneous
     def test_series(self):
@@ -1306,34 +1246,20 @@ class TestPanel(object):
         """
         Test that del method raises an exception on all class attributes
         """
+        props = [
+            'series',
+            'primary_axis_label',
+            'secondary_axis_label',
+            'primary_axis_units',
+            'secondary_axis_units',
+            'log_dep_axis',
+            'legend_props',
+            'primary_axis_scale',
+            'secondary_axis_scale'
+        ]
         obj = putil.plot.Panel(series=default_series)
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.series
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.primary_axis_label
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.secondary_axis_label
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.primary_axis_units
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.secondary_axis_units
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.log_dep_axis
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.legend_props
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.primary_axis_scale
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.secondary_axis_scale
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        for prop in props:
+            AROPROP(obj, prop)
 
     def test_images(self, tmpdir):
         """ Compare images to verify correct plotting of panel """

@@ -1,7 +1,7 @@
 # eng.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,W0105,W0611
+# pylint: disable=C0111,E0611,W0105,W0611
 
 # Standard library imports
 import collections
@@ -9,6 +9,11 @@ import math
 import textwrap
 import decimal
 from decimal import Decimal
+import sys
+if sys.hexversion < 0x03000000: # pragma: no cover
+    from itertools import izip_longest as zip_longest
+else: # pragma: no cover
+    from itertools import zip_longest
 # PyPI imports
 import numpy
 # Putil imports
@@ -88,16 +93,14 @@ def _split_every(text, sep, count, lstrip=False, rstrip=False):
                    from the end of each list item (True) or not (False)
     :type  rstrip: boolean
 
-    :rtype: list
+    :rtype: tuple
     """
-    tlist = text.split(sep)
-    lines = (
-        sep.join(tlist[num:num+count]) for num in range(0, len(tlist), count)
-    )
     ltr = '_rl '[2*lstrip+rstrip].strip()
-    return [
-        getattr(line, ltr+'strip')() if ltr != '_' else line for line in lines
-    ]
+    func = lambda x: getattr(x, ltr+'strip')() if ltr != '_' else x
+    items = text.split(sep)
+    groups = zip_longest(*[iter(items)]*count, fillvalue='')
+    joints = (sep.join(group).rstrip(sep) for group in groups)
+    return tuple(func(joint) for joint in joints)
 
 
 def _to_eng_tuple(number):
@@ -105,38 +108,25 @@ def _to_eng_tuple(number):
     Returns a tuple where the first item is the mantissa and the second
     item is the exponent when the number is formatted in engineering
     notation
+
+    :param number: Number
+    :type  number: integer or float
+
+    :rtype: tuple
     """
+    # pylint: disable=W0141
+    # Helper function: split integer and fractional part of mantissa
+    #  + ljust ensures that integer part in engineering notation has
+    #    at most 3 digits (say if number given is 1E4)
+    #  + rstrip ensures that there is no empty fractional part
+    split = lambda x, p: (x.ljust(3+neg, '0')[:p], x[p:].rstrip('0'))
     # Convert number to scientific notation, a "constant" format
     mant, exp = to_scientific_tuple(number)
-    # At most the integer part of the mantissa can have 3 digits in
-    # engineering notation, so some numbers might need to have trailing
-    # zeros added
-    mant = '{mant}00'.format(mant=mant).replace('.', '')
-    new_exp = exp-(exp%3)
-    new_ppos = 1+exp-new_exp+(mant[0] == '-')
-    # .rstrip('.0') does not work because in cases like '100.0' it will
-    # return '1', as it takes both zeros and periods;
-    # .rstrip('0').rstrip('.') _first_ removes trailing zeros and _then_
-    # removes the period if the fractional part of the mantissa was null
-    new_mant = '{int_part}.{frac_part}'.format(
-        int_part=mant[:new_ppos],
-        frac_part=mant[new_ppos:]
-    ).rstrip('0').rstrip('.')
+    mant, neg = mant.replace('.', ''), mant.startswith('-')
+    # New values
+    new_mant = '.'.join(filter(None, split(mant, 1+(exp%3)+neg)))
+    new_exp = int(3*math.floor(exp/3))
     return NUMCOMP(new_mant, new_exp)
-
-
-def _to_sci_string(number):
-    """
-    Returns a string with the number formatted in scientific notation. This
-    function does not have all the configurability of the public function
-    to_scientific_string, this is a convenience function to test _to_eng_tuple
-    """
-    mant, exp = _to_eng_tuple(number)
-    return '{mant}E{exp_sign}{exp}'.format(
-        mant=mant,
-        exp_sign='-' if exp < 0 else '+',
-        exp=abs(exp)
-    )
 
 
 @putil.pcontracts.contract(number='number')
@@ -158,32 +148,22 @@ def no_exp(number):
     .. [[[end]]]
     """
     mant, exp = to_scientific_tuple(number)
-    if exp == 0:
+    if not exp:
         return str(number)
-    elif exp < 0:
-        return '0.{zeros}{fpart}'.format(
-            zeros='0'*(abs(exp)-1),
-            fpart=mant.replace('.', '')
-        )
-    else:
-        if '.' not in mant:
-            return mant+('0'*exp)+('.0' if isinstance(number, float) else '')
-        else:
-            lfpart = len(mant)-2
-            if lfpart < exp:
-                return '{fpart}{zeros}'.format(
-                    fpart=mant.replace('.', ''),
-                    zeros='0'*(exp-lfpart)
-                ).rstrip('.')
-            else:
-                mant = mant.replace('.', '')
-                return (mant[:lfpart+1]+'.'+mant[lfpart+1:]).rstrip('.')
+    floating_mant = '.' in mant
+    mant = mant.replace('.', '')
+    if exp < 0:
+        return '0.'+'0'*(-exp-1)+mant
+    if not floating_mant:
+        return mant+'0'*exp+('.0' if isinstance(number, float) else '')
+    lfpart = len(mant)-1
+    if lfpart < exp:
+        return (mant+'0'*(exp-lfpart)).rstrip('.')
+    return mant
 
 
 @putil.pcontracts.contract(
-    number='int|float',
-    frac_length='non_negative_integer',
-    rjust=bool
+    number='int|float', frac_length='non_negative_integer', rjust=bool
 )
 def peng(number, frac_length, rjust=True):
     r"""
@@ -276,11 +256,7 @@ def peng(number, frac_length, rjust=True):
         # Engineering notation numbers can have a sign, a 3-digit integer part,
         # a period, and a fractional part of length frac_length, so the
         # length of the number to the left of, and including, the period is 5
-        return (
-            '{num} '.format(num=number.rjust(5+frac_length))
-            if rjust else
-            number
-        )
+        return '{0} '.format(number.rjust(5+frac_length)) if rjust else number
     # Low-bound number
     sign = +1 if number >= 0 else -1
     ssign = '-' if sign == -1 else ''
@@ -292,7 +268,7 @@ def peng(number, frac_length, rjust=True):
     # of fractional part. Rounding method is to add a '5' at the decimal
     # position just after the end of frac_length digits
     exp = 3.0*math.floor(math.floor(math.log10(anumber))/3.0)
-    mant = number/10**(exp)
+    mant = number/10**exp
     # Because exponent is a float, mantissa is a float and its string
     # representation always includes a period
     smant = str(mant)
@@ -384,10 +360,7 @@ def peng_frac(snum):
     pindex = snum.find('.')
     if pindex == -1:
         return 0
-    else:
-        return (
-            int(snum[pindex+1:] if snum[-1].isdigit() else snum[pindex+1:-1])
-        )
+    return int(snum[pindex+1:] if snum[-1].isdigit() else snum[pindex+1:-1])
 
 
 def peng_int(snum):
@@ -538,14 +511,12 @@ def peng_suffix_math(suffix, offset):
     # pylint: disable=W0212,W0631
     exhobj = putil.exh.get_or_create_exh_obj()
     exhobj.add_exception(
-        exname='invalid_offset',
-        extype=ValueError,
-        exmsg='Argument `offset` is not valid'
+        exname='off', extype=ValueError, exmsg='Argument `offset` is not valid'
     )
     try:
         return _POWER_TO_SUFFIX_DICT[_SUFFIX_TO_POWER_DICT[suffix]+3*offset]
     except KeyError:
-        exhobj.raise_exception_if(exname='invalid_offset', condition=True)
+        exhobj.raise_exception_if(exname='off', condition=True)
 
 
 def round_mantissa(arg, decimals=0):

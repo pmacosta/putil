@@ -13,7 +13,7 @@ import pytest
 # Putil imports
 import putil.exh
 import putil.pcontracts
-import putil.test
+from putil.test import AE, AI, GET_EXMSG
 
 
 ###
@@ -99,19 +99,16 @@ def test_format_arg():
 
 def test_format_arg_exceptions():
     """ Test _format_arg function exceptions """
+    obj = putil.pcontracts._format_arg
     items = [
         '',
         [RuntimeError, ''],
         ['', RuntimeError],
         [''],
     ]
+    exmsg = 'Empty custom contract exception message'
     for item in items:
-        putil.test.assert_exception(
-            putil.pcontracts._format_arg,
-            {'arg':item},
-            ValueError,
-            'Empty custom contract exception message'
-        )
+        AE(obj, ValueError, exmsg, arg=item)
     items = [
         set([RuntimeError, 'Message']),
         [],
@@ -122,13 +119,9 @@ def test_format_arg_exceptions():
         [ValueError, 3],
         [3, ValueError]
     ]
+    exmsg = 'Illegal custom contract exception definition'
     for item in items:
-        putil.test.assert_exception(
-            putil.pcontracts._format_arg,
-            {'arg':item},
-            TypeError,
-            'Illegal custom contract exception definition'
-        )
+        AE(obj, TypeError, exmsg, arg=item)
 
 
 def test_isexception():
@@ -144,23 +137,13 @@ def test_parse_new_contract_args():
     # Validate *args
     with pytest.raises(TypeError) as excinfo:
         fobj('Desc1', file_not_found='Desc2')
-    assert (
-        putil.test.get_exmsg(excinfo) ==
-        'Illegal custom contract exception definition'
-    )
+    assert GET_EXMSG(excinfo) == 'Illegal custom contract exception definition'
     with pytest.raises(TypeError) as excinfo:
         fobj('Desc1', 'Desc2')
-    assert (
-        putil.test.get_exmsg(excinfo) ==
-        'Illegal custom contract exception definition'
-    )
+    assert GET_EXMSG(excinfo) == 'Illegal custom contract exception definition'
     with pytest.raises(TypeError) as excinfo:
         fobj(5)
-    assert (
-        putil.test.get_exmsg(excinfo)
-        ==
-        'Illegal custom contract exception definition'
-    )
+    assert GET_EXMSG(excinfo) == 'Illegal custom contract exception definition'
     # Normal behavior
     assert (
         fobj()
@@ -244,12 +227,8 @@ def test_parse_new_contract_args():
         ]
     )
     # Validate **kwargs
-    putil.test.assert_exception(
-        fobj,
-        {'a':45},
-        TypeError,
-        'Illegal custom contract exception definition'
-    )
+    exmsg = 'Illegal custom contract exception definition'
+    AE(fobj, TypeError, exmsg, a=45)
     ref = [
         {'name':'char', 'msg':'Desc1', 'type':RuntimeError},
         {'name':'other', 'msg':'a', 'type':ValueError}
@@ -266,98 +245,70 @@ def test_register_custom_contracts():
         putil.pcontracts._CUSTOM_CONTRACTS
     )
     fobj = putil.pcontracts._register_custom_contracts
-    ftest = putil.test.assert_exception
     key1 = 'contract_name'
     key2 = 'contract_exceptions'
     # Test data validation
-    ftest(
-        fobj,
-        {key1:5, key2:{}},
-        TypeError,
-        'Argument `contract_name` is of the wrong type'
+    exmsg = 'Argument `contract_name` is of the wrong type'
+    AE(fobj, TypeError, exmsg, **{key1:5, key2:{}})
+    exmsg = 'Argument `contract_exceptions` is of the wrong type'
+    AE(fobj, TypeError, exmsg, **{key1:'test', key2:5})
+    exmsg = 'Contract exception definition is of the wrong type'
+    AE(fobj, TypeError, exmsg, **{key1:'test', key2:{'msg':'b', 'key':'hole'}})
+    AE(fobj, TypeError, exmsg, **{key1:'test', key2:[{5:'b'}]})
+    AE(fobj, TypeError, exmsg, **{key1:'test', key2:[{'a':'b'}]})
+    AE(
+        fobj, TypeError, exmsg,
+        **{key1:'test', key2:[{'name':'a', 'msg':'b', 'x':RuntimeError}]}
     )
-    ftest(
-        fobj,
-        {key1:'test', key2:5},
-        TypeError, 'Argument `contract_exceptions` is of the wrong type'
+    AE(
+        fobj, TypeError, exmsg,
+        **{key1:'test', key2:[{'name':5, 'msg':'b', 'type':RuntimeError}]}
     )
-    ftest(
-        fobj,
-        {key1:'test', key2:{'msg':'b', 'key':'hole'}},
-        TypeError, 'Contract exception definition is of the wrong type'
+    AE(
+        fobj, TypeError, exmsg,
+        **{key1:'test', key2:[{'name':'a', 'msg':5, 'type':RuntimeError}]}
     )
-    ftest(
-        fobj,
-        {key1:'test', key2:[{5:'b'}]},
-        TypeError, 'Contract exception definition is of the wrong type'
+    AE(
+        fobj, TypeError, exmsg,
+        **{key1:'test', key2:[{'name':'a', 'msg':'b', 'type':5}]}
     )
-    ftest(
-        fobj,
-        {key1:'test', key2:[{'a':'b'}]},
-        TypeError, 'Contract exception definition is of the wrong type'
-    )
-    ftest(
-        fobj,
-        {key1:'test', key2:[{'name':'a', 'msg':'b', 'x':RuntimeError}]},
-        TypeError, 'Contract exception definition is of the wrong type'
-    )
-    ftest(
-        fobj,
-        {key1:'test', key2:[{'name':5, 'msg':'b', 'type':RuntimeError}]},
-        TypeError, 'Contract exception definition is of the wrong type'
-    )
-    ftest(
-        fobj,
-        {key1:'test', key2:[{'name':'a', 'msg':5, 'type':RuntimeError}]},
-        TypeError, 'Contract exception definition is of the wrong type'
-    )
-    ftest(
-        fobj,
-        {key1:'test', key2:[{'name':'a', 'msg':'b', 'type':5}]},
-        TypeError, 'Contract exception definition is of the wrong type'
-    )
-    ftest(
-        fobj,
-        {
+    exmsg = 'Contract exception names are not unique'
+    AE(
+        fobj, ValueError, exmsg,
+        **{
             key1:'test',
             key2:[{'name':'a', 'msg':'b'}, {'name':'a', 'msg':'c',}]
-        },
-        ValueError, 'Contract exception names are not unique'
+        }
     )
-    ftest(
-        fobj,
-        {
+    exmsg = 'Contract exception messages are not unique'
+    AE(
+        fobj, ValueError, exmsg,
+        **{
             key1:'test',
             key2:[
                 {'name':'a', 'msg':'desc'}, {'name':'b', 'msg':'desc',}
             ]
-        },
-        ValueError, 'Contract exception messages are not unique'
+        }
     )
-    ftest(
-        fobj,
-        {
+    exmsg = 'Multiple replacement fields to be substituted by argument value'
+    AE(
+        fobj, ValueError, exmsg,
+        **{
             key1:'test',
             key2:[
                 {'name':'x', 'msg':'I am *[spartacus]*'},
                 {'name':'y', 'msg':'A move is *[spartacus]*',}
             ]
-        },
-        ValueError,
-        'Multiple replacement fields to be substituted by argument value'
+        }
     )
     putil.pcontracts._register_custom_contracts(
         contract_name='test1',
         contract_exceptions=[{'name':'a', 'msg':'desc'}]
     )
-    putil.test.assert_exception(
-        fobj,
-        {
-            'contract_name':'test1',
-            'contract_exceptions':[{'name':'a', 'msg':'other desc'}]
-        },
-        RuntimeError,
-        'Attempt to redefine custom contract `test1`'
+    exmsg = 'Attempt to redefine custom contract `test1`'
+    AE(
+        fobj, RuntimeError, exmsg,
+        **{key1:'test1', key2:[{'name':'a', 'msg':'other desc'}]}
     )
     # Test homogenization of exception definitions
     putil.pcontracts._CUSTOM_CONTRACTS = dict()
@@ -502,41 +453,15 @@ def test_contract():
     @putil.pcontracts.contract(value=int)
     def func7(value):
         return value
-    putil.test.assert_exception(
-        func1,
-        {'number':'a string'},
-        RuntimeError,
-        'Argument `number` is not valid'
-    )
-    putil.test.assert_exception(
-        func2,
-        {'number':0},
-        RuntimeError,
-        'Illegal number: 0')
-    putil.test.assert_exception(
-        func2,
-        {'number':1},
-        TypeError,
-        'Unfathomable'
-    )
-    putil.test.assert_exception(
-        func3,
-        {'fname':'a', 'fnumber':5, 'flag':False},
-        RuntimeError,
-        'The argument fname is wrong'
-    )
-    putil.test.assert_exception(
-        func3,
-        {'fname':'b', 'fnumber':5, 'flag':False},
-        OSError,
-        'File name `b` not found'
-    )
-    putil.test.assert_exception(
-        func3,
-        {'fname':'zzz', 'fnumber':5, 'flag':45},
-        RuntimeError,
-        'Argument `flag` is not valid'
-    )
+    AI(func1, 'number', number='a string')
+    AE(func2, RuntimeError, 'Illegal number: 0', number=0)
+    AE(func2, TypeError, 'Unfathomable', number=1)
+    exmsg = 'The argument fname is wrong'
+    AE(func3, RuntimeError, exmsg, fname='a', fnumber=5, flag=False)
+    exmsg = 'File name `b` not found'
+    AE(func3, OSError, exmsg, fname='b', fnumber=5, flag=False)
+    exmsg = 'Argument `flag` is not valid'
+    AE(func3, RuntimeError, exmsg, fname='zzz', fnumber=5, flag=45)
     with pytest.raises(TypeError) as excinfo:
         func2(2, 5, 10)
     ref = (
@@ -544,7 +469,7 @@ def test_contract():
         if sys.hexversion < 0x03000000 else
         'func2() takes 1 positional argument but 3 were given'
     )
-    assert putil.test.get_exmsg(excinfo) == ref
+    assert GET_EXMSG(excinfo) == ref
     assert func1(5) == 5
     assert func2(10) == 10
     assert func3('hello', 'world', False) == ('hello', 'world')
@@ -599,49 +524,15 @@ def test_contract():
         }
     ]
     assert putil.test.comp_list_of_dicts(pexlist, ref)
-    putil.test.assert_exception(
-        func4,
-        {'fname':'a', 'fnumber':5},
-        RuntimeError,
-        'The argument fname is wrong'
-    )
-    putil.test.assert_exception(
-        func4,
-        {'fname':'b', 'fnumber':5},
-        OSError,
-        'File name `b` not found'
-    )
-    putil.test.assert_exception(
-        func5,
-        {'num':1},
-        RuntimeError,
-        'Illegal number: unity'
-    )
-    putil.test.assert_exception(
-        func5,
-        {'num':1.0, 'flag':45},
-        RuntimeError,
-        'Argument `flag` is not valid'
-    )
-    putil.test.assert_exception(
-        func5,
-        {'num':1.0, 'fudge':1.0},
-        RuntimeError,
-        'Argument `fudge` is not valid'
-    )
+    exmsg = 'The argument fname is wrong'
+    AE(func4, RuntimeError, exmsg, fname='a', fnumber=5)
+    AE(func4, OSError, 'File name `b` not found', fname='b', fnumber=5)
+    AE(func5, RuntimeError, 'Illegal number: unity', num=1)
+    AI(func5, 'flag', num=1.0, flag=45)
+    AI(func5, 'fudge', num=1.0, fudge=1.0)
     putil.exh.del_exh_obj()
-    putil.test.assert_exception(
-        func6,
-        {'fname':5},
-        contracts.interface.ContractSyntaxError,
-        ''
-    )
-    putil.test.assert_exception(
-        func7,
-        {'value':'a'},
-        RuntimeError,
-        'Argument `value` is not valid'
-    )
+    AE(func6, contracts.interface.ContractSyntaxError, '', fname=5)
+    AI(func7, 'value', value='a')
     putil.pcontracts._CUSTOM_CONTRACTS = copy.deepcopy(
         original_custom_contracts
     )
@@ -656,24 +547,14 @@ def test_enable_disable_contracts():
     def func(number):
         return number
     assert not putil.pcontracts.all_disabled()
-    putil.test.assert_exception(
-        func,
-        {'number':None},
-        RuntimeError,
-        'Argument `number` is not valid'
-    )
+    AI(func, 'number', number=None)
     putil.pcontracts.disable_all()
     assert putil.pcontracts.all_disabled()
     # Contracts are disabled, no exception should be raised
     assert func(['a', 'b']) == ['a', 'b']
     putil.pcontracts.enable_all()
     assert not putil.pcontracts.all_disabled()
-    putil.test.assert_exception(
-        func,
-        {'number':None},
-        RuntimeError,
-        'Argument `number` is not valid'
-    )
+    AI(func, 'number', number=None)
 
 
 def test_get_exdesc():
@@ -687,12 +568,10 @@ def test_get_exdesc():
     assert sample_func_local() == 'Test local function property'
     assert sample_func_global() == 'Test global function property'
     del globals()['sample_func_global']
-    putil.test.assert_exception(
-        putil.pcontracts.get_exdesc,
-        {},
-        RuntimeError,
+    exmsg = (
         'Function object could not be found for function `assert_exception`'
     )
+    AE(putil.pcontracts.get_exdesc, RuntimeError, exmsg)
 
 
 def test_new_contract():

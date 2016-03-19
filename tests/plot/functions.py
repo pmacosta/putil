@@ -7,6 +7,13 @@
 import pytest
 # Putil imports
 import putil.plot
+from putil.test import AE, AI, GET_EXMSG
+
+
+###
+# Global variables
+###
+FOBJ = putil.plot.parameterized_color_space
 
 
 ###
@@ -52,38 +59,33 @@ class TestDataSource(object):
             indep_var = property(None, _set_indep_var)
         with pytest.raises(TypeError) as excinfo:
             Test1()
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ("Can't instantiate abstract class Test1 with abstract methods "
-            "__str__, _set_dep_var, _set_indep_var, dep_var, indep_var")
+        assert GET_EXMSG(excinfo) == (
+            "Can't instantiate abstract class Test1 with abstract methods "
+            "__str__, _set_dep_var, _set_indep_var, dep_var, indep_var"
         )
         with pytest.raises(TypeError) as excinfo:
             Test2()
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ("Can't instantiate abstract class Test2 with abstract methods "
-            "_set_dep_var, _set_indep_var, dep_var, indep_var")
+        assert GET_EXMSG(excinfo) == (
+            "Can't instantiate abstract class Test2 with abstract methods "
+            "_set_dep_var, _set_indep_var, dep_var, indep_var"
         )
         with pytest.raises(TypeError) as excinfo:
             Test3()
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ("Can't instantiate abstract class Test3 with abstract methods "
-            "_set_indep_var, dep_var, indep_var")
+        assert GET_EXMSG(excinfo) == (
+            "Can't instantiate abstract class Test3 with abstract methods "
+            "_set_indep_var, dep_var, indep_var"
         )
         with pytest.raises(TypeError) as excinfo:
             Test4()
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ("Can't instantiate abstract class Test4 with abstract methods "
-            "dep_var, indep_var")
+        assert GET_EXMSG(excinfo) == (
+            "Can't instantiate abstract class Test4 with abstract methods "
+            "dep_var, indep_var"
         )
         with pytest.raises(TypeError) as excinfo:
             Test5()
-        assert (
-            putil.test.get_exmsg(excinfo) ==
-            ("Can't instantiate abstract class "
-            "Test5 with abstract methods indep_var")
+        assert GET_EXMSG(excinfo) == (
+            "Can't instantiate abstract class "
+            "Test5 with abstract methods indep_var"
         )
         # This statement should raise no exception
         Test6()
@@ -100,34 +102,14 @@ class TestParameterizedColorSpace(object):
         """ Test param_list argument exceptions """
         items = ['a', ['a', None, False]]
         for item in items:
-            putil.test.assert_exception(
-                putil.plot.parameterized_color_space,
-                {'param_list':item},
-                RuntimeError,
-                'Argument `param_list` is not valid'
-            )
-        putil.test.assert_exception(
-            putil.plot.parameterized_color_space,
-            {'param_list':list()},
-            TypeError,
-            'Argument `param_list` is empty'
-        )
+            AI(FOBJ, 'param_list', param_list=item)
+        AE(FOBJ, TypeError, 'Argument `param_list` is empty', param_list=[])
 
     @pytest.mark.functions
     def test_offset_exceptions(self):
         """ Test offset argument exceptions """
-        putil.test.assert_exception(
-            putil.plot.parameterized_color_space,
-            {'param_list':[1, 2], 'offset':'a'},
-            RuntimeError,
-            'Argument `offset` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.parameterized_color_space,
-            {'param_list':[1, 2], 'offset':-0.1},
-            RuntimeError,
-            'Argument `offset` is not valid'
-        )
+        for item in ['a', -0.1]:
+            AI(FOBJ, 'offset', param_list=[1, 2], offset=item)
 
     def test_offset(self):
         """ Test offset argument behavior """
@@ -142,24 +124,14 @@ class TestParameterizedColorSpace(object):
     @pytest.mark.functions
     def test_color_space_exceptions(self):
         """ Test color argument exceptions """
-        putil.test.assert_exception(
-            putil.plot.parameterized_color_space,
-            {'param_list':[1, 2], 'color_space':3},
-            RuntimeError,
-            'Argument `color_space` is not valid'
-        )
-        msg = (
+        AI(FOBJ, 'color_space', param_list=[1, 2], color_space=3)
+        exmsg = (
             "Argument `color_space` is not one of 'binary', 'Blues', 'BuGn', "
             "'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd', 'PuBu', "
             "'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', "
             "'YlOrBr' or 'YlOrRd' (case insensitive)"
         )
-        putil.test.assert_exception(
-            putil.plot.parameterized_color_space,
-            {'param_list':[1, 2], 'color_space':'a'},
-            ValueError,
-            msg
-        )
+        AE(FOBJ, ValueError, exmsg, param_list=[1, 2], color_space='a')
 
     def test_parameterized_color_space(self):
         """ Test color_space function behavior """

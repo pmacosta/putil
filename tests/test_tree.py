@@ -8,7 +8,7 @@
 import copy
 import pytest
 # Putil imports
-import putil.test
+from putil.test import AE, AI, AROPROP, RE
 import putil.tree
 
 
@@ -210,12 +210,7 @@ class TestTreeNode(object):
             {'name':'a.b..c', 'data':1.0}
         ]
         for item in items:
-            putil.test.assert_exception(
-                obj._validate_nodes_with_data,
-                {'names':item},
-                RuntimeError,
-                'Argument `nodes` is not valid'
-            )
+            AI(obj._validate_nodes_with_data, 'nodes', names=item)
 
     ### "Magic" methods
     def test_copy(self, default_trees):
@@ -348,18 +343,10 @@ class TestTreeNode(object):
             ]
         ]
         for item in items:
-            putil.test.assert_exception(
-                putil.tree.Tree().add_nodes,
-                {'nodes':item},
-                RuntimeError,
-                'Argument `nodes` is not valid'
-            )
-        putil.test.assert_exception(
-            putil.tree.Tree().add_nodes,
-            {'nodes':[{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]},
-            ValueError,
-            'Illegal node name: d.e'
-        )
+            AI(putil.tree.Tree().add_nodes, 'nodes', nodes=item)
+        nodes = [{'name':'a.c', 'data':'a'}, {'name':'d.e', 'data':'a'}]
+        exmsg = 'Illegal node name: d.e'
+        AE(putil.tree.Tree().add_nodes, ValueError, exmsg, nodes=nodes)
 
     def test_collapse_subtree(self):
         """ Test collapse_subtree method behavior """
@@ -442,12 +429,8 @@ class TestTreeNode(object):
         """ Test collapse method exceptions """
         t1obj = putil.tree.Tree('/')
         t1obj.add_nodes([{'name':'hello/world/root', 'data':[]}])
-        putil.test.assert_exception(
-            t1obj.collapse_subtree,
-            {'name':t1obj.root_name, 'recursive':5},
-            RuntimeError,
-            'Argument `recursive` is not valid'
-        )
+        name = t1obj.root_name
+        AI(t1obj.collapse_subtree, 'recursive', name=name, recursive=5)
 
     def test_copy_subtree(self, default_trees):
         """ Test copy_subtree method behavior """
@@ -514,33 +497,17 @@ class TestTreeNode(object):
             {'name':'root.leaf2', 'data':7}
         ])
         items = [5, '.x.y']
+        dnode = 'root.x'
+        fobj = obj.copy_subtree
         for item in items:
-            putil.test.assert_exception(
-                obj.copy_subtree,
-                {'source_node':item, 'dest_node':'root.x'},
-                RuntimeError,
-                'Argument `source_node` is not valid'
-            )
-        putil.test.assert_exception(
-            obj.copy_subtree,
-            {'source_node':'hello', 'dest_node':'root.x'},
-            RuntimeError,
-            'Node hello not in tree'
-        )
+            AI(fobj, 'source_node', source_node=item, dest_node=dnode)
+        exmsg = 'Node hello not in tree'
+        AE(fobj, RE, exmsg, source_node='hello', dest_node=dnode)
         items = [5, 'x..y']
         for item in items:
-            putil.test.assert_exception(
-                obj.copy_subtree,
-                {'source_node':'root.leaf1', 'dest_node':item},
-                RuntimeError,
-                'Argument `dest_node` is not valid'
-            )
-        putil.test.assert_exception(
-            obj.copy_subtree,
-            {'source_node':'root.leaf1', 'dest_node':'teto.leaf2'},
-            RuntimeError,
-            'Illegal root in destination node'
-        )
+            AI(fobj, 'dest_node', source_node='root.leaf1', dest_node=item)
+        exmsg = 'Illegal root in destination node'
+        AE(fobj, RE, exmsg, source_node='root.leaf1', dest_node='teto.leaf2')
 
     def test_delete_prefix(self):
         """ Test delete_prefix method behavior """
@@ -581,20 +548,11 @@ class TestTreeNode(object):
                 {'name':'hello/world/root/cnode/anode/leaf', 'data':[]}
             ]
         )
-        putil.test.assert_exception(
-            tobj.delete_prefix,
-            {'name':5},
-            RuntimeError,
-            'Argument `name` is not valid'
-        )
+        AI(tobj.delete_prefix, 'name', name=5)
         items = ['hello/world/root', 'hello/world!!!!']
+        exmsg = 'Argument `name` is not a valid prefix'
         for item in items:
-            putil.test.assert_exception(
-                tobj.delete_prefix,
-                {'name':item},
-                RuntimeError,
-                'Argument `name` is not a valid prefix'
-            )
+            AE(tobj.delete_prefix, RE, exmsg, name=item)
 
     def test_delete_subtree(self, default_trees):
         """ Test delete_subtree method behavior """
@@ -624,24 +582,10 @@ class TestTreeNode(object):
         tree1, _, _, _ = default_trees
         items = ['a..b', ['t1l1', 'a..b'], 5, ['t1l1', 5]]
         for item in items:
-            putil.test.assert_exception(
-                tree1.delete_subtree,
-                {'nodes':item},
-                RuntimeError,
-                'Argument `nodes` is not valid'
-            )
-        putil.test.assert_exception(
-            tree1.delete_subtree,
-            {'nodes':'a.b.c'},
-            RuntimeError,
-            'Node a.b.c not in tree'
-        )
-        putil.test.assert_exception(
-            tree1.delete_subtree,
-            {'nodes':['t1l1', 'a.b.c']},
-            RuntimeError,
-            'Node a.b.c not in tree'
-        )
+            AI(tree1.delete_subtree, 'nodes', nodes=item)
+        exmsg = 'Node a.b.c not in tree'
+        AE(tree1.delete_subtree, RE, exmsg, nodes='a.b.c')
+        AE(tree1.delete_subtree, RE, exmsg, nodes=['t1l1', 'a.b.c'])
 
     def test_flatten_subtree(self, default_trees):
         """ Test flatten_subtree method behavior """
@@ -865,12 +809,7 @@ class TestTreeNode(object):
         tree1, _, _, _ = default_trees
         items = ['a..b', 5]
         for item in items:
-            putil.test.assert_exception(
-                tree1.in_tree,
-                {'name':item},
-                RuntimeError,
-                'Argument `name` is not valid'
-            )
+            AI(tree1.in_tree, 'name', name=item)
 
     def test_is_leaf(self, default_trees):
         """ Test is_leaf property behavior """
@@ -1008,44 +947,19 @@ class TestTreeNode(object):
         _, _, _, tree4 = default_trees
         items = [5, 'a.b..c']
         for item in items:
-            putil.test.assert_exception(
-                tree4.rename_node,
-                {'name':item, 'new_name':'root.x'},
-                RuntimeError,
-                'Argument `name` is not valid'
-            )
-        putil.test.assert_exception(
-            tree4.rename_node,
-            {'name':'a.b.c', 'new_name':'root.x'},
-            RuntimeError,
-            'Node a.b.c not in tree'
-        )
+            AI(tree4.rename_node, 'name', name=item, new_name='root.x')
+        exmsg = 'Node a.b.c not in tree'
+        AE(tree4.rename_node, RE, exmsg, name='a.b.c', new_name='root.x')
         items = [5, 'a..b']
         for item in items:
-            putil.test.assert_exception(
-                tree4.rename_node,
-                {'name':'root', 'new_name':item},
-                RuntimeError,
-                'Argument `new_name` is not valid'
-            )
-        putil.test.assert_exception(
-            tree4.rename_node,
-            {'name':'root.branch1', 'new_name':'root.branch1'},
-            RuntimeError,
-            'Node root.branch1 already exists'
-        )
-        putil.test.assert_exception(
-            tree4.rename_node,
-            {'name':'root.branch1', 'new_name':'a.b.c'},
-            RuntimeError,
-            'Argument `new_name` has an illegal root node'
-        )
-        putil.test.assert_exception(
-            tree4.rename_node,
-            {'name':'root', 'new_name':'dummy.hier'},
-            RuntimeError,
-            'Argument `new_name` is an illegal root node name'
-        )
+            AI(tree4.rename_node, 'new_name', name='root', new_name=item)
+        exmsg = 'Node root.branch1 already exists'
+        root = 'root.branch1'
+        AE(tree4.rename_node, RE, exmsg, name=root, new_name=root)
+        exmsg = 'Argument `new_name` has an illegal root node'
+        AE(tree4.rename_node, RE, exmsg, name=root, new_name='a.b.c')
+        exmsg = 'Argument `new_name` is an illegal root node name'
+        AE(tree4.rename_node, RE, exmsg, name='root', new_name='dummy.hier')
 
     def test_search_tree(self):
         """ Test search method behavior """
@@ -1102,12 +1016,7 @@ class TestTreeNode(object):
         )
         items = [5, 'a/ b', 'a/b//c']
         for item in items:
-            putil.test.assert_exception(
-                tobj.search_tree,
-                {'name':item},
-                RuntimeError,
-                'Argument `name` is not valid'
-            )
+            AI(tobj.search_tree, 'name', name=item)
 
     ### Properties
     def test_node_separator(self, default_trees):
@@ -1246,12 +1155,7 @@ class TestTreeNode(object):
         """
         items = [3, 'hello']
         for item in items:
-            putil.test.assert_exception(
-                putil.tree.Tree,
-                {'node_separator':item},
-                RuntimeError,
-                'Argument `node_separator` is not valid'
-            )
+            AI(putil.tree.Tree, 'node_separator', node_separator=item)
         putil.tree.Tree('+')
 
     def test_root_name(self, default_trees):
@@ -1278,18 +1182,9 @@ class TestTreeNode(object):
         Test that del method raises an exception on all class attributes
         """
         tree1, _, _, _ = default_trees
-        with pytest.raises(AttributeError) as excinfo:
-            del tree1.nodes
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del tree1.node_separator
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del tree1.root_name
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del tree1.root_node
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        props = ['nodes', 'node_separator', 'root_name', 'root_node']
+        for prop in props:
+            AROPROP(tree1, prop)
 
     ### Miscellaneous
     @pytest.mark.tree
@@ -1307,16 +1202,7 @@ class TestTreeNode(object):
         ]
         items = [5, 'a.b..c']
         for method in method_list:
+            func = getattr(obj, method)
             for item in items:
-                putil.test.assert_exception(
-                    getattr(obj, method),
-                    {'name':item},
-                    RuntimeError,
-                    'Argument `name` is not valid'
-                )
-            putil.test.assert_exception(
-                getattr(obj, method),
-                {'name':'a.b.c'},
-                RuntimeError,
-                'Node a.b.c not in tree'
-            )
+                AI(func, 'name', name=item)
+            AE(func, RE, 'Node a.b.c not in tree', name='a.b.c')

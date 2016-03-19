@@ -15,7 +15,7 @@ if sys.hexversion < 0x03000000:
 # Putil imports
 import putil.misc
 import putil.pcsv
-import putil.test
+from putil.test import AE, AI, GET_EXMSG, RE
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _read
 else:
@@ -42,6 +42,7 @@ class TestCsvFile(object):
     @pytest.mark.csv_file
     def test_init_exceptions(self):
         """ Test constructor exceptions """
+        obj = putil.pcsv.CsvFile
         fname = os.path.join(
             os.path.abspath(os.sep),
             'file',
@@ -50,70 +51,31 @@ class TestCsvFile(object):
             'exists.csv'
         )
         func_pointers = [
-            (RuntimeError, 'File {0} is empty', write_file_empty),
+            (RE, 'File {0} is empty', write_file_empty),
             (
-                RuntimeError,
+                RE,
                 'Column headers are not unique in file {0}',
                 write_cols_not_unique
             ),
-            (RuntimeError, 'File {0} has no valid data', write_no_data)
+            (RE, 'File {0} has no valid data', write_no_data)
         ]
-        putil.test.assert_exception(
-            putil.pcsv.CsvFile,
-            {'fname':5},
-            RuntimeError,
-            'Argument `fname` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.pcsv.CsvFile,
-            {'fname':fname},
-            OSError,
-            'File {0} could not be found'.format(fname)
-        )
+        AI(obj, 'fname', fname=5)
+        exmsg = 'File {0} could not be found'.format(fname)
+        AE(obj, OSError, exmsg, fname=fname)
         for extype, exmsg, fobj in func_pointers:
             with pytest.raises(extype) as excinfo:
                 with putil.misc.TmpFile(fobj) as fname:
                     putil.pcsv.CsvFile(fname=os.path.normpath(fname))
             ref = (exmsg.format(fname) if '{0}' in exmsg else exmsg)
-            assert putil.test.get_exmsg(excinfo) == os.path.normpath(ref)
+            assert GET_EXMSG(excinfo) == os.path.normpath(ref)
         with putil.misc.TmpFile(write_file) as fname:
-            putil.test.assert_exception(
-                putil.pcsv.CsvFile,
-                {'fname':fname, 'has_header':5},
-                RuntimeError,
-                'Argument `has_header` is not valid'
-            )
+            AI(obj, 'has_header', fname=fname, has_header=5)
         with putil.misc.TmpFile(write_file) as fname:
-            putil.test.assert_exception(
-                putil.pcsv.CsvFile,
-                {'fname':fname, 'dfilter':5.2},
-                RuntimeError,
-                'Argument `dfilter` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.CsvFile,
-                {'fname':fname, 'dfilter':5, 'has_header':True},
-                ValueError,
-                'Column 5 not found'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.CsvFile,
-                {'fname':fname, 'dfilter':5, 'has_header':False},
-                ValueError,
-                'Column 5 not found'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.CsvFile,
-                {'fname':fname, 'dfilter':'A', 'has_header':False},
-                RuntimeError,
-                'Invalid column specification'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.CsvFile,
-                {'fname':fname, 'dfilter':'aa'},
-                ValueError,
-                'Column aa not found'
-            )
+            AI(obj, 'dfilter', fname=fname, dfilter=5.2)
+            AE(obj, ValueError, 'Column 5 not found', fname, 5, True)
+            AE(obj, ValueError, 'Column 5 not found', fname, 5, False)
+            AE(obj, RE, 'Invalid column specification', fname, 'A', False)
+            AE(obj, ValueError, 'Column aa not found', fname, 'aa')
 
     def test_eq(self):
         """ Test __eq__ method behavior """
@@ -259,20 +221,12 @@ class TestCsvFile(object):
 
     def test_data_start_exceptions(self):
         """ Test frow parameter exceptions """
+        obj = putil.pcsv.CsvFile
         with putil.misc.TmpFile(write_data_start_file) as fname:
             for item in ['a', True, -1]:
-                putil.test.assert_exception(
-                    putil.pcsv.CsvFile,
-                    {'fname':fname, 'frow':item},
-                    RuntimeError,
-                    'Argument `frow` is not valid'
-                )
-            putil.test.assert_exception(
-                putil.pcsv.CsvFile,
-                {'fname':fname, 'frow':10},
-                RuntimeError,
-                'File {0} has no valid data'.format(fname)
-            )
+                AI(obj, 'frow', fname, frow=item)
+            exmsg = 'File {0} has no valid data'.format(fname)
+            AE(obj, RE, exmsg, fname, frow=10)
 
     def test_add_dfilter(self):
         """ Test add_dfilter method behavior """
@@ -368,32 +322,15 @@ class TestCsvFile(object):
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
             for item in items:
-                putil.test.assert_exception(
-                    obj.add_dfilter,
-                    {'dfilter':item},
-                    RuntimeError,
-                    'Argument `dfilter` is not valid'
-                )
-            putil.test.assert_exception(
-                obj.add_dfilter,
-                {'dfilter':{'aaa':5}},
-                ValueError,
-                'Column aaa not found'
-            )
+                AI(obj.add_dfilter, 'dfilter', dfilter=item)
+            exmsg = 'Column aaa not found'
+            AE(obj.add_dfilter, ValueError, exmsg, dfilter={'aaa':5})
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
-            putil.test.assert_exception(
-                obj.add_dfilter,
-                {'dfilter':{10:5}},
-                ValueError,
-                'Column 10 not found'
-            )
-            putil.test.assert_exception(
-                obj.add_dfilter,
-                {'dfilter':'25'},
-                RuntimeError,
-                'Invalid column specification'
-            )
+            exmsg = 'Column 10 not found'
+            AE(obj.add_dfilter, ValueError, exmsg, dfilter={10:5})
+            exmsg = 'Invalid column specification'
+            AE(obj.add_dfilter, RE, exmsg, dfilter='25')
 
     def test_cols(self):
         """ Test cols method behavior """
@@ -409,12 +346,7 @@ class TestCsvFile(object):
             obj = putil.pcsv.CsvFile(fname=fname)
         items = [1, 'x']
         for item in items:
-            putil.test.assert_exception(
-                obj.cols,
-                {'filtered':item},
-                RuntimeError,
-                'Argument `filtered` is not valid'
-            )
+            AI(obj.cols, 'filtered', filtered=item)
 
     def test_data(self):
         """ Test data method behavior """
@@ -446,12 +378,7 @@ class TestCsvFile(object):
         """ Test data method exceptions """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Result':20})
-        putil.test.assert_exception(
-            obj.data,
-            {'filtered':5},
-            RuntimeError,
-            'Argument `filtered` is not valid'
-        )
+        AI(obj.data, 'filtered', filtered=5)
         obj.data()
         obj.data(filtered=True)
         obj.add_dfilter('Ctrl')
@@ -542,38 +469,12 @@ class TestCsvFile(object):
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
         for item in [None, []]:
-            putil.test.assert_exception(
-                obj.dsort,
-                {'order':item},
-                RuntimeError,
-                'Argument `order` is not valid'
-            )
-        putil.test.assert_exception(
-            obj.dsort,
-            {'order':'a'},
-            ValueError,
-            'Column a not found'
-        )
-        putil.test.assert_exception(
-            obj.dsort,
-            {'order':['Ctrl', 'a']},
-            ValueError,
-            'Column a not found'
-        )
-        putil.test.assert_exception(
-            obj.dsort,
-            {'order':['Ctrl', {'a':'d'}]},
-            ValueError,
-            'Column a not found'
-        )
+            AI(obj.dsort, 'order', order=item)
+        for item in ['a', ['Ctrl', 'a'], ['Ctrl', {'a':'d'}]]:
+            AE(obj.dsort, ValueError, 'Column a not found', order=item)
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
-        putil.test.assert_exception(
-            obj.dsort,
-            {'order':'0'},
-            RuntimeError,
-            'Invalid column specification'
-        )
+        AE(obj.dsort, RE, 'Invalid column specification', order='0')
 
     def test_header(self):
         """ Test header method behavior """
@@ -597,12 +498,7 @@ class TestCsvFile(object):
         """ Test header method exceptions """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        putil.test.assert_exception(
-            obj.header,
-            {'filtered':5},
-            RuntimeError,
-            'Argument `filtered` is not valid'
-        )
+        AI(obj.header, 'filtered', filtered=5)
 
     def test_replace(self):
         """ Test replace method behavior """
@@ -701,44 +597,19 @@ class TestCsvFile(object):
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
             for item in [2.0, [2.0]]:
-                putil.test.assert_exception(
-                    obj.replace,
-                    {'rdata':item},
-                    RuntimeError,
-                    'Argument `rdata` is not valid'
-                )
-            putil.test.assert_exception(
-                obj.replace,
-                {'rdata':[[2.0]], 'filtered':2.0},
-                RuntimeError,
-                'Argument `filtered` is not valid'
+                AI(obj.replace, 'rdata', rdata=item)
+            AI(obj.replace, 'filtered', rdata=[[2.0]], filtered=2.0)
+            exmsg = (
+               'Number of rows mismatch between input and replacement data'
             )
             obj.cfilter = ['Ctrl']
-            putil.test.assert_exception(
-                obj.replace,
-                {
-                    'rdata':[[1]],
-                    'filtered':False
-                },
-                ValueError,
-               (
-                   'Number of rows mismatch between '
-                    'input and replacement data'
-                )
+            AE(obj.replace, ValueError, exmsg, rdata=[[1]], filtered=False)
+            exmsg = (
+               'Number of columns mismatch between input and replacement data'
             )
             obj.cfilter = ['Ctrl', 'Ref']
-            putil.test.assert_exception(
-                obj.replace,
-                {
-                    'rdata':[[1], [2], [3], [4], [5]],
-                    'filtered':False
-                },
-                ValueError,
-               (
-                   'Number of columns mismatch between '
-                    'input and replacement data'
-                )
-            )
+            rdata = [[1], [2], [3], [4], [5]]
+            AE(obj.replace, ValueError, exmsg, rdata=rdata, filtered=False)
 
     def test_reset_dfilter(self):
         """ Test reset_dfilter method behavior """
@@ -809,12 +680,7 @@ class TestCsvFile(object):
             'BR'
         ]
         for item in items:
-            putil.test.assert_exception(
-                obj.reset_dfilter,
-                {'ftype':item},
-                RuntimeError,
-                'Argument `ftype` is not valid'
-            )
+            AI(obj.reset_dfilter, 'ftype', ftype=item)
 
     def test_rows(self):
         """ Test rows method behavior """
@@ -828,12 +694,7 @@ class TestCsvFile(object):
         """ Test rows method exceptions """
         with putil.misc.TmpFile(write_data_start_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        putil.test.assert_exception(
-            obj.rows,
-            {'filtered':1},
-            RuntimeError,
-            'Argument `filtered` is not valid'
-        )
+        AI(obj.rows, 'filtered', filtered=1)
 
     def test_write(self):
         """ Test write method behavior """
@@ -1000,56 +861,24 @@ class TestCsvFile(object):
                 )
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        putil.test.assert_exception(
-            obj.write,
-            {'fname':5},
-            RuntimeError,
-            'Argument `fname` is not valid'
-        )
+        AI(obj.write, 'fname', fname=5)
         for item in [8, []]:
-            putil.test.assert_exception(
-                obj.write,
-                {'fname':some_fname, 'header':item},
-                RuntimeError,
-                'Argument `header` is not valid'
-            )
-        putil.test.assert_exception(
-            obj.write,
-            {'fname':some_fname, 'append':'a'},
-            RuntimeError,
-            'Argument `append` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.write,
-            {'fname':some_fname, 'filtered':5},
-            RuntimeError,
-            'Argument `filtered` is not valid'
-        )
+            AI(obj.write, 'header', fname=some_fname, header=item)
+        AI(obj.write, 'append', fname=some_fname, append='a')
+        AI(obj.write, 'filtered', fname=some_fname, filtered=5)
         obj.rfilter = {'Result':100}
-        putil.test.assert_exception(
-            obj.write,
-            {'fname':some_fname, 'filtered':True},
-            ValueError,
-            'There is no data to save to file'
-        )
+        exmsg = 'There is no data to save to file'
+        AE(obj.write, ValueError, exmsg, fname=some_fname, filtered=True)
         obj.reset_dfilter()
         with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir):
-            putil.test.assert_exception(
-                obj.write,
-                {'fname':some_fname},
-                OSError,
-                'File {0} could not be created: Permission denied'.format(
-                    some_fname
-                )
+            exmsg = 'File {0} could not be created: Permission denied'.format(
+                some_fname
             )
-            putil.test.assert_exception(
-                obj.write,
-                {'fname':root_file},
-                OSError,
-                'File {0} could not be created: Permission denied'.format(
-                    root_file
-                )
+            AE(obj.write, OSError, exmsg, fname=some_fname)
+            exmsg = 'File {0} could not be created: Permission denied'.format(
+                root_file
             )
+            AE(obj.write, OSError, exmsg, fname=root_file)
 
     def test_cfilter(self):
         """ Test cfilter property behavior """
@@ -1066,22 +895,18 @@ class TestCsvFile(object):
             obj = putil.pcsv.CsvFile(fname=fname)
         with pytest.raises(RuntimeError) as excinfo:
             obj.cfilter = 5.0
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Argument `cfilter` is not valid'
-        )
+        assert GET_EXMSG(excinfo) == 'Argument `cfilter` is not valid'
         with pytest.raises(ValueError) as excinfo:
             obj.cfilter = 'A'
-        assert putil.test.get_exmsg(excinfo) == 'Column A not found'
+        assert GET_EXMSG(excinfo) == 'Column A not found'
         with pytest.raises(ValueError) as excinfo:
             obj.cfilter = 20
-        assert putil.test.get_exmsg(excinfo) == 'Column 20 not found'
+        assert GET_EXMSG(excinfo) == 'Column 20 not found'
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
         with pytest.raises(RuntimeError) as excinfo:
             obj.cfilter = 'A'
-        assert putil.test.get_exmsg(excinfo) == 'Invalid column specification'
+        assert GET_EXMSG(excinfo) == 'Invalid column specification'
 
     def test_dfilter(self):
         """ Test dfilter property behavior """
@@ -1133,21 +958,21 @@ class TestCsvFile(object):
         for item in items:
             with pytest.raises(RuntimeError) as excinfo:
                 obj.dfilter = item
-            assert putil.test.get_exmsg(excinfo) == msg
+            assert GET_EXMSG(excinfo) == msg
         with pytest.raises(ValueError) as excinfo:
             obj.dfilter = {'aaa':5}
-        assert putil.test.get_exmsg(excinfo) == 'Column aaa not found'
+        assert GET_EXMSG(excinfo) == 'Column aaa not found'
         with pytest.raises(ValueError) as excinfo:
             obj.dfilter = {10:5}
-        assert putil.test.get_exmsg(excinfo) == 'Column 10 not found'
+        assert GET_EXMSG(excinfo) == 'Column 10 not found'
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
         with pytest.raises(ValueError) as excinfo:
             obj.dfilter = {10:5}
-        assert putil.test.get_exmsg(excinfo) == 'Column 10 not found'
+        assert GET_EXMSG(excinfo) == 'Column 10 not found'
         with pytest.raises(RuntimeError) as excinfo:
             obj.dfilter = {'10':5}
-        assert putil.test.get_exmsg(excinfo) == msg
+        assert GET_EXMSG(excinfo) == msg
 
     def test_rfilter(self):
         """ Test rfilter property behavior """
@@ -1194,24 +1019,24 @@ class TestCsvFile(object):
         for item in items:
             with pytest.raises(RuntimeError) as excinfo:
                 obj.rfilter = item
-            assert putil.test.get_exmsg(excinfo) == msg
+            assert GET_EXMSG(excinfo) == msg
         with pytest.raises(ValueError) as excinfo:
             obj.rfilter = {}
-        assert putil.test.get_exmsg(excinfo) == 'Argument `rfilter` is empty'
+        assert GET_EXMSG(excinfo) == 'Argument `rfilter` is empty'
         with pytest.raises(ValueError) as excinfo:
             obj.rfilter = {'aaa':5}
-        assert putil.test.get_exmsg(excinfo) == 'Column aaa not found'
+        assert GET_EXMSG(excinfo) == 'Column aaa not found'
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
         with pytest.raises(RuntimeError) as excinfo:
             obj.rfilter = {'name':5}
-        assert putil.test.get_exmsg(excinfo) == msg
+        assert GET_EXMSG(excinfo) == msg
         with pytest.raises(ValueError) as excinfo:
             obj.rfilter = {10:5}
-        assert putil.test.get_exmsg(excinfo) == 'Column 10 not found'
+        assert GET_EXMSG(excinfo) == 'Column 10 not found'
         with pytest.raises(RuntimeError) as excinfo:
             obj.rfilter = {'a':5}
-        assert putil.test.get_exmsg(excinfo) == msg
+        assert GET_EXMSG(excinfo) == msg
 
     @pytest.mark.csv_file
     def test_cannot_delete_attributes(self):
@@ -1222,10 +1047,10 @@ class TestCsvFile(object):
             obj = putil.pcsv.CsvFile(fname=fname)
         with pytest.raises(AttributeError) as excinfo:
             del obj.cfilter
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        assert GET_EXMSG(excinfo) == "can't delete attribute"
         with pytest.raises(AttributeError) as excinfo:
             del obj.dfilter
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        assert GET_EXMSG(excinfo) == "can't delete attribute"
         with pytest.raises(AttributeError) as excinfo:
             del obj.rfilter
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        assert GET_EXMSG(excinfo) == "can't delete attribute"

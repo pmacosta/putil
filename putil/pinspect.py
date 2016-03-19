@@ -37,14 +37,10 @@ _PRIVATE_PROP_REGEXP = re.compile('_[^_]+')
 ###
 def _get_module_name_from_fname(fname):
     """ Get module name from module file name """
-    iobj = [
-        item
-        for item in sys.modules.values()
-        if item and hasattr(item, '__file__')
-    ]
     fname = fname.replace('.pyc', '.py')
-    for mobj in iobj:
-        if mobj.__file__.replace('.pyc', '.py') == fname:
+    for mobj in sys.modules.values():
+        if (hasattr(mobj, '__file__') and
+           (mobj.__file__.replace('.pyc', '.py') == fname)):
             module_name = mobj.__name__
             return module_name
     raise RuntimeError('Module could not be found')
@@ -887,6 +883,7 @@ class _AstTreeScanner(ast.NodeVisitor):
         #         )
         #     )
         # ###
+        dlist = []
         while count >= -len(self._indent_stack):
             element_full_name = self._indent_stack[count]['full_name']
             edict = self._callables_db.get(element_full_name, None)
@@ -919,9 +916,20 @@ class _AstTreeScanner(ast.NodeVisitor):
                 #     )
                 # ###
                 edict['last_lineno'] = lineno-1
+                dlist.append(count)
             if indent > stack_indent:
                 break
             count -= 1
+        # Callables have to be removed from stack when they are closed,
+        # otherwise if a callable is subsequently followed after a few
+        # lines by another callable at a further indentation level (like a for
+        # loop) the second callable would incorrectly appear within the scope
+        # of the first callable
+        stack = self._indent_stack
+        stack_length = len(self._indent_stack)
+        dlist = [item for item in dlist if stack[item]['type'] != 'module']
+        for item in dlist:
+            del self._indent_stack[stack_length+item]
 
     def _get_indent(self, node):
         """ Get node indentation level """
@@ -945,9 +953,10 @@ class _AstTreeScanner(ast.NodeVisitor):
         indent = self._get_indent(node)
         indent_stack = copy.deepcopy(self._indent_stack)
         # Find enclosing scope
-        while (((indent <= indent_stack[-1]['level']) and
+        while ((len(indent_stack) > 1) and
+              (((indent <= indent_stack[-1]['level']) and
               (indent_stack[-1]['type'] != 'module')) or
-              (indent_stack[-1]['type'] == 'prop')):
+              (indent_stack[-1]['type'] == 'prop'))):
             self._close_callable(node)
             indent_stack.pop()
         # Construct new callable name
@@ -1018,15 +1027,15 @@ class _AstTreeScanner(ast.NodeVisitor):
             }
             self._reverse_callables_db[code_id] = element_full_name
             # ### Print statements for debug
-            # if self._debug:
-            #     print(
-            #         pcolor(
-            #             'Visiting property {0} @ {1}'.format(
-            #                 element_full_name, code_id[1]
-            #             ),
-            #             'green'
-            #         )
-            #     )
+            #if self._debug:
+            #    print(
+            #        pcolor(
+            #            'Visiting property {0} @ {1}'.format(
+            #                element_full_name, code_id[1]
+            #            ),
+            #            'green'
+            #        )
+            #    )
             ###
             # Get property actions
         self.generic_visit(node)

@@ -17,11 +17,18 @@ import pytest
 if sys.hexversion < 0x03000000:
     import mock
 # Putil imports
+from putil.test import AI, AE, AROPROP, RE
 import putil.misc
 import putil.plot
 from .fixtures import compare_image_set
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_figure_images
+
+
+###
+# Global variables
+###
+FOBJ = putil.plot.Figure
 
 
 ###
@@ -42,12 +49,7 @@ class TestFigure(object):
     def test_complete_exceptions(self):
         """ Test _complete property exceptions """
         obj = putil.plot.Figure(panels=None)
-        putil.test.assert_exception(
-            obj.show,
-            {},
-            RuntimeError,
-            'Figure object is not fully specified'
-        )
+        AE(obj.show, RE, 'Figure object is not fully specified')
 
     def test_iter(self, default_panel):
         """ Test __iter__ method behavior """
@@ -176,33 +178,11 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_save_exceptions(self, default_panel):
         """ Test save method exceptions """
-        obj = putil.plot.Figure(
-            panels=default_panel
-        )
-        putil.test.assert_exception(
-            obj.save,
-            {'fname':3},
-            RuntimeError,
-            'Argument `fname` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.save,
-            {'fname':'test\0'},
-            RuntimeError,
-            'Argument `fname` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.save,
-            {'fname':'myfile', 'ftype':5},
-            RuntimeError,
-            'Argument `ftype` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.save,
-            {'fname':'myfile', 'ftype':'bmp'},
-            RuntimeError,
-            'Unsupported file type: bmp'
-        )
+        obj = putil.plot.Figure(panels=default_panel)
+        for item in [3, 'test\0']:
+            AI(obj.save, 'fname', fname=item)
+        AI(obj.save, 'ftype', 'myfile', 5)
+        AE(obj.save, RE, 'Unsupported file type: bmp', 'myfile', ftype='bmp')
 
     def test_show(self, default_panel, capsys):
         """ Test that show method behavior """
@@ -251,12 +231,7 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_fig_width_exceptions(self, default_panel):
         """ Test figure width property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':default_panel, 'fig_width':'a'},
-            RuntimeError,
-            'Argument `fig_width` is not valid'
-        )
+        AI(FOBJ, 'fig_width', panels=default_panel, fig_width='a')
 
     def test_fig_height(self, default_panel):
         """ Test figure height property behavior """
@@ -270,12 +245,7 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_fig_height_exceptions(self, default_panel):
         """ Test figure height property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':default_panel, 'fig_height':'a'},
-            RuntimeError,
-            'Argument `fig_height` is not valid'
-        )
+        AI(FOBJ, 'fig_height', panels=default_panel, fig_height='a')
 
     def test_indep_axis_scale(self, default_panel):
         """ Test indep_axis_scale property """
@@ -322,15 +292,7 @@ class TestFigure(object):
         """ Test indep_axis_ticks exceptions """
         obj = putil.plot.Figure(panels=None)
         assert obj.indep_axis_ticks is None
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {
-                'panels':default_panel,
-                'indep_axis_ticks':5
-            },
-            RuntimeError,
-            'Argument `indep_axis_ticks` is not valid'
-        )
+        AI(FOBJ, 'indep_axis_ticks', default_panel, indep_axis_ticks=5)
 
     def test_indep_var_label(self, default_panel):
         """ Test indep_var_label property behavior """
@@ -342,12 +304,7 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_indep_var_label_exceptions(self, default_panel):
         """ Test indep_var_label property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':default_panel, 'indep_var_label':5},
-            RuntimeError,
-            'Argument `indep_var_label` is not valid'
-        )
+        AI(FOBJ, 'indep_var_label', default_panel, indep_var_label=5)
 
     def test_indep_var_units(self, default_panel):
         """ Test indep_var_units property behavior """
@@ -359,12 +316,7 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_indep_var_units_exceptions(self, default_panel):
         """ Test indep_var_units exceptions """
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':default_panel, 'indep_var_units':5},
-            RuntimeError,
-            'Argument `indep_var_units` is not valid'
-        )
+        AI(FOBJ, 'indep_var_units', default_panel, indep_var_units=5)
 
     def test_log_indep_axis(self, default_panel):
         """ Test log_indep_axis property behavior """
@@ -378,12 +330,7 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_log_indep_axis_exceptions(self, default_panel):
         """ Test log_indep_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':default_panel, 'log_indep_axis':5},
-            RuntimeError,
-            'Argument `log_indep_axis` is not valid'
-        )
+        AI(FOBJ, 'log_indep_axis', default_panel, log_indep_axis=5)
         negative_data_source = putil.plot.BasicSource(
             indep_var=numpy.array([-5, 6, 7, 8]),
             dep_var=numpy.array([0.1, 10, 5, 4])
@@ -393,14 +340,12 @@ class TestFigure(object):
             label='negative data series'
         )
         negative_panel = putil.plot.Panel(series=negative_series)
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':negative_panel, 'log_indep_axis':True},
-            ValueError,
+        exmsg = (
             'Figure cannot be plotted with a logarithmic independent '
             'axis because panel 0, series 0 contains negative independent '
             'data points'
         )
+        AE(FOBJ, ValueError, exmsg, negative_panel, log_indep_axis=True)
 
     def test_panels(self, default_panel):
         """ Test panel property behavior """
@@ -410,18 +355,10 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_panels_exceptions(self, default_panel):
         """ Test panel property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':5},
-            RuntimeError,
-            'Argument `panels` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':[default_panel, putil.plot.Panel(series=None)]},
-            TypeError,
-            'Panel 1 is not fully specified'
-        )
+        AI(FOBJ, 'panels', 5)
+        exmsg = 'Panel 1 is not fully specified'
+        panels = [default_panel, putil.plot.Panel(series=None)]
+        AE(FOBJ, TypeError, exmsg, panels)
 
     def test_title(self, default_panel):
         """ Test title property behavior """
@@ -433,66 +370,23 @@ class TestFigure(object):
     @pytest.mark.figure
     def test_title_exceptions(self, default_panel):
         """ Test title property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {'panels':default_panel, 'title':5},
-            RuntimeError,
-            'Argument `title` is not valid'
-        )
+        AI(FOBJ, 'title', default_panel, title=5)
 
     ### Miscellaneous
     @pytest.mark.figure
     def test_specified_figure_size_too_small_exceptions(self, default_panel):
         """ Test requested figure size is too small behavior """
         # Continuous integration image is 5.61in wide
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {
-                'panels':default_panel,
-                'indep_var_label':'Input',
-                'indep_var_units':'Amps',
-                'title':'My graph',
-                'fig_width':0.1,
-                'fig_height':200
-            },
-            RuntimeError,
-            (
-                'Figure size is too small: minimum width [5.6[1]|6.2]*, '
-                'minimum height 2.6[6|8]'
-            )
+        exmsg = (
+            'Figure size is too small: minimum width [5.6[1]|6.2]*, '
+            'minimum height 2.6[6|8]'
         )
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {
-                'panels':default_panel,
-                'indep_var_label':'Input',
-                'indep_var_units':'Amps',
-                'title':'My graph',
-                'fig_width':200,
-                'fig_height':0.1
-            },
-            RuntimeError,
-            (
-                'Figure size is too small: minimum width [5.6[1]|6.2]*, '
-                'minimum height 2.66'
-            )
-        )
-        putil.test.assert_exception(
-            putil.plot.Figure,
-            {
-                'panels':default_panel,
-                'indep_var_label':'Input',
-                'indep_var_units':'Amps',
-                'title':'My graph',
-                'fig_width':0.1,
-                'fig_height':0.1
-            },
-            RuntimeError,
-            (
-                'Figure size is too small: minimum width [5.6[1]|6.2]*, '
-                'minimum height 2.6[6|8]'
-            )
-        )
+        kwargs = dict(title='My graph', fig_width=0.1, fig_height=200)
+        AE(FOBJ, RE, exmsg, default_panel, 'Input', 'Amps', **kwargs)
+        kwargs = dict(title='My graph', fig_width=200, fig_height=0.1)
+        AE(FOBJ, RE, exmsg, default_panel, 'Input', 'Amps', **kwargs)
+        kwargs = dict(title='My graph', fig_width=0.1, fig_height=0.1)
+        AE(FOBJ, RE, exmsg, default_panel, 'Input', 'Amps', **kwargs)
 
     @pytest.mark.figure
     def test_cannot_delete_attributes_exceptions(self, default_panel):
@@ -500,36 +394,20 @@ class TestFigure(object):
         Test that del method raises an exception on all class attributes
         """
         obj = putil.plot.Figure(panels=default_panel)
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.axes_list
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.fig
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.fig_height
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.fig_width
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.indep_axis_scale
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.indep_var_label
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.indep_var_units
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.log_indep_axis
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.panels
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.title
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        props = [
+            'axes_list',
+            'fig',
+            'fig_height',
+            'fig_width',
+            'indep_axis_scale',
+            'indep_var_label',
+            'indep_var_units',
+            'log_indep_axis',
+            'panels',
+            'title'
+        ]
+        for prop in props:
+            AROPROP(obj, prop)
 
     def test_images(self, tmpdir):
         """ Compare images to verify correct plotting of figure """

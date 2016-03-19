@@ -3,12 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
+# Standard library imports
+from itertools import product
 # PyPI imports
 import pytest
 # Putil imports
 import putil.misc
 import putil.pcsv
-import putil.test
+from putil.test import AE, AI, RE
 from tests.pcsv.files import (
     write_cols_not_unique,
     write_file,
@@ -142,6 +144,8 @@ def test_replace_function():
 @pytest.mark.replace
 def test_replace_function_exceptions():
     """ Test replace function exceptions """
+    # pylint: disable=R0914
+    obj = putil.pcsv.replace
     # Input file exceptions
     file_items = [5, 'some_file\0']
     dfilter_items = [
@@ -158,254 +162,82 @@ def test_replace_function_exceptions():
         with putil.misc.TmpFile(write_file) as real_file:
             ifname = '_dummy_file_' if not file_toggle else real_file
             rfname = real_file if not file_toggle else '_dummy_file_'
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['a'],
-                    'rfname':rfname,
-                    'rdfilter':['b']
-                },
-                OSError,
-                'File _dummy_file_ could not be found'
-            )
+            exmsg = 'File _dummy_file_ could not be found'
+            AE(obj, OSError, exmsg, ifname, ['a'], rfname, ['b'])
             for item in file_items:
                 ifname = item if not file_toggle else real_file
                 rfname = real_file if not file_toggle else item
-                putil.test.assert_exception(
-                    putil.pcsv.replace,
-                    {
-                        'ifname':ifname,
-                        'idfilter':['a'],
-                        'rfname':rfname,
-                        'rdfilter':['b']
-                    },
-                    RuntimeError,
-                    'Argument `*[{0}]*` is not valid'.format(
-                        'ifname' if not file_toggle else 'rfname'
-                    )
-                )
+                par = 'ifname' if not file_toggle else 'rfname'
+                AI(obj, par, ifname, ['a'], rfname, ['b'])
+        dfilter = ['Ctrl']
         with putil.misc.TmpFile(write_file_empty) as empty_file:
             with putil.misc.TmpFile(write_file) as real_file:
                 ifname = empty_file if not file_toggle else real_file
                 rfname = real_file if not file_toggle else empty_file
-                putil.test.assert_exception(
-                    putil.pcsv.replace,
-                    {
-                        'ifname':ifname,
-                        'idfilter':['Ctrl'],
-                        'rfname':rfname,
-                        'rdfilter':['Ctrl']
-                    },
-                    RuntimeError,
-                    r'File (.+) is empty'
-                )
+                exmsg = r'File (.+) is empty'
+                AE(obj, RE, exmsg, ifname, dfilter, rfname, dfilter)
         with putil.misc.TmpFile(write_cols_not_unique) as nuniq_file:
             with putil.misc.TmpFile(write_file) as real_file:
                 ifname = nuniq_file if not file_toggle else real_file
                 rfname = real_file if not file_toggle else nuniq_file
-                putil.test.assert_exception(
-                    putil.pcsv.replace,
-                    {
-                        'ifname':ifname,
-                        'idfilter':['Ctrl'],
-                        'rfname':rfname,
-                        'rdfilter':['Ctrl']
-                    },
-                    RuntimeError,
-                    'Column headers are not unique in file (.+)'
-                )
+                exmsg = 'Column headers are not unique in file (.+)'
+                AE(obj, RE, exmsg, ifname, dfilter, rfname, dfilter)
         # Filter-related exceptions
         with putil.misc.TmpFile(write_file) as ifname:
             with putil.misc.TmpFile(write_file) as rfname:
                 for item in dfilter_items:
                     idfilter = item if not file_toggle else ['Ctrl']
                     rdfilter = ['Ctrl'] if not file_toggle else item
-                    putil.test.assert_exception(
-                        putil.pcsv.replace,
-                        {
-                            'ifname':ifname,
-                            'idfilter':idfilter,
-                            'rfname':rfname,
-                            'rdfilter':rdfilter
-                        },
-                        RuntimeError,
-                        'Argument `{0}` is not valid'.format(
-                            'idfilter' if not file_toggle else 'rdfilter'
-                        )
-                    )
+                    par = 'idfilter' if not file_toggle else 'rdfilter'
+                    AI(obj, par, ifname, idfilter, rfname, rdfilter)
                 item = (['Ctrl'], {'aaa':5})
                 idfilter = item if not file_toggle else ['Ctrl']
                 rdfilter = ['Ctrl'] if not file_toggle else item
-                putil.test.assert_exception(
-                    putil.pcsv.replace,
-                    {
-                        'ifname':ifname,
-                        'idfilter':idfilter,
-                        'rfname':rfname,
-                        'rdfilter':rdfilter
-                    },
-                    ValueError,
-                    'Column aaa not found'
-                )
+                exmsg = 'Column aaa not found'
+                AE(obj, ValueError, exmsg, ifname, idfilter, rfname, rdfilter)
                 # Columns-related exceptions
                 idfilter = ['NoCol'] if not file_toggle else ['Ref']
                 rdfilter = ['Ref'] if not file_toggle else ['NoCol']
-                putil.test.assert_exception(
-                    putil.pcsv.replace,
-                    {
-                        'ifname':ifname,
-                        'idfilter':idfilter,
-                        'rfname':rfname,
-                        'rdfilter':rdfilter
-                    },
-                    ValueError,
-                    'Column NoCol not found'
-                )
+                exmsg = 'Column NoCol not found'
+                AE(obj, ValueError, exmsg, ifname, idfilter, rfname, rdfilter)
                 idfilter = ['0'] if not file_toggle else ['Ref']
                 rdfilter = ['Ref'] if not file_toggle else ['0']
-                putil.test.assert_exception(
-                    putil.pcsv.replace,
-                    {
-                        'ifname':ifname,
-                        'ihas_header':file_toggle,
-                        'idfilter':idfilter,
-                        'rfname':rfname,
-                        'rdfilter':rdfilter,
-                        'rhas_header':not file_toggle,
-                    },
-                    RuntimeError,
-                    'Invalid column specification'
+                exmsg = 'Invalid column specification'
+                AE(
+                    obj, RE, exmsg,
+                    ifname, idfilter,
+                    rfname, rdfilter,
+                    ihas_header=file_toggle, rhas_header=not file_toggle
                 )
     with putil.misc.TmpFile(write_file) as ifname:
         with putil.misc.TmpFile(write_file) as rfname:
             # Invalid row_start
-            for item in ['a', True, -1]:
-                for par in ['ifrow', 'rfrow']:
-                    putil.test.assert_exception(
-                        putil.pcsv.replace,
-                        {
-                            'ifname':ifname,
-                            'idfilter':['Ctrl'],
-                            'rfname':rfname,
-                            'rdfilter':['Ctrl'],
-                            par:item,
-                        },
-                        RuntimeError,
-                        'Argument `{0}` is not valid'.format(par)
-                    )
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ctrl'],
-                    'ifrow':200,
-                },
-                RuntimeError,
-                'File {0} has no valid data'.format(ifname)
-            )
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ctrl'],
-                    'rfrow':200,
-                },
-                RuntimeError,
-                'File {0} has no valid data'.format(rfname)
-            )
+            for item, par in product(['a', True, -1], ['ifrow', 'rfrow']):
+                AI(obj, par, ifname, dfilter, rfname, dfilter, **{par:item})
+            exmsg = 'File {0} has no valid data'.format(ifname)
+            AE(obj, RE, exmsg, ifname, dfilter, rfname, dfilter, ifrow=200)
+            exmsg = 'File {0} has no valid data'.format(rfname)
+            AE(obj, RE, exmsg, ifname, dfilter, rfname, dfilter, rfrow=200)
             # Column numbers are different
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ctrl', 'Ref'],
-                },
-                RuntimeError,
-                'Number of input and replacement columns are different'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ref'],
-                    'ocols':['a', 'b', 'c']
-                },
-                RuntimeError,
-                'Number of input and output columns are different'
-            )
+            exmsg = 'Number of input and replacement columns are different'
+            AE(obj, RE, exmsg, ifname, ['Ctrl'], rfname, ['Ctrl', 'Ref'])
+            exmsg = 'Number of input and output columns are different'
+            ocols = ['a', 'b', 'c']
+            AE(obj, RE, exmsg, ifname, ['Ctrl'], rfname, ['Ref'], ocols=ocols)
     # Output file exceptions
     with putil.misc.TmpFile(write_file) as ifname:
         with putil.misc.TmpFile(write_file) as rfname:
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ref'],
-                    'ofname':7
-                },
-                RuntimeError,
-                'Argument `ofname` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ref'],
-                    'ofname':'a_file\0'
-                },
-                RuntimeError,
-                'Argument `ofname` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ref'],
-                    'ofname':'some_file.csv',
-                    'ocols':7
-                },
-                RuntimeError,
-                'Argument `ocols` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ref'],
-                    'ofname':'some_file.csv',
-                    'ocols':['a', 'b', 5]
-                },
-                RuntimeError,
-                'Argument `ocols` is not valid'
-            )
+            par = 'ofname'
+            for item in [7, 'a_file\0']:
+                AI(obj, par, ifname, dfilter, rfname, ['Ref'], ofname=item)
+            fname = 'some_file.csv'
+            for item in [7, ['a', 'b', 5]]:
+                AI(
+                    obj, 'ocols', ifname, dfilter, rfname, ['Ref'],
+                    ofname=fname, ocols=item
+                )
     # Number of rows do not match
+    exmsg = 'Number of rows mismatch between input and replacement data'
     with putil.misc.TmpFile(write_file) as ifname:
         with putil.misc.TmpFile(write_str_cols_file) as rfname:
-            putil.test.assert_exception(
-                putil.pcsv.replace,
-                {
-                    'ifname':ifname,
-                    'idfilter':['Ctrl'],
-                    'rfname':rfname,
-                    'rdfilter':['Ref']
-                },
-                ValueError,
-                'Number of rows mismatch between input and replacement data'
-            )
+            AE(obj, ValueError, exmsg, ifname, dfilter, rfname, ['Ref'])

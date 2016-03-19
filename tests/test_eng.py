@@ -9,14 +9,13 @@ import sys
 import pytest
 from numpy import array, ndarray
 # Putil imports
-import putil.test
 import putil.eng
+from putil.test import AE, AI
 
 
 ###
 # Global variables
 ###
-AE = functools.partial(putil.test.assert_exception, extype=RuntimeError)
 DFLT = 'def'
 PY2 = bool(sys.hexversion < 0x03000000)
 
@@ -30,21 +29,32 @@ pv = lambda py2arg, py3arg: py2arg if PY2 else py3arg
 sarg = lambda msg: 'Argument `{0}` is not valid'.format(msg)
 t = lambda num: '10.'+('0'*num)
 
+def to_sci_string(number):
+    """
+    Returns a string with the number formatted in scientific notation. This
+    function does not have all the configurability of the public function
+    to_scientific_string, it is a convenience function to test _to_eng_tuple
+    """
+    mant, exp = putil.eng._to_eng_tuple(number)
+    return '{mant}E{exp_sign}{exp}'.format(
+        mant=mant, exp_sign='-' if exp < 0 else '+', exp=abs(exp)
+    )
+
 
 ###
 # Test functions
 ###
 @pytest.mark.parametrize(
     'text, sep, num, lstrip, rstrip, ref', [
-    ('a, b, c, d', ',', 1, DFLT, DFLT, ['a', ' b', ' c', ' d']),
-    ('a , b , c , d ', ',', 1, DFLT, DFLT, ['a ', ' b ', ' c ', ' d ']),
-    ('a , b , c , d ', ',', 1, True, DFLT, ['a ', 'b ', 'c ', 'd ']),
-    ('a , b , c , d ', ',', 1, DFLT, True, ['a', ' b', ' c', ' d']),
-    ('a , b , c , d ', ',', 1, True, True, ['a', 'b', 'c', 'd']),
-    ('a, b, c, d', ',', 2, DFLT, DFLT, ['a, b', ' c, d']),
-    ('a, b, c, d', ',', 3, DFLT, DFLT, ['a, b, c', ' d']),
-    ('a, b, c, d', ',', 4, DFLT, DFLT, ['a, b, c, d']),
-    ('a, b, c, d', ',', 5, DFLT, DFLT, ['a, b, c, d']),
+    ('a, b, c, d', ',', 1, DFLT, DFLT, ('a', ' b', ' c', ' d')),
+    ('a , b , c , d ', ',', 1, DFLT, DFLT, ('a ', ' b ', ' c ', ' d ')),
+    ('a , b , c , d ', ',', 1, True, DFLT, ('a ', 'b ', 'c ', 'd ')),
+    ('a , b , c , d ', ',', 1, DFLT, True, ('a', ' b', ' c', ' d')),
+    ('a , b , c , d ', ',', 1, True, True, ('a', 'b', 'c', 'd')),
+    ('a, b, c, d', ',', 2, DFLT, DFLT, ('a, b', ' c, d')),
+    ('a, b, c, d', ',', 3, DFLT, DFLT, ('a, b, c', ' d')),
+    ('a, b, c, d', ',', 4, DFLT, DFLT, ('a, b, c, d',)),
+    ('a, b, c, d', ',', 5, DFLT, DFLT, ('a, b, c, d',)),
     ]
 )
 def test_split_every(text, sep, num, lstrip, rstrip, ref):
@@ -269,7 +279,7 @@ def test_split_every(text, sep, num, lstrip, rstrip, ref):
 )
 def test_to_sci_string(num, ref):
     """ Test _to_eng_string function behavior """
-    assert putil.eng._to_sci_string(num) == ref
+    assert to_sci_string(num) == ref
 
 
 @pytest.mark.parametrize(
@@ -299,7 +309,7 @@ def test_no_exp(num, ref):
 @pytest.mark.eng
 def test_no_ex_exceptions():
     """ Test no_exp function exceptions """
-    AE(putil.eng.no_exp, {'number':'a'}, exmsg=sarg('number'))
+    AI(putil.eng.no_exp, 'number', number='a')
 
 
 @pytest.mark.eng
@@ -313,7 +323,7 @@ def test_no_ex_exceptions():
 )
 def test_peng_exceptions(args, name):
     """ Test peng function exceptions """
-    AE(putil.eng.peng, args, exmsg=sarg(name))
+    AI(putil.eng.peng, name, **args)
 
 
 @pytest.mark.parametrize(
@@ -480,7 +490,7 @@ def test_peng_snum_exceptions(func, arg):
     Test exceptions of functions that receive a string representing
     a number in engineering notation
     """
-    AE(func, dict(snum=arg), exmsg=sarg('snum'))
+    AI(func, 'snum', **dict(snum=arg))
 
 
 @pytest.mark.parametrize(
@@ -545,9 +555,7 @@ def test_peng_suffix(arg, ref):
 @pytest.mark.eng
 def test_peng_suffix_math_exceptions(args, extype, name):
     """ Test peng_suffix_math function exceptions """
-    putil.test.assert_exception(
-        putil.eng.peng_suffix_math, args, extype, sarg(name)
-    )
+    AE(putil.eng.peng_suffix_math, extype, sarg(name), **args)
 
 
 @pytest.mark.parametrize('args, ref', [((' ', 3), 'G'), (('u', -2), 'p')])
@@ -1098,7 +1106,7 @@ def test_pprint_vector(vector, args, ref, header):
 def test_pprint_vector_exceptions(args):
     """ Test pprint_vector function exceptions """
     msg = 'Argument `width` is too small'
-    putil.test.assert_exception(putil.eng.pprint_vector, args, ValueError, msg)
+    AE(putil.eng.pprint_vector, ValueError, msg, **args)
 
 
 @pytest.mark.parametrize(

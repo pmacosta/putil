@@ -14,5 +14,8 @@ package (`py.test <http://www.pytest.org>`_-based)
 Functions
 *********
 
+.. autofunction:: putil.test.assert_arg_invalid
 .. autofunction:: putil.test.assert_exception
+.. autofunction:: putil.test.assert_ro_prop
 .. autofunction:: putil.test.exception_type_str
+.. autofunction:: putil.test.get_exmsg

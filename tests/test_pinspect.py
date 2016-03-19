@@ -16,7 +16,7 @@ if sys.hexversion == 0x03000000:
     from putil.compat3 import _readlines
 # Putil imports
 import putil.pinspect
-import putil.test
+from putil.test import AE, AI, RE, GET_EXMSG
 
 
 ###
@@ -114,7 +114,7 @@ if sys.hexversion == 0x03000000:
         obj = _readlines
         with pytest.raises(RuntimeError) as excinfo:
             _readlines(fname, mopen1)
-        assert putil.test.get_exmsg(excinfo) == 'Mock mopen1 function'
+        assert GET_EXMSG(excinfo) == 'Mock mopen1 function'
         # Trigger UnicodeDecodeError exception
         assert _readlines(fname, mopen2, MockOpenCls) == 'MockOpenCls'
 
@@ -127,19 +127,13 @@ def test_object_is_module():
 
 def test_get_module_name():
     """ Test get_module_name() function """
-    putil.test.assert_exception(
-        putil.pinspect.get_module_name,
-        {'module_obj':5},
-        RuntimeError,
-        'Argument `module_obj` is not valid'
-    )
+    obj = putil.pinspect.get_module_name
+    AI(obj, 'module_obj', module_obj=5)
     mock_module_obj = types.ModuleType('mock_module_obj', 'Mock module')
-    putil.test.assert_exception(
-        putil.pinspect.get_module_name,
-        {'module_obj':mock_module_obj},
-        RuntimeError,
+    exmsg = (
         'Module object `mock_module_obj` could not be found in loaded modules'
     )
+    AE(obj, RE, exmsg, module_obj=mock_module_obj)
     ref = 'putil.pinspect'
     assert putil.pinspect.get_module_name(sys.modules[ref]) == ref
     assert putil.pinspect.get_module_name(sys.modules['putil']) == 'putil'
@@ -147,16 +141,9 @@ def test_get_module_name():
 
 def test_get_module_name_from_fname():
     """ Test _get_module_name_from_fname() function """
-    putil.test.assert_exception(
-        putil.pinspect._get_module_name_from_fname,
-        {'fname':'_not_a_module'},
-        RuntimeError,
-        'Module could not be found'
-    )
-    ref = 'putil.pinspect'
-    assert putil.pinspect._get_module_name_from_fname(
-        sys.modules[ref].__file__
-    ) == ref
+    obj = putil.pinspect._get_module_name_from_fname
+    AE(obj, RE, 'Module could not be found', fname='_not_a_module')
+    assert obj(sys.modules['putil.pinspect'].__file__) == 'putil.pinspect'
 
 
 def test_is_special_method():
@@ -177,60 +164,29 @@ class TestCallables(object):
         obj1._callables_db = {'call1':1, 'call2':2}
         obj2 = putil.pinspect.Callables()
         obj2._callables_db = {'call1':1, 'call2':'a'}
-        putil.test.assert_exception(
-            obj1._check_intersection,
-            {'other':obj2},
-            RuntimeError,
-            'Conflicting information between objects'
-        )
+        exmsg = 'Conflicting information between objects'
+        obj = obj1._check_intersection
+        AE(obj, RE, exmsg, other=obj2)
         obj1._callables_db = {'call1':1, 'call2':['a', 'c']}
         obj2._callables_db = {'call1':1, 'call2':['a', 'b']}
-        putil.test.assert_exception(
-            obj1._check_intersection,
-            {'other':obj2},
-            RuntimeError,
-            'Conflicting information between objects'
-        )
+        AE(obj, RE, exmsg, other=obj2)
         obj1._callables_db = {'call1':1, 'call2':{'a':'b'}}
         obj2._callables_db = {'call1':1, 'call2':{'a':'c'}}
-        putil.test.assert_exception(
-            obj1._check_intersection,
-            {'other':obj2},
-            RuntimeError,
-            'Conflicting information between objects'
-        )
+        AE(obj, RE, exmsg, other=obj2)
         obj1._callables_db = {'call1':1, 'call2':'a'}
         obj2._callables_db = {'call1':1, 'call2':'c'}
-        putil.test.assert_exception(
-            obj1._check_intersection,
-            {'other':obj2},
-            RuntimeError,
-            'Conflicting information between objects'
-        )
+        AE(obj, RE, exmsg, other=obj2)
         obj1._callables_db = {'call1':1, 'call2':'a'}
         obj2._callables_db = {'call1':1, 'call2':'a'}
         assert obj1._check_intersection(obj2) is None
 
     def test_init_exceptions(self):
         """ Test constructor exceptions """
-        putil.test.assert_exception(
-            putil.pinspect.Callables,
-            {'fnames':5},
-            RuntimeError,
-            'Argument `fnames` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.pinspect.Callables,
-            {'fnames':[5]},
-            RuntimeError,
-            'Argument `fnames` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.pinspect.Callables,
-            {'fnames':['_not_a_file_']},
-            OSError,
-            'File _not_a_file_ could not be found'
-        )
+        obj = putil.pinspect.Callables
+        for item in [5, [5]]:
+            AI(obj, 'fnames', fnames=item)
+        exmsg = 'File _not_a_file_ could not be found'
+        AE(obj, OSError, exmsg, fnames=['_not_a_file_'])
 
     def test_add(self):
         """ Test __add__ __radd__ method behavior """
@@ -258,7 +214,7 @@ class TestCallables(object):
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
         assert (
-            putil.test.get_exmsg(excinfo)
+            GET_EXMSG(excinfo)
             ==
             'Conflicting information between objects'
         )
@@ -268,7 +224,7 @@ class TestCallables(object):
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
         assert (
-            putil.test.get_exmsg(excinfo)
+            GET_EXMSG(excinfo)
             ==
             'Conflicting information between objects'
         )
@@ -278,7 +234,7 @@ class TestCallables(object):
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
         assert (
-            putil.test.get_exmsg(excinfo)
+            GET_EXMSG(excinfo)
             ==
             'Conflicting information between objects'
         )
@@ -461,10 +417,13 @@ class TestCallables(object):
             '   putil.pit.MyClass\n'
             'putil.pit.MyClass: class (1-2)\n'
             'putil.pit.func1: func (3-4)\n'
-            'putil.test.assert_exception: func (22-91)\n'
-            'putil.test.comp_list_of_dicts: func (92-106)\n'
-            'putil.test.exception_type_str: func (107-124)\n'
-            'putil.test.get_exmsg: func (125-127)'
+            'putil.test._get_fargs: func (26-61)\n'
+            'putil.test.assert_arg_invalid: func (62-93)\n'
+            'putil.test.assert_exception: func (94-177)\n'
+            'putil.test.assert_ro_prop: func (178-198)\n'
+            'putil.test.comp_list_of_dicts: func (199-213)\n'
+            'putil.test.exception_type_str: func (214-231)\n'
+            'putil.test.get_exmsg: func (232-246)'
         )
         if str(obj) != rtext:
             print('Actual text:')
@@ -486,10 +445,13 @@ class TestCallables(object):
             '   putil.pit\n'
             '   putil.test\n'
             'putil.pit.my_func: func (1-2)\n'
-            'putil.test.assert_exception: func (22-91)\n'
-            'putil.test.comp_list_of_dicts: func (92-106)\n'
-            'putil.test.exception_type_str: func (107-124)\n'
-            'putil.test.get_exmsg: func (125-127)'
+            'putil.test._get_fargs: func (26-61)\n'
+            'putil.test.assert_arg_invalid: func (62-93)\n'
+            'putil.test.assert_exception: func (94-177)\n'
+            'putil.test.assert_ro_prop: func (178-198)\n'
+            'putil.test.comp_list_of_dicts: func (199-213)\n'
+            'putil.test.exception_type_str: func (214-231)\n'
+            'putil.test.get_exmsg: func (232-246)'
         )
         if str(obj) != rtext:
             print('Actual text:')
@@ -602,29 +564,15 @@ class TestCallables(object):
         """ Test load method exceptions """
         obj = putil.pinspect.Callables()
         for item in [True, 5]:
-            putil.test.assert_exception(
-                obj.load,
-                {'callables_fname':item},
-                RuntimeError,
-                'Argument `callables_fname` is not valid'
-            )
-        putil.test.assert_exception(
-            obj.load,
-            {'callables_fname':'_not_a_file_'},
-            OSError,
-            'File _not_a_file_ could not be found'
-        )
+            AI(obj.load, 'callables_fname', callables_fname=item)
+        exmsg = 'File _not_a_file_ could not be found'
+        AE(obj.load, OSError, exmsg, callables_fname='_not_a_file_')
 
     def test_save_exceptions(self):
         """ Test save method exceptions """
         obj = putil.pinspect.Callables()
         for item in [True, 5]:
-            putil.test.assert_exception(
-                obj.save,
-                {'callables_fname':item},
-                RuntimeError,
-                'Argument `callables_fname` is not valid'
-            )
+            AI(obj.save, 'callables_fname', callables_fname=item)
 
     def test_trace(self):
         """ Test trace method behavior """
@@ -774,66 +722,67 @@ class TestCallables(object):
         ref.append('   tests.test_exdoc.MockGetFrame')
         ref.append('   tests.test_exdoc.TestExDoc')
         ref.append('   tests.test_exdoc.TestExDocCxt')
-        ref.append('tests.test_exdoc.exdocobj: func (50-83)')
-        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (55-60)')
-        ref.append('tests.test_exdoc.exdocobj_raised: func (84-97)')
-        ref.append('tests.test_exdoc.exdocobj_single: func (98-107)')
-        ref.append('tests.test_exdoc.simple_exobj: func (108-125)')
-        ref.append('tests.test_exdoc.simple_exobj.func1: func (113-118)')
-        ref.append('tests.test_exdoc.mock_getframe: func (126-129)')
-        ref.append('tests.test_exdoc.trace_error_class: func (130-141)')
-        ref.append('tests.test_exdoc.MockFCode: class (142-147)')
-        ref.append('tests.test_exdoc.MockFCode.__init__: meth (143-147)')
-        ref.append('tests.test_exdoc.MockGetFrame: class (148-155)')
-        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (149-155)')
-        ref.append('tests.test_exdoc.TestExDocCxt: class (156-302)')
-        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (158-239)')
+        ref.append('tests.test_exdoc.exdocobj: func (51-84)')
+        ref.append('tests.test_exdoc.exdocobj.multi_level_write: func (56-61)')
+        ref.append('tests.test_exdoc.exdocobj_raised: func (85-98)')
+        ref.append('tests.test_exdoc.exdocobj_single: func (99-108)')
+        ref.append('tests.test_exdoc.simple_exobj: func (109-126)')
+        ref.append('tests.test_exdoc.simple_exobj.func1: func (114-119)')
+        ref.append('tests.test_exdoc.mock_getframe: func (127-130)')
+        ref.append('tests.test_exdoc.trace_error_class: func (131-142)')
+        ref.append('tests.test_exdoc.MockFCode: class (143-148)')
+        ref.append('tests.test_exdoc.MockFCode.__init__: meth (144-148)')
+        ref.append('tests.test_exdoc.MockGetFrame: class (149-156)')
+        ref.append('tests.test_exdoc.MockGetFrame.__init__: meth (150-156)')
+        ref.append('tests.test_exdoc.TestExDocCxt: class (157-280)')
+        ref.append('tests.test_exdoc.TestExDocCxt.test_init: meth (159-217)')
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_init.func0: func (160-169)'
+            'tests.test_exdoc.TestExDocCxt.test_init.func0: func (161-170)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_multiple: meth (240-280)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple: meth (218-258)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_multiple.func1: func (242-251)'
+            'tests.test_exdoc.TestExDocCxt.test_multiple.func1: func (220-229)'
         )
         ref.append(
             'tests.test_exdoc.TestExDocCxt.test_multiple.test_trace: '
-            'func (252-269)'
+            'func (230-247)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDocCxt.test_save_callables: meth (281-302)'
+            'tests.test_exdoc.TestExDocCxt.test_save_callables: '
+            'meth (259-280)'
         )
-        ref.append('tests.test_exdoc.TestExDoc: class (303-918)')
-        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (305-354)')
-        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (355-368)')
+        ref.append('tests.test_exdoc.TestExDoc: class (281-810)')
+        ref.append('tests.test_exdoc.TestExDoc.test_init: meth (283-299)')
+        ref.append('tests.test_exdoc.TestExDoc.test_copy: meth (300-313)')
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_build_ex_tree: meth (369-476)'
+            'tests.test_exdoc.TestExDoc.test_build_ex_tree: meth (314-416)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.func1: '
-            'func (376-381)'
+            'func (321-326)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes1: '
-            'func (383-384)'
+            'func (328-329)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes2: '
-            'func (385-386)'
+            'func (330-331)'
         )
         ref.append(
             'tests.test_exdoc.TestExDoc.test_build_ex_tree.mock_add_nodes3: '
-            'func (387-388)'
+            'func (332-333)'
         )
-        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (477-486)')
-        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (487-496)')
+        ref.append('tests.test_exdoc.TestExDoc.test_depth: meth (417-426)')
+        ref.append('tests.test_exdoc.TestExDoc.test_exclude: meth (427-436)')
         ref.append(
             'tests.test_exdoc.TestExDoc.test_get_sphinx_autodoc: '
-            'meth (497-524)'
+            'meth (437-464)'
         )
         ref.append(
-            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: meth (525-918)'
+            'tests.test_exdoc.TestExDoc.test_get_sphinx_doc: meth (465-810)'
         )
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
@@ -866,6 +815,36 @@ class TestCallables(object):
         xobj.trace(
             [sys.modules['tests.support.pinspect_support_module_4'].__file__]
         )
+        import tests.support.pinspect_support_module_10
+        xobj = putil.pinspect.Callables(
+            [sys.modules['tests.support.pinspect_support_module_10'].__file__]
+        )
+        ref = list()
+        mname = 'tests.support.pinspect_support_module_10'
+        ref.append('Modules:')
+        ref.append('   {0}'.format(mname))
+        ref.append('Classes:')
+        ref.append('   {0}.AClass'.format(mname))
+        ref.append('   {0}.AClass.method1.SubClass'.format(mname))
+        ref.append('{0}.AClass: class (6-28)'.format(mname))
+        ref.append('{0}.AClass.method1: meth (12-25)'.format(mname))
+        ref.append('{0}.AClass.method1.func1: func (15-18)'.format(mname))
+        ref.append('{0}.AClass.method1.SubClass: class (20-23)'.format(mname))
+        ref.append(
+            '{0}.AClass.method1.SubClass.__init__: meth (22-23)'.format(mname)
+        )
+        ref.append('{0}.AClass.method2: meth (26-28)'.format(mname))
+        ref_txt = '\n'.join(ref)
+        actual_txt = str(xobj)
+        if actual_txt != ref_txt:
+            print('Actual text')
+            print('-----------')
+            print(actual_txt)
+            print('Reference text')
+            print('--------------')
+            print(ref_txt)
+        assert actual_txt == ref_txt
+
 
     def test_callables_db(self):
         """ Test callables_db property """

@@ -191,23 +191,12 @@ def test_pcontracts_doccode():
     def funcb(name):
         print('My name is {0}'.format(name))
     putil.test.assert_exception(
-        funca,
-        {'name':''},
-        RuntimeError,
-        'Only one exception'
+        funca, RuntimeError, 'Only one exception', name=''
     )
     funca('John')
+    putil.test.assert_exception(funcb, RuntimeError, 'Empty', name='')
     putil.test.assert_exception(
-        funcb,
-        {'name':''},
-        RuntimeError,
-        'Empty'
-    )
-    putil.test.assert_exception(
-        funcb,
-        {'name':'[Bracket]'},
-        RuntimeError,
-        'Invalid name'
+        funcb, RuntimeError, 'Invalid name', name='[Bracket]',
     )
     funcb('John')
 
@@ -225,27 +214,20 @@ def test_pcontracts_doccode():
     @putil.pcontracts.contract(name='custom_contract1')
     def func1(name):
         return name
-    putil.test.assert_exception(
-        func1, {'name':''}, RuntimeError, 'Invalid name'
-    )
+    putil.test.assert_exception(func1, RuntimeError, 'Invalid name', name='')
     assert func1('John') == 'John'
     # Contract 2
     @putil.pcontracts.contract(name='custom_contract2')
     def func2(name):
         return name
-    putil.test.assert_exception(
-        func2, {'name':''}, RuntimeError, 'Invalid name'
-    )
+    putil.test.assert_exception(func2, RuntimeError, 'Invalid name', name='')
     assert func2('John') == 'John'
     # Contract 3
     @putil.pcontracts.contract(name='custom_contract3')
     def func3(name):
         return name
     putil.test.assert_exception(
-        func3,
-        {'name':''},
-        ValueError,
-        'Argument `name` is not valid'
+        func3, ValueError, 'Argument `name` is not valid', name=''
     )
     assert func3('John') == 'John'
     # Contract 4
@@ -253,56 +235,41 @@ def test_pcontracts_doccode():
     def func4(name):
         return name
     putil.test.assert_exception(
-        func4,
-        {'name':''},
-        ValueError,
-        'Argument `name` is not valid'
+        func4, ValueError, 'Argument `name` is not valid', name=''
     )
     assert func4('John') == 'John'
     # Contract 5
     @putil.pcontracts.contract(name='custom_contract5')
     def func5(name):
         return name
-    putil.test.assert_exception(
-        func5, {'name':''}, RuntimeError, 'Invalid name'
-    )
+    putil.test.assert_exception(func5, RuntimeError, 'Invalid name', name='')
     assert func5('John') == 'John'
     # Contract 6
     @putil.pcontracts.contract(name='custom_contract6')
     def func6(name):
         return name
-    putil.test.assert_exception(
-        func6, {'name':''}, RuntimeError, 'Invalid name'
-    )
+    putil.test.assert_exception(func6, RuntimeError, 'Invalid name', name='')
     assert func6('John') == 'John'
     # Contract 7
     @putil.pcontracts.contract(name='custom_contract7')
     def func7(name):
         return name
     putil.test.assert_exception(
-        func7,
-        {'name':''},
-        OSError,
-        'File could not be opened'
+        func7, OSError, 'File could not be opened', name=''
     )
     assert func7('John') == 'John'
     # Contract 8
     @putil.pcontracts.contract(name='custom_contract8')
     def func8(name):
         return name
-    putil.test.assert_exception(
-        func8, {'name':''}, RuntimeError, 'Invalid name'
-    )
+    putil.test.assert_exception(func8, RuntimeError, 'Invalid name', name='')
     assert func8('John') == 'John'
     # Contract 9
     @putil.pcontracts.contract(name='custom_contract9')
     def func9(name):
         return name
     putil.test.assert_exception(
-        func9,
-        {'name':''},
-        TypeError,
-        'Argument `name` is not valid'
+        func9, TypeError, 'Argument `name` is not valid', name=''
     )
     assert func9('John') == 'John'
     # Contract 10
@@ -310,10 +277,7 @@ def test_pcontracts_doccode():
     def func10(name):
         return name
     putil.test.assert_exception(
-        func10,
-        {'name':''},
-        RuntimeError,
-        'Argument `name` is not valid'
+        func10, RuntimeError, 'Argument `name` is not valid', name=''
     )
     assert func10('John') == 'John'
 

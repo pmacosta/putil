@@ -3,11 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
+# Standard library imports
+from itertools import product
 # PyPI imports
 import pytest
 # Putil imports
 import putil.pcsv
-import putil.test
+from putil.test import AE, AI, RE
 from tests.pcsv.files import (
     write_cols_not_unique,
     write_file,
@@ -197,6 +199,8 @@ def test_merge():
 @pytest.mark.merge
 def test_merge_exceptions():
     """ Test merge function exceptions """
+    # pylint: disable=R0914
+    obj = putil.pcsv.merge
     # Input file exceptions
     file_items = [5, 'some_file\0']
     dfilter_items = [
@@ -213,233 +217,81 @@ def test_merge_exceptions():
         with putil.misc.TmpFile(write_file) as real_file:
             fname1 = '_dummy_file_' if not file_toggle else real_file
             fname2 = real_file if not file_toggle else '_dummy_file_'
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['a'],
-                    'fname2':fname2,
-                    'dfilter2':['b']
-                },
-                OSError,
-                'File _dummy_file_ could not be found'
-            )
+            exmsg = 'File _dummy_file_ could not be found'
+            AE(obj, OSError, exmsg, fname1, fname2, ['a'], ['b'])
             for item in file_items:
                 fname1 = item if not file_toggle else real_file
                 fname2 = real_file if not file_toggle else item
-                putil.test.assert_exception(
-                    putil.pcsv.merge,
-                    {
-                        'fname1':fname1,
-                        'dfilter1':['a'],
-                        'fname2':fname2,
-                        'dfilter2':['b']
-                    },
-                    RuntimeError,
-                    'Argument `*[{0}]*` is not valid'.format(
-                        'fname1' if not file_toggle else 'fname2'
-                    )
-                )
+                par = 'fname1' if not file_toggle else 'fname2'
+                AI(obj, par, fname1, fname2, ['a'], ['b'])
+        dfilter = ['Ctrl']
         with putil.misc.TmpFile(write_file_empty) as empty_file:
             with putil.misc.TmpFile(write_file) as real_file:
                 fname1 = empty_file if not file_toggle else real_file
                 fname2 = real_file if not file_toggle else empty_file
-                putil.test.assert_exception(
-                    putil.pcsv.merge,
-                    {
-                        'fname1':fname1,
-                        'dfilter1':['Ctrl'],
-                        'fname2':fname2,
-                        'dfilter2':['Ctrl']
-                    },
-                    RuntimeError,
-                    r'File (.+) is empty'
-                )
+                exmsg = r'File (.+) is empty'
+                AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter)
         with putil.misc.TmpFile(write_cols_not_unique) as nuniq_file:
             with putil.misc.TmpFile(write_file) as real_file:
                 fname1 = nuniq_file if not file_toggle else real_file
                 fname2 = real_file if not file_toggle else nuniq_file
-                putil.test.assert_exception(
-                    putil.pcsv.merge,
-                    {
-                        'fname1':fname1,
-                        'dfilter1':['Ctrl'],
-                        'fname2':fname2,
-                        'dfilter2':['Ctrl']
-                    },
-                    RuntimeError,
-                    'Column headers are not unique in file (.+)'
-                )
+                exmsg = 'Column headers are not unique in file (.+)'
+                AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter)
         # Filter-related exceptions
         with putil.misc.TmpFile(write_file) as fname1:
             with putil.misc.TmpFile(write_file) as fname2:
                 for item in dfilter_items:
                     dfilter1 = item if not file_toggle else ['Ctrl']
                     dfilter2 = ['Ctrl'] if not file_toggle else item
-                    putil.test.assert_exception(
-                        putil.pcsv.merge,
-                        {
-                            'fname1':fname1,
-                            'dfilter1':dfilter1,
-                            'fname2':fname2,
-                            'dfilter2':dfilter2
-                        },
-                        RuntimeError,
-                        'Argument `{0}` is not valid'.format(
-                            'dfilter1' if not file_toggle else 'dfilter2'
-                        )
-                    )
+                    par = 'dfilter1' if not file_toggle else 'dfilter2'
+                    AI(obj, par, fname1, fname2, dfilter1, dfilter2)
                 item = (['Ctrl'], {'aaa':5})
                 dfilter1 = item if not file_toggle else ['Ctrl']
                 dfilter2 = ['Ctrl'] if not file_toggle else item
-                putil.test.assert_exception(
-                    putil.pcsv.merge,
-                    {
-                        'fname1':fname1,
-                        'dfilter1':dfilter1,
-                        'fname2':fname2,
-                        'dfilter2':dfilter2
-                    },
-                    ValueError,
-                    'Column aaa not found'
-                )
+                exmsg = 'Column aaa not found'
+                AE(obj, ValueError, exmsg, fname1, fname2, dfilter1, dfilter2)
                 # Columns-related exceptions
                 dfilter1 = ['NoCol'] if not file_toggle else ['Ref']
                 dfilter2 = ['Ref'] if not file_toggle else ['NoCol']
-                putil.test.assert_exception(
-                    putil.pcsv.merge,
-                    {
-                        'fname1':fname1,
-                        'dfilter1':dfilter1,
-                        'fname2':fname2,
-                        'dfilter2':dfilter2
-                    },
-                    ValueError,
-                    'Column NoCol not found'
-                )
+                exmsg = 'Column NoCol not found'
+                AE(obj, ValueError, exmsg, fname1, fname2, dfilter1, dfilter2)
                 dfilter1 = ['0'] if not file_toggle else ['Ref']
                 dfilter2 = ['Ref'] if not file_toggle else ['0']
-                putil.test.assert_exception(
-                    putil.pcsv.merge,
-                    {
-                        'fname1':fname1,
-                        'has_header1':file_toggle,
-                        'dfilter1':dfilter1,
-                        'fname2':fname2,
-                        'dfilter2':dfilter2,
-                        'has_header2':not file_toggle,
-                    },
-                    RuntimeError,
-                    'Invalid column specification'
+                exmsg = 'Invalid column specification'
+                AE(
+                    obj, RE, exmsg,
+                    fname1, fname2,
+                    dfilter1, dfilter2,
+                    has_header1=file_toggle, has_header2=not file_toggle
                 )
     with putil.misc.TmpFile(write_file) as fname1:
         with putil.misc.TmpFile(write_file) as fname2:
             # Invalid row_start
-            for item in ['a', True, -1]:
-                for par in ['frow1', 'frow2']:
-                    putil.test.assert_exception(
-                        putil.pcsv.merge,
-                        {
-                            'fname1':fname1,
-                            'dfilter1':['Ctrl'],
-                            'fname2':fname2,
-                            'dfilter2':['Ctrl'],
-                            par:item,
-                        },
-                        RuntimeError,
-                        'Argument `{0}` is not valid'.format(par)
-                    )
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['Ctrl'],
-                    'fname2':fname2,
-                    'dfilter2':['Ctrl'],
-                    'frow1':200,
-                },
-                RuntimeError,
-                'File {0} has no valid data'.format(fname1)
-            )
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['Ctrl'],
-                    'fname2':fname2,
-                    'dfilter2':['Ctrl'],
-                    'frow2':200,
-                },
-                RuntimeError,
-                'File {0} has no valid data'.format(fname2)
-            )
+            for item, par in product(['a', True, -1], ['frow1', 'frow2']):
+                AI(obj, par, fname1, fname2, ['Ctrl'], ['Ctrl'], **{par:item})
+            exmsg = 'File {0} has no valid data'.format(fname1)
+            AE(obj, RE, exmsg, fname1, fname2, ['Ctrl'], ['Ctrl'], frow1=200)
+            exmsg = 'File {0} has no valid data'.format(fname2)
+            AE(obj, RE, exmsg, fname1, fname2, ['Ctrl'], ['Ctrl'], frow2=200)
     with putil.misc.TmpFile(write_file) as fname1:
         with putil.misc.TmpFile(write_file) as fname2:
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['Ctrl'],
-                    'fname2':fname2,
-                    'dfilter2':['Ref'],
-                    'ocols':['a', 'b', 'c']
-                },
-                RuntimeError,
-                (
-                    'Combined columns in data files and output '
-                    'columns are different'
-                )
+            exmsg = (
+                'Combined columns in data files and output '
+                'columns are different'
+            )
+            AE(
+                obj, RE, exmsg,
+                fname1, fname2, ['Ctrl'], ['Ref'], ocols=['a', 'b', 'c']
             )
     # Output file exceptions
     with putil.misc.TmpFile(write_file) as fname1:
         with putil.misc.TmpFile(write_file) as fname2:
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['Ctrl'],
-                    'fname2':fname2,
-                    'dfilter2':['Ref'],
-                    'ofname':7
-                },
-                RuntimeError,
-                'Argument `ofname` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['Ctrl'],
-                    'fname2':fname2,
-                    'dfilter2':['Ref'],
-                    'ofname':'a_file\0'
-                },
-                RuntimeError,
-                'Argument `ofname` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['Ctrl'],
-                    'fname2':fname2,
-                    'dfilter2':['Ref'],
-                    'ofname':'some_file.csv',
-                    'ocols':7
-                },
-                RuntimeError,
-                'Argument `ocols` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.pcsv.merge,
-                {
-                    'fname1':fname1,
-                    'dfilter1':['Ctrl'],
-                    'fname2':fname2,
-                    'dfilter2':['Ref'],
-                    'ofname':'some_file.csv',
-                    'ocols':['a', 'b', 5]
-                },
-                RuntimeError,
-                'Argument `ocols` is not valid'
-            )
+            par = 'ofname'
+            for item in [7, 'a_file\0']:
+                AI(obj, par, fname1, fname2, dfilter, ['Ref'], ofname=item)
+            fname = 'some_file.csv'
+            for item in [7, ['a', 'b', 5]]:
+                AI(
+                    obj, 'ocols', fname1, fname2, dfilter, ['Ref'],
+                    ofname=fname, ocols=item
+                )

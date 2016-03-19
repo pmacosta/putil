@@ -11,10 +11,17 @@ import matplotlib
 import numpy
 import pytest
 # Putil imports
+from putil.test import AE, AI, AROPROP, RE
 import putil.plot
 from .fixtures import compare_image_set
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_series_images
+
+
+###
+# Global variables
+###
+FOBJ = putil.plot.Series
 
 
 ###
@@ -102,16 +109,7 @@ class TestSeries(object):
     @pytest.mark.series
     def test_color_exceptions(self, default_source):
         """ Test color property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {
-                'data_source':default_source,
-                'label':'test',
-                'color':default_source
-            },
-            RuntimeError,
-            'Argument `color` is not valid'
-        )
+        AI(FOBJ, 'color', default_source, 'test', color=default_source)
         items = [
             'invalid_color_name',
             -0.01,
@@ -125,13 +123,9 @@ class TestSeries(object):
             [1, 1, 2, 1],
             (1, 1, 1, -1)
         ]
+        exmsg = 'Invalid color specification'
         for item in items:
-            putil.test.assert_exception(
-                putil.plot.Series,
-                {'data_source':default_source, 'label':'test', 'color':item},
-                TypeError,
-                'Invalid color specification'
-            )
+            AE(FOBJ, TypeError, exmsg, default_source, 'test', item)
 
     def test_data_source(self, default_source):
         """ Test data source property exception """
@@ -158,26 +152,14 @@ class TestSeries(object):
             dep_var=numpy.array([10, 20, 30, 40])
         )
         obj._indep_var = None
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':obj, 'label':'test'},
-            RuntimeError,
-            'Argument `data_source` is not fully specified'
-        )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':5, 'label':'test'},
-            RuntimeError,
-            'Argument `data_source` does not have an `indep_var` attribute'
-        )
+        exmsg = 'Argument `data_source` is not fully specified'
+        AE(FOBJ, RE, exmsg, obj, 'test')
+        exmsg = 'Argument `data_source` does not have an `indep_var` attribute'
+        AE(FOBJ, RE, exmsg, 5, 'test')
         obj = TestSource()
         obj.indep_var = numpy.array([5, 6, 7, 8])
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':obj, 'label':'test'},
-            RuntimeError,
-            'Argument `data_source` does not have an `dep_var` attribute'
-        )
+        exmsg = 'Argument `data_source` does not have an `dep_var` attribute'
+        AE(FOBJ, RE, exmsg, obj, 'test')
 
     def test_interp(self, default_source):
         """ Test interp property behavior """
@@ -210,33 +192,18 @@ class TestSeries(object):
     @pytest.mark.series
     def test_interp_exceptions(self, default_source):
         """ Test interp property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'interp':5},
-            RuntimeError,
-            'Argument `interp` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {
-                'data_source':default_source,
-                'label':'test',
-                'interp':'NOT_AN_OPTION'
-            },
-            ValueError,
+        AI(FOBJ, 'interp', default_source, 'test', interp=5)
+        exmsg = (
             "Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', "
             "'LINREG'] (case insensitive)"
         )
+        AE(FOBJ, ValueError, exmsg, default_source, 'test', interp='NO_OPTION')
         source_obj = putil.plot.BasicSource(
             indep_var=numpy.array([5]),
             dep_var=numpy.array([0])
         )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':source_obj, 'label':'test', 'interp':'CUBIC'},
-            ValueError,
-            'At least 4 data points are needed for CUBIC interpolation'
-        )
+        exmsg = 'At least 4 data points are needed for CUBIC interpolation'
+        AE(FOBJ, ValueError, exmsg, source_obj, 'test', interp='CUBIC')
 
     def test_label(self, default_source):
         """ Test label property behavior """
@@ -247,12 +214,7 @@ class TestSeries(object):
     @pytest.mark.series
     def test_label_exceptions(self, default_source):
         """ Test label property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':5},
-            RuntimeError,
-            'Argument `label` is not valid'
-        )
+        AI(FOBJ, 'label', default_source, 5)
 
     def test_line_style(self, default_source):
         """ Test line_style property behavior """
@@ -276,18 +238,9 @@ class TestSeries(object):
     @pytest.mark.series
     def test_line_style_exceptions(self, default_source):
         """ Test line_style property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'line_style':5},
-            RuntimeError,
-            'Argument `line_style` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'line_style':'x'},
-            ValueError,
-            "Argument `line_style` is not one of ['-', '--', '-.', ':']"
-        )
+        AI(FOBJ, 'line_style', default_source, 'test', line_style=5)
+        exmsg = "Argument `line_style` is not one of ['-', '--', '-.', ':']"
+        AE(FOBJ, ValueError, exmsg, default_source, 'test', line_style='x')
 
     def test_marker(self, default_source):
         """ Test marker property behavior """
@@ -309,12 +262,7 @@ class TestSeries(object):
     @pytest.mark.series
     def test_marker_exceptions(self, default_source):
         """ Test marker property exceptions  """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'marker':'hello'},
-            RuntimeError,
-            'Argument `marker` is not valid'
-        )
+        AI(FOBJ, 'marker', default_source, 'test', marker='hello')
 
     def test_secondary_axis(self, default_source):
         """ Test secondary_axis property behavior """
@@ -340,12 +288,7 @@ class TestSeries(object):
     @pytest.mark.series
     def test_secondary_axis_exceptions(self, default_source):
         """ Test secondary_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'secondary_axis':5},
-            RuntimeError,
-            'Argument `secondary_axis` is not valid'
-        )
+        AI(FOBJ, 'secondary_axis', default_source, 'test', secondary_axis=5)
 
     ### Miscellaneous
     def test_calculate_curve(self, default_source):
@@ -403,27 +346,17 @@ class TestSeries(object):
         Test that del method raises an exception on all class attributes
         """
         obj = putil.plot.Series(data_source=default_source, label='test')
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.data_source
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.label
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.color
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.marker
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.interp
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.line_style
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.secondary_axis
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        props = [
+            'data_source',
+            'label',
+            'color',
+            'marker',
+            'interp',
+            'line_style',
+            'secondary_axis'
+        ]
+        for prop in props:
+            AROPROP(obj, prop)
 
     def test_images(self, tmpdir):
         """ Compare images to verify correct plotting of series """

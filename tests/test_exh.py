@@ -1,3 +1,4 @@
+
 # test_exh.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
@@ -6,8 +7,8 @@
 
 # Standard library imports
 from __future__ import print_function
+import collections
 import copy
-import functools
 import os
 import re
 import sys
@@ -23,7 +24,7 @@ import putil.eng
 import putil.exh
 import putil.misc
 import putil.pcontracts
-import putil.test
+from putil.test import AE, AI, AROPROP, CLDICTS, GET_EXMSG
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
 sys.path.append(SUPPORT_DIR)
@@ -52,8 +53,8 @@ def exec_function(source, filename, global_map):
 ###
 # Global variables
 ###
-AE = functools.partial(putil.test.assert_exception, extype=RuntimeError)
-
+CTNAME = 'tests.test_exh.TestExHandle'
+PENG_FNAME = sys.modules['putil.eng'].__file__
 
 ###
 # Helper functions
@@ -66,7 +67,7 @@ sarg = lambda msg: 'Argument `{0}` is not valid'.format(msg)
 ###
 def test_star_exh_obj():
     """ Test [get|set|del]_exh_obj() function behavior """
-    AE(putil.exh.set_exh_obj, {'obj':5}, exmsg=sarg('obj'))
+    AI(putil.exh.set_exh_obj, 'obj', obj=5)
     # set_exh_obj function
     exobj = putil.exh.ExHandle()
     putil.exh.set_exh_obj(exobj)
@@ -91,15 +92,14 @@ def test_star_exh_obj():
     putil.exh.del_exh_obj()
     # get_or_create_exh_obj function
     obj = putil.exh.get_or_create_exh_obj
-    AE(obj, {'full_cname':5}, exmsg=sarg('full_cname'))
-    AE(obj, {'exclude':5}, exmsg=sarg('exclude'))
-    AE(obj, {'callables_fname':True}, exmsg=sarg('callables_fname'))
+    AI(obj, 'full_cname', full_cname=5)
+    AI(obj, 'exclude', exclude=5)
+    AI(obj, 'callables_fname', callables_fname=True)
     args = {'callables_fname':'_not_a_file_'}
     msg = 'File _not_a_file_ could not be found'
-    putil.test.assert_exception(obj, args, OSError, msg)
+    AE(obj, OSError, msg, **args)
     # exclude parameter
-    putil_eng_fname = sys.modules['putil.eng'].__file__
-    pobj = putil.pinspect.Callables([putil_eng_fname])
+    pobj = putil.pinspect.Callables([PENG_FNAME])
     new_exh_obj = putil.exh.get_or_create_exh_obj(exclude=['putil.eng'])
     new_exh_obj._exclude = ['putil.eng']
     putil.exh.del_exh_obj()
@@ -112,8 +112,7 @@ def test_star_exh_obj():
 
 
 @pytest.mark.parametrize(
-    'arg, ref',
-    [
+    'arg, ref', [
         (RuntimeError, 'RuntimeError'),
         (OSError, 'OSError')
     ]
@@ -129,13 +128,13 @@ class TestExHandle(object):
         """ Test constructor behavior """
         # Exceptions
         obj = putil.exh.ExHandle
-        AE(obj, {'full_cname':5}, exmsg=sarg('full_cname'))
-        AE(obj, {'exclude':5}, exmsg=sarg('exclude'))
-        AE(obj, {'exclude':['p', 'a', 5, 'c']}, exmsg=sarg('exclude'))
-        AE(obj, {'callables_fname':True}, exmsg=sarg('callables_fname'))
+        AI(obj, 'full_cname', full_cname=5)
+        AI(obj, 'exclude', exclude=5)
+        AI(obj, 'exclude', exclude=['p', 'a', 5, 'c'])
+        AI(obj, 'callables_fname', callables_fname=True)
         arg = {'exclude':['sys', '_not_a_module_']}
         msg = 'Source for module _not_a_module_ could not be found'
-        putil.test.assert_exception(obj, arg, ValueError, msg)
+        AE(obj, ValueError, msg, **arg)
         arg = {'callables_fname':'_not_an_existing_file_'}
         msg = 'File _not_an_existing_file_ could not be found'
         # Functionality
@@ -156,39 +155,24 @@ class TestExHandle(object):
         assert exobj._exclude_list == [
             sys.modules['putil.exh'].__file__.replace('.pyc', '.py')
         ]
-        pobj = putil.pinspect.Callables(
-            [sys.modules['putil.eng'].__file__]
-        )
+        pobj = putil.pinspect.Callables([PENG_FNAME])
         with putil.misc.TmpFile() as fname:
             pobj.save(fname)
             exobj = putil.exh.ExHandle(callables_fname=fname)
         assert pobj == exobj._callables_obj
 
     @pytest.mark.parametrize(
-        'args, extype, exname',
-        [
-            (
-                {'exname':5, 'extype':RuntimeError, 'exmsg':'Message'},
-                RuntimeError,
-                'Argument `exname` is not valid'
-            ),
-            (
-                {'exname':'exception', 'extype':5, 'exmsg':'Message'},
-                RuntimeError,
-                'Argument `extype` is not valid'
-            ),
-            (
-                {'exname':'exception', 'extype':RuntimeError, 'exmsg':True},
-                RuntimeError,
-                'Argument `exmsg` is not valid'
-            ),
+        'args, extype, exname', [
+            ((5, RuntimeError, 'Message'), RuntimeError, sarg('exname')),
+            (('exception', 5, 'Message'), RuntimeError, sarg('extype')),
+            (('exception', RuntimeError, True), RuntimeError, sarg('exmsg'))
         ]
     )
     @pytest.mark.parametrize('full_cname', [True, False])
     def test_add_exception_exceptions(self, full_cname, args, extype, exname):
         """ Test add_exception() method exceptions """
         obj = putil.exh.ExHandle(full_cname).add_exception
-        putil.test.assert_exception(obj, args, extype, exname)
+        AE(obj, extype, exname, *args)
         # These should not raise an exception
         obj = putil.exh.ExHandle(full_cname)
         obj.add_exception(exname='name1', extype=RuntimeError, exmsg='desc1')
@@ -197,16 +181,74 @@ class TestExHandle(object):
     def test_add_exception(self):
         """ Test add_exception() function behavior """
         # pylint: disable=E0602,W0613
+        # Functions that are going to be traced
+        def func1():
+            aobj('first_exception', TypeError, dmsg('first'))
+            print("Hello")
+        def prop_decorator(func):
+            return func
+        @putil.pcontracts.contract(text=str)
+        @prop_decorator
+        def func2(text):
+            aobj('second_exception', ValueError, dmsg('second'))
+            aobj('third_exception', OSError, dmsg('third'))
+            print(text)
+        class Class1(object):
+            def __init__(self, exobj):
+                self._value = None
+                self._aobj = exobj.add_exception
+            @property
+            def value3(self):
+                self._aobj('getter_exception', TypeError, pmsg('Get'))
+                return self._value
+            @value3.setter
+            @putil.pcontracts.contract(value=int)
+            def value3(self, value):
+                self._aobj('setter_exception', TypeError, pmsg('Set'))
+                self._value = value
+            @value3.deleter
+            def value3(self):
+                self._aobj('deleter_exception', TypeError, pmsg('Delete'))
+                print('Cannot delete attribute')
+            def _get_value4_int(self):
+                self._aobj('dummy_exception', OSError, 'Bypass exception')
+                return self._value
+            def _get_value4(self):
+                return self._get_value4_int()
+            value4 = property(_get_value4)
+        def func7():
+            aobj(emsg(7), TypeError, mmsg(7))
+        def func8():
+            aobj(emsg(8), TypeError, mmsg(8))
+        def func9():
+            aobj(emsg(9), TypeError, mmsg(9))
+        def func10():
+            aobj(emsg(10), TypeError, mmsg(10))
+        def func11():
+            aobj(emsg(11), TypeError, mmsg(11))
+        def func12():
+            aobj(emsg(12), TypeError, mmsg(12))
+        def func13():
+            aobj(emsg(13), TypeError, mmsg(13))
+        def func14():
+            aobj(emsg(14), TypeError, mmsg(14))
+        # Add a function via exec
+        iftxt = (
+            "def func15(exobj):"
+            "   aobj(emsg(15), TypeError, mmsg(15))"
+        )
+        gmap = locals()
+        exec_function(iftxt, '<exec_function>', gmap)
+        func15 = gmap['func15']
         # Helper functions
         dmsg = lambda msg: 'This is the {0} exception'.format(msg)
         emsg = lambda num: 'total_exception_{0}'.format(num)
         mmsg = lambda num: 'Total exception #{0}'.format(num)
         pmsg = lambda msg: '{0} function exception'.format(msg)
-        root = 'tests.test_exh.TestExHandle.test_add_exception'
+        root = CTNAME+'.test_add_exception'
         # Assertions
         exobj = putil.exh.ExHandle(
-            full_cname=True,
-            exclude=['_pytest', 'tests.test_exh']
+            full_cname=True, exclude=['_pytest', 'tests.test_exh']
         )
         assert exobj.exceptions_db == []
         # Generate all possible combinations of full_cname and exclude options
@@ -215,67 +257,6 @@ class TestExHandle(object):
         for full_cname, exclude in combinations:
             exobj = putil.exh.ExHandle(full_cname=full_cname, exclude=exclude)
             aobj = exobj.add_exception
-            # Functions that are going to be traced
-            def func1():
-                aobj('first_exception', TypeError, dmsg('first'))
-                print("Hello")
-            def prop_decorator(func):
-                return func
-            @putil.pcontracts.contract(text=str)
-            @prop_decorator
-            def func2(text):
-                aobj('second_exception', ValueError, dmsg('second'))
-                aobj('third_exception', OSError, dmsg('third'))
-                print(text)
-            class Class1(object):
-                def __init__(self, exobj):
-                    self._value = None
-                    self._aobj = exobj.add_exception
-                @property
-                def value3(self):
-                    self._aobj('getter_exception', TypeError, pmsg('Get'))
-                    return self._value
-                @value3.setter
-                @putil.pcontracts.contract(value=int)
-                def value3(self, value):
-                    self._aobj('setter_exception', TypeError, pmsg('Set'))
-                    self._value = value
-                @value3.deleter
-                def value3(self):
-                    self._aobj('deleter_exception', TypeError, pmsg('Delete'))
-                    print('Cannot delete attribute')
-                def _get_value4_int(self):
-                    self._aobj(
-                        'dummy_exception', OSError, 'Pass-through exception'
-                    )
-                    return self._value
-                def _get_value4(self):
-                    return self._get_value4_int()
-                value4 = property(_get_value4)
-            def func7():
-                aobj(emsg(7), TypeError, mmsg(7))
-            def func8():
-                aobj(emsg(8), TypeError, mmsg(8))
-            def func9():
-                aobj(emsg(9), TypeError, mmsg(9))
-            def func10():
-                aobj(emsg(10), TypeError, mmsg(10))
-            def func11():
-                aobj(emsg(11), TypeError, mmsg(11))
-            def func12():
-                aobj(emsg(12), TypeError, mmsg(12))
-            def func13():
-                aobj(emsg(13), TypeError, mmsg(13))
-            def func14():
-                aobj(emsg(14), TypeError, mmsg(14))
-            # Add a function via exec
-            iftxt = (
-                "def func15(exobj):"
-                "   aobj(emsg(15), TypeError, mmsg(15))"
-            )
-            gmap = locals()
-            exec_function(iftxt, '<exec_function>', gmap)
-            func15 = gmap['func15']
             # Trace functions
             dobj = Class1(exobj)
             dobj.value3 = 5
@@ -310,7 +291,7 @@ class TestExHandle(object):
                 'Class1.value4(getter)',
             ]
             if full_cname and exclude:
-                template = root+'/tests.test_exh.TestExHandle.'
+                template = root+'/'+CTNAME+'.'
                 func_name = 'test_add_exception.'
                 fnames = (
                     [template+func_name+item for item in fnames[0:14]]+
@@ -322,8 +303,7 @@ class TestExHandle(object):
                 dmsg('first'), dmsg('second'), dmsg('third'),
                 pmsg('Set'), pmsg('Get'), pmsg('Delete'),
                 mmsg(7), mmsg(8), mmsg(9), mmsg(10), mmsg(11), mmsg(12),
-                mmsg(13), mmsg(14), mmsg(15), mmsg(16),
-                'Pass-through exception'
+                mmsg(13), mmsg(14), mmsg(15), mmsg(16), 'Bypass exception'
             ]
             # Test that exceptions have been added correctly to handler
             assert cdb
@@ -348,22 +328,6 @@ class TestExHandle(object):
                 assert erec['type'] == ttuple[1]
                 assert erec['msg'] == ttuple[2]
             # Test that function IDs are unique
-            repeated_found = False
-            exlist = []
-            nlist = ['/second_exception', '/third_exception']
-            match = lambda name: any([name.endswith(item) for item in nlist])
-            for exname in cdb:
-                if match(exname) and (not repeated_found):
-                    func_id = exname.split('/')[0]
-                    repeated_found = True
-                    exlist.append(func_id)
-                elif match(exname):
-                    if exname.split('/')[0] != func_id:
-                        assert False
-                else:
-                    exlist.append(exname.split('/')[0])
-            mdict = {}
-            import collections
             mdict = collections.defaultdict(lambda: [])
             for exname in cdb:
                 func_id = exname.split('/')[0]
@@ -408,37 +372,11 @@ class TestExHandle(object):
                 exobj._decode_call(call) for call in erec['function']
             ]
             assert sorted(erec.items()) == ref
-            # Test property search
-            exobj = putil.exh.ExHandle(full_cname=True, exclude=['_pytest'])
-            class MyClass(object):
-                def __init__(self, exobj):
-                    exobj.add_exception(
-                        'class_exception', OSError, 'Init exception'
-                    )
-            _ = MyClass(exobj)
-            ecb = exobj._ex_dict
-            exname = list(ecb.keys())[0]
-            erec = ecb[exname]
-            template = '{root}/{root}.MyClass.__init__'
-            ref = sorted(
-                {
-                    'function':[template.format(root=root)],
-                    'type':OSError,
-                    'msg':'Init exception',
-                    'raised': [False]
-                }.items()
-            )
-            assert re.compile(r'\d+/class_exception').match(exname)
-            erec['function'] = [
-                exobj._decode_call(call) for call in erec['function']
-            ]
-            assert sorted(erec.items()) == ref
         ###
         # Test property search
         ###
         exobj = putil.exh.ExHandle(
-            full_cname=True,
-            exclude=['_pytest', 'tests.test_exh']
+            full_cname=True, exclude=['_pytest', 'tests.test_exh']
         )
         cobj = exh_support_module_2.MyClass(exobj)
         cobj.value = 5
@@ -462,8 +400,7 @@ class TestExHandle(object):
             assert item['function'][0]
         putil.exh.set_exh_obj(
             putil.exh.ExHandle(
-                full_cname=True,
-                exclude=['_pytest', 'putil.eng']
+                full_cname=True, exclude=['_pytest', 'putil.eng']
             )
         )
         _ = putil.eng.peng(15, 3, False)
@@ -480,8 +417,7 @@ class TestExHandle(object):
         putil.exh.set_exh_obj(
             putil.exh.ExHandle(
                 full_cname=True,
-                exclude=['_pytest',
-                'tests.support.exh_support_module_1']
+                exclude=['_pytest', 'tests.support.exh_support_module_1']
             )
         )
         tests.support.exh_support_module_1.simple_exception()
@@ -491,166 +427,92 @@ class TestExHandle(object):
     def test_raise_exception_if_exceptions(self):
         """ Test raise_exception_if method exceptions """
         # pylint: disable=W0702
+        # Helper functions
+        def check_rec(mname, extype, exmsg):
+            assert erec['function'].endswith('{0}'.format(mname))
+            assert erec['type'] == extype
+            assert erec['msg'] == exmsg
+            assert erec['raised']
+        def check_str(exobj, slist, llist):
+            root = CTNAME+'.test_raise_exception_if_exceptions'
+            ref = [
+                '{0}/{0}.func_top/{0}.func_mid/{0}.func_base'.format(root),
+                '{0}/{0}.func_base'.format(root),
+                '{0}/{0}.func_mid/{0}.func_base'.format(root)
+            ]
+            pb = lambda x, nflip: x if nflip else (not x)
+            alist = ['*' if item else '' for item in llist]
+            entry = exobj._ex_dict[list(exobj._ex_dict.keys())[0]]
+            entry = exobj._ex_dict[list(exobj._ex_dict.keys())[0]]
+            assert (
+                [exobj._decode_call(item) for item in entry['function']] == ref
+            )
+            assert entry['raised'] == llist
+            stxt = str(exobj).split('\n')[3:]
+            plist = [item.endswith(' [raised]') for item in stxt]
+            assert all([pb(item, sitem) for item, sitem in zip(plist, slist)])
+            db = exobj.exceptions_db
+            exmsg = 'RuntimeError (Invalid condition)'
+            for num in range(0, 3):
+                assert db[num]['data'] == exmsg+alist[num]
+            for num, fname in zip(range(0, 3), ref):
+                assert db[num]['name'] == fname
+        # Tests
         obj = putil.exh.ExHandle()
         def func3(cond1=False, cond2=False, cond3=False, cond4=False):
             exobj = putil.exh.ExHandle()
-            exobj.add_exception(
-                'my_exception1',
-                RuntimeError,
-                'This is an exception'
+            items = (
+                (RuntimeError, 'This is an exception'),
+                (OSError, 'This is an exception with a *[fname]* field')
             )
-            exobj.add_exception(
-                'my_exception2',
-                OSError,
-                'This is an exception with a *[fname]* field'
-            )
-            exobj.raise_exception_if(
-                'my_exception1',
-                cond1,
-                edata=None
-            )
-            exobj.raise_exception_if(
-                'my_exception2',
-                cond2,
-                edata={'field':'fname', 'value':'my_file.txt'}
-            )
+            for num, (extype, exmsg) in enumerate(items):
+                exobj.add_exception('my_exception'+str(num+1), extype, exmsg)
+            exobj.raise_exception_if('my_exception1', cond1, edata=None)
+            edata = {'field':'fname', 'value':'my_file.txt'}
+            exobj.raise_exception_if('my_exception2', cond2, edata=edata)
             if cond3:
                 exobj.raise_exception_if('my_exception3', False)
-            if cond4:
-                exobj.raise_exception_if(
-                    'my_exception2',
-                    cond4,
-                    edata={'field':'not_a_field', 'value':'my_file.txt'}
-                )
+            edata = {'field':'not_a_field', 'value':'my_file.txt'}
+            exobj.raise_exception_if('my_exception2', cond4, edata=edata)
             return exobj
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {'exname':5, 'condition':False},
-            RuntimeError,
-            'Argument `exname` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {'exname':'my_exception', 'condition':5},
-            RuntimeError,
-            'Argument `condition` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {'exname':'my_exception', 'condition':False, 'edata':354},
-            RuntimeError,
-            'Argument `edata` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {
-                'exname':'my_exception',
-                'condition':False,
-                'edata':{'field':'my_field'}
-            },
-            RuntimeError,
-            'Argument `edata` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {
-                'exname':'my_exception',
-                'condition':False,
-                'edata':{'field':3, 'value':5}
-            },
-            RuntimeError,
-            'Argument `edata` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {'exname':'my_exception', 'condition':False, 'edata':{'value':5}},
-            RuntimeError,
-            'Argument `edata` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {
-                'exname':'my_exception',
-                'condition':False,
-                'edata':[
-                    {'field':'my_field1', 'value':5}, {'field':'my_field'}
-                ]
-            },
-            RuntimeError,
-            'Argument `edata` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {
-                'exname':'my_exception', 'condition':False,
-                'edata':[
-                    {'field':'my_field1', 'value':5}, {'field':3, 'value':5}
-                ]
-            },
-            RuntimeError,
-            'Argument `edata` is not valid'
-        )
-        putil.test.assert_exception(
-            obj.raise_exception_if,
-            {
-                'exname':'my_exception',
-                'condition':False,
-                'edata':[{'field':'my_field1', 'value':5}, {'value':5}]
-            },
-            RuntimeError,
-            'Argument `edata` is not valid'
-        )
-        putil.test.assert_exception(
-            func3,
-            {'cond1':True, 'cond2':False},
-            RuntimeError,
-            'This is an exception'
-        )
-        putil.test.assert_exception(
-            func3,
-            {'cond2':True},
-            OSError,
-            'This is an exception with a my_file.txt field'
-        )
-        putil.test.assert_exception(
-            func3,
-            {'cond3':True},
-            ValueError,
-            'Exception name my_exception3 not found'
-        )
-        putil.test.assert_exception(
-            func3,
-            {'cond4':True},
-            RuntimeError,
-            'Field not_a_field not in exception message'
-        )
-        exobj = func3() # Test that edata=None works
+        robj = obj.raise_exception_if
+        AI(robj, 'exname', exname=5, condition=False)
+        AI(robj, 'condition', exname='my_exception', condition=5)
+        items = [
+            354,
+            {'field':'my_field'},
+            {'field':3, 'value':5},
+            {'value':5},
+            [{'field':'my_field1', 'value':5}, {'field':'my_field'}],
+            [{'field':'my_field1', 'value':5}, {'field':3, 'value':5}],
+            [{'field':'my_field1', 'value':5}, {'value':5}]
+        ]
+        for item in items:
+            AI(robj, 'edata', 'my_exception', False, item)
+        AE(func3, RuntimeError, 'This is an exception', True, False)
+        exmsg = 'This is an exception with a my_file.txt field'
+        AE(func3, OSError, exmsg, cond2=True)
+        exmsg = 'Exception name my_exception3 not found'
+        AE(func3, ValueError, exmsg, cond3=True)
+        exmsg = 'Field not_a_field not in exception message'
+        AE(func3, RuntimeError, exmsg, cond4=True)
+        # Test that edata=None works
+        exobj = func3()
         cdb = exobj._ex_dict
         if not cdb:
-            assert False
+            pytest.fail('_ex_dict empty')
         for exname, erec in cdb.items():
             mname = 'test_exh.test_raise_exception.func3'
             if exname.endswith('/{0}.my_exception1'.format(mname)):
-                assert erec['function'].endswith('{0}'.format(mname))
-                assert erec['type'] == RuntimeError
-                assert erec['msg'] == 'This is an exception'
-                assert erec['raised']
+                check_rec(mname, RuntimeError, 'This is an exception')
             if exname.endswith('/{0}.my_exception2'.format(mname)):
-                assert erec['function'].endswith('{0}'.format(mname))
-                assert erec['type'] == OSError
-                assert (
-                    erec['msg']
-                    ==
-                    'This is an exception with a *[fname]* field'
-                )
-                assert erec['raised']
+                msg = 'This is an exception with a *[fname]* field'
+                check_rec(mname, OSError, msg)
         exobj = putil.exh.ExHandle(full_cname=True)
         def func_base(exobj, cond):
             """ Test raised field """
             exobj.add_exception(
-                'multi_path_exception',
-                RuntimeError,
-                'Invalid condition'
+                'multi_path_exception', RuntimeError, 'Invalid condition'
             )
             exobj.raise_exception_if(
                 exname='multi_path_exception', condition=cond
@@ -666,85 +528,15 @@ class TestExHandle(object):
         func_top(exobj, False)
         func_base(exobj, False)
         func_mid(exobj, False)
-        try:
-            func_mid(exobj, True)
-        except:
-            pass
-        entry = exobj._ex_dict[list(exobj._ex_dict.keys())[0]]
-        root = 'tests.test_exh.TestExHandle.test_raise_exception_if_exceptions'
-        assert (
-            [exobj._decode_call(item) for item in entry['function']]
-            ==
-            [
-                '{0}/{0}.func_top/{0}.func_mid/{0}.func_base'.format(root),
-                '{0}/{0}.func_base'.format(root),
-                '{0}/{0}.func_mid/{0}.func_base'.format(root)
-            ]
-        )
-        assert entry['raised'] == [False, False, True]
-        stxt = str(exobj).split('\n')[3:]
-        assert not stxt[0].endswith(' [raised]')
-        assert stxt[1].endswith(' [raised]')
-        assert not stxt[2].endswith(' [raised]')
-        db = exobj.exceptions_db
-        assert db[0]['name'] == (
-            '{0}/{0}.func_top/{0}.func_mid/{0}.func_base'.format(root)
-        )
-        assert db[0]['data'] == 'RuntimeError (Invalid condition)'
-        assert db[1]['name'] == (
-            '{0}/{0}.func_base'.format(root)
-        )
-        assert db[1]['data'] == 'RuntimeError (Invalid condition)'
-        assert db[2]['name'] == (
-            '{0}/{0}.func_mid/{0}.func_base'.format(root)
-        )
-        assert db[2]['data'] == 'RuntimeError (Invalid condition)*'
-        #
-        try:
-            func_top(exobj, True)
-        except:
-            pass
-        assert entry['raised'] == [True, False, True]
-        stxt = str(exobj).split('\n')[3:]
-        assert not stxt[0].endswith(' [raised]')
-        assert stxt[1].endswith(' [raised]')
-        assert stxt[2].endswith(' [raised]')
-        db = exobj.exceptions_db
-        assert db[0]['name'] == (
-            '{0}/{0}.func_top/{0}.func_mid/{0}.func_base'.format(root)
-        )
-        assert db[0]['data'] == 'RuntimeError (Invalid condition)*'
-        assert db[1]['name'] == (
-            '{0}/{0}.func_base'.format(root)
-        )
-        assert db[1]['data'] == 'RuntimeError (Invalid condition)'
-        assert db[2]['name'] == (
-            '{0}/{0}.func_mid/{0}.func_base'.format(root)
-        )
-        assert db[2]['data'] == 'RuntimeError (Invalid condition)*'
-        #
-        try:
-            func_base(exobj, True)
-        except:
-            pass
-        assert entry['raised'] == [True, True, True]
-        stxt = str(exobj).split('\n')[3:]
-        assert stxt[0].endswith(' [raised]')
-        assert stxt[1].endswith(' [raised]')
-        assert stxt[2].endswith(' [raised]')
-        db = exobj.exceptions_db
-        assert db[0]['name'] == (
-            '{0}/{0}.func_top/{0}.func_mid/{0}.func_base'.format(root)
-        )
-        assert db[0]['data'] == 'RuntimeError (Invalid condition)*'
-        assert db[1]['name'] == (
-            '{0}/{0}.func_base'.format(root)
-        )
-        assert db[1]['data'] == 'RuntimeError (Invalid condition)*'
-        assert db[2]['name'] == (
-            '{0}/{0}.func_mid/{0}.func_base'.format(root)
-        )
-        assert db[2]['data'] == 'RuntimeError (Invalid condition)*'
+        fpointers = [func_mid, func_top, func_base]
+        slist = [[False, True, False], [False, True, True], [True, True, True]]
+        llist = [[False, False, True], [True, False, True], [True, True, True]]
+        for fpointer, sitem, litem in zip(fpointers, slist, llist):
+            try:
+                fpointer(exobj, True)
+            except:
+                pass
+            check_str(exobj, sitem, litem)
 
     def test_exceptions_db(self):
         """ Test _exceptions_db property behavior """
@@ -752,9 +544,7 @@ class TestExHandle(object):
             # Functions definitions
             def func4(exobj):
                 exobj.add_exception(
-                    'my_exception1',
-                    RuntimeError,
-                    'This is exception #1'
+                    'my_exception1', RuntimeError, 'This is exception #1'
                 )
             def func5(exobj):
                 exobj.add_exception(
@@ -763,36 +553,25 @@ class TestExHandle(object):
                     'This is exception #2, *[result]*'
                 )
                 exobj.add_exception(
-                    'my_exception3',
-                    TypeError,
-                    'This is exception #3'
+                    'my_exception3', TypeError, 'This is exception #3'
                 )
             exobj = putil.exh.ExHandle(full_cname)
             func4(exobj)
             func5(exobj)
             # Actual tests
             # Test that property cannot be deleted
-            with pytest.raises(AttributeError) as excinfo:
-                del exobj.exceptions_db
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+            AROPROP(exobj, 'exceptions_db')
             # Test contents
             tdata_in = exobj.exceptions_db
             if (not tdata_in) or (len(tdata_in) != 3):
-                assert False
+                pytest.fail('Erroneous exceptions database')
             tdata_out = list()
-            regtext1 = (
-                r'[\w|\W]+/tests.test_exh.TestExHandle.'
-                'test_exceptions_db.func4'
-            )
-            regtext2 = (
-                r'[\w|\W]+/tests.test_exh.TestExHandle.'
-                'test_exceptions_db.func5'
-            )
+            regtext1 = r'[\w|\W]+/'+CTNAME+'.test_exceptions_db.func4'
+            regtext2 = r'[\w|\W]+/'+CTNAME+'.test_exceptions_db.func5'
             regtext3 = r'\d+/my_exception[2-3]'
-            cname = 'tests.test_exh.TestExHandle.test_exceptions_db'
+            cname = CTNAME+'.test_exceptions_db'
             for erec in tdata_in:
                 name = None
-                print(erec['name'])
                 if full_cname:
                     if re.compile(regtext1).match(erec['name']):
                         name = '{0}.func4'.format(cname)
@@ -804,8 +583,7 @@ class TestExHandle(object):
                     elif re.compile(regtext3).match(erec['name']):
                         name = '{0}.func5'.format(cname)
                 if not name:
-                    print('NOT FOUND')
-                    assert False
+                    pytest.fail('Exception not found')
                 tdata_out.append({'name':name, 'data':erec['data']})
             ref = [
                     {
@@ -821,13 +599,11 @@ class TestExHandle(object):
                         'data':'TypeError (This is exception #3)'
                     }
             ]
-            assert putil.test.comp_list_of_dicts(tdata_out, ref)
+            assert CLDICTS(tdata_out, ref)
 
     def test_save_callables(self):
         """ Test save_callables method behavior """
-        obj1 = putil.pinspect.Callables(
-            [sys.modules['putil.eng'].__file__]
-        )
+        obj1 = putil.pinspect.Callables([PENG_FNAME])
         with putil.misc.TmpFile() as fname1:
             with putil.misc.TmpFile() as fname2:
                 callables_fname1 = fname1
@@ -842,12 +618,7 @@ class TestExHandle(object):
     def test_save_callables_exceptions(self):
         """ Test save_callables method exceptions """
         obj = putil.exh.ExHandle()
-        putil.test.assert_exception(
-            obj.save_callables,
-            {'callables_fname':True},
-            RuntimeError,
-            'Argument `callables_fname` is not valid'
-        )
+        AI(obj.save_callables, 'callables_fname', True)
 
     def test_callables_db(self):
         """ Test callables_db property behavior """
@@ -863,9 +634,7 @@ class TestExHandle(object):
         # in pinspect module
         assert exobj.callables_db is not None
         # Test that property cannot be deleted
-        with pytest.raises(AttributeError) as excinfo:
-            del exobj.callables_db
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        AROPROP(exobj, 'callables_db')
 
     def test_callables_separator(self):
         """ Test callables_separator property behavior """
@@ -874,9 +643,7 @@ class TestExHandle(object):
         # pinspect module
         assert exobj.callables_separator == '/'
         # Test that property cannot be deleted
-        with pytest.raises(AttributeError) as excinfo:
-            del exobj.callables_separator
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        AROPROP(exobj, 'callables_separator')
 
     def test_str(self):
         """ Test __str__ method behavior """
@@ -884,9 +651,7 @@ class TestExHandle(object):
             # Functions definition
             def func7(exobj):
                 exobj.add_exception(
-                    'my_exception7',
-                    RuntimeError,
-                    'This is exception #7'
+                    'my_exception7', RuntimeError, 'This is exception #7'
                 )
                 exobj.raise_exception_if('my_exception7', False)
             def func8(exobj):
@@ -896,9 +661,7 @@ class TestExHandle(object):
                     'This is exception #8, *[fname]*'
                 )
                 exobj.add_exception(
-                    'my_exception9',
-                    TypeError,
-                    'This is exception #9'
+                    'my_exception9', TypeError, 'This is exception #9'
                 )
             exobj = putil.exh.ExHandle(full_cname)
             func7(exobj)
@@ -1005,10 +768,7 @@ class TestExHandle(object):
         assert source_obj._clut == dest_obj._clut
         assert id(source_obj._clut) != id(dest_obj._clut)
         assert source_obj._full_cname == dest_obj._full_cname
-        assert putil.test.comp_list_of_dicts(
-            source_obj.exceptions_db,
-            dest_obj.exceptions_db
-        )
+        assert CLDICTS(source_obj.exceptions_db, dest_obj.exceptions_db)
 
     def test_multiple_paths_to_same_exception(self):
         """
@@ -1030,38 +790,64 @@ class TestExHandle(object):
         assert len(exdb) == 2
         assert exdb[0]['data'] == 'RuntimeError (This is the exception)'
         assert exdb[1]['data'] == 'RuntimeError (This is the exception)'
-        cname = (
-            'tests.test_exh.TestExHandle.test_multiple_paths_to_same_exception'
-        )
+        cname = CTNAME+'.test_multiple_paths_to_same_exception'
         assert exdb[0]['name'].endswith(
             '{0}/{0}.funca/{0}.exdef'.format(cname)
         )
         assert exdb[1]['name'].endswith(
             '{0}/{0}.funcb/{0}.exdef'.format(cname)
         )
-        str_in = putil.misc.flatten_list([
-            item.split('\n') for item in str(exobj).split('\n\n')
-        ])
+        str_in = putil.misc.flatten_list(
+            [item.split('\n') for item in str(exobj).split('\n\n')]
+        )
         fstring = cname+'/'+cname+'.func{0}/'+cname+'.exdef'
         assert str_in[0].endswith('/my_exception')
         assert str_in[1] == 'Type    : RuntimeError'
         assert str_in[2] == 'Message : This is the exception'
         assert str_in[3].startswith('Function: ')
-        assert (str_in[3].endswith(fstring.format('a')) or
-               str_in[3].endswith(fstring.format('b')))
-        assert str_in[4].startswith('          ')
-        assert str_in[4].endswith(fstring.format(
-            'a' if str_in[3].endswith(fstring.format('b')) else 'b'
-        ))
+        assert (
+            str_in[3].endswith(fstring.format('a')) or
+            str_in[3].endswith(fstring.format('b'))
+        )
+        assert str_in[4].startswith(' '*10)
+        assert str_in[4].endswith(
+            fstring.format(
+                'a' if str_in[3].endswith(fstring.format('b')) else 'b'
+            )
+        )
 
     def test_add(self):
         """ Test __add__ method behavior """
+        scomp = lambda a, b: bool(sorted(a) == sorted(b))
+        def check_add(sobj):
+            ex_dict_ref = {
+                'call1':{'a':5, 'b':6},
+                'call2':{'a':7, 'b':8},
+                'call3':{'a':10, 'b':100},
+                'call4':{'a':200, 'b':300}
+            }
+            c_ref = {'id1':5, 'ssid1':10, 'id2':3, 'ssid2':1}
+            rcdb_ref = {'rc1':5, 'rc2':7, 'rc3':0, 'rc4':-1}
+            mod_ref = {
+                'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'
+            }
+            fnames_ref = {'hello':0, 'world':1}
+            mlist_ref = ['this', 'is', 'a', 'test']
+            cls_ref = ['once', 'upon', 'a', 'time']
+            assert scomp(sobj._ex_dict, c_ref)
+            cobj = sobj._callables_obj
+            assert scomp(cobj._callables_db, ex_dict_ref)
+            assert scomp(cobj._reverse_callables_db, rcdb_ref)
+            assert scomp(cobj._modules_dict, mod_ref)
+            assert scomp(cobj._fnames, fnames_ref)
+            assert scomp(cobj._module_names, mlist_ref)
+            assert scomp(cobj._class_names, cls_ref)
         def comp_objs(obj):
             ref = {
-                'tests.test_exh.TestExHandle.test_add': '0',
-                'tests.test_exh.TestExHandle.test_add.func1': '1',
-                'tests.test_exh.TestExHandle.test_add.func2': '3',
-                'tests.test_exh.TestExHandle.test_add.func3': '2'
+                CTNAME+'.test_add': '0',
+                CTNAME+'.test_add.func1': '1',
+                CTNAME+'.test_add.func2': '3',
+                CTNAME+'.test_add.func3': '2'
             }
             assert obj._clut == ref
             nref = [
@@ -1114,109 +900,35 @@ class TestExHandle(object):
         obj2._callables_obj._module_names = ['a', 'test']
         obj2._callables_obj._class_names = ['a', 'time']
         #
-        sobj = obj1+obj2
-        assert sorted(sobj._ex_dict) == sorted(
-            {'id1':5, 'ssid1':10, 'id2':3, 'ssid2':1}
-        )
-        assert sorted(sobj._callables_obj._callables_db) == sorted({
-            'call1':{'a':5, 'b':6},
-            'call2':{'a':7, 'b':8},
-            'call3':{'a':10, 'b':100},
-            'call4':{'a':200, 'b':300}
-        })
-        assert sorted(sobj._callables_obj._reverse_callables_db) == sorted(
-            {'rc1':5, 'rc2':7, 'rc3':0, 'rc4':-1}
-        )
-        assert sorted(sobj._callables_obj._modules_dict) == sorted(
-            {'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'}
-        )
-        assert (
-            sorted(sobj._callables_obj._fnames)
-            ==
-            sorted({'hello':0, 'world':1})
-        )
-        assert sorted(sobj._callables_obj._module_names) == sorted(
-            ['this', 'is', 'a', 'test']
-        )
-        assert sorted(sobj._callables_obj._class_names) == sorted(
-            ['once', 'upon', 'a', 'time']
-        )
-        #
+        check_add(obj1+obj2)
         obj1 += obj2
-        assert sorted(obj1._ex_dict) == sorted(
-            {'id1':5, 'ssid1':10, 'id2':3, 'ssid2':1}
-        )
-        assert sorted(obj1._callables_obj._callables_db) == sorted({
-            'call1':{'a':5, 'b':6},
-            'call2':{'a':7, 'b':8},
-            'call3':{'a':10, 'b':100},
-            'call4':{'a':200, 'b':300}
-        })
-        assert sorted(obj1._callables_obj._reverse_callables_db) == sorted(
-            {'rc1':5, 'rc2':7, 'rc3':0, 'rc4':-1}
-        )
-        assert sorted(obj1._callables_obj._modules_dict) == sorted(
-            {'key1':'alpha', 'key2':'beta', 'key3':'pi', 'key4':'gamma'}
-        )
-        assert (
-            sorted(obj1._callables_obj._fnames)
-            ==
-            sorted({'hello':0, 'world':1})
-        )
-        assert sorted(obj1._callables_obj._module_names) == sorted(
-            ['this', 'is', 'a', 'test']
-        )
-        assert sorted(obj1._callables_obj._class_names) == sorted(
-            ['once', 'upon', 'a', 'time']
-        )
+        check_add(obj1)
         # Incompatible types
         with pytest.raises(TypeError) as excinfo:
             obj1+5
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Unsupported operand type(s) for +: putil.exh.ExHandle and int'
-        )
+        msg = 'Unsupported operand type(s) for +: putil.exh.ExHandle and int'
+        assert GET_EXMSG(excinfo) == msg
         # Incompatible types
         with pytest.raises(TypeError) as excinfo:
             obj1 += 5
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Unsupported operand type(s) for +: putil.exh.ExHandle and int'
-        )
+        assert GET_EXMSG(excinfo) == msg
         #
         obj2._full_cname = True
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Incompatible exception handlers'
-        )
+        msg = 'Incompatible exception handlers'
+        assert GET_EXMSG(excinfo) == msg
         with pytest.raises(RuntimeError) as excinfo:
             obj1 += obj2
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Incompatible exception handlers'
-        )
+        assert GET_EXMSG(excinfo) == msg
         obj2._full_cname = False
         obj2._exclude = ['_pytest']
         with pytest.raises(RuntimeError) as excinfo:
             obj1+obj2
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Incompatible exception handlers'
-        )
+        assert GET_EXMSG(excinfo) == msg
         with pytest.raises(RuntimeError) as excinfo:
             obj1 += obj2
-        assert (
-            putil.test.get_exmsg(excinfo)
-            ==
-            'Incompatible exception handlers'
-        )
+        assert GET_EXMSG(excinfo) == msg
         obj2._exclude = None
         # Test re-mapping of callables look-up table
         obj1 = putil.exh.ExHandle(full_cname=True, exclude=['putil.eng'])
@@ -1271,7 +983,8 @@ class TestExHandle(object):
     def test_eq(self):
         """ Test __eq__ method behavior """
         putil.exh.get_or_create_exh_obj()
-        putil.eng.peng(100, 3, True) # Trace some exceptions
+        # Trace some exceptions
+        putil.eng.peng(100, 3, True)
         obj1 = putil.exh.get_exh_obj()
         obj2 = copy.copy(obj1)
         assert obj1 == obj2

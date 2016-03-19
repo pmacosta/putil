@@ -760,12 +760,13 @@ class ExHandle(object):
             # pcontracts decorators)
             ret = []
             skip = 0
+            dlist = ['putil.pcontracts', 'putil.pcontracts.contract.wrapper']
             for fob, fin, uobj in stack:
                 if skip > 0:
                     skip -= 1
                 else:
                     item = self._get_callable_full_name(fob, fin, uobj)
-                    if item == 'putil.pcontracts.contract.wrapper':
+                    if item in dlist:
                         skip = 3
                     else:
                         ret.append(item)

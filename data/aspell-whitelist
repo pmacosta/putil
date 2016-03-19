@@ -7,6 +7,7 @@ ABCDEX
 ABCMeta
 abstractmethod
 abstractproperty
+AClass
 actmsg
 addfinalizer
 AE
@@ -34,6 +35,7 @@ ARGS
 ArgumentParser
 ArgumentTypeError
 argv
+AROPROP
 ascii
 aspell
 AssertionError
@@ -114,6 +116,7 @@ ClassDef
 ClassWithPropertyDefinedViaDecorators
 ClassWithPropertyDefinedViaFunction
 ClassWithPropertyDefinedViaLambdaAndEnclosure
+CLDICTS
 clist
 ClosureClass
 cls
@@ -176,6 +179,7 @@ csvsource
 CsvSource
 ctags
 ctext
+CTNAME
 Ctrl
 ctx
 ctxt
@@ -246,6 +250,7 @@ dlist
 dmark
 dmsg
 dname
+dnode
 dobj
 doccode
 docstring
@@ -330,6 +335,7 @@ exkey
 exlength
 exlist
 exmsg
+EXMSG
 exname
 exnum
 exobj
@@ -337,6 +343,7 @@ exoutput
 extb
 extype
 exvalue
+fargs
 fdata
 fdel
 fdesc
@@ -354,6 +361,7 @@ filename
 FileName
 FileNameExists
 filenames
+fillvalue
 FinalClass
 finterp
 FIve
@@ -372,6 +380,7 @@ fnode
 fnum
 fnumber
 fobj
+FOBJ
 foi
 fontdict
 fontsize
@@ -380,6 +389,7 @@ fp
 fpart
 fplot
 fpointer
+fpointers
 fproc
 fprog
 frac
@@ -506,6 +516,7 @@ itoken
 itokens
 ivar
 IXUSR
+izip
 json
 JSON
 kcg
@@ -556,8 +567,10 @@ linregress
 linspace
 linux
 listdir
+litem
 literalinclude
 ljust
+llist
 lmax
 lmin
 lname
@@ -568,6 +581,7 @@ loglog
 loren
 lparent
 lprim
+lprops
 lrange
 lsec
 lsep
@@ -614,6 +628,7 @@ misconfiguration
 mistyrose
 mkdir
 mkstemp
+mlist
 mlmdfunc
 mmsg
 mname
@@ -657,6 +672,7 @@ ncol
 ndarray
 ndata
 ndict
+nflip
 nimages
 nindent
 ninterp
@@ -748,6 +764,7 @@ parg
 pargs
 partuple
 ParTuple
+pb
 pcolor
 pcond
 pcontract
@@ -759,6 +776,7 @@ pdir
 peachpuff
 Peform
 peng
+PENG
 peru
 peta
 pexceptions
@@ -778,6 +796,7 @@ plottable
 plst
 plt
 pmsg
+pname
 png
 PNG
 pobj
@@ -845,6 +864,7 @@ rb
 rbranch
 rc
 r'C
+rcdb
 rcfilter
 rchars
 rcols
@@ -853,6 +873,7 @@ rdata
 rdfilter
 rdict
 RdPu
+RDVAR
 readlines
 readme
 README
@@ -892,6 +913,7 @@ RGBA
 rhas
 Rightarrow
 rindex
+RIVAR
 rjust
 rl
 rlevel
@@ -901,6 +923,7 @@ rmfiles
 rmtree
 rnode
 rnum
+ro
 robj
 rosybrown
 royalblue
@@ -932,6 +955,7 @@ Scipy
 SciPy
 SCIPY
 Scipy's
+scomp
 scontext
 sdeps
 sdict
@@ -1003,6 +1027,7 @@ struct
 stxt
 stype
 su
+SubClass
 SubClassA
 SubClassB
 SubClassC
@@ -1022,6 +1047,7 @@ svg
 symlink
 Symlink
 symlinks
+SyntaxError
 sys
 sysconfig
 tb
