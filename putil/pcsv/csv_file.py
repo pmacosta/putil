@@ -280,14 +280,10 @@ class CsvFile(object):
             "putil.pcsv.CsvFile(fname=r'...', dfilter=['a'])"
         """
         dfilter_list = (
-            None,
-            self._cfilter,
-            self._rfilter,
-            (self._rfilter, self._cfilter)
+            None, self._cfilter, self._rfilter, (self._rfilter, self._cfilter)
         )
         dfilter = dfilter_list[
-            2*(self._rfilter is not None)+
-            (self._cfilter is not None)
+            2*(self._rfilter is not None)+(self._cfilter is not None)
         ]
         has_header = self._has_header
         ret = [
@@ -702,8 +698,7 @@ class CsvFile(object):
                 clist.append(
                     (
                         key if isinstance(key, int) else
-                        self._header_upper.index(key.upper())
-                        ,
+                        self._header_upper.index(key.upper()),
                         value.upper() == 'D'
                     )
                 )

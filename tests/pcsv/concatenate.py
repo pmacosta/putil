@@ -3,18 +3,14 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,C0302,E0611,F0401,R0201,R0915,W0232
 
-# Standard library imports
-from itertools import product
 # PyPI imports
 import pytest
 # Putil imports
 import putil.pcsv
-from putil.test import AE, AI, RE
-import putil.test
-from tests.pcsv.files import (
-    write_cols_not_unique,
+from putil.test import AE, RE
+from tests.pcsv.fixtures import (
+    common_exceptions,
     write_file,
-    write_file_empty,
     write_input_file,
     write_replacement_file
 )
@@ -42,8 +38,7 @@ def test_concatenate():
     # Filter one column
     with putil.misc.TmpFile(write_input_file) as fname1:
         with putil.misc.TmpFile(write_replacement_file) as fname2:
-            putil.pcsv.concatenate(
-                fname1, fname2, 'Ref', 'H2')
+            putil.pcsv.concatenate(fname1, fname2, 'Ref', 'H2')
         obj = putil.pcsv.CsvFile(fname=fname1, has_header=True)
     assert obj.header() == ['Ref']
     assert obj.data() == [[10], [20], [30], [2], [6], [10]]
@@ -51,7 +46,8 @@ def test_concatenate():
     with putil.misc.TmpFile(write_input_file) as fname1:
         with putil.misc.TmpFile(write_replacement_file) as fname2:
             putil.pcsv.concatenate(
-                fname1, fname2, ['Ref', 'Data1'], ['H2', 'H4'])
+                fname1, fname2, ['Ref', 'Data1'], ['H2', 'H4']
+            )
         obj = putil.pcsv.CsvFile(fname=fname1, has_header=True)
     assert obj.header() == ['Ref', 'Data1']
     assert obj.data() == [
@@ -151,71 +147,8 @@ def test_concatenate():
 @pytest.mark.concatenate
 def test_concatenate_exceptions():
     """ Test concatenate function exceptions """
-    # pylint: disable=R0914
     obj = putil.pcsv.concatenate
-    # Input file exceptions
-    file_items = [5, 'some_file\0']
-    dfilter_items = [
-        True,
-        ['a', True],
-        (['Ctrl'], 'a'),
-        (['Ctrl'], {}),
-        ({5:True}, ['Ctrl']),
-        ({'a':{'xx':2}}, ['Ctrl']),
-        (['Ctrl'], {'a':[3, {'xx':2}]})
-    ]
-    for file_toggle in [False, True]:
-        # File-related tests
-        with putil.misc.TmpFile(write_file) as real_file:
-            fname1 = '_dummy_file_' if not file_toggle else real_file
-            fname2 = real_file if not file_toggle else '_dummy_file_'
-            exmsg = 'File _dummy_file_ could not be found'
-            AE(obj, OSError, exmsg, fname1, fname2, ['a'], ['b'])
-            for item in file_items:
-                fname1 = item if not file_toggle else real_file
-                fname2 = real_file if not file_toggle else item
-                par = 'fname1' if not file_toggle else 'fname2'
-                AI(obj, par, fname1, fname2, ['a'], ['b'])
-        dfilter = ['Ctrl']
-        with putil.misc.TmpFile(write_file_empty) as empty_file:
-            with putil.misc.TmpFile(write_file) as real_file:
-                fname1 = empty_file if not file_toggle else real_file
-                fname2 = real_file if not file_toggle else empty_file
-                exmsg = r'File (.+) is empty'
-                AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter)
-        with putil.misc.TmpFile(write_cols_not_unique) as nuniq_file:
-            with putil.misc.TmpFile(write_file) as real_file:
-                fname1 = nuniq_file if not file_toggle else real_file
-                fname2 = real_file if not file_toggle else nuniq_file
-                exmsg = 'Column headers are not unique in file (.+)'
-                AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter)
-        # Filter-related exceptions
-        with putil.misc.TmpFile(write_file) as fname1:
-            with putil.misc.TmpFile(write_file) as fname2:
-                for item in dfilter_items:
-                    dfilter1 = item if not file_toggle else ['Ctrl']
-                    dfilter2 = ['Ctrl'] if not file_toggle else item
-                    par = 'dfilter1' if not file_toggle else 'dfilter2'
-                    AI(obj, par, fname1, fname2, dfilter1, dfilter2)
-                item = (['Ctrl'], {'aaa':5})
-                dfilter1 = item if not file_toggle else ['Ctrl']
-                dfilter2 = ['Ctrl'] if not file_toggle else item
-                exmsg = 'Column aaa not found'
-                AE(obj, ValueError, exmsg, fname1, fname2, dfilter1, dfilter2)
-                # Columns-related exceptions
-                dfilter1 = ['NoCol'] if not file_toggle else ['Ref']
-                dfilter2 = ['Ref'] if not file_toggle else ['NoCol']
-                exmsg = 'Column NoCol not found'
-                AE(obj, ValueError, exmsg, fname1, fname2, dfilter1, dfilter2)
-                dfilter1 = ['0'] if not file_toggle else ['Ref']
-                dfilter2 = ['Ref'] if not file_toggle else ['0']
-                exmsg = 'Invalid column specification'
-                AE(
-                    obj, RE, exmsg,
-                    fname1, fname2,
-                    dfilter1, dfilter2,
-                    has_header1=file_toggle, has_header2=not file_toggle
-                )
+    common_exceptions(obj)
     with putil.misc.TmpFile(write_file) as fname1:
         with putil.misc.TmpFile(write_file) as fname2:
             # Column numbers are different
@@ -229,25 +162,3 @@ def test_concatenate_exceptions():
                 obj, RE, exmsg, fname1, fname2, ['Ctrl'], ['Ctrl', 'Ref'],
                 ocols=['a', 'b', 'c']
             )
-    # Starting row
-    with putil.misc.TmpFile(write_file) as fname1:
-        with putil.misc.TmpFile(write_file) as fname2:
-            # Invalid row_start
-            for item, par in product(['a', True, -1], ['frow1', 'frow2']):
-                AI(obj, par, fname1, fname2, dfilter, dfilter, **{par:item})
-            exmsg = 'File {0} has no valid data'.format(fname1)
-            AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter, frow1=200)
-            exmsg = 'File {0} has no valid data'.format(fname2)
-            AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter, frow2=200)
-    # Output file exceptions
-    with putil.misc.TmpFile(write_file) as fname1:
-        with putil.misc.TmpFile(write_file) as fname2:
-            par = 'ofname'
-            for item in [7, 'a_file\0']:
-                AI(obj, par, fname1, fname2, dfilter, ['Ref'], ofname=item)
-            fname = 'some_file.csv'
-            for item in [7, ['a', 'b', 5]]:
-                AI(
-                    obj, 'ocols', fname1, fname2, dfilter, ['Ref'],
-                    ofname=fname, ocols=item
-                )

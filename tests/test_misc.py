@@ -5,7 +5,7 @@
 
 # Standard library imports
 from __future__ import print_function
-import datetime
+from datetime import datetime
 import inspect
 import os
 import platform
@@ -117,30 +117,16 @@ def test_binary_string_to_octal_string():
             '\\1\\0\\2\\0\\3\\0\\4\\0\\5\\0\\6\\0\\a\\0'
             '\\b\\0\\t\\0\\n\\0\\v\\0\\f\\0\\r\\0\\16\\0'
         )
-        assert (
-            obj(
-                ''.join([struct.pack('h', num) for num in range(1, 15)])
-            )
-            ==
-            ref
-        )
+        actual = obj(''.join([struct.pack('h', num) for num in range(1, 15)]))
+        assert ref == actual
     else:
         ref = (
             r'\o1\0\o2\0\o3\0\o4\0\o5\0\o6\0\a\0'
             r'\b\0\t\0\n\0\v\0\f\0\r\0\o16\0'
         )
-        assert (
-            obj(
-                ''.join(
-                    [
-                        struct.pack('h', num).decode('ascii')
-                        for num in range(1, 15)
-                    ]
-                )
-            )
-            ==
-            ref
-        )
+        code = lambda x: struct.pack('h', x).decode('ascii')
+        actual = obj(''.join([code(num) for num in range(1, 15)]))
+        assert ref == actual
 
 
 def test_char_string_to_decimal():
@@ -152,126 +138,43 @@ def test_char_string_to_decimal():
 def test_elapsed_time_string():
     """ Test elapsed_time_string function behavior """
     obj = putil.misc.elapsed_time_string
-    assert obj(
-        datetime.datetime(2015, 1, 1),
-        datetime.datetime(2015, 1, 1)) == 'None'
+    assert obj(datetime(2015, 1, 1), datetime(2015, 1, 1)) == 'None'
     AE(
         obj, RuntimeError, 'Invalid time delta specification',
-        start_time=datetime.datetime(2015, 2, 1),
-        stop_time=datetime.datetime(2015, 1, 1)
+        start_time=datetime(2015, 2, 1), stop_time=datetime(2015, 1, 1)
     )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1),
-            datetime.datetime(2015, 1, 1)
-        )
-        ==
-        '1 year'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1),
-            datetime.datetime(2016, 1, 1)
-        )
-        ==
-        '2 years'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1),
-            datetime.datetime(2014, 1, 31)
-        )
-        ==
-        '1 month'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1),
-            datetime.datetime(2014, 3, 2)
-        )
-        ==
-        '2 months'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 10),
-            datetime.datetime(2014, 1, 1, 11)
-        )
-        ==
-        '1 hour'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 10),
-            datetime.datetime(2014, 1, 1, 12)
-        )
-        ==
-        '2 hours'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10),
-            datetime.datetime(2014, 1, 1, 1, 11)
-        )
-        ==
-        '1 minute'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10),
-            datetime.datetime(2014, 1, 1, 1, 12)
-        )
-        ==
-        '2 minutes'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10, 1),
-            datetime.datetime(2014, 1, 1, 1, 10, 2)
-        )
-        ==
-        '1 second'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10, 1),
-            datetime.datetime(2014, 1, 1, 1, 10, 3)
-        )
-        ==
-        '2 seconds'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10, 1),
-            datetime.datetime(2015, 1, 1, 1, 10, 2)
-        )
-        ==
-        '1 year and 1 second'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10, 1),
-            datetime.datetime(2015, 1, 1, 1, 10, 3)
-        )
-        ==
-        '1 year and 2 seconds'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10, 1),
-            datetime.datetime(2015, 1, 2, 1, 10, 3)
-        )
-        ==
-        '1 year, 1 day and 2 seconds'
-    )
-    assert (
-        obj(
-            datetime.datetime(2014, 1, 1, 1, 10, 1),
-            datetime.datetime(2015, 1, 3, 1, 10, 3)
-        )
-        ==
-        '1 year, 2 days and 2 seconds'
-    )
+    items = [
+        ((2014, 1, 1), (2015, 1, 1), '1 year'),
+        ((2014, 1, 1), (2016, 1, 1), '2 years'),
+        ((2014, 1, 1), (2014, 1, 31), '1 month'),
+        ((2014, 1, 1), (2014, 3, 2), '2 months'),
+        ((2014, 1, 1, 10), (2014, 1, 1, 11), '1 hour'),
+        ((2014, 1, 1, 10), (2014, 1, 1, 12), '2 hours'),
+        ((2014, 1, 1, 1, 10), (2014, 1, 1, 1, 11), '1 minute'),
+        ((2014, 1, 1, 1, 10), (2014, 1, 1, 1, 12), '2 minutes'),
+        ((2014, 1, 1, 1, 10, 1), (2014, 1, 1, 1, 10, 2), '1 second'),
+        ((2014, 1, 1, 1, 10, 1), (2014, 1, 1, 1, 10, 3), '2 seconds'),
+        (
+            (2014, 1, 1, 1, 10, 1),
+            (2015, 1, 1, 1, 10, 2),
+            '1 year and 1 second'
+        ),
+        (
+            (2014, 1, 1, 1, 10, 1),
+            (2015, 1, 1, 1, 10, 3),
+            '1 year and 2 seconds'),
+        (
+            (2014, 1, 1, 1, 10, 1),
+            (2015, 1, 2, 1, 10, 3),
+            '1 year, 1 day and 2 seconds'),
+        (
+            (2014, 1, 1, 1, 10, 1),
+            (2015, 1, 3, 1, 10, 3),
+            '1 year, 2 days and 2 seconds'
+        ),
+    ]
+    for date1, date2, ref in items:
+        assert obj(datetime(*date1), datetime(*date2)) == ref
 
 
 def test_flatten_list():
@@ -341,11 +244,9 @@ def test_make_dir(capsys):
         fname = os.path.join(home_dir, 'some_dir', 'some_file.ext')
         putil.misc.make_dir(fname)
         stdout, _ = capsys.readouterr()
-        assert (
-            repr(_unicode_to_ascii(stdout.rstrip()))[1:-1]
-            ==
-            repr(os.path.dirname(fname).rstrip())[1:-1]
-        )
+        actual = repr(os.path.dirname(fname).rstrip())[1:-1]
+        ref = repr(_unicode_to_ascii(stdout.rstrip()))[1:-1]
+        assert actual == ref
         putil.misc.make_dir(
             os.path.join(os.path.abspath(os.sep), 'some_file.ext')
         )
@@ -370,48 +271,21 @@ def test_normalize():
 def test_normalize_windows_fname():
     """ Test normalize_windows_fname behavior """
     obj = putil.misc.normalize_windows_fname
-    ref = (
-        'a/b/c//'
-        if platform.system().lower() != 'windows' else
-        r'a\b\c'
-    )
+    in_windows = platform.system().lower() == 'windows'
+    ref = r'a\b\c' if in_windows else 'a/b/c//'
     assert obj('a/b/c//') == ref
-    ref = (
-        'a/b/c'
-        if platform.system().lower() != 'windows' else
-        r'a\b\c'
-    )
+    ref = r'a\b\c' if in_windows else 'a/b/c'
     assert obj('a/b/c//', True) == ref
-    ref = (
-        r'\\a\b\c'
-        if platform.system().lower() == 'windows' else
-        r'\\a\\b\\c'
-    )
-    assert (
-        obj(r'\\\\\\\\a\\\\b\\c', True)
-        ==
-        ref
-    )
-    ref = (
-        r'C:\a\b\c'
-        if platform.system().lower() == 'windows' else
-        r'C:\\a\\b\\c'
-    )
-    assert (
-        obj(r'C:\\\\\\\\a\\\\b\\c', True)
-        ==
-        ref
-    )
+    ref = r'\\a\b\c' if in_windows else r'\\a\\b\\c'
+    assert obj(r'\\\\\\\\a\\\\b\\c', True) == ref
+    ref = r'C:\a\b\c' if in_windows else r'C:\\a\\b\\c'
+    assert obj(r'C:\\\\\\\\a\\\\b\\c', True) == ref
     ref = (
         '\\apps\\temp\\new\\file\\wire'
-        if platform.system().lower() == 'windows' else
+        if in_windows else
         r'\apps\temp\new\\file\\wire'
     )
-    assert (
-        obj(r'\apps\temp\new\\\\file\\\\\\\\\\wire', True)
-        ==
-        ref
-    )
+    assert obj(r'\apps\temp\new\\\\file\\\\\\\\\\wire', True) == ref
 
 
 def test_per():
@@ -431,8 +305,7 @@ def test_per():
     assert obj(4, 3, 3) == 0.333
     assert obj(4, 0, 3) == 1e20
     ttuple = zip(
-        obj(array([3, 1.1, 5]), array([2, 0, 2]), 1),
-        [0.5, 1e20, 1.5]
+        obj(array([3, 1.1, 5]), array([2, 0, 2]), 1), [0.5, 1e20, 1.5]
     )
     assert all([test == ref for test, ref in ttuple])
 
@@ -470,6 +343,7 @@ def test_quote_str():
 
 def test_strframe():
     """ Test strframe function behavior """
+    obj = putil.misc.strframe
     def check_basic_frame(lines):
         assert lines[0].startswith('\x1b[33mFrame object ID: 0x')
         assert lines[1] == 'File name......: {0}'.format(
@@ -483,13 +357,13 @@ def test_strframe():
         )
         assert lines[5] == 'Index..........: 0'
     fobj = inspect.stack()[0]
-    lines = putil.misc.strframe(fobj).split('\n')
+    lines = obj(fobj).split('\n')
     check_basic_frame(lines)
     assert len(lines) == 6
     lines = [
-        line for num, line in
-            enumerate(putil.misc.strframe(fobj, extended=True).split('\n'))
-            if (num < 6) or line.startswith('f_')
+        line
+        for num, line in enumerate(obj(fobj, extended=True).split('\n'))
+        if (num < 6) or line.startswith('f_')
     ]
     check_basic_frame(lines)
     assert lines[6].startswith('f_back ID......: 0x')

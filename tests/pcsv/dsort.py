@@ -10,7 +10,7 @@ import putil.misc
 import putil.pcsv
 import putil.test
 from putil.test import AE, AI, RE
-from tests.pcsv.files import (
+from tests.pcsv.fixtures import (
     write_cols_not_unique,
     write_file,
     write_file_empty
@@ -33,17 +33,9 @@ def test_dsort_function():
             )
         obj = putil.pcsv.CsvFile(fname=ofname, has_header=True)
     assert obj.header() == ['Ctrl', 'Ref', 'Result']
-    assert (
-        obj.data()
-        ==
-        [
-            [3, 5, 50],
-            [2, 4, 30],
-            [2, 5, 40],
-            [1, 3, 10],
-            [1, 4, 20]
-        ]
-    )
+    assert obj.data() == [
+        [3, 5, 50], [2, 4, 30], [2, 5, 40], [1, 3, 10], [1, 4, 20]
+    ]
     # Input file name does not have headers, separate output file name
     with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_file) as fname:
@@ -55,17 +47,9 @@ def test_dsort_function():
             )
         obj = putil.pcsv.CsvFile(fname=ofname, has_header=False)
     assert obj.header() == [0, 1, 2]
-    assert (
-        obj.data()
-        ==
-        [
-            [3, 5, 50],
-            [2, 4, 30],
-            [2, 5, 40],
-            [1, 3, 10],
-            [1, 4, 20]
-        ]
-    )
+    assert obj.data() == [
+        [3, 5, 50], [2, 4, 30], [2, 5, 40], [1, 3, 10], [1, 4, 20]
+    ]
     # "In place" sort
     with putil.misc.TmpFile(write_file) as fname:
         putil.pcsv.dsort(
@@ -75,17 +59,9 @@ def test_dsort_function():
         )
         obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
     assert obj.header() == [0, 1, 2]
-    assert (
-        obj.data()
-        ==
-        [
-            [3, 5, 50],
-            [2, 4, 30],
-            [2, 5, 40],
-            [1, 3, 10],
-            [1, 4, 20]
-        ]
-    )
+    assert obj.data() == [
+        [3, 5, 50], [2, 4, 30], [2, 5, 40], [1, 3, 10], [1, 4, 20]
+    ]
     # Starting row
     with putil.misc.TmpFile(write_file) as fname:
         putil.pcsv.dsort(
@@ -96,15 +72,7 @@ def test_dsort_function():
         )
         obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
     assert obj.header() == [0, 1, 2]
-    assert (
-        obj.data()
-        ==
-        [
-            [3, 5, 50],
-            [2, 4, 30],
-            [2, 5, 40],
-        ]
-    )
+    assert obj.data() == [[3, 5, 50], [2, 4, 30], [2, 5, 40]]
 
 
 @pytest.mark.dsort

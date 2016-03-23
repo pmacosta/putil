@@ -393,9 +393,7 @@ def elapsed_time_string(start_time, stop_time):
     )
     ret_list = [
         '{token} {token_name}{plural}'.format(
-            token=num,
-            token_name=desc,
-            plural='s' if num > 1 else ''
+            token=num, token_name=desc, plural='s' if num > 1 else ''
         ) for num, desc in token_iter if num > 0
     ]
     if len(ret_list) == 0:
@@ -449,15 +447,14 @@ def gcd(vector):
     """
     if len(vector) == 0:
         return None
-    elif len(vector) == 1:
+    if len(vector) == 1:
         return vector[0]
-    elif len(vector) == 2:
+    if len(vector) == 2:
         return pgcd(vector[0], vector[1])
-    else:
-        current_gcd = pgcd(vector[0], vector[1])
-        for element in vector[2:]:
-            current_gcd = pgcd(current_gcd, element)
-        return current_gcd
+    current_gcd = pgcd(vector[0], vector[1])
+    for element in vector[2:]:
+        current_gcd = pgcd(current_gcd, element)
+    return current_gcd
 
 
 def isalpha(obj):
@@ -708,7 +705,7 @@ def per(arga, argb, prec=10):
 
      * TypeError (Arguments are not of the same type)
     """
-    # pylint: disable=E1101
+    # pylint: disable=E1101,R0204
     if not isinstance(prec, int):
         raise RuntimeError('Argument `prec` is not valid')
     arga_type = (
@@ -794,9 +791,7 @@ def pcolor(text, color, indent=0):
     if esc_dict[color] != -1:
         return (
             '\033[{color_code}m{indent}{text}\033[0m'.format(
-                color_code=esc_dict[color],
-                indent=' '*indent,
-                text=text
+                color_code=esc_dict[color], indent=' '*indent, text=text
             )
         )
     return '{indent}{text}'.format(indent=' '*indent, text=text)

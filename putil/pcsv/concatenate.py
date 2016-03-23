@@ -36,14 +36,15 @@ exobj = trace_ex_pcsv_concatenate.trace_module(no_print=True)
 @putil.pcontracts.contract(
     fname1='file_name_exists', fname2='file_name_exists',
     dfilter1='csv_data_filter', dfilter2='csv_data_filter',
-    has_header1=bool, frow1='non_negative_integer',
-    has_header2=bool, frow2='non_negative_integer',
+    has_header1=bool, has_header2=bool,
+    frow1='non_negative_integer', frow2='non_negative_integer',
     ofname='None|file_name', ocols='None|list(str)'
 )
 def concatenate(
     fname1, fname2,
     dfilter1=None, dfilter2=None,
-    has_header1=True, frow1=0, has_header2=True, frow2=0,
+    has_header1=True, has_header2=True,
+    frow1=0, frow2=0,
     ofname=None, ocols=None):
     r"""
     Concatenates two comma-separated values file. Data rows from the second
@@ -70,16 +71,16 @@ def concatenate(
                         or not (False)
     :type  has_header1: boolean
 
+    :param has_header2: Flag that indicates whether the second comma-separated
+                        values file has column headers in its first line (True)
+                        or not (False)
+    :type  has_header2: boolean
+
     :param frow1: First comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as
                   the first row that has a number (integer of float) in at
                   least one of its columns
     :type  frow1: :ref:`NonNegativeInteger`
-
-    :param has_header2: Flag that indicates whether the second comma-separated
-                        values file has column headers in its first line (True)
-                        or not (False)
-    :type  has_header2: boolean
 
     :param frow2: Second comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as

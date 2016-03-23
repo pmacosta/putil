@@ -64,24 +64,14 @@ def test_write_function_works():
     lsep = '\r\n'
     with putil.misc.TmpFile() as fname:
         putil.pcsv.write(
-            fname,
-            [['Input', 'Output'], [1, 2], [3, 4]],
-            append=False
+            fname, [['Input', 'Output'], [1, 2], [3, 4]], append=False
         )
         written_data = _read(fname)
-    assert (
-        written_data == 'Input,Output{0}1,2{0}3,4{0}'.format(lsep)
-    )
+    assert written_data == 'Input,Output{0}1,2{0}3,4{0}'.format(lsep)
     with putil.misc.TmpFile() as fname:
         putil.pcsv.write(
-            fname,
-            [['Input', 'Output'], [1, 2], [3, 4]],
-            append=False
+            fname, [['Input', 'Output'], [1, 2], [3, 4]], append=False
         )
         putil.pcsv.write(fname, [[5.0, 10]], append=True)
         written_data = _read(fname)
-    assert (
-        written_data
-        ==
-        'Input,Output{0}1,2{0}3,4{0}5.0,10{0}'.format(lsep)
-    )
+    assert written_data == 'Input,Output{0}1,2{0}3,4{0}5.0,10{0}'.format(lsep)

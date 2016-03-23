@@ -20,7 +20,7 @@ if sys.hexversion < 0x03000000:
     from putil.compat2 import _read
 else:
     from putil.compat3 import _read
-from tests.pcsv.files import (
+from tests.pcsv.fixtures import (
     write_cols_not_unique,
     write_data_start_file,
     write_empty_cols,
@@ -95,79 +95,31 @@ class TestCsvFile(object):
         """ Test __repr__ method behavior """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        assert (
-            repr(obj)
-            ==
-            "putil.pcsv.CsvFile(fname=r'{0}')".format(os.path.normpath(fname))
-        )
+        fname = os.path.normpath(fname)
+        rstart = "putil.pcsv.CsvFile(fname=r'{0}'"
+        assert repr(obj) == (rstart+')').format(fname)
         obj.dfilter = 'Ctrl'
-        assert (
-            repr(obj)
-            ==
-            "putil.pcsv.CsvFile(fname=r'{0}', dfilter=['Ctrl'])".format(
-                os.path.normpath(fname)
-            )
-        )
+        assert repr(obj) == (rstart+", dfilter=['Ctrl'])").format(fname)
         obj.dfilter = {'Ctrl':2}
-        assert (
-            repr(obj)
-            ==
-            (
-                "putil.pcsv.CsvFile(fname=r'{0}', "
-                "dfilter={{'Ctrl': 2}})".format(os.path.normpath(fname))
-            )
-        )
+        assert repr(obj) == (rstart+", dfilter={{'Ctrl': 2}})").format(fname)
         obj.dfilter = ('Ctrl', {'Result': 40})
-        assert (
-            repr(obj)
-            ==
-            (
-                "putil.pcsv.CsvFile(fname=r'{0}', "
-                "dfilter=({{'Result': 40}}, ['Ctrl']))".format(
-                    os.path.normpath(fname)
-                )
-            )
+        assert repr(obj) == (rstart+", dfilter={1})").format(
+            fname, "({'Result': 40}, ['Ctrl'])"
         )
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
-        assert (
-            repr(obj)
-            ==
-            "putil.pcsv.CsvFile(fname=r'{0}', has_header=False)".format(
-                os.path.normpath(fname)
-            )
-        )
+        assert repr(obj) == (rstart+", has_header=False)").format(fname)
         obj.dfilter = 0
-        assert (
-            repr(obj)
-            ==
-            (
-                "putil.pcsv.CsvFile(fname=r'{0}', "
-                "dfilter=[0], has_header=False)".format(
-                    os.path.normpath(fname)
-                )
-            )
+        assert repr(obj) == (rstart+", dfilter={1}, has_header=False)").format(
+            fname, '[0]'
         )
         obj.dfilter = {0:2}
-        assert (
-            repr(obj)
-            ==
-            (
-                "putil.pcsv.CsvFile(fname=r'{0}', "
-                "dfilter={{0: 2}}, has_header=False)".format(
-                    os.path.normpath(fname)
-                )
-            )
+        assert repr(obj) == (rstart+", dfilter={1}, has_header=False)").format(
+            fname, '{0: 2}'
         )
         obj.dfilter = (0, {2: 40})
-        assert (
-            repr(obj)
-            ==
-            (
-                "putil.pcsv.CsvFile(fname=r'{0}', "
-                "dfilter=({{2: 40}}, [0]), "
-                "has_header=False)".format(os.path.normpath(fname))
-            )
+        assert repr(obj) == (rstart+', dfilter={1}, has_header=False)').format(
+            fname, '({2: 40}, [0])'
         )
 
     def test_str(self):
@@ -393,75 +345,43 @@ class TestCsvFile(object):
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
         obj.dsort([{'Ctrl':'D'}, {'Ref':'A'}])
-        assert (
-            obj.data()
-            ==
-            [
-                [3, 5, 50],
-                [2, 4, 30],
-                [2, 5, 40],
-                [1, 3, 10],
-                [1, 4, 20],
-            ]
-        )
+        assert obj.data() == [
+            [3, 5, 50], [2, 4, 30], [2, 5, 40], [1, 3, 10], [1, 4, 20],
+        ]
         obj.dsort([{'Ctrl':'D'}, {'Ref':'D'}])
-        assert (
-            obj.data()
-            ==
-            [
-                [3, 5, 50],
-                [2, 5, 40],
-                [2, 4, 30],
-                [1, 4, 20],
-                [1, 3, 10],
-            ]
-        )
+        assert obj.data() == [
+             [3, 5, 50], [2, 5, 40], [2, 4, 30], [1, 4, 20], [1, 3, 10],
+         ]
         obj.dsort(['Ctrl', 'Ref'])
-        assert (
-            obj.data()
-            ==
-            [
-                [1, 3, 10],
-                [1, 4, 20],
-                [2, 4, 30],
-                [2, 5, 40],
-                [3, 5, 50],
-            ]
-        )
+        assert obj.data() == [
+            [1, 3, 10], [1, 4, 20], [2, 4, 30], [2, 5, 40], [3, 5, 50],
+        ]
         with putil.misc.TmpFile(write_sort_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
         obj.dsort([{'H1':'A'}, {'H2':'A'}, {'H3':'A'}])
-        assert (
-            obj.data()
-            ==
-            [
-                [1, 1, 20],
-                [1, 2, 5],
-                [1, 2, 10],
-                [3, 1, 30],
-                [3, 2, 20],
-                [3, 6, 10],
-                [4, 5, 20],
-                [4, 7, 10],
-                [4, 8, 30],
-            ]
-        )
+        assert obj.data() == [
+            [1, 1, 20],
+            [1, 2, 5],
+            [1, 2, 10],
+            [3, 1, 30],
+            [3, 2, 20],
+            [3, 6, 10],
+            [4, 5, 20],
+            [4, 7, 10],
+            [4, 8, 30],
+        ]
         obj.dsort([{'H1':'D'}, {'H2':'A'}, {'H3':'D'}])
-        assert (
-            obj.data()
-            ==
-            [
-                [4, 5, 20],
-                [4, 7, 10],
-                [4, 8, 30],
-                [3, 1, 30],
-                [3, 2, 20],
-                [3, 6, 10],
-                [1, 1, 20],
-                [1, 2, 10],
-                [1, 2, 5],
-            ]
-        )
+        assert obj.data() == [
+            [4, 5, 20],
+            [4, 7, 10],
+            [4, 8, 30],
+            [3, 1, 30],
+            [3, 2, 20],
+            [3, 6, 10],
+            [1, 1, 20],
+            [1, 2, 10],
+            [1, 2, 5],
+        ]
 
     @pytest.mark.csv_file
     def test_dsort_exceptions(self):
@@ -506,90 +426,52 @@ class TestCsvFile(object):
             obj = putil.pcsv.CsvFile(fname=fname)
         obj.cfilter = ['Ref']
         obj.replace([[1.0], [2.0], [3.0], [4.5], [5.0]], filtered='C')
-        assert (
-            obj.data()
-            ==
-            [
-                [1, 1.0, 10],
-                [1, 2.0, 20],
-                [2, 3.0, 30],
-                [2, 4.5, 40],
-                [3, 5.0, 50],
-            ]
-        )
+        assert obj.data() == [
+            [1, 1.0, 10],
+            [1, 2.0, 20],
+            [2, 3.0, 30],
+            [2, 4.5, 40],
+            [3, 5.0, 50],
+        ]
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
         obj.cfilter = [0, 2]
         obj.replace(
-            [[1.0, 'a'], [2.0, 'b'], [3.0, 'c'], [4.5, 'd'], [5.0, 'e']],
-            True
+            [[1.0, 'a'], [2.0, 'b'], [3.0, 'c'], [4.5, 'd'], [5.0, 'e']], True
         )
-        assert (
-            obj.data()
-            ==
-            [
-                [1.0, 3, 'a'],
-                [2.0, 4, 'b'],
-                [3.0, 4, 'c'],
-                [4.5, 5, 'd'],
-                [5.0, 5, 'e'],
-            ]
-        )
+        assert obj.data() == [
+            [1.0, 3, 'a'],
+            [2.0, 4, 'b'],
+            [3.0, 4, 'c'],
+            [4.5, 5, 'd'],
+            [5.0, 5, 'e'],
+        ]
         with putil.misc.TmpFile(write_file) as fname:
-            obj = putil.pcsv.CsvFile(
-                fname=fname,
-                dfilter=({'Ctrl':2}, [0, 2])
-            )
-        obj.replace(
-            [[1.0, 'a'], [2.0, 'b']],
-            filtered=True
-        )
-        assert (
-            obj.data()
-            ==
-            [
-                [1, 3, 10],
-                [1, 4, 20],
-                [1.0, 4, 'a'],
-                [2.0, 5, 'b'],
-                [3, 5, 50],
-            ]
-        )
+            obj = putil.pcsv.CsvFile(fname=fname, dfilter=({'Ctrl':2}, [0, 2]))
+        obj.replace([[1.0, 'a'], [2.0, 'b']], filtered=True)
+        assert obj.data() == [
+            [1, 3, 10],
+            [1, 4, 20],
+            [1.0, 4, 'a'],
+            [2.0, 5, 'b'],
+            [3, 5, 50],
+        ]
         with putil.misc.TmpFile(write_no_header_file) as fname:
-            obj = putil.pcsv.CsvFile(
-                fname=fname, has_header=False
-            )
+            obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
         obj.dfilter = [1]
         obj.replace([['a'], ['b'], ['c'], ['d']], True)
-        assert (
-            obj.data()
-            ==
-            [
-                [1, 'a', 7],
-                [2, 'b', 8],
-                [3, 'c', 9],
-                [1, 'd', 6],
-            ]
-        )
+        assert obj.data() == [
+            [1, 'a', 7], [2, 'b', 8], [3, 'c', 9], [1, 'd', 6],
+        ]
         with putil.misc.TmpFile(write_no_header_file) as fname:
             obj = putil.pcsv.CsvFile(
                 fname=fname, dfilter={0:1}, has_header=False
             )
         obj.cfilter = [0, 2]
-        obj.replace(
-            [[1.0, 'a'], [2.0, 'b']],
-            filtered=True
-        )
-        assert (
-            obj.data()
-            ==
-            [
-                [1.0, 4, 'a'],
-                [2, 5, 8],
-                [3, 6, 9],
-                [2.0, 6, 'b'],
-            ]
-        )
+        obj.replace([[1.0, 'a'], [2.0, 'b']], filtered=True)
+        assert obj.data() == [
+            [1.0, 4, 'a'], [2, 5, 8], [3, 6, 9], [2.0, 6, 'b'],
+        ]
 
     @pytest.mark.csv_file
     def test_replace_exceptions(self):
@@ -674,11 +556,7 @@ class TestCsvFile(object):
         """ Test reset_dfilter method exceptions """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        items = [
-            2.0,
-            'x',
-            'BR'
-        ]
+        items = [2.0, 'x', 'BR']
         for item in items:
             AI(obj.reset_dfilter, 'ftype', ftype=item)
 
@@ -719,11 +597,8 @@ class TestCsvFile(object):
         obj.cfilter = ['Result', 'Ref', 'Result']
         obj.write(filtered=True, append=False)
         written_data = _read(ofname)
-        assert (
-            written_data
-            ==
-            'Result,Ref,Result{0}30,4,30{0}40,5,40{0}'.format(lsep)
-        )
+        ref = 'Result,Ref,Result{0}30,4,30{0}40,5,40{0}'.format(lsep)
+        assert written_data == ref
         obj.reset_dfilter()
         # Test repeated columns with renamed header
         obj.reset_dfilter('c')
@@ -738,11 +613,8 @@ class TestCsvFile(object):
         with putil.misc.TmpFile() as fname:
             obj.write(fname=fname, filtered='c')
             written_data = _read(fname)
-        assert (
-            written_data
-            ==
-            'Result{0}10{0}20{0}30{0}40{0}50{0}'.format(lsep)
-        )
+        ref = 'Result{0}10{0}20{0}30{0}40{0}50{0}'.format(lsep)
+        assert written_data == ref
         # Check saving all data
         with putil.misc.TmpFile() as fname:
             obj.write(fname=fname, append=False)
@@ -758,32 +630,16 @@ class TestCsvFile(object):
         assert written_data == ref
         obj.cfilter = ['Ctrl', 'Result']
         with putil.misc.TmpFile() as fname:
-            obj.write(
-                fname=fname,
-                filtered=True,
-                header=False,
-                append=False
-            )
+            obj.write(fname=fname, filtered=True, header=False, append=False)
             written_data = _read(fname)
-        assert (
-            written_data
-            ==
-            '1,10{0}1,20{0}2,30{0}2,40{0}3,50{0}'.format(lsep)
-        )
+        ref = '1,10{0}1,20{0}2,30{0}2,40{0}3,50{0}'.format(lsep)
+        assert written_data == ref
         obj. cfilter = [0, 2]
         with putil.misc.TmpFile() as fname:
-            obj.write(
-                fname=fname,
-                filtered=True,
-                header=False,
-                append=False
-            )
+            obj.write(fname=fname, filtered=True, header=False, append=False)
             written_data = _read(fname)
-        assert (
-            written_data
-            ==
-            '1,10{0}1,20{0}2,30{0}2,40{0}3,50{0}'.format(lsep)
-        )
+        ref = '1,10{0}1,20{0}2,30{0}2,40{0}3,50{0}'.format(lsep)
+        assert written_data == ref
         with putil.misc.TmpFile() as fname:
             obj.reset_dfilter()
             obj.rfilter = {'Result':[10, 30]}
@@ -833,15 +689,8 @@ class TestCsvFile(object):
             else:
                 with open(fname, 'r', newline='') as fobj:
                     data = fobj.readlines()
-        assert (
-            data
-            ==
-            [
-                'Col1,Col2,Col3{0}'.format(lsep),
-                "1,'',10{0}".format(lsep),
-                "1,4,''{0}".format(lsep)
-            ]
-        )
+        items = ['Col1,Col2,Col3{0}', "1,'',10{0}", "1,4,''{0}"]
+        assert data == [item.format(lsep) for item in items]
 
     @pytest.mark.csv_file
     def test_write_exceptions(self):
@@ -996,11 +845,8 @@ class TestCsvFile(object):
             obj.add_dfilter({'Ctrl':'nom'})
             assert obj.data(filtered=True) == [['nom', 10], ['low', 30]]
             obj.add_dfilter({'Ctrl':'high'})
-            assert (
-                obj.data(filtered=True)
-                ==
-                [['nom', 10], ['high', 20], ['low', 30]]
-            )
+            ref = [['nom', 10], ['high', 20], ['low', 30]]
+            assert obj.data(filtered=True) == ref
         with putil.misc.TmpFile(write_no_header_file) as fname:
             obj = putil.pcsv.CsvFile(
                 fname=fname, dfilter={0:3}, has_header=False

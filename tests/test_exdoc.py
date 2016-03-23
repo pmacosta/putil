@@ -25,8 +25,7 @@ if sys.hexversion < 0x03000000:
 import putil.exdoc
 import putil.exh
 import putil.misc
-from putil.test import AE, AI, GET_EXMSG
-import putil.test
+from putil.test import AE, AI, AROPROP, GET_EXMSG
 import tests.support.exdoc_support_module_1
 import tests.support.exdoc_support_module_3
 import tests.support.exdoc_support_module_4
@@ -113,9 +112,7 @@ def simple_exobj():
     exobj = putil.exh.ExHandle(True)
     def func1():
         exobj.add_exception(
-            'first_exception',
-            TypeError,
-            'This is the first exception'
+            'first_exception', TypeError, 'This is the first exception'
         )
     func1()
     return exobj
@@ -158,15 +155,26 @@ class TestExDocCxt(object):
     """ Tests for ExDocCxt class """
     def test_init(self):
         """ Test constructor behavior """
+        # Helper functions
+        def check_ctx1(name=None, kwargs=None):
+            exmsg = 'Argument `{0}` is not valid'.format(name)
+            with pytest.raises(RuntimeError) as excinfo:
+                with putil.exdoc.ExDocCxt(**kwargs):
+                    putil.misc.pcolor('a', 'red')
+            assert GET_EXMSG(excinfo) == exmsg
+        def check_ctx2(name=None, kwargs=None):
+            exmsg = 'Argument `in_callables_fname` is not valid'
+            with pytest.raises(RuntimeError) as excinfo:
+                with putil.exdoc.ExDocCxt(**kwargs):
+                    func0()
+            assert GET_EXMSG(excinfo) == exmsg
+        # Function to use for tests
         def func0():
             exobj = putil.exh.get_or_create_exh_obj(
-                full_cname=True,
-                exclude=['_pytest']
+                full_cname=True, exclude=['_pytest']
             )
             exobj.add_exception(
-                'first_exception',
-                TypeError,
-                'This is the first exception'
+                'first_exception', TypeError, 'This is the first exception'
             )
         if putil.exh.get_exh_obj():
             putil.exh.del_exh_obj()
@@ -176,21 +184,11 @@ class TestExDocCxt(object):
         assert GET_EXMSG(excinfo) == 'This is bad'
         assert putil.exh.get_exh_obj() is None
         #
-        with pytest.raises(RuntimeError) as excinfo:
-            with putil.exdoc.ExDocCxt(_no_print='a'):
-                putil.misc.pcolor('a', 'red')
-        assert GET_EXMSG(excinfo) == 'Argument `_no_print` is not valid'
-        #
-        with pytest.raises(RuntimeError) as excinfo:
-            with putil.exdoc.ExDocCxt(exclude=5):
-                putil.misc.pcolor('a', 'red')
-        assert GET_EXMSG(excinfo) == 'Argument `exclude` is not valid'
+        check_ctx1('_no_print', dict(_no_print='a'))
+        check_ctx1('exclude', dict(exclude=5))
         #
         for item in [5, 'test\0']:
-            with pytest.raises(RuntimeError) as excinfo:
-                with putil.exdoc.ExDocCxt(pickle_fname=item):
-                    putil.misc.pcolor('a', 'red')
-            assert GET_EXMSG(excinfo) == 'Argument `pickle_fname` is not valid'
+            check_ctx1('pickle_fname', dict(pickle_fname=item))
         #
         with putil.misc.TmpFile() as fname:
             with putil.exdoc.ExDocCxt(pickle_fname=fname):
@@ -198,34 +196,24 @@ class TestExDocCxt(object):
             assert os.path.isfile(fname)
         #
         for item in [5, 'test\0']:
-            with pytest.raises(RuntimeError) as excinfo:
-                with putil.exdoc.ExDocCxt(in_callables_fname=item):
-                    func0()
-            exmsg = 'Argument `in_callables_fname` is not valid'
-            assert GET_EXMSG(excinfo) == exmsg
+            check_ctx1('in_callables_fname', dict(in_callables_fname=item))
         #
         with pytest.raises(OSError) as excinfo:
             with putil.exdoc.ExDocCxt(in_callables_fname='_not_a_file_'):
                 func0()
         assert GET_EXMSG(excinfo) == 'File _not_a_file_ could not be found'
+        #
         for item in [5, 'test\0']:
-            with pytest.raises(RuntimeError) as excinfo:
-                with putil.exdoc.ExDocCxt(out_callables_fname=item):
-                    func0()
-            exmsg = 'Argument `out_callables_fname` is not valid'
-            assert GET_EXMSG(excinfo) == exmsg
+            check_ctx1('out_callables_fname', dict(out_callables_fname=item))
 
     def test_multiple(self):
         """ Test multiple-CPU tracing behavior """
         def func1():
             exobj = putil.exh.get_or_create_exh_obj(
-                full_cname=True,
-                exclude=['_pytest']
+                full_cname=True, exclude=['_pytest']
             )
             exobj.add_exception(
-                'first_exception',
-                TypeError,
-                'This is the first exception'
+                'first_exception', TypeError, 'This is the first exception'
             )
         def test_trace():
             cobj = putil.exdoc.ExDocCxt
@@ -234,8 +222,7 @@ class TestExDocCxt(object):
                 obj1 = copy.copy(putil.exh.get_exh_obj())
                 putil.exh.del_exh_obj()
                 putil.exh.get_or_create_exh_obj(
-                    full_cname=True,
-                    exclude=['_pytest']
+                    full_cname=True, exclude=['_pytest']
                 )
                 func1()
                 obj2 = copy.copy(putil.exh.get_exh_obj())
@@ -266,12 +253,8 @@ class TestExDocCxt(object):
                 tests.support.exdoc_support_module_4.func('John')
             pobj1 = putil.pinspect.Callables()
             pobj1.load(out_callables_fname)
-        pobj2 = putil.pinspect.Callables(
-            [
-                __file__,
-                sys.modules['tests.support.exdoc_support_module_4'].__file__
-            ]
-        )
+        fname = sys.modules['tests.support.exdoc_support_module_4'].__file__
+        pobj2 = putil.pinspect.Callables([__file__, fname])
         assert pobj1 == pobj2
 
 
@@ -320,9 +303,7 @@ class TestExDoc(object):
         exobj1 = putil.exh.ExHandle(full_cname=True)
         def func1():
             exobj1.add_exception(
-                'first_exception',
-                TypeError,
-                'This is the first exception'
+                'first_exception', TypeError, 'This is the first exception'
             )
         func1()
         def mock_add_nodes1(self):
@@ -420,9 +401,7 @@ class TestExDoc(object):
         assert obj.depth is None
         obj.depth = 5
         assert obj.depth == 5
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.depth
-        assert GET_EXMSG(excinfo) == "can't delete attribute"
+        AROPROP(obj, 'depth')
 
     def test_exclude(self, simple_exobj):
         """ Test exclude property behavior """
@@ -430,9 +409,7 @@ class TestExDoc(object):
         assert obj.exclude is None
         obj.exclude = ['a', 'b']
         assert obj.exclude == ['a', 'b']
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.exclude
-        assert GET_EXMSG(excinfo) == "can't delete attribute"
+        AROPROP(obj, 'exclude')
 
     def test_get_sphinx_autodoc(self, exdocobj, exdocobj_single):
         """ Test get_sphinx_autodoc method behavior """
@@ -478,48 +455,24 @@ class TestExDoc(object):
         AI(obj, 'raised', name='callable', raised=5)
         AI(obj, 'raised', name='callable', no_comment=5)
         minwidth = putil.exdoc._MINWIDTH
-        assert exdocobj.get_sphinx_doc('_not_found_') == ''
-        assert (
-            exdocobj.get_sphinx_doc(
-                'tests.support.exdoc_support_module_1.read', raised=True
-            )
-            ==
-            ''
-        )
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.read'
-        )
-        assert tstr == (
+        assert obj('_not_found_') == ''
+        root = 'tests.support.exdoc_support_module_1.'
+        assert obj(root+'read', raised=True) == ''
+        assert obj(root+'read') == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.read\n'
             '\n'
             ':raises: TypeError (Cannot call read)\n'
             '\n'
         )
-        assert (
-            exdocobj.get_sphinx_doc(
-                'tests.support.exdoc_support_module_1.read',
-                raised=True,
-                no_comment=True
-            )
-            ==
-            ''
-        )
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.read',
-            no_comment=True
-        )
-        assert tstr == (
+        assert obj(root+'read', raised=True, no_comment=True) == ''
+        assert obj(root+'read', no_comment=True) == (
             '\n'
             ':raises: TypeError (Cannot call read)\n'
             '\n'
         )
         putil.exdoc._MINWIDTH = 16
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.read',
-            width=16
-        )
-        assert tstr == (
+        assert obj(root+'read', width=16) == (
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -536,21 +489,14 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.write'
-        )
-        assert tstr == (
+        assert obj(root+'write') == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.write'
             '\n\n:raises:\n * TypeError (Argument is not valid)'
             '\n\n * TypeError (Cannot call write)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.write',
-            width=16
-        )
-        assert tstr == (
+        assert obj(root+'write', width=16) == (
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -571,23 +517,12 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.write',
-            depth=1
-        )
-        assert tstr == (
+        assert obj(root+'write', depth=1) == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.write'
             '\n\n:raises: TypeError (Cannot call write)\n\n'
         )
-        tstr = exdocobj.get_sphinx_doc(
-            (
-                'tests.support.exdoc_support_module_1.'
-                'ExceptionAutoDocClass.__init__'
-            ),
-            depth=1
-        )
-        assert tstr == (
+        assert obj(root+'ExceptionAutoDocClass.__init__', depth=1) == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             '__init__\n\n:raises:\n'
@@ -599,11 +534,18 @@ class TestExDoc(object):
             ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
             ' * ValueError (Illegal node name: *[node_name]*)\n\n'
         )
-        tstr = exdocobj.get_sphinx_doc(
-            ('tests.support.exdoc_support_module_1.'
-             'ExceptionAutoDocClass.__init__'
-             ),
-            depth=0
+        assert obj(root+'ExceptionAutoDocClass.__init__', depth=0) == (
+            '.. Auto-generated exceptions documentation for\n'
+            '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
+            '__init__\n\n'
+            ':raises:\n'
+            ' * RuntimeError (Argument \\`value1\\` is not valid)\n\n'
+            ' * RuntimeError (Argument \\`value2\\` is not valid)\n\n'
+            ' * RuntimeError (Argument \\`value3\\` is not valid)\n\n'
+            ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
+        )
+        tstr = obj(
+            root+'ExceptionAutoDocClass.__init__', exclude=['putil.tree']
         )
         assert tstr == (
             '.. Auto-generated exceptions documentation for\n'
@@ -615,27 +557,8 @@ class TestExDoc(object):
             ' * RuntimeError (Argument \\`value3\\` is not valid)\n\n'
             ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
         )
-        tstr = exdocobj.get_sphinx_doc(
-            (
-                'tests.support.exdoc_support_module_1.'
-                'ExceptionAutoDocClass.__init__'
-            ),
-            exclude=['putil.tree']
-        )
-        assert tstr == (
-            '.. Auto-generated exceptions documentation for\n'
-            '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
-            '__init__\n\n'
-            ':raises:\n'
-            ' * RuntimeError (Argument \\`value1\\` is not valid)\n\n'
-            ' * RuntimeError (Argument \\`value2\\` is not valid)\n\n'
-            ' * RuntimeError (Argument \\`value3\\` is not valid)\n\n'
-            ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
-        )
-        tstr = exdocobj.get_sphinx_doc(
-            ('tests.support.exdoc_support_module_1.'
-             'ExceptionAutoDocClass.__init__'
-             ),
+        tstr = obj(
+            root+'ExceptionAutoDocClass.__init__',
             exclude=['add_nodes', '_validate_nodes_with_data']
         )
         assert tstr == (
@@ -649,10 +572,7 @@ class TestExDoc(object):
             ' * RuntimeError (Argument \\`value3\\` is not valid)\n\n'
             ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
         )
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.ExceptionAutoDocClass.value3'
-        )
-        assert tstr == (
+        assert obj(root+'ExceptionAutoDocClass.value3') == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             'value3\n\n'
@@ -665,13 +585,7 @@ class TestExDoc(object):
             '   * TypeError (Cannot get value3)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        tstr = exdocobj.get_sphinx_doc(
-            ('tests.support.exdoc_support_module_1.'
-             'ExceptionAutoDocClass.value3'
-             ),
-            width=16
-        )
-        assert tstr == (
+        assert obj(root+'ExceptionAutoDocClass.value3', width=16) == (
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -707,10 +621,7 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.ExceptionAutoDocClass.temp'
-        )
-        assert tstr == (
+        assert obj(root+'ExceptionAutoDocClass.temp') == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             'temp\n\n'
@@ -719,11 +630,7 @@ class TestExDoc(object):
             ' valid)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.ExceptionAutoDocClass.temp',
-            width=16
-        )
-        assert tstr == (
+        assert obj(root+'ExceptionAutoDocClass.temp', width=16) == (
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -744,10 +651,7 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        tstr = exdocobj.get_sphinx_doc(
-            'tests.support.exdoc_support_module_1.ExceptionAutoDocClass.value2'
-        )
-        assert tstr == (
+        assert obj(root+'ExceptionAutoDocClass.value2') == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             'value2\n\n'
@@ -756,13 +660,7 @@ class TestExDoc(object):
             ' * TypeError (Argument \\`value2\\` is not valid)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        tstr = exdocobj.get_sphinx_doc(
-            ('tests.support.exdoc_support_module_1.'
-             'ExceptionAutoDocClass.value2'
-             ),
-            width=16
-        )
-        assert tstr == (
+        assert obj(root+'ExceptionAutoDocClass.value2', width=16) == (
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -789,21 +687,16 @@ class TestExDoc(object):
         )
         putil.exdoc._MINWIDTH = minwidth
         # Test raised argument behaves as expected
-        tstr = exdocobj_raised.get_sphinx_doc(
-            'tests.support.exdoc_support_module_5.float_func',
-        )
-        assert tstr == (
+        obj = exdocobj_raised.get_sphinx_doc
+        root = 'tests.support.exdoc_support_module_5.'
+        assert obj(root+'float_func') == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_5.float_func\n\n'
             ':raises:\n'
             ' * TypeError (Argument \\`arg\\` is not valid)\n\n'
             ' * ValueError (Argument \\`arg\\` is illegal)\n\n'
         )
-        tstr = exdocobj_raised.get_sphinx_doc(
-            'tests.support.exdoc_support_module_5.float_func',
-            raised=True
-        )
-        assert tstr == (
+        assert obj(root+'float_func', raised=True) == (
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_5.float_func\n\n'
             ':raises: ValueError (Argument \\`arg\\` is illegal)\n\n'

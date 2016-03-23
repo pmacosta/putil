@@ -48,10 +48,7 @@ def _build_exclusion_list(exclude):
             mod_file = None
             for token in mod.split('.'):
                 try:
-                    mfile, mdir, _ = imp.find_module(
-                        token,
-                        [mdir] if mdir else None
-                    )
+                    mfile, mdir, _ = imp.find_module(token, mdir and [mdir])
                     if mfile:
                         mod_file = mfile.name
                         mfile.close()
@@ -67,10 +64,7 @@ def _invalid_frame(fobj):
     """ Selects valid stack frame to process """
     fin = fobj.f_code.co_filename
     invalid_module = any(
-        [
-            fin.endswith(item)
-            for item in _INVALID_MODULES_LIST
-        ]
+        [fin.endswith(item) for item in _INVALID_MODULES_LIST]
     )
     return invalid_module or (not os.path.isfile(fin))
 
@@ -320,9 +314,7 @@ class ExHandle(object):
            (self._exclude != other._exclude)):
             raise RuntimeError('Incompatible exception handlers')
         robj = ExHandle(
-            full_cname=self._full_cname,
-            exclude=self._exclude,
-            _copy=True
+            full_cname=self._full_cname, exclude=self._exclude, _copy=True
         )
         ex_dict = copy.deepcopy(other._ex_dict)
         robj._ex_dict = copy.deepcopy(self._ex_dict)
@@ -330,8 +322,7 @@ class ExHandle(object):
         _merge_cdicts(robj, other._clut, ex_dict, other._callables_separator)
         robj._ex_dict.update(ex_dict)
         robj._callables_obj = (
-            copy.copy(self._callables_obj)+
-            copy.copy(other._callables_obj)
+            copy.copy(self._callables_obj)+copy.copy(other._callables_obj)
         )
         return robj
 
@@ -377,9 +368,7 @@ class ExHandle(object):
             True
         """
         cobj = ExHandle(
-            full_cname=self._full_cname,
-            exclude=self._exclude,
-            _copy=True
+            full_cname=self._full_cname, exclude=self._exclude, _copy=True
         )
         cobj._ex_dict = copy.deepcopy(self._ex_dict)
         cobj._clut = copy.deepcopy(self._clut)

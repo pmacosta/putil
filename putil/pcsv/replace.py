@@ -34,59 +34,61 @@ exobj = trace_ex_pcsv_replace.trace_module(no_print=True)
 # Functions
 ###
 @putil.pcontracts.contract(
-    ifname='file_name_exists',
-    idfilter='csv_data_filter',
-    ihas_header=bool,
-    ifrow='non_negative_integer',
-    rfname='file_name_exists',
-    rdfilter='csv_data_filter',
-    rhas_header=bool,
-    rfrow='non_negative_integer',
+    fname1='file_name_exists',
+    fname2='file_name_exists',
+    dfilter1='csv_data_filter',
+    dfilter2='csv_data_filter',
+    has_header1=bool,
+    has_header2=bool,
+    frow1='non_negative_integer',
+    frow2='non_negative_integer',
     ofname='None|file_name',
     ocols='None|list(str)'
 )
 def replace(
-    ifname, idfilter, rfname, rdfilter,
-    ihas_header=True, ifrow=0, rhas_header=True, rfrow=0,
+    fname1, fname2,
+    dfilter1, dfilter2,
+    has_header1=True, has_header2=True,
+    frow1=0, frow2=0,
     ofname=None, ocols=None):
     r"""
     Replaces data in one file with data from another file
 
-    :param ifname: Name of the input comma-separated values file, the file
+    :param fname1: Name of the input comma-separated values file, the file
                    that contains the columns to be replaced
-    :type  ifname: :ref:`FileNameExists`
+    :type  fname1: :ref:`FileNameExists`
 
-    :param idfilter: Row and/or column filter for the input file
-    :type  idfilter: :ref:`CsvDataFilter`
-
-    :param rfname: Name of the replacement comma-separated values file, the
+    :param fname2: Name of the replacement comma-separated values file, the
                    file that contains the replacement data
-    :type  rfname: :ref:`FileNameExists`
+    :type  fname2: :ref:`FileNameExists`
 
-    :param rdfilter: Row and/or column filter for the replacement file
-    :type  rdfilter: :ref:`CsvDataFilter`
+    :param dfilter1: Row and/or column filter for the input file
+    :type  dfilter1: :ref:`CsvDataFilter`
 
-    :param ihas_header: Flag that indicates whether the input comma-separated
+    :param dfilter2: Row and/or column filter for the replacement file
+    :type  dfilter2: :ref:`CsvDataFilter`
+
+    :param has_header1: Flag that indicates whether the input comma-separated
                         values file has column headers in its first line (True)
                         or not (False)
-    :type  ihas_header: boolean
+    :type  has_header1: boolean
 
-    :param ifrow: Input comma-separated values file first data row (starting
+    :param has_header2: Flag that indicates whether the replacement
+                        comma-separated values file has column headers in its
+                        first line (True) or not (False)
+    :type  has_header2: boolean
+
+    :param frow1: Input comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as
                   the first row that has a number (integer of float) in at
                   least one of its columns
-    :type  ifrow: :ref:`NonNegativeInteger`
+    :type  frow1: :ref:`NonNegativeInteger`
 
-    :param rhas_header: Flag that indicates whether the replacement
-                        comma-separated values file has column headers in its
-                        first line (True) or not (False)
-    :type  rhas_header: boolean
-
-    :param rfrow: Replacement comma-separated values file first data row
+    :param frow2: Replacement comma-separated values file first data row
                   (starting from 1). If 0 the row where data starts is
                   auto-detected as the first row that has a number (integer of
                   float) in at least one of its columns
-    :type  rfrow: :ref:`NonNegativeInteger`
+    :type  frow2: :ref:`NonNegativeInteger`
 
     :param ofname: Name of the output comma-separated values file, the file
                    that will contain the input file data but with some columns
@@ -96,7 +98,7 @@ def replace(
 
     :param ocols: Names of the replaced columns in the output comma-separated
                   values file. If None the column names in the input file are
-                  used if **ihas_header** is True, otherwise no header is used
+                  used if **has_header1** is True, otherwise no header is used
     :type  ocols: list or None
 
     .. [[[cog cog.out(exobj.get_sphinx_autodoc(raised=True)) ]]]
@@ -106,21 +108,21 @@ def replace(
     :raises:
      * OSError (File *[fname]* could not be found)
 
-     * RuntimeError (Argument \`idfilter\` is not valid)
+     * RuntimeError (Argument \`dfilter1\` is not valid)
 
-     * RuntimeError (Argument \`ifname\` is not valid)
+     * RuntimeError (Argument \`dfilter2\` is not valid)
 
-     * RuntimeError (Argument \`ifrow\` is not valid)
+     * RuntimeError (Argument \`fname1\` is not valid)
+
+     * RuntimeError (Argument \`fname2\` is not valid)
+
+     * RuntimeError (Argument \`frow1\` is not valid)
+
+     * RuntimeError (Argument \`frow2\` is not valid)
 
      * RuntimeError (Argument \`ocols\` is not valid)
 
      * RuntimeError (Argument \`ofname\` is not valid)
-
-     * RuntimeError (Argument \`rdfilter\` is not valid)
-
-     * RuntimeError (Argument \`rfname\` is not valid)
-
-     * RuntimeError (Argument \`rfrow\` is not valid)
 
      * RuntimeError (Column headers are not unique in file *[fname]*)
 
@@ -156,14 +158,14 @@ def replace(
     )
     # Read and validate input data
     iobj = CsvFile(
-        fname=ifname, dfilter=idfilter, has_header=ihas_header, frow=ifrow
+        fname=fname1, dfilter=dfilter1, has_header=has_header1, frow=frow1
     )
     # Read and validate replacement data
     robj = CsvFile(
-        fname=rfname, dfilter=rdfilter, has_header=rhas_header, frow=rfrow
+        fname=fname2, dfilter=dfilter2, has_header=has_header2, frow=frow2
     )
     # Assign output data structure
-    ofname = ifname if ofname is None else ofname
+    ofname = fname1 if ofname is None else ofname
     icfilter = iobj.header() if iobj.cfilter is None else iobj.cfilter
     rcfilter = robj.header() if robj.cfilter is None else robj.cfilter
     ocols = icfilter if ocols is None else ocols
@@ -187,7 +189,7 @@ def replace(
     ]
     # Create new header
     orow = []
-    if ihas_header:
+    if has_header1:
         for col_num, idata in enumerate(iobj.header()):
             orow.append(
                 ocols[icfilter_index.index(col_num)]
