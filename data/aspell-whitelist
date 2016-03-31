@@ -1,4 +1,3 @@
-rstart
 aa
 aaa
 abc
@@ -354,6 +353,7 @@ fdirs
 femto
 fexh
 fexlist
+ffull
 fget
 fgrid
 FigureCanvasAgg
@@ -932,6 +932,7 @@ r'putil
 rrows
 rst
 RST
+rstart
 rstr
 rstrip
 rsts

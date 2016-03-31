@@ -500,7 +500,8 @@ class CsvFile(object):
                     self._rfilter[key] = rfilter[key]
             self._fdata_rows = len(self._apply_filter('R'))
 
-    def _apply_filter(self, ftype):
+    def _apply_filter(self, ftype, no_empty=False):
+        # pylint: disable=W0141
         rlist = [True, 'B', 'b', 'R', 'r']
         clist = [True, 'B', 'b', 'C', 'c']
         apply_filter = (
@@ -528,7 +529,9 @@ class CsvFile(object):
                     self._data
                 )
             ]
-        return self._fdata if apply_filter else self._data
+        data = self._fdata if apply_filter else self._data
+        ffull = lambda row: not any([item is None for item in row])
+        return list(filter(ffull, data)) if no_empty else data
 
     @putil.pcontracts.contract(has_header=bool)
     def _set_has_header(self, has_header):
@@ -640,8 +643,8 @@ class CsvFile(object):
         """
         return self._fdata_cols if filtered else self._data_cols
 
-    @putil.pcontracts.contract(filtered='csv_filtered')
-    def data(self, filtered=False):
+    @putil.pcontracts.contract(filtered='csv_filtered', no_empty=bool)
+    def data(self, filtered=False, no_empty=False):
         r"""
          Returns (filtered) file data. The returned object is a list, each item
          is a sub-list corresponding to a row of data; each item in the
@@ -650,17 +653,24 @@ class CsvFile(object):
         :param filtered: Filtering type
         :type  filtered: :ref:`CsvFiltered`
 
+        :param no_empty: Flag that indicates whether rows with empty columns
+                         should be filtered out (True) or not (False)
+        :type  no_empty: bool
+
         :rtype: list
 
         .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
         .. Auto-generated exceptions documentation for
         .. putil.pcsv.csv_file.CsvFile.data
 
-        :raises: RuntimeError (Argument \`filtered\` is not valid)
+        :raises:
+         * RuntimeError (Argument \`filtered\` is not valid)
+
+         * RuntimeError (Argument \`no_empty\` is not valid)
 
         .. [[[end]]]
         """
-        return self._apply_filter(filtered)
+        return self._apply_filter(filtered, no_empty)
 
     @putil.pcontracts.contract(order='csv_col_sort')
     def dsort(self, order):
@@ -925,6 +935,8 @@ class CsvFile(object):
          * RuntimeError (Argument \`fname\` is not valid)
 
          * RuntimeError (Argument \`header\` is not valid)
+
+         * RuntimeError (Argument \`no_empty\` is not valid)
 
          * ValueError (There is no data to save to file)
 

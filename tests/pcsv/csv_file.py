@@ -330,7 +330,10 @@ class TestCsvFile(object):
         """ Test data method exceptions """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, dfilter={'Result':20})
+        # Exceptions
         AI(obj.data, 'filtered', filtered=5)
+        AI(obj.data, 'no_empty', no_empty=5)
+        # Basic behavior (default no_empty)
         obj.data()
         obj.data(filtered=True)
         obj.add_dfilter('Ctrl')
@@ -339,6 +342,17 @@ class TestCsvFile(object):
         obj.data()
         assert obj.dfilter == ({'Result':20}, ['Ctrl'])
         obj.data()
+        # Test filtering of rows that have empty values
+        with putil.misc.TmpFile(write_empty_cols) as fname:
+            obj = putil.pcsv.CsvFile(fname=fname, has_header=False, frow=1)
+        assert obj.data() == [
+            ['Col1', 'Col2', 'Col3'], [1, None, 10], [1, 4, None]
+        ]
+        assert obj.data(no_empty=True) == [['Col1', 'Col2', 'Col3']]
+        obj.dfilter = ([0, 2])
+        assert obj.data(filtered=True, no_empty=True) == [
+            ['Col1', 'Col3'], [1, 10]
+        ]
 
     def test_dsort(self):
         """ Test dsort method behavior """
