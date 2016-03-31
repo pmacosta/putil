@@ -65,6 +65,7 @@ Putil Library
 .. _Funcsigs: https://pypi.python.org/pypi/funcsigs
 .. _Matplotlib: http://matplotlib.org
 .. _Mock: http://www.voidspace.org.uk/python/mock
+.. _Nose: http://nose.readthedocs.org
 .. _Numpy: http://www.numpy.org
 .. _Pillow: https://python-pillow.github.io
 .. _PyContracts: https://andreacensi.github.io/contracts
@@ -209,6 +210,8 @@ Contributing
     * `Matplotlib`_ (1.4.1 or newer)
 
     * `Mock`_ (Python 2.x only, 1.0.1 or newer)
+
+    * `Nose`_ (Python 2.6: 1.0.0 or newer)
 
     * `Numpy`_ (1.8.2 or newer)
 

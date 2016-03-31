@@ -17,7 +17,17 @@ import sys
 # This is a sub-set of the putil.misc.pcolor function, repeated here because
 # this script may be run right after cloning and putil module may not be in
 # the Python search path
+def _os_cmd(cmd):
+    """ Execute shell command and display standard output """
+    pobj = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
+    stdout, _ = pobj.communicate()
+    print(stdout)
+
+
 def _pcolor(text, color, indent=0):
+    """ Colorized print to standard output """
     esc_dict = {
         'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35,
         'cyan':36, 'white':37, 'none':-1
@@ -31,6 +41,19 @@ def _pcolor(text, color, indent=0):
             )
         )
     return '{indent}{text}'.format(indent=' '*indent, text=text)
+
+
+def _pip_install(pyver, pkg_name):
+    """ Install package via pip """
+    _os_cmd(
+        [
+            'pip{0}'.format(pyver),
+            'install',
+            '--upgrade',
+            '--force-reinstall',
+            pkg_name
+        ]
+    )
 
 
 def which(name):
@@ -62,9 +85,7 @@ def load_requirements(pkg_dir, pyver):
     for rfile in [os.path.join(reqs_dir, item) for item in reqs_files]:
         with open(os.path.join(reqs_dir, rfile), 'r') as fobj:
             lines = [
-                item.strip()
-                for item in fobj.readlines()
-                if item.strip()
+                item.strip() for item in fobj.readlines() if item.strip()
             ]
         ret.extend(lines)
     return ret
@@ -75,6 +96,7 @@ def build_wheel_cache(pyvers):
     pkg_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     pyvers = ['2.6', '2.7', '3.3', '3.4', '3.5'] if not len(pyvers) else pyvers
     old_python_path = os.environ['PYTHONPATH']
+    template = 'Building {0} wheel cache for Python {1}'
     for pyver in pyvers:
         pycmd = which('python{0}'.format(pyver))
         if not pycmd:
@@ -92,38 +114,16 @@ def build_wheel_cache(pyvers):
                 break
         else:
             raise RuntimeError('Numpy dependency could not be found')
+        # Numpy appears to error out during importing if nose is not
+        # pre-installed, apparently, it is not part of their dependency tree
+        if pyver == '2.6':
+            _pip_install(pyver, 'nose')
         for line in lines:
-            print(
-                _pcolor(
-                    'Building {0} wheel cache for Python {1}'.format(
-                        line,
-                        pyver
-                    ),
-                    'cyan'
-                )
-            )
+            print(_pcolor(template.format(line, pyver), 'cyan'))
             if 'scipy' in line:
                 # Install numpy before scipy otherwise pip throws an exception
-                pobj = subprocess.Popen(
-                    [
-                        'pip{0}'.format(pyver),
-                        'install',
-                        '--upgrade',
-                        '--force-reinstall',
-                        numpy_line.strip()
-                    ],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT
-                )
-                stdout, _ = pobj.communicate()
-                print(stdout)
-            pobj = subprocess.Popen(
-                ['pip{0}'.format(pyver), 'wheel', line],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
-            )
-            stdout, _ = pobj.communicate()
-            print(stdout)
+                _pip_install(pyver, numpy_line.strip())
+            _os_cmd(['pip{0}'.format(pyver), 'wheel', line])
         os.environ['PYTHONPATH'] = old_python_path
 
 
