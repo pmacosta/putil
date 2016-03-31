@@ -8,6 +8,7 @@
 from __future__ import print_function
 import os
 import subprocess
+import sys
 
 
 ###
@@ -69,10 +70,10 @@ def load_requirements(pkg_dir, pyver):
     return ret
 
 
-def build_wheel_cache():
+def build_wheel_cache(pyvers):
     """ Build pip wheel cache """
     pkg_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    pyvers = ['2.6', '2.7', '3.3', '3.4', '3.5']
+    pyvers = ['2.6', '2.7', '3.3', '3.4', '3.5'] if not len(pyvers) else pyvers
     old_python_path = os.environ['PYTHONPATH']
     for pyver in pyvers:
         pycmd = which('python{0}'.format(pyver))
@@ -127,4 +128,4 @@ def build_wheel_cache():
 
 
 if __name__ == '__main__':
-    build_wheel_cache()
+    build_wheel_cache(sys.argv[1:])
