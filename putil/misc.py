@@ -1,15 +1,17 @@
 # misc.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0903,W0611
+# pylint: disable=C0111,E0611,R0903,W0611
 
 # Standard library imports
 from __future__ import print_function
 import ast
+import collections
 import inspect
 import os
 import platform
 import re
+import sys
 import tempfile
 import time
 import types
@@ -920,41 +922,28 @@ def strframe(obj, extended=False):
 ###
 # Classes
 ###
-class CiDict(dict):
-    """
-    Dictionary class with case-insensitive keys
-    """
-    def __init__(self, posarg=None, **kwargs):
-        # Algorithm:
-        # 1. Create a dictionary with the build-in dict() method (this ensures
-        #    that all exceptions will be identical)
-        # 2. Create a new dictionary with lower-case keys of dictionary created
-        #    in step #1
-        # 3. Associate dictionary created in step #2 to self
-        # Method may not be the most efficient for large dictionaries, where
-        # an iteration-based algorithm may have less memory requirements
-        _dict1 = {}
-        if posarg is not None:
-            try:
-                _dict1.update(posarg)
-            except TypeError:
-                raise
-            except ValueError:
-                raise
-        if kwargs:
-            _dict1.update(kwargs)
-        _dict2 = {}
-        for key in _dict1.keys():
-            item = key.lower() if isinstance(key, str) is True else key
-            _dict2[item] = _dict1[key]
-        dict.__init__(self, _dict2)
+# Inspired from https://stackoverflow.com/
+# questions/3387691/python-how-to-perfectly-override-a-dict
+class CiDict(collections.MutableMapping):
+    def __init__(self, *args, **kwargs):
+        self._store = dict()
+        self.update(dict(*args, **kwargs))
 
     def __getitem__(self, key):
-        return super(CiDict, self).__getitem__(
-            key.lower() if isinstance(key, str) else key
-        )
+        return self._store[self.__keytransform__(key)]
 
-    def __setitem__(self, key, val):
-        super(CiDict, self).__setitem__(
-            key.lower() if isinstance(key, str) else key, val
-        )
+    def __setitem__(self, key, value):
+        self._store[self.__keytransform__(key)] = value
+
+    def __delitem__(self, key):
+        del self._store[self.__keytransform__(key)]
+
+    def __iter__(self):
+        return iter(self._store)
+
+    def __len__(self):
+        return len(self._store)
+
+    def __keytransform__(self, key):
+        # pylint: disable=R0201
+        return key.lower() if isinstance(key, str) else key

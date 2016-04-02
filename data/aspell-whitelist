@@ -1,3 +1,6 @@
+MutableMapping
+delitem
+keytransform
 aa
 aaa
 abc
@@ -164,6 +167,7 @@ cpu
 cpus
 CPUs
 CPUS
+crange
 cregexp
 cst
 csv
@@ -183,6 +187,7 @@ CTNAME
 Ctrl
 ctx
 ctxt
+ctype
 customizations
 cvec
 cvector
@@ -751,6 +756,7 @@ OSI
 othercontract
 otoken
 otokens
+ovalue
 pacakges
 palegoldenrod
 palegreen
@@ -817,6 +823,7 @@ pragma
 pre
 prec
 prf
+priv
 proc
 prt
 ps
@@ -1046,6 +1053,7 @@ subobj
 subprocess
 subtokens
 subtree
+svalue
 svg
 symlink
 Symlink

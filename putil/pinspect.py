@@ -1,7 +1,8 @@
 # pinspect.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,E0012,E0611,F0401,R0912,R0916,W0212,W0631,W1504
+# pylint: disable=C0103,C0111
+# pylint: disable=E0012,E0611,F0401,R0912,R0914,R0916,W0212,W0631,W1504
 
 # Standard library imports
 from __future__ import print_function
@@ -16,9 +17,9 @@ import sys
 import types
 # PyPI imports
 try:    # pragma: no cover
-    from inspect import signature
+    from inspect import Parameter, signature
 except ImportError: # pragma: no cover
-    from funcsigs import signature
+    from funcsigs import Parameter, signature
 # Putil imports
 if sys.hexversion < 0x03000000: # pragma: no cover
     from putil.compat2 import _unicode_to_ascii, _readlines, _unicode_char
@@ -44,22 +45,6 @@ def _get_module_name_from_fname(fname):
             module_name = mobj.__name__
             return module_name
     raise RuntimeError('Module could not be found')
-
-
-def _is_parg(arg):
-    """
-    Returns True if arg argument is the name of a positional variable
-    argument (i.e. *pargs)
-    """
-    return (len(arg) > 1) and (arg[0] == '*') and (arg[1] != '*')
-
-
-def _is_kwarg(arg):
-    """
-    Returns True if arg argument is the name of a keyword variable argument
-    (i.e. **kwargs)
-    """
-    return (len(arg) > 2) and (arg[:2] == '**')
 
 
 def _validate_fname(fname):
@@ -116,33 +101,25 @@ def get_function_args(func, no_self=False, no_varargs=False):
     """
     par_dict = signature(func).parameters
     # Mark positional and/or keyword arguments (if any)
+    pos = lambda x: x.kind == Parameter.VAR_POSITIONAL
+    kw = lambda x: x.kind == Parameter.VAR_KEYWORD
+    opts = ['', '*', '**']
     args = [
-        '{prefix}{arg}'.format(
-            prefix=(
-                '*'
-                if par_dict[par].kind == par_dict[par].VAR_POSITIONAL else
-                (
-                    '**'
-                    if par_dict[par].kind == par_dict[par].VAR_KEYWORD else
-                    ''
-                )
-            ),
-            arg=par
-        )
-        for par in par_dict
+        '{prefix}{arg}'.format(prefix=opts[pos(value)+2*kw(value)], arg=par)
+        for par, value in par_dict.items()
     ]
     # Filter out 'self' from parameter list (optional)
     self_filtered_args = args if not args else (
         args[1 if (args[0] == 'self') and no_self else 0:]
     )
     # Filter out positional or keyword arguments (optional)
-    varargs_filtered_args = tuple([
-        arg
-        for arg in self_filtered_args
-        if ((not no_varargs) or
-           (no_varargs and (not _is_parg(arg)) and (not _is_kwarg(arg))))
-    ])
-    return varargs_filtered_args
+    pos = lambda x: (len(x) > 1) and (x[0] == '*') and (x[1] != '*')
+    kw = lambda x: (len(x) > 2) and (x[:2] == '**')
+    varargs_filtered_args = [
+        arg for arg in self_filtered_args
+        if (not no_varargs) or all([no_varargs, not pos(arg), not kw(arg)])
+    ]
+    return tuple(varargs_filtered_args)
 
 
 def get_module_name(module_obj):
@@ -169,13 +146,9 @@ def get_module_name(module_obj):
     if not is_object_module(module_obj):
         raise RuntimeError('Argument `module_obj` is not valid')
     name = module_obj.__name__
+    msg = 'Module object `{name}` could not be found in loaded modules'
     if name not in sys.modules:
-        raise RuntimeError(
-            (
-                'Module object `{name}` could not '
-                'be found in loaded modules'.format(name=name)
-            )
-        )
+        raise RuntimeError(msg.format(name=name))
     return name
 
 
@@ -215,13 +188,11 @@ def private_props(obj):
     :returns: iterator
     """
     # Get private properties but NOT magic methods
-    iobj = [
-        obj_name
-        for obj_name in dir(obj)
-        if _PRIVATE_PROP_REGEXP.match(obj_name) and
-            (not callable(getattr(obj, obj_name)))
-    ]
-    for obj_name in iobj:
+    props = [item for item in dir(obj)]
+    priv_props = [_PRIVATE_PROP_REGEXP.match(item) for item in props]
+    call_props = [callable(getattr(obj, item)) for item in props]
+    iobj = zip(props, priv_props, call_props)
+    for obj_name in [prop for prop, priv, call in iobj if priv and (not call)]:
         yield obj_name
 
 
@@ -398,7 +369,6 @@ class Callables(object):
             >>> obj1 == obj3
             True
         """
-
         self._check_intersection(other)
         self._callables_db.update(copy.deepcopy(other._callables_db))
         self._reverse_callables_db.update(
@@ -480,47 +450,28 @@ class Callables(object):
         The numbers in parenthesis indicate the line number in which the
         callable starts and ends within the file it is defined in
         """
-        ret = list()
         if self._module_names:
+            ret = []
             # List traced modules
             ret.append('Modules:')
             for module_name in sorted(self._module_names):
-                ret.append(
-                    '   {module_name}'.format(module_name=module_name)
-                )
+                ret.append('   {0}'.format(module_name))
             # List traced classes
             if self._class_names:
                 ret.append('Classes:')
                 for class_name in sorted(self._class_names):
-                    ret.append(
-                        '   {class_name}'.format(class_name=class_name)
-                    )
+                    ret.append('   {0}'.format(class_name))
             # List traced callables (methods, functions, properties)
             for entry in sorted(self._modules_dict):
                 dict_value = self._modules_dict[entry]
                 for value in sorted(dict_value, key=lambda x: x['code_id'][1]):
-                    start_line = value['code_id'][1]
-                    stop_line = value['last_lineno']
-                    line_text = (
-                        (
-                            ' ({start_line}-{stop_line})'.format(
-                                start_line=start_line,
-                                stop_line=stop_line
-                            )
-                        )
-                        if start_line != stop_line else
-                        ' ({line_number})'.format(line_number=start_line)
-                    )
-                    ret.append(
-                        '{callable_name}: {callable_type}{line_range}'.format(
-                            callable_name=value['name'],
-                            callable_type=value['type'],
-                            line_range=line_text
-                        )
-                    )
+                    start, stop = value['code_id'][1], value['last_lineno']
+                    cname, ctype = value['name'], value['type']
+                    range_lines = (start, ['', '-'+str(stop)][start != stop])
+                    crange = ' ({0}{1})'.format(*range_lines)
+                    ret.append('{0}: {1}{2}'.format(cname, ctype, crange))
             return '\n'.join(ret)
-        else:
-            return ''
+        return ''
 
     def _check_intersection(self, other):
         """
@@ -534,25 +485,20 @@ class Callables(object):
             other_dict = getattr(other, prop)
             keys_self = set(self_dict.keys())
             keys_other = set(other_dict.keys())
-            intersection = keys_self & keys_other
-            for key in intersection:
-                if ((type(self_dict[key]) != type(other_dict[key])) or
-                   ((type(self_dict[key]) == type(other_dict[key])) and
-                   ((isinstance(self_dict[key], list) and
-                   (not all(
-                       [
-                           item in self_dict[key] for item in other_dict[key]
-                       ]
-                   ))) or
-                   (
-                       isinstance(self_dict[key], dict) and
-                       (self_dict[key] != other_dict[key])
-                   ) or
-                   (isinstance(self_dict[key], str) and
-                   (self_dict[key] != other_dict[key]))))):
-                    raise RuntimeError(
-                        'Conflicting information between objects'
+            for key in keys_self & keys_other:
+                svalue = self_dict[key]
+                ovalue = other_dict[key]
+                same_type = type(svalue) == type(ovalue)
+                if same_type:
+                    list_comp = isinstance(svalue, list) and any(
+                        [item not in svalue for item in ovalue]
                     )
+                    str_comp = isinstance(svalue, str) and svalue != ovalue
+                    dict_comp = isinstance(svalue, dict) and svalue != ovalue
+                    comp = any([list_comp, str_comp, dict_comp])
+                if (not same_type) or (same_type and comp):
+                    emsg = 'Conflicting information between objects'
+                    raise RuntimeError(emsg)
 
     def _get_callables_db(self):
         """ Getter for callables_db property """
@@ -566,8 +512,7 @@ class Callables(object):
         ret = None
         # Sort callables by starting line number
         iobj = sorted(
-            self._modules_dict[module_name],
-            key=lambda x: x['code_id'][1]
+            self._modules_dict[module_name], key=lambda x: x['code_id'][1]
         )
         for value in iobj:
             if value['code_id'][1] <= lineno <= value['last_lineno']:
@@ -652,14 +597,10 @@ class Callables(object):
         # keys are tuples, where the first item is a file name and the
         # second item is the starting line of the callable within that file
         # (dictionary value), thus need to convert the key to a string
+        items = self._reverse_callables_db.items()
         fdict = {
             '_callables_db': self._callables_db,
-            '_reverse_callables_db':dict(
-                [
-                    (str(key), value)
-                    for key, value in self._reverse_callables_db.items()
-                ]
-            ),
+            '_reverse_callables_db':dict([(str(k), v) for k, v in items]),
             '_modules_dict':self._modules_dict,
             '_fnames':self._fnames,
             '_module_names':self._module_names,
@@ -682,7 +623,7 @@ class Callables(object):
 
          * RuntimeError (Argument \`fnames\` is not valid)
         """
-        # pylint: disable=R0101,R0914
+        # pylint: disable=R0101
         if fnames and (not isinstance(fnames, list)):
             raise RuntimeError('Argument `fnames` is not valid')
         if fnames and any([not isinstance(item, str) for item in fnames]):
@@ -812,6 +753,25 @@ class Callables(object):
     """
 
 
+# [[[cog
+# code = """
+# def pcolor(text, color, indent=0):
+#     esc_dict = {
+#         'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34,
+#          'magenta':35, 'cyan':36, 'white':37, 'none':-1
+#     }
+#     color = color.lower()
+#     if esc_dict[color] != -1:
+#         return (
+#             '\033[{color_code}m{indent}{text}\033[0m'.format(
+#                 color_code=esc_dict[color], indent=' '*indent, text=text
+#             )
+#         )
+#     return '{indent}{text}'.format(indent=' '*indent, text=text)
+# """
+# cog.out(code)
+# ]]]
+# [[[end]]]
 class _AstTreeScanner(ast.NodeVisitor):
     """
     Get all callables from a given module by traversing abstract syntax tree
@@ -834,9 +794,6 @@ class _AstTreeScanner(ast.NodeVisitor):
         self._reverse_callables_db = {}
         self._class_names = []
         self._processed_line = 0
-        ###
-        # self._debug = True
-        ###
 
     def _close_callable(self, node, force=False):
         """ Record last line number of callable """
@@ -849,12 +806,13 @@ class _AstTreeScanner(ast.NodeVisitor):
             return
         if lineno <= self._processed_line:
             return
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(
-        #         pcolor('Close callable @ line = {0}'.format(lineno), 'green')
-        #     )
-        # ###
+        # [[[cog
+        # code = """
+        # print(pcolor('Close callable @ line = {0}'.format(lineno), 'green'))
+        # """
+        # cog.out(code)
+        # ]]]
+        # [[[end]]]
         # Extract node name for property closing. Once a property is found,
         # it can only be closed out by a node type that has a name
         name = ''
@@ -872,49 +830,58 @@ class _AstTreeScanner(ast.NodeVisitor):
         # Traverse backwards through call stack and close callables as needed
         indent = self._get_indent(node)
         count = -1
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(
-        #         pcolor(
-        #             '    Name {0} @ {1}, indent = {2}'.format(
-        #                 name if name else 'None', lineno, indent
-        #             ),
-        #             'yellow'
-        #         )
+        # [[[cog
+        # code = """
+        # print(
+        #     pcolor(
+        #         '    Name {0} @ {1}, indent = {2}'.format(
+        #             name if name else 'None', lineno, indent
+        #         ),
+        #         'yellow'
         #     )
-        # ###
+        # )
+        # """
+        # cog.out(code)
+        # ]]]
+        # [[[end]]]
         dlist = []
         while count >= -len(self._indent_stack):
             element_full_name = self._indent_stack[count]['full_name']
             edict = self._callables_db.get(element_full_name, None)
             stack_indent = self._indent_stack[count]['level']
             open_callable = element_full_name and (not edict['last_lineno'])
-            # ### Print statements for debug
-            # if self._debug:
-            #     print(
-            #         pcolor(
-            #             '    Name {0}, indent, {1}, stack_indent {2}'.format(
-            #                 element_full_name, indent, stack_indent
-            #             ),
-            #             'yellow'
-            #         )
+            # [[[cog
+            # code = """
+            # print(
+            #     pcolor(
+            #         '    Name {0}, indent, {1}, stack_indent {2}'.format(
+            #             element_full_name, indent, stack_indent
+            #         ),
+            #         'yellow'
             #     )
-            # ###
+            # )
+            # """
+            # cog.out(code)
+            # ]]]
+            # [[[end]]]
             if (open_callable and (force or (indent < stack_indent) or
                ((indent == stack_indent) and
                ((edict['type'] != 'prop') or ((edict['type'] == 'prop') and
                (name and (name != element_full_name))))))):
-                # ### Print statements for debug
-                # if self._debug:
-                #     print(
-                #         pcolor(
-                #             '    Closing {0} @ {1}'.format(
-                #                 element_full_name, lineno-1
-                #             ),
-                #             'yellow'
-                #         )
+                # [[[cog
+                # code = """
+                # print(
+                #     pcolor(
+                #         '    Closing {0} @ {1}'.format(
+                #             element_full_name, lineno-1
+                #         ),
+                #         'yellow'
                 #     )
-                # ###
+                # )
+                # """
+                # cog.out(code)
+                # ]]]
+                # [[[end]]]
                 edict['last_lineno'] = lineno-1
                 dlist.append(count)
             if indent > stack_indent:
@@ -983,10 +950,10 @@ class _AstTreeScanner(ast.NodeVisitor):
 
     def generic_visit(self, node):
         """ Generic node """
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(pcolor('Enter generic visitor', 'magenta'))
-        # ###
+        # [[[cog
+        # cog.out("print(pcolor('Enter generic visitor', 'magenta'))")
+        # ]]]
+        # [[[end]]]
         # A generic visitor that potentially closes callables is needed to
         # close enclosed callables that are not at the end of the enclosing
         # callable, otherwise the ending line of the enclosed callable would
@@ -1008,9 +975,10 @@ class _AstTreeScanner(ast.NodeVisitor):
         Assignment walker (to parse class properties defined via the
         property() function)
         """
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(pcolor('Enter assign visitor', 'magenta'))
+        # [[[cog
+        # cog.out("print(pcolor('Enter assign visitor', 'magenta'))")
+        # ]]]
+        # [[[end]]]
         # ###
         # Class-level assignment may also be a class attribute that is not
         # a managed attribute, record it anyway, no harm in doing so as it
@@ -1026,26 +994,29 @@ class _AstTreeScanner(ast.NodeVisitor):
                 'last_lineno':None
             }
             self._reverse_callables_db[code_id] = element_full_name
-            # ### Print statements for debug
-            #if self._debug:
-            #    print(
-            #        pcolor(
-            #            'Visiting property {0} @ {1}'.format(
-            #                element_full_name, code_id[1]
-            #            ),
-            #            'green'
-            #        )
-            #    )
-            ###
+            # [[[cog
+            # code = """
+            # print(
+            #     pcolor(
+            #         'Visiting property {0} @ {1}'.format(
+            #             element_full_name, code_id[1]
+            #         ),
+            #         'green'
+            #     )
+            # )
+            # """
+            # cog.out(code)
+            # ]]]
+            # [[[end]]]
             # Get property actions
         self.generic_visit(node)
 
     def visit_ClassDef(self, node):
         """ Class walker """
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(pcolor('Enter class visitor', 'magenta'))
-        # ###
+        # [[[cog
+        # cog.out("print(pcolor('Enter class visitor', 'magenta'))")
+        # ]]]
+        # [[[end]]]
         # Get class information (name, line number, etc.)
         element_full_name = self._pop_indent_stack(node, 'class')
         code_id = (self._fname, node.lineno)
@@ -1059,25 +1030,28 @@ class _AstTreeScanner(ast.NodeVisitor):
             'last_lineno':None
         }
         self._reverse_callables_db[code_id] = element_full_name
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(
-        #         pcolor(
-        #             'Visiting class {0} @ {1}, indent = {2}'.format(
-        #                 element_full_name, code_id[1], self._get_indent(node)
-        #             ),
-        #             'green'
-        #         )
+        # [[[cog
+        # code = """
+        # print(
+        #     pcolor(
+        #         'Visiting class {0} @ {1}, indent = {2}'.format(
+        #             element_full_name, code_id[1], self._get_indent(node)
+        #         ),
+        #         'green'
         #     )
-        # ###
+        # )
+        # """
+        # cog.out(code)
+        # ]]]
+        # [[[end]]]
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node):
         """ Function/method walker """
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(pcolor('Enter function visitor', 'magenta'))
-        # ###
+        # [[[cog
+        # cog.out("print(pcolor('Enter function visitor', 'magenta'))")
+        # ]]]
+        # [[[end]]]
         in_class = self._in_class(node)
         decorator_list = [
             dobj.id if hasattr(dobj, 'id') else dobj.attr
@@ -1106,16 +1080,19 @@ class _AstTreeScanner(ast.NodeVisitor):
             'last_lineno':None
         }
         self._reverse_callables_db[code_id] = element_full_name
-        # ### Print statements for debug
-        # if self._debug:
-        #     print(
-        #         pcolor(
-        #             'Visiting callable {0}  @ {1}'.format(
-        #                 element_full_name, code_id[1]
-        #             ),
-        #             'green'
-        #         )
+        # [[[cog
+        # code = """
+        # print(
+        #     pcolor(
+        #         'Visiting callable {0}  @ {1}'.format(
+        #             element_full_name, code_id[1]
+        #         ),
+        #         'green'
         #     )
-        #     print(pcolor('    in_class = {}'.format(in_class), 'yellow'))
-        # ###
+        # )
+        # print(pcolor('    in_class = {}'.format(in_class), 'yellow'))
+        # """
+        # cog.out(code)
+        # ]]]
+        # [[[end]]]
         self.generic_visit(node)

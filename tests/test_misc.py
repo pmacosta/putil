@@ -392,6 +392,9 @@ def test_cidict():
     assert obj == {'one':1, 'two':2, 'three':3, 'four':4}
     assert obj['four'] == 4
     obj['FIve'] = 5
+    assert 'four' in obj
+    assert 'FOUR' in obj
+    assert len(obj) == 5
     assert obj == {'one':1, 'two':2, 'three':3, 'four':4, 'five':5}
     assert obj['five'] == 5
     assert len(obj) == 5
@@ -404,6 +407,5 @@ def test_cidict():
     assert GET_EXMSG(excinfo) == "unhashable type: 'list'"
     with pytest.raises(ValueError) as excinfo:
         putil.misc.CiDict(['Prop1', 'Prop2', 'Prop3', 'Prop4'])
-    assert GET_EXMSG(excinfo) == (
-        'dictionary update sequence element #0 has length 5; 2 is required'
-    )
+    msg = 'dictionary update sequence element #0 has length 5; 2 is required'
+    assert GET_EXMSG(excinfo) == msg
