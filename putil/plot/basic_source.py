@@ -1,7 +1,7 @@
 # basic_source.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,C0302,W0105,W0212
+# pylint: disable=C0111,C0302,E1101,E1103,W0105,W0212
 
 # PyPI imports
 import numpy
@@ -9,7 +9,7 @@ import numpy
 import putil.exh
 import putil.pcontracts
 from .constants import PRECISION
-from .functions import DataSource
+from .functions import _C, _SEL, DataSource
 
 
 ###
@@ -161,9 +161,9 @@ class BasicSource(DataSource):
         )
         self._exh.raise_exception_if(
             exname='num_elements',
-            condition=(dep_var is not None) and
-                      (self._raw_indep_var is not None) and
-                      (len(self._raw_indep_var) != len(dep_var)))
+            condition=_C(dep_var, self._raw_indep_var) and
+                      (self._raw_indep_var.size != dep_var.size)
+        )
         self._raw_dep_var = putil.eng.round_mantissa(dep_var, PRECISION)
         self._update_dep_var()
 
@@ -176,8 +176,7 @@ class BasicSource(DataSource):
         )
         self._exh.raise_exception_if(
             exname='min_max',
-            condition=(self.indep_min is not None) and
-                      (indep_max is not None) and
+            condition=_C(self.indep_min, indep_max) and
                       (indep_max < self.indep_min)
         )
         self._indep_max = (
@@ -199,8 +198,7 @@ class BasicSource(DataSource):
         )
         self._exh.raise_exception_if(
             exname='min_max',
-            condition=(self.indep_max is not None) and
-                      (indep_min is not None) and
+            condition=_C(self.indep_max, indep_min) and
                       (self.indep_max < indep_min)
         )
         self._indep_min = (
@@ -223,9 +221,9 @@ class BasicSource(DataSource):
         )
         self._exh.raise_exception_if(
             exname='num_elements',
-            condition=(indep_var is not None) and
-                      (self._raw_dep_var is not None) and
-                      (len(self._raw_dep_var) != len(indep_var)))
+            condition=_C(indep_var, self._raw_dep_var) and
+                      (self._raw_dep_var.size != indep_var.size)
+        )
         self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
         # Apply minimum and maximum range bounding and assign it to
         # self._indep_var and thus this is what self.indep_var returns
@@ -238,8 +236,7 @@ class BasicSource(DataSource):
         variable range bounding
         """
         self._dep_var = self._raw_dep_var
-        if ((self._indep_var_indexes is not None) and
-            (self._raw_dep_var is not None)):
+        if _C(self._indep_var_indexes, self._raw_dep_var):
             super(BasicSource, self)._set_dep_var(
                 self._raw_dep_var[self._indep_var_indexes]
             )
@@ -255,25 +252,15 @@ class BasicSource(DataSource):
                   ' range bounding'
         )
         if self._raw_indep_var is not None:
-            indep_min = (
-                self.indep_min
-                if self.indep_min is not None else
-                self._raw_indep_var[0]
-            )
-            indep_max = (
-                self.indep_max
-                if self.indep_max is not None else
-                self._raw_indep_var[-1]
-            )
+            indep_min = _SEL(self.indep_min, self._raw_indep_var[0])
+            indep_max = _SEL(self.indep_max, self._raw_indep_var[-1])
             min_indexes = self._raw_indep_var >= indep_min
             max_indexes = self._raw_indep_var <= indep_max
             self._indep_var_indexes = numpy.where(min_indexes & max_indexes)
             super(BasicSource, self)._set_indep_var(
                 self._raw_indep_var[self._indep_var_indexes]
             )
-            self._exh.raise_exception_if(
-                exname='empty', condition=len(self.indep_var) == 0
-            )
+            self._exh.raise_exception_if('empty', not self.indep_var.size)
 
     # Managed attributes
     dep_var = property(

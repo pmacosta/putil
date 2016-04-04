@@ -5,12 +5,14 @@
 
 # Standard library imports
 import abc
+import collections
+import itertools
 import math
 import sys
 # PyPI imports
 import six
-import matplotlib.pyplot as plt
 import numpy
+import matplotlib.pyplot as plt
 # Putil imports
 import putil.exh
 import putil.eng
@@ -38,29 +40,22 @@ exobj_plot = trace_ex_plot_functions.trace_module(no_print=True)
 
 
 ###
+# Global variables
+###
+TickProps = collections.namedtuple(
+    'TickProps', ['locs', 'labels', 'min', 'max', 'div', 'unit_scale']
+)
+
+
+###
 # Functions
 ###
-def _process_ticks(locs, min_lim, max_lim, mant):
-    """
-    Returns pretty-printed tick locations that are within the given bound
-    """
-    locs = [float(loc) for loc in locs]
-    bounded_locs = [
-        loc
-        for loc in locs
-        if ((loc >= min_lim) or (abs(loc-min_lim) <= 1e-14)) and
-           ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))
-    ]
-    raw_labels = [
-        putil.eng.peng(float(loc), mant, rjust=False)
-        if ((abs(loc) >= 1) or (loc == 0)) else
-        str(putil.eng.round_mantissa(loc, mant))
-        for loc in bounded_locs
-    ]
-    return (
-        bounded_locs,
-        [label.replace('u', '$\\mu$') for label in raw_labels]
-    )
+# all() is not an adequate replacement because if element is zero
+# or empty it returns False; also not adequate with Numpy arrays
+_C = lambda *x: all([item is not None for item in x])
+_F = lambda x, y: dict(field=x, value=y)
+_MF = lambda *x: [_F(item1, item2) for item1, item2 in zip(x[::2], x[1::2])]
+_SEL = lambda x, y: x if x is not None else y
 
 
 def _intelligent_ticks(series, series_min, series_max,
@@ -76,9 +71,7 @@ def _intelligent_ticks(series, series_min, series_max,
         series_min = series_max = series[0]
         tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
         tick_list = numpy.array(
-            [
-                series[0]-tick_spacing, series[0], series[0]+tick_spacing
-            ]
+            [series[0]-tick_spacing, series[0], series[0]+tick_spacing]
         )
         tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
         tight = tight_left = tight_right = log_axis = False
@@ -130,9 +123,7 @@ def _intelligent_ticks(series, series_min, series_max,
                     )
                     if MIN_TICKS <= num_ticks <= SUGGESTED_MAX_TICKS:
                         tick_list = numpy.linspace(
-                            rounded_min_series,
-                            rounded_max_series,
-                            num_ticks
+                            rounded_min_series, rounded_max_series, num_ticks
                         ).tolist()
                         break
                 # Remove elements that cause minimum spacing, to see if with
@@ -148,16 +139,15 @@ def _intelligent_ticks(series, series_min, series_max,
                 if (not indexes[-1]) and (len(working_series) > 2):
                     indexes[-2], indexes[-1] = False, True
                 working_series = working_series[indexes]
-            tick_list = (tick_list
-                        if len(tick_list) > 0 else
-                        numpy.linspace(
-                            min_series,
-                            max_series,
-                            SUGGESTED_MAX_TICKS
-                        ).tolist())
+            tick_list = (
+                tick_list
+                if len(tick_list) > 0 else
+                numpy.linspace(
+                    min_series, max_series, SUGGESTED_MAX_TICKS
+                ).tolist()
+            )
             tick_spacing = putil.eng.round_mantissa(
-                tick_list[1]-tick_list[0],
-                PRECISION
+                tick_list[1]-tick_list[0], PRECISION
             )
             # Account for interpolations, whose curves might have values above
             # or below the data points. Only add an extra tick, otherwise let
@@ -210,13 +200,36 @@ def _intelligent_ticks(series, series_min, series_max,
             )
             opt['loc'].append(opt['max'])
             opt['labels'].append('')
-    return (
+    return TickProps(
         opt['loc'],
         opt['labels'],
         opt['min'],
         opt['max'],
         opt['scale'],
         opt['unit'].replace('u', '$\\mu$')
+    )
+
+
+def _process_ticks(locs, min_lim, max_lim, mant):
+    """
+    Returns pretty-printed tick locations that are within the given bound
+    """
+    locs = [float(loc) for loc in locs]
+    bounded_locs = [
+        loc
+        for loc in locs
+        if ((loc >= min_lim) or (abs(loc-min_lim) <= 1e-14)) and
+           ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))
+    ]
+    raw_labels = [
+        putil.eng.peng(float(loc), mant, rjust=False)
+        if ((abs(loc) >= 1) or (loc == 0)) else
+        str(putil.eng.round_mantissa(loc, mant))
+        for loc in bounded_locs
+    ]
+    return (
+        bounded_locs,
+        [label.replace('u', '$\\mu$') for label in raw_labels]
     )
 
 

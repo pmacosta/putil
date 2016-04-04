@@ -34,6 +34,12 @@ from tests.pcsv.fixtures import (
 
 
 ###
+# Global variables
+###
+SEP = os.path.abspath(os.sep)
+
+
+###
 # Test classes
 ###
 class TestCsvFile(object):
@@ -43,13 +49,7 @@ class TestCsvFile(object):
     def test_init_exceptions(self):
         """ Test constructor exceptions """
         obj = putil.pcsv.CsvFile
-        fname = os.path.join(
-            os.path.abspath(os.sep),
-            'file',
-            'does',
-            'not',
-            'exists.csv'
-        )
+        fname = os.path.join(SEP, 'file', 'does', 'not', 'exists.csv')
         func_pointers = [
             (RE, 'File {0} is empty', write_file_empty),
             (
@@ -709,8 +709,8 @@ class TestCsvFile(object):
     @pytest.mark.csv_file
     def test_write_exceptions(self):
         """ Test write method exceptions """
-        some_fname = os.path.join(os.path.abspath(os.sep), 'some', 'file')
-        root_file = os.path.join(os.path.abspath(os.sep), 'test.csv')
+        some_fname = os.path.join(SEP, 'some', 'file')
+        root_file = os.path.join(SEP, 'test.csv')
         def mock_make_dir(fname):
             if fname == some_fname:
                 raise IOError(

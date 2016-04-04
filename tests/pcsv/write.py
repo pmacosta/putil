@@ -35,13 +35,11 @@ def test_write_function_exceptions():
     some_fname = os.path.join(os.path.abspath(os.sep), 'some', 'file')
     def mock_make_dir_io(fname):
         raise IOError(
-            'File {0} could not be created'.format(fname),
-            'Permission denied'
+            'File {0} could not be created'.format(fname), 'Permission denied'
         )
     def mock_make_dir_os(fname):
         raise OSError(
-            'File {0} could not be created'.format(fname),
-            'Permission denied'
+            'File {0} could not be created'.format(fname), 'Permission denied'
         )
     some_fname = os.path.join(os.path.abspath(os.sep), 'some', 'file')
     data = [['Col1', 'Col2'], [1, 2]]

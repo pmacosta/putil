@@ -10,7 +10,7 @@ import pytest
 from numpy import array, ndarray
 # Putil imports
 import putil.eng
-from putil.test import AE, AI
+from putil.test import AE, AI, CS
 
 
 ###
@@ -1087,7 +1087,7 @@ def test_pprint_vector(vector, args, ref, header):
     """ Test pprint_vector function behavior """
     obj = putil.eng.pprint_vector
     obj = obj if isdflt(args) else functools.partial(obj, **args)
-    assert header+obj(vector) == ref
+    CS(header+obj(vector), ref)
 
 
 @pytest.mark.parametrize(

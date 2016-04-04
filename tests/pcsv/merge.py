@@ -37,16 +37,14 @@ def test_merge():
     # Filter one column
     with putil.misc.TmpFile(write_input_file) as fname1:
         with putil.misc.TmpFile(write_replacement_file) as fname2:
-            putil.pcsv.merge(
-                fname1, fname2, 'Ref', 'H2')
+            putil.pcsv.merge(fname1, fname2, 'Ref', 'H2')
         obj = putil.pcsv.CsvFile(fname=fname1, has_header=True)
     assert obj.header() == ['Ref', 'H2']
     assert obj.data() == [[10, 2], [20, 6], [30, 10]]
     # Filter two columns
     with putil.misc.TmpFile(write_input_file) as fname1:
         with putil.misc.TmpFile(write_replacement_file) as fname2:
-            putil.pcsv.merge(
-                fname1, fname2, ['Ref', 'Data1'], ['H2', 'H4'])
+            putil.pcsv.merge(fname1, fname2, ['Ref', 'Data1'], ['H2', 'H4'])
         obj = putil.pcsv.CsvFile(fname=fname1, has_header=True)
     assert obj.header() == ['Ref', 'Data1', 'H2', 'H4']
     assert obj.data() == [[10, 20, 2, 4], [20, 40, 6, 8], [30, 300, 10, 12]]

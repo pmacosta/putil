@@ -64,8 +64,8 @@ def test_format_arg():
     fobj = putil.pcontracts._format_arg
     assert fobj('Message') == {'msg':'Message', 'type':RuntimeError}
     assert fobj(OSError) == {
-            'msg':'Argument `*[argument_name]*` is not valid', 'type':OSError
-        }
+        'msg':'Argument `*[argument_name]*` is not valid', 'type':OSError
+    }
     assert fobj((ValueError, 'Description 1')) == {
         'msg':'Description 1', 'type':ValueError
     }

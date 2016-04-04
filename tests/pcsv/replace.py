@@ -106,7 +106,8 @@ def test_replace_function():
     with putil.misc.TmpFile(write_input_file) as fname1:
         with putil.misc.TmpFile(write_replacement_file) as fname2:
             putil.pcsv.replace(
-                fname1, fname2, ['Ref'], ['H4'], frow1=3, frow2=3)
+                fname1, fname2, ['Ref'], ['H4'], frow1=3, frow2=3
+            )
             obj = putil.pcsv.CsvFile(fname=fname1)
             assert obj.header() == ['Ctrl', 'Ref', 'Data1', 'Data2']
             assert obj.data() == [['high', 8, 40, 60], ['low', 12, 300, 3000]]

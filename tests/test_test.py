@@ -6,34 +6,13 @@
 # PyPI imports
 import pytest
 # Putil imports
-import putil.test
+from putil.test import AE, AI
+import putil
 
 
 ###
 # Test functions
 ###
-def test_comp_list_of_dicts():
-    """ Test comp_list_of_dicts function behavior """
-    list1 = []
-    list2 = [{'a':5, 'b':6}]
-    assert not putil.test.comp_list_of_dicts(list1, list2)
-    list1 = [{'a':5}]
-    list2 = [{'a':5, 'b':6}]
-    assert not putil.test.comp_list_of_dicts(list1, list2)
-    list1 = [{'a':5, 'b':6}]
-    list2 = [{'a':5, 'b':6}]
-    assert putil.test.comp_list_of_dicts(list1, list2)
-
-
-def test_exception_type_str():
-    """ Test exception_type_str function behavior """
-    class MyException(Exception):
-        pass
-    assert putil.test.exception_type_str(RuntimeError) == 'RuntimeError'
-    assert putil.test.exception_type_str(Exception) == 'Exception'
-    assert putil.test.exception_type_str(MyException) == 'MyException'
-
-
 def test_assert_arg_invalid():
     """ Test assert_arg_invalid function behavior """
     def func1(par):
@@ -140,3 +119,115 @@ def test_assert_ro_prop():
         putil.test.assert_ro_prop('a', '')
     except SyntaxError as eobj:
         pass
+
+
+def test_comp_list_of_dicts():
+    """ Test comp_list_of_dicts function behavior """
+    list1 = []
+    list2 = [{'a':5, 'b':6}]
+    assert not putil.test.comp_list_of_dicts(list1, list2)
+    list1 = [{'a':5}]
+    list2 = [{'a':5, 'b':6}]
+    assert not putil.test.comp_list_of_dicts(list1, list2)
+    list1 = [{'a':5, 'b':6}]
+    list2 = [{'a':5, 'b':6}]
+    assert putil.test.comp_list_of_dicts(list1, list2)
+
+
+def test_compare_strings(capsys):
+    """ Test compare_string function behavior """
+    obj = putil.test.compare_strings
+    AI(obj, 'actual', 5, 'a')
+    AI(obj, 'ref', 'a', 5)
+    AI(obj, 'diff_mode', 'a', 'b', 2)
+    obj('a', 'a')
+    actual = 'Hello\nworld!\n'
+    ref = 'Hello\ncruel\nworld\nthis\nis\na\ntest\nof\nthe\nfunction'
+    pcol = putil.test._pcolor
+    cyan = lambda x: pcol(x, 'cyan')
+    red = lambda x: pcol(x, 'red')
+    yellow = lambda x: pcol(x, 'yellow')
+    output_ref_list = (
+        '',
+        cyan('String comparison'),
+        cyan('-----------------'),
+        'Matching character',
+        yellow('Mismatched character'),
+        red('Extra character'),
+        cyan('Reference text'),
+        cyan('--------------'),
+        cyan(' 1:')+' Hello',
+        cyan(' 2:')+' '+yellow('cruel'),
+        cyan(' 3:')+' '+red('world'),
+        cyan(' 4:')+' '+red('this'),
+        cyan(' 5:')+' '+red('is'),
+        cyan(' 6:')+' '+red('a'),
+        cyan(' 7:')+' '+red('test'),
+        cyan(' 8:')+' '+red('of'),
+        cyan(' 9:')+' '+red('the'),
+        cyan('10:')+' '+red('function'),
+        cyan('Actual text'),
+        cyan('-----------'),
+        cyan(' 1:')+' Hello',
+        cyan(' 2:')+' '+yellow('world')+red('!'),
+        cyan(' 3:')+' ',
+        ''
+    )
+    output_ref = '\n'.join(output_ref_list)
+    msg = 'Strings do not match'
+    AE(obj, AssertionError, msg, actual, ref)
+    out, _ = capsys.readouterr()
+    assert str(out) == output_ref
+    output_ref_list = (
+        '',
+        cyan('String comparison'),
+        cyan('-----------------'),
+        'Matching character',
+        yellow('Mismatched character'),
+        red('Extra character'),
+        cyan('-------------------'),
+        cyan(' 1 Ref.  :')+' Hello',
+        cyan('   Actual:')+' Hello',
+        cyan('-------------------'),
+        cyan(' 2 Ref.  :')+' '+yellow('cruel'),
+        cyan('   Actual:')+' '+yellow('world')+red('!'),
+        cyan('-------------------'),
+        cyan(' 3 Ref.  :')+' '+red('world'),
+        cyan('   Actual:')+' ',
+        cyan('-------------------'),
+        cyan(' 4 Ref.  :')+' '+red('this'),
+        cyan('   Actual:')+' ',
+        cyan('-------------------'),
+        cyan(' 5 Ref.  :')+' '+red('is'),
+        cyan('   Actual:')+' ',
+        cyan('-------------------'),
+        cyan(' 6 Ref.  :')+' '+red('a'),
+        cyan('   Actual:')+' ',
+        cyan('-------------------'),
+        cyan(' 7 Ref.  :')+' '+red('test'),
+        cyan('   Actual:')+' ',
+        cyan('-------------------'),
+        cyan(' 8 Ref.  :')+' '+red('of'),
+        cyan('   Actual:')+' ',
+        cyan('-------------------'),
+        cyan(' 9 Ref.  :')+' '+red('the'),
+        cyan('   Actual:')+' ',
+        cyan('-------------------'),
+        cyan('10 Ref.  :')+' '+red('function'),
+        cyan('   Actual:')+' ',
+        ''
+    )
+    output_ref = '\n'.join(output_ref_list)
+    msg = 'Strings do not match'
+    AE(obj, AssertionError, msg, actual, ref, True)
+    out, _ = capsys.readouterr()
+    assert str(out) == output_ref
+
+
+def test_exception_type_str():
+    """ Test exception_type_str function behavior """
+    class MyException(Exception):
+        pass
+    assert putil.test.exception_type_str(RuntimeError) == 'RuntimeError'
+    assert putil.test.exception_type_str(Exception) == 'Exception'
+    assert putil.test.exception_type_str(MyException) == 'MyException'

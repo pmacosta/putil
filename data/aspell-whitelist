@@ -1,6 +1,3 @@
-MutableMapping
-delitem
-keytransform
 aa
 aaa
 abc
@@ -17,6 +14,7 @@ AE
 Agg
 aguments
 aliceblue
+aline
 alist
 antiquewhite
 anumber
@@ -228,6 +226,7 @@ del
 delattr
 deleter
 Deleter
+delitem
 dep
 DEP
 deps
@@ -265,6 +264,7 @@ doctests
 doctrees
 Docutils
 dodgerblue
+dpi
 dpk
 drawstyle
 dropbox
@@ -529,6 +529,7 @@ kcg
 keepdir
 KeyError
 KeyErrror
+keytransform
 kMGTPEZY
 kpar
 kwarg
@@ -619,10 +620,13 @@ mediumspringgreen
 mediumturquoise
 mediumvioletred
 memodict
+mename
 MERCHANTABILITY
+meroot
 metaclass
 meth
 mex
+MF
 mfile
 mFrame
 midnightblue
@@ -634,6 +638,7 @@ misconfiguration
 mistyrose
 mkdir
 mkstemp
+mline
 mlist
 mlmdfunc
 mmsg
@@ -643,6 +648,7 @@ MockFCode
 MockGetFrame
 MockOpenCls
 moddb
+modfile
 modindex
 modname
 ModuleType
@@ -654,6 +660,7 @@ mtxt
 multi
 Multi
 multialignment
+MutableMapping
 MyClass
 MyCol
 mycontract
@@ -661,6 +668,7 @@ mydecorator
 MyException
 myfile
 MySource
+na
 nActual
 NamedTemporaryFile
 namedtuple
@@ -675,13 +683,16 @@ navajowhite
 nCallable
 ncmu
 ncol
+ncruel
 ndarray
 ndata
 ndict
 nflip
+nfunction
 nimages
 nindent
 ninterp
+nis
 nitem
 nldig
 nline
@@ -694,6 +705,7 @@ nodeps
 NodesWithData
 NodeVisitor
 NodeWithData
+nof
 noindex
 nom
 NoNe
@@ -711,6 +723,9 @@ nReference
 nsep
 nSeries
 nsys
+ntest
+nthe
+nthis
 ntree
 num
 NUM
@@ -723,6 +738,7 @@ Numpy
 nums
 nuniq
 nvar
+nworld
 nzero
 OAUTH
 objs
@@ -772,6 +788,7 @@ pargs
 partuple
 ParTuple
 pb
+pcol
 pcolor
 pcond
 pcontract
@@ -849,6 +866,7 @@ pycmd
 PyCon
 pycontracts
 PyContracts
+pyellow
 pyfile
 pylint
 Pylint
@@ -925,6 +943,7 @@ RIVAR
 rjust
 rl
 rlevel
+rline
 rlist
 rmatch
 rmfiles
@@ -974,9 +993,11 @@ sdir
 sdist
 seagreen
 searchsorted
+SEL
 semilogx
 semilogy
 sep
+SEP
 Serafini
 seriesA
 seriesB
@@ -1095,6 +1116,7 @@ TextWrapper
 th
 tHrEe
 thresholding
+TickProps
 timeit
 tlist
 tmax

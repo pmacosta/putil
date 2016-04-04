@@ -7,6 +7,10 @@
 from __future__ import print_function
 import re
 import sys
+if sys.hexversion < 0x03000000: # pragma: no cover
+    from itertools import izip_longest
+else:    # pragma: no cover
+    from itertools import zip_longest as izip_longest
 try:    # pragma: no cover
     from inspect import signature
 except ImportError: # pragma: no cover
@@ -57,6 +61,21 @@ def _get_fargs(func, no_self=False, no_varargs=False): # pragma: no cover
            (no_varargs and (not is_parg(arg)) and (not is_kwarg(arg))))
     ])
     return varargs_filtered_args
+
+
+def _pcolor(text, color, indent=0): # pragma: no cover
+    esc_dict = {
+        'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34,
+         'magenta':35, 'cyan':36, 'white':37, 'none':-1
+    }
+    color = color.lower()
+    if esc_dict[color] != -1:
+        return (
+            '\033[{color_code}m{indent}{text}\033[0m'.format(
+                color_code=esc_dict[color], indent=' '*indent, text=text
+            )
+        )
+    return '{indent}{text}'.format(indent=' '*indent, text=text)
 
 
 def assert_arg_invalid(fpointer, pname, *args, **kwargs):
@@ -196,6 +215,96 @@ def assert_ro_prop(cobj, prop_name):
     assert get_exmsg(excinfo) == "can't delete attribute"
 
 
+def compare_strings(actual, ref, diff_mode=False):
+    r"""
+    Compare two strings. Lines are numbered, differing characters are colored
+    yellow and extra characters (characters present in one string but not in
+    the other) are colored red
+
+    :param actual: Text produced by software under test
+    :type  actual: string
+
+    :param ref: Reference text
+    :type  ref: string
+
+    :param diff_mode: Flag that indicates whether the line(s) of the actual
+                      and reference strings are printed one right after
+                      the other (True) of if the actual and reference
+                      strings are printed separately (False)
+    :type diff_mode: boolean
+
+    :raises:
+     * AssertionError(Strings do not match)
+
+     * RuntimeError(Argument \`actual\` is not valid)
+
+     * RuntimeError(Argument \`diff_mode\` is not valid)
+
+     * RuntimeError(Argument \`ref\` is not valid)
+    """
+    # pylint: disable=R0912,R0914
+    pyellow = lambda x, y: x if x == y else _pcolor(x, 'yellow')
+    def colorize_lines(list1, list2, template, mode=True):
+        iobj = izip_longest(list1, list2, fillvalue='')
+        for num, (line1, line2) in enumerate(iobj):
+            if mode and (len(list2)-1 < num):
+                break
+            line = [pyellow(chr2, chr1) for chr1, chr2 in zip(line1, line2)]
+            # Eliminate superfluous colorizing codes when next character has
+            # the same color
+            line = ''.join(line).replace('\033[0m\033[33m', '')
+            if len(line2) > len(line1):
+                line += _pcolor(line2[len(line1):], 'red')
+            yield template.format(num+1, line)
+    def print_non_diff(msg, list1, list2, template):
+        print(_pcolor(msg, 'cyan'))
+        print(_pcolor('-'*len(msg), 'cyan'))
+        for line in colorize_lines(list1, list2, template):
+            print(line)
+    def print_diff(list1, list2, template1, template2, sep):
+        iobj = zip(
+            colorize_lines(list1, list2, template1, False),
+            colorize_lines(list2, list1, template2, False)
+        )
+        for rline, aline in iobj:
+            print(_pcolor(sep, 'cyan'))
+            print(rline)
+            print(aline)
+    if not isinstance(actual, str):
+        raise RuntimeError('Argument `actual` is not valid')
+    if not isinstance(ref, str):
+        raise RuntimeError('Argument `ref` is not valid')
+    if not isinstance(diff_mode, bool):
+        raise RuntimeError('Argument `diff_mode` is not valid')
+    if actual != ref:
+        actual = actual.split('\n')
+        ref = ref.split('\n')
+        length = len(str(max(len(actual), len(ref))))
+        print('')
+        msg = 'String comparison'
+        print(_pcolor(msg, 'cyan'))
+        print(_pcolor('-'*len(msg), 'cyan'))
+        print('Matching character')
+        print(_pcolor('Mismatched character', 'yellow'))
+        print(_pcolor('Extra character', 'red'))
+        if not diff_mode:
+            template = _pcolor('{0:'+str(length)+'}:', 'cyan')+' {1}'
+            print_non_diff('Reference text', actual, ref, template)
+            print_non_diff('Actual text', ref, actual, template)
+        else:
+            mline = max(
+                [
+                    max(len(item1), len(item2))
+                    for item1, item2 in izip_longest(actual, ref, fillvalue='')
+                ]
+            )
+            sep = '-'*(mline+length+9)
+            template1 = _pcolor('{0:'+str(length)+'} Ref.  :', 'cyan')+' {1}'
+            template2 = _pcolor(' '*length+' Actual:', 'cyan')+' {1}'
+            print_diff(actual, ref, template1, template2, sep)
+        raise AssertionError('Strings do not match')
+
+
 def comp_list_of_dicts(list1, list2):
     """ Compare list of dictionaries """
     for item in list1:
@@ -248,5 +357,6 @@ AE = assert_exception
 AI = assert_arg_invalid
 AROPROP = assert_ro_prop
 CLDICTS = comp_list_of_dicts
+CS = compare_strings
 GET_EXMSG = get_exmsg
 RE = RuntimeError

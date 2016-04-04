@@ -25,7 +25,7 @@ if sys.hexversion < 0x03000000:
 import putil.exdoc
 import putil.exh
 import putil.misc
-from putil.test import AE, AI, AROPROP, GET_EXMSG
+from putil.test import AE, AI, AROPROP, CS, GET_EXMSG
 import tests.support.exdoc_support_module_1
 import tests.support.exdoc_support_module_3
 import tests.support.exdoc_support_module_4
@@ -336,12 +336,7 @@ class TestExDoc(object):
             '   └mod._validate_arguments (*)'
         )
         ref = ref.replace('mod.', 'tests.support.exdoc_support_module_1.')
-        if str(exdocobj._tobj) != ref:
-            print(putil.misc.pcolor('\nActual tree:', 'yellow'))
-            print(str(exdocobj._tobj))
-            print(putil.misc.pcolor('Reference tree:', 'yellow'))
-            print(ref)
-        assert str(exdocobj._tobj) == ref
+        CS(str(exdocobj._tobj), ref)
         trace_error_class()
         sfunc = 'putil.tree.Tree.add_nodes'
         with mock.patch(sfunc, side_effect=mock_add_nodes1):
@@ -426,14 +421,14 @@ class TestExDoc(object):
             tstr = exdocobj.get_sphinx_autodoc()
             assert tstr == ''
             tstr = exdocobj.get_sphinx_autodoc()
-            assert tstr == (
+            CS(tstr,
                 '.. Auto-generated exceptions documentation for\n'
                 '.. tests.support.exdoc_support_module_1.'
                 'ExceptionAutoDocClass.multiply\n\n'
                 ':raises: ValueError (Overflow)\n\n'
             )
             tstr = exdocobj_single.get_sphinx_autodoc()
-            assert tstr == (
+            CS(tstr,
                 '.. Auto-generated exceptions documentation for\n'
                 '.. tests.support.exdoc_support_module_4.func\n\n'
                 ':raises: TypeError (Argument \\`name\\` is not valid)\n\n'
@@ -458,7 +453,7 @@ class TestExDoc(object):
         assert obj('_not_found_') == ''
         root = 'tests.support.exdoc_support_module_1.'
         assert obj(root+'read', raised=True) == ''
-        assert obj(root+'read') == (
+        CS(obj(root+'read'),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.read\n'
             '\n'
@@ -466,13 +461,13 @@ class TestExDoc(object):
             '\n'
         )
         assert obj(root+'read', raised=True, no_comment=True) == ''
-        assert obj(root+'read', no_comment=True) == (
+        CS(obj(root+'read', no_comment=True),
             '\n'
             ':raises: TypeError (Cannot call read)\n'
             '\n'
         )
         putil.exdoc._MINWIDTH = 16
-        assert obj(root+'read', width=16) == (
+        CS(obj(root+'read', width=16),
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -489,14 +484,14 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        assert obj(root+'write') == (
+        CS(obj(root+'write'),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.write'
             '\n\n:raises:\n * TypeError (Argument is not valid)'
             '\n\n * TypeError (Cannot call write)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        assert obj(root+'write', width=16) == (
+        CS(obj(root+'write', width=16),
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -517,12 +512,12 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        assert obj(root+'write', depth=1) == (
+        CS(obj(root+'write', depth=1),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.write'
             '\n\n:raises: TypeError (Cannot call write)\n\n'
         )
-        assert obj(root+'ExceptionAutoDocClass.__init__', depth=1) == (
+        CS(obj(root+'ExceptionAutoDocClass.__init__', depth=1),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             '__init__\n\n:raises:\n'
@@ -534,7 +529,7 @@ class TestExDoc(object):
             ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
             ' * ValueError (Illegal node name: *[node_name]*)\n\n'
         )
-        assert obj(root+'ExceptionAutoDocClass.__init__', depth=0) == (
+        CS(obj(root+'ExceptionAutoDocClass.__init__', depth=0),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             '__init__\n\n'
@@ -544,10 +539,7 @@ class TestExDoc(object):
             ' * RuntimeError (Argument \\`value3\\` is not valid)\n\n'
             ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
         )
-        tstr = obj(
-            root+'ExceptionAutoDocClass.__init__', exclude=['putil.tree']
-        )
-        assert tstr == (
+        CS(obj(root+'ExceptionAutoDocClass.__init__', exclude=['putil.tree']),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             '__init__\n\n'
@@ -561,7 +553,7 @@ class TestExDoc(object):
             root+'ExceptionAutoDocClass.__init__',
             exclude=['add_nodes', '_validate_nodes_with_data']
         )
-        assert tstr == (
+        CS(tstr,
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             '__init__\n\n'
@@ -572,7 +564,7 @@ class TestExDoc(object):
             ' * RuntimeError (Argument \\`value3\\` is not valid)\n\n'
             ' * RuntimeError (Argument \\`value4\\` is not valid)\n\n'
         )
-        assert obj(root+'ExceptionAutoDocClass.value3') == (
+        CS(obj(root+'ExceptionAutoDocClass.value3'),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             'value3\n\n'
@@ -585,7 +577,7 @@ class TestExDoc(object):
             '   * TypeError (Cannot get value3)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        assert obj(root+'ExceptionAutoDocClass.value3', width=16) == (
+        CS(obj(root+'ExceptionAutoDocClass.value3', width=16),
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -621,7 +613,7 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        assert obj(root+'ExceptionAutoDocClass.temp') == (
+        CS(obj(root+'ExceptionAutoDocClass.temp'),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             'temp\n\n'
@@ -630,7 +622,7 @@ class TestExDoc(object):
             ' valid)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        assert obj(root+'ExceptionAutoDocClass.temp', width=16) == (
+        CS(obj(root+'ExceptionAutoDocClass.temp', width=16),
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -651,7 +643,7 @@ class TestExDoc(object):
             '\n'
         )
         putil.exdoc._MINWIDTH = minwidth
-        assert obj(root+'ExceptionAutoDocClass.value2') == (
+        CS(obj(root+'ExceptionAutoDocClass.value2'),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_1.ExceptionAutoDocClass.'
             'value2\n\n'
@@ -660,7 +652,7 @@ class TestExDoc(object):
             ' * TypeError (Argument \\`value2\\` is not valid)\n\n'
         )
         putil.exdoc._MINWIDTH = 16
-        assert obj(root+'ExceptionAutoDocClass.value2', width=16) == (
+        CS(obj(root+'ExceptionAutoDocClass.value2', width=16),
             '.. Auto-\n'
             '.. generated\n'
             '.. exceptions\n'
@@ -689,14 +681,14 @@ class TestExDoc(object):
         # Test raised argument behaves as expected
         obj = exdocobj_raised.get_sphinx_doc
         root = 'tests.support.exdoc_support_module_5.'
-        assert obj(root+'float_func') == (
+        CS(obj(root+'float_func'),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_5.float_func\n\n'
             ':raises:\n'
             ' * TypeError (Argument \\`arg\\` is not valid)\n\n'
             ' * ValueError (Argument \\`arg\\` is illegal)\n\n'
         )
-        assert obj(root+'float_func', raised=True) == (
+        CS(obj(root+'float_func', raised=True),
             '.. Auto-generated exceptions documentation for\n'
             '.. tests.support.exdoc_support_module_5.float_func\n\n'
             ':raises: ValueError (Argument \\`arg\\` is illegal)\n\n'

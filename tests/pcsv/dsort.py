@@ -26,10 +26,7 @@ def test_dsort_function():
     with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_file) as fname:
             putil.pcsv.dsort(
-                fname=fname,
-                order=[{'Ctrl':'D'}, {'Ref':'A'}],
-                has_header=True,
-                ofname=ofname
+                fname, [{'Ctrl':'D'}, {'Ref':'A'}], True, ofname=ofname
             )
         obj = putil.pcsv.CsvFile(fname=ofname, has_header=True)
     assert obj.header() == ['Ctrl', 'Ref', 'Result']
@@ -39,12 +36,7 @@ def test_dsort_function():
     # Input file name does not have headers, separate output file name
     with putil.misc.TmpFile() as ofname:
         with putil.misc.TmpFile(write_file) as fname:
-            putil.pcsv.dsort(
-                fname=fname,
-                order=[{0:'D'}, {1:'A'}],
-                has_header=False,
-                ofname=ofname
-            )
+            putil.pcsv.dsort(fname, [{0:'D'}, {1:'A'}], False, ofname=ofname)
         obj = putil.pcsv.CsvFile(fname=ofname, has_header=False)
     assert obj.header() == [0, 1, 2]
     assert obj.data() == [
@@ -52,11 +44,7 @@ def test_dsort_function():
     ]
     # "In place" sort
     with putil.misc.TmpFile(write_file) as fname:
-        putil.pcsv.dsort(
-            fname=fname,
-            order=[{0:'D'}, {1:'A'}],
-            has_header=False
-        )
+        putil.pcsv.dsort(fname, [{0:'D'}, {1:'A'}], False)
         obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
     assert obj.header() == [0, 1, 2]
     assert obj.data() == [
@@ -64,12 +52,7 @@ def test_dsort_function():
     ]
     # Starting row
     with putil.misc.TmpFile(write_file) as fname:
-        putil.pcsv.dsort(
-            fname=fname,
-            order=[{0:'D'}, {1:'A'}],
-            has_header=False,
-            frow=4
-        )
+        putil.pcsv.dsort(fname, [{0:'D'}, {1:'A'}], False, 4)
         obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
     assert obj.header() == [0, 1, 2]
     assert obj.data() == [[3, 5, 50], [2, 4, 30], [2, 5, 40]]

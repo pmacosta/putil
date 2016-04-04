@@ -7,16 +7,16 @@
 from __future__ import print_function
 import os
 # PyPI imports
+import numpy
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-import numpy
 # Putil imports
 import putil.exh
 import putil.misc
 import putil.pcontracts
 from .panel import Panel
 from .constants import TITLE_FONT_SIZE
-from .functions import _intelligent_ticks
+from .functions import _F, _MF, _intelligent_ticks
 
 
 ###
@@ -40,13 +40,15 @@ exobj_plot = trace_ex_plot_figure.trace_module(no_print=True)
 ###
 # Functions
 ###
+_IS_NUMBER = lambda x: isinstance(x, int) or isinstance(x, float)
+
+
 def _first_label(label_list):
     """ Find first non-blank label """
-    for label_index, label_obj in enumerate(label_list):
-        if ((label_obj.get_text() is not None) and
-           (label_obj.get_text().strip() != '')):
+    llist = [lobj.get_text().strip() for lobj in label_list]
+    for label_index, label_text in enumerate(llist):
+        if label_text not in [None, '']:
             return label_index
-    return None
 
 
 def _get_text_prop(fig, text_obj):
@@ -61,54 +63,33 @@ def _get_text_prop(fig, text_obj):
 def _get_yaxis_size(fig_obj, tick_labels, axis_label):
     """ Compute Y axis height and width """
     # Minimum of one line spacing between vertical ticks
+    get_prop = lambda x, y: _get_text_prop(fig_obj, x)[y]
     axis_height = axis_width = 0
     label_index = _first_label(tick_labels)
     if label_index is not None:
-        label_height = _get_text_prop(
-            fig_obj, tick_labels[label_index]
-        )['height']
+        label_height = get_prop(tick_labels[label_index], 'height')
         axis_height = (2*len(tick_labels)-1)*label_height
-        axis_width = max(
-            [
-                num
-                for num in [_get_text_prop(fig_obj, tick)['width']
-                for tick in tick_labels]
-                if isinstance(num, int) or isinstance(num, float)
-            ]
-        )
+        raw_axis_width = [get_prop(tick, 'width') for tick in tick_labels]
+        axis_width = max([num for num in raw_axis_width if _IS_NUMBER(num)])
     # axis_label is a Text object, which is never None, it has the x, y
     # coordinates and axis label text, even if is = ''
-    axis_height = max(
-        axis_height,
-        _get_text_prop(fig_obj, axis_label)['height']
-    )
-    axis_width = axis_width+(1.5*_get_text_prop(fig_obj, axis_label)['width'])
+    axis_height = max(axis_height, get_prop(axis_label, 'height'))
+    axis_width = axis_width+(1.5*get_prop(axis_label, 'width'))
     return axis_height, axis_width
 
 
 def _get_xaxis_size(fig_obj, tick_labels, axis_label):
     """ Compute Y axis height and width """
     # Minimum of one smallest label separation between horizontal ticks
-    min_label_width = min(
-        [
-            num
-            for num in [_get_text_prop(fig_obj, tick)['width']
-            for tick in tick_labels]
-            if isinstance(num, int) or isinstance(num, float)
-        ]
-    )
-    axis_width = ((len(tick_labels)-1)*min_label_width)+sum(
-        [
-            num
-            for num in [_get_text_prop(fig_obj, tick)['width']
-            for tick in tick_labels]
-            if isinstance(num, int) or isinstance(num, float)
-        ]
-    )
+    get_prop = lambda x, y: _get_text_prop(fig_obj, x)[y]
+    raw_axis_width = [get_prop(tick, 'width') for tick in tick_labels]
+    label_width_list = [num for num in raw_axis_width if _IS_NUMBER(num)]
+    min_label_width = min(label_width_list)
+    axis_width = ((len(tick_labels)-1)*min_label_width)+sum(label_width_list)
     # axis_label is a Text object, which is never None, it has the x, y
     # coordinates and axis label text, even if is = ''
-    axis_height = 1.5*_get_text_prop(fig_obj, axis_label)['height']
-    axis_width = max(axis_width, _get_text_prop(fig_obj, axis_label)['width'])
+    axis_height = 1.5*get_prop(axis_label, 'height')
+    axis_width = max(axis_width, get_prop(axis_label, 'width'))
     return axis_height, axis_width
 
 
@@ -224,9 +205,7 @@ class Figure(object):
         self._set_title(title)
         self._set_log_indep_axis(log_indep_axis)
         self._indep_axis_ticks = (
-            indep_axis_ticks
-            if not self.log_indep_axis else
-            None
+            indep_axis_ticks if not self.log_indep_axis else None
         )
         self._set_fig_width(fig_width)
         self._set_fig_height(fig_height)
@@ -532,7 +511,7 @@ class Figure(object):
             self._exh.raise_exception_if(
                 exname='panel_not_fully_specified',
                 condition=not obj._complete,
-                edata={'field':'panel_num', 'value':num}
+                edata=_F('panel_num', num)
             )
 
     def _get_fig(self):
@@ -545,7 +524,7 @@ class Figure(object):
         """
         Returns True if figure is fully specified, otherwise returns False
         """
-        return (self.panels is not None) and (len(self.panels) > 0)
+        return (self.panels is not None) and len(self.panels)
 
     def _draw(self, force_redraw=False, raise_exception=False):
         # pylint: disable=C0326,W0612
@@ -561,7 +540,7 @@ class Figure(object):
             extype=RuntimeError,
             exmsg='Figure object is not fully specified'
         )
-        if (self._complete) and force_redraw:
+        if self._complete and force_redraw:
             num_panels = len(self.panels)
             plt.close('all')
             # Create required number of panels
@@ -571,21 +550,16 @@ class Figure(object):
             # Find union of the independent variable data set of all panels
             for panel_num, panel_obj in enumerate(self.panels):
                 for series_num, series_obj in enumerate(panel_obj.series):
-                    if ((self.log_indep_axis is not None) and
-                       self.log_indep_axis and
-                       (min(series_obj.indep_var) < 0)):
-                        self._exh.raise_exception_if(
-                            exname='figure_indep_log_axis',
-                            condition=bool(
-                                (self.log_indep_axis is not None) and
-                                self.log_indep_axis and
-                                (min(series_obj.indep_var) < 0)
-                            ),
-                            edata=[
-                                {'field':'panel_num', 'value':panel_num},
-                                {'field':'series_num', 'value':series_num}
-                            ]
+                    self._exh.raise_exception_if(
+                        exname='figure_indep_log_axis',
+                        condition=bool(
+                            self.log_indep_axis and
+                            (min(series_obj.indep_var) < 0)
+                        ),
+                        edata=_MF(
+                            'panel_num', panel_num, 'series_num', series_num
                         )
+                    )
                     glob_indep_var = numpy.unique(
                         numpy.append(
                             glob_indep_var,
@@ -597,68 +571,44 @@ class Figure(object):
                             )
                         )
                     )
-            (
-                indep_var_locs,
-                indep_var_labels,
-                indep_var_min,
-                indep_var_max,
-                self._indep_var_div,
-                indep_var_unit_scale
-            ) = _intelligent_ticks(
-                    glob_indep_var,
-                    min(glob_indep_var),
-                    max(glob_indep_var),
-                    tight=True,
-                    log_axis=self.log_indep_axis,
-                    tick_list=(
-                        self._indep_axis_ticks
-                        if not self._log_indep_axis else
-                        None
-                    )
+            indep_var_ticks = _intelligent_ticks(
+                glob_indep_var,
+                min(glob_indep_var),
+                max(glob_indep_var),
+                tight=True,
+                log_axis=self.log_indep_axis,
+                tick_list=(
+                    None if self._log_indep_axis else self._indep_axis_ticks
                 )
-            self._indep_axis_ticks = indep_var_locs
+            )
+            self._indep_var_div = indep_var_ticks.div
+            self._indep_axis_ticks = indep_var_ticks.locs
             # Scale all panel series
             for panel_obj in self.panels:
                 panel_obj._scale_indep_var(self._indep_var_div)
             # Draw panels
             indep_axis_dict = {
-                'indep_var_min':indep_var_min,
-                'indep_var_max':indep_var_max,
-                'indep_var_locs':indep_var_locs,
-                'indep_var_labels':None,
-                'indep_axis_label':None,
-                'indep_axis_units':None,
-                'indep_axis_unit_scale':None
-            }
-            indep_axis_dict = {
                 'log_indep':self.log_indep_axis,
-                'indep_var_min':indep_var_min,
-                'indep_var_max':indep_var_max,
-                'indep_var_locs':indep_var_locs,
-                'indep_var_labels':indep_var_labels,
+                'indep_var_min':indep_var_ticks.min,
+                'indep_var_max':indep_var_ticks.max,
+                'indep_var_locs':indep_var_ticks.locs,
+                'indep_var_labels':indep_var_ticks.labels,
                 'indep_axis_label':self.indep_var_label,
                 'indep_axis_units':self.indep_var_units,
-                'indep_axis_unit_scale':indep_var_unit_scale
+                'indep_axis_unit_scale':indep_var_ticks.unit_scale
             }
             panels_with_indep_axis_list = [
                 num for num, panel_obj in enumerate(self.panels)
                 if panel_obj.display_indep_axis
-            ]
-            panels_with_indep_axis_list = (
-                [num_panels-1]
-                if len(panels_with_indep_axis_list) == 0 else
-                panels_with_indep_axis_list
-            )
+            ] or [num_panels-1]
+            keys = ['number', 'primary', 'secondary']
             for num, (panel_obj, axarr) in enumerate(zip(self.panels, axes)):
                 panel_dict = panel_obj._draw_panel(
                     axarr, indep_axis_dict, num in panels_with_indep_axis_list
                 )
+                panel_dict['number'] = num
                 self._axes_list.append(
-                    {
-                        'number':num,
-                        'primary':panel_dict['primary'],
-                        'secondary':panel_dict['secondary']
-                    }
+                    dict((item, panel_dict[item]) for item in keys)
                 )
             if self.title not in [None, '']:
                 axes[0].set_title(
@@ -673,8 +623,7 @@ class Figure(object):
             self._calculate_figure_size()
         elif (not self._complete) and (raise_exception):
             self._exh.raise_exception_if(
-                exname='not_fully_specified',
-                condition=True
+                exname='not_fully_specified', condition=True
             )
 
     def _calculate_figure_size(self):
@@ -710,54 +659,26 @@ class Figure(object):
             for (yaxis_height, yaxis_width), (xaxis_height, xaxis_width)
             in zip(yaxis_dims, xaxis_dims)
         ]
-        min_fig_width = round(
-            (
-                max(
-                    title_width,
-                    max([panel_width for _, panel_width in panel_dims])
-                )
-            )
-            /
-            float(self._fig.dpi),
-            2
-        )
+        dpi = float(self._fig.dpi)
+        panels_width = max([panel_width for _, panel_width in panel_dims])
+        panels_height = max([panel_height for panel_height, _ in panel_dims])
+        min_fig_width = round(max(title_width, panels_width)/dpi, 2)
         min_fig_height = round(
-            (
-                (
-                    (
-                        len(self._axes_list)*max([
-                            panel_height
-                            for panel_height, _ in panel_dims
-                        ])
-                    )+title_height
-                )
-                /
-                float(self._fig.dpi)),
-            2
+            ((len(self._axes_list)*panels_height)+title_height)/dpi, 2
         )
         self._exh.raise_exception_if(
             exname='fig_small',
-            condition=bool(((self.fig_width is not None) and
-                      (self.fig_width < min_fig_width)) or
-                      ((self.fig_height is not None) and
-                      (self.fig_height < min_fig_height))),
+            condition=bool(
+                (self.fig_width and (self.fig_width < min_fig_width)) or
+                (self.fig_height and (self.fig_height < min_fig_height))
+            ),
             edata=[
-                {'field':'min_width', 'value':min_fig_width},
-                {'field':'min_height', 'value':min_fig_height}
+                _F('min_width', min_fig_width),
+                _F('min_height', min_fig_height)
             ]
         )
-        self.fig_width = (
-            min_fig_width
-            if self.fig_width is None else
-            self.fig_width
-        )
-        self.fig_height = (
-            min_fig_height
-            if self.fig_height is None
-            else self.fig_height
-        )
-
-    _complete = property(_get_complete)
+        self.fig_width = self.fig_width or  min_fig_width
+        self.fig_height = self.fig_height or min_fig_height
 
     @putil.pcontracts.contract(fname='file_name', ftype=str)
     def save(self, fname, ftype='PNG'):
@@ -807,7 +728,7 @@ class Figure(object):
         self._exh.raise_exception_if(
             exname='unsupported_file_type',
             condition=ftype.lower() not in ['png', 'eps'],
-            edata={'field':'file_type', 'value':ftype}
+            edata=_F('file_type', ftype)
         )
         _, extension = os.path.splitext(fname)
         if (not extension) or (extension == '.'):
@@ -846,6 +767,8 @@ class Figure(object):
         plt.show()
 
     # Managed attributes
+    _complete = property(_get_complete)
+
     axes_list = property(
         _get_axes_list, doc='Matplotlib figure axes handle list'
     )
