@@ -9,10 +9,13 @@ abstractmethod
 abstractproperty
 AClass
 actmsg
+addai
+addex
 addfinalizer
 AE
 Agg
 aguments
+ai
 aliceblue
 aline
 alist
@@ -26,9 +29,11 @@ APPKEY
 APPSECRET
 appveyor
 Appveyor
+APROP
 arg
 arga
 argb
+argname
 argparse
 Argparse
 args
@@ -165,6 +170,7 @@ cpu
 cpus
 CPUs
 CPUS
+craise
 crange
 cregexp
 cst
@@ -317,6 +323,7 @@ exceptionB
 exceptionC
 exceptionD
 excinfo
+exdata
 exdb
 exdef
 exdesc
@@ -344,6 +351,7 @@ EXMSG
 exname
 exnum
 exobj
+ExObj
 exoutput
 extb
 extype
@@ -356,6 +364,7 @@ fdict
 fdir
 fdirs
 femto
+fex
 fexh
 fexlist
 ffull
@@ -391,6 +400,7 @@ foi
 fontdict
 fontsize
 forestgreen
+fos
 fp
 fpart
 fplot
@@ -435,6 +445,7 @@ getframe
 getframeinfo
 getitem
 getmembers
+getpid
 getsourcelines
 getter
 Getter
@@ -450,6 +461,7 @@ Hettinger
 hexversion
 HH
 hier
+hnf
 horizontalalignment
 hotpink
 html
@@ -459,6 +471,7 @@ hvector
 hver
 iadd
 icfilter
+icol
 idata
 idfilter
 idict
@@ -478,6 +491,7 @@ IMGTOL
 ImportError
 importlib
 imread
+iname
 incfile
 IncreasingRealNumpyVector
 indep
@@ -495,10 +509,13 @@ InterpolationOption
 io
 iobj
 IOError
+iom
 iomm
 Ionel's
 ipsum
+irec
 irmm
+iro
 isalpha
 isclass
 isdflt
@@ -595,6 +612,7 @@ lsep
 lstrip
 ltr
 lue
+lvars
 lvec
 lvector
 makedir
@@ -738,6 +756,7 @@ Numpy
 nums
 nuniq
 nvar
+nvdata
 nworld
 nzero
 OAUTH
@@ -808,6 +827,7 @@ pexlist
 pflag
 pgcd
 pico
+pid
 Pillow>=2.6.1
 pindex
 pinspect
@@ -886,6 +906,7 @@ pyvers
 r'a
 radd
 radix
+raiex
 rb
 rbranch
 rc
@@ -925,6 +946,7 @@ reStructuredText
 ret
 retcode
 returncode
+rex
 rf
 rfile
 r'File

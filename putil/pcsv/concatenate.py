@@ -4,6 +4,7 @@
 # pylint: disable=C0111,W0105,W0611
 
 # Putil imports
+import putil.exh
 import putil.pcontracts
 from putil.ptypes import (
     csv_col_filter,
@@ -33,6 +34,8 @@ exobj = trace_ex_pcsv_concatenate.trace_module(no_print=True)
 ###
 # Functions
 ###
+_C = lambda *x: all([item is not None for item in x])
+
 @putil.pcontracts.contract(
     fname1='file_name_exists', fname2='file_name_exists',
     dfilter1='csv_data_filter', dfilter2='csv_data_filter',
@@ -141,18 +144,12 @@ def concatenate(
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
-    _exh = putil.exh.get_or_create_exh_obj()
-    _exh.add_exception(
-        exname='irmm',
-        extype=RuntimeError,
-        exmsg='Files have different number of columns'
+    iro = putil.exh.addex(
+        RuntimeError, 'Files have different number of columns'
     )
-    _exh.add_exception(
-        exname='iomm',
-        extype=RuntimeError,
-        exmsg=(
-            'Number of columns in data files and output columns are different'
-        )
+    iom = putil.exh.addex(
+        RuntimeError,
+        'Number of columns in data files and output columns are different'
     )
     # Read and validate file 1
     obj1 = CsvFile(
@@ -170,21 +167,12 @@ def concatenate(
     elif ocols is None:
         ocols = []
     else:
-        _exh.raise_exception_if(
-            exname='iomm',
-            condition=(
-                (obj1.cfilter is not None) and
-                (len(obj1.cfilter) != len(ocols))
-            )
-        )
+        iom((obj1.cfilter is not None) and (len(obj1.cfilter) != len(ocols)))
         ocols = [ocols]
     # Miscellaneous data validation
-    _exh.raise_exception_if(
-        exname='irmm',
-        condition=(
-            (obj1.cfilter is not None) and (obj2.cfilter is not None) and
-            (len(obj1.cfilter) != len(obj2.cfilter))
-        )
+    iro(
+        _C(obj1.cfilter, obj2.cfilter) and
+        (len(obj1.cfilter) != len(obj2.cfilter))
     )
     # Write final output
     data = ocols+obj1.data(filtered=True)+obj2.data(filtered=True)

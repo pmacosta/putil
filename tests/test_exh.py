@@ -65,6 +65,48 @@ sarg = lambda msg: 'Argument `{0}` is not valid'.format(msg)
 ###
 # Test functions
 ###
+def test_add():
+    """ Test add function behavior """
+    obj = putil.exh.addex
+    # Exceptions
+    AI(obj, 'extype', 5, 'Message')
+    AI(obj, 'exmsg', RuntimeError, 2.0)
+    AI(obj, 'condition', RuntimeError, 'Message', 1)
+    AI(obj, 'edata', RuntimeError, 'Message', False, 5)
+    inst1 = obj(IOError, 'First exception')
+    inst2 = obj(TypeError, 'My exception')
+    inst3 = obj(RuntimeError, 'Third exception')
+    inst2(False)
+    AE(inst2, TypeError, 'My exception', True)
+    inst4 = obj(IOError, 'Invalid *[name]*')
+    inst4(False)
+    AE(inst4, IOError, 'Invalid arg', True, [{'field':'name', 'value':'arg'}])
+    obj(TypeError, 'My exception', False)
+    with pytest.raises(TypeError) as excinfo:
+        obj(TypeError, 'My exception', True)
+    assert GET_EXMSG(excinfo) == 'My exception'
+    edata = [{'field':'name', 'value':'arg'}]
+    obj(IOError, 'Invalid *[name]*', False, edata)
+    with pytest.raises(IOError) as excinfo:
+        obj(IOError, 'Invalid *[name]*', True, edata)
+    assert GET_EXMSG(excinfo) == 'Invalid arg'
+
+def test_add_ai():
+    """ Test add_ai function behavior """
+    obj = putil.exh.addai
+    # Exceptions
+    AI(obj, 'argname', 5)
+    AI(obj, 'condition', 'name', 1)
+    inst1 = obj('value')
+    inst2 = obj('fname')
+    inst3 = obj('kwarg')
+    inst2(False)
+    AE(inst2, RuntimeError, 'Argument `fname` is not valid', True)
+    obj('arg', False)
+    with pytest.raises(RuntimeError) as excinfo:
+        obj('arg', True)
+    assert GET_EXMSG(excinfo) == 'Argument `arg` is not valid'
+
 def test_star_exh_obj():
     """ Test [get|set|del]_exh_obj() function behavior """
     AI(putil.exh.set_exh_obj, 'obj', obj=5)
@@ -164,6 +206,7 @@ class TestExHandle(object):
     @pytest.mark.parametrize(
         'args, extype, exname', [
             ((5, RuntimeError, 'Message'), RuntimeError, sarg('exname')),
+            (('34', RuntimeError, 'Message'), RuntimeError, sarg('exname')),
             (('exception', 5, 'Message'), RuntimeError, sarg('extype')),
             (('exception', RuntimeError, True), RuntimeError, sarg('exmsg'))
         ]
@@ -307,6 +350,7 @@ class TestExHandle(object):
             ]
             # Test that exceptions have been added correctly to handler
             assert cdb
+            cdb = exobj._flatten_ex_dict()
             for exname in cdb:
                 erec = cdb[exname]
                 iobj = zip(fnames, fexh, fdesc)
@@ -319,7 +363,7 @@ class TestExHandle(object):
                 else:
                     raise RuntimeError('Callable not found')
                 if full_cname and exclude:
-                    assert erec['function'][0] == exobj._encode_call(ttuple[0])
+                    assert erec['function'][0] == exobj.encode_call(ttuple[0])
                 else:
                     if not full_cname:
                         assert erec['function'][0] is None
@@ -356,7 +400,7 @@ class TestExHandle(object):
             cname = 'putil.exh.sys._getframe'
             with mock.patch(cname, side_effect=mock_get_frame):
                 func_f()
-            ecb = exobj._ex_dict
+            ecb = exobj._flatten_ex_dict()
             exname = list(ecb.keys())[0]
             erec = ecb[exname]
             ref = sorted(
@@ -369,7 +413,7 @@ class TestExHandle(object):
             )
             assert re.compile(r'\d+/'+emsg('F')).match(exname)
             erec['function'] = [
-                exobj._decode_call(call) for call in erec['function']
+                exobj.decode_call(call) for call in erec['function']
             ]
             assert sorted(erec.items()) == ref
         ###
@@ -380,10 +424,11 @@ class TestExHandle(object):
         )
         cobj = exh_support_module_2.MyClass(exobj)
         cobj.value = 5
-        assert len(list(cobj._exhobj._ex_dict.keys())) == 1
-        key = list(cobj._exhobj._ex_dict.keys())[0]
-        item = cobj._exhobj._ex_dict[key]
-        assert cobj._exhobj._decode_call(item['function'][0]).endswith(
+        cdb = cobj._exhobj._flatten_ex_dict()
+        assert len(list(cdb.keys())) == 1
+        key = list(cdb.keys())[0]
+        item = cdb[key]
+        assert cobj._exhobj.decode_call(item['function'][0]).endswith(
             'exh_support_module_2.MyClass.value(setter)'
         )
         assert item['msg'] == 'Illegal value'
@@ -396,7 +441,8 @@ class TestExHandle(object):
             putil.exh.ExHandle(full_cname=True, exclude=['_pytest'])
         )
         _ = putil.eng.peng(15, 3, False)
-        for item in putil.exh.get_exh_obj()._ex_dict.values():
+        cdb = putil.exh.get_exh_obj()._flatten_ex_dict()
+        for item in cdb.values():
             assert item['function'][0]
         putil.exh.set_exh_obj(
             putil.exh.ExHandle(
@@ -404,7 +450,8 @@ class TestExHandle(object):
             )
         )
         _ = putil.eng.peng(15, 3, False)
-        for item in putil.exh.get_exh_obj()._ex_dict.values():
+        cdb = putil.exh.get_exh_obj()._flatten_ex_dict()
+        for item in cdb.values():
             assert not item['function'][0]
         # Test with function that has an exception in body
         import tests.support.exh_support_module_1
@@ -412,7 +459,8 @@ class TestExHandle(object):
             putil.exh.ExHandle(full_cname=True, exclude=['_pytest'])
         )
         tests.support.exh_support_module_1.simple_exception()
-        for item in putil.exh.get_exh_obj()._ex_dict.values():
+        cdb = putil.exh.get_exh_obj()._flatten_ex_dict()
+        for item in cdb.values():
             assert item['function'][0]
         putil.exh.set_exh_obj(
             putil.exh.ExHandle(
@@ -421,7 +469,8 @@ class TestExHandle(object):
             )
         )
         tests.support.exh_support_module_1.simple_exception()
-        for item in putil.exh.get_exh_obj()._ex_dict.values():
+        cdb = putil.exh.get_exh_obj()._flatten_ex_dict()
+        for item in cdb.values():
             assert not item['function'][0]
 
     def test_raise_exception_if_exceptions(self):
@@ -442,10 +491,11 @@ class TestExHandle(object):
             ]
             pb = lambda x, nflip: x if nflip else (not x)
             alist = ['*' if item else '' for item in llist]
-            entry = exobj._ex_dict[list(exobj._ex_dict.keys())[0]]
-            entry = exobj._ex_dict[list(exobj._ex_dict.keys())[0]]
+            cdb_int = exobj._flatten_ex_dict()
+            entry = cdb_int[list(cdb_int.keys())[0]]
+            entry = cdb_int[list(cdb_int.keys())[0]]
             assert (
-                [exobj._decode_call(item) for item in entry['function']] == ref
+                [exobj.decode_call(item) for item in entry['function']] == ref
             )
             assert entry['raised'] == llist
             stxt = str(exobj).split('\n')[3:]
@@ -498,7 +548,7 @@ class TestExHandle(object):
         AE(func3, RuntimeError, exmsg, cond4=True)
         # Test that edata=None works
         exobj = func3()
-        cdb = exobj._ex_dict
+        cdb = exobj._flatten_ex_dict()
         if not cdb:
             pytest.fail('_ex_dict empty')
         for exname, erec in cdb.items():
@@ -860,10 +910,10 @@ class TestExHandle(object):
             ]
             alist = [
                 item.split(obj._callables_separator)[1]
-                for item in obj._ex_dict
+                for item in obj._flatten_ex_dict()
             ]
             assert sorted(alist) == sorted(nref)
-            for key, value in obj._ex_dict.items():
+            for key, value in obj._flatten_ex_dict().items():
                 name = key.split(obj._callables_separator)[1]
                 if name == 'copy_exception_1':
                     assert value['function'] == ['0/1']

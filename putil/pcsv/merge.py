@@ -4,6 +4,7 @@
 # pylint: disable=C0111,W0105,W0611
 
 # Putil imports
+import putil.exh
 import putil.pcontracts
 from putil.ptypes import (
     csv_col_filter,
@@ -142,13 +143,9 @@ def merge(
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
-    _exh = putil.exh.get_or_create_exh_obj()
-    _exh.add_exception(
-        exname='iomm',
-        extype=RuntimeError,
-        exmsg=(
-            'Combined columns in data files and output columns are different'
-        )
+    iomm_ex = putil.exh.addex(
+        RuntimeError,
+        'Combined columns in data files and output columns are different'
     )
     # Read and validate file 1
     obj1 = CsvFile(
@@ -186,9 +183,7 @@ def merge(
     elif ocols is None:
         ocols = []
     else:
-        _exh.raise_exception_if(
-            exname='iomm', condition=cols1+cols2 != len(ocols)
-        )
+        iomm_ex(cols1+cols2 != len(ocols))
         ocols = [ocols]
     # Even out rows
     delta = obj1.rows(filtered=True)-obj2.rows(filtered=True)

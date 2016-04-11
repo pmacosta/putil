@@ -7,11 +7,11 @@
 from __future__ import print_function
 import sys
 # PyPI imports
-import matplotlib
 import numpy
 import pytest
+import matplotlib
 # Putil imports
-from putil.test import AE, AI, AROPROP, RE
+from putil.test import AE, AI, AROPROP, RE, compare_strings
 import putil.plot
 from .fixtures import compare_image_set
 sys.path.append('..')
@@ -30,62 +30,42 @@ FOBJ = putil.plot.Series
 class TestSeries(object):
     """ Tests for Series class """
     ### Private methods
-    def test_str(self, default_source):
-        """ Test __str__ method behavior """
-        marker_list = [
-            {
-                'value':None,
-                'string':'None'
-            },
-            {
-                'value':'o',
-                'string':'o'
-            },
+    @pytest.mark.parametrize(
+        'mdict', [
+            {'value':None, 'string':'None'},
+            {'value':'o', 'string':'o'},
             {
                 'value':matplotlib.path.Path([(0, 0), (1, 1)]),
                 'string':'matplotlib.path.Path object'
             },
-            {
-                'value':[(0, 0), (1, 1)],
-                'string':'[(0, 0), (1, 1)]'
-            },
-            {
-                'value':r'$a_{b}$',
-                'string':r'$a_{b}$'
-            },
+            {'value':[(0, 0), (1, 1)], 'string':'[(0, 0), (1, 1)]'},
+            {'value':r'$a_{b}$', 'string':r'$a_{b}$'},
             {
                 'value':matplotlib.markers.TICKLEFT,
                 'string':'matplotlib.markers.TICKLEFT'
             }
         ]
-        for marker_dict in marker_list:
-            obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                marker=marker_dict['value']
-            )
-            ret = (
-                'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
-                'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
-                'Label: test\n'
-                'Color: k\n'
-                'Marker: {0}\n'
-                'Interpolation: CUBIC\n'
-                'Line style: -\n'
-                'Secondary axis: False'.format(marker_dict['string'])
-            )
-            if str(obj) != ret:
-                print('Object:')
-                print(str(obj))
-                print('')
-                print('Comparison:')
-                print(ret)
-            assert str(obj) == ret
+    )
+    def test_str(self, default_source, mdict):
+        """ Test __str__ method behavior """
+        obj = putil.plot.Series(
+            data_source=default_source, label='test', marker=mdict['value']
+        )
+        ret = (
+            'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+            'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+            'Label: test\n'
+            'Color: k\n'
+            'Marker: {0}\n'
+            'Interpolation: CUBIC\n'
+            'Line style: -\n'
+            'Secondary axis: False'.format(mdict['string'])
+        )
+        compare_strings(str(obj), ret)
 
     ### Properties
-    def test_color(self, default_source):
-        """ Test color property behavior """
-        items = [
+    @pytest.mark.parametrize(
+        'color', [
             None,
             'moccasin',
             0.5,
@@ -93,24 +73,19 @@ class TestSeries(object):
             (0.5, 0.5, 0.5),
             [0.25, 0.25, 0.25, 0.25]
         ]
+    )
+    def test_color(self, default_source, color):
+        """ Test color property behavior """
+        proc_color = lambda x: x.lower() if isinstance(x, str) else x
         putil.plot.Series(data_source=default_source, label='test', color=None)
-        for item in items:
-            obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                color=item
-            )
-            assert (
-                obj.color
-                ==
-                (item.lower() if isinstance(item, str) else item)
-            )
+        obj = putil.plot.Series(
+            data_source=default_source, label='test', color=color
+        )
+        assert obj.color == proc_color(color)
 
     @pytest.mark.series
-    def test_color_exceptions(self, default_source):
-        """ Test color property exceptions """
-        AI(FOBJ, 'color', default_source, 'test', color=default_source)
-        items = [
+    @pytest.mark.parametrize(
+        'color', [
             'invalid_color_name',
             -0.01,
             1.1,
@@ -123,9 +98,12 @@ class TestSeries(object):
             [1, 1, 2, 1],
             (1, 1, 1, -1)
         ]
+    )
+    def test_color_exceptions(self, default_source, color):
+        """ Test color property exceptions """
+        AI(FOBJ, 'color', default_source, 'test', color=default_source)
         exmsg = 'Invalid color specification'
-        for item in items:
-            AE(FOBJ, TypeError, exmsg, default_source, 'test', item)
+        AE(FOBJ, TypeError, exmsg, default_source, 'test', color)
 
     def test_data_source(self, default_source):
         """ Test data source property exception """
@@ -164,8 +142,7 @@ class TestSeries(object):
     def test_interp(self, default_source):
         """ Test interp property behavior """
         source_obj = putil.plot.BasicSource(
-            indep_var=numpy.array([5]),
-            dep_var=numpy.array([0])
+            indep_var=numpy.array([5]), dep_var=numpy.array([0])
         )
         items = [
             (None, default_source),
@@ -178,15 +155,10 @@ class TestSeries(object):
         items = ['straight', 'StEp', 'CUBIC', 'linreg']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                interp=item
+                data_source=default_source, label='test', interp=item
             )
             assert obj.interp == item.upper()
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert obj.interp == 'CUBIC'
 
     @pytest.mark.series
@@ -199,8 +171,7 @@ class TestSeries(object):
         )
         AE(FOBJ, ValueError, exmsg, default_source, 'test', interp='NO_OPTION')
         source_obj = putil.plot.BasicSource(
-            indep_var=numpy.array([5]),
-            dep_var=numpy.array([0])
+            indep_var=numpy.array([5]), dep_var=numpy.array([0])
         )
         exmsg = 'At least 4 data points are needed for CUBIC interpolation'
         AE(FOBJ, ValueError, exmsg, source_obj, 'test', interp='CUBIC')
@@ -224,15 +195,10 @@ class TestSeries(object):
         items = ['-', '--', '-.', ':']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                line_style=item
+                data_source=default_source, label='test', line_style=item
             )
             assert obj.line_style == item
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert obj.line_style == '-'
 
     @pytest.mark.series
@@ -245,15 +211,11 @@ class TestSeries(object):
     def test_marker(self, default_source):
         """ Test marker property behavior """
         obj = putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            marker=None
+            data_source=default_source, label='test', marker=None
         )
         assert obj.marker is None
         obj = putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            marker='D'
+            data_source=default_source, label='test', marker='D'
         )
         assert obj.marker == 'D'
         obj = putil.plot.Series(data_source=default_source, label='test')
@@ -267,22 +229,15 @@ class TestSeries(object):
     def test_secondary_axis(self, default_source):
         """ Test secondary_axis property behavior """
         putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            secondary_axis=None
+            data_source=default_source, label='test', secondary_axis=None
         )
         items = [False, True]
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                secondary_axis=item
+                data_source=default_source, label='test', secondary_axis=item
             )
             assert obj.secondary_axis == item
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert not obj.secondary_axis
 
     @pytest.mark.series
@@ -296,31 +251,22 @@ class TestSeries(object):
         items = [None, 'STRAIGHT', 'STEP']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                interp=item
+                data_source=default_source, label='test', interp=item
             )
             assert (obj.interp_indep_var, obj.interp_dep_var) == (None, None)
         items = ['CUBIC', 'LINREG']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                interp=item
+                data_source=default_source, label='test', interp=item
             )
             assert (obj.interp_indep_var, obj.interp_dep_var) != (None, None)
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert (obj.interp_indep_var, obj.interp_dep_var) != (None, None)
 
     def test_scale_indep_var(self, default_source):
         """ Test that independent variable scaling works """
         obj = putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            interp=None
+            data_source=default_source, label='test', interp=None
         )
         assert obj.scaled_indep_var is not None
         assert obj.scaled_dep_var is not None

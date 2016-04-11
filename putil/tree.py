@@ -30,6 +30,12 @@ exobj_tree = trace_ex_tree.trace_module(no_print=True)
 
 
 ###
+# Functions
+###
+_F = lambda x, y: dict(field=x, value=y)
+
+
+###
 # Classes
 ###
 class Tree(object):
@@ -60,18 +66,10 @@ class Tree(object):
         self._vertical = ufunc(0x2502)
         self._vertical_and_right = ufunc(0x251C)
         self._up_and_right = ufunc(0x2514)
-        self._exh = putil.exh.get_or_create_exh_obj()
-        self._exh.add_exception(
-            exname='illegal_node_separator',
-            extype=RuntimeError,
-            exmsg='Argument `node_separator` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_node_separator',
-            condition=(
-                (not isinstance(node_separator, str)) or
-                (isinstance(node_separator, str) and len(node_separator) != 1)
-            )
+        putil.exh.addai(
+            'node_separator',
+            (not isinstance(node_separator, str)) or
+            (isinstance(node_separator, str) and len(node_separator) != 1)
         )
         self._node_separator = node_separator
 
@@ -103,8 +101,6 @@ class Tree(object):
         cobj._db = copy.deepcopy(self._db, memodict)
         cobj._root = self._root
         cobj._root_hierarchy_length = self._root_hierarchy_length
-        # Link to the global exception handler
-        cobj._exh = self._exh
         return cobj
 
     def __nonzero__(self):  # pragma: no cover
@@ -302,28 +298,20 @@ class Tree(object):
         return self._db[name]['parent']
 
     def _node_in_tree(self, name):
-        self._exh.add_exception(
-            exname='node_not_in_tree',
-            extype=RuntimeError,
-            exmsg='Node *[name]* not in tree'
-        )
-        self._exh.raise_exception_if(
-            exname='node_not_in_tree',
-            condition=name not in self._db,
-            edata={'field':'name', 'value':name}
+        putil.exh.addex(
+            RuntimeError,
+            'Node *[name]* not in tree',
+            name not in self._db,
+            _F('name', name)
         )
         return True
 
     def _node_name_in_tree(self, name):
-        self._exh.add_exception(
-            exname='node_not_in_tree',
-            extype=RuntimeError,
-            exmsg='Node *[node_name]* not in tree'
-        )
-        self._exh.raise_exception_if(
-            exname='node_not_in_tree',
-            condition=name not in self._db,
-            edata={'field':'node_name', 'value':name}
+        putil.exh.addex(
+            RuntimeError,
+            'Node *[node_name]* not in tree',
+            name not in self._db,
+            _F('node_name', name)
         )
         return True
 
@@ -456,36 +444,30 @@ class Tree(object):
 
     def _validate_nodes_with_data(self, names):
         """ NodeWithData pseudo-type validation """
-        self._exh.add_exception(
-            exname='illegal_node_with_data',
-            extype=RuntimeError,
-            exmsg='Argument `nodes` is not valid'
-        )
+        node_ex = putil.exh.addai('nodes')
         names = names if isinstance(names, list) else [names]
-        self._exh.raise_exception_if(
-            exname='illegal_node_with_data',
-            condition=not names
-        )
+        node_ex(not names)
         for ndict in names:
-            self._exh.raise_exception_if(
-                exname='illegal_node_with_data',
-                condition=(not isinstance(ndict, dict)) or
-                          (isinstance(ndict, dict) and
-                          (set(ndict.keys()) != set(['name', 'data'])))
+            node_ex(
+                (not isinstance(ndict, dict)) or
+                (isinstance(ndict, dict) and
+                (set(ndict.keys()) != set(['name', 'data'])))
             )
             name = ndict['name']
-            self._exh.raise_exception_if(
-                exname='illegal_node_with_data',
-                condition=(not isinstance(name, str)) or
-                          (isinstance(name, str) and
-                          ((' ' in name) or
-                          any(
-                              [
-                                  element.strip() == ''
-                                  for element in
-                                  name.strip().split(self._node_separator)
-                            ]
-                          )))
+            node_ex(
+                (not isinstance(name, str)) or
+                (
+                    isinstance(name, str) and (
+                        (' ' in name) or
+                        any(
+                            [
+                                element.strip() == ''
+                                for element in
+                                name.strip().split(self._node_separator)
+                          ]
+                        )
+                    )
+                )
             )
 
     def add_nodes(self, nodes):
@@ -556,10 +538,8 @@ class Tree(object):
             [5, 7]
         """
         self._validate_nodes_with_data(nodes)
-        self._exh.add_exception(
-            exname='illegal_node_name',
-            extype=ValueError,
-            exmsg='Illegal node name: *[node_name]*'
+        inn_ex = putil.exh.addex(
+            ValueError, 'Illegal node name: *[node_name]*'
         )
         nodes = nodes if isinstance(nodes, list) else [nodes]
         # Create root node (if needed)
@@ -581,14 +561,9 @@ class Tree(object):
             name, data = node_dict['name'], node_dict['data']
             if name not in self._db:
                 # Validate node name (root of new node same as tree root)
-                self._exh.raise_exception_if(
-                    exname='illegal_node_name',
-                    condition=(
-                        not name.startswith(
-                            self.root_name+self._node_separator
-                        )
-                    ),
-                    edata={'field':'node_name', 'value':name}
+                inn_ex(
+                    not name.startswith(self.root_name+self._node_separator),
+                    _F('node_name', name)
                 )
                 self._create_intermediate_nodes(name)
             self._db[name]['data'] += copy.deepcopy(
@@ -653,24 +628,10 @@ class Tree(object):
         (``root.branch1.leaf2.subleaf2``) and this child does have data
         associated with it, :code:`'Hello world!'`
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.add_exception(
-            exname='illegal_recursive',
-            extype=RuntimeError,
-            exmsg='Argument `recursive` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_recursive',
-            condition=not isinstance(recursive, bool)
-        )
+        iname_ex = putil.exh.addai('name')
+        irec_ex = putil.exh.addai('recursive')
+        iname_ex(self._validate_node_name(name))
+        irec_ex(not isinstance(recursive, bool))
         self._node_in_tree(name)
         self._collapse_subtree(name, recursive)
 
@@ -729,45 +690,20 @@ class Tree(object):
              └leaf2 (*)
               └subleaf2
         """
-        self._exh.add_exception(
-            exname='illegal_source_node',
-            extype=RuntimeError,
-            exmsg='Argument `source_node` is not valid'
+        src_ex = putil.exh.addai('source_node')
+        src_tree_ex = putil.exh.addex(
+            RuntimeError, 'Node *[source_node]* not in tree'
         )
-        self._exh.add_exception(
-            exname='source_node_not_in_tree',
-            extype=RuntimeError,
-            exmsg='Node *[source_node]* not in tree'
+        dest1_ex = putil.exh.addai('dest_node')
+        dest2_ex = putil.exh.addex(
+            RuntimeError, 'Illegal root in destination node'
         )
-        self._exh.add_exception(
-            exname='illegal_dest_node1',
-            extype=RuntimeError,
-            exmsg='Argument `dest_node` is not valid'
+        src_ex(self._validate_node_name(source_node))
+        dest1_ex(self._validate_node_name(dest_node))
+        src_tree_ex(
+            source_node not in self._db, _F('source_node', source_node)
         )
-        self._exh.add_exception(
-            exname='illegal_dest_node2',
-            extype=RuntimeError,
-            exmsg='Illegal root in destination node'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_source_node',
-            condition=self._validate_node_name(source_node)
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_dest_node1',
-            condition=self._validate_node_name(dest_node)
-        )
-        self._exh.raise_exception_if(
-            exname='source_node_not_in_tree',
-            condition=source_node not in self._db,
-            edata={'field':'source_node', 'value':source_node}
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_dest_node2',
-            condition=not dest_node.startswith(
-                self.root_name+self._node_separator
-            )
-        )
+        dest2_ex(not dest_node.startswith(self.root_name+self._node_separator))
         for node in self._get_subtree(source_node):
             self._db[node.replace(source_node, dest_node, 1)] = {
                 'parent':self._db[node]['parent'].replace(
@@ -837,27 +773,13 @@ class Tree(object):
              └anode
               └leaf (*)
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
+        name_ex = putil.exh.addai('name')
+        prefix_ex = putil.exh.addex(
+            RuntimeError, 'Argument `name` is not a valid prefix'
         )
-        self._exh.add_exception(
-            exname='illegal_prefix',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not a valid prefix'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_prefix',
-            condition=(
-                (not self.root_name.startswith(name))
-                or
-                (self.root_name == name)
-            )
+        name_ex(self._validate_node_name(name))
+        prefix_ex(
+            ((not self.root_name.startswith(name)) or (self.root_name == name))
         )
         self._delete_prefix(name)
 
@@ -900,15 +822,7 @@ class Tree(object):
              └leaf2 (*)
               └subleaf2
         """
-        self._exh.add_exception(
-            exname='illegal_nodes',
-            extype=RuntimeError,
-            exmsg='Argument `nodes` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_nodes',
-            condition=self._validate_node_name(nodes)
-        )
+        putil.exh.addai('nodes', self._validate_node_name(nodes))
         self._delete_subtree(nodes)
 
     def flatten_subtree(self, name):
@@ -980,15 +894,7 @@ class Tree(object):
               ├another_subleaf1
               └another_subleaf2
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         parent = self._db[name]['parent']
         if (parent) and (not self._db[name]['data']):
@@ -1021,15 +927,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return sorted(self._db[name]['children'])
 
@@ -1053,15 +951,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return self._db[name]['data']
 
@@ -1085,15 +975,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return [node for node in self._get_subtree(name) if self.is_leaf(node)]
 
@@ -1126,15 +1008,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return self._db[name]
 
@@ -1159,15 +1033,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return [self._db[child] for child in self._db[name]['children']]
 
@@ -1192,15 +1058,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return (
             self._db[self._db[name]['parent']]
@@ -1249,15 +1107,7 @@ class Tree(object):
              'root.branch1.leaf2',
              'root.branch1.leaf2.subleaf2']
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return self._get_subtree(name)
 
@@ -1280,15 +1130,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return not self._db[name]['parent']
 
@@ -1308,15 +1150,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         return name in self._db
 
     def is_leaf(self, name):
@@ -1338,15 +1172,7 @@ class Tree(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         return not self._db[name]['children']
 
@@ -1391,15 +1217,7 @@ class Tree(object):
             └leaf2 (*)
              └subleaf2
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         if (name != self.root_name) and (self._node_in_tree(name)):
             for key in [node for node in self.nodes if node.find(name) != 0]:
                 del self._db[key]
@@ -1447,15 +1265,7 @@ class Tree(object):
             Children: leaf1, leaf2
             Data: [5, 7]
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         self._node_in_tree(name)
         node = self._db[name]
         children = [
@@ -1534,58 +1344,34 @@ class Tree(object):
             │ └subleaf1 (*)
             └branch2
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
+        name_ex = putil.exh.addai('name')
+        new_name_ex = putil.exh.addai('new_name')
+        exists_ex = putil.exh.addex(
+            RuntimeError, 'Node *[new_name]* already exists'
         )
-        self._exh.add_exception(
-            exname='illegal_new_name1',
-            extype=RuntimeError,
-            exmsg='Argument `new_name` is not valid'
+        new_name2_ex = putil.exh.addex(
+            RuntimeError, 'Argument `new_name` has an illegal root node'
         )
-        self._exh.add_exception(
-            exname='new_name_exists',
-            extype=RuntimeError,
-            exmsg='Node *[new_name]* already exists'
+        root_ex = putil.exh.addex(
+            RuntimeError, 'Argument `new_name` is an illegal root node name'
         )
-        self._exh.add_exception(
-            exname='illegal_new_name2',
-            extype=RuntimeError,
-            exmsg='Argument `new_name` has an illegal root node'
-        )
-        self._exh.add_exception(
-            exname='illegal_new_root_name',
-            extype=RuntimeError,
-            exmsg='Argument `new_name` is an illegal root node name'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_new_name1',
-            condition=self._validate_node_name(new_name)
-        )
+        name_ex(self._validate_node_name(name))
+        new_name_ex(self._validate_node_name(new_name))
         self._node_in_tree(name)
-        self._exh.raise_exception_if(
-            exname='new_name_exists',
-            condition=self.in_tree(new_name) and
-                      (name != self.root_name),
-            edata={'field':'new_name', 'value':new_name}
+        exists_ex(
+            self.in_tree(new_name) and (name != self.root_name),
+            _F('new_name', new_name)
         )
         sep = self._node_separator
-        self._exh.raise_exception_if(
-            exname='illegal_new_name2',
-            condition=(name.split(sep)[:-1] != new_name.split(sep)[:-1]) and
-                      (name != self.root_name)
+        new_name2_ex(
+            (name.split(sep)[:-1] != new_name.split(sep)[:-1]) and
+            (name != self.root_name)
         )
         old_hierarchy_length = len(name.split(self._node_separator))
         new_hierarchy_length = len(new_name.split(self._node_separator))
-        self._exh.raise_exception_if(
-            exname='illegal_new_root_name',
-            condition=(name == self.root_name) and
-                      (old_hierarchy_length < new_hierarchy_length)
+        root_ex(
+            (name == self.root_name) and
+            (old_hierarchy_length < new_hierarchy_length)
         )
         self._rename_node(name, new_name)
 
@@ -1631,15 +1417,7 @@ class Tree(object):
              'root/cnode/anode',
              'root/cnode/anode/leaf']
         """
-        self._exh.add_exception(
-            exname='illegal_name',
-            extype=RuntimeError,
-            exmsg='Argument `name` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='illegal_name',
-            condition=self._validate_node_name(name)
-        )
+        putil.exh.addai('name', self._validate_node_name(name))
         return self._search_tree(name)
 
     # Managed attributes

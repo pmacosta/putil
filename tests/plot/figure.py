@@ -11,11 +11,11 @@ import sys
 if sys.hexversion >= 0x03000000:
     import unittest.mock as mock
 # PyPI imports
-import matplotlib
 import numpy
 import pytest
 if sys.hexversion < 0x03000000:
     import mock
+import matplotlib
 # Putil imports
 from putil.test import AI, AE, AROPROP, RE
 import putil.misc
@@ -58,9 +58,7 @@ class TestFigure(object):
             dep_var=numpy.array([1, 2, 3, 4])
         )
         series1_obj = putil.plot.Series(
-            data_source=ds1_obj,
-            label='series 1',
-            interp=None
+            data_source=ds1_obj, label='series 1', interp=None
         )
         panel2 = putil.plot.Panel(series=series1_obj)
         obj = putil.plot.Figure(panels=[default_panel, panel2])
@@ -74,13 +72,9 @@ class TestFigure(object):
         """ Test __nonzero__ method behavior """
         obj = putil.plot.Figure()
         assert not obj
-        obj = putil.plot.Figure(
-            panels=default_panel
-        )
+        obj = putil.plot.Figure(panels=default_panel)
         assert obj
-        obj = putil.plot.Figure(
-            panels=2*[default_panel]
-        )
+        obj = putil.plot.Figure(panels=2*[default_panel])
         assert obj
 
     def test_str(self, default_panel):
@@ -258,34 +252,22 @@ class TestFigure(object):
         """ Test indep_axis_ticks property behavior """
         obj = putil.plot.Figure(
             panels=default_panel,
-            indep_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
+            indep_axis_ticks=[1000, 2000, 3000, 3500]
         )
-        assert obj.indep_axis_ticks == [
-            1.0, 2.0, 3.0, 3.5
-        ]
+        assert obj.indep_axis_ticks == [1.0, 2.0, 3.0, 3.5]
         obj = putil.plot.Figure(
             panels=default_panel,
-            indep_axis_ticks=numpy.array(
-                [1E6, 2E6, 3E6, 3.5E6]
-            )
+            indep_axis_ticks=numpy.array([1E6, 2E6, 3E6, 3.5E6])
         )
-        assert obj.indep_axis_ticks == [
-            1.0, 2.0, 3.0, 3.5
-        ]
+        assert obj.indep_axis_ticks == [1.0, 2.0, 3.0, 3.5]
         # Logarithmic independent axis tick marks
         # cannot be overridden
         obj = putil.plot.Figure(
             panels=default_panel,
             log_indep_axis=True,
-            indep_axis_ticks=numpy.array(
-                [1E6, 2E6, 3E6, 3.5E6]
-            )
+            indep_axis_ticks=numpy.array([1E6, 2E6, 3E6, 3.5E6])
         )
-        assert obj.indep_axis_ticks == [
-            1.0, 10.0
-        ]
+        assert obj.indep_axis_ticks == [1.0, 10.0]
 
     @pytest.mark.figure
     def test_indep_axis_ticks_exceptions(self, default_panel):
@@ -336,8 +318,7 @@ class TestFigure(object):
             dep_var=numpy.array([0.1, 10, 5, 4])
         )
         negative_series = putil.plot.Series(
-            data_source=negative_data_source,
-            label='negative data series'
+            data_source=negative_data_source, label='negative data series'
         )
         negative_panel = putil.plot.Panel(series=negative_series)
         exmsg = (

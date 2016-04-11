@@ -9,16 +9,16 @@ import os
 import re
 import sys
 # PyPI imports
+if os.environ.get('READTHEDOCS', False) != 'True': # pragma: no branch
+    # The PyContracts module imports numpy, which is not allowed in
+    # the ReadTheDocs environment
+    import contracts
+import decorator
 try:    # pragma: no cover
     from funcsigs import signature, Parameter
 except ImportError: # pragma: no cover
     signature = inspect.signature
     Parameter = inspect.Parameter
-import decorator
-if os.environ.get('READTHEDOCS', False) != 'True': # pragma: no branch
-    # The PyContracts module imports numpy, which is not allowed in
-    # the ReadTheDocs environment
-    import contracts
 # Putil imports
 import putil.exh
 if sys.hexversion < 0x03000000: # pragma: no cover
@@ -426,6 +426,7 @@ def contract(**contract_args):
         if all_disabled():
             return func(*args, **kwargs)
         exhobj = putil.exh.get_exh_obj()
+        exdata = {}
         if exhobj is not None:
             for param_name, param_contract in contract_args.items():
                 # param_name=param_value, as in num='str|float'
@@ -458,7 +459,7 @@ def contract(**contract_args):
                         param_name,
                         exdict['num']
                     )
-                    exhobj.add_exception(
+                    exdata[exname] = exhobj.add_exception(
                         exname=exname,
                         extype=exdict['type'],
                         exmsg=exdict['msg'].replace(
@@ -510,7 +511,10 @@ def contract(**contract_args):
             )
             if exhobj is not None:
                 exhobj.raise_exception_if(
-                    exname=exname, condition=True, edata=edata
+                    exname=exname,
+                    condition=True,
+                    edata=edata,
+                    _keys=exdata[exname]
                 )
             else:
                 # Pick "nice" variable names because the raise line is

@@ -358,17 +358,19 @@ class TestExDoc(object):
         # Create exception tree where branching is right at root node
         exobj = putil.exh.ExHandle()
         exobj._ex_dict = {
-            'root/leaf1':{
-                'function':['root/leaf1'],
-                'type':RuntimeError,
-                'msg': 'Exception 1',
-                'raised': [False]
+            12345: {
+                (RuntimeError, 'Exception 1'): {
+                    'function':['root/leaf1'],
+                    'raised': [False],
+                    'name':'root/leaf1'
+                }
             },
-            'root/leaf2':{
-                'function':['root.leaf2'],
-                'type':OSError,
-                'msg': 'Exception 2',
-                'raised': [False]
+            67899:{
+                (OSError, 'Exception 2'): {
+                    'function':['root.leaf2'],
+                    'raised': [False],
+                    'name':'root/leaf2'
+                }
             }
         }
         exobj._callables_obj._callables_db = {
@@ -384,11 +386,12 @@ class TestExDoc(object):
         }
         exdocobj = putil.exdoc.ExDoc(exobj, _no_print=True, _empty=True)
         exdocobj._build_ex_tree()
-        assert str(exdocobj._tobj) == (
+        ref = (
             'root\n'
             '├leaf1 (*)\n'
             '└leaf2 (*)'
         )
+        putil.test.compare_strings(str(exdocobj._tobj), ref)
 
     def test_depth(self, simple_exobj):
         """ Test depth property behavior """

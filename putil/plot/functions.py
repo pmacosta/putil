@@ -374,15 +374,8 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
         'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',
         'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd'
     ]
-    _exh = putil.exh.get_or_create_exh_obj()
-    _exh.add_exception(
-        exname='par_list_empty',
-        extype=TypeError,
-        exmsg='Argument `param_list` is empty'
-    )
-    _exh.raise_exception_if(
-        exname='par_list_empty',
-        condition=len(param_list) == 0
+    putil.exh.addex(
+        TypeError, 'Argument `param_list` is empty', len(param_list) == 0
     )
     color_palette_list = [
         plt.cm.binary, plt.cm.Blues, plt.cm.BuGn, plt.cm.BuPu, plt.cm.GnBu,
@@ -469,7 +462,6 @@ class DataSource(object):
     """
     # pylint: disable=E0012,R0903,R0921
     def __init__(self):
-        self._exh = putil.exh.get_or_create_exh_obj()
         self._dep_var, self._indep_var = None, None
 
     def _get_dep_var(self):
@@ -546,17 +538,12 @@ class DataSource(object):
         """
         Returns True if object is fully specified, otherwise returns False
         """
-        self._exh.add_exception(
-            exname='num_elements',
-            extype=ValueError,
-            exmsg='Arguments `indep_var` and `dep_var` must have '
-                  'the same number of elements'
-        )
-        self._exh.raise_exception_if(
-            exname='num_elements',
-            condition=(self._dep_var is not None) and
-                      (self._indep_var is not None) and
-                      (len(self._dep_var) != len(self._indep_var))
+        putil.exh.addex(
+            ValueError,
+            'Arguments `indep_var` and `dep_var` must have '
+            'the same number of elements',
+            (self._dep_var is not None) and (self._indep_var is not None) and
+            (len(self._dep_var) != len(self._indep_var))
         )
         return (self.indep_var is not None) and (self.dep_var is not None)
 

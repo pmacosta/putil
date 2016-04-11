@@ -88,6 +88,33 @@ def test_assert_exception():
     assert putil.test.get_exmsg(excinfo) == 'Illegal number of arguments'
 
 
+def test_assert_prop():
+    """ Test assert_ro_prop function behavior """
+    class MyClass1(object):
+        def __init__(self):
+            self._value = 1
+        def getter(self):
+            return self._value
+        def setter(self, value):
+            self._value = int(value)
+        value = property(getter, setter)
+    # Test case that raises exception
+    obj1 = MyClass1()
+    msg = "invalid literal for int() with base 10: 'a'"
+    putil.test.assert_prop(obj1, 'value', 'a', ValueError, msg)
+    # Test case that does not raise exception
+    try:
+        putil.test.assert_prop(obj1, 'value', 5.2, ValueError, msg)
+    except AssertionError as eobj:
+        actmsg = putil.test.get_exmsg(eobj)
+        assert actmsg == 'Did not raise'
+    # Test case where unexpected exception is raised during evaluation
+    try:
+        putil.test.assert_prop('a', 'value', 5.2, ValueError, msg)
+    except AttributeError as eobj:
+        pass
+
+
 def test_assert_ro_prop():
     """ Test assert_ro_prop function behavior """
     class MyClass1(object):

@@ -1,7 +1,7 @@
 # csv_file.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,W0105,W0611
+# pylint: disable=C0111,R0201,W0105,W0611
 
 # Standard library imports
 import csv
@@ -150,22 +150,14 @@ class CsvFile(object):
         self._fdata_cols = None
         self._set_has_header(has_header)
         # Register exceptions
-        self._exh = putil.exh.get_or_create_exh_obj()
-        self._exh.add_exception(
-            exname='file_empty',
-            extype=RuntimeError,
-            exmsg='File *[fname]* is empty'
+        empty_exobj = putil.exh.addex(RuntimeError, 'File *[fname]* is empty')
+        col_exobj = putil.exh.addex(
+            RuntimeError, 'Column headers are not unique in file *[fname]*'
         )
-        self._exh.add_exception(
-            exname='column_headers_not_unique',
-            extype=RuntimeError,
-            exmsg='Column headers are not unique in file *[fname]*'
+        nvdata_exobj = putil.exh.addex(
+            RuntimeError, 'File *[fname]* has no valid data'
         )
-        self._exh.add_exception(
-            exname='file_has_no_valid_data',
-            extype=RuntimeError,
-            exmsg='File *[fname]* has no valid data'
-        )
+        edata = {'field':'fname', 'value':self._fname}
         # Read data
         if sys.hexversion < 0x03000000: # pragma: no cover, no branch
             fname = putil.misc.normalize_windows_fname(fname)
@@ -175,20 +167,12 @@ class CsvFile(object):
             with open(fname, 'r', newline='') as file_handle:
                 self._raw_data = [row for row in csv.reader(file_handle)]
         # Process header
-        self._exh.raise_exception_if(
-            exname='file_empty',
-            condition=len(self._raw_data) == 0,
-            edata={'field':'fname', 'value':self._fname}
-        )
+        empty_exobj(not len(self._raw_data), edata)
         if has_header:
             self._header = self._raw_data[0]
             self._header_upper = [col.upper() for col in self._header]
-            self._exh.raise_exception_if(
-                exname='column_headers_not_unique',
-                condition=(
-                    len(set(self._header_upper)) != len(self._header_upper)
-                ),
-                edata={'field':'fname', 'value':self._fname}
+            col_exobj(
+                len(set(self._header_upper)) != len(self._header_upper), edata
             )
         else:
             self._header = list(range(0, len(self._raw_data[0])))
@@ -201,17 +185,9 @@ class CsvFile(object):
                 if any([putil.misc.isnumber(_tofloat(col)) for col in row]):
                     break
             else:
-                self._exh.raise_exception_if(
-                    exname='file_has_no_valid_data',
-                    condition=True,
-                    edata={'field':'fname', 'value':self._fname}
-                )
+                nvdata_exobj(True, edata)
         else:
-            self._exh.raise_exception_if(
-                exname='file_has_no_valid_data',
-                condition=frow > len(self._raw_data),
-                edata={'field':'fname', 'value':self._fname}
-            )
+            nvdata_exobj(frow > len(self._raw_data), edata)
             num = frow-(2 if has_header else 1)
         # Set up class properties
         self._data = [
@@ -394,20 +370,11 @@ class CsvFile(object):
             # Conditionally register exceptions so that they do not appear
             # in situations where has_header is always True. In this way
             # they are not auto-documented by default
-            self._exh.add_exception(
-                exname='illegal_col',
-                extype=RuntimeError,
-                exmsg='Invalid column specification'
+            icol_ex = putil.exh.addex(
+                RuntimeError, 'Invalid column specification'
             )
-            self._exh.add_exception(
-                exname='header_not_found_int',
-                extype=ValueError,
-                exmsg='Column *[column_identifier]* not found'
-            )
-        self._exh.add_exception(
-            exname='header_not_found_str',
-            extype=ValueError,
-            exmsg='Column *[column_identifier]* not found'
+        hnf_ex = putil.exh.addex(
+            ValueError, 'Column *[column_identifier]* not found'
         )
         col_list = (
             [col]
@@ -415,29 +382,20 @@ class CsvFile(object):
             col
         )
         for col in col_list:
+            edata = {'field':'column_identifier', 'value':col}
             if not self._has_header:
                 # Condition not subsumed in raise_exception_if
                 # so that calls that always have has_header=True
                 # do not pick up this exception
-                self._exh.raise_exception_if(
-                    exname='illegal_col',
-                    condition=not isinstance(col, int)
-                )
-                self._exh.raise_exception_if(
-                    exname='header_not_found_int',
-                    condition=(col < 0) or (col > len(self._header)-1),
-                    edata={'field':'column_identifier', 'value':col}
-                )
+                icol_ex(not isinstance(col, int))
+                hnf_ex((col < 0) or (col > len(self._header)-1), edata)
             else:
-                self._exh.raise_exception_if(
-                    exname='header_not_found_str',
-                    condition=(
-                        (isinstance(col, int) and
-                        ((col < 0) or (col > self._data_cols))) or
-                        (isinstance(col, str) and
-                        (col.upper() not in self._header_upper))
-                    ),
-                    edata={'field':'column_identifier', 'value':col}
+                hnf_ex(
+                    (isinstance(col, int) and
+                    ((col < 0) or (col > self._data_cols))) or
+                    (isinstance(col, str) and
+                    (col.upper() not in self._header_upper)),
+                    edata
                 )
         return col_list
 
@@ -539,31 +497,15 @@ class CsvFile(object):
 
     def _validate_frow(self, frow):
         """ Validate frow argument """
-        self._exh.add_exception(
-            exname='invalid_frow',
-            extype=RuntimeError,
-            exmsg='Argument `frow` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='invalid_frow',
-            condition=not (
-                isinstance(frow, int) and
-                (not isinstance(frow, bool)) and (frow >= 0)
-            )
-        )
+        is_int = isinstance(frow, int) and (not isinstance(frow, bool))
+        putil.exh.addai('frow', not (is_int and (frow >= 0)))
         return frow
 
     def _validate_rfilter(self, rfilter, letter='d'):
         """ Validate that all columns in filter are in header """
         if letter == 'd':
-            self._exh.add_exception(
-                exname='non_int_keys_dfilter',
-                extype=RuntimeError,
-                exmsg='Argument `dfilter` is not valid'
-            )
-            self._exh.raise_exception_if(
-                exname='non_int_keys_dfilter',
-                condition=(
+            putil.exh.addai(
+                'dfilter', (
                     (not self._has_header)
                     and any(
                         [
@@ -574,14 +516,8 @@ class CsvFile(object):
                 )
             )
         else:
-            self._exh.add_exception(
-                exname='non_int_keys_rfilter',
-                extype=RuntimeError,
-                exmsg='Argument `rfilter` is not valid'
-            )
-            self._exh.raise_exception_if(
-                exname='non_int_keys_rfilter',
-                condition=(
+            putil.exh.addai(
+                'rfilter', (
                     (not self._has_header)
                     and any(
                         [
@@ -785,35 +721,17 @@ class CsvFile(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='invalid_rdata',
-            extype=RuntimeError,
-            exmsg=(
-                'Argument `rdata` is not valid'
-            )
+        # pylint: disable=R0914
+        rdata_ex = putil.exh.addai('rdata')
+        rows_ex = putil.exh.addex(
+            ValueError,
+            'Number of rows mismatch between input and replacement data'
         )
-        self._exh.add_exception(
-            exname='data_rows',
-            extype=ValueError,
-            exmsg=(
-                'Number of rows mismatch between '
-                'input and replacement data'
-            )
+        cols_ex = putil.exh.addex(
+            ValueError,
+            'Number of columns mismatch between input and replacement data'
         )
-        self._exh.add_exception(
-            exname='data_cols',
-            extype=ValueError,
-            exmsg=(
-                'Number of columns mismatch between '
-                'input and replacement data'
-            )
-        )
-        self._exh.raise_exception_if(
-            exname='invalid_rdata',
-            condition=any(
-                [len(item) != len(rdata[0]) for item in rdata]
-            )
-        )
+        rdata_ex(any([len(item) != len(rdata[0]) for item in rdata]))
         # Use all columns if no specification has been given
         cfilter = (
             self._cfilter
@@ -834,14 +752,8 @@ class CsvFile(object):
             col_id
             for col_id in cfilter
         ]
-        self._exh.raise_exception_if(
-            exname='data_rows',
-            condition=len(odata) != len(rdata)
-        )
-        self._exh.raise_exception_if(
-            exname='data_cols',
-            condition=len(odata[0]) != len(rdata[0])
-        )
+        rows_ex(len(odata) != len(rdata))
+        cols_ex(len(odata[0]) != len(rdata[0]))
         df_tuples = self._format_rfilter(self._rfilter)
         rnum = 0
         for row in self._data:
@@ -943,18 +855,13 @@ class CsvFile(object):
         .. [[[end]]]
         """
         # pylint: disable=R0913
-        self._exh.add_exception(
-            exname='write',
-            extype=ValueError,
-            exmsg='There is no data to save to file'
+        write_ex = putil.exh.addex(
+            ValueError, 'There is no data to save to file'
         )
         fname = self._fname if fname is None else fname
         data = self.data(filtered=filtered)
-        self._exh.raise_exception_if(
-            exname='write',
-            condition=(
-                (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0))
-            )
+        write_ex(
+            (len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0))
         )
         if header:
             header = [header] if isinstance(header, str) else header
@@ -978,9 +885,7 @@ class CsvFile(object):
         )
 
     # Managed attributes
-    cfilter = property(
-        _get_cfilter, _set_cfilter, doc='Column filter'
-    )
+    cfilter = property(_get_cfilter, _set_cfilter, doc='Column filter')
     r"""
     Sets or returns the column filter
 
@@ -1003,9 +908,7 @@ class CsvFile(object):
     .. [[[end]]]
     """
 
-    dfilter = property(
-        _get_dfilter, _set_dfilter, doc='Data filter'
-    )
+    dfilter = property(_get_dfilter, _set_dfilter, doc='Data filter')
     r"""
     Sets or returns the data (row and/or column) filter. The first tuple
     item is the row filter and the second tuple item is the column filter
@@ -1029,9 +932,7 @@ class CsvFile(object):
     .. [[[end]]]
     """
 
-    rfilter = property(
-        _get_rfilter, _set_rfilter, doc='Returns row filter'
-    )
+    rfilter = property(_get_rfilter, _set_rfilter, doc='Returns row filter')
     r"""
     Sets or returns the row filter
 

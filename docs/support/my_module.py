@@ -29,54 +29,27 @@ def func(name):
     .. [[[end]]]
 
     """
-    exhobj = putil.exh.get_or_create_exh_obj()
-    exhobj.add_exception(
-        exname='illegal_name',
-        extype=TypeError,
-        exmsg='Argument `name` is not valid'
-    )
-    exhobj.raise_exception_if(
-        exname='illegal_name',
-        condition=not isinstance(name, str)
+    # Raise condition evaluated in same call as exception addition
+    putil.exh.addex(
+        TypeError, 'Argument `name` is not valid', not isinstance(name, str)
     )
     return 'My name is {0}'.format(name)
 
 class MyClass(object):
-    """
-    Stores a value
-
-    :param  value: value
-    :type   value: integer
-
-    .. [[[cog cog.out(exobj.get_sphinx_autodoc(width=69))]]]
-    .. [[[end]]]
-    """
+    """ Stores a value """
     def __init__(self, value=None):
-        self._exhobj = putil.exh.get_or_create_exh_obj()
         self._value = None if not value else value
 
     def _get_value(self):
-        self._exhobj.add_exception(
-            exname='not_set',
-            extype=RuntimeError,
-            exmsg='Attribute `value` not set'
-        )
-        self._exhobj.raise_exception_if(
-            exname='not_set',
-            condition=not self._value
-        )
+        # Raise condition not evaluated in same call as
+        # exception additions
+        exobj = putil.exh.addex(RuntimeError, 'Attribute `value` not set')
+        exobj(not self._value)
         return self._value
 
     def _set_value(self, value):
-        self._exhobj.add_exception(
-            exname='illegal',
-            extype=RuntimeError,
-            exmsg='Argument `value` is not valid'
-        )
-        self._exhobj.raise_exception_if(
-            exname='illegal',
-            condition=not isinstance(value, int)
-        )
+        exobj = putil.exh.addex(RuntimeError, 'Argument `value` is not valid')
+        exobj(not isinstance(value, int))
         self._value = value
 
     value = property(_get_value, _set_value)

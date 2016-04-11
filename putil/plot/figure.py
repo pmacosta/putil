@@ -172,19 +172,11 @@ class Figure(object):
     def __init__(self, panels=None, indep_var_label='', indep_var_units='',
         indep_axis_ticks=None, fig_width=None, fig_height=None, title='',
         log_indep_axis=False):
-        self._exh = putil.exh.get_or_create_exh_obj()
-        self._exh.add_exception(
-            exname='invalid_indep_axis_ticks',
-            extype=RuntimeError,
-            exmsg='Argument `indep_axis_ticks` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='invalid_indep_axis_ticks',
-            condition=(
-                (indep_axis_ticks is not None) and (
-                    (not isinstance(indep_axis_ticks, list)) and
-                    (not isinstance(indep_axis_ticks, numpy.ndarray))
-                )
+        putil.exh.addai(
+            'indep_axis_ticks',
+            (indep_axis_ticks is not None) and (
+                (not isinstance(indep_axis_ticks, list)) and
+                (not isinstance(indep_axis_ticks, numpy.ndarray))
             )
         )
         # Public attributes
@@ -493,26 +485,13 @@ class Figure(object):
         Verifies that elements of panel list are of the right type and
         fully specified
         """
-        self._exh.add_exception(
-            exname='invalid_panel',
-            extype=RuntimeError,
-            exmsg='Argument `panels` is not valid'
-        )
-        self._exh.add_exception(
-            exname='panel_not_fully_specified',
-            extype=TypeError,
-            exmsg='Panel *[panel_num]* is not fully specified'
+        invalid_ex = putil.exh.addai('panels')
+        specified_ex = putil.exh.addex(
+            TypeError, 'Panel *[panel_num]* is not fully specified'
         )
         for num, obj in enumerate(self.panels):
-            self._exh.raise_exception_if(
-                exname='invalid_panel',
-                condition=not isinstance(obj, Panel)
-            )
-            self._exh.raise_exception_if(
-                exname='panel_not_fully_specified',
-                condition=not obj._complete,
-                edata=_F('panel_num', num)
-            )
+            invalid_ex(not isinstance(obj, Panel))
+            specified_ex(not obj._complete, _F('panel_num', num))
 
     def _get_fig(self):
         return self._fig
@@ -528,17 +507,14 @@ class Figure(object):
 
     def _draw(self, force_redraw=False, raise_exception=False):
         # pylint: disable=C0326,W0612
-        self._exh.add_exception(
-            exname='figure_indep_log_axis',
-            extype=ValueError,
-            exmsg='Figure cannot be plotted with a logarithmic '
-                  'independent axis because panel *[panel_num]*, series '
-                  '*[series_num]* contains negative independent data points'
+        log_ex = putil.exh.addex(
+            ValueError,
+            'Figure cannot be plotted with a logarithmic '
+            'independent axis because panel *[panel_num]*, series '
+            '*[series_num]* contains negative independent data points'
         )
-        self._exh.add_exception(
-            exname='not_fully_specified',
-            extype=RuntimeError,
-            exmsg='Figure object is not fully specified'
+        specified_ex = putil.exh.addex(
+            RuntimeError, 'Figure object is not fully specified'
         )
         if self._complete and force_redraw:
             num_panels = len(self.panels)
@@ -550,9 +526,8 @@ class Figure(object):
             # Find union of the independent variable data set of all panels
             for panel_num, panel_obj in enumerate(self.panels):
                 for series_num, series_obj in enumerate(panel_obj.series):
-                    self._exh.raise_exception_if(
-                        exname='figure_indep_log_axis',
-                        condition=bool(
+                    log_ex(
+                        bool(
                             self.log_indep_axis and
                             (min(series_obj.indep_var) < 0)
                         ),
@@ -622,17 +597,14 @@ class Figure(object):
             FigureCanvasAgg(self._fig).draw()
             self._calculate_figure_size()
         elif (not self._complete) and (raise_exception):
-            self._exh.raise_exception_if(
-                exname='not_fully_specified', condition=True
-            )
+            specified_ex(True)
 
     def _calculate_figure_size(self):
         """ Calculates minimum panel and figure size """
-        self._exh.add_exception(
-            exname='fig_small',
-            extype=RuntimeError,
-            exmsg='Figure size is too small: minimum width *[min_width]*, '
-                  'minimum height *[min_height]*'
+        small_ex = putil.exh.addex(
+            RuntimeError,
+            'Figure size is too small: minimum width *[min_width]*, '
+            'minimum height *[min_height]*'
         )
         title_height = title_width = 0
         title = self._fig.axes[0].get_title()
@@ -666,16 +638,12 @@ class Figure(object):
         min_fig_height = round(
             ((len(self._axes_list)*panels_height)+title_height)/dpi, 2
         )
-        self._exh.raise_exception_if(
-            exname='fig_small',
-            condition=bool(
+        small_ex(
+            bool(
                 (self.fig_width and (self.fig_width < min_fig_width)) or
                 (self.fig_height and (self.fig_height < min_fig_height))
             ),
-            edata=[
-                _F('min_width', min_fig_width),
-                _F('min_height', min_fig_height)
-            ]
+            [_F('min_width', min_fig_width), _F('min_height', min_fig_height)]
         )
         self.fig_width = self.fig_width or  min_fig_width
         self.fig_height = self.fig_height or min_fig_height
@@ -711,24 +679,15 @@ class Figure(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='fig_not_fully_specified',
-            extype=RuntimeError,
-            exmsg='Figure object is not fully specified'
+        specified_ex = putil.exh.addex(
+            RuntimeError, 'Figure object is not fully specified'
         )
-        self._exh.add_exception(
-            exname='unsupported_file_type',
-            extype=RuntimeError,
-            exmsg='Unsupported file type: *[file_type]*'
+        unsupported_ex = putil.exh.addex(
+            RuntimeError, 'Unsupported file type: *[file_type]*'
         )
-        self._exh.raise_exception_if(
-            exname='fig_not_fully_specified',
-            condition=not self._complete
-        )
-        self._exh.raise_exception_if(
-            exname='unsupported_file_type',
-            condition=ftype.lower() not in ['png', 'eps'],
-            edata=_F('file_type', ftype)
+        specified_ex(not self._complete)
+        unsupported_ex(
+            ftype.lower() not in ['png', 'eps'], _F('file_type', ftype)
         )
         _, extension = os.path.splitext(fname)
         if (not extension) or (extension == '.'):

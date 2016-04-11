@@ -389,7 +389,7 @@ def test_contract():
     # Register exceptions
     func4('x', 5)
     func5(0)
-    exdict = putil.exh.get_exh_obj()._ex_dict
+    exdict = putil.exh.get_exh_obj()._flatten_ex_dict()
     pexlist = list()
     for exkey, exitem in exdict.items():
         pexlist.append(

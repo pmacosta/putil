@@ -1,10 +1,12 @@
 # test.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,E0611,F0401,W0106,W0703
+# pylint: disable=C0111,E0611,F0401,W0106,W0122,W0212,W0613,W0703
 
 # Standard library imports
 from __future__ import print_function
+import copy
+import os
 import re
 import sys
 if sys.hexversion < 0x03000000: # pragma: no cover
@@ -82,7 +84,8 @@ def assert_arg_invalid(fpointer, pname, *args, **kwargs):
     r"""
     Asserts whether a function raises a :code:`RuntimeError` exception with the
     message :code:`'Argument \`*pname*\` is not valid'`, where
-    :code:`*pname*` is the value of the **pname** argument
+    :code:`*pname*` is the value of the **pname** argument, when called with
+    given positional and/or keyword arguments
 
     :param fpointer: Object to evaluate
     :type  fpointer: callable
@@ -194,6 +197,53 @@ def assert_exception(fpointer, extype, exmsg, *args, **kwargs):
         )
 
 
+def _invalid_frame(fobj):
+    """ Selects valid stack frame to process """
+    fin = fobj.f_code.co_filename
+    invalid_module = fin.endswith('test.py')
+    return invalid_module or (not os.path.isfile(fin))
+
+
+def assert_prop(cobj, prop_name, value, extype, exmsg):
+    """
+    Asserts whether a class property raises a given exception when assigned
+    a given value
+
+    :param cobj: Class object
+    :type  cobj: class object
+
+    :param prop_name: Property name
+    :type  prop_name: string
+
+    :param extype: Exception type
+    :type  extype: Exception type object, i.e. RuntimeError, TypeError, etc.
+
+    :param exmsg: Exception message
+    :type  exmsg: string
+    """
+    # Get locals of calling function
+    fnum = 0
+    fobj = sys._getframe(fnum)
+    while _invalid_frame(fobj):
+        fnum += 1
+        fobj = sys._getframe(fnum)
+    fobj = sys._getframe(fnum)
+    # Add cobj to local variables dictionary of calling function, the
+    # exec statement is going to be run in its environment
+    lvars = copy.copy(fobj.f_locals)
+    lvars.update({'____test_obj____':cobj})
+    # Run method assignment
+    cmd = '____test_obj____.'+prop_name+' = '+repr(value)
+    try:
+        with pytest.raises(extype) as excinfo:
+            exec(cmd, fobj.f_globals, lvars)
+    except Exception as eobj:
+        if get_exmsg(eobj) == 'DID NOT RAISE':
+            raise AssertionError('Did not raise')
+        raise
+    assert get_exmsg(excinfo) == exmsg
+
+
 def assert_ro_prop(cobj, prop_name):
     """
     Asserts that a class property cannot be deleted
@@ -204,7 +254,6 @@ def assert_ro_prop(cobj, prop_name):
     :param prop_name: Property name
     :type  prop_name: string
     """
-    # pylint: disable=W0122,W0613
     try:
         with pytest.raises(AttributeError) as excinfo:
             exec('del cobj.'+prop_name, None, locals())
@@ -355,6 +404,7 @@ def get_exmsg(exobj): # pragma: no cover
 ###
 AE = assert_exception
 AI = assert_arg_invalid
+APROP = assert_prop
 AROPROP = assert_ro_prop
 CLDICTS = comp_list_of_dicts
 CS = compare_strings

@@ -38,20 +38,11 @@ def def_file_names(mode, ref_dir, test_dir, img_name, olist):
         # Support incomplete sets of reference images to reduce size
         # of source tar ball
         temp_ref_fname = [
-            os.path.realpath(
-                os.path.join(ref_dir.format(num), img_name)
-            )
+            os.path.realpath(os.path.join(ref_dir.format(num), img_name))
             for num in range(1, SETS+1)
         ]
-        ref_fname = [
-            item for item in temp_ref_fname if os.path.exists(item)
-        ]
-    olist.append(
-        {
-            'ref_fname':ref_fname,
-            'test_fname':test_fname
-        }
-    )
+        ref_fname = [item for item in temp_ref_fname if os.path.exists(item)]
+    olist.append({'ref_fname':ref_fname, 'test_fname':test_fname})
     print(
         'Generating image {0}'.format(
             ref_fname if mode == 'ref' else test_fname
@@ -71,11 +62,7 @@ def setup_env(mode, test_dir):
     ) if (mode == 'test') or (not test_dir) else test_dir
     test_dir = (
         os.path.abspath(
-            os.path.join(
-                '.',
-                os.path.abspath(os.sep),
-                'test_images'
-            )
+            os.path.join('.', os.path.abspath(os.sep), 'test_images')
         )
         if test_dir is None else
         test_dir
@@ -96,8 +83,6 @@ def unittest_series_images(mode=None, test_dir=None, _timeit=False):
     olist = []
     print('')
     for marker, interp, line_style in comb_list:
-        #if (not marker) and (not line_style):
-        #   continue
         img_name = 'series_marker_{0}_interp_{1}_line_style_{2}.png'.format(
             'true' if marker else 'false',
             interp.lower(),
@@ -480,8 +465,7 @@ def unittest_figure_images(mode=None, test_dir=None):
     img_name = 'figure_basic.png'
     fname = def_file_names(mode, ref_dir, test_dir, img_name, olist)
     source_obj = putil.plot.BasicSource(
-        numpy.array(list(range(1, 6))),
-        numpy.array([1, 2, 3, 10, 4])
+        numpy.array(list(range(1, 6))), numpy.array([1, 2, 3, 10, 4])
     )
     series_obj = putil.plot.Series(source_obj, label='')
     panel_obj = putil.plot.Panel(series_obj)

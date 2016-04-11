@@ -31,32 +31,19 @@ exobj = trace_ex_pcsv_write.trace_module(no_print=True)
 ###
 # Functions
 ###
+_F = lambda x, y: dict(field=x, value=y)
+_MF = lambda *x: [_F(item1, item2) for item1, item2 in zip(x[::2], x[1::2])]
+
+
 def _write_int(fname, data, append=True):
     """ Write data to CSV file with validation """
     # pylint: disable=W0705
-    _exh = putil.exh.get_or_create_exh_obj()
-    _exh.add_exception(
-        exname='data_is_empty',
-        extype=ValueError,
-        exmsg='There is no data to save to file'
+    data_ex = putil.exh.addex(ValueError, 'There is no data to save to file')
+    fos_ex = putil.exh.addex(
+        OSError,
+        'File *[fname]* could not be created: *[reason]*'
     )
-    _exh.add_exception(
-        exname='file_could_not_be_created_io',
-        extype=OSError,
-        exmsg='File *[fname]* could not be created: *[reason]*'
-    )
-    _exh.add_exception(
-        exname='file_could_not_be_created_os',
-        extype=OSError,
-        exmsg='File *[fname]* could not be created: *[reason]*'
-    )
-    _exh.raise_exception_if(
-        exname='data_is_empty',
-        condition=(
-            (len(data) == 0) or
-            ((len(data) == 1) and (len(data[0]) == 0))
-        )
-    )
+    data_ex((len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
     try:
         putil.misc.make_dir(fname)
         mode = 'w' if append is False else 'a'
@@ -66,24 +53,8 @@ def _write_int(fname, data, append=True):
         else: # pragma: no cover
             with open(fname, mode, newline='') as file_handle:
                 csv.writer(file_handle, delimiter=',').writerows(data)
-    except IOError as eobj:
-        _exh.raise_exception_if(
-            exname='file_could_not_be_created_io',
-            condition=True,
-            edata=[
-                {'field':'fname', 'value':fname},
-                {'field':'reason', 'value':eobj.strerror}
-            ]
-        )
-    except OSError as eobj: # pragma: no cover
-        _exh.raise_exception_if(
-            exname='file_could_not_be_created_os',
-            condition=True,
-            edata=[
-                {'field':'fname', 'value':fname},
-                {'field':'reason', 'value':eobj.strerror}
-            ]
-        )
+    except (IOError, OSError) as eobj:
+        fos_ex(True, _MF('fname', fname, 'reason', eobj.strerror))
 
 
 @putil.pcontracts.contract(

@@ -304,18 +304,20 @@ class TestCallables(object):
             '   putil.pit.MyClass\n'
             'putil.pit.MyClass: class (1-2)\n'
             'putil.pit.func1: func (3-4)\n'
-            'putil.test._get_fargs: func (30-65)\n'
-            'putil.test._pcolor: func (66-80)\n'
-            'putil.test.assert_arg_invalid: func (81-112)\n'
-            'putil.test.assert_exception: func (113-196)\n'
-            'putil.test.assert_ro_prop: func (197-217)\n'
-            'putil.test.compare_strings: func (218-307)\n'
-            'putil.test.compare_strings.colorize_lines: func (247-258)\n'
-            'putil.test.compare_strings.print_non_diff: func (259-263)\n'
-            'putil.test.compare_strings.print_diff: func (264-272)\n'
-            'putil.test.comp_list_of_dicts: func (308-322)\n'
-            'putil.test.exception_type_str: func (323-340)\n'
-            'putil.test.get_exmsg: func (341-355)'
+            'putil.test._get_fargs: func (32-67)\n'
+            'putil.test._pcolor: func (68-82)\n'
+            'putil.test.assert_arg_invalid: func (83-115)\n'
+            'putil.test.assert_exception: func (116-199)\n'
+            'putil.test._invalid_frame: func (200-206)\n'
+            'putil.test.assert_prop: func (207-246)\n'
+            'putil.test.assert_ro_prop: func (247-266)\n'
+            'putil.test.compare_strings: func (267-356)\n'
+            'putil.test.compare_strings.colorize_lines: func (296-307)\n'
+            'putil.test.compare_strings.print_non_diff: func (308-312)\n'
+            'putil.test.compare_strings.print_diff: func (313-321)\n'
+            'putil.test.comp_list_of_dicts: func (357-371)\n'
+            'putil.test.exception_type_str: func (372-389)\n'
+            'putil.test.get_exmsg: func (390-404)'
         )
         CS(str(obj), rtext)
         ftime = int(os.path.getmtime(src))
@@ -332,18 +334,20 @@ class TestCallables(object):
             '   putil.pit\n'
             '   putil.test\n'
             'putil.pit.my_func: func (1-2)\n'
-            'putil.test._get_fargs: func (30-65)\n'
-            'putil.test._pcolor: func (66-80)\n'
-            'putil.test.assert_arg_invalid: func (81-112)\n'
-            'putil.test.assert_exception: func (113-196)\n'
-            'putil.test.assert_ro_prop: func (197-217)\n'
-            'putil.test.compare_strings: func (218-307)\n'
-            'putil.test.compare_strings.colorize_lines: func (247-258)\n'
-            'putil.test.compare_strings.print_non_diff: func (259-263)\n'
-            'putil.test.compare_strings.print_diff: func (264-272)\n'
-            'putil.test.comp_list_of_dicts: func (308-322)\n'
-            'putil.test.exception_type_str: func (323-340)\n'
-            'putil.test.get_exmsg: func (341-355)'
+            'putil.test._get_fargs: func (32-67)\n'
+            'putil.test._pcolor: func (68-82)\n'
+            'putil.test.assert_arg_invalid: func (83-115)\n'
+            'putil.test.assert_exception: func (116-199)\n'
+            'putil.test._invalid_frame: func (200-206)\n'
+            'putil.test.assert_prop: func (207-246)\n'
+            'putil.test.assert_ro_prop: func (247-266)\n'
+            'putil.test.compare_strings: func (267-356)\n'
+            'putil.test.compare_strings.colorize_lines: func (296-307)\n'
+            'putil.test.compare_strings.print_non_diff: func (308-312)\n'
+            'putil.test.compare_strings.print_diff: func (313-321)\n'
+            'putil.test.comp_list_of_dicts: func (357-371)\n'
+            'putil.test.exception_type_str: func (372-389)\n'
+            'putil.test.get_exmsg: func (390-404)'
         )
         CS(str(obj), rtext)
         ## Test malformed JSON file
@@ -465,38 +469,38 @@ class TestCallables(object):
         ref.append('   {0}'.format(cname))
         ref.append('{0}._homogenize_data_filter: func (44-66)'.format(mname))
         ref.append('{0}._tofloat: func (67-82)'.format(mname))
-        ref.append('{0}: class (83-1057)'.format(cname))
-        ref.append('{0}.__init__: meth (134-231)'.format(cname))
-        ref.append('{0}.__eq__: meth (232-266)'.format(cname))
-        ref.append('{0}.__repr__: meth (267-300)'.format(cname))
-        ref.append('{0}.__str__: meth (301-345)'.format(cname))
-        ref.append('{0}._format_rfilter: meth (346-362)'.format(cname))
-        ref.append('{0}._gen_col_index: meth (363-375)'.format(cname))
-        ref.append('{0}._get_cfilter: meth (376-378)'.format(cname))
-        ref.append('{0}._get_dfilter: meth (379-381)'.format(cname))
-        ref.append('{0}._get_rfilter: meth (382-384)'.format(cname))
-        ref.append('{0}._reset_dfilter_int: meth (385-390)'.format(cname))
-        ref.append('{0}._in_header: meth (391-443)'.format(cname))
-        ref.append('{0}._set_cfilter: meth (444-448)'.format(cname))
-        ref.append('{0}._set_dfilter: meth (449-454)'.format(cname))
-        ref.append('{0}._set_rfilter: meth (455-459)'.format(cname))
-        ref.append('{0}._add_dfilter_int: meth (460-502)'.format(cname))
-        ref.append('{0}._apply_filter: meth (503-535)'.format(cname))
-        ref.append('{0}._set_has_header: meth (536-539)'.format(cname))
-        ref.append('{0}._validate_frow: meth (540-555)'.format(cname))
-        ref.append('{0}._validate_rfilter: meth (556-601)'.format(cname))
-        ref.append('{0}.add_dfilter: meth (602-625)'.format(cname))
-        ref.append('{0}.cols: meth (626-645)'.format(cname))
-        ref.append('{0}.data: meth (646-674)'.format(cname))
-        ref.append('{0}.dsort: meth (675-727)'.format(cname))
-        ref.append('{0}.header: meth (728-759)'.format(cname))
-        ref.append('{0}.replace: meth (760-854)'.format(cname))
-        ref.append('{0}.reset_dfilter: meth (855-872)'.format(cname))
-        ref.append('{0}.rows: meth (873-892)'.format(cname))
-        ref.append('{0}.write: meth (893-980)'.format(cname))
-        ref.append('{0}.cfilter: prop (981-1005)'.format(cname))
-        ref.append('{0}.dfilter: prop (1006-1031)'.format(cname))
-        ref.append('{0}.rfilter: prop (1032-1057)'.format(cname))
+        ref.append('{0}: class (83-958)'.format(cname))
+        ref.append('{0}.__init__: meth (134-207)'.format(cname))
+        ref.append('{0}.__eq__: meth (208-242)'.format(cname))
+        ref.append('{0}.__repr__: meth (243-276)'.format(cname))
+        ref.append('{0}.__str__: meth (277-321)'.format(cname))
+        ref.append('{0}._format_rfilter: meth (322-338)'.format(cname))
+        ref.append('{0}._gen_col_index: meth (339-351)'.format(cname))
+        ref.append('{0}._get_cfilter: meth (352-354)'.format(cname))
+        ref.append('{0}._get_dfilter: meth (355-357)'.format(cname))
+        ref.append('{0}._get_rfilter: meth (358-360)'.format(cname))
+        ref.append('{0}._reset_dfilter_int: meth (361-366)'.format(cname))
+        ref.append('{0}._in_header: meth (367-401)'.format(cname))
+        ref.append('{0}._set_cfilter: meth (402-406)'.format(cname))
+        ref.append('{0}._set_dfilter: meth (407-412)'.format(cname))
+        ref.append('{0}._set_rfilter: meth (413-417)'.format(cname))
+        ref.append('{0}._add_dfilter_int: meth (418-460)'.format(cname))
+        ref.append('{0}._apply_filter: meth (461-493)'.format(cname))
+        ref.append('{0}._set_has_header: meth (494-497)'.format(cname))
+        ref.append('{0}._validate_frow: meth (498-503)'.format(cname))
+        ref.append('{0}._validate_rfilter: meth (504-537)'.format(cname))
+        ref.append('{0}.add_dfilter: meth (538-561)'.format(cname))
+        ref.append('{0}.cols: meth (562-581)'.format(cname))
+        ref.append('{0}.data: meth (582-610)'.format(cname))
+        ref.append('{0}.dsort: meth (611-663)'.format(cname))
+        ref.append('{0}.header: meth (664-695)'.format(cname))
+        ref.append('{0}.replace: meth (696-766)'.format(cname))
+        ref.append('{0}.reset_dfilter: meth (767-784)'.format(cname))
+        ref.append('{0}.rows: meth (785-804)'.format(cname))
+        ref.append('{0}.write: meth (805-887)'.format(cname))
+        ref.append('{0}.cfilter: prop (888-910)'.format(cname))
+        ref.append('{0}.dfilter: prop (911-934)'.format(cname))
+        ref.append('{0}.rfilter: prop (935-958)'.format(cname))
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
         CS(actual_txt, ref_txt)
@@ -548,12 +552,12 @@ class TestCallables(object):
         import tests.test_exdoc
         mname = 'tests.test_exdoc'
         xobj = putil.pinspect.Callables([modfile(mname)])
-        ref = []
         cname1 = '{0}.TestExDocCxt'.format(mname)
         cname2 = '{0}.TestExDoc'.format(mname)
         mename1 = '{0}.test_multiple'.format(cname1)
         mename2 = '{0}.test_build_ex_tree'.format(cname2)
         meroot = '{0}.test_get_sphinx'.format(cname2)
+        ref = []
         ref.append('Modules:')
         ref.append('   tests.test_exdoc')
         ref.append('Classes:')
@@ -582,18 +586,18 @@ class TestCallables(object):
         ref.append('{0}.func1: func (211-217)'.format(mename1))
         ref.append('{0}.test_trace: func (218-234)'.format(mename1))
         ref.append('{0}.test_save_callables: meth (246-263)'.format(cname1))
-        ref.append('{0}: class (264-695)'.format(cname2))
+        ref.append('{0}: class (264-698)'.format(cname2))
         ref.append('{0}.test_init: meth (266-282)'.format(cname2))
         ref.append('{0}.test_copy: meth (283-296)'.format(cname2))
-        ref.append('{0}: meth (297-392)'.format(mename2))
+        ref.append('{0}: meth (297-395)'.format(mename2))
         ref.append('{0}.func1: func (304-307)'.format(mename2))
         ref.append('{0}.mock_add_nodes1: func (309-310)'.format(mename2))
         ref.append('{0}.mock_add_nodes2: func (311-312)'.format(mename2))
         ref.append('{0}.mock_add_nodes3: func (313-314)'.format(mename2))
-        ref.append('{0}.test_depth: meth (393-400)'.format(cname2))
-        ref.append('{0}.test_exclude: meth (401-408)'.format(cname2))
-        ref.append('{0}_autodoc: meth (409-436)'.format(meroot))
-        ref.append('{0}_doc: meth (437-695)'.format(meroot))
+        ref.append('{0}.test_depth: meth (396-403)'.format(cname2))
+        ref.append('{0}.test_exclude: meth (404-411)'.format(cname2))
+        ref.append('{0}_autodoc: meth (412-439)'.format(meroot))
+        ref.append('{0}_doc: meth (440-698)'.format(meroot))
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
         CS(actual_txt, ref_txt)

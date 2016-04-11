@@ -193,7 +193,6 @@ class CsvSource(DataSource):
                  indep_min=None, indep_max=None, fproc=None, fproc_eargs=None):
         # Private attributes
         super(CsvSource, self).__init__()
-        self._exh = putil.exh.get_or_create_exh_obj()
         self._raw_indep_var = None
         self._raw_dep_var = None
         self._min_indep_var_index = None
@@ -330,17 +329,13 @@ class CsvSource(DataSource):
         Check that dependent column label can be found in
         comma-separated file header
         """
-        self._exh.add_exception(
-            exname='label',
-            extype=ValueError,
-            exmsg='Column *[col_name]* (dependent column label) could not be'
-                  ' found in comma-separated file *[fname]* header'
-        )
-        self._exh.raise_exception_if(
-            exname='label',
-            condition=_C(self._csv_obj, self.dep_col_label) and
-                      (self.dep_col_label not in self._csv_obj.header()),
-            edata=_MF('col_name', self.dep_col_label, 'fname', self.fname)
+        putil.exh.addex(
+            ValueError,
+            'Column *[col_name]* (dependent column label) could not be'
+            ' found in comma-separated file *[fname]* header',
+            _C(self._csv_obj, self.dep_col_label) and
+            (self.dep_col_label not in self._csv_obj.header()),
+            _MF('col_name', self.dep_col_label, 'fname', self.fname)
         )
 
     def _check_rfilter(self):
@@ -348,18 +343,16 @@ class CsvSource(DataSource):
         Check that columns in filter specification can be found in
         comma-separated file header
         """
-        self._exh.add_exception(
-            exname='rfilter',
-            extype=ValueError,
-            exmsg='Column *[col_name]* in row filter not found '
-                  'in comma-separated file *[fname]* header'
+        rfilter_ex = putil.exh.addex(
+            ValueError,
+            'Column *[col_name]* in row filter not found '
+            'in comma-separated file *[fname]* header'
         )
         if _C(self._csv_obj, self.rfilter):
             for key in self.rfilter:
-                self._exh.raise_exception_if(
-                    exname='rfilter',
-                    condition=key not in self._csv_obj.header(),
-                    edata=_MF('col_name', key, 'fname', self.fname)
+                rfilter_ex(
+                    key not in self._csv_obj.header(),
+                    _MF('col_name', key, 'fname', self.fname)
                 )
 
     def _check_indep_col_label(self):
@@ -367,17 +360,13 @@ class CsvSource(DataSource):
         Check that independent column label can be found in
         comma-separated file header
         """
-        self._exh.add_exception(
-            exname='label',
-            extype=ValueError,
-            exmsg='Column *[col_name]* (independent column label) could not'
-                  ' be found in comma-separated file *[fname]* header'
-        )
-        self._exh.raise_exception_if(
-            exname='label',
-            condition=_C(self._csv_obj, self.indep_col_label) and
-                      (self.indep_col_label not in self._csv_obj.header()),
-            edata=_MF('col_name', self.indep_col_label, 'fname', self.fname)
+        putil.exh.addex(
+            ValueError,
+            'Column *[col_name]* (independent column label) could not'
+            ' be found in comma-separated file *[fname]* header',
+            _C(self._csv_obj, self.indep_col_label) and
+            (self.indep_col_label not in self._csv_obj.header()),
+            _MF('col_name', self.indep_col_label, 'fname', self.fname)
         )
 
     def _check_fproc_eargs(self):
@@ -385,22 +374,20 @@ class CsvSource(DataSource):
         Checks that the extra arguments are in the processing
         function definition
         """
-        self._exh.add_exception(
-            exname='extra_args',
-            extype=ValueError,
-            exmsg='Extra argument `*[arg_name]*` not found in argument '
-                  '`fproc` (function *[func_name]*) definition'
+        eargs_ex = putil.exh.addex(
+            ValueError,
+            'Extra argument `*[arg_name]*` not found in argument '
+            '`fproc` (function *[func_name]*) definition',
         )
         if _C(self.fproc, self.fproc_eargs):
             args = putil.pinspect.get_function_args(self._fproc)
             fname = self.fproc.__name__
             for key in self.fproc_eargs:
-                self._exh.raise_exception_if(
-                    exname='extra_args',
-                    condition=all(
+                eargs_ex(
+                    all(
                         [arg not in args for arg in [key, '*args', '**kwargs']]
                     ),
-                    edata=_MF('func_name', fname, 'arg_name', key)
+                    _MF('func_name', fname, 'arg_name', key)
                 )
 
     def _get_dep_col_label(self):
@@ -410,10 +397,8 @@ class CsvSource(DataSource):
         """
         Retrieve dependent data variable from comma-separated values file
         """
-        self._exh.add_exception(
-            exname='empty',
-            extype=ValueError,
-            exmsg='Filtered dependent variable is empty'
+        empty_ex = putil.exh.addex(
+            ValueError, 'Filtered dependent variable is empty'
         )
         if _C(self._csv_obj, self.dep_col_label):
             # When object is given all arguments at construction the column
@@ -423,7 +408,7 @@ class CsvSource(DataSource):
             self._csv_obj.cfilter = self.dep_col_label
             args = dict(filtered=True, no_empty=True)
             data = numpy.array([row[0] for row in self._csv_obj.data(**args)])
-            self._exh.raise_exception_if('empty', not data.size)
+            empty_ex(not data.size)
             self._set_dep_var(data[::-1] if self._reverse_data else data)
 
     def _get_fname(self):
@@ -448,10 +433,8 @@ class CsvSource(DataSource):
         """
         Retrieve independent data variable from comma-separated values file
         """
-        self._exh.add_exception(
-            exname='empty',
-            extype=ValueError,
-            exmsg='Filtered independent variable is empty'
+        empty_ex = putil.exh.addex(
+            ValueError, 'Filtered independent variable is empty'
         )
         if _C(self._csv_obj, self.indep_col_label):
             # When object is given all arguments at construction the column
@@ -461,7 +444,7 @@ class CsvSource(DataSource):
             self._csv_obj.cfilter = self.indep_col_label
             args = dict(filtered=True, no_empty=True)
             data = numpy.array([row[0] for row in self._csv_obj.data(**args)])
-            self._exh.raise_exception_if('empty', condition=not data.size)
+            empty_ex(not data.size)
             # Flip data if it is in descending order (affects interpolation)
             if max(numpy.diff(data)) < 0:
                 self._reverse_data = True
@@ -473,56 +456,42 @@ class CsvSource(DataSource):
 
     def _process_data(self):
         """ Process data through call-back function """
-        # pylint: disable=W0110,W0141,W0703
-        self._exh.add_exception(
-            exname='invalid_ret',
-            extype=TypeError,
-            exmsg=(
-                'Argument `fproc` (function *[func_name]*) '
-                'return value is not valid'
-            )
+        # pylint: disable=R0914,W0110,W0141,W0703
+        invalid_ret_ex = putil.exh.addex(
+            TypeError,
+            'Argument `fproc` (function *[func_name]*) '
+            'return value is not valid'
         )
-        self._exh.add_exception(
-            exname='illegal_ret',
-            extype=RuntimeError,
-            exmsg='Argument `fproc` (function *[func_name]*) '
-                  'returned an illegal number of values'
+        illegal_ret_ex = putil.exh.addex(
+            RuntimeError,
+            'Argument `fproc` (function *[func_name]*) '
+            'returned an illegal number of values'
         )
-        self._exh.add_exception(
-            exname='length',
-            extype=ValueError,
-            exmsg='Processed independent and dependent variables '
-                  'are of different length'
+        length_ex = putil.exh.addex(
+            ValueError,
+            'Processed independent and dependent variables '
+            'are of different length'
         )
-        self._exh.add_exception(
-            exname='empty_indep_var',
-            extype=ValueError,
-            exmsg='Processed independent variable is empty'
+        empty_indep_ex = putil.exh.addex(
+            ValueError, 'Processed independent variable is empty'
         )
-        self._exh.add_exception(
-            exname='illegal_indep_var',
-            extype=TypeError,
-            exmsg='Processed independent variable is not valid'
+        illegal_indep_ex = putil.exh.addex(
+            TypeError, 'Processed independent variable is not valid'
         )
-        self._exh.add_exception(
-            exname='empty_dep_var',
-            extype=ValueError,
-            exmsg='Processed dependent variable is empty'
+        empty_dep_ex = putil.exh.addex(
+            ValueError, 'Processed dependent variable is empty'
         )
-        self._exh.add_exception(
-            exname='illegal_dep_var',
-            extype=TypeError,
-            exmsg='Processed dependent variable is not valid'
+        illegal_dep_ex = putil.exh.addex(
+            TypeError, 'Processed dependent variable is not valid'
         )
-        self._exh.add_exception(
-            exname='proc_fun_ex',
-            extype=RuntimeError,
-            exmsg='Processing function *[func_name]* raised an exception when '
-                  'called with the following arguments:\n'
-                  'indep_var: *[indep_var_value]*\n'
-                  'dep_var: *[dep_var_value]*\n'
-                  'fproc_eargs: *[fproc_eargs_value]*\n'
-                  'Exception error: *[exception_error_message]*'
+        proc_fun_ex = putil.exh.addex(
+            RuntimeError,
+            'Processing function *[func_name]* raised an exception when '
+            'called with the following arguments:\n'
+            'indep_var: *[indep_var_value]*\n'
+            'dep_var: *[dep_var_value]*\n'
+            'fproc_eargs: *[fproc_eargs_value]*\n'
+            'Exception error: *[exception_error_message]*'
         )
         if not _C(self.fproc, self.indep_var, self.dep_var):
             return
@@ -536,9 +505,8 @@ class CsvSource(DataSource):
                 for key, value in self.fproc_eargs.items():
                     eamsg += template.format(key=key, value=value)
             eamsg = eamsg.rstrip() if fproc_eargs else 'None'
-            self._exh.raise_exception_if(
-                exname='proc_fun_ex',
-                condition=True,
+            proc_fun_ex(
+                True,
                 edata=_MF(
                     'func_name', self.fproc.__name__,
                     'indep_var_value', pprint(self.indep_var, limit=10),
@@ -547,35 +515,24 @@ class CsvSource(DataSource):
                     'exception_error_message', str(error_msg),
                 )
             )
-        self._exh.raise_exception_if(
-            'invalid_ret',
+        invalid_ret_ex(
             not (isinstance(ret, list) or isinstance(ret, tuple)),
             _MF('func_name', self.fproc.__name__)
         )
-        self._exh.raise_exception_if(
-            'illegal_ret', len(ret) != 2, _MF('func_name', self.fproc.__name__)
-        )
+        illegal_ret_ex(len(ret) != 2, _MF('func_name', self.fproc.__name__))
         indep_var = ret[0]
         dep_var = ret[1]
-        self._exh.raise_exception_if(
-            exname='empty_indep_var',
-            condition=isinstance(indep_var, numpy.ndarray) and
-                      not list(filter(lambda x: x is not None, indep_var))
+        empty_indep_ex(
+            isinstance(indep_var, numpy.ndarray) and
+            not list(filter(lambda x: x is not None, indep_var))
         )
-        self._exh.raise_exception_if(
-            'illegal_indep_var', _check_increasing_real_numpy_vector(indep_var)
+        illegal_indep_ex(_check_increasing_real_numpy_vector(indep_var))
+        empty_dep_ex(
+            isinstance(dep_var, numpy.ndarray) and
+            not list(filter(lambda x: x is not None, dep_var))
         )
-        self._exh.raise_exception_if(
-            exname='empty_dep_var',
-            condition=isinstance(dep_var, numpy.ndarray) and
-                      not list(filter(lambda x: x is not None, dep_var))
-        )
-        self._exh.raise_exception_if(
-            'illegal_dep_var', _check_real_numpy_vector(dep_var)
-        )
-        self._exh.raise_exception_if(
-            'length', indep_var.size != dep_var.size
-        )
+        illegal_dep_ex(_check_real_numpy_vector(dep_var))
+        length_ex(indep_var.size != dep_var.size)
         # The processing function could potentially expand (say, via
         # interpolation) or shorten the data set length. To avoid errors
         # that dependent and independent variables have different number
@@ -597,14 +554,11 @@ class CsvSource(DataSource):
 
     @putil.pcontracts.contract(dep_var='real_numpy_vector')
     def _set_dep_var(self, dep_var):
-        self._exh.add_exception(
-            exname='same',
-            extype=ValueError,
-            exmsg='Arguments `indep_var` and `dep_var`'
-                  ' must have the same number of elements'
-        )
-        self._exh.raise_exception_if(
-            exname='same', condition=self._raw_indep_var.size != dep_var.size
+        putil.exh.addex(
+            ValueError,
+            'Arguments `indep_var` and `dep_var`'
+            ' must have the same number of elements',
+            self._raw_indep_var.size != dep_var.size
         )
         self._raw_dep_var = round_mantissa(dep_var, PRECISION)
         self._update_dep_var()
@@ -620,20 +574,17 @@ class CsvSource(DataSource):
 
     @putil.pcontracts.contract(fproc='function')
     def _set_fproc(self, fproc):
-        self._exh.add_exception(
-            exname='min_args',
-            extype=ValueError,
-            exmsg='Argument `fproc` (function *[func_name]*) '
-                  'does not have at least 2 arguments'
+        min_args_ex = putil.exh.addex(
+            ValueError,
+            'Argument `fproc` (function *[func_name]*) '
+            'does not have at least 2 arguments'
         )
         if fproc is not None:
             args = putil.pinspect.get_function_args(fproc)
-            self._exh.raise_exception_if(
-                exname='min_args',
-                condition=(len(args) < 2) and
-                          ('*args' not in args) and
-                          ('**kwargs' not in args),
-                edata=_MF('func_name', fproc.__name__)
+            min_args_ex(
+                (len(args) < 2) and ('*args' not in args) and
+                ('**kwargs' not in args),
+                _MF('func_name', fproc.__name__)
             )
         self._fproc = fproc
         self._check_fproc_eargs()
@@ -656,13 +607,9 @@ class CsvSource(DataSource):
 
     @putil.pcontracts.contract(indep_max='real_num')
     def _set_indep_max(self, indep_max):
-        self._exh.add_exception(
-            exname='min_max',
-            extype=ValueError,
-            exmsg='Argument `indep_min` is greater than argument `indep_max`'
-        )
-        self._exh.raise_exception_if(
-            'min_max',
+        putil.exh.addex(
+            ValueError,
+            'Argument `indep_min` is greater than argument `indep_max`',
             _C(self.indep_min, indep_max) and (indep_max < self.indep_min)
         )
         self._indep_max = (
@@ -677,13 +624,9 @@ class CsvSource(DataSource):
 
     @putil.pcontracts.contract(indep_min='real_num')
     def _set_indep_min(self, indep_min):
-        self._exh.add_exception(
-            exname='min_max',
-            extype=ValueError,
-            exmsg='Argument `indep_min` is greater than argument `indep_max`'
-        )
-        self._exh.raise_exception_if(
-            'min_max',
+        putil.exh.addex(
+            ValueError,
+            'Argument `indep_min` is greater than argument `indep_max`',
             _C(self.indep_max, indep_min) and (self.indep_max < indep_min)
         )
         self._indep_min = (
@@ -698,16 +641,12 @@ class CsvSource(DataSource):
 
     @putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
     def _set_indep_var(self, indep_var):
-        self._exh.add_exception(
-            exname='same',
-            extype=ValueError,
-            exmsg='Arguments `indep_var` and `dep_var`'
-                  ' must have the same number of elements'
-        )
-        self._exh.raise_exception_if(
-            exname='same',
-            condition=_C(indep_var, self._raw_dep_var) and
-                      (self._raw_dep_var.size != indep_var.size)
+        putil.exh.addex(
+            ValueError,
+            'Arguments `indep_var` and `dep_var`'
+            ' must have the same number of elements',
+            _C(indep_var, self._raw_dep_var) and
+            (self._raw_dep_var.size != indep_var.size)
         )
         self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
         # Apply minimum and maximum range bounding and assign it to
@@ -737,11 +676,10 @@ class CsvSource(DataSource):
         """
         Update independent variable according to its minimum and maximum limits
         """
-        self._exh.add_exception(
-            exname='empty',
-            extype=ValueError,
-            exmsg='Argument `indep_var` is empty after '
-                  '`indep_min`/`indep_max` range bounding'
+        empty_ex = putil.exh.addex(
+            ValueError,
+            'Argument `indep_var` is empty after '
+            '`indep_min`/`indep_max` range bounding'
         )
         if self._raw_indep_var is not None:
             indep_min = _SEL(self.indep_min, self._raw_indep_var[0])
@@ -752,9 +690,7 @@ class CsvSource(DataSource):
             super(CsvSource, self)._set_indep_var(
                 self._raw_indep_var[self._indep_var_indexes]
             )
-            self._exh.raise_exception_if(
-                exname='empty', condition=not self.indep_var.size
-            )
+            empty_ex(not self.indep_var.size)
 
     # Managed attributes
     dep_col_label = property(

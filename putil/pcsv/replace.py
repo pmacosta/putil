@@ -4,6 +4,7 @@
 # pylint: disable=C0111,W0105,W0611
 
 # Putil imports
+import putil.exh
 import putil.pcontracts
 from putil.ptypes import (
     csv_col_filter,
@@ -145,16 +146,11 @@ def replace(
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
-    _exh = putil.exh.get_or_create_exh_obj()
-    _exh.add_exception(
-        exname='irmm',
-        extype=RuntimeError,
-        exmsg='Number of input and replacement columns are different'
+    irmm_ex = putil.exh.addex(
+        RuntimeError, 'Number of input and replacement columns are different'
     )
-    _exh.add_exception(
-        exname='iomm',
-        extype=RuntimeError,
-        exmsg='Number of input and output columns are different'
+    iomm_ex = putil.exh.addex(
+        RuntimeError, 'Number of input and output columns are different'
     )
     # Read and validate input data
     iobj = CsvFile(
@@ -170,12 +166,8 @@ def replace(
     rcfilter = robj.header() if robj.cfilter is None else robj.cfilter
     ocols = icfilter if ocols is None else ocols
     # Miscellaneous data validation
-    _exh.raise_exception_if(
-        exname='irmm', condition=len(icfilter) != len(rcfilter)
-    )
-    _exh.raise_exception_if(
-        exname='iomm', condition=len(icfilter) != len(ocols)
-    )
+    irmm_ex(len(icfilter) != len(rcfilter))
+    iomm_ex(len(icfilter) != len(ocols))
     # Replace data
     iobj.replace(rdata=robj.data(filtered=True), filtered=True)
     iheader_upper = [

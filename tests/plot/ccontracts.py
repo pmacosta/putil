@@ -5,6 +5,7 @@
 
 # PyPI imports
 import numpy
+import pytest
 # Putil imports
 import putil.plot
 from putil.test import AE
@@ -105,7 +106,8 @@ class TestContracts(object):
         for item in items:
             putil.plot.increasing_real_numpy_vector(item)
 
-    def test_interpolation_option_contract(self):
+    @pytest.mark.parametrize('option', ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG'])
+    def test_interpolation_option_contract(self, option):
         """ Tests for InterpolationOption pseudo-type """
         obj = putil.plot.interpolation_option
         AE(obj, ValueError, emsg('interpolation_option'), obj=5)
@@ -116,12 +118,11 @@ class TestContracts(object):
         )
         AE(obj, ValueError, msg, obj='x')
         putil.plot.interpolation_option(None)
-        items = ['STRAIGHT', 'STEP', 'CUBIC', 'LINREG']
-        for item in items:
-            putil.plot.interpolation_option(item)
-            putil.plot.interpolation_option(item.lower())
+        putil.plot.interpolation_option(option)
+        putil.plot.interpolation_option(option.lower())
 
-    def test_line_style_option_contract(self):
+    @pytest.mark.parametrize('option', ['-', '--', '-.', ':'])
+    def test_line_style_option_contract(self, option):
         """ Tests for LineStyleOption pseudo-type """
         obj = putil.plot.line_style_option
         AE(obj, ValueError, emsg('line_style_option'), obj=5)
@@ -132,11 +133,17 @@ class TestContracts(object):
         )
         AE(obj, ValueError, msg, obj='x')
         putil.plot.line_style_option(None)
-        items = ['-', '--', '-.', ':']
-        for item in items:
-            putil.plot.line_style_option(item)
+        putil.plot.line_style_option(option)
 
-    def test_color_space_option_contract(self):
+    @pytest.mark.parametrize(
+        'option', [
+            'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens',
+            'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd',
+            'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr',
+            'YlOrRd'
+        ]
+    )
+    def test_color_space_option_contract(self, option):
         """ Tests for LineStyleOption pseudo-type """
         obj = putil.plot.color_space_option
         AE(obj, ValueError, emsg('color_space_option'), obj=5)
@@ -148,14 +155,7 @@ class TestContracts(object):
             "'YlOrBr' or 'YlOrRd' (case insensitive)[STOP CONTRACT MSG]"
         )
         AE(obj, ValueError, msg, obj='x')
-        items = [
-            'binary', 'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens',
-            'Greys', 'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd',
-            'Purples', 'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr',
-            'YlOrRd'
-        ]
-        for item in items:
-            putil.plot.color_space_option(item)
+        putil.plot.color_space_option(option)
 
     def test_legend_position_validation(self):
         """ Tests _legend_position_validation() function behavior """

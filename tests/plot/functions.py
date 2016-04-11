@@ -139,9 +139,7 @@ class TestParameterizedColorSpace(object):
         import matplotlib.pyplot as plt
         color_space = plt.cm.Greys
         result = putil.plot.parameterized_color_space(
-            [0, 2/3.0, 4/3.0, 2],
-            0.25,
-            'Greys'
+            [0, 2/3.0, 4/3.0, 2], 0.25, 'Greys'
         )
         assert result == [
             color_space(0.25),

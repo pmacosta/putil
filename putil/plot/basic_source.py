@@ -153,31 +153,22 @@ class BasicSource(DataSource):
 
     @putil.pcontracts.contract(dep_var='real_numpy_vector')
     def _set_dep_var(self, dep_var):
-        self._exh.add_exception(
-            exname='num_elements',
-            extype=ValueError,
-            exmsg='Arguments `indep_var` and `dep_var` must have'
-                  ' the same number of elements'
-        )
-        self._exh.raise_exception_if(
-            exname='num_elements',
-            condition=_C(dep_var, self._raw_indep_var) and
-                      (self._raw_indep_var.size != dep_var.size)
+        putil.exh.addex(
+            ValueError,
+            'Arguments `indep_var` and `dep_var` must have'
+            ' the same number of elements',
+            _C(dep_var, self._raw_indep_var) and
+            (self._raw_indep_var.size != dep_var.size)
         )
         self._raw_dep_var = putil.eng.round_mantissa(dep_var, PRECISION)
         self._update_dep_var()
 
     @putil.pcontracts.contract(indep_max='real_num')
     def _set_indep_max(self, indep_max):
-        self._exh.add_exception(
-            exname='min_max',
-            extype=ValueError,
-            exmsg='Argument `indep_min` is greater than argument `indep_max`'
-        )
-        self._exh.raise_exception_if(
-            exname='min_max',
-            condition=_C(self.indep_min, indep_max) and
-                      (indep_max < self.indep_min)
+        putil.exh.addex(
+            ValueError,
+            'Argument `indep_min` is greater than argument `indep_max`',
+            _C(self.indep_min, indep_max) and (indep_max < self.indep_min)
         )
         self._indep_max = (
             putil.eng.round_mantissa(indep_max, PRECISION)
@@ -191,15 +182,10 @@ class BasicSource(DataSource):
 
     @putil.pcontracts.contract(indep_min='real_num')
     def _set_indep_min(self, indep_min):
-        self._exh.add_exception(
-            exname='min_max',
-            extype=ValueError,
-            exmsg='Argument `indep_min` is greater than argument `indep_max`'
-        )
-        self._exh.raise_exception_if(
-            exname='min_max',
-            condition=_C(self.indep_max, indep_min) and
-                      (self.indep_max < indep_min)
+        putil.exh.addex(
+            ValueError,
+            'Argument `indep_min` is greater than argument `indep_max`',
+            _C(self.indep_max, indep_min) and (self.indep_max < indep_min)
         )
         self._indep_min = (
             putil.eng.round_mantissa(indep_min, PRECISION)
@@ -213,16 +199,12 @@ class BasicSource(DataSource):
 
     @putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
     def _set_indep_var(self, indep_var):
-        self._exh.add_exception(
-            exname='num_elements',
-            extype=ValueError,
-            exmsg='Arguments `indep_var` and `dep_var` must have the '
-                  'same number of elements'
-        )
-        self._exh.raise_exception_if(
-            exname='num_elements',
-            condition=_C(indep_var, self._raw_dep_var) and
-                      (self._raw_dep_var.size != indep_var.size)
+        putil.exh.addex(
+            ValueError,
+            'Arguments `indep_var` and `dep_var` must have the '
+            'same number of elements',
+            _C(indep_var, self._raw_dep_var) and
+            (self._raw_dep_var.size != indep_var.size)
         )
         self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
         # Apply minimum and maximum range bounding and assign it to
@@ -245,11 +227,10 @@ class BasicSource(DataSource):
         """
         Update independent variable according to its minimum and maximum limits
         """
-        self._exh.add_exception(
-            exname='empty',
-            extype=ValueError,
-            exmsg='Argument `indep_var` is empty after `indep_min`/`indep_max`'
-                  ' range bounding'
+        empty_ex = putil.exh.addex(
+            ValueError,
+            'Argument `indep_var` is empty after `indep_min`/`indep_max`'
+            ' range bounding'
         )
         if self._raw_indep_var is not None:
             indep_min = _SEL(self.indep_min, self._raw_indep_var[0])
@@ -260,7 +241,7 @@ class BasicSource(DataSource):
             super(BasicSource, self)._set_indep_var(
                 self._raw_indep_var[self._indep_var_indexes]
             )
-            self._exh.raise_exception_if('empty', not self.indep_var.size)
+            empty_ex(not self.indep_var.size)
 
     # Managed attributes
     dep_var = property(

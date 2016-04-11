@@ -140,10 +140,9 @@ class TestTreeNode(object):
     def test_get_children_private(self, default_trees):
         """ Test _get_children method behavior """
         tree1, _, _, _ = default_trees
-        assert sorted(tree1._get_children('t1l1')) == sorted([
-            't1l1.t1l2b1',
-            't1l1.t1l2b2'
-        ])
+        assert sorted(tree1._get_children('t1l1')) == sorted(
+            ['t1l1.t1l2b1', 't1l1.t1l2b2']
+        )
         assert tree1._get_children('t1l1.t1l2b2.t1l3b2c') == []
 
     def test_get_data_private(self, default_trees):
@@ -221,7 +220,6 @@ class TestTreeNode(object):
         assert (ntree._db == tree4._db) and (id(ntree._db) != id(tree4._db))
         assert ntree._root == tree4._root
         assert ntree._root_hierarchy_length is tree4._root_hierarchy_length
-        assert ntree._exh is tree4._exh
 
     def test_str(self, default_trees):
         """ Test __str__ method behavior """

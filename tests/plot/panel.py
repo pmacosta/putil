@@ -11,7 +11,7 @@ import numpy
 import pytest
 # Putil imports
 import putil.plot
-from putil.test import AE, AI, AROPROP, GET_EXMSG, RE
+from putil.test import AE, AI, APROP, AROPROP, RE
 from .fixtures import compare_image_set
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_panel_images
@@ -39,18 +39,14 @@ class TestPanel(object):
     def test_intelligent_ticks(self):
         """ Test _intelligent_tick method behavior """
         # pylint: disable=E1103
+        fut = putil.plot.functions._intelligent_ticks
         oprec = putil.plot.PRECISION
         putil.plot.PRECISION = 8
         # 0
         # Tight = True
         # One sample
         vector = numpy.array([35e-6])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [31.5, 35, 38.5],
             ['31.5', '35.0', '38.5'],
@@ -63,12 +59,7 @@ class TestPanel(object):
         # 1
         # Scaling with more data samples after 1.0
         vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
             ['0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6'],
@@ -81,12 +72,7 @@ class TestPanel(object):
         # 2
         # Regular, should not have any scaling
         vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [1, 2, 3, 4, 5, 6, 7],
             ['1', '2', '3', '4', '5', '6', '7'],
@@ -99,12 +85,7 @@ class TestPanel(object):
         # 3
         # Regular, should not have any scaling
         vector = numpy.array([10, 20, 30, 40, 50, 60, 70])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [10, 20, 30, 40, 50, 60, 70],
             ['10', '20', '30', '40', '50', '60', '70'],
@@ -117,12 +98,7 @@ class TestPanel(object):
         # 4
         # Scaling
         vector = numpy.array([1000, 2000, 3000, 4000, 5000, 6000, 7000])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [1, 2, 3, 4, 5, 6, 7],
             ['1', '2', '3', '4', '5', '6', '7'],
@@ -137,12 +113,7 @@ class TestPanel(object):
         vector = numpy.array(
             [200e6, 300e6, 400e6, 500e6, 600e6, 700e6, 800e6, 900e6, 1000e6]
         )
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0],
             ['200', '300', '400', '500', '600', '700', '800', '900', '1k'],
@@ -160,12 +131,7 @@ class TestPanel(object):
                 810, 820, 830, 840, 850, 900, 905
             ]
         )
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert putil.eng.round_mantissa(numpy.array(obj[0]), 5).tolist() == [
             105.0, 193.889, 282.778, 371.667, 460.556,
             549.444, 638.333, 727.222, 816.111, 905.0
@@ -184,12 +150,7 @@ class TestPanel(object):
         # 7
         # Ticks marks where some data points can be on grid
         vector = numpy.array([10, 20, 30, 40, 41, 50, 60, 62, 70, 75.5, 80])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [10, 20, 30, 40, 50, 60, 70, 80],
             ['10', '20', '30', '40', '50', '60', '70', '80'],
@@ -203,12 +164,7 @@ class TestPanel(object):
         # Tight = False
         # One sample
         vector = numpy.array([1e-9])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=False
-        )
+        obj = fut(vector, min(vector), max(vector), tight=False)
         assert (
             obj == ([0.9, 1, 1.1], ['0.9', '1.0', '1.1'], 0.9, 1.1, 1e-9, 'n')
         )
@@ -216,12 +172,7 @@ class TestPanel(object):
         # 9
         # Scaling with more data samples after 1.0
         vector = numpy.array([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=False
-        )
+        obj = fut(vector, min(vector), max(vector), tight=False)
         assert obj == (
             [0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7],
             [
@@ -237,12 +188,7 @@ class TestPanel(object):
         # 10
         # Scaling with more data samples before 1.0
         vector = numpy.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=False
-        )
+        obj = fut(vector, min(vector), max(vector), tight=False)
         assert obj == (
             [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2],
             [
@@ -258,12 +204,7 @@ class TestPanel(object):
         # 11
         # Regular, with some overshoot
         vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            7.5,
-            tight=False
-        )
+        obj = fut(vector, min(vector), 7.5, tight=False)
         assert obj == (
             [0, 1, 2, 3, 4, 5, 6, 7, 8],
             ['0', '1', '2', '3', '4', '5', '6', '7', '8'],
@@ -276,12 +217,7 @@ class TestPanel(object):
         # 12
         # Regular, with some undershoot
         vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            0.1,
-            max(vector),
-            tight=False
-        )
+        obj = fut(vector, 0.1, max(vector), tight=False)
         assert obj == (
             [0, 1, 2, 3, 4, 5, 6, 7, 8],
             ['0', '1', '2', '3', '4', '5', '6', '7', '8'],
@@ -294,12 +230,7 @@ class TestPanel(object):
         # 13
         # Regular, with large overshoot
         vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            20,
-            tight=False
-        )
+        obj = fut(vector, min(vector), 20, tight=False)
         assert obj == (
             [0, 1, 2, 3, 4, 5, 6, 7, 8],
             ['0', '1', '2', '3', '4', '5', '6', '7', '8'],
@@ -312,12 +243,7 @@ class TestPanel(object):
         # 14
         # Regular, with large undershoot
         vector = numpy.array([1, 2, 3, 4, 5, 6, 7])
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            -10,
-            max(vector),
-            tight=False
-        )
+        obj = fut(vector, -10, max(vector), tight=False)
         assert obj == (
             [0, 1, 2, 3, 4, 5, 6, 7, 8],
             ['0', '1', '2', '3', '4', '5', '6', '7', '8'],
@@ -330,12 +256,7 @@ class TestPanel(object):
         # 15
         # Scaling, minimum as reference
         vector = 1e9+(numpy.array([10, 20, 30, 40, 50, 60, 70, 80])*1e3)
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [
                 1.00001, 1.00002, 1.00003, 1.00004,
@@ -359,12 +280,7 @@ class TestPanel(object):
                 70e6, 80e6, 90e6, 100e6, 20.22e9
             ]
         )
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert putil.eng.round_mantissa(numpy.array(obj[0]), 7).tolist() == [
             0.0101, 2.2556444, 4.5011889, 6.7467333, 8.9922778, 11.237822,
             13.483367, 15.728911, 17.974456, 20.22
@@ -383,12 +299,7 @@ class TestPanel(object):
         # 17
         # Scaling, maximum as reference
         vector = (numpy.array([0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5])*1e12)
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True)
         assert obj == (
             [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5],
             ['0.7', '0.8', '0.9', '1.0', '1.1', '1.2', '1.3', '1.4', '1.5'],
@@ -402,12 +313,7 @@ class TestPanel(object):
         # Log axis
         # Tight False
         vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            max(vector),
-            tight=True, log_axis=True
-        )
+        obj = fut(vector, min(vector), max(vector), tight=True, log_axis=True)
         assert obj == (
             [1, 10, 100, 1000, 10000, 100000],
             ['1', '10', '100', '1k', '10k', '100k'],
@@ -420,13 +326,7 @@ class TestPanel(object):
         # Tight True
         # Left side
         vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            500,
-            max(vector),
-            tight=False,
-            log_axis=True
-        )
+        obj = fut(vector, 500, max(vector), tight=False, log_axis=True)
         assert obj == (
             [1, 10, 100, 1000, 10000, 100000],
             ['1', '10', '100', '1k', '10k', '100k'],
@@ -439,12 +339,7 @@ class TestPanel(object):
         # 20
         # Right side
         vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            min(vector),
-            1e9,
-            tight=False, log_axis=True
-        )
+        obj = fut(vector, min(vector), 1e9, tight=False, log_axis=True)
         assert obj == (
             [1, 10, 100, 1000, 10000, 100000],
             ['1', '10', '100', '1k', '10k', '100k'],
@@ -458,12 +353,7 @@ class TestPanel(object):
         # Both
         # Right side
         vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
-        obj = putil.plot.functions._intelligent_ticks(
-            vector,
-            500,
-            1e9,
-            tight=False, log_axis=True
-        )
+        obj = fut(vector, 500, 1e9, tight=False, log_axis=True)
         assert obj == (
             [1, 10, 100, 1000, 10000, 100000],
             ['1', '10', '100', '1k', '10k', '100k'],
@@ -477,7 +367,7 @@ class TestPanel(object):
         # User-override
         vector = (numpy.array([2e3, 3e4, 4e5, 5e6, 6e7]))
         user_vector = numpy.array([1E6, 2E6, 5E6])
-        obj = putil.plot.functions._intelligent_ticks(
+        obj = fut(
             vector,
             500,
             1e9,
@@ -499,10 +389,12 @@ class TestPanel(object):
         """ Tests _legend_position_validation method """
         assert putil.plot.panel._legend_position_validation(5)
         assert putil.plot.panel._legend_position_validation('x')
-        for item in [
-                None, 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT',
-                'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',
-                'LOWER CENTER', 'UPPER CENTER', 'CENTER']:
+        items = [
+            None, 'BEST', 'UPPER RIGHT', 'UPPER LEFT', 'LOWER LEFT',
+            'LOWER RIGHT', 'RIGHT', 'CENTER LEFT', 'CENTER RIGHT',
+            'LOWER CENTER', 'UPPER CENTER', 'CENTER'
+        ]
+        for item in items:
             assert not putil.plot.panel._legend_position_validation(item)
 
     def test_iter(self):
@@ -520,14 +412,10 @@ class TestPanel(object):
             dep_var=numpy.array([20, 40, 50])
         )
         series1_obj = putil.plot.Series(
-            data_source=ds1_obj
-            , label='series 1',
-            interp=None
+            data_source=ds1_obj, label='series 1', interp=None
         )
         series2_obj = putil.plot.Series(
-            data_source=ds2_obj,
-            label='series 2',
-            interp=None
+            data_source=ds2_obj, label='series 2', interp=None
         )
         series3_obj = putil.plot.Series(
             data_source=ds3_obj,
@@ -629,12 +517,11 @@ class TestPanel(object):
         # Trigger execution of self._series function to
         # pick up exceptions there
         obj = putil.plot.Panel(series=default_series)
-        with pytest.raises(ValueError) as excinfo:
-            obj.log_dep_axis = True
-        assert GET_EXMSG(excinfo) == (
+        msg = (
             'Series item 0 cannot be plotted in a logarithmic axis '
             'because it contains negative data points'
         )
+        APROP(obj, 'log_dep_axis', True, ValueError, msg)
 
     def test_display_indep_axis(self, default_series):
         """ Test display_indep_axis attribute """
@@ -655,8 +542,7 @@ class TestPanel(object):
     def test_legend_props(self, default_series):
         """ Test legend_props attribute """
         obj = putil.plot.Panel(
-            series=default_series,
-            legend_props={'pos':'upper left'}
+            series=default_series, legend_props={'pos':'upper left'}
         )
         assert obj.legend_props == {'pos':'UPPER LEFT', 'cols':1}
         obj = putil.plot.Panel(series=default_series, legend_props={'cols':3})
@@ -700,32 +586,20 @@ class TestPanel(object):
         obj = putil.plot.Panel(series=None)
         assert obj.primary_axis_ticks is None
         obj = putil.plot.Panel(
-            series=default_series,
-            primary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
+            series=default_series, primary_axis_ticks=[1000, 2000, 3000, 3500]
         )
-        assert obj.primary_axis_ticks == [
-            1.0, 2.0, 3.0, 3.5
-        ]
+        assert obj.primary_axis_ticks == [1.0, 2.0, 3.0, 3.5]
         obj = putil.plot.Panel(
-            series=default_series,
-            primary_axis_ticks=[
-                1E6, 4E6, 8E6, 9E6
-            ]
+            series=default_series, primary_axis_ticks=[1E6, 4E6, 8E6, 9E6]
         )
-        assert obj.primary_axis_ticks == [
-            1.0, 4.0, 8.0, 9.0
-        ]
+        assert obj.primary_axis_ticks == [1.0, 4.0, 8.0, 9.0]
         obj = putil.plot.Panel(
             series=putil.plot.Series(
                 data_source=default_source,
                 label='test series',
                 secondary_axis=True
             ),
-            primary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
+            primary_axis_ticks=[1000, 2000, 3000, 3500]
         )
         assert obj.primary_axis_ticks is None
         # Logarithmic independent axis tick marks
@@ -739,9 +613,7 @@ class TestPanel(object):
                 interp='STRAIGHT',
                 label='test series',
             ),
-            primary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ],
+            primary_axis_ticks=[1000, 2000, 3000, 3500],
             log_dep_axis=True,
         )
         assert obj.primary_axis_ticks == [1.0, 10.0]
@@ -789,27 +661,17 @@ class TestPanel(object):
         )
         obj = putil.plot.Panel(
             series=series_obj,
-            secondary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
+            secondary_axis_ticks=[1000, 2000, 3000, 3500]
         )
-        assert obj.secondary_axis_ticks == [
-            1.0, 2.0, 3.0, 3.5
-        ]
+        assert obj.secondary_axis_ticks == [1.0, 2.0, 3.0, 3.5]
         obj = putil.plot.Panel(
             series=series_obj,
-            secondary_axis_ticks=[
-                1E6, 4E6, 8E6, 9E6
-            ]
+            secondary_axis_ticks=[1E6, 4E6, 8E6, 9E6]
         )
-        assert obj.secondary_axis_ticks == [
-            1.0, 4.0, 8.0, 9.0
-        ]
+        assert obj.secondary_axis_ticks == [1.0, 4.0, 8.0, 9.0]
         obj = putil.plot.Panel(
             series=default_series,
-            secondary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ]
+            secondary_axis_ticks=[1000, 2000, 3000, 3500]
         )
         assert obj.secondary_axis_ticks is None
         # Logarithmic independent axis tick marks
@@ -824,9 +686,7 @@ class TestPanel(object):
                 label='test series',
                 secondary_axis=True
             ),
-            secondary_axis_ticks=[
-                1000, 2000, 3000, 3500
-            ],
+            secondary_axis_ticks=[1000, 2000, 3000, 3500],
             log_dep_axis=True,
         )
         assert obj.secondary_axis_ticks == [1.0, 10.0]
@@ -888,19 +748,16 @@ class TestPanel(object):
             dep_var=numpy.array([20])
         )
         series1_obj = putil.plot.Series(
-            data_source=ds1_obj,
-            label='series 1',
-            interp=None
+            data_source=ds1_obj, label='series 1', interp=None
         )
         series2_obj = putil.plot.Series(
-            data_source=ds2_obj,
-            label='series 2',
-            interp=None
+            data_source=ds2_obj, label='series 2', interp=None
         )
         series3_obj = putil.plot.Series(
             data_source=ds3_obj,
             label='series 3',
-            interp=None, secondary_axis=True
+            interp=None,
+            secondary_axis=True
         )
         series4_obj = putil.plot.Series(
             data_source=ds4_obj,
@@ -921,14 +778,10 @@ class TestPanel(object):
             secondary_axis=True
         )
         series7_obj = putil.plot.Series(
-            data_source=ds7_obj,
-            label='series 7',
-            interp=None
+            data_source=ds7_obj, label='series 7', interp=None
         )
         series8_obj = putil.plot.Series(
-            data_source=ds8_obj,
-            label='series 8',
-            interp=None
+            data_source=ds8_obj, label='series 8', interp=None
         )
         # 0-8: Linear primary and secondary axis, with multiple series on both
         panel_obj = putil.plot.Panel(
@@ -1046,8 +899,7 @@ class TestPanel(object):
         # 27-35: Logarithmic primary and secondary axis,
         # with multiple series on both
         panel_obj = putil.plot.Panel(
-            series=[series1_obj, series5_obj],
-            log_dep_axis=True
+            series=[series1_obj, series5_obj], log_dep_axis=True
         )
         assert (
             panel_obj._panel_has_primary_axis,
@@ -1211,9 +1063,7 @@ class TestPanel(object):
             dep_var=numpy.array([4.2, 8, 10, 4])
         )
         series_obj = putil.plot.Series(
-            data_source=source_obj,
-            label='test',
-            secondary_axis=True
+            data_source=source_obj, label='test', secondary_axis=True
         )
         panel1_obj = putil.plot.Panel(series=series_obj)
         panel2_obj = putil.plot.Panel(series=[default_series, series_obj])

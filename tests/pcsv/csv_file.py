@@ -15,7 +15,7 @@ if sys.hexversion < 0x03000000:
 # Putil imports
 import putil.misc
 import putil.pcsv
-from putil.test import AE, AI, GET_EXMSG, RE
+from putil.test import AE, AI, APROP, AROPROP, GET_EXMSG, RE
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _read
 else:
@@ -756,20 +756,14 @@ class TestCsvFile(object):
         """ Test cfilter property exceptions """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.cfilter = 5.0
-        assert GET_EXMSG(excinfo) == 'Argument `cfilter` is not valid'
-        with pytest.raises(ValueError) as excinfo:
-            obj.cfilter = 'A'
-        assert GET_EXMSG(excinfo) == 'Column A not found'
-        with pytest.raises(ValueError) as excinfo:
-            obj.cfilter = 20
-        assert GET_EXMSG(excinfo) == 'Column 20 not found'
+        msg = 'Argument `cfilter` is not valid'
+        APROP(obj, 'cfilter', 5.0, RuntimeError, msg)
+        APROP(obj, 'cfilter', 'A', ValueError, 'Column A not found')
+        APROP(obj, 'cfilter', 20, ValueError, 'Column 20 not found')
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.cfilter = 'A'
-        assert GET_EXMSG(excinfo) == 'Invalid column specification'
+        msg = 'Invalid column specification'
+        APROP(obj, 'cfilter', 'A', RuntimeError, msg)
 
     def test_dfilter(self):
         """ Test dfilter property behavior """
@@ -796,12 +790,8 @@ class TestCsvFile(object):
         assert obj.dfilter == ({'Ref':5}, ['Ref'])
 
     @pytest.mark.csv_file
-    def test_dfilter_exceptions(self):
-        """ Test dfilter property exceptions """
-        with putil.misc.TmpFile(write_file) as fname:
-            obj = putil.pcsv.CsvFile(fname=fname)
-        msg = 'Argument `dfilter` is not valid'
-        items = [
+    @pytest.mark.parametrize(
+        'dfilter', [
             True,
             (1, 2, 3),
             (True, 'A'),
@@ -817,25 +807,20 @@ class TestCsvFile(object):
             ({}, []),
             {'dfilter':{'a':{'xx':2}}},
             {'dfilter':{'a':[3, {'xx':2}]}}
-        ]
-        for item in items:
-            with pytest.raises(RuntimeError) as excinfo:
-                obj.dfilter = item
-            assert GET_EXMSG(excinfo) == msg
-        with pytest.raises(ValueError) as excinfo:
-            obj.dfilter = {'aaa':5}
-        assert GET_EXMSG(excinfo) == 'Column aaa not found'
-        with pytest.raises(ValueError) as excinfo:
-            obj.dfilter = {10:5}
-        assert GET_EXMSG(excinfo) == 'Column 10 not found'
+         ]
+    )
+    def test_dfilter_exceptions(self, dfilter):
+        """ Test dfilter property exceptions """
+        with putil.misc.TmpFile(write_file) as fname:
+            obj = putil.pcsv.CsvFile(fname=fname)
+        msg = 'Argument `dfilter` is not valid'
+        APROP(obj, 'dfilter', dfilter, RuntimeError, msg)
+        APROP(obj, 'dfilter', {'aaa':5}, ValueError, 'Column aaa not found')
+        APROP(obj, 'dfilter', {10:5}, ValueError, 'Column 10 not found')
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
-        with pytest.raises(ValueError) as excinfo:
-            obj.dfilter = {10:5}
-        assert GET_EXMSG(excinfo) == 'Column 10 not found'
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.dfilter = {'10':5}
-        assert GET_EXMSG(excinfo) == msg
+        APROP(obj, 'dfilter', {10:5}, ValueError, 'Column 10 not found')
+        APROP(obj, 'dfilter', {'10':5}, RuntimeError, msg)
 
     def test_rfilter(self):
         """ Test rfilter property behavior """
@@ -870,47 +855,29 @@ class TestCsvFile(object):
             assert obj.data(filtered=True) == [[1, 6, 6]]
 
     @pytest.mark.csv_file
-    def test_rfilter_exceptions(self):
+    @pytest.mark.parametrize(
+        'rfilter', [2.0, {5:True}, {'a':{'xx':2}}, {'a':[3, {'xx':2}]}]
+    )
+    def test_rfilter_exceptions(self, rfilter):
         """ Test rfilter property exceptions """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname)
         msg = 'Argument `rfilter` is not valid'
-        items = [2.0, {5:True}, {'a':{'xx':2}}, {'a':[3, {'xx':2}]}]
-        for item in items:
-            with pytest.raises(RuntimeError) as excinfo:
-                obj.rfilter = item
-            assert GET_EXMSG(excinfo) == msg
-        with pytest.raises(ValueError) as excinfo:
-            obj.rfilter = {}
-        assert GET_EXMSG(excinfo) == 'Argument `rfilter` is empty'
-        with pytest.raises(ValueError) as excinfo:
-            obj.rfilter = {'aaa':5}
-        assert GET_EXMSG(excinfo) == 'Column aaa not found'
+        APROP(obj, 'rfilter', rfilter, RuntimeError, msg)
+        APROP(obj, 'rfilter', {}, ValueError, 'Argument `rfilter` is empty')
+        APROP(obj, 'rfilter', {'aaa':5}, ValueError, 'Column aaa not found')
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.rfilter = {'name':5}
-        assert GET_EXMSG(excinfo) == msg
-        with pytest.raises(ValueError) as excinfo:
-            obj.rfilter = {10:5}
-        assert GET_EXMSG(excinfo) == 'Column 10 not found'
-        with pytest.raises(RuntimeError) as excinfo:
-            obj.rfilter = {'a':5}
-        assert GET_EXMSG(excinfo) == msg
+        APROP(obj, 'rfilter', {'name':5}, RuntimeError, msg)
+        APROP(obj, 'rfilter', {10:5}, ValueError, 'Column 10 not found')
+        APROP(obj, 'rfilter', {'a':5}, RuntimeError, msg)
 
     @pytest.mark.csv_file
-    def test_cannot_delete_attributes(self):
+    @pytest.mark.parametrize('prop', ['cfilter', 'dfilter', 'rfilter'])
+    def test_cannot_delete_attributes(self, prop):
         """
         Test that del method raises an exception on all class attributes
         """
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname)
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.cfilter
-        assert GET_EXMSG(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.dfilter
-        assert GET_EXMSG(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.rfilter
-        assert GET_EXMSG(excinfo) == "can't delete attribute"
+        AROPROP(obj, prop)

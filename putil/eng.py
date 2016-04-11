@@ -509,14 +509,11 @@ def peng_suffix_math(suffix, offset):
         'T'
     """
     # pylint: disable=W0212,W0631
-    exhobj = putil.exh.get_or_create_exh_obj()
-    exhobj.add_exception(
-        exname='off', extype=ValueError, exmsg='Argument `offset` is not valid'
-    )
+    eobj = putil.exh.addex(ValueError, 'Argument `offset` is not valid')
     try:
         return _POWER_TO_SUFFIX_DICT[_SUFFIX_TO_POWER_DICT[suffix]+3*offset]
     except KeyError:
-        exhobj.raise_exception_if(exname='off', condition=True)
+        eobj(True)
 
 
 def round_mantissa(arg, decimals=0):

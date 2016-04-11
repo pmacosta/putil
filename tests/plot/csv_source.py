@@ -12,7 +12,7 @@ import numpy
 import pytest
 # Putil imports
 import putil.misc
-from putil.test import AE, AI, GET_EXMSG, RE
+from putil.test import AE, AI, APROP, AROPROP, GET_EXMSG, RE
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
@@ -261,9 +261,7 @@ class TestCsvSource(object):
                 dep_var=numpy.array([10, 20, 30])
             )
             for item in items:
-                with pytest.raises(RuntimeError) as excinfo:
-                    obj.indep_max = item
-                assert GET_EXMSG(excinfo) == msg
+                APROP(obj, 'indep_max', item, RuntimeError, msg)
 
     def test_indep_min(self):
         """ Tests indep_min property behavior """
@@ -638,33 +636,10 @@ class TestCsvSource(object):
                 indep_col_label='Col7',
                 dep_col_label='Col2'
             )
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.dep_col_label
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.dep_var
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.fname
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.fproc
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.fproc_eargs
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_col_label
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_max
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_min
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_var
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.rfilter
-            assert GET_EXMSG(excinfo) == "can't delete attribute"
+            prop_list = [
+                'dep_col_label', 'dep_var', 'fname', 'fproc', 'fproc_eargs',
+                'indep_col_label', 'indep_max', 'indep_min', 'indep_var',
+                'rfilter'
+            ]
+            for prop in prop_list:
+                AROPROP(obj, prop)
