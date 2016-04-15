@@ -5,6 +5,17 @@
 Changelog
 =========
 
+* 0.9.11 [2016-04-15]:
+
+  * Created new APIs in the exh module to simplify adding and conditionally
+    raising exceptions that can be auto-documented with the exdoc module
+
+  * Homogenized API arguments in several pcsv module functions
+
+  * Bug fixes
+
+  * Documentation updates
+
 * 0.9.10 [2016-03-10]: Final release of 0.9.10 branch
 * 0.9.10rc1 [2016-03-09]: Apple OS X compatibility changes. Reduced memory
   consumption during exception auto-documentation process. Bug fixes
