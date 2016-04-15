@@ -59,6 +59,7 @@ meta: FORCE
 sdist: meta
 	@echo "Creating source distribution"
 	@cd $(PKG_DIR); python setup.py sdist --formats=gztar,zip
+	@$(PKG_DIR)/sbin/list-authors.sh
 
 sterile: clean
 	@echo "Removing tox directory"
@@ -79,3 +80,4 @@ wheel: meta
 	@cd $(PKG_DIR); python setup.py bdist_wheel
 	@mv -f $(PKG_DIR)/setup.py.tmp $(PKG_DIR)/setup.py
 	@mv $(PKG_DIR)/MANIFEST.in.tmp $(PKG_DIR)/MANIFEST.in
+	@$(PKG_DIR)/sbin/list-authors.sh
