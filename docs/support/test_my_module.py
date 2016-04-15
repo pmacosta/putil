@@ -9,9 +9,9 @@ def test_func():
     """ Test func() function """
     putil.test.assert_exception(
         docs.support.my_module.func,
-        {'name':5},
         TypeError,
-        'Argument `name` is not valid'
+        'Argument `name` is not valid',
+        {'name':5}
     )
     assert docs.support.my_module.func('John') == 'My name is John'
 

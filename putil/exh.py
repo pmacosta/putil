@@ -2,12 +2,13 @@
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
 # pylint: disable=C0111,C0411,E0012,E0611,E1101,E1103,F0401
-# pylint: disable=R0201,R0912,R0914,R0915,W0122,W0212,W0613,W0631
+# pylint: disable=R0201,R0912,R0913,R0914,R0915,W0122,W0212,W0613,W0631
 
 # Standard library imports
 import copy
 import imp
 import inspect
+import itertools
 import os
 import sys
 if sys.hexversion < 0x03000000: # pragma: no cover
@@ -48,10 +49,7 @@ def _build_exclusion_list(exclude):
             mod_file = None
             for token in mod.split('.'):
                 try:
-                    mfile, mdir, _ = imp.find_module(
-                        token,
-                        [mdir] if mdir else None
-                    )
+                    mfile, mdir, _ = imp.find_module(token, mdir and [mdir])
                     if mfile:
                         mod_file = mfile.name
                         mfile.close()
@@ -67,10 +65,7 @@ def _invalid_frame(fobj):
     """ Selects valid stack frame to process """
     fin = fobj.f_code.co_filename
     invalid_module = any(
-        [
-            fin.endswith(item)
-            for item in _INVALID_MODULES_LIST
-        ]
+        [fin.endswith(item) for item in _INVALID_MODULES_LIST]
     )
     return invalid_module or (not os.path.isfile(fin))
 
@@ -103,17 +98,106 @@ def _merge_cdicts(self, clut, exdict, separator):
         repl_dict[value] = otoken
     # Update other dictionaries to the mapping to self
     # exceptions dictionary
-    for entry in exdict.values():
-        olist = []
-        for item in entry['function']:
-            if item is None:
-                # Callable name is None when callable is part of exclude list
-                olist.append(None)
-            else:
-                itokens = item.split(separator)
-                itokens = [repl_dict.get(itoken) for itoken in itokens]
-                olist.append(separator.join(itokens))
-        entry['function'] = olist
+    for fdict in exdict.values():
+        for entry in fdict.values():
+            olist = []
+            for item in entry['function']:
+                if item is None:
+                    # Callable name is None when callable is
+                    # part of exclude list
+                    olist.append(None)
+                else:
+                    itokens = item.split(separator)
+                    itokens = [repl_dict.get(itoken) for itoken in itokens]
+                    olist.append(separator.join(itokens))
+            entry['function'] = olist
+
+
+def addex(extype, exmsg, condition=None, edata=None):
+    r"""
+    Adds an exception in the global exception handler
+
+    :param extype: Exception type; *must* be derived from the `Exception
+                   <https://docs.python.org/2/library/exceptions.html#
+                   exceptions.Exception>`_ class
+    :type  extype: Exception type object, i.e. RuntimeError, TypeError,
+                   etc.
+
+    :param exmsg: Exception message; it can contain fields to be replaced
+                  when the exception is raised via
+                  :py:meth:`putil.exh.ExHandle.raise_exception_if`.
+                  A field starts with the characters :code:`'\*['` and
+                  ends with the characters :code:`']\*'`, the field name
+                  follows the same rules as variable names and is between
+                  these two sets of characters. For example,
+                  :code:`'\*[fname]\*'` defines the fname field
+    :type  exmsg: string
+
+    :param condition: Flag that indicates whether the exception is
+                      raised *(True)* or not *(False)*. If None the
+                      flag is not used an no exception is raised
+    :type  condition: boolean or None
+
+    :param edata: Replacement values for fields in the exception message
+                  (see :py:meth:`putil.exh.ExHandle.add_exception` for how
+                  to define fields). Each dictionary entry can only have
+                  these two keys:
+
+                  * **field** *(string)* -- Field name
+
+                  * **value** *(any)* -- Field value, to be converted into
+                    a string with the `format
+                    <https://docs.python.org/2/library/stdtypes.html#
+                    str.format>`_ string method
+
+                  If None no field replacement is done
+
+    :rtype: (if condition is not given or None) function
+
+    :raises:
+     * RuntimeError (Argument \`condition\` is not valid)
+
+     * RuntimeError (Argument \`edata\` is not valid)
+
+     * RuntimeError (Argument \`exmsg\` is not valid)
+
+     * RuntimeError (Argument \`extype\` is not valid)
+    """
+    return _ExObj(extype, exmsg, condition, edata).craise
+
+
+def addai(argname, condition=None):
+    r"""
+    Adds an exception of the type :code:`RuntimeError('Argument \`*[argname]*\`
+    is not valid')` in the global exception handler where :code:`*[argname]*`
+    is the value of the **argname** argument
+
+    :param argname: Argument name
+    :type  argname: string
+
+    :param condition: Flag that indicates whether the exception is
+                      raised *(True)* or not *(False)*. If None the flag is not
+                      used and no exception is raised
+    :type  condition: boolean or None
+
+    :rtype: (if condition is not given or None) function
+
+    :raises:
+     * RuntimeError (Argument \`argname\` is not valid)
+
+     * RuntimeError (Argument \`condition\` is not valid)
+    """
+    # pylint: disable=C0123
+    if not isinstance(argname, str):
+        raise RuntimeError('Argument `argname` is not valid')
+    if (condition is not None) and (type(condition) != bool):
+        raise RuntimeError('Argument `condition` is not valid')
+    obj = _ExObj(
+        RuntimeError,
+        'Argument `{0}` is not valid'.format(argname),
+        condition
+    )
+    return obj.craise
 
 
 def del_exh_obj():
@@ -206,6 +290,145 @@ def set_exh_obj(obj):
 ###
 # Classes
 ###
+class _ExObj(object):
+    # pylint: disable=R0903
+    r"""
+    Exception object
+
+    :param extype: Exception type; *must* be derived from the `Exception
+                   <https://docs.python.org/2/library/exceptions.html#
+                   exceptions.Exception>`_ class
+    :type  extype: Exception type object, i.e. RuntimeError, TypeError,
+                   etc.
+
+    :param exmsg: Exception message; it can contain fields to be replaced
+                  when the exception is raised via
+                  :py:meth:`putil.exh.ExHandle.raise_exception_if`.
+                  A field starts with the characters :code:`'\*['` and
+                  ends with the characters :code:`']\*'`, the field name
+                  follows the same rules as variable names and is between
+                  these two sets of characters. For example,
+                  :code:`'\*[fname]\*'` defines the fname field
+    :type  exmsg: string
+
+    :param condition: Flag that indicates whether the exception is
+                      raised *(True)* or not *(False)*
+    :type  condition: boolean
+
+    :param edata: Replacement values for fields in the exception message
+                  (see :py:meth:`putil.exh.ExHandle.add_exception` for how
+                  to define fields). Each dictionary entry can only have
+                  these two keys:
+
+                  * **field** *(string)* -- Field name
+
+                  * **value** *(any)* -- Field value, to be converted into
+                    a string with the `format
+                    <https://docs.python.org/2/library/stdtypes.html#
+                    str.format>`_ string method
+
+                  If None no field replacement is done
+
+    :type  edata: dictionary, iterable of dictionaries or None
+
+    :param exclude: Module exclusion list. A particular callable in an
+                    otherwise fully qualified name is omitted if it belongs
+                    to a module in this list. If None all callables are
+                    included
+    :type  exclude: list of strings or None
+
+    :param callables_fname: File name that contains traced modules information.
+                            File can be produced by either the
+                            :py:meth:`putil.pinspect.Callables.save` or
+                            :py:meth:`putil.exh.ExHandle.save_callables`
+                            methods
+    :type  callables_fname: :ref:`FileNameExists` or None
+
+    :rtype: :py:class:`putil.exh.ExHandle`
+
+    :raises:
+     * OSError (File *[callables_fname]* could not be found
+
+     * RuntimeError (Argument \`callables_fname\` is not valid)
+
+     * RuntimeError (Argument \`condition\` is not valid)
+
+     * RuntimeError (Argument \`edata\` is not valid)
+
+      * RuntimeError (Argument \`exclude\` is not valid)
+
+     * RuntimeError (Argument \`exname\` is not valid)
+
+     * RuntimeError (Argument \`extype\` is not valid)
+
+     * RuntimeError (Argument \`full_cname\` is not valid)
+
+     * ValueError (Source for module *[module_name]* could not be found)
+    """
+
+    _count = itertools.count(0)
+
+    def __init__(
+            self, extype, exmsg, condition=None, edata=None, exclude=None,
+            callables_fname=None
+    ):
+        super(_ExObj, self).__init__()
+        self._exh = get_or_create_exh_obj(
+            exclude=exclude, callables_fname=callables_fname
+        )
+        next(self._count)
+        self._exname = '__exobj_pid_{0}_ex{1}__'.format(
+            os.getpid(), self._count
+        )
+        self._ex_data = self._exh.add_exception(
+            self._exname, extype, exmsg
+        )
+        if condition is not None:
+            self.craise(condition, edata)
+
+    def craise(self, condition, edata=None):
+        """
+        Raises exception conditionally
+
+        :param condition: Flag that indicates whether the exception is
+                          raised *(True)* or not *(False)*
+        :type  condition: boolean
+
+        :param edata: Replacement values for fields in the exception message
+                      (see :py:meth:`putil.exh.ExHandle.add_exception` for how
+                      to define fields). Each dictionary entry can only have
+                      these two keys:
+
+                      * **field** *(string)* -- Field name
+
+                      * **value** *(any)* -- Field value, to be converted into
+                        a string with the `format
+                        <https://docs.python.org/2/library/stdtypes.html#
+                        str.format>`_ string method
+
+                      If None no field replacement is done
+        :type  edata: dictionary, iterable of dictionaries or None
+
+        :raises:
+         * RuntimeError (Argument \\`condition\\` is not valid)
+
+         * RuntimeError (Argument \\`edata\\` is not valid)
+
+         * RuntimeError (Argument \\`exname\\` is not valid)
+
+         * RuntimeError (Field *[field_name]* not in exception message)
+
+         * ValueError (Exception name *[name]* not found')
+
+        """
+        self._exh.raise_exception_if(
+            self._exname,
+            condition,
+            edata,
+            _keys=self._ex_data
+        )
+
+
 # In the second line of some examples, the function
 # putil.exh.get_or_create_exh_obj() is not used because if any other
 # module that registers exceptions is executed first in the doctest run,
@@ -320,9 +543,7 @@ class ExHandle(object):
            (self._exclude != other._exclude)):
             raise RuntimeError('Incompatible exception handlers')
         robj = ExHandle(
-            full_cname=self._full_cname,
-            exclude=self._exclude,
-            _copy=True
+            full_cname=self._full_cname, exclude=self._exclude, _copy=True
         )
         ex_dict = copy.deepcopy(other._ex_dict)
         robj._ex_dict = copy.deepcopy(self._ex_dict)
@@ -330,8 +551,7 @@ class ExHandle(object):
         _merge_cdicts(robj, other._clut, ex_dict, other._callables_separator)
         robj._ex_dict.update(ex_dict)
         robj._callables_obj = (
-            copy.copy(self._callables_obj)+
-            copy.copy(other._callables_obj)
+            copy.copy(self._callables_obj)+copy.copy(other._callables_obj)
         )
         return robj
 
@@ -377,9 +597,7 @@ class ExHandle(object):
             True
         """
         cobj = ExHandle(
-            full_cname=self._full_cname,
-            exclude=self._exclude,
-            _copy=True
+            full_cname=self._full_cname, exclude=self._exclude, _copy=True
         )
         cobj._ex_dict = copy.deepcopy(self._ex_dict)
         cobj._clut = copy.deepcopy(self._clut)
@@ -495,20 +713,22 @@ class ExHandle(object):
 
             >>> from __future__ import print_function
             >>> import docs.support.exh_example
+            >>> putil.exh.del_exh_obj()
             >>> docs.support.exh_example.my_func('Tom')
             My name is Tom
-            >>> print(str(docs.support.exh_example.EXHOBJ)) #doctest: +ELLIPSIS
-            Name    : .../illegal_name
+            >>> print(str(putil.exh.get_exh_obj())) #doctest: +ELLIPSIS
+            Name    : ...
             Type    : TypeError
             Message : Argument `name` is not valid
             Function: None
         """
         ret = []
-        for key in sorted(self._ex_dict.keys()):
+        fex_dict = self._flatten_ex_dict()
+        for key in sorted(fex_dict.keys()):
             # Exception name and details
             rstr = []
-            extype = _ex_type_str(self._ex_dict[key]['type'])
-            exmsg = self._ex_dict[key]['msg']
+            extype = _ex_type_str(fex_dict[key]['type'])
+            exmsg = fex_dict[key]['msg']
             rstr.append('Name    : {exname}'.format(exname=key))
             rstr.append('Type    : {extype}'.format(extype=extype))
             rstr.append('Message : {exmsg}'.format(exmsg=exmsg))
@@ -517,8 +737,8 @@ class ExHandle(object):
             # so there could potentially be multiple items in the
             # self._ex_dict[key]['function'] list
             flist = [
-                self._decode_call(item)
-                for item in self._ex_dict[key]['function']
+                self.decode_call(item)
+                for item in fex_dict[key]['function']
             ]
             iobj = enumerate(sorted(flist))
             for fnum, func_name in iobj:
@@ -529,7 +749,7 @@ class ExHandle(object):
                        callable_name=func_name,
                        rtext=(
                            ' [raised]'
-                           if self._ex_dict[key]['raised'][rindex] else
+                           if fex_dict[key]['raised'][rindex] else
                            ''
                        )
                    )
@@ -537,37 +757,17 @@ class ExHandle(object):
             ret.append('\n'.join(rstr))
         return '\n\n'.join(ret)
 
-    def _decode_call(self, call):
-        """ Replace call tokens with callable names """
-        # Callable name is None when callable is part of exclude list
-        if call is None:
-            return
-        itokens = call.split(self._callables_separator)
+    def _flatten_ex_dict(self):
+        """ Flatten structure of exceptions dictionary """
         odict = {}
-        for key, value in self._clut.items():
-            if value in itokens:
-                odict[itokens[itokens.index(value)]] = key
-        return self._callables_separator.join(
-            [odict[itoken] for itoken in itokens]
-        )
-
-    def _encode_call(self, call):
-        """
-        Replace call with tokens from look-up table to reduce
-        object memory footprint
-        """
-        # Callable name is None when callable is part of exclude list
-        if call is None:
-            return
-        itokens = call.split(self._callables_separator)
-        otokens = []
-        for itoken in itokens:
-            otoken = self._clut.get(itoken, None)
-            if not otoken:
-                otoken = str(len(self._clut))
-                self._clut[itoken] = otoken
-            otokens.append(otoken)
-        return self._callables_separator.join(otokens)
+        for _, fdict in self._ex_dict.items():
+            for (extype, exmsg), value in fdict.items():
+                key = value['name']
+                odict[key] = copy.deepcopy(value)
+                del odict[key]['name']
+                odict[key]['type'] = extype
+                odict[key]['msg'] = exmsg
+        return odict
 
     def _format_msg(self, msg, edata):
         """ Substitute parameters in exception message """
@@ -596,29 +796,27 @@ class ExHandle(object):
         # Check if object is a class property
         name = self._property_search(fob)
         if name:
-            del fob
-            del uobj
+            del fob, fin, uobj
             return name
         if os.path.isfile(fin):
             lineno = fob.f_lineno
-            del fob
-            del uobj
-            return self._callables_obj.get_callable_from_line(fin, lineno)
-        try:
-            code_id = (
-                inspect.getfile(uobj).replace('.pyc', 'py'),
-                inspect.getsourcelines(uobj)[1]
-            )
-            self._callables_obj.trace([code_id[0]])
-            del fob
-            del uobj
-            return self._callables_obj.reverse_callables_db[code_id]
-        except (TypeError, OSError):
-            # TypeError: getfile, object is a built-in module,
-            #            class or function
-            # OSError: getsourcelines, code cannot be retrieved
-            pass
-        return 'dynamic'
+            ret = self._callables_obj.get_callable_from_line(fin, lineno)
+            del fob, fin, uobj, name, lineno
+            return ret
+        # Code executed in doctests does not have an actual callable object
+        # exec-based callables do not have a valid file name
+        fname = uobj and _get_func_code(uobj).co_filename
+        if (not fname) or (fname and (not os.path.isfile(fname))):
+            del fob, fin, uobj, name, fname
+            return 'dynamic'
+        code_id = (
+            inspect.getfile(uobj).replace('.pyc', 'py'),
+            inspect.getsourcelines(uobj)[1]
+        )
+        self._callables_obj.trace([code_id[0]])
+        ret = self._callables_obj.reverse_callables_db[code_id]
+        del fob, fin, uobj, name, fname, code_id
+        return ret
 
     if (hasattr(sys.modules['decorator'], '__version__') and
        (int(decorator.__version__.split('.')[0]) == 3)):   # pragma: no cover
@@ -653,8 +851,7 @@ class ExHandle(object):
             fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
             uobj, ufin = self._unwrap_obj(frame, fun)
             if ufin in self._exclude_list:
-                del uobj
-                del frame
+                del uobj, frame
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
@@ -679,9 +876,7 @@ class ExHandle(object):
                 fin, lin, fun, fuc, fui = inspect.getframeinfo(frame)
                 uobj, ufin = self._unwrap_obj(frame, fun)
                 if ufin in self._exclude_list:
-                    del uobj
-                    del frame
-                    del stack
+                    del uobj, frame, stack
                     return callable_id, None
                 tokens = frame.f_code.co_filename.split(os.sep)
                 ###
@@ -702,9 +897,7 @@ class ExHandle(object):
                 if in_decorator and (name == prev_name):
                     del ret[num-num_del_items]
                     num_del_items += 1
-            del uobj
-            del frame
-            del stack
+            del uobj, frame, stack
             return callable_id, self._callables_separator.join(ret)
     else:   # pragma: no cover
         # Method works with decorator 4.x series
@@ -738,8 +931,7 @@ class ExHandle(object):
             fin, _, fun, _, _ = inspect.getframeinfo(frame)
             uobj, ufin = self._unwrap_obj(frame, fun)
             if ufin in self._exclude_list:
-                del uobj
-                del frame
+                del uobj, frame
                 return callable_id, None
             tokens = frame.f_code.co_filename.split(os.sep)
             ###
@@ -757,9 +949,7 @@ class ExHandle(object):
                 fin, _, fun, _, _ = inspect.getframeinfo(frame)
                 uobj, ufin = self._unwrap_obj(frame, fun)
                 if ufin in self._exclude_list:
-                    del uobj
-                    del frame
-                    del stack
+                    del uobj, frame, stack
                     return callable_id, None
                 tokens = frame.f_code.co_filename.split(os.sep)
                 ###
@@ -770,19 +960,17 @@ class ExHandle(object):
             # pcontracts decorators)
             ret = []
             skip = 0
+            dlist = ['putil.pcontracts', 'putil.pcontracts.contract.wrapper']
             for fob, fin, uobj in stack:
                 if skip > 0:
                     skip -= 1
                 else:
                     item = self._get_callable_full_name(fob, fin, uobj)
-                    if item == 'putil.pcontracts.contract.wrapper':
+                    if item in dlist:
                         skip = 3
                     else:
                         ret.append(item)
-            del fob
-            del uobj
-            del frame
-            del stack
+            del fob, uobj, frame, stack
             return callable_id, self._callables_separator.join(ret)
 
     def _get_callables_separator(self):
@@ -799,47 +987,45 @@ class ExHandle(object):
             # When full callable name is not used the calling path is
             # irrelevant and there is no function associated with an
             # exception
-            return [
-                {
-                    'name':key,
-                    'data':template.format(
-                        extype=_ex_type_str(self._ex_dict[key]['type']),
-                        exmsg=self._ex_dict[key]['msg'],
-                        raised='*' if self._ex_dict[key]['raised'][0] else ''
+            ret = []
+            for _, fdict in self._ex_dict.items():
+                for key in fdict.keys():
+                    ret.append(
+                        {
+                            'name':fdict[key]['name'],
+                            'data':template.format(
+                                extype=_ex_type_str(key[0]),
+                                exmsg=key[1],
+                                raised='*' if fdict[key]['raised'][0] else ''
+                            )
+                        }
                     )
-                } for key in self._ex_dict.keys()
-            ]
+            return ret
         # When full callable name is used, all calling paths are saved
         ret = []
-        for key in self._ex_dict.keys():
-            for func_name in self._ex_dict[key]['function']:
-                rindex = self._ex_dict[key]['function'].index(func_name)
-                raised = self._ex_dict[key]['raised'][rindex]
-                ret.append(
-                    {
-                        'name':self._decode_call(func_name),
-                        'data':template.format(
-                            extype=_ex_type_str(self._ex_dict[key]['type']),
-                            exmsg=self._ex_dict[key]['msg'],
-                            raised='*' if raised else ''
-                        )
-                    }
-                )
+        for fdict in self._ex_dict.values():
+            for key in fdict.keys():
+                for func_name in fdict[key]['function']:
+                    rindex = fdict[key]['function'].index(func_name)
+                    raised = fdict[key]['raised'][rindex]
+                    ret.append(
+                        {
+                            'name':self.decode_call(func_name),
+                            'data':template.format(
+                                extype=_ex_type_str(key[0]),
+                                exmsg=key[1],
+                                raised='*' if raised else ''
+                            )
+                        }
+                    )
         return ret
 
-    def _get_ex_data(self, name=None):
+    def _get_ex_data(self):
         """ Returns hierarchical function name """
         func_id, func_name = self._get_callable_path()
-        ex_name = ''.join(
-            [
-                str(func_id),
-                self._callables_separator if name is not None else '',
-                name if name is not None else ''
-            ]
-        )
         if self._full_cname:
-            func_name = self._encode_call(func_name)
-        return {'func_name':func_name, 'ex_name':ex_name}
+            func_name = self.encode_call(func_name)
+        return func_id, func_name
 
     def _property_search(self, fobj):
         """
@@ -850,9 +1036,7 @@ class ExHandle(object):
         scontext = fobj.f_locals.get('self', None)
         class_obj = scontext.__class__ if scontext is not None else None
         if not class_obj:
-            del fobj
-            del scontext
-            del class_obj
+            del fobj, scontext, class_obj
             return
         # Get class properties objects
         class_props = [
@@ -861,9 +1045,7 @@ class ExHandle(object):
             if isinstance(member_obj, property)
         ]
         if not class_props:
-            del fobj
-            del scontext
-            del class_obj
+            del fobj, scontext, class_obj
             return
         class_file = inspect.getfile(class_obj).replace('.pyc', '.py')
         class_name = self._callables_obj.get_callable_from_line(
@@ -906,10 +1088,7 @@ class ExHandle(object):
             for action_name, action_id_list in prop_actions_dict.items():
                 if action_id_list and (func_id in action_id_list):
                     prop_name = '.'.join([class_name, prop_name])
-                    del fobj
-                    del scontext
-                    del class_obj
-                    del class_props
+                    del fobj, scontext, class_obj, class_props
                     return '{prop_name}({prop_action})'.format(
                         prop_name=prop_name,
                         prop_action=desc_dict[action_name]
@@ -970,7 +1149,7 @@ class ExHandle(object):
 
         :param exname: Exception name; has to be unique within the namespace,
                        duplicates are eliminated
-        :type  exname: string
+        :type  exname: non-numeric string
 
         :param extype: Exception type; *must* be derived from the `Exception
                        <https://docs.python.org/2/library/exceptions.html#
@@ -988,6 +1167,21 @@ class ExHandle(object):
                       :code:`'\*[fname]\*'` defines the fname field
         :type  exmsg: string
 
+        :rtype: tuple
+
+        The returned tuple has the following items:
+
+          * **callable id** (string) first returned item, identification (as
+            reported by the `id
+            <https://docs.python.org/2/library/functions.html#id>`_ built-in
+            function) of the callable where the exception was added
+
+          * **exception definition** (tuple), second returned item, first item
+            is the exception type and the second item is the exception message
+
+          * **callable name** (string), third returned item, callable full
+            name (encoded with the :py:meth:`ExHandle.encode_call` method
+
         :raises:
          * RuntimeError (Argument \`exmsg\` is not valid)
 
@@ -995,8 +1189,14 @@ class ExHandle(object):
 
          * RuntimeError (Argument \`extype\` is not valid)
         """
-        # pylint: disable=R0913
         if not isinstance(exname, str):
+            raise RuntimeError('Argument `exname` is not valid')
+        number = True
+        try:
+            int(exname)
+        except ValueError:
+            number = False
+        if number:
             raise RuntimeError('Argument `exname` is not valid')
         if not isinstance(exmsg, str):
             raise RuntimeError('Argument `exmsg` is not valid')
@@ -1010,17 +1210,68 @@ class ExHandle(object):
         # A callable that defines an exception can be accessed by
         # multiple functions or paths, therefore the callable
         # dictionary key 'function' is a list
-        ex_data = self._get_ex_data(exname)
-        entry = self._ex_dict.get(
-            ex_data['ex_name'],
-            {'function':[], 'type':extype, 'msg':exmsg, 'raised':[]}
+        func_id, func_name = self._get_ex_data()
+        if func_id not in self._ex_dict:
+            self._ex_dict[func_id] = {}
+        key = (extype, exmsg)
+        exname = '{0}{1}{2}'.format(func_id, self._callables_separator, exname)
+        entry = self._ex_dict[func_id].get(
+            key, {'function':[], 'name':exname, 'raised':[]}
         )
-        if ex_data['func_name'] not in entry['function']:
-            entry['function'].append(ex_data['func_name'])
+        if func_name not in entry['function']:
+            entry['function'].append(func_name)
             entry['raised'].append(False)
-        self._ex_dict[ex_data['ex_name']] = entry
+        self._ex_dict[func_id][key] = entry
+        return (func_id, key, func_name)
 
-    def raise_exception_if(self, exname, condition, edata=None):
+    def decode_call(self, call):
+        """
+        Replaces callable tokens with callable names
+
+        :param call: Encoded callable  name
+        :type  call: string
+
+        :rtype: string
+        """
+        # Callable name is None when callable is part of exclude list
+        if call is None:
+            return
+        itokens = call.split(self._callables_separator)
+        odict = {}
+        for key, value in self._clut.items():
+            if value in itokens:
+                odict[itokens[itokens.index(value)]] = key
+        return self._callables_separator.join(
+            [odict[itoken] for itoken in itokens]
+        )
+
+    def encode_call(self, call):
+        """
+        Replaces callables with tokens to reduce object memory footprint. A
+        callable token is an integer that denotes the order in which the
+        callable was encountered by the encoder, i.e. the first callable
+        encoded is assigned token 0, the second callable encoded is assigned
+        token 1, etc.
+
+        :param call: Callable name
+        :type  call: string
+
+        :rtype: string
+        """
+        # Callable name is None when callable is part of exclude list
+        if call is None:
+            return
+        itokens = call.split(self._callables_separator)
+        otokens = []
+        for itoken in itokens:
+            otoken = self._clut.get(itoken, None)
+            if not otoken:
+                otoken = str(len(self._clut))
+                self._clut[itoken] = otoken
+            otokens.append(otoken)
+        return self._callables_separator.join(otokens)
+
+    def raise_exception_if(self, exname, condition, edata=None, _keys=None):
         """
         Raises exception conditionally
 
@@ -1058,22 +1309,35 @@ class ExHandle(object):
          * ValueError (Exception name *[name]* not found')
 
         """
-        if not isinstance(exname, str):
-            raise RuntimeError('Argument `exname` is not valid')
+        # _edict is an argument used by the _ExObj class which saves a
+        # second exception look-up since the _ExObj class can save the
+        # call dictionary
         if not isinstance(condition, bool):
             raise RuntimeError('Argument `condition` is not valid')
         if not self._validate_edata(edata):
             raise RuntimeError('Argument `edata` is not valid')
-        # Find exception object
-        edict = self._get_ex_data(exname)
-        if edict['ex_name'] not in self._ex_dict:
-            raise ValueError(
-                'Exception name {exname} not found'.format(exname=exname)
+        if _keys is None:
+            if not isinstance(exname, str):
+                raise RuntimeError('Argument `exname` is not valid')
+            # Find exception object
+            func_id, func_name = self._get_ex_data()
+            name = '{0}{1}{2}'.format(
+                func_id, self._callables_separator, exname
             )
-        eobj = self._ex_dict[edict['ex_name']]
+            for key, value in self._ex_dict[func_id].items():
+                if value['name'] == name:
+                    break
+            else:
+                raise ValueError(
+                    'Exception name {exname} not found'.format(exname=exname)
+                )
+            _keys = (func_id, key, func_name)
+        eobj = self._ex_dict[_keys[0]][_keys[1]]
         if condition:
-            eobj['raised'][eobj['function'].index(edict['func_name'])] = True
-            self._raise_exception(eobj, edata)
+            eobj['raised'][eobj['function'].index(_keys[2])] = True
+            self._raise_exception(
+                {'type':_keys[1][0], 'msg':_keys[1][1]}, edata
+            )
 
     def save_callables(self, callables_fname):
         """

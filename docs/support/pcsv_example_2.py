@@ -7,8 +7,8 @@ import putil.misc, putil.pcsv
 
 def main():
     ctx = putil.misc.TmpFile
-    with ctx() as ifname:
-        with ctx() as rfname:
+    with ctx() as fname1:
+        with ctx() as fname2:
             with ctx() as ofname:
                 # Create first (input) data file
                 input_data = [
@@ -17,7 +17,7 @@ def main():
                     [2, 10000],
                     [3, 0.10]
                 ]
-                putil.pcsv.write(ifname, input_data, append=False)
+                putil.pcsv.write(fname1, input_data, append=False)
                 # Create second (replacement) data file
                 replacement_data = [
                     ['Staff', 'Rate', 'Days'],
@@ -25,15 +25,15 @@ def main():
                     ['Sue', 20, 'Thursday'],
                     ['Pat', 15, 'Tuesday']
                 ]
-                putil.pcsv.write(rfname, replacement_data, append=False)
+                putil.pcsv.write(fname2, replacement_data, append=False)
                 # Replace "Cost" column of input file with "Rate" column
                 # of replacement file for "Items" 2 and 3 with "Staff" data
                 # from Joe and Pat. Save resulting data to another file
                 putil.pcsv.replace(
-                    ifname=ifname,
-                    idfilter=('Cost', {'Item':[1, 3]}),
-                    rfname=rfname,
-                    rdfilter=('Rate', {'Staff':['Joe', 'Pat']}),
+                    fname1=fname1,
+                    dfilter1=('Cost', {'Item':[1, 3]}),
+                    fname2=fname2,
+                    dfilter2=('Rate', {'Staff':['Joe', 'Pat']}),
                     ofname=ofname
                 )
                 # Verify that resulting file is correct

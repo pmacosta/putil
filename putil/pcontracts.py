@@ -9,16 +9,16 @@ import os
 import re
 import sys
 # PyPI imports
+if os.environ.get('READTHEDOCS', False) != 'True': # pragma: no branch
+    # The PyContracts module imports numpy, which is not allowed in
+    # the ReadTheDocs environment
+    import contracts
+import decorator
 try:    # pragma: no cover
     from funcsigs import signature, Parameter
 except ImportError: # pragma: no cover
     signature = inspect.signature
     Parameter = inspect.Parameter
-import decorator
-if os.environ.get('READTHEDOCS', False) != 'True': # pragma: no branch
-    # The PyContracts module imports numpy, which is not allowed in
-    # the ReadTheDocs environment
-    import contracts
 # Putil imports
 import putil.exh
 if sys.hexversion < 0x03000000: # pragma: no cover
@@ -309,11 +309,13 @@ def _parse_new_contract_args(*args, **kwargs):
     """ Parse argument for new_contract() function """
     # No arguments
     if (len(args) == 0) and (len(kwargs) == 0):
-        return [{
-            'name':'argument_invalid',
-            'msg':'Argument `*[argument_name]*` is not valid',
-            'type':RuntimeError
-        }]
+        return [
+            {
+                'name':'argument_invalid',
+                'msg':'Argument `*[argument_name]*` is not valid',
+                'type':RuntimeError
+            }
+        ]
     # Process args
     if (len(args) > 1) or ((len(args) == 1) and (len(kwargs) > 0)):
         raise TypeError('Illegal custom contract exception definition')
@@ -362,16 +364,14 @@ def _register_custom_contracts(contract_name, contract_exceptions):
     # Homogenize exception definitions
     if isinstance(contract_exceptions, list):
         homogenized_exdict = dict(
-            [
-                (
-                    exdict['name'], {
-                        'num':exnum,
-                        'msg':exdict['msg'],
-                        'type':exdict.get('type', RuntimeError),
-                        'field':_get_replacement_token(exdict['msg'])
-                    }
-                ) for exnum, exdict in enumerate(contract_exceptions)
-            ]
+            (
+                exdict['name'], {
+                    'num':exnum,
+                    'msg':exdict['msg'],
+                    'type':exdict.get('type', RuntimeError),
+                    'field':_get_replacement_token(exdict['msg'])
+                }
+            ) for exnum, exdict in enumerate(contract_exceptions)
         )
     else:
         homogenized_exdict = {
@@ -426,6 +426,7 @@ def contract(**contract_args):
         if all_disabled():
             return func(*args, **kwargs)
         exhobj = putil.exh.get_exh_obj()
+        exdata = {}
         if exhobj is not None:
             for param_name, param_contract in contract_args.items():
                 # param_name=param_value, as in num='str|float'
@@ -458,7 +459,7 @@ def contract(**contract_args):
                         param_name,
                         exdict['num']
                     )
-                    exhobj.add_exception(
+                    exdata[exname] = exhobj.add_exception(
                         exname=exname,
                         extype=exdict['type'],
                         exmsg=exdict['msg'].replace(
@@ -510,7 +511,10 @@ def contract(**contract_args):
             )
             if exhobj is not None:
                 exhobj.raise_exception_if(
-                    exname=exname, condition=True, edata=edata
+                    exname=exname,
+                    condition=True,
+                    edata=edata,
+                    _keys=exdata[exname]
                 )
             else:
                 # Pick "nice" variable names because the raise line is
@@ -532,18 +536,15 @@ def new_contract(*args, **kwargs):
         # Pass to the custom contract, via a property, only the
         # exception descriptions
         func.exdesc = dict(
-            [
+            (
+                value['name'],
                 (
-                    value['name'],
-                    (
-                        '[START CONTRACT MSG: {0}]{1}'
-                        '[STOP CONTRACT MSG]'.format(
-                            contract_name,
-                            value['msg']
-                        )
+                    '[START CONTRACT MSG: {0}]{1}'
+                    '[STOP CONTRACT MSG]'.format(
+                        contract_name, value['msg']
+                    )
                 )
-            )    for value in exdesc
-            ]
+            ) for value in exdesc
         )
         # Register custom contract
         _register_custom_contracts(contract_name, exdesc)

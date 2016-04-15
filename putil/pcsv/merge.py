@@ -4,6 +4,7 @@
 # pylint: disable=C0111,W0105,W0611
 
 # Putil imports
+import putil.exh
 import putil.pcontracts
 from putil.ptypes import (
     csv_col_filter,
@@ -36,14 +37,15 @@ exobj = trace_ex_pcsv_merge.trace_module(no_print=True)
 @putil.pcontracts.contract(
     fname1='file_name_exists', fname2='file_name_exists',
     dfilter1='csv_data_filter', dfilter2='csv_data_filter',
-    has_header1=bool, frow1='non_negative_integer',
-    has_header2=bool, frow2='non_negative_integer',
+    has_header1=bool, has_header2=bool,
+    frow1='non_negative_integer', frow2='non_negative_integer',
     ofname='None|file_name', ocols='None|list(str)'
 )
 def merge(
     fname1, fname2,
     dfilter1=None, dfilter2=None,
-    has_header1=True, frow1=0, has_header2=True, frow2=0,
+    has_header1=True, has_header2=True,
+    frow1=0, frow2=0,
     ofname=None, ocols=None):
     r"""
     Merges two comma-separated values files. Data columns from the second
@@ -71,16 +73,16 @@ def merge(
                         or not (False)
     :type  has_header1: boolean
 
+    :param has_header2: Flag that indicates whether the second comma-separated
+                        values file has column headers in its first line (True)
+                        or not (False)
+    :type  has_header2: boolean
+
     :param frow1: First comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as
                   the first row that has a number (integer of float) in at
                   least one of its columns
     :type  frow1: :ref:`NonNegativeInteger`
-
-    :param has_header2: Flag that indicates whether the second comma-separated
-                        values file has column headers in its first line (True)
-                        or not (False)
-    :type  has_header2: boolean
 
     :param frow2: Second comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as
@@ -141,13 +143,9 @@ def merge(
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
-    _exh = putil.exh.get_or_create_exh_obj()
-    _exh.add_exception(
-        exname='iomm',
-        extype=RuntimeError,
-        exmsg=(
-            'Combined columns in data files and output columns are different'
-        )
+    iomm_ex = putil.exh.addex(
+        RuntimeError,
+        'Combined columns in data files and output columns are different'
     )
     # Read and validate file 1
     obj1 = CsvFile(
@@ -185,9 +183,7 @@ def merge(
     elif ocols is None:
         ocols = []
     else:
-        _exh.raise_exception_if(
-            exname='iomm', condition=cols1+cols2 != len(ocols)
-        )
+        iomm_ex(cols1+cols2 != len(ocols))
         ocols = [ocols]
     # Even out rows
     delta = obj1.rows(filtered=True)-obj2.rows(filtered=True)

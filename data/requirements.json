@@ -193,5 +193,13 @@
 		"cat":["tests"],
 		"ver":">=13.1.2",
 		"pos":21
+	},
+	"nose":{
+		"name":"Nose",
+		"optional":false,
+		"url":"http://nose.readthedocs.org",
+		"cat":["main"],
+		"ver":{"py26":">=1.0.0"},
+		"pos":22
 	}
 }

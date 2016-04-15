@@ -4,14 +4,15 @@
 # pylint: disable=C0111,C0302,E0102,E0611,W0105
 
 # PyPI imports
+import numpy
 import matplotlib.path
 import matplotlib.pyplot as plt
-import numpy
 from scipy.stats import linregress
 from scipy.interpolate import InterpolatedUnivariateSpline
 # Putil imports
 import putil.misc
 import putil.pcontracts
+from .functions import _C
 from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
 
 
@@ -121,7 +122,6 @@ class Series(object):
     # pylint: disable=R0902,R0903,R0913
     def __init__(self, data_source, label, color='k', marker='o',
                  interp='CUBIC', line_style='-', secondary_axis=False):
-        self._exh = putil.exh.get_or_create_exh_obj()
         # Series plotting attributes
         self._ref_linewidth = LINE_WIDTH
         self._ref_markersize = MARKER_SIZE
@@ -163,40 +163,23 @@ class Series(object):
 
     def _set_data_source(self, data_source):
         # pylint: disable=W0212
-        self._exh.add_exception(
-            exname='indep_var_attribute',
-            extype=RuntimeError,
-            exmsg=(
-                'Argument `data_source` does not '
-                'have an `indep_var` attribute'
-            )
+        indep_ex = putil.exh.addex(
+            RuntimeError,
+            'Argument `data_source` does not have an `indep_var` attribute'
         )
-        self._exh.add_exception(
-            exname='dep_var_attribute',
-            extype=RuntimeError,
-            exmsg=(
-                'Argument `data_source` does not '
-                'have an `dep_var` attribute'
-            )
+        dep_ex = putil.exh.addex(
+            RuntimeError,
+            'Argument `data_source` does not have an `dep_var` attribute'
         )
-        self._exh.add_exception(
-            exname='full_spec',
-            extype=RuntimeError,
-            exmsg='Argument `data_source` is not fully specified'
+        specified_ex = putil.exh.addex(
+            RuntimeError, 'Argument `data_source` is not fully specified'
         )
         if data_source is not None:
-            self._exh.raise_exception_if(
-                exname='indep_var_attribute',
-                condition='indep_var' not in dir(data_source)
-            )
-            self._exh.raise_exception_if(
-                exname='dep_var_attribute',
-                condition='dep_var' not in dir(data_source)
-            )
-            self._exh.raise_exception_if(
-                exname='full_spec',
-                condition=('_complete' in dir(data_source)) and
-                          (not data_source._complete)
+            indep_ex('indep_var' not in dir(data_source))
+            dep_ex('dep_var' not in dir(data_source))
+            specified_ex(
+                ('_complete' in dir(data_source)) and
+                (not data_source._complete)
             )
             self._data_source = data_source
             self.indep_var = self.data_source.indep_var
@@ -216,10 +199,8 @@ class Series(object):
 
     @putil.pcontracts.contract(color='real_num|str|list|tuple')
     def _set_color(self, color):
-        self._exh.add_exception(
-            exname='invalid_color',
-            extype=TypeError,
-            exmsg='Invalid color specification'
+        invalid_ex = putil.exh.addex(
+            TypeError, 'Invalid color specification'
         )
         valid_html_colors = [
             'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
@@ -252,15 +233,17 @@ class Series(object):
             'thistle', 'tomato', 'turquois', 'violet', 'wheat', 'white',
             'whitesmoke', 'yellow', 'yellowgreen'
         ]
-        self._color = (color.lower().strip()
-                      if isinstance(color, str) else
-                      (float(color) if putil.misc.isreal(color) else color))
+        self._color = (
+            color.lower().strip()
+            if isinstance(color, str) else
+            (float(color) if putil.misc.isreal(color) else color)
+        )
         check_list = list()
         # No color specification
         check_list.append(self.color is None)
         # Gray scale color specification, checked by decorator
         check_list.append(
-            putil.misc.isreal(self.color) and (color >= 0.0) and (color <= 1.0)
+            putil.misc.isreal(self.color) and (0.0 <= color <= 1.0)
         )
         # Basic built-in Matplotlib specification
         check_list.append(
@@ -286,35 +269,20 @@ class Series(object):
             (isinstance(self.color, list) or isinstance(self.color, tuple)) and
             (len(self.color) in [3, 4]) and
             ((numpy.array([
-                putil.misc.isreal(comp) and
-                    (comp >= 0.0) and
-                    (comp <= 1.0)
+                putil.misc.isreal(comp) and (0.0 <= comp <= 1.0)
                 for comp in self.color
             ]) == numpy.array([True]*len(self.color))).all())
         )
-        self._exh.raise_exception_if(
-            exname='invalid_color',
-            condition=True not in check_list
-        )
+        invalid_ex(True not in check_list)
 
     def _get_marker(self):
         return self._marker
 
     def _set_marker(self, marker):
-        self._exh.add_exception(
-            exname='invalid_marker',
-            extype=RuntimeError,
-            exmsg='Argument `marker` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='invalid_marker',
-            condition=not self._validate_marker(marker)
-        )
+        putil.exh.addai('marker', not self._validate_marker(marker))
         self._marker = marker
         self._marker_spec = (
-            self.marker
-            if self.marker not in ["None", None, ' ', ''] else
-            ''
+            self.marker if self.marker not in ["None", None, ' ', ''] else ''
         )
 
     def _get_interp(self):
@@ -323,9 +291,7 @@ class Series(object):
     @putil.pcontracts.contract(interp='interpolation_option')
     def _set_interp(self, interp):
         self._interp = (
-            interp.upper().strip()
-            if isinstance(interp, str) else
-            interp
+            interp.upper().strip() if isinstance(interp, str) else interp
         )
         self._validate_source_length_cubic_interp()
         self._update_linestyle_spec()
@@ -382,17 +348,11 @@ class Series(object):
         Test if data source has minimum length to calculate cubic interpolation
         """
         # pylint: disable=C0103
-        self._exh.add_exception(
-            exname='invalid_cubic_series',
-            extype=ValueError,
-            exmsg='At least 4 data points are needed for CUBIC interpolation'
-        )
-        self._exh.raise_exception_if(
-            exname='invalid_cubic_series',
-            condition=(self.interp == 'CUBIC') and
-                      (self.indep_var is not None) and
-                      (self.dep_var is not None) and
-                      (self.indep_var.shape[0] < 4)
+        putil.exh.addex(
+            ValueError,
+            'At least 4 data points are needed for CUBIC interpolation',
+            (self.interp == 'CUBIC') and (self.indep_var is not None) and
+            (self.dep_var is not None) and (self.indep_var.shape[0] < 4)
         )
 
     def _validate_marker(self, marker):
@@ -463,9 +423,7 @@ class Series(object):
     def _calculate_curve(self):
         """ Compute curve to interpolate between data points """
         # pylint: disable=E1101,W0612
-        if ((self.interp is not None) and
-           (self.indep_var is not None) and
-           (self.dep_var is not None)):
+        if _C(self.interp, self.indep_var, self.dep_var):
             if self.interp == 'CUBIC':
                 # Add 20 points between existing points
                 self.interp_indep_var = numpy.array([])
@@ -524,17 +482,13 @@ class Series(object):
     def _update_linestyle_spec(self):
         """ Update line style specification to be used in series drawing """
         self._linestyle_spec = (
-            self.line_style
-            if (self.line_style is not None) and (self.interp is not None) else
-            ''
+            self.line_style if _C(self.line_style, self.interp) else ''
         )
 
     def _update_linewidth_spec(self):
         """ Update line width specification to be used in series drawing """
         self._linewidth_spec = (
-            self._ref_linewidth
-            if (self.line_style is not None) and (self.interp is not None) else
-            0.0
+            self._ref_linewidth if _C(self.line_style, self.interp) else 0.0
         )
 
     def _legend_artist(self, legend_scale=None):
@@ -556,15 +510,8 @@ class Series(object):
     def _draw_series(self, axarr, log_indep, log_dep):
         """ Draw series """
         if self._check_series_is_plottable():
-            fplot = (
-                axarr.plot
-                if (not log_indep) and (not log_dep) else
-                (
-                    axarr.semilogx
-                    if log_indep and (not log_dep) else
-                    (axarr.loglog if log_indep and log_dep else axarr.semilogy)
-                )
-            )
+            flist = [axarr.plot, axarr.semilogx, axarr.semilogy, axarr.loglog]
+            fplot = flist[2*log_dep+log_indep]
             # Plot line
             if self._linestyle_spec != '':
                 fplot(
@@ -578,9 +525,7 @@ class Series(object):
                     linestyle=self.line_style,
                     linewidth=self._ref_linewidth,
                     drawstyle=(
-                        'steps-post'
-                        if self.interp == 'STEP' else
-                        'default'
+                        'steps-post' if self.interp == 'STEP' else 'default'
                     ),
                     label=self.label
                 )
@@ -593,9 +538,7 @@ class Series(object):
                     linestyle='',
                     linewidth=0,
                     drawstyle=(
-                        'steps-post'
-                        if self.interp == 'STEP' else
-                        'default'
+                        'steps-post' if self.interp == 'STEP' else 'default'
                     ),
                     marker=self._marker_spec,
                     markeredgecolor=self.color,
@@ -605,9 +548,9 @@ class Series(object):
                     label=self.label if self.line_style is None else None
                 )
 
+    # Managed attributes
     _complete = property(_get_complete)
 
-    # Managed attributes
     color = property(
         _get_color, _set_color, doc='Series line and marker color'
     )

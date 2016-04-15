@@ -7,14 +7,21 @@
 from __future__ import print_function
 import sys
 # PyPI imports
-import matplotlib
 import numpy
 import pytest
+import matplotlib
 # Putil imports
+from putil.test import AE, AI, AROPROP, RE, compare_strings
 import putil.plot
 from .fixtures import compare_image_set
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_series_images
+
+
+###
+# Global variables
+###
+FOBJ = putil.plot.Series
 
 
 ###
@@ -23,62 +30,42 @@ from tests.plot.gen_ref_images import unittest_series_images
 class TestSeries(object):
     """ Tests for Series class """
     ### Private methods
-    def test_str(self, default_source):
-        """ Test __str__ method behavior """
-        marker_list = [
-            {
-                'value':None,
-                'string':'None'
-            },
-            {
-                'value':'o',
-                'string':'o'
-            },
+    @pytest.mark.parametrize(
+        'mdict', [
+            {'value':None, 'string':'None'},
+            {'value':'o', 'string':'o'},
             {
                 'value':matplotlib.path.Path([(0, 0), (1, 1)]),
                 'string':'matplotlib.path.Path object'
             },
-            {
-                'value':[(0, 0), (1, 1)],
-                'string':'[(0, 0), (1, 1)]'
-            },
-            {
-                'value':r'$a_{b}$',
-                'string':r'$a_{b}$'
-            },
+            {'value':[(0, 0), (1, 1)], 'string':'[(0, 0), (1, 1)]'},
+            {'value':r'$a_{b}$', 'string':r'$a_{b}$'},
             {
                 'value':matplotlib.markers.TICKLEFT,
                 'string':'matplotlib.markers.TICKLEFT'
             }
         ]
-        for marker_dict in marker_list:
-            obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                marker=marker_dict['value']
-            )
-            ret = (
-                'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
-                'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
-                'Label: test\n'
-                'Color: k\n'
-                'Marker: {0}\n'
-                'Interpolation: CUBIC\n'
-                'Line style: -\n'
-                'Secondary axis: False'.format(marker_dict['string'])
-            )
-            if str(obj) != ret:
-                print('Object:')
-                print(str(obj))
-                print('')
-                print('Comparison:')
-                print(ret)
-            assert str(obj) == ret
+    )
+    def test_str(self, default_source, mdict):
+        """ Test __str__ method behavior """
+        obj = putil.plot.Series(
+            data_source=default_source, label='test', marker=mdict['value']
+        )
+        ret = (
+            'Independent variable: [ 5.0, 6.0, 7.0, 8.0 ]\n'
+            'Dependent variable: [ 0.0, -10.0, 5.0, 4.0 ]\n'
+            'Label: test\n'
+            'Color: k\n'
+            'Marker: {0}\n'
+            'Interpolation: CUBIC\n'
+            'Line style: -\n'
+            'Secondary axis: False'.format(mdict['string'])
+        )
+        compare_strings(str(obj), ret)
 
     ### Properties
-    def test_color(self, default_source):
-        """ Test color property behavior """
-        items = [
+    @pytest.mark.parametrize(
+        'color', [
             None,
             'moccasin',
             0.5,
@@ -86,33 +73,19 @@ class TestSeries(object):
             (0.5, 0.5, 0.5),
             [0.25, 0.25, 0.25, 0.25]
         ]
+    )
+    def test_color(self, default_source, color):
+        """ Test color property behavior """
+        proc_color = lambda x: x.lower() if isinstance(x, str) else x
         putil.plot.Series(data_source=default_source, label='test', color=None)
-        for item in items:
-            obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                color=item
-            )
-            assert (
-                obj.color
-                ==
-                (item.lower() if isinstance(item, str) else item)
-            )
+        obj = putil.plot.Series(
+            data_source=default_source, label='test', color=color
+        )
+        assert obj.color == proc_color(color)
 
     @pytest.mark.series
-    def test_color_exceptions(self, default_source):
-        """ Test color property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {
-                'data_source':default_source,
-                'label':'test',
-                'color':default_source
-            },
-            RuntimeError,
-            'Argument `color` is not valid'
-        )
-        items = [
+    @pytest.mark.parametrize(
+        'color', [
             'invalid_color_name',
             -0.01,
             1.1,
@@ -125,13 +98,12 @@ class TestSeries(object):
             [1, 1, 2, 1],
             (1, 1, 1, -1)
         ]
-        for item in items:
-            putil.test.assert_exception(
-                putil.plot.Series,
-                {'data_source':default_source, 'label':'test', 'color':item},
-                TypeError,
-                'Invalid color specification'
-            )
+    )
+    def test_color_exceptions(self, default_source, color):
+        """ Test color property exceptions """
+        AI(FOBJ, 'color', default_source, 'test', color=default_source)
+        exmsg = 'Invalid color specification'
+        AE(FOBJ, TypeError, exmsg, default_source, 'test', color)
 
     def test_data_source(self, default_source):
         """ Test data source property exception """
@@ -158,32 +130,19 @@ class TestSeries(object):
             dep_var=numpy.array([10, 20, 30, 40])
         )
         obj._indep_var = None
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':obj, 'label':'test'},
-            RuntimeError,
-            'Argument `data_source` is not fully specified'
-        )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':5, 'label':'test'},
-            RuntimeError,
-            'Argument `data_source` does not have an `indep_var` attribute'
-        )
+        exmsg = 'Argument `data_source` is not fully specified'
+        AE(FOBJ, RE, exmsg, obj, 'test')
+        exmsg = 'Argument `data_source` does not have an `indep_var` attribute'
+        AE(FOBJ, RE, exmsg, 5, 'test')
         obj = TestSource()
         obj.indep_var = numpy.array([5, 6, 7, 8])
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':obj, 'label':'test'},
-            RuntimeError,
-            'Argument `data_source` does not have an `dep_var` attribute'
-        )
+        exmsg = 'Argument `data_source` does not have an `dep_var` attribute'
+        AE(FOBJ, RE, exmsg, obj, 'test')
 
     def test_interp(self, default_source):
         """ Test interp property behavior """
         source_obj = putil.plot.BasicSource(
-            indep_var=numpy.array([5]),
-            dep_var=numpy.array([0])
+            indep_var=numpy.array([5]), dep_var=numpy.array([0])
         )
         items = [
             (None, default_source),
@@ -196,47 +155,26 @@ class TestSeries(object):
         items = ['straight', 'StEp', 'CUBIC', 'linreg']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                interp=item
+                data_source=default_source, label='test', interp=item
             )
             assert obj.interp == item.upper()
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert obj.interp == 'CUBIC'
 
     @pytest.mark.series
     def test_interp_exceptions(self, default_source):
         """ Test interp property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'interp':5},
-            RuntimeError,
-            'Argument `interp` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {
-                'data_source':default_source,
-                'label':'test',
-                'interp':'NOT_AN_OPTION'
-            },
-            ValueError,
+        AI(FOBJ, 'interp', default_source, 'test', interp=5)
+        exmsg = (
             "Argument `interp` is not one of ['STRAIGHT', 'STEP', 'CUBIC', "
             "'LINREG'] (case insensitive)"
         )
+        AE(FOBJ, ValueError, exmsg, default_source, 'test', interp='NO_OPTION')
         source_obj = putil.plot.BasicSource(
-            indep_var=numpy.array([5]),
-            dep_var=numpy.array([0])
+            indep_var=numpy.array([5]), dep_var=numpy.array([0])
         )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':source_obj, 'label':'test', 'interp':'CUBIC'},
-            ValueError,
-            'At least 4 data points are needed for CUBIC interpolation'
-        )
+        exmsg = 'At least 4 data points are needed for CUBIC interpolation'
+        AE(FOBJ, ValueError, exmsg, source_obj, 'test', interp='CUBIC')
 
     def test_label(self, default_source):
         """ Test label property behavior """
@@ -247,12 +185,7 @@ class TestSeries(object):
     @pytest.mark.series
     def test_label_exceptions(self, default_source):
         """ Test label property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':5},
-            RuntimeError,
-            'Argument `label` is not valid'
-        )
+        AI(FOBJ, 'label', default_source, 5)
 
     def test_line_style(self, default_source):
         """ Test line_style property behavior """
@@ -262,45 +195,27 @@ class TestSeries(object):
         items = ['-', '--', '-.', ':']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                line_style=item
+                data_source=default_source, label='test', line_style=item
             )
             assert obj.line_style == item
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert obj.line_style == '-'
 
     @pytest.mark.series
     def test_line_style_exceptions(self, default_source):
         """ Test line_style property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'line_style':5},
-            RuntimeError,
-            'Argument `line_style` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'line_style':'x'},
-            ValueError,
-            "Argument `line_style` is not one of ['-', '--', '-.', ':']"
-        )
+        AI(FOBJ, 'line_style', default_source, 'test', line_style=5)
+        exmsg = "Argument `line_style` is not one of ['-', '--', '-.', ':']"
+        AE(FOBJ, ValueError, exmsg, default_source, 'test', line_style='x')
 
     def test_marker(self, default_source):
         """ Test marker property behavior """
         obj = putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            marker=None
+            data_source=default_source, label='test', marker=None
         )
         assert obj.marker is None
         obj = putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            marker='D'
+            data_source=default_source, label='test', marker='D'
         )
         assert obj.marker == 'D'
         obj = putil.plot.Series(data_source=default_source, label='test')
@@ -309,43 +224,26 @@ class TestSeries(object):
     @pytest.mark.series
     def test_marker_exceptions(self, default_source):
         """ Test marker property exceptions  """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'marker':'hello'},
-            RuntimeError,
-            'Argument `marker` is not valid'
-        )
+        AI(FOBJ, 'marker', default_source, 'test', marker='hello')
 
     def test_secondary_axis(self, default_source):
         """ Test secondary_axis property behavior """
         putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            secondary_axis=None
+            data_source=default_source, label='test', secondary_axis=None
         )
         items = [False, True]
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                secondary_axis=item
+                data_source=default_source, label='test', secondary_axis=item
             )
             assert obj.secondary_axis == item
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert not obj.secondary_axis
 
     @pytest.mark.series
     def test_secondary_axis_exceptions(self, default_source):
         """ Test secondary_axis property exceptions """
-        putil.test.assert_exception(
-            putil.plot.Series,
-            {'data_source':default_source, 'label':'test', 'secondary_axis':5},
-            RuntimeError,
-            'Argument `secondary_axis` is not valid'
-        )
+        AI(FOBJ, 'secondary_axis', default_source, 'test', secondary_axis=5)
 
     ### Miscellaneous
     def test_calculate_curve(self, default_source):
@@ -353,31 +251,22 @@ class TestSeries(object):
         items = [None, 'STRAIGHT', 'STEP']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                interp=item
+                data_source=default_source, label='test', interp=item
             )
             assert (obj.interp_indep_var, obj.interp_dep_var) == (None, None)
         items = ['CUBIC', 'LINREG']
         for item in items:
             obj = putil.plot.Series(
-                data_source=default_source,
-                label='test',
-                interp=item
+                data_source=default_source, label='test', interp=item
             )
             assert (obj.interp_indep_var, obj.interp_dep_var) != (None, None)
-        obj = putil.plot.Series(
-            data_source=default_source,
-            label='test'
-        )
+        obj = putil.plot.Series(data_source=default_source, label='test')
         assert (obj.interp_indep_var, obj.interp_dep_var) != (None, None)
 
     def test_scale_indep_var(self, default_source):
         """ Test that independent variable scaling works """
         obj = putil.plot.Series(
-            data_source=default_source,
-            label='test',
-            interp=None
+            data_source=default_source, label='test', interp=None
         )
         assert obj.scaled_indep_var is not None
         assert obj.scaled_dep_var is not None
@@ -403,27 +292,17 @@ class TestSeries(object):
         Test that del method raises an exception on all class attributes
         """
         obj = putil.plot.Series(data_source=default_source, label='test')
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.data_source
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.label
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.color
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.marker
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.interp
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.line_style
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-        with pytest.raises(AttributeError) as excinfo:
-            del obj.secondary_axis
-        assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+        props = [
+            'data_source',
+            'label',
+            'color',
+            'marker',
+            'interp',
+            'line_style',
+            'secondary_axis'
+        ]
+        for prop in props:
+            AROPROP(obj, prop)
 
     def test_images(self, tmpdir):
         """ Compare images to verify correct plotting of series """

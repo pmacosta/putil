@@ -1,15 +1,17 @@
 # misc.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0903,W0611
+# pylint: disable=C0111,E0611,R0903,W0611
 
 # Standard library imports
 from __future__ import print_function
 import ast
+import collections
 import inspect
 import os
 import platform
 import re
+import sys
 import tempfile
 import time
 import types
@@ -393,9 +395,7 @@ def elapsed_time_string(start_time, stop_time):
     )
     ret_list = [
         '{token} {token_name}{plural}'.format(
-            token=num,
-            token_name=desc,
-            plural='s' if num > 1 else ''
+            token=num, token_name=desc, plural='s' if num > 1 else ''
         ) for num, desc in token_iter if num > 0
     ]
     if len(ret_list) == 0:
@@ -449,15 +449,14 @@ def gcd(vector):
     """
     if len(vector) == 0:
         return None
-    elif len(vector) == 1:
+    if len(vector) == 1:
         return vector[0]
-    elif len(vector) == 2:
+    if len(vector) == 2:
         return pgcd(vector[0], vector[1])
-    else:
-        current_gcd = pgcd(vector[0], vector[1])
-        for element in vector[2:]:
-            current_gcd = pgcd(current_gcd, element)
-        return current_gcd
+    current_gcd = pgcd(vector[0], vector[1])
+    for element in vector[2:]:
+        current_gcd = pgcd(current_gcd, element)
+    return current_gcd
 
 
 def isalpha(obj):
@@ -708,7 +707,7 @@ def per(arga, argb, prec=10):
 
      * TypeError (Arguments are not of the same type)
     """
-    # pylint: disable=E1101
+    # pylint: disable=E1101,R0204
     if not isinstance(prec, int):
         raise RuntimeError('Argument `prec` is not valid')
     arga_type = (
@@ -794,9 +793,7 @@ def pcolor(text, color, indent=0):
     if esc_dict[color] != -1:
         return (
             '\033[{color_code}m{indent}{text}\033[0m'.format(
-                color_code=esc_dict[color],
-                indent=' '*indent,
-                text=text
+                color_code=esc_dict[color], indent=' '*indent, text=text
             )
         )
     return '{indent}{text}'.format(indent=' '*indent, text=text)
@@ -925,41 +922,28 @@ def strframe(obj, extended=False):
 ###
 # Classes
 ###
-class CiDict(dict):
-    """
-    Dictionary class with case-insensitive keys
-    """
-    def __init__(self, posarg=None, **kwargs):
-        # Algorithm:
-        # 1. Create a dictionary with the build-in dict() method (this ensures
-        #    that all exceptions will be identical)
-        # 2. Create a new dictionary with lower-case keys of dictionary created
-        #    in step #1
-        # 3. Associate dictionary created in step #2 to self
-        # Method may not be the most efficient for large dictionaries, where
-        # an iteration-based algorithm may have less memory requirements
-        _dict1 = {}
-        if posarg is not None:
-            try:
-                _dict1.update(posarg)
-            except TypeError:
-                raise
-            except ValueError:
-                raise
-        if kwargs:
-            _dict1.update(kwargs)
-        _dict2 = {}
-        for key in _dict1.keys():
-            item = key.lower() if isinstance(key, str) is True else key
-            _dict2[item] = _dict1[key]
-        dict.__init__(self, _dict2)
+# Inspired from https://stackoverflow.com/
+# questions/3387691/python-how-to-perfectly-override-a-dict
+class CiDict(collections.MutableMapping):
+    def __init__(self, *args, **kwargs):
+        self._store = dict()
+        self.update(dict(*args, **kwargs))
 
     def __getitem__(self, key):
-        return super(CiDict, self).__getitem__(
-            key.lower() if isinstance(key, str) else key
-        )
+        return self._store[self.__keytransform__(key)]
 
-    def __setitem__(self, key, val):
-        super(CiDict, self).__setitem__(
-            key.lower() if isinstance(key, str) else key, val
-        )
+    def __setitem__(self, key, value):
+        self._store[self.__keytransform__(key)] = value
+
+    def __delitem__(self, key):
+        del self._store[self.__keytransform__(key)]
+
+    def __iter__(self):
+        return iter(self._store)
+
+    def __len__(self):
+        return len(self._store)
+
+    def __keytransform__(self, key):
+        # pylint: disable=R0201
+        return key.lower() if isinstance(key, str) else key

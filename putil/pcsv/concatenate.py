@@ -4,6 +4,7 @@
 # pylint: disable=C0111,W0105,W0611
 
 # Putil imports
+import putil.exh
 import putil.pcontracts
 from putil.ptypes import (
     csv_col_filter,
@@ -33,17 +34,20 @@ exobj = trace_ex_pcsv_concatenate.trace_module(no_print=True)
 ###
 # Functions
 ###
+_C = lambda *x: all([item is not None for item in x])
+
 @putil.pcontracts.contract(
     fname1='file_name_exists', fname2='file_name_exists',
     dfilter1='csv_data_filter', dfilter2='csv_data_filter',
-    has_header1=bool, frow1='non_negative_integer',
-    has_header2=bool, frow2='non_negative_integer',
+    has_header1=bool, has_header2=bool,
+    frow1='non_negative_integer', frow2='non_negative_integer',
     ofname='None|file_name', ocols='None|list(str)'
 )
 def concatenate(
     fname1, fname2,
     dfilter1=None, dfilter2=None,
-    has_header1=True, frow1=0, has_header2=True, frow2=0,
+    has_header1=True, has_header2=True,
+    frow1=0, frow2=0,
     ofname=None, ocols=None):
     r"""
     Concatenates two comma-separated values file. Data rows from the second
@@ -70,16 +74,16 @@ def concatenate(
                         or not (False)
     :type  has_header1: boolean
 
+    :param has_header2: Flag that indicates whether the second comma-separated
+                        values file has column headers in its first line (True)
+                        or not (False)
+    :type  has_header2: boolean
+
     :param frow1: First comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as
                   the first row that has a number (integer of float) in at
                   least one of its columns
     :type  frow1: :ref:`NonNegativeInteger`
-
-    :param has_header2: Flag that indicates whether the second comma-separated
-                        values file has column headers in its first line (True)
-                        or not (False)
-    :type  has_header2: boolean
 
     :param frow2: Second comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as
@@ -140,18 +144,12 @@ def concatenate(
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
-    _exh = putil.exh.get_or_create_exh_obj()
-    _exh.add_exception(
-        exname='irmm',
-        extype=RuntimeError,
-        exmsg='Files have different number of columns'
+    iro = putil.exh.addex(
+        RuntimeError, 'Files have different number of columns'
     )
-    _exh.add_exception(
-        exname='iomm',
-        extype=RuntimeError,
-        exmsg=(
-            'Number of columns in data files and output columns are different'
-        )
+    iom = putil.exh.addex(
+        RuntimeError,
+        'Number of columns in data files and output columns are different'
     )
     # Read and validate file 1
     obj1 = CsvFile(
@@ -169,21 +167,12 @@ def concatenate(
     elif ocols is None:
         ocols = []
     else:
-        _exh.raise_exception_if(
-            exname='iomm',
-            condition=(
-                (obj1.cfilter is not None) and
-                (len(obj1.cfilter) != len(ocols))
-            )
-        )
+        iom((obj1.cfilter is not None) and (len(obj1.cfilter) != len(ocols)))
         ocols = [ocols]
     # Miscellaneous data validation
-    _exh.raise_exception_if(
-        exname='irmm',
-        condition=(
-            (obj1.cfilter is not None) and (obj2.cfilter is not None) and
-            (len(obj1.cfilter) != len(obj2.cfilter))
-        )
+    iro(
+        _C(obj1.cfilter, obj2.cfilter) and
+        (len(obj1.cfilter) != len(obj2.cfilter))
     )
     # Write final output
     data = ocols+obj1.data(filtered=True)+obj2.data(filtered=True)

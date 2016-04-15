@@ -11,11 +11,18 @@ import sys
 import numpy
 import pytest
 # Putil imports
-import putil.test
+import putil.misc
+from putil.test import AE, AI, APROP, AROPROP, GET_EXMSG, RE
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
     from putil.compat3 import _write
+
+
+###
+# Global variables
+###
+FOBJ = putil.plot.CsvSource
 
 
 ###
@@ -247,26 +254,14 @@ class TestCsvSource(object):
             # __init__ path
             items = ['a', False]
             for item in items:
-                putil.test.assert_exception(
-                    putil.plot.CsvSource,
-                    {
-                        'fname':fname,
-                        'indep_col_label':'Col7',
-                        'dep_col_label':'Col2',
-                        'indep_max':item
-                    },
-                    RuntimeError,
-                    msg
-                )
+                AI(FOBJ, 'indep_max', fname, 'Col7', 'Col2', indep_max=item)
             # Managed attribute path
             obj = putil.plot.BasicSource(
                 indep_var=numpy.array([1, 2, 3]),
                 dep_var=numpy.array([10, 20, 30])
             )
             for item in items:
-                with pytest.raises(RuntimeError) as excinfo:
-                    obj.indep_max = item
-                assert putil.test.get_exmsg(excinfo) == msg
+                APROP(obj, 'indep_max', item, RuntimeError, msg)
 
     def test_indep_min(self):
         """ Tests indep_min property behavior """
@@ -299,17 +294,7 @@ class TestCsvSource(object):
             # __init__ path
             items = ['a', False]
             for item in items:
-                putil.test.assert_exception(
-                    putil.plot.CsvSource,
-                    {
-                        'fname':fname,
-                        'indep_col_label':'Col7',
-                        'dep_col_label':'Col2',
-                        'indep_min':item
-                    },
-                    RuntimeError,
-                    msg
-                )
+                AI(FOBJ, 'indep_min', fname, 'Col7', 'Col2', indep_min=item)
             # Managed attribute path
             obj = putil.plot.CsvSource(
                 fname=fname,
@@ -320,7 +305,7 @@ class TestCsvSource(object):
             for item in items:
                 with pytest.raises(RuntimeError) as excinfo:
                     obj.indep_min = item
-                assert putil.test.get_exmsg(excinfo) == msg
+                assert GET_EXMSG(excinfo) == msg
 
     @pytest.mark.csv_source
     def test_indep_min_greater_than_indep_max_exceptions(self):
@@ -339,7 +324,7 @@ class TestCsvSource(object):
             )
             with pytest.raises(ValueError) as excinfo:
                 obj.indep_max = 0
-            assert putil.test.get_exmsg(excinfo) == msg
+            assert GET_EXMSG(excinfo) == msg
             # Assign indep_max first
             obj = putil.plot.CsvSource(
                 fname=fname,
@@ -349,7 +334,7 @@ class TestCsvSource(object):
             )
             with pytest.raises(ValueError) as excinfo:
                 obj.indep_min = 50
-            assert putil.test.get_exmsg(excinfo) == msg
+            assert GET_EXMSG(excinfo) == msg
 
     def test_fname(self):
         """ Test constructor fname argument behavior """
@@ -366,19 +351,10 @@ class TestCsvSource(object):
         # This assignment should raise an exception
         items = [5, None]
         for item in items:
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {'fname':item, 'indep_col_label':'C7', 'dep_col_label':'C2'},
-                RuntimeError,
-                'Argument `fname` is not valid'
-            )
+            AI(FOBJ, 'fname', item, 'C7', 'C2')
         fname = 'nonexistent_fname.csv'
-        putil.test.assert_exception(
-            putil.plot.CsvSource,
-            {'fname':fname, 'indep_col_label':'Col7', 'dep_col_label':'Col2'},
-            OSError,
-            'File {0} could not be found'.format(fname)
-        )
+        exmsg = 'File {0} could not be found'.format(fname)
+        AE(FOBJ, OSError, exmsg, fname, 'Col7', 'Col2')
 
     @pytest.mark.csv_source
     def test_indep_col_label_exceptions(self):
@@ -387,27 +363,12 @@ class TestCsvSource(object):
         with putil.misc.TmpFile(write_csv_file) as fname:
             # These assignments should raise an exception
             for item in items:
-                putil.test.assert_exception(
-                    putil.plot.CsvSource,
-                    {
-                        'fname':fname,
-                        'indep_col_label':item,
-                        'dep_col_label':'Col2'
-                    },
-                    RuntimeError,
-                    'Argument `indep_col_label` is not valid'
-                )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col99',
-                    'dep_col_label':'Col2'
-                },
-                ValueError,
+                AI(FOBJ, 'indep_col_label', fname, item, 'Col2')
+            exmsg = (
                 'Column Col99 (independent column label) could not be found '
                 'in comma-separated file {0} header'.format(fname)
             )
+            AE(FOBJ, ValueError, exmsg, fname, 'Col99', 'Col2')
 
     @pytest.mark.csv_source
     def test_dep_col_label_exceptions(self):
@@ -416,58 +377,26 @@ class TestCsvSource(object):
         with putil.misc.TmpFile(write_csv_file) as fname:
             # This assignment should raise an exception
             for item in items:
-                putil.test.assert_exception(
-                    putil.plot.CsvSource,
-                    {
-                        'fname':fname,
-                        'indep_col_label':'Col7',
-                        'dep_col_label':item
-                    },
-                    RuntimeError,
-                    'Argument `dep_col_label` is not valid'
-                )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col99'
-                },
-                ValueError,
+                AI(FOBJ, 'dep_col_label', fname, 'Col7', item)
+            exmsg = (
                 'Column Col99 (dependent column label) could not be found in '
                 'comma-separated file {0} header'.format(fname)
             )
+            AE(FOBJ, ValueError, exmsg, fname, 'Col7', 'Col99')
 
     @pytest.mark.csv_source
     def test_empty_indep_var_after_filter_exceptions(self):
         """ Test empty independent variable after rfilter exceptions """
         with putil.misc.TmpFile(write_csv_file) as fname:
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':10}
-                },
-                ValueError,
-                'Filtered independent variable is empty'
-            )
+            exmsg = 'Filtered independent variable is empty'
+            AE(FOBJ, ValueError, exmsg, fname, 'Col2', 'Col3', {'Col1':10})
 
     @pytest.mark.csv_source
     def test_empty_dep_var_after_filter_exceptions(self):
         """ Test empty dependent variable after rfilter exceptions """
         with putil.misc.TmpFile(write_csv_file) as fname:
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col5', 'rfilter':{'Col1':0}
-                },
-                ValueError,
-                'Filtered dependent variable is empty'
-            )
+            exmsg = 'Filtered dependent variable is empty'
+            AE(FOBJ, ValueError, exmsg, fname, 'Col2', 'Col5', {'Col1':0})
 
     def test_data_reversed(self):
         """ Test reordering when independent variable in descending order """
@@ -538,29 +467,12 @@ class TestCsvSource(object):
         def fproc1():
             return numpy.array([1]), numpy.array([1])
         with putil.misc.TmpFile(write_csv_file) as fname:
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col2',
-                    'fproc':5
-                },
-                RuntimeError,
-                'Argument `fproc` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col2',
-                    'fproc':fproc1
-                },
-                ValueError,
+            AI(FOBJ, 'fproc', fname, 'Col7', 'Col2', fproc=5)
+            exmsg = (
                 'Argument `fproc` (function fproc1) does not have at least '
                 '2 arguments'
             )
+            AE(FOBJ, ValueError, exmsg, fname, 'Col7', 'Col2', fproc=fproc1)
 
     def test_fproc_eargs(self):
         """ Test fprog_eargs property behavior """
@@ -585,43 +497,19 @@ class TestCsvSource(object):
         def fproc2(indep_var, dep_var, par1, par2):
             return [numpy.array([1, 2]), numpy.array([1, 2])]
         with putil.misc.TmpFile(write_csv_file) as fname:
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col2',
-                    'fproc_eargs':5
-                },
-                RuntimeError,
-                'Argument `fproc_eargs` is not valid'
-            )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col2',
-                    'fproc':fproc1,
-                    'fproc_eargs':{'par1':5}
-                },
-                ValueError,
+            AI(FOBJ, 'fproc_eargs', fname, 'Col7', 'Col2', fproc_eargs=5)
+            kwarg = dict(fproc=fproc1, fproc_eargs={'par1':5})
+            exmsg = (
                 'Extra argument `par1` not found in argument `fproc` '
                 '(function fproc1) definition'
             )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col2',
-                    'fproc':fproc2,
-                    'fproc_eargs':{'par3':5}
-                },
-                ValueError,
+            AE(FOBJ, ValueError, exmsg, fname, 'Col7', 'Col2', **kwarg)
+            exmsg = (
                 'Extra argument `par3` not found in argument `fproc` '
                 '(function fproc2) definition'
             )
+            kwarg = dict(fproc=fproc2, fproc_eargs={'par3':5})
+            AE(FOBJ, ValueError, exmsg, fname, 'Col7', 'Col2', **kwarg)
 
     @pytest.mark.csv_source
     def test_data_processing_exceptions(self):
@@ -652,99 +540,42 @@ class TestCsvSource(object):
             raise RuntimeError('Test exception message #2')
         with putil.misc.TmpFile(write_csv_file) as fname:
             # These assignments should raise an exception
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':0},
-                    'fproc':fproc1
-                },
-                TypeError,
+            exmsg = (
                 'Argument `fproc` (function fproc1) return value is not valid'
             )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':0},
-                    'fproc':fproc2
-                },
-                RuntimeError,
+            kwargs = dict(rfilter={'Col1':0}, fproc=fproc1)
+            AE(FOBJ, TypeError, exmsg, fname, 'Col2', 'Col3', **kwargs)
+            kwargs = dict(rfilter={'Col1':0}, fproc=fproc2)
+            exmsg = (
                 'Argument `fproc` (function fproc2) returned an illegal '
                 'number of values'
             )
+            AE(FOBJ, RE, exmsg, fname, 'Col2', 'Col3', **kwargs)
             items = [fproc4, fproc5]
             for item in items:
-                putil.test.assert_exception(
-                    putil.plot.CsvSource,
-                    {
-                        'fname':fname,
-                        'indep_col_label':'Col2',
-                        'dep_col_label':'Col3',
-                        'rfilter':{'Col1':0},
-                        'fproc':item
-                    },
-                    TypeError,
-                    'Processed independent variable is not valid'
-                )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':0},
-                    'fproc':fproc6
-                },
-                TypeError,
-                'Processed dependent variable is not valid'
-            )
+                exmsg = 'Processed independent variable is not valid'
+                kwargs = dict(rfilter={'Col1':0}, fproc=item)
+                AE(FOBJ, TypeError, exmsg, fname, 'Col2', 'Col3', **kwargs)
+            exmsg = 'Processed dependent variable is not valid'
+            kwargs = dict(rfilter={'Col1':0}, fproc=fproc6)
+            AE(FOBJ, TypeError, exmsg, fname, 'Col2', 'Col3', **kwargs)
             items = [fproc8, fproc10]
             for item in items:
-                putil.test.assert_exception(
-                    putil.plot.CsvSource,
-                    {
-                        'fname':fname,
-                        'indep_col_label':'Col2',
-                        'dep_col_label':'Col3',
-                        'rfilter':{'Col1':0},
-                        'fproc':item
-                    },
-                    ValueError,
-                    'Processed independent variable is empty'
-                )
+                exmsg = 'Processed independent variable is empty'
+                kwargs = dict(rfilter={'Col1':0}, fproc=item)
+                AE(FOBJ, ValueError, exmsg, fname, 'Col2', 'Col3', **kwargs)
             items = [fproc9, fproc11]
             for item in items:
-                putil.test.assert_exception(
-                    putil.plot.CsvSource,
-                    {
-                        'fname':fname,
-                        'indep_col_label':'Col2',
-                        'dep_col_label':'Col3',
-                        'rfilter':{'Col1':0},
-                        'fproc':item
-                    },
-                    ValueError,
-                    'Processed dependent variable is empty'
-                )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':0},
-                    'fproc':fproc12
-                },
-                ValueError,
+                exmsg = 'Processed dependent variable is empty'
+                kwargs = dict(rfilter={'Col1':0}, fproc=item)
+                AE(FOBJ, ValueError, exmsg, fname, 'Col2', 'Col3', **kwargs)
+            exmsg = (
                 'Processed independent and dependent variables are of '
                 'different length'
             )
-            msg = (
+            kwargs = dict(rfilter={'Col1':0}, fproc=fproc12)
+            AE(FOBJ, ValueError, exmsg, fname, 'Col2', 'Col3', **kwargs)
+            exmsg = (
                 'Processing function fproc13 raised an exception when '
                     'called with the following arguments:\n'
                 'indep_var: [ 1.0, 2.0, 3.0 ]\n'
@@ -753,21 +584,11 @@ class TestCsvSource(object):
                 '   par1: 13\n'
                 'Exception error: Test exception message #1'
             )
-
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':0},
-                    'fproc':fproc13,
-                    'fproc_eargs':{'par1':13}
-                },
-                RuntimeError,
-                msg
+            kwargs = dict(
+                rfilter={'Col1':0}, fproc=fproc13, fproc_eargs={'par1':13}
             )
-            msg = (
+            AE(FOBJ, RE, exmsg, fname, 'Col2', 'Col3', **kwargs)
+            exmsg = (
                 'Processing function fproc14 raised an exception when '
                     'called with the following arguments:\n'
                 'indep_var: [ 1.0, 2.0, 3.0 ]\n'
@@ -775,30 +596,10 @@ class TestCsvSource(object):
                 'fproc_eargs: None\n'
                 'Exception error: Test exception message #2'
             )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':0},
-                    'fproc':fproc14, 'fproc_eargs':{}
-                },
-                RuntimeError,
-                msg
-            )
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col2',
-                    'dep_col_label':'Col3',
-                    'rfilter':{'Col1':0},
-                    'fproc':fproc14
-                },
-                RuntimeError,
-                msg
-            )
+            kwargs = dict(rfilter={'Col1':0}, fproc=fproc14, fproc_eargs={})
+            AE(FOBJ, RE, exmsg, fname, 'Col2', 'Col3', **kwargs)
+            kwargs = dict(rfilter={'Col1':0}, fproc=fproc14)
+            AE(FOBJ, RE, exmsg, fname, 'Col2', 'Col3', **kwargs)
 
     def test_rfilter(self):
         """ Test constructor rfilter argument behavior """
@@ -816,29 +617,13 @@ class TestCsvSource(object):
     def test_rfilter_exceptions(self):
         """ Test constructor rfilter argument exceptions """
         with putil.misc.TmpFile(write_csv_file) as fname:
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col2',
-                    'rfilter':5},
-                RuntimeError,
-                'Argument `rfilter` is not valid'
-            )
+            AI(FOBJ, 'rfilter', fname, 'Col7', 'Col2', 5)
         with putil.misc.TmpFile(write_csv_file) as fname:
-            putil.test.assert_exception(
-                putil.plot.CsvSource,
-                {
-                    'fname':fname,
-                    'indep_col_label':'Col7',
-                    'dep_col_label':'Col2',
-                    'rfilter':{'Col99':500}
-                },
-                ValueError,
+            exmsg = (
                 'Column Col99 in row filter not found in '
                 'comma-separated file {0} header'.format(fname)
             )
+            AE(FOBJ, ValueError, exmsg, fname, 'Col7', 'Col2', {'Col99':500})
 
     @pytest.mark.csv_source
     def test_cannot_delete_attributes_exceptions(self):
@@ -851,33 +636,10 @@ class TestCsvSource(object):
                 indep_col_label='Col7',
                 dep_col_label='Col2'
             )
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.dep_col_label
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.dep_var
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.fname
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.fproc
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.fproc_eargs
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_col_label
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_max
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_min
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.indep_var
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
-            with pytest.raises(AttributeError) as excinfo:
-                del obj.rfilter
-            assert putil.test.get_exmsg(excinfo) == "can't delete attribute"
+            prop_list = [
+                'dep_col_label', 'dep_var', 'fname', 'fproc', 'fproc_eargs',
+                'indep_col_label', 'indep_max', 'indep_min', 'indep_var',
+                'rfilter'
+            ]
+            for prop in prop_list:
+                AROPROP(obj, prop)

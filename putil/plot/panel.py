@@ -4,13 +4,13 @@
 # pylint: disable=C0111,C0302,R0912,R0913,R0914,R0915,W0105,W0212
 
 # PyPI imports
-import matplotlib.pyplot as plt
 import numpy
+import matplotlib.pyplot as plt
 # Putil imports
 import putil.exh
 import putil.pcontracts
 from .series import Series
-from .functions import _intelligent_ticks, _uniquify_tick_labels
+from .functions import _F, _intelligent_ticks, _uniquify_tick_labels
 from .constants import AXIS_LABEL_FONT_SIZE, AXIS_TICKS_FONT_SIZE, LEGEND_SCALE
 
 
@@ -149,7 +149,6 @@ class Panel(object):
                  secondary_axis_ticks=None, log_dep_axis=False,
                  legend_props=None, display_indep_axis=False):
         # Private attributes
-        self._exh = putil.exh.get_or_create_exh_obj()
         self._series = None
         self._primary_axis_label = None
         self._secondary_axis_label = None
@@ -188,33 +187,18 @@ class Panel(object):
             'UPPER CENTER', 'CENTER'
         ]
         # Exceptions definition
-        self._exh.add_exception(
-            exname='invalid_primary_axis_ticks',
-            extype=RuntimeError,
-            exmsg='Argument `primary_axis_ticks` is not valid'
-        )
-        self._exh.add_exception(
-            exname='invalid_secondary_axis_ticks',
-            extype=RuntimeError,
-            exmsg='Argument `secondary_axis_ticks` is not valid'
-        )
-        self._exh.raise_exception_if(
-            exname='invalid_primary_axis_ticks',
-            condition=(
-                (primary_axis_ticks is not None) and (
-                (not isinstance(primary_axis_ticks, list)) and
-                (not isinstance(primary_axis_ticks, numpy.ndarray))
-                )
+        invalid_prim_ex = putil.exh.addai('primary_axis_ticks')
+        invalid_sec_ex = putil.exh.addai('secondary_axis_ticks')
+        invalid_prim_ex(
+            (primary_axis_ticks is not None) and (
+            (not isinstance(primary_axis_ticks, list)) and
+            (not isinstance(primary_axis_ticks, numpy.ndarray))
             )
         )
-        self._exh.raise_exception_if(
-            exname='invalid_secondary_axis_ticks',
-            condition=(
-                (secondary_axis_ticks is not None) and (
-                (not isinstance(secondary_axis_ticks, list)) and
-                (not isinstance(secondary_axis_ticks, numpy.ndarray))
-                )
-            )
+        invalid_sec_ex(
+            (secondary_axis_ticks is not None) and (
+            (not isinstance(secondary_axis_ticks, list)) and
+            (not isinstance(secondary_axis_ticks, numpy.ndarray)))
         )
         # Assignment of arguments to attributes
         # Order here is important to avoid unnecessary re-calculating of
@@ -702,25 +686,18 @@ class Panel(object):
 
     @putil.pcontracts.contract(legend_props='None|dict')
     def _set_legend_props(self, legend_props):
-        self._exh.add_exception(
-            exname='invalid_legend_prop',
-            extype=ValueError,
-            exmsg='Illegal legend property `*[prop_name]*`'
+        invalid_ex = putil.exh.addex(
+            ValueError, 'Illegal legend property `*[prop_name]*`'
         )
-        self._exh.add_exception(
-            exname='illegal_legend_prop',
-            extype=TypeError,
-            exmsg=(
-                "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
-                "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
-                "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', "
-                "'UPPER CENTER', 'CENTER'] (case insensitive)"
-            )
+        illegal_ex = putil.exh.addex(
+            TypeError,
+            "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
+            "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
+            "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', "
+            "'UPPER CENTER', 'CENTER'] (case insensitive)"
         )
-        self._exh.add_exception(
-            exname='invalid_legend_cols',
-            extype=RuntimeError,
-            exmsg='Legend property `cols` is not valid'
+        cols_ex = putil.exh.addex(
+            RuntimeError, 'Legend property `cols` is not valid'
         )
         self._legend_props = (
             legend_props
@@ -730,22 +707,17 @@ class Panel(object):
         self._legend_props.setdefault('pos', 'BEST')
         self._legend_props.setdefault('cols', 1)
         for key, value in self.legend_props.items():
-            self._exh.raise_exception_if(
-                exname='invalid_legend_prop',
-                condition=key not in self._legend_props_list,
-                edata={'field':'prop_name', 'value':key}
+            invalid_ex(
+                key not in self._legend_props_list, _F('prop_name', key)
             )
-            self._exh.raise_exception_if(
-                exname='illegal_legend_prop',
-                condition=(key == 'pos') and
-                          _legend_position_validation(self.legend_props['pos'])
+            illegal_ex(
+                (key == 'pos') and
+                _legend_position_validation(self.legend_props['pos'])
             )
-            self._exh.raise_exception_if(
-                exname='invalid_legend_cols',
-                condition=((key == 'cols') and
-                          (not isinstance(value, int))) or
-                          ((key == 'cols') and
-                          (isinstance(value, int) is True) and (value < 0))
+            cols_ex(
+                ((key == 'cols') and (not isinstance(value, int))) or
+                ((key == 'cols') and
+                (isinstance(value, int) is True) and (value < 0))
             )
         self._legend_props['pos'] = self._legend_props['pos'].upper()
 
@@ -834,36 +806,21 @@ class Panel(object):
         Verifies that elements of series list are of the right type and
         fully specified
         """
-        self._exh.add_exception(
-            exname='invalid_series',
-            extype=RuntimeError,
-            exmsg='Argument `series` is not valid'
+        invalid_ex = putil.exh.addai('series')
+        incomplete_ex = putil.exh.addex(
+            RuntimeError, 'Series item *[number]* is not fully specified'
         )
-        self._exh.add_exception(
-            exname='incomplete_series',
-            extype=RuntimeError,
-            exmsg='Series item *[number]* is not fully specified'
-        )
-        self._exh.add_exception(
-            exname='no_log',
-            extype=ValueError,
-            exmsg='Series item *[number]* cannot be plotted in a logarithmic '
-                  'axis because it contains negative data points'
+        log_ex = putil.exh.addex(
+            ValueError,
+            'Series item *[number]* cannot be plotted in a logarithmic '
+            'axis because it contains negative data points'
         )
         for num, obj in enumerate(self.series):
-            self._exh.raise_exception_if(
-                exname='invalid_series',
-                condition=not isinstance(obj, Series)
-            )
-            self._exh.raise_exception_if(
-                exname='incomplete_series',
-                condition=not obj._complete,
-                edata={'field':'number', 'value':num}
-            )
-            self._exh.raise_exception_if(
-                exname='no_log',
-                condition=bool((min(obj.dep_var) <= 0) and self.log_dep_axis),
-                edata={'field':'number', 'value':num}
+            invalid_ex(not isinstance(obj, Series))
+            incomplete_ex(not obj._complete, _F('number', num))
+            log_ex(
+                bool((min(obj.dep_var) <= 0) and self.log_dep_axis),
+                _F('number', num)
             )
 
     def _get_complete(self):
