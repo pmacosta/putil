@@ -108,6 +108,7 @@ class TestCsvFile(object):
         )
         with putil.misc.TmpFile(write_file) as fname:
             obj = putil.pcsv.CsvFile(fname=fname, has_header=False)
+        fname = os.path.normpath(fname)
         assert repr(obj) == (rstart+", has_header=False)").format(fname)
         obj.dfilter = 0
         assert repr(obj) == (rstart+", dfilter={1}, has_header=False)").format(
