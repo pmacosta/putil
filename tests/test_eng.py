@@ -34,7 +34,6 @@ from tests.eng.wave_core import (
     test_interp_dep_vector,
     TestWaveform
 )
-
 from tests.eng.wave_functions import (
     test_acos,
     test_acos_exceptions,
@@ -65,6 +64,7 @@ from tests.eng.wave_functions import (
     test_nmax,
     test_nmin,
     test_phase,
+    test_real,
     test_round,
     test_round_exceptions,
     test_sin,
@@ -78,4 +78,6 @@ from tests.eng.wave_functions import (
     test_wfloat_exceptions,
     test_wint,
     test_wint_exceptions,
+    test_wvalue,
+    test_wvalue_exceptions,
 )

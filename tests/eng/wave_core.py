@@ -524,6 +524,13 @@ class TestWaveform(object):
         if obj:
             pytest.fail('__bool__ failed')
 
+    def test_complex(self):
+        """ Test complex property behavior """
+        obj = putil.eng.Waveform(array([1.0, 2.0]), array([2, 8]), 'obj')
+        assert not obj.complex
+        obj = putil.eng.Waveform(array([1.0, 2.0]), array([2, 8+3j]), 'obj')
+        assert obj.complex
+
     def test_contains(self):
         """ Test __contains__ method behavior """
         obj_a = putil.eng.Waveform(
@@ -1409,6 +1416,15 @@ class TestWaveform(object):
         with pytest.raises(RuntimeError) as excinfo:
             _ = obj_b ** obj_a
         assert GET_EXMSG(excinfo) == 'Waveforms are not compatible'
+
+    def test_real(self):
+        """ Test real property behavior """
+        obj = putil.eng.Waveform(array([1.0, 2.0]), array([2, 8]), 'obj')
+        assert obj.real
+        obj = putil.eng.Waveform(array([1.0, 2.0]), array([2.2, 8.3]), 'obj')
+        assert obj.real
+        obj = putil.eng.Waveform(array([1.0, 2.0]), array([2, 8+3j]), 'obj')
+        assert not obj.real
 
     def test_repr(self):
         """ Test __repr__ method behavior """

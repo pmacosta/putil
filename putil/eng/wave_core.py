@@ -10,6 +10,7 @@ import copy
 import numpy
 import scipy.interpolate
 # Putil imports
+import putil.exh
 import putil.pcontracts
 from .functions import pprint_vector, remove_extra_delims
 from .constants import FP_ATOL, FP_RTOL
@@ -113,11 +114,8 @@ def _interp_dep_vector(wave, indep_vector):
 
 def _get_indep_vector(wave_a, wave_b):
     """ Create new independent variable vector """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='non_overlapping_ranges',
-        extype=RuntimeError,
-        exmsg='Independent variable ranges do not overlap'
+    exobj = putil.exh.addex(
+        RuntimeError, 'Independent variable ranges do not overlap'
     )
     min_bound = max(
         numpy.min(wave_a.indep_vector),
@@ -127,10 +125,7 @@ def _get_indep_vector(wave_a, wave_b):
         numpy.max(wave_a.indep_vector),
         numpy.max(wave_b.indep_vector)
     )
-    exh.raise_exception_if(
-        exname='non_overlapping_ranges',
-        condition=bool(min_bound > max_bound)
-    )
+    exobj(bool(min_bound > max_bound))
     raw_range = numpy.unique(
         numpy.concatenate(
             (wave_a.indep_vector, wave_b.indep_vector)
@@ -149,12 +144,7 @@ def _verify_compatibility(wave_a, wave_b, check_dep_units=True):
     Verify that two waveforms can be combined with various
     mathematical functions
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='incompatible_waveforms',
-        extype=RuntimeError,
-        exmsg='Waveforms are not compatible'
-    )
+    exobj = putil.exh.addex(RuntimeError, 'Waveforms are not compatible')
     ctuple = (
         bool(wave_a.indep_scale != wave_b.indep_scale),
         bool(wave_a.dep_scale != wave_b.dep_scale),
@@ -166,10 +156,7 @@ def _verify_compatibility(wave_a, wave_b, check_dep_units=True):
         ),
         bool(wave_a.interp != wave_b.interp),
     )
-    exh.raise_exception_if(
-        exname='incompatible_waveforms',
-        condition=any(ctuple)
-    )
+    exobj(any(ctuple))
 
 
 ###
@@ -269,7 +256,6 @@ class Waveform(object):
     def __init__(self, indep_vector, dep_vector, indep_name,
         indep_scale='LINEAR', dep_scale='LINEAR', indep_units='', dep_units='',
         interp='CONTINUOUS'):
-        self._exh = putil.exh.get_or_create_exh_obj()
         self._indep_vector = None
         self._dep_vector = None
         self._indep_name = None
@@ -734,14 +720,10 @@ class Waveform(object):
 
         .. [[[end]]]
         """
-        self._exh.add_exception(
-            exname='complex_not_supported',
-            extype=TypeError,
-            exmsg='Complex operand not supported'
-        )
-        self._exh.raise_exception_if(
-            exname='complex_not_supported',
-            condition=self._dep_vector.dtype.name.startswith('complex')
+        putil.exh.addex(
+            TypeError,
+            'Complex operand not supported',
+            self._dep_vector.dtype.name.startswith('complex')
         )
         obj = copy.copy(self)
         obj.indep_name = '~'+obj.indep_name
@@ -1502,16 +1484,10 @@ interp='CONTINUOUS')"
         cop_list = [
             '>', '>=', '<', '<=', '%', '<<', '>>', '&', '^', '|', 'fdiv'
         ]
-        self._exh.add_exception(
-            exname='unsupported_type',
-            extype=TypeError,
-            exmsg='Data type not supported'
-        )
+        extype = putil.exh.addex(TypeError, 'Data type not supported')
         if operand in cop_list:
-            self._exh.add_exception(
-                exname='complex_not_supported',
-                extype=TypeError,
-                exmsg='Complex operands not supported'
+            exnosup = putil.exh.addex(
+                TypeError, 'Complex operands not supported'
             )
         scalar = (
             isinstance(other, Waveform) and other.dep_units in ['', '-']
@@ -1541,17 +1517,11 @@ interp='CONTINUOUS')"
                 dep_units=self._dep_units,
                 interp=self._interp
             )
-        self._exh.raise_exception_if(
-            exname='unsupported_type',
-            condition=not isinstance(other, Waveform)
-        )
+        extype(not isinstance(other, Waveform))
         if operand in cop_list:
-            self._exh.raise_exception_if(
-                exname='complex_not_supported',
-                condition=(
-                    self.dep_vector.dtype.name.startswith('complex') or
-                    other.dep_vector.dtype.name.startswith('complex')
-                )
+            exnosup(
+                self.dep_vector.dtype.name.startswith('complex') or
+                other.dep_vector.dtype.name.startswith('complex')
             )
         check_units_list = [
             '<', '<=', '>', '>=', '+', '-', '<<', '>>', '&', '|', '^'
@@ -1711,6 +1681,13 @@ interp='CONTINUOUS')"
     def _get_interp(self):
         return self._interp
 
+    def _get_complex(self):
+        return self._dep_vector.dtype.name.startswith('complex')
+
+    def _get_real(self):
+        dtype = self._dep_vector.dtype.name
+        return any([dtype.startswith(item) for item in ['int', 'float']])
+
     def _get_vectors(self):
         return [
             Point(iitem, ditem)
@@ -1755,17 +1732,13 @@ interp='CONTINUOUS')"
         self._set_vectors_int(indep_vector, dep_vector)
 
     def _set_vectors_int(self, indep_vector=None, dep_vector=None, check=True):
-        self._exh.add_exception(
-            exname='vectors_element_mismatch',
-            extype=ValueError,
-            exmsg=(
+        putil.exh.addex(
+            ValueError,
+            (
                 'Independent and dependent vectors must '
                 'have the same number of elements'
-            )
-        )
-        self._exh.raise_exception_if(
-            exname='vectors_element_mismatch',
-            condition=check and (
+            ),
+            check and (
                 len(
                     indep_vector
                     if indep_vector is not None else
@@ -1785,6 +1758,13 @@ interp='CONTINUOUS')"
             self._dep_vector = copy.copy(dep_vector)
 
     # Managed attributes
+    complex = property(
+        _get_complex, doc='Complex dependent variable flag'
+    )
+    r"""
+    Returns True if dependent variable is complex, False otherwise
+    """
+
     dep_scale = property(
         _get_dep_scale, _set_dep_scale, doc='Dependent variable scale'
     )
@@ -1927,6 +1907,13 @@ interp='CONTINUOUS')"
      valid)
 
     .. [[[end]]]
+    """
+
+    real = property(
+        _get_real, doc='Real dependent variable flag'
+    )
+    r"""
+    Returns True if dependent variable is real, False otherwise
     """
 
     vectors = property(

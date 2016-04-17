@@ -8,6 +8,7 @@ import copy
 # PyPI imports
 import numpy
 # Putil imports
+import putil.exh
 import putil.pcontracts
 from .functions import remove_extra_delims
 from .constants import FP_ATOL, FP_RTOL
@@ -76,29 +77,14 @@ def _validate_min_max(wave, indep_min, indep_max):
         imax = True
     if imin and imax:
         return indep_min, indep_max
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='min_max_not_valid',
-        extype=RuntimeError,
-        exmsg='Incongruent `indep_min` and `indep_max` arguments'
+    exminmax = putil.exh.addex(
+        RuntimeError, 'Incongruent `indep_min` and `indep_max` arguments'
     )
-    exh.add_exception(
-        exname='min_not_valid',
-        extype=RuntimeError,
-        exmsg='Argument `indep_min` is not valid'
-    )
-    exh.add_exception(
-        exname='max_not_valid',
-        extype=RuntimeError,
-        exmsg='Argument `indep_max` is not valid'
-    )
-    exh.raise_exception_if(
-        exname='min_max_not_valid',
-        condition=bool(indep_min >= indep_max)
-    )
-    exh.raise_exception_if(
-        exname='min_not_valid',
-        condition=bool(
+    exmin = putil.exh.addai('indep_min')
+    exmax = putil.exh.addai('indep_max')
+    exminmax(bool(indep_min >= indep_max))
+    exmin(
+        bool(
             (indep_min < wave._indep_vector[0]) and
             (
                 not numpy.isclose(
@@ -107,9 +93,8 @@ def _validate_min_max(wave, indep_min, indep_max):
             )
         )
     )
-    exh.raise_exception_if(
-        exname='max_not_valid',
-        condition=bool(
+    exmax(
+        bool(
             (indep_max > wave._indep_vector[-1]) and
             (
                 not numpy.isclose(
@@ -142,15 +127,8 @@ def acos(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='domain_error',
-        extype=ValueError,
-        exmsg='Math domain error'
-    )
-    exh.raise_exception_if(
-        exname='domain_error',
-        condition=bool(
+    putil.exh.addex(
+        ValueError, 'Math domain error', bool(
             (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
         )
     )
@@ -178,14 +156,8 @@ def acosh(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='domain_error',
-        extype=ValueError,
-        exmsg='Math domain error'
-    )
-    exh.raise_exception_if(
-        exname='domain_error', condition=bool(min(wave._dep_vector) < 1)
+    putil.exh.addex(
+        ValueError, 'Math domain error', bool(min(wave._dep_vector) < 1)
     )
     return _operation(wave, 'acosh', '', numpy.arccosh)
 
@@ -211,15 +183,8 @@ def asin(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='domain_error',
-        extype=ValueError,
-        exmsg='Math domain error'
-    )
-    exh.raise_exception_if(
-        exname='domain_error',
-        condition=bool(
+    putil.exh.addex(
+        ValueError, 'Math domain error', bool(
             (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
         )
     )
@@ -290,15 +255,8 @@ def atanh(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='domain_error',
-        extype=ValueError,
-        exmsg='Math domain error'
-    )
-    exh.raise_exception_if(
-        exname='domain_error',
-        condition=bool(
+    putil.exh.addex(
+        ValueError, 'Math domain error', bool(
             (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
         )
     )
@@ -432,15 +390,8 @@ def db(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='domain_error',
-        extype=ValueError,
-        exmsg='Math domain error'
-    )
-    exh.raise_exception_if(
-        exname='domain_error',
-        condition=bool((min(wave._dep_vector) <= 0))
+    putil.exh.addex(
+        ValueError, 'Math domain error', bool((min(wave._dep_vector) <= 0))
     )
     ret = copy.copy(wave)
     ret.dep_units = 'dB'
@@ -641,15 +592,8 @@ def log(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='domain_error',
-        extype=ValueError,
-        exmsg='Math domain error'
-    )
-    exh.raise_exception_if(
-        exname='domain_error',
-        condition=bool((min(wave._dep_vector) <= 0))
+    putil.exh.addex(
+        ValueError, 'Math domain error', bool((min(wave._dep_vector) <= 0))
     )
     return _operation(wave, 'log', '', numpy.log)
 
@@ -675,15 +619,8 @@ def log10(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='domain_error',
-        extype=ValueError,
-        exmsg='Math domain error'
-    )
-    exh.raise_exception_if(
-        exname='domain_error',
-        condition=bool((min(wave._dep_vector) <= 0))
+    putil.exh.addex(
+        ValueError, 'Math domain error', bool((min(wave._dep_vector) <= 0))
     )
     return _operation(wave, 'log10', '', numpy.log10)
 
@@ -851,6 +788,28 @@ def phase(wave, unwrap=True, rad=True):
     return ret
 
 
+@putil.pcontracts.contract(wave=Waveform)
+def real(wave):
+    r"""
+    Returns the real part of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.real
+
+    :raises: RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    return _operation(wave, 'real', wave.dep_units, numpy.real)
+
+
+
 @putil.pcontracts.contract(wave=Waveform, decimals='int,>=0')
 def round(wave, decimals=0):
     r"""
@@ -877,15 +836,10 @@ def round(wave, decimals=0):
     .. [[[end]]]
     """
     # pylint: disable=W0622
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='complex_not_supported',
-        extype=TypeError,
-        exmsg='Cannot convert complex to integer'
-    )
-    exh.raise_exception_if(
-        exname='complex_not_supported',
-        condition=wave._dep_vector.dtype.name.startswith('complex')
+    putil.exh.addex(
+        TypeError,
+        'Cannot convert complex to integer',
+        wave._dep_vector.dtype.name.startswith('complex')
     )
     ret = copy.copy(wave)
     ret.indep_name = 'round({0}, {1})'.format(ret.indep_name, decimals)
@@ -1043,15 +997,10 @@ def wfloat(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='complex_not_supported',
-        extype=TypeError,
-        exmsg='Cannot convert complex to float'
-    )
-    exh.raise_exception_if(
-        exname='complex_not_supported',
-        condition=wave._dep_vector.dtype.name.startswith('complex')
+    putil.exh.addex(
+        TypeError,
+        'Cannot convert complex to float',
+        wave._dep_vector.dtype.name.startswith('complex')
     )
     ret = copy.copy(wave)
     ret._dep_vector = ret._dep_vector.astype(numpy.float)
@@ -1079,16 +1028,65 @@ def wint(wave):
 
     .. [[[end]]]
     """
-    exh = putil.exh.get_or_create_exh_obj()
-    exh.add_exception(
-        exname='complex_not_supported',
-        extype=TypeError,
-        exmsg='Cannot convert complex to integer'
-    )
-    exh.raise_exception_if(
-        exname='complex_not_supported',
-        condition=wave._dep_vector.dtype.name.startswith('complex')
+    putil.exh.addex(
+        TypeError,
+        'Cannot convert complex to integer',
+        wave._dep_vector.dtype.name.startswith('complex')
     )
     ret = copy.copy(wave)
     ret._dep_vector = ret._dep_vector.astype(numpy.int)
     return ret
+
+
+@putil.pcontracts.contract(wave=Waveform, indep_var='number')
+def wvalue(wave, indep_var):
+    r"""
+    Returns the dependent variable value at a given independent variable point.
+    If the independent variable point is not in the independent variable vector
+    the dependent variable value is obtained by linear interpolation
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_var: Independent variable point for which the dependent
+                      variable is to be obtained
+    :type  indep_var: integer or float
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.wvalue
+
+    :raises:
+     * RuntimeError (Argument \`indep_var\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Argument \`indep_var\` is not in the independent
+       variable vector range)
+
+    .. [[[end]]]
+    """
+    close_min = numpy.isclose(
+        indep_var, wave._indep_vector[0], FP_RTOL, FP_ATOL
+    )
+    close_max = numpy.isclose(
+        indep_var, wave._indep_vector[-1], FP_RTOL, FP_ATOL
+    )
+    putil.exh.addex(
+        ValueError,
+        'Argument `indep_var` is not in the independent variable vector range',
+        bool(((indep_var < wave._indep_vector[0]) and (not close_min))
+        or
+        ((indep_var > wave._indep_vector[-1]) and (not close_max)))
+    )
+    if close_min:
+        return wave._dep_vector[0]
+    if close_max:
+        return wave._dep_vector[-1]
+    idx = numpy.searchsorted(wave._indep_vector, indep_var)
+    xdelta = wave._indep_vector[idx]-wave._indep_vector[idx-1]
+    ydelta = wave._dep_vector[idx]-wave._dep_vector[idx-1]
+    slope = ydelta/float(xdelta)
+    return wave._dep_vector[idx-1]+slope*(indep_var-wave._indep_vector[idx-1])

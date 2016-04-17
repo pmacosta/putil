@@ -712,7 +712,7 @@ def peng_suffix_math(suffix, offset):
         >>> putil.eng.peng_suffix_math('u', 6)
         'T'
     """
-    # pylint: disable=W0212,W0631
+    # pylint: disable=W0212
     eobj = putil.exh.addex(ValueError, 'Argument `offset` is not valid')
     try:
         return _POWER_TO_SUFFIX_DICT[_SUFFIX_TO_POWER_DICT[suffix]+3*offset]

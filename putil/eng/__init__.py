@@ -46,6 +46,7 @@ from .wave_functions import (
     nmax,
     nmin,
     phase,
+    real,
     round,
     sin,
     sinh,
@@ -55,5 +56,6 @@ from .wave_functions import (
     wcomplex,
     wfloat,
     wint,
+    wvalue
 )
 from .constants import FP_ATOL, FP_RTOL

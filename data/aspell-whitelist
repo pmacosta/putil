@@ -376,9 +376,13 @@ exitem
 exkey
 exlength
 exlist
+exmax
+exmin
+exminmax
 exmsg
 EXMSG
 exname
+exnosup
 exnum
 exobj
 ExObj
@@ -515,6 +519,7 @@ idata
 idfilter
 idict
 idv
+idx
 ifname
 ifobj
 ifrow
@@ -1358,9 +1363,11 @@ writerows
 wround
 wsindent
 wsregexp
+wvalue
 xaxis
 xbb
 xbf
+xdelta
 xdist
 xef
 xFFFF
@@ -1375,6 +1382,7 @@ xstart
 xstop
 xyz
 yaxis
+ydelta
 yellowgreen
 yflist
 yinterp

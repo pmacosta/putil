@@ -255,9 +255,9 @@ def test_funcs_exceptions():
         putil.eng.cos, putil.eng.cosh, putil.eng.db, putil.eng.derivative,
         putil.eng.exp, putil.eng.floor, putil.eng.imag, putil.eng.integral,
         putil.eng.log, putil.eng.log10, putil.eng.nintegral, putil.eng.nmax,
-        putil.eng.nmin, putil.eng.phase, putil.eng.round, putil.eng.sin,
-        putil.eng.sinh, putil.eng.sqrt, putil.eng.tan, putil.eng.tanh,
-        putil.eng.wcomplex, putil.eng.wfloat, putil.eng.wint
+        putil.eng.nmin, putil.eng.phase, putil.eng.real, putil.eng.round,
+        putil.eng.sin, putil.eng.sinh, putil.eng.sqrt, putil.eng.tan,
+        putil.eng.tanh, putil.eng.wcomplex, putil.eng.wfloat, putil.eng.wint,
     ]
     for item in items:
         AI(item, 'wave', 'a')
@@ -382,6 +382,14 @@ def test_phase_exceptions():
         AI(putil.eng.phase, 'rad', wave=obj, rad=item)
 
 
+def test_real():
+    """ Test real function behavior """
+    dep_vector = numpy.array([10.41, 1+3j, 10-0.5j])
+    strict_compare_waves(
+        dep_vector, putil.eng.real, 'real', 'Volts', numpy.real
+    )
+
+
 def test_round():
     """ Test wround method behavior """
     obj_a = std_obj('obj', dep_vector=numpy.array([5.4, 1.6, 0]))
@@ -498,3 +506,32 @@ def test_wint_exceptions():
     dep_vector = numpy.array([0.99, 1+3j, 0.5])
     obj = std_obj(indep_name='obj_a', dep_vector=dep_vector)
     AE(putil.eng.wint, TypeError, 'Cannot convert complex to integer', obj)
+
+
+def test_wvalue():
+    """ Test wvalue method behavior """
+    obj = std_obj('obj')
+    assert putil.eng.wvalue(obj, 0.9999999999999) == 6
+    assert putil.eng.wvalue(obj, 1.0) == 6
+    assert putil.eng.wvalue(obj, 1.0000000000001) == 6
+    assert putil.eng.wvalue(obj, 2.9999999999999) == 4
+    assert putil.eng.wvalue(obj, 3) == 4
+    assert putil.eng.wvalue(obj, 3.0000000000001) == 4
+    assert putil.eng.wvalue(obj, 1.5) == 5.5
+    assert putil.eng.wvalue(obj, 1.25) == 5.75
+    assert putil.eng.wvalue(obj, 2.5) == 4.5
+    assert putil.eng.wvalue(obj, 2.9) == 4.1
+
+
+@pytest.mark.wave_functions
+def test_wvalue_exceptions():
+    """ Test wvalue function exceptions """
+    AI(putil.eng.wvalue, 'wave', 'a', 5)
+    obj = std_obj(indep_name='obj')
+    exmsg = (
+        'Argument `indep_var` is not in the independent variable vector range'
+    )
+    AE(putil.eng.wvalue, ValueError, exmsg, obj, 0)
+    AE(putil.eng.wvalue, ValueError, exmsg, obj, 0.999)
+    AE(putil.eng.wvalue, ValueError, exmsg, obj, 3.001)
+    AE(putil.eng.wvalue, ValueError, exmsg, obj, 4)

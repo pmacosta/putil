@@ -161,6 +161,7 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.nmax
 .. autofunction:: putil.eng.nmin
 .. autofunction:: putil.eng.phase
+.. autofunction:: putil.eng.real
 .. autofunction:: putil.eng.round
 .. autofunction:: putil.eng.sin
 .. autofunction:: putil.eng.sinh
@@ -170,6 +171,7 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.wcomplex
 .. autofunction:: putil.eng.wfloat
 .. autofunction:: putil.eng.wint
+.. autofunction:: putil.eng.wvalue
 
 .. autoclass:: putil.eng.Waveform
 	:members: __add__,
@@ -217,12 +219,14 @@ Waveform pseudo-type
                   __str__,
                   __truediv__,
                   __xor__,
-                  vectors,
+                  complex,
                   dep_scale,
                   dep_units,
                   dep_vector,
                   indep_scale,
                   indep_units,
                   indep_vector,
-                  interp
+                  interp,
+                  real,
+                  vectors
 	:show-inheritance:
