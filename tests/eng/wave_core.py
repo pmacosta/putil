@@ -122,15 +122,15 @@ def test_get_indep_vector():
     obj_b = putil.eng.Waveform(
         array([1.5, 4, 5]), array([30, 40, 50]), 'obj_b'
     )
-    assert cmp_vectors(fut(obj_a, obj_b), array([1.5, 2, 3, 4]))
+    cmp_vectors(fut(obj_a, obj_b), array([1.5, 2, 3, 4]))
     obj_a = putil.eng.Waveform(
         array([1.75, 2, 2.5, 4]), array([10, 20, 30, 40]), 'obj_a'
     )
-    assert cmp_vectors(fut(obj_a, obj_b), array([1.75, 2, 2.5, 4]))
+    cmp_vectors(fut(obj_a, obj_b), array([1.75, 2, 2.5, 4]))
     obj_a = putil.eng.Waveform(
         array([3.5, 4.5, 6, 7]), array([10, 20, 30, 40]), 'obj_a'
     )
-    assert cmp_vectors(fut(obj_a, obj_b), array([3.5, 4, 4.5, 5]))
+    cmp_vectors(fut(obj_a, obj_b), array([3.5, 4, 4.5, 5]))
 
 
 def test_homogenize_waves():
@@ -149,7 +149,7 @@ def test_homogenize_waves():
     )
     fut = putil.eng.wave_core._homogenize_waves
     indep_vector, dep_vector_a, dep_vector_b = fut(obj_a, obj_b)
-    assert cmp_vectors(
+    cmp_vectors(
         indep_vector,
         array([1, 1.5, 2, 2.25, 3, 3.75, 4])
     )
@@ -673,10 +673,10 @@ class TestWaveform(object):
         ref = array([(1/6.0)+(1j/6.0), 0.2+0.2j, 0.25+0.25j])
         assert (((1+1j)/obj_a).dep_vector == ref).all()
         ref = array([0.6-0.3j, 0.5-0.25j, 0.4-0.2j])
-        assert cmp_vectors((obj_a/(8+4j)).dep_vector, ref)
+        cmp_vectors((obj_a/(8+4j)).dep_vector, ref)
         obj_a /= 8+4j
         ref = array([0.6-0.3j, 0.5-0.25j, 0.4-0.2j])
-        assert cmp_vectors(obj_a.dep_vector, ref)
+        cmp_vectors(obj_a.dep_vector, ref)
         # Test units handling with waveforms
         # Both without units
         obj_a = std_obj('obj_a', dep_units='')
@@ -1502,8 +1502,8 @@ class TestWaveform(object):
         obj_b[slice(0, 5, 2)] = [
             (-1, 20), (4, 30), (60, -20)
         ]
-        assert cmp_vectors(obj_b.indep_vector, array([-1, 2, 4, 5, 60]))
-        assert cmp_vectors(obj_b.dep_vector, array([20, 8, 30, 5, -20]))
+        cmp_vectors(obj_b.indep_vector, array([-1, 2, 4, 5, 60]))
+        cmp_vectors(obj_b.dep_vector, array([20, 8, 30, 5, -20]))
         assert obj_b.indep_vector.dtype.name.startswith('int')
         assert obj_b.dep_vector.dtype.name.startswith('int')
 

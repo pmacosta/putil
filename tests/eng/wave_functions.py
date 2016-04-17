@@ -11,7 +11,7 @@ import numpy
 import pytest
 # Putil imports
 import putil.eng
-import putil.test
+from putil.test import AE, AI
 from .support import cmp_vectors, std_obj
 
 
@@ -61,9 +61,7 @@ def test_acos_exceptions():
     dep_vector = numpy.array([1.01, 0.98, 0.5])
     obj_b = std_obj(indep_name='obj_b', dep_vector=dep_vector)
     for item in [obj_a, obj_b]:
-        putil.test.assert_exception(
-            putil.eng.acos, {'wave':item}, ValueError, 'Math domain error'
-        )
+        AE(putil.eng.acos, ValueError, 'Math domain error', item)
 
 
 def test_acosh():
@@ -79,9 +77,7 @@ def test_acosh_exceptions():
     """ Test acosh function exceptions """
     dep_vector = numpy.array([0.99, 0.98, 0.5])
     obj = std_obj(indep_name='obj_a', dep_vector=dep_vector)
-    putil.test.assert_exception(
-        putil.eng.acosh, {'wave':obj}, ValueError, 'Math domain error'
-    )
+    AE(putil.eng.acosh, ValueError, 'Math domain error', obj)
 
 
 def test_asin():
@@ -100,9 +96,7 @@ def test_asin_exceptions():
     dep_vector = numpy.array([1.01, 0.98, 0.5])
     obj_b = std_obj(indep_name='obj_b', dep_vector=dep_vector)
     for item in [obj_a, obj_b]:
-        putil.test.assert_exception(
-            putil.eng.asin, {'wave':item}, ValueError, 'Math domain error'
-        )
+        AE(putil.eng.asin, ValueError, 'Math domain error', item)
 
 
 def test_asinh():
@@ -137,9 +131,7 @@ def test_atanh_exceptions():
     dep_vector = numpy.array([1.01, 0.98, 0.5])
     obj_b = std_obj(indep_name='obj_b', dep_vector=dep_vector)
     for item in [obj_a, obj_b]:
-        putil.test.assert_exception(
-            putil.eng.atanh, {'wave':item}, ValueError, 'Math domain error'
-        )
+        AE(putil.eng.atanh, ValueError, 'Math domain error', item)
 
 
 def test_average():
@@ -172,36 +164,12 @@ def test_bound_exceptions():
         putil.eng.nintegral, putil.eng.nmax, putil.eng.nmin,
     ]
     for item in items:
-        putil.test.assert_exception(
-            item,
-            {'wave':obj, 'indep_min':'a'},
-            RuntimeError,
-            'Argument `indep_min` is not valid'
-        )
-        putil.test.assert_exception(
-            item,
-            {'wave':obj, 'indep_max':'a'},
-            RuntimeError,
-            'Argument `indep_max` is not valid'
-        )
-        putil.test.assert_exception(
-            item,
-            {'wave':obj, 'indep_min':1.5, 'indep_max':1},
-            RuntimeError,
-            'Incongruent `indep_min` and `indep_max` arguments'
-        )
-        putil.test.assert_exception(
-            item,
-            {'wave':obj, 'indep_min':0},
-            RuntimeError,
-            'Argument `indep_min` is not valid'
-        )
-        putil.test.assert_exception(
-            item,
-            {'wave':obj, 'indep_max':10},
-            RuntimeError,
-            'Argument `indep_max` is not valid'
-        )
+        AI(item, 'indep_min', wave=obj, indep_min='a')
+        AI(item, 'indep_max', wave=obj, indep_max='a')
+        msg = 'Incongruent `indep_min` and `indep_max` arguments'
+        AE(item, RuntimeError, msg, wave=obj, indep_min=1.5, indep_max=1)
+        AI(item, 'indep_min', wave=obj, indep_min=0)
+        AI(item, 'indep_max', wave=obj, indep_max=10)
 
 
 def test_ceil():
@@ -241,9 +209,7 @@ def test_db_exceptions():
     """ Test db function exceptions """
     dep_vector = numpy.array([0, 0.98, 0.5])
     obj = std_obj(indep_name='obj', dep_vector=dep_vector)
-    putil.test.assert_exception(
-        putil.eng.db, {'wave':obj}, ValueError, 'Math domain error'
-    )
+    AE(putil.eng.db, ValueError, 'Math domain error', obj)
 
 
 def test_derivative():
@@ -294,9 +260,7 @@ def test_funcs_exceptions():
         putil.eng.wcomplex, putil.eng.wfloat, putil.eng.wint
     ]
     for item in items:
-        putil.test.assert_exception(
-            item, {'wave':'a'}, RuntimeError, 'Argument `wave` is not valid'
-        )
+        AI(item, 'wave', 'a')
 
 
 def test_imag():
@@ -350,9 +314,7 @@ def test_log_exceptions():
     obj = std_obj(indep_name='obj', dep_vector=dep_vector)
     items = [putil.eng.log, putil.eng.log10]
     for item in items:
-        putil.test.assert_exception(
-            item, {'wave':obj}, ValueError, 'Math domain error'
-        )
+        AE(item, ValueError, 'Math domain error', obj)
 
 
 def test_nmax():
@@ -416,16 +378,8 @@ def test_phase_exceptions():
     obj = std_obj('obj')
     items = ['a', 5.0, (1, 2)]
     for item in items:
-        putil.test.assert_exception(
-            putil.eng.phase,
-            {'wave':obj, 'unwrap':item},
-            RuntimeError, 'Argument `unwrap` is not valid'
-        )
-        putil.test.assert_exception(
-            putil.eng.phase,
-            {'wave':obj, 'rad':item},
-            RuntimeError, 'Argument `rad` is not valid'
-        )
+        AI(putil.eng.phase, 'unwrap', wave=obj, unwrap=item)
+        AI(putil.eng.phase, 'rad', wave=obj, rad=item)
 
 
 def test_round():
@@ -448,12 +402,7 @@ def test_round_exceptions():
     obj = std_obj(indep_name='obj')
     items = [-1, -0.0001, 'a', 3.5]
     for item in items:
-        putil.test.assert_exception(
-            putil.eng.round,
-            {'wave':obj, 'decimals':item},
-            RuntimeError,
-            'Argument `decimals` is not valid'
-        )
+        AI(putil.eng.round, 'decimals', wave=obj, decimals=item)
 
 
 def test_sin():
@@ -529,12 +478,7 @@ def test_wfloat_exceptions():
     """ Test wfloat function exceptions """
     dep_vector = numpy.array([0.99, 1+3j, 0.5])
     obj = std_obj(indep_name='obj_a', dep_vector=dep_vector)
-    putil.test.assert_exception(
-        putil.eng.wfloat,
-        {'wave':obj},
-        TypeError,
-        'Cannot convert complex to float'
-    )
+    AE(putil.eng.wfloat, TypeError, 'Cannot convert complex to float', obj)
 
 
 def test_wint():
@@ -553,9 +497,4 @@ def test_wint_exceptions():
     """ Test wint function exceptions """
     dep_vector = numpy.array([0.99, 1+3j, 0.5])
     obj = std_obj(indep_name='obj_a', dep_vector=dep_vector)
-    putil.test.assert_exception(
-        putil.eng.wint,
-        {'wave':obj},
-        TypeError,
-        'Cannot convert complex to integer'
-    )
+    AE(putil.eng.wint, TypeError, 'Cannot convert complex to integer', obj)
