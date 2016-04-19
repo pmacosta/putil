@@ -135,7 +135,26 @@ def test_atanh_exceptions():
 
 
 def test_average():
-    """ Test average function behavior """
+    """ Test average and naverage functions behavior """
+    obj = std_obj(
+        indep_vector=numpy.array([1, 2, 3, 7, 9, 15]),
+        dep_vector=numpy.array([6, 5, 4, 8.2, 7, 7.25]),
+        indep_name='obj',
+        interp='CONTINUOUS',
+        indep_scale='LINEAR'
+    )
+    act = putil.eng.average(obj)
+    ref = std_obj(
+        indep_name='average(obj)',
+        indep_vector=numpy.array([1, 2, 3, 7, 9, 15]),
+        dep_vector=numpy.array(
+            [6.0, 5.5, 5.0, 5.73333333333, 6.2, 6.59642857143]
+        ),
+        dep_units='Volts',
+        interp='CONTINUOUS',
+        indep_scale='LINEAR'
+    )
+    assert act == ref
     obj = std_obj(indep_name='obj', interp='CONTINUOUS', indep_scale='LINEAR')
     act = putil.eng.average(obj)
     ref = std_obj(
@@ -145,14 +164,17 @@ def test_average():
         interp='CONTINUOUS',
         indep_scale='LINEAR'
     )
-    assert act == ref
     assert act.indep_name == ref.indep_name
     act = putil.eng.average(obj, indep_min=1.5)
-    cmp_vectors(act.dep_vector, numpy.array([5.5, 5.25, 4.8333333333333]))
+    cmp_vectors(act.dep_vector, numpy.array([5.5, 5.25, 4.75]))
+    assert putil.eng.naverage(obj, indep_min=1.5) == act[-1].dep_var
     act = putil.eng.average(obj, indep_max=2.5)
-    cmp_vectors(act.dep_vector, numpy.array([6, 5.5, 5.166666666666]))
+    cmp_vectors(act.dep_vector, numpy.array([6, 5.5, 5.25]))
+    assert putil.eng.naverage(obj, indep_max=2.5) == act[-1].dep_var
     act = putil.eng.average(obj, indep_min=1.5, indep_max=2.5)
     cmp_vectors(act.dep_vector, numpy.array([5.5, 5.25, 5.0]))
+    num = putil.eng.naverage(obj, indep_min=1.5, indep_max=2.5)
+    assert num == act[-1].dep_var
 
 
 @pytest.mark.wave_functions
@@ -161,7 +183,8 @@ def test_bound_exceptions():
     obj = std_obj(indep_name='obj')
     items = [
         putil.eng.average, putil.eng.derivative, putil.eng.integral,
-        putil.eng.nintegral, putil.eng.nmax, putil.eng.nmin,
+        putil.eng.naverage, putil.eng.nintegral, putil.eng.nmax,
+        putil.eng.nmin,
     ]
     for item in items:
         AI(item, 'indep_min', wave=obj, indep_min='a')
@@ -231,6 +254,15 @@ def test_derivative():
         ),
         indep_vector,
     )
+    obj = std_obj('obj', indep_vector, dep_vector)
+    obj.indep_units = ''
+    assert putil.eng.derivative(obj).dep_units == 'Volts'
+    obj.indep_units = 'Sec'
+    obj.dep_units = ''
+    assert putil.eng.derivative(obj).dep_units == '1/Sec'
+    obj.indep_units = ''
+    obj.dep_units = ''
+    assert putil.eng.derivative(obj).dep_units == ''
 
 
 def test_exp():
@@ -254,10 +286,11 @@ def test_funcs_exceptions():
         putil.eng.atan, putil.eng.atanh, putil.eng.average, putil.eng.ceil,
         putil.eng.cos, putil.eng.cosh, putil.eng.db, putil.eng.derivative,
         putil.eng.exp, putil.eng.floor, putil.eng.imag, putil.eng.integral,
-        putil.eng.log, putil.eng.log10, putil.eng.nintegral, putil.eng.nmax,
-        putil.eng.nmin, putil.eng.phase, putil.eng.real, putil.eng.round,
-        putil.eng.sin, putil.eng.sinh, putil.eng.sqrt, putil.eng.tan,
-        putil.eng.tanh, putil.eng.wcomplex, putil.eng.wfloat, putil.eng.wint,
+        putil.eng.log, putil.eng.log10, putil.eng.naverage,
+        putil.eng.nintegral, putil.eng.nmax, putil.eng.nmin, putil.eng.phase,
+        putil.eng.real, putil.eng.round, putil.eng.sin, putil.eng.sinh,
+        putil.eng.sqrt, putil.eng.tan, putil.eng.tanh, putil.eng.wcomplex,
+        putil.eng.wfloat, putil.eng.wint,
     ]
     for item in items:
         AI(item, 'wave', 'a')
@@ -289,6 +322,15 @@ def test_integral():
         numpy.array([act.dep_vector[-1]]),
         numpy.array([putil.eng.nintegral(obj)])
     )
+    obj = std_obj('obj', indep_vector, dep_vector)
+    obj.indep_units = ''
+    assert putil.eng.integral(obj).dep_units == 'Volts'
+    obj.indep_units = 'Sec'
+    obj.dep_units = ''
+    assert putil.eng.integral(obj).dep_units == 'Sec'
+    obj.indep_units = ''
+    obj.dep_units = ''
+    assert putil.eng.integral(obj).dep_units == ''
 
 
 def test_log():

@@ -240,6 +240,8 @@ def _remove_extra_delims(expr, ldelim='(', rdelim=')', fcount=None):
     Removes unnecessary delimiters (parenthesis, brackets, etc.). Internal
     function that can be recursed
     """
+    if not expr.strip():
+        return ''
     fcount = [0] if fcount is None else fcount
     tfuncs = _get_functions(expr, ldelim=ldelim, rdelim=rdelim)
     # Replace function call with tokens
@@ -779,11 +781,8 @@ def remove_extra_delims(expr, ldelim='(', rdelim=')'):
     if any([item not in vchars for item in expr]) or ('__' in expr):
         raise RuntimeError('Argument `expr` is not valid')
     expr = _remove_consecutive_delims(expr, ldelim=ldelim, rdelim=rdelim)
-    return _remove_extra_delims(
-        _remove_consecutive_delims(expr, ldelim=ldelim, rdelim=rdelim),
-        ldelim=ldelim,
-        rdelim=rdelim
-    )
+    expr = expr.replace(ldelim+rdelim, '')
+    return _remove_extra_delims(expr, ldelim=ldelim, rdelim=rdelim)
 
 
 def round_mantissa(arg, decimals=0):

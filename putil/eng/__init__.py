@@ -42,6 +42,7 @@ from .wave_functions import (
     integral,
     log,
     log10,
+    naverage,
     nintegral,
     nmax,
     nmin,

@@ -157,6 +157,7 @@ Waveform pseudo-type
 .. autofunction:: putil.eng.integral
 .. autofunction:: putil.eng.log
 .. autofunction:: putil.eng.log10
+.. autofunction:: putil.eng.naverage
 .. autofunction:: putil.eng.nintegral
 .. autofunction:: putil.eng.nmax
 .. autofunction:: putil.eng.nmin

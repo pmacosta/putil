@@ -1114,6 +1114,7 @@ def test_remove_extra_delims():
     """ Test remove_extra_delims function behavior """
     fobj = putil.eng.remove_extra_delims
     assert fobj('') == ''
+    assert fobj('()') == ''
     assert fobj('(((45.3+35)))') == '45.3+35'
     assert fobj('(((45+(25/20)-((5<<2))%35)))') == '45+25/20-(5<<2)%35'
     assert (

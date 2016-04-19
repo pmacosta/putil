@@ -54,6 +54,23 @@ def _bound_waveform(wave, indep_min, indep_max):
     wave._dep_vector = dep_vector[min_pos:max_pos+1]
 
 
+def _build_units(indep_units, dep_units, op):
+    """ Build unit math operations """
+    if (not dep_units) and (not indep_units):
+        return ''
+    if dep_units and (not indep_units):
+        return dep_units
+    if (not dep_units) and indep_units:
+        return (
+            remove_extra_delims('1{0}({1})'.format(op, indep_units))
+            if op == '/' else
+            remove_extra_delims('({0})'.format(indep_units))
+        )
+    return remove_extra_delims(
+        '({0}){1}({2})'.format(dep_units, op, indep_units)
+    )
+
+
 def _operation(wave, desc, units, fpointer):
     """ Generic operation on a waveform object """
     ret = copy.copy(wave)
@@ -61,6 +78,18 @@ def _operation(wave, desc, units, fpointer):
     ret.indep_name = '{0}({1})'.format(desc, ret.indep_name)
     ret._dep_vector = fpointer(ret._dep_vector)
     return ret
+
+
+def _running_area(indep_vector, dep_vector):
+    """ Calculate running area under curve """
+    rect_height = numpy.minimum(dep_vector[:-1], dep_vector[1:])
+    rect_base = numpy.diff(indep_vector)
+    rect_area = numpy.multiply(rect_height, rect_base)
+    triang_height = numpy.abs(numpy.diff(dep_vector))
+    triang_area = 0.5*numpy.multiply(triang_height, rect_base)
+    return numpy.cumsum(
+        numpy.concatenate((numpy.array([0.0]), triang_area+rect_area))
+    )
 
 
 def _validate_min_max(wave, indep_min, indep_max):
@@ -299,9 +328,11 @@ def average(wave, indep_min=None, indep_max=None):
     """
     ret = copy.copy(wave)
     _bound_waveform(ret, indep_min, indep_max)
-    ret._dep_vector = (
-        numpy.cumsum(ret._dep_vector)/numpy.arange(1.0, ret._dep_vector.size+1)
-    )
+    area = _running_area(ret._indep_vector, ret._dep_vector)
+    area[0] = ret._dep_vector[0]
+    deltas = ret._indep_vector-ret._indep_vector[0]
+    deltas[0] = 1.0
+    ret._dep_vector = numpy.divide(area, deltas)
     ret.indep_name = 'average({0})'.format(ret._indep_name)
     return ret
 
@@ -449,9 +480,7 @@ def derivative(wave, indep_min=None, indep_max=None):
     )
     ret._dep_vector = numpy.divide(delta_dep, delta_indep)
     ret.indep_name = 'derivative({0})'.format(ret._indep_name)
-    ret.dep_units = remove_extra_delims(
-        '({0})/({1})'.format(ret.dep_units, ret.indep_units)
-    )
+    ret.dep_units = _build_units(ret.indep_units, ret.dep_units, '/')
     return ret
 
 
@@ -556,18 +585,9 @@ def integral(wave, indep_min=None, indep_max=None):
     """
     ret = copy.copy(wave)
     _bound_waveform(ret, indep_min, indep_max)
-    rect_height = numpy.minimum(ret._dep_vector[:-1], ret._dep_vector[1:])
-    rect_base = numpy.diff(ret._indep_vector)
-    rect_area = numpy.multiply(rect_height, rect_base)
-    triang_height = numpy.abs(numpy.diff(ret._dep_vector))
-    triang_area = 0.5*numpy.multiply(triang_height, rect_base)
-    ret._dep_vector = numpy.cumsum(
-        numpy.concatenate((numpy.array([0.0]), triang_area+rect_area))
-    )
+    ret._dep_vector = _running_area(ret._indep_vector, ret._dep_vector)
     ret.indep_name = 'integral({0})'.format(ret._indep_name)
-    ret.dep_units = remove_extra_delims(
-        '({0})*({1})'.format(ret.dep_units, ret.indep_units)
-    )
+    ret.dep_units = _build_units(ret.indep_units, ret.dep_units, '*')
     return ret
 
 
@@ -623,6 +643,46 @@ def log10(wave):
         ValueError, 'Math domain error', bool((min(wave._dep_vector) <= 0))
     )
     return _operation(wave, 'log10', '', numpy.log10)
+
+
+@putil.pcontracts.contract(
+    wave=Waveform, indep_min='None|number', indep_max='None|number'
+)
+def naverage(wave, indep_min=None, indep_max=None):
+    r"""
+    Returns the numerical average of a waveform's dependent variable vector
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: :py:class:`putil.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.wave_functions.naverage
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+    .. [[[end]]]
+    """
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    delta_x = ret._indep_vector[-1]-ret._indep_vector[0]
+    return numpy.trapz(ret._dep_vector, x=ret._indep_vector)/delta_x
 
 
 @putil.pcontracts.contract(
