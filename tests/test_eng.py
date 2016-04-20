@@ -27,6 +27,10 @@ from tests.eng.functions import (
     test_to_sci_string,
     test_to_scientific_string,
 )
+from tests.eng.touchstone import (
+    test_read_touchstone,
+    test_read_touchstone_exceptions
+)
 from tests.eng.wave_core import (
     test_get_indep_vector,
     test_get_indep_vector_exceptions,

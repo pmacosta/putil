@@ -1,0 +1,137 @@
+# touchstone.py
+# Copyright (c) 2013-2016 Pablo Acosta-Serafini
+# See LICENSE for details
+# pylint: disable=C0111,W0611
+
+# Standard library imports
+import os
+import re
+# PyPI imports
+import numpy
+# Putil imports
+import putil.exh
+import putil.pcontracts
+from putil.ptypes import file_name_exists
+
+
+###
+# Exception tracing initialization code
+###
+"""
+[[[cog
+import os, sys
+sys.path.append(os.environ['TRACER_DIR'])
+import trace_ex_eng_touchstone
+exobj = trace_ex_eng_touchstone.trace_module(no_print=True)
+]]]
+[[[end]]]
+"""
+
+
+###
+# Functions
+###
+@putil.pcontracts.contract(fname='file_name_exists')
+def read_touchstone(fname):
+    """
+    Read Touchstone file
+
+    :param fname: Touchstone file name
+    :type  fname: ref:`FileNameExists`
+    .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+    .. [[[end]]]
+    """
+    # pylint: disable=R0912,R0914,R0915,W0702
+    # Exceptions definitions
+    exnports = putil.exh.addex(
+        RuntimeError, 'File *[fname]* does not have a valid extension'
+    )
+    exnoopt = putil.exh.addex(
+        RuntimeError, 'First non-comment line is not the option line'
+    )
+    exopt = putil.exh.addex(RuntimeError, 'Illegal option line')
+    exline = putil.exh.addex(RuntimeError, 'Illegal data in line *[lineno]*')
+    exnodata = putil.exh.addex(RuntimeError, 'File *[fname]* has no data')
+    exdata = putil.exh.addex(RuntimeError, 'Malformed data')
+    # Verify that file has correct extension format
+    _, ext = os.path.splitext(fname)
+    ext = ext.lower()
+    nports_regexp = re.compile(r'\.s(\d+)p')
+    match = nports_regexp.match(ext)
+    exnports(not match, edata={'field':'fname', 'value':fname})
+    nports = int(match.groups()[0])
+    opt_line = False
+    units_dict = {'GHZ':'GHz', 'MHZ':'MHz', 'KHZ':'KHz', 'HZ':'Hz'}
+    units_opts = ['GHZ', 'MHZ', 'KHZ', 'HZ']
+    type_opts = ['S', 'Y', 'Z', 'H', 'G']
+    format_opts = ['DB', 'MA', 'RI']
+    opts = dict(units=None, ptype=None, pformat=None, z0=None)
+    data = numpy.array([])
+    with open(fname, 'r') as fobj:
+        for num, line in enumerate(fobj):
+            line = line.strip().upper()
+            # Comment line
+            if line.startswith('!'):
+                continue
+            # Options line
+            if (not opt_line) and (not line.startswith('#')):
+                exnoopt(True)
+            if not opt_line:
+                # Each Touchstone data file must contain an option line
+                # (additional option lines after the first one will be ignored)
+                opt_line = True
+                tokens = line[1:].split()   # Remove initial hash
+                if 'R' in tokens:
+                    idx = tokens.index('R')
+                    add = 1
+                    if len(tokens) > idx+1:
+                        try:
+                            opts['z0'] = float(tokens[idx+1])
+                            add = 2
+                        except:
+                            pass
+                    tokens = tokens[:idx]+tokens[idx+add:]
+                matches = 0
+                for token in tokens:
+                    if (token in format_opts) and (not opts['pformat']):
+                        matches += 1
+                        opts['pformat'] = token
+                    elif (token in units_opts) and (not opts['units']):
+                        matches += 1
+                        opts['units'] = units_dict[token]
+                    elif (token in type_opts) and (not opts['ptype']):
+                        matches += 1
+                        opts['ptype'] = token
+                exopt(matches != len(tokens))
+            if opt_line and line.startswith('#'):
+                continue
+            # Data lines
+            try:
+                tokens = [float(item) for item in line.split()]
+                data = numpy.append(data, tokens)
+            except:
+                exline(True, edata={'field':'lineno', 'value':num+1})
+    exnodata(not data.size, edata={'field':'fname', 'value':fname})
+    exdata(data.size % (1+(2*nports)) != 0)
+    npoints = int(data.size / (1+(2*nports)))
+    # Set option defaults
+    opts['units'] = opts['units'] or 'GHz'
+    opts['ptype'] = opts['ptype'] or 'S'
+    opts['pformat'] = opts['pformat'] or 'MA'
+    opts['z0'] = opts['z0'] or 50
+    # Format data
+    data_dict = {}
+    fslice = slice(0, data.size, 1+(2*nports))
+    data_dict['freq'] = data[fslice]
+    data = numpy.delete(data, fslice)
+    d1slice = slice(0, data.size, 2)
+    d2slice = slice(1, data.size, 2)
+    if opts['pformat'] == 'MA':
+        data = data[d1slice]*numpy.exp(1j*data[d2slice])
+    elif opts['pformat'] == 'RI':
+        data = data[d1slice]+(1j*data[d2slice])
+    elif opts['pformat'] == 'DB':
+        data = (10**(data[d1slice]/20.0))*numpy.exp(1j*data[d2slice])
+    data_dict['data'] = numpy.resize(data, (npoints, nports, nports))
+    del data
+    return dict(nports=nports, opts=opts, points=npoints, data=data_dict)

@@ -150,6 +150,7 @@ cls
 Clsc
 clsvar
 clut
+cmath
 cmd
 CMD
 cmdclass
@@ -336,6 +337,7 @@ environ
 eobj
 eol
 EOL
+eopts
 eps
 EPS
 eq
@@ -375,6 +377,7 @@ EXHOBJ
 exitem
 exkey
 exlength
+exline
 exlist
 exmax
 exmin
@@ -382,10 +385,14 @@ exminmax
 exmsg
 EXMSG
 exname
+exnodata
+exnoopt
 exnosup
+exnports
 exnum
 exobj
 ExObj
+exopt
 exoutput
 expr
 extb
@@ -455,6 +462,7 @@ fromfile
 FromImportClosureClass
 frow
 fset
+fslice
 fstring
 ftest
 fticklabels
@@ -766,6 +774,7 @@ NaN
 nano
 nargs
 navajowhite
+naverage
 nCallable
 ncmu
 ncol
@@ -805,12 +814,14 @@ None's
 NONINFRINGEMENT
 NonNegativeInteger
 NonNullString
+noopt
 nops
 noption
 NOPTION
 norder
 np
 npoints
+nports
 npz
 nref
 nReference
@@ -913,6 +924,7 @@ peta
 pexceptions
 pexlist
 pflag
+pformat
 pgcd
 pico
 pid
@@ -954,6 +966,7 @@ proc
 prt
 ps
 ptxt
+ptype
 ptypes
 PuBu
 PuBuGn
@@ -1040,6 +1053,7 @@ repr
 req
 reqdir
 reqs
+resize
 reStructuredText
 ret
 retcode
