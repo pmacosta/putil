@@ -1305,6 +1305,9 @@ toDocClass
 tofile
 tofloat
 tolist
+TouchstoneData
+TouchstoneNoiseData
+TouchstoneOptions
 tox
 Tox
 tpars

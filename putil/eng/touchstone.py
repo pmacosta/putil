@@ -36,14 +36,25 @@ exobj = trace_ex_eng_touchstone.trace_module(no_print=True)
 def read_touchstone(fname):
     r"""
     Reads a `Touchstone <https://ibis.org/connector/touchstone_spec11.pdf>`_
-    file. According to the specification a data line can have at most four
-    complex parameters values (plus potentially the frequency point), however
+    file. According to the specification a data line can have at most values
+    for four complex parameters (plus potentially the frequency point), however
     this function is able to process malformed files as long as they have the
     correct number of data points. Per the Touchstone specification noise data
     is only supported for 2-port files
 
     :param fname: Touchstone file name
     :type  fname: ref:`FileNameExists`
+
+    :rtype: dictionary with the following structure:
+
+     * **nports** (*integer*) -- number of ports
+
+     * **opts** (:ref:`TouchstoneOptions`) -- File options
+
+     * **data** (:ref:`TouchstoneData`) -- Parameter data
+
+     * **noise** (:ref:`TouchstoneNoiseData`) -- Noise data, per the Touchstone
+       specification only supported in 2-port files
 
     .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for

@@ -351,6 +351,59 @@ RealNumpyVector
 ---------------
 Numpy vector in which all elements are real (integers and/or floats)
 
+.. _TouchstoneData:
+
+TouchstoneData
+--------------
+
+A dictionary with the following structure:
+
+* **points** (*integer*) -- Number of data points
+
+* **freq** (:ref:`IncreasingRealNumpyVector`) -- Frequency vector
+
+* **data** (Complex Numpy array) -- Parameter data, its size is equal to
+  :code:`nports` x :code:`nports` x :code:`points` where :code:`nports`
+  represents the number of ports in the file
+
+.. _TouchstoneNoiseData:
+
+TouchstoneNoiseData
+-------------------
+
+A dictionary with the following structure:
+
+* **points** (*integer*) -- Number of data points
+
+* **freq** (:ref:`IncreasingRealNumpyVector`) -- Frequency vector
+
+* **nf** (:ref:`RealNumpyVector`) -- Minimum noise figure vector in decibels
+
+* **rc** (Complex Numpy vector) -- Source source reflection coefficient to
+  realize minimum noise figure
+
+* **res** (:ref:`RealNumpyVector`) -- Normalized effective noise resistance
+
+.. _TouchstoneOptions:
+
+TouchstoneOptions
+-----------------
+
+A dictionary with the following structure:
+
+* **units** (*string*) -- Frequency units, one of :code:`'GHz'`, :code:`'MHz'`,
+  :code:`'KHz'` or :code:`'Hz'` (case insensitive, default :code:`'GHz'`)
+
+* **ptype** (*string*) -- Parameter type, one of :code:`'S'`, :code:`'Y'`,
+  :code:`'Z'`, :code:`'H'` or :code:`'G'` (case insensitive, default
+  :code:`'S'`)
+
+* **pformat** (*string*) -- Data point format type, one of :code:`'DB'`
+  (decibels), :code:`'MA'` (magnitude and angle), or :code:`'RI'` (real and
+  imaginary) (case insensitive, default :code:`'MA'`)
+
+* **z0** (float) -- Reference resistance in Ohms, default 50 Ohms
+
 .. _WaveInterpOption:
 
 WaveInterpOption
