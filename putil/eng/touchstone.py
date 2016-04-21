@@ -33,12 +33,34 @@ exobj = trace_ex_eng_touchstone.trace_module(no_print=True)
 ###
 @putil.pcontracts.contract(fname='file_name_exists')
 def read_touchstone(fname):
-    """
-    Read Touchstone file
+    r"""
+    Reads a `Touchstone <https://ibis.org/connector/touchstone_spec11.pdf>`_
+    file.
 
     :param fname: Touchstone file name
     :type  fname: ref:`FileNameExists`
+
     .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.touchstone.read_touchstone
+
+    :raises:
+     * OSError (File *[fname]* could not be found)
+
+     * RuntimeError (Argument \`fname\` is not valid)
+
+     * RuntimeError (File *[fname]* does not have a valid extension)
+
+     * RuntimeError (File *[fname]* has no data)
+
+     * RuntimeError (First non-comment line is not the option line)
+
+     * RuntimeError (Illegal data in line *[lineno]*)
+
+     * RuntimeError (Illegal option line)
+
+     * RuntimeError (Malformed data)
+
     .. [[[end]]]
     """
     # pylint: disable=R0912,R0914,R0915,W0702
@@ -132,6 +154,10 @@ def read_touchstone(fname):
         data = data[d1slice]+(1j*data[d2slice])
     elif opts['pformat'] == 'DB':
         data = (10**(data[d1slice]/20.0))*numpy.exp(1j*data[d2slice])
+    if nports == 2:
+        # The order of data for a two-port file is N11, N21, N12, N22 but for
+        # m ports where m > 2, the order is N11, N12, N13, ..., N1m
+        pass
     data_dict['data'] = numpy.resize(data, (npoints, nports, nports))
     del data
     return dict(nports=nports, opts=opts, points=npoints, data=data_dict)

@@ -26,7 +26,7 @@ import sbin.functions
 # Global variables
 ###
 ENG_SUBMODULES = [
-    'functions', 'wave_core', 'wave_functions'
+    'functions', 'wave_core', 'wave_functions', 'touchstone'
 ]
 PLOT_SUBMODULES = [
     'basic_source', 'csv_source', 'figure', 'functions', 'panel', 'series'
