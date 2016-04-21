@@ -505,6 +505,81 @@ def exp(wave):
     return _operation(wave, 'exp', '', numpy.exp)
 
 
+@putil.pcontracts.contract(
+    wave=Waveform, dep_var='number', der='int,>=-1,<=+1', inst='int,>0',
+    indep_min='None|number', indep_max='None|number')
+def find(wave, dep_var, der=0, inst=1, indep_min=None, indep_max=None):
+    r"""
+    Returns the independent variable vector point that corresponds to a given
+    dependent variable vector point. If the dependent variable point is not in
+    the dependent variable vector the independent variable vector point is
+    obtained by linear interpolation
+
+    :param wave: Waveform
+    :type  wave: :py:class:`putil.eng.Waveform`
+
+    :param dep_var: Dependent vector value to search for
+    :type  dep_var: integer, float or complex
+
+    :param der: Dependent vector derivative filter. If +1 only independent
+                vector points that have positive derivatives when crossing
+                the requested dependent vector point are returned; if -1 only
+                independent vector points that have negative derivatives when
+                crossing the requested dependent vector point are returned,
+                otherwise if 0 all independent vector points are returned
+                regardless of the dependent vector derivative
+    :type  der: integer, float or complex
+
+    :param inst: Instance number filter. If, for example, **inst** equals 3,
+                 then the independent variable vector point at which the
+                 dependent variable vector equals the requested value for the
+                 third time is returned
+    :type  inst: positive integer
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: integer, float or None if the dependent variable point is not found
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. [[[end]]]
+    """
+    # pylint: disable=R0913,R0914
+    ret = copy.copy(wave)
+    _bound_waveform(ret, indep_min, indep_max)
+    close_min = numpy.isclose(min(ret._dep_vector), dep_var, FP_RTOL, FP_ATOL)
+    close_max = numpy.isclose(max(ret._dep_vector), dep_var, FP_RTOL, FP_ATOL)
+    if (((numpy.amin(ret._dep_vector) > dep_var) and (not close_min)) or
+       ((numpy.amax(ret._dep_vector) < dep_var) and (not close_max))):
+        return None
+    cross_wave = ret._dep_vector-dep_var
+    sign_wave = numpy.sign(cross_wave)
+    exact_idx = numpy.where(
+        numpy.isclose(ret._dep_vector, dep_var, FP_RTOL, FP_ATOL)
+    )[0]
+    # Locations where dep_vector crosses dep_var or it is equal to it
+    left_idx = numpy.where(numpy.diff(sign_wave))[0]
+    # Remove elements to the left of exact matches
+
+    print(left_idx)
+    left_idx = numpy.delete(left_idx, exact_idx)
+    left_idx = numpy.delete(left_idx, exact_idx-1)
+    right_idx = left_idx+1
+    y_left = ret._dep_vector[left_idx]
+    y_right = ret._dep_vector[right_idx]
+    x_left = ret._indep_vector[left_idx]
+    x_right = ret._indep_vector[right_idx]
+    slope = ((y_left-y_right)/(x_left-x_right)).astype(float)
+    # y = y0+slope*(x-x0) => x0+(y-y0)/slope
+    print(ret._indep_vector[exact_idx])
+    indep_var = x_left+((dep_var-y_left)/slope)
+    indep_var.sort()
+    print(indep_var)
+
+
 @putil.pcontracts.contract(wave=Waveform)
 def floor(wave):
     r"""

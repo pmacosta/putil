@@ -4,6 +4,7 @@
 # pylint: disable=C0111,W0611
 
 # Standard library imports
+import copy
 import os
 import re
 # PyPI imports
@@ -31,11 +32,24 @@ exobj = trace_ex_eng_touchstone.trace_module(no_print=True)
 ###
 # Functions
 ###
+def _check_increasing_vector(obj):
+    # pylint: disable=C0103
+    if (((obj.dtype.type == numpy.array([0]).dtype.type) or
+       (obj.dtype.type == numpy.array([0.0]).dtype.type)) and
+       ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and
+       (min(numpy.diff(obj)) > 0)))):
+        return False
+    return True
+
+
 @putil.pcontracts.contract(fname='file_name_exists')
 def read_touchstone(fname):
     r"""
     Reads a `Touchstone <https://ibis.org/connector/touchstone_spec11.pdf>`_
-    file.
+    file. According to the specification a data line can have at most four
+    complex parameters values (plus potentially the frequency point), however
+    this function is able to process malformed files as long as they have the
+    correct number of data points
 
     :param fname: Touchstone file name
     :type  fname: ref:`FileNameExists`
@@ -54,6 +68,8 @@ def read_touchstone(fname):
      * RuntimeError (File *[fname]* has no data)
 
      * RuntimeError (First non-comment line is not the option line)
+
+     * RuntimeError (Frequency must increase)
 
      * RuntimeError (Illegal data in line *[lineno]*)
 
@@ -75,6 +91,7 @@ def read_touchstone(fname):
     exline = putil.exh.addex(RuntimeError, 'Illegal data in line *[lineno]*')
     exnodata = putil.exh.addex(RuntimeError, 'File *[fname]* has no data')
     exdata = putil.exh.addex(RuntimeError, 'Malformed data')
+    exfreq = putil.exh.addex(RuntimeError, 'Frequency must increase')
     # Verify that file has correct extension format
     _, ext = os.path.splitext(fname)
     ext = ext.lower()
@@ -129,13 +146,17 @@ def read_touchstone(fname):
                 continue
             # Data lines
             try:
+                if '!' in line:
+                    idx = line.index('!')
+                    line = line[:idx]
                 tokens = [float(item) for item in line.split()]
                 data = numpy.append(data, tokens)
             except:
                 exline(True, edata={'field':'lineno', 'value':num+1})
     exnodata(not data.size, edata={'field':'fname', 'value':fname})
-    exdata(data.size % (1+(2*nports)) != 0)
-    npoints = int(data.size / (1+(2*nports)))
+    nums_per_freq = 1+(2*(nports**2))
+    exdata(data.size % nums_per_freq != 0)
+    npoints = int(data.size / nums_per_freq)
     # Set option defaults
     opts['units'] = opts['units'] or 'GHz'
     opts['ptype'] = opts['ptype'] or 'S'
@@ -143,21 +164,25 @@ def read_touchstone(fname):
     opts['z0'] = opts['z0'] or 50
     # Format data
     data_dict = {}
-    fslice = slice(0, data.size, 1+(2*nports))
-    data_dict['freq'] = data[fslice]
-    data = numpy.delete(data, fslice)
+    fslice = slice(0, data.size, nums_per_freq)
     d1slice = slice(0, data.size, 2)
     d2slice = slice(1, data.size, 2)
+    data_dict['freq'] = data[fslice]
+    exfreq(_check_increasing_vector(data_dict['freq']))
+    data = numpy.delete(data, fslice)
     if opts['pformat'] == 'MA':
         data = data[d1slice]*numpy.exp(1j*data[d2slice])
     elif opts['pformat'] == 'RI':
         data = data[d1slice]+(1j*data[d2slice])
-    elif opts['pformat'] == 'DB':
+    else: # if opts['pformat'] == 'DB':
         data = (10**(data[d1slice]/20.0))*numpy.exp(1j*data[d2slice])
+    if nports > 1:
+        data_dict['data'] = numpy.resize(data, (npoints, nports, nports))
+    else:
+        data_dict['data'] = copy.copy(data)
+    del data
     if nports == 2:
         # The order of data for a two-port file is N11, N21, N12, N22 but for
         # m ports where m > 2, the order is N11, N12, N13, ..., N1m
-        pass
-    data_dict['data'] = numpy.resize(data, (npoints, nports, nports))
-    del data
+        data_dict['data'] = numpy.transpose(data_dict['data'], (0, 2, 1))
     return dict(nports=nports, opts=opts, points=npoints, data=data_dict)

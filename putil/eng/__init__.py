@@ -38,6 +38,7 @@ from .wave_functions import (
     db,
     derivative,
     exp,
+    find,
     floor,
     imag,
     integral,

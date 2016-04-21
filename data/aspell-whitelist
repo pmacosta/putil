@@ -266,6 +266,7 @@ dep
 DEP
 deps
 DEPS
+der
 desc
 Desc
 DESC
@@ -369,6 +370,7 @@ exdocobj
 exe
 execnet
 executables
+exfreq
 exh
 EXH
 ExHandle
@@ -524,6 +526,7 @@ icfilter
 icmp
 icol
 idata
+idb
 idfilter
 idict
 idv
@@ -1121,6 +1124,7 @@ RuntimeError
 rvalue
 rwtb
 rxor
+saa
 saddlebrown
 sandybrown
 sarg
