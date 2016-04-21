@@ -101,6 +101,17 @@ def test_read_touchstone():
         ret = obj(fname)
         assert ret['nports'] == 8
         assert ret['opts'] == dict(units='KHz', ptype='S', pformat='MA', z0=12)
+    # Test file with one data point
+    fname = 'file.s1p'
+    data = [[1, 2, 3]]
+    with TmpFile(fname, ['RI'], data):
+        ret = obj(fname)
+    assert ret['nports'] == 1
+    assert ret['opts'] == dict(units='GHz', ptype='S', pformat='RI', z0=50)
+    assert (ret['data']['freq'] == numpy.array([1.0])).all()
+    assert (ret['data']['data'] == numpy.array([2+3j])).all()
+    assert ret['noise'] == {}
+    assert ret['data']['points'] == 1
     # Test 1-port data parsing (and end of line comments)
     fname = 'file.s1p'
     data = [
@@ -115,7 +126,8 @@ def test_read_touchstone():
     assert (ret['data']['freq'] == numpy.array([1.0, 4.0, 7.0])).all()
     ref = numpy.array([2+3j, 5+6j, 8+9j])
     assert (ret['data']['data'] == ref).all()
-    assert ret['points'] == 3
+    assert ret['noise'] == {}
+    assert ret['data']['points'] == 3
     # Test 2-port data parsing
     # Real and imaginary format
     fname = 'file.s2p'
@@ -141,7 +153,8 @@ def test_read_touchstone():
         ]
     )
     assert (ret['data']['data'] == ref).all()
-    assert ret['points'] == 2
+    assert ret['data']['points'] == 2
+    assert ret['noise'] == {}
     # Magnitude and angle
     with TmpFile(fname, ['MA'], data):
         ret = obj(fname)
@@ -161,7 +174,8 @@ def test_read_touchstone():
         ]
     )
     assert (ret['data']['data'] == ref).all()
-    assert ret['points'] == 2
+    assert ret['data']['points'] == 2
+    assert ret['noise'] == {}
     # Decibel-angle
     with TmpFile(fname, ['DB'], data):
         ret = obj(fname)
@@ -182,7 +196,8 @@ def test_read_touchstone():
         ]
     )
     assert (ret['data']['data'] == ref).all()
-    assert ret['points'] == 2
+    assert ret['data']['points'] == 2
+    assert ret['noise'] == {}
     # Test 3-port data parsing
     # Real and imaginary format
     fname = 'file.s3p'
@@ -214,8 +229,82 @@ def test_read_touchstone():
         ]
     )
     assert (ret['data']['data'] == ref).all()
-    assert ret['points'] == 2
-
+    assert ret['data']['points'] == 2
+    assert ret['noise'] == {}
+    # Noise data
+    # 1 point
+    fname = 'file.s2p'
+    data = [
+        [1, 2, 3, 4, 5, 1.1, 7, 2.2, 3.3],
+        [0.5, 1, 2, 3, 4]
+    ]
+    with TmpFile(fname, ['RI'], data):
+        ret = obj(fname)
+    assert ret['nports'] == 2
+    assert ret['opts'] == dict(units='GHz', ptype='S', pformat='RI', z0=50)
+    assert (ret['data']['freq'] == numpy.array([1.0])).all()
+    ref = numpy.array(
+        [
+            [
+                [2+3j, 1.1+7j],
+                [4+5j, 2.2+3.3j]
+            ]
+        ]
+    )
+    assert (ret['data']['data'] == ref).all()
+    assert ret['data']['points'] == 1
+    assert (ret['noise']['freq'] == numpy.array([0.5])).all()
+    assert (ret['noise']['nf'] == numpy.array([1])).all()
+    assert (ret['noise']['rc'] == numpy.array([2*cmath.exp(3j)])).all()
+    assert (ret['noise']['res'] == numpy.array([4])).all()
+    assert ret['noise']['points'] == 1
+    # Multiple points
+    fname = 'file.s2p'
+    data = [
+        [1, 2, 3, 4, 5, 1.1, 7, 2.2, 3.3],
+        [2, 8, 9, 10, 11, 12, 13, 14, 15],
+        [3, 2, 2, 3, 3, 4, 4, 5, 5],
+        [0.5, 1, 2, 3, 4],
+        [1.5, 5, 6, 7, 8],
+        [2.5, 9, 10, 11, 12],
+        [3.5, 13.5, 14, 15.7, 16],
+    ]
+    with TmpFile(fname, ['RI'], data):
+        ret = obj(fname)
+    assert ret['nports'] == 2
+    assert ret['opts'] == dict(units='GHz', ptype='S', pformat='RI', z0=50)
+    assert (ret['data']['freq'] == numpy.array([1.0, 2.0, 3.0])).all()
+    ref = numpy.array(
+        [
+            [
+                [2+3j, 1.1+7j],
+                [4+5j, 2.2+3.3j]
+            ],
+            [
+                [8+9j, 12+13j],
+                [10+11j, 14+15j]
+            ],
+            [
+                [2+2j, 4+4j],
+                [3+3j, 5+5j]
+            ]
+        ]
+    )
+    assert (ret['data']['data'] == ref).all()
+    assert ret['data']['points'] == 3
+    assert (ret['noise']['freq'] == numpy.array([0.5, 1.5, 2.5, 3.5])).all()
+    assert (ret['noise']['nf'] == numpy.array([1, 5, 9, 13.5])).all()
+    ref = numpy.array(
+        [
+            2*cmath.exp(3j),
+            6*cmath.exp(7j),
+            10*cmath.exp(11j),
+            14*cmath.exp(15.7j)
+        ]
+    )
+    assert (ret['noise']['rc'] == ref).all()
+    assert (ret['noise']['res'] == numpy.array([4, 8, 12, 16])).all()
+    assert ret['noise']['points'] == 4
 
 
 @pytest.mark.touchstone
@@ -252,3 +341,24 @@ def test_read_touchstone_exceptions():
     fname = 'file.s1p'
     with TmpFile(fname, ['MA'], [[1, 2, 3], [2, 3, 4], [2, 5, 6]]):
         AE(obj, RuntimeError, 'Frequency must increase', fname)
+    # Noise data
+    fname = 'file.s2p'
+    data = [
+        [1, 2, 3, 4, 5, 7, 8, 9, 10],
+        [11, 12, 13, 14, 15, 16, 17, 18, 19],
+        ['! Noise data'],
+        [2, 11, 12, 13, 14],
+        [1, 15, 16, 17, 18]
+    ]
+    with TmpFile(fname, ['MA'], data):
+        AE(obj, RuntimeError, 'Noise frequency must increase', fname)
+    fname = 'file.s2p'
+    data = [
+        [1, 2, 3, 4, 5, 7, 8, 9, 10],
+        [11, 12, 13, 14, 15, 16, 17, 18, 19],
+        ['! Noise data'],
+        [2, 11, 12, 13, 14],
+        [4, 15, 16, 17, 18, 19]
+    ]
+    with TmpFile(fname, ['MA'], data):
+        AE(obj, RuntimeError, 'Malformed noise data', fname)

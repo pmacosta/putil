@@ -32,16 +32,6 @@ exobj = trace_ex_eng_touchstone.trace_module(no_print=True)
 ###
 # Functions
 ###
-def _check_increasing_vector(obj):
-    # pylint: disable=C0103
-    if (((obj.dtype.type == numpy.array([0]).dtype.type) or
-       (obj.dtype.type == numpy.array([0.0]).dtype.type)) and
-       ((obj.shape[0] == 1) or ((obj.shape[0] > 1) and
-       (min(numpy.diff(obj)) > 0)))):
-        return False
-    return True
-
-
 @putil.pcontracts.contract(fname='file_name_exists')
 def read_touchstone(fname):
     r"""
@@ -49,7 +39,8 @@ def read_touchstone(fname):
     file. According to the specification a data line can have at most four
     complex parameters values (plus potentially the frequency point), however
     this function is able to process malformed files as long as they have the
-    correct number of data points
+    correct number of data points. Per the Touchstone specification noise data
+    is only supported for 2-port files
 
     :param fname: Touchstone file name
     :type  fname: ref:`FileNameExists`
@@ -77,6 +68,10 @@ def read_touchstone(fname):
 
      * RuntimeError (Malformed data)
 
+     * RuntimeError (Malformed noise data)
+
+     * RuntimeError (Noise frequency must increase)
+
     .. [[[end]]]
     """
     # pylint: disable=R0912,R0914,R0915,W0702
@@ -91,7 +86,9 @@ def read_touchstone(fname):
     exline = putil.exh.addex(RuntimeError, 'Illegal data in line *[lineno]*')
     exnodata = putil.exh.addex(RuntimeError, 'File *[fname]* has no data')
     exdata = putil.exh.addex(RuntimeError, 'Malformed data')
+    exndata = putil.exh.addex(RuntimeError, 'Malformed noise data')
     exfreq = putil.exh.addex(RuntimeError, 'Frequency must increase')
+    exnfreq = putil.exh.addex(RuntimeError, 'Noise frequency must increase')
     # Verify that file has correct extension format
     _, ext = os.path.splitext(fname)
     ext = ext.lower()
@@ -154,9 +151,6 @@ def read_touchstone(fname):
             except:
                 exline(True, edata={'field':'lineno', 'value':num+1})
     exnodata(not data.size, edata={'field':'fname', 'value':fname})
-    nums_per_freq = 1+(2*(nports**2))
-    exdata(data.size % nums_per_freq != 0)
-    npoints = int(data.size / nums_per_freq)
     # Set option defaults
     opts['units'] = opts['units'] or 'GHz'
     opts['ptype'] = opts['ptype'] or 'S'
@@ -164,11 +158,39 @@ def read_touchstone(fname):
     opts['z0'] = opts['z0'] or 50
     # Format data
     data_dict = {}
+    nums_per_freq = 1+(2*(nports**2))
     fslice = slice(0, data.size, nums_per_freq)
+    freq = data[fslice]
+    ndiff = numpy.diff(freq)
+    ndict = {}
+    if (nports == 2) and ndiff.size and (min(ndiff) <= 0):
+        # Extract noise data
+        npoints = numpy.where(ndiff <= 0)[0][0]+1
+        freq = freq[:npoints]
+        ndata = data[9*npoints:]
+        nfpoints = int(ndata.size / 5.0)
+        exndata(ndata.size % 5 != 0)
+        data = data[:9*npoints]
+        ndiff = 1
+        nfslice = slice(0, ndata.size, 5)
+        nfreq = ndata[nfslice]
+        ndiff = numpy.diff(nfreq)
+        exnfreq(bool(ndiff.size and (min(ndiff) <= 0)))
+        nfig_slice = slice(1, ndata.size, 5)
+        rlmag_slice = slice(2, ndata.size, 5)
+        rlphase_slice = slice(3, ndata.size, 5)
+        res_slice = slice(4, ndata.size, 5)
+        ndict['freq'] = nfreq
+        ndict['nf'] = ndata[nfig_slice]
+        ndict['rc'] = ndata[rlmag_slice]*numpy.exp(1j*ndata[rlphase_slice])
+        ndict['res'] = ndata[res_slice]
+        ndict['points'] = nfpoints
+    exdata(data.size % nums_per_freq != 0)
+    npoints = int(data.size / nums_per_freq)
+    exfreq(bool(ndiff.size and (min(ndiff) <= 0)))
+    data_dict['freq'] = freq
     d1slice = slice(0, data.size, 2)
     d2slice = slice(1, data.size, 2)
-    data_dict['freq'] = data[fslice]
-    exfreq(_check_increasing_vector(data_dict['freq']))
     data = numpy.delete(data, fslice)
     if opts['pformat'] == 'MA':
         data = data[d1slice]*numpy.exp(1j*data[d2slice])
@@ -181,8 +203,11 @@ def read_touchstone(fname):
     else:
         data_dict['data'] = copy.copy(data)
     del data
+    data_dict['points'] = npoints
     if nports == 2:
         # The order of data for a two-port file is N11, N21, N12, N22 but for
         # m ports where m > 2, the order is N11, N12, N13, ..., N1m
         data_dict['data'] = numpy.transpose(data_dict['data'], (0, 2, 1))
-    return dict(nports=nports, opts=opts, points=npoints, data=data_dict)
+    return dict(
+        nports=nports, opts=opts, data=data_dict, noise=ndict
+    )

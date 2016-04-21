@@ -387,6 +387,8 @@ exminmax
 exmsg
 EXMSG
 exname
+exndata
+exnfreq
 exnodata
 exnoopt
 exnosup
@@ -785,9 +787,15 @@ ncruel
 ndarray
 ndata
 ndict
+ndiff
 ndv
 ne
+nf
+nfig
 nflip
+nfpoints
+nfreq
+nfslice
 nfunction
 nimages
 nindent
@@ -1083,6 +1091,8 @@ rl
 rlevel
 rline
 rlist
+rlmag
+rlphase
 rlshift
 rmatch
 rmfiles
