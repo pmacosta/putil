@@ -4,6 +4,7 @@
 # pylint: disable=C0111,R0916
 
 # Standard library imports
+import math
 import os
 import platform
 import inspect
@@ -750,10 +751,15 @@ def touchstone_data(obj):
         raise ValueError(putil.pcontracts.get_exdesc())
     if _check_increasing_real_numpy_vector(obj['freq']):
         raise ValueError(putil.pcontracts.get_exdesc())
-    if _check_number_numpy_vector(obj['data']):
+    if not isinstance(obj['data'], numpy.ndarray):
         raise ValueError(putil.pcontracts.get_exdesc())
-    sizes = [obj['freq'].size, obj['data'].size]
-    if set(sizes) != set([obj['points']]):
+    vdata = ['int', 'float', 'complex']
+    if not any([obj['data'].dtype.name.startswith(item) for item in vdata]):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if obj['freq'].size != obj['points']:
+        raise ValueError(putil.pcontracts.get_exdesc())
+    nports = int(math.sqrt(obj['data'].size/obj['freq'].size))
+    if obj['points']*(nports**2) != obj['data'].size:
         raise ValueError(putil.pcontracts.get_exdesc())
     return None
 

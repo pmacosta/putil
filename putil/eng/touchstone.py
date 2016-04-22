@@ -1,7 +1,7 @@
 # touchstone.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,W0611
+# pylint: disable=C0111,R0914,W0611
 
 # Standard library imports
 import copy
@@ -12,7 +12,13 @@ import numpy
 # Putil imports
 import putil.exh
 import putil.pcontracts
-from putil.ptypes import file_name_exists
+from putil.ptypes import (
+    file_name,
+    file_name_exists,
+    touchstone_data,
+    touchstone_noise_data,
+    touchstone_options
+)
 
 
 ###
@@ -32,6 +38,31 @@ exobj = trace_ex_eng_touchstone.trace_module(no_print=True)
 ###
 # Functions
 ###
+def _chunk(freq_vector, data_matrix, pformat):
+    """ Chunk input data into valid Touchstone file rows """
+    pformat = pformat.upper()
+    length = 4
+    for freq, data in zip(freq_vector, data_matrix):
+        data.resize(data.size)
+        for index in range(0, data.size, length):
+            fpoint = [freq] if not index else [None]
+            cdata = data[index:index+length]
+            if pformat == 'MA':
+                vector1 = numpy.abs(cdata)
+                vector2 = numpy.angle(cdata)
+            elif pformat == 'RI':
+                vector1 = numpy.real(cdata)
+                vector2 = numpy.imag(cdata)
+            else: # elif pformat == 'DB':
+                vector1 = 20.0*numpy.log10(numpy.abs(cdata))
+                vector2 = numpy.angle(cdata)
+            sep_data = []
+            for item1, item2 in zip(vector1, vector2):
+                sep_data.extend([item1, item2])
+            ret = fpoint+sep_data
+            yield ret
+
+
 @putil.pcontracts.contract(fname='file_name_exists')
 def read_touchstone(fname):
     r"""
@@ -85,7 +116,7 @@ def read_touchstone(fname):
 
     .. [[[end]]]
     """
-    # pylint: disable=R0912,R0914,R0915,W0702
+    # pylint: disable=R0912,R0915,W0702
     # Exceptions definitions
     exnports = putil.exh.addex(
         RuntimeError, 'File *[fname]* does not have a valid extension'
@@ -222,3 +253,107 @@ def read_touchstone(fname):
     return dict(
         nports=nports, opts=opts, data=data_dict, noise=ndict
     )
+
+
+@putil.pcontracts.contract(
+    fname='file_name',
+    options='touchstone_options',
+    data='touchstone_data',
+    noise='None|touchstone_noise_data',
+    frac_length='int,>=0',
+    exp_length='int,>0'
+)
+def write_touchstone(fname, options, data, noise=None, frac_length=10,
+    exp_length=2):
+    r"""
+    Writes a `Touchstone`_ file. Data is written in scientific notation
+
+    :param fname: Touchstone file name
+    :type  fname: ref:`FileName`
+
+    :param options: Touchstone file options
+    :type  options: :ref:`TouchstoneOptions`
+
+    :param data: Touchstone file parameter data
+    :type  data: :ref:`TouchstoneData`
+
+    :param noise: Touchstone file parameter noise data (only supported in
+                  two-port files)
+    :type  noise: :ref:`TouchstoneNoiseData`
+
+    :param frac_length: Number of digits to use in fractional part of data
+    :type  frac_length: non-negative integer
+
+    :param exp_length: Number of digits to use in exponent
+    :type  exp_length: positive integer
+
+    .. [[[cog cog.out(exobj.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. putil.eng.touchstone.write_touchstone
+
+    :raises:
+     * RuntimeError (Argument \`data\` is not valid)
+
+     * RuntimeError (Argument \`exp_length\` is not valid)
+
+     * RuntimeError (Argument \`fname\` is not valid)
+
+     * RuntimeError (Argument \`frac_length\` is not valid)
+
+     * RuntimeError (Argument \`noise\` is not valid)
+
+     * RuntimeError (Argument \`options\` is not valid)
+
+     * RuntimeError (File *[fname]* does not have a valid extension)
+
+     * RuntimeError (Malformed data)
+
+     * RuntimeError (Noise data only supported in two-port files)
+
+    .. [[[end]]]
+    """
+    # pylint: disable=R0913
+    # Exceptions definitions
+    exnports = putil.exh.addex(
+        RuntimeError, 'File *[fname]* does not have a valid extension'
+    )
+    exnoise = putil.exh.addex(
+        RuntimeError, 'Noise data only supported in two-port files'
+    )
+    expoints = putil.exh.addex(RuntimeError, 'Malformed data')
+    # Data validation
+    _, ext = os.path.splitext(fname)
+    ext = ext.lower()
+    nports_regexp = re.compile(r'\.s(\d+)p')
+    match = nports_regexp.match(ext)
+    exnports(not match, edata={'field':'fname', 'value':fname})
+    nports = int(match.groups()[0])
+    exnoise(bool((nports != 2) and noise))
+    nums_per_freq = nports**2
+    expoints(data['points']*nums_per_freq != data['data'].size)
+    #
+    if nports == 2:
+        data['data'] = numpy.transpose(data['data'], (0, 2, 1))
+    units_dict = {'ghz':'GHz', 'mhz':'MHz', 'khz':'KHz', 'hz':'Hz'}
+    options['units'] = units_dict[options['units'].lower()]
+    fspace = 2+frac_length+(exp_length+2)
+    # Format data
+    with open(fname, 'w') as fobj:
+        fobj.write(
+            '# {units} {ptype} {pformat} R {z0}\n'.format(
+                units=options['units'],
+                ptype=options['ptype'],
+                pformat=options['pformat'],
+                z0=options['z0']
+            )
+        )
+        for row in _chunk(data['freq'], data['data'], options['pformat']):
+            data = [
+                putil.eng.to_scientific_string(
+                    item, frac_length, exp_length, bool(num != 0)
+                )
+                if item is not None else
+                fspace*' '
+                for num, item in enumerate(row)
+            ]
+            fobj.write(' '.join(data)+'\n')

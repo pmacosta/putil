@@ -29,7 +29,9 @@ from tests.eng.functions import (
 )
 from tests.eng.touchstone import (
     test_read_touchstone,
-    test_read_touchstone_exceptions
+    test_read_touchstone_exceptions,
+    test_write_touchstone,
+    test_write_touchstone_exceptions
 )
 from tests.eng.wave_core import (
     test_get_indep_vector,

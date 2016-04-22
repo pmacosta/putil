@@ -23,6 +23,7 @@ ai
 aliceblue
 aline
 alist
+allclose
 alphanums
 antiquewhite
 anumber
@@ -123,6 +124,7 @@ CaselessLiteral
 ccontract
 ccontracts
 cd
+cdata
 cdb
 cdicts
 ceil
@@ -247,6 +249,7 @@ DataSource
 datetime
 DBU
 dcmp
+ddd
 ddelim
 ddir
 dec
@@ -390,6 +393,7 @@ exname
 exndata
 exnfreq
 exnodata
+exnoise
 exnoopt
 exnosup
 exnports
@@ -398,6 +402,7 @@ exobj
 ExObj
 exopt
 exoutput
+expoints
 expr
 extb
 extype
@@ -455,6 +460,7 @@ fp
 FP
 fpart
 fplot
+fpoint
 fpointer
 fpointers
 fproc
@@ -467,6 +473,7 @@ FromImportClosureClass
 frow
 fset
 fslice
+fspace
 fstring
 ftest
 fticklabels
@@ -504,6 +511,8 @@ getsourcelines
 getter
 Getter
 ghostwhite
+ghz
+gHz
 giga
 GitHub
 globals
@@ -523,6 +532,7 @@ Huy
 hvec
 hvector
 hver
+hz
 iadd
 icfilter
 icmp
@@ -615,6 +625,7 @@ keepdir
 KeyError
 KeyErrror
 keytransform
+khz
 kMGTPEZY
 kpar
 kwarg
@@ -727,6 +738,7 @@ mex
 MF
 mfile
 mFrame
+mhz
 midnightblue
 milli
 mintcream
@@ -1083,6 +1095,8 @@ rfunc
 RGB
 RGBA
 rhas
+ri
+Ri
 Rightarrow
 rindex
 RIVAR
@@ -1106,6 +1120,7 @@ robj
 r'obj
 ror
 rosybrown
+roundtrip
 royalblue
 rpar
 rpos
@@ -1148,6 +1163,7 @@ SCIPY
 Scipy's
 scomp
 scontext
+sdata
 sdeps
 sdict
 sdicts
@@ -1362,6 +1378,7 @@ ValueError
 vararg
 varargs
 vchars
+vdata
 ver
 VER
 vers
@@ -1380,8 +1397,10 @@ WaveScaleOption
 WaveVectors
 wb
 wcomplex
+wdata
 wdir
 wfloat
+wfreq
 wheader
 whitelist
 whitesmoke
@@ -1389,8 +1408,10 @@ whitespace
 wint
 wintegral
 wobj
+wres
 writelines
 writerows
+WriteTmpFile
 wround
 wsindent
 wsregexp

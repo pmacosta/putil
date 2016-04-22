@@ -22,7 +22,7 @@ from .functions import (
     to_scientific_string,
     to_scientific_tuple
 )
-from .touchstone import read_touchstone
+from .touchstone import read_touchstone, write_touchstone
 from .wave_core import Point, Waveform
 from .wave_functions import (
     acos,

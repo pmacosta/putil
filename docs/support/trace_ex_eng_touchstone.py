@@ -13,6 +13,7 @@ def trace_module(no_print=True):
     module_prefix = 'putil.{0}.{1}.'.format(fname, mname)
     callable_names = (
         'read_touchstone',
+        'write_touchstone',
     )
     return docs.support.trace_support.run_trace(
         mname, fname, module_prefix, callable_names, no_print,

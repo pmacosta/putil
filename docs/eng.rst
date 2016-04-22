@@ -130,6 +130,7 @@ Functions
 .. autofunction:: putil.eng.peng_suffix_math
 .. autofunction:: putil.eng.pprint_vector
 .. autofunction:: putil.eng.read_touchstone
+.. autofunction:: putil.eng.write_touchstone
 .. autofunction:: putil.eng.remove_extra_delims
 .. autofunction:: putil.eng.round_mantissa
 .. autofunction:: putil.eng.to_scientific_string

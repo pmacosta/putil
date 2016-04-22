@@ -367,7 +367,7 @@ def test_touchstone_data_contract():
         '[STOP CONTRACT MSG]'
     )
     freq = numpy.array([1, 2, 3])
-    data = numpy.array([1, 2, -3])
+    data = numpy.resize(numpy.arange(1, 1+(3*(2**2))), (3, 2, 2))
     wdata = numpy.array([1, 2, -3, 4])
     wfreq = numpy.array([1, 2, 'a'])
     items = [
