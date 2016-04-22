@@ -362,9 +362,11 @@ A dictionary with the following structure:
 
 * **freq** (:ref:`IncreasingRealNumpyVector`) -- Frequency vector
 
-* **data** (Complex Numpy array) -- Parameter data, its size is equal to
+* **data** (:ref:`NumberNumpyVector`) -- Parameter data, its size is equal to
   :code:`nports` x :code:`nports` x :code:`points` where :code:`nports`
   represents the number of ports in the file
+
+The dictionary keys are case sensitive
 
 .. _TouchstoneNoiseData:
 
@@ -379,10 +381,12 @@ A dictionary with the following structure:
 
 * **nf** (:ref:`RealNumpyVector`) -- Minimum noise figure vector in decibels
 
-* **rc** (Complex Numpy vector) -- Source source reflection coefficient to
+* **rc** (:ref:`NumberNumpyVector`) -- Source source reflection coefficient to
   realize minimum noise figure
 
 * **res** (:ref:`RealNumpyVector`) -- Normalized effective noise resistance
+
+The dictionary keys are case sensitive
 
 .. _TouchstoneOptions:
 
@@ -403,6 +407,8 @@ A dictionary with the following structure:
   imaginary) (case insensitive, default :code:`'MA'`)
 
 * **z0** (float) -- Reference resistance in Ohms, default 50 Ohms
+
+The dictionary keys are case sensitive
 
 .. _WaveInterpOption:
 

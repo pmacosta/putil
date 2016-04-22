@@ -358,6 +358,95 @@ def test_real_numpy_vector_contract():
         obj(item)
 
 
+def test_touchstone_data_contract():
+    """ Tests for TouchstoneData pseudo-type """
+    obj = putil.ptypes.touchstone_data
+    exmsg = (
+        '[START CONTRACT MSG: touchstone_data]Argument '
+        '`*[argument_name]*` is not valid'
+        '[STOP CONTRACT MSG]'
+    )
+    freq = numpy.array([1, 2, 3])
+    data = numpy.array([1, 2, -3])
+    wdata = numpy.array([1, 2, -3, 4])
+    wfreq = numpy.array([1, 2, 'a'])
+    items = [
+        45,
+        {},
+        {'hello':5},
+        {'points':1, 'freq':2},
+        {'points':1, 'freq':2, 'data':3, 'hello':4},
+        {'points':'a', 'freq':freq, 'data':data},
+        {'points':3, 'freq':'a', 'data':data},
+        {'points':3, 'freq':freq, 'data':'a'},
+        {'points':3, 'freq':data, 'data':data},
+        {'points':3, 'freq':freq, 'data':wdata},
+        {'points':3, 'freq':wfreq, 'data':wdata},
+    ]
+    for item in items:
+        AE(obj, ValueError, exmsg, item)
+    obj({'points':3, 'freq':freq, 'data':data})
+
+
+def test_touchstone_noise_data_contract():
+    """ Tests for TouchstoneNoiseData pseudo-type """
+    obj = putil.ptypes.touchstone_noise_data
+    exmsg = (
+        '[START CONTRACT MSG: touchstone_noise_data]Argument '
+        '`*[argument_name]*` is not valid'
+        '[STOP CONTRACT MSG]'
+    )
+    freq = numpy.array([1, 2, 3])
+    nf = numpy.array([4, 5, 6])
+    rc = numpy.array([1+2j, 3+4j, 5+6j])
+    res = numpy.array([50.0, 25.0, 75.0])
+    wres = numpy.array([1, 2, -3])
+    items = [
+        45,
+        {'hello':5},
+        {'points':1, 'freq':2, 'nf':3, 'rc':4},
+        {'points':1, 'freq':2, 'nf':3, 'rc':4, 'res':5, 'hello':2},
+        {'points':1, 'freq':2, 'nf':3, 'rc':4, 'res':5, 'hello':2},
+        {'points':'a', 'freq':freq, 'nf':nf, 'rc':rc, 'res':res},
+        {'points':3, 'freq':'a', 'nf':nf, 'rc':rc, 'res':res},
+        {'points':3, 'freq':freq, 'nf':'a', 'rc':rc, 'res':res},
+        {'points':3, 'freq':freq, 'nf':nf, 'rc':'a', 'res':res},
+        {'points':3, 'freq':freq, 'nf':nf, 'rc':rc, 'res':'a'},
+        {'points':3, 'freq':res, 'nf':nf, 'rc':rc, 'res':res},
+        {'points':3, 'freq':freq, 'nf':nf, 'rc':rc, 'res':wres},
+        {'points':4, 'freq':freq, 'nf':nf, 'rc':rc, 'res':res},
+    ]
+    for item in items:
+        AE(obj, ValueError, exmsg, item)
+    obj({})
+    obj({'points':3, 'freq':freq, 'nf':nf, 'rc':rc, 'res':res})
+
+
+def test_touchstone_options_contract():
+    """ Tests for TouchstoneOptions pseudo-type """
+    obj = putil.ptypes.touchstone_options
+    exmsg = (
+        '[START CONTRACT MSG: touchstone_options]Argument '
+        '`*[argument_name]*` is not valid'
+        '[STOP CONTRACT MSG]'
+    )
+    items = [
+        45,
+        {},
+        {'hello':5},
+        {'units':1, 'ptype':2, 'pformat':3},
+        {'units':1, 'ptype':2, 'pformat':3, 'z0':4, 'hello':5},
+        {'units':'a', 'pformat':'MA', 'ptype':'S', 'z0':50.0},
+        {'units':'GHz', 'pformat':'a', 'ptype':'S', 'z0':50.0},
+        {'units':'GHz', 'pformat':'MA', 'ptype':'a', 'z0':50.0},
+        {'units':'GHz', 'pformat':'MA', 'ptype':'S', 'z0':'a'},
+        {'units':'GHz', 'pformat':'MA', 'ptype':'S', 'z0':-50.0},
+    ]
+    for item in items:
+        AE(obj, ValueError, exmsg, item)
+    obj({'units':'gHz', 'pformat':'Ri', 'ptype':'s', 'z0':50.0})
+
+
 def test_wave_interp_option_contract():
     """ Tests for WaveInterpolationOption pseudo-type """
     exmsg = (

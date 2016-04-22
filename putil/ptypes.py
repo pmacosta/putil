@@ -730,6 +730,97 @@ def real_numpy_vector(obj):
 
 
 @putil.pcontracts.new_contract()
+def touchstone_data(obj):
+    r"""
+    Validates if an object is an TouchstoneData pseudo-type object
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the name of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    if ((not isinstance(obj, dict)) or (isinstance(obj, dict) and
+       (sorted(obj.keys()) != sorted(['points', 'freq', 'data'])))):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if not (isinstance(obj['points'], int) and (obj['points'] > 0)):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if _check_increasing_real_numpy_vector(obj['freq']):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if _check_number_numpy_vector(obj['data']):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    sizes = [obj['freq'].size, obj['data'].size]
+    if set(sizes) != set([obj['points']]):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    return None
+
+
+@putil.pcontracts.new_contract()
+def touchstone_noise_data(obj):
+    r"""
+    Validates if an object is an TouchstoneNoiseData pseudo-type object
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the name of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    if isinstance(obj, dict) and (not obj):
+        return None
+    if ((not isinstance(obj, dict)) or (isinstance(obj, dict) and
+       (sorted(obj.keys()) != sorted(['points', 'freq', 'nf', 'rc', 'res'])))):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if not (isinstance(obj['points'], int) and (obj['points'] > 0)):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if _check_increasing_real_numpy_vector(obj['freq']):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if _check_real_numpy_vector(obj['nf']):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if _check_number_numpy_vector(obj['rc']):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if not (isinstance(obj['res'], numpy.ndarray) and
+       (len(obj['res'].shape) == 1) and (obj['res'].shape[0] > 0) and
+       numpy.all(obj['res'] >= 0)):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    sizes = [obj['freq'].size, obj['nf'].size, obj['rc'].size, obj['res'].size]
+    if set(sizes) != set([obj['points']]):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    return None
+
+
+@putil.pcontracts.new_contract()
+def touchstone_options(obj):
+    r"""
+    Validates if an object is an TouchstoneOptions pseudo-type object
+
+    :param obj: Object
+    :type  obj: any
+
+    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
+     token \*[argument_name]\* is replaced by the name of the argument the
+     contract is attached to
+
+    :rtype: None
+    """
+    if ((not isinstance(obj, dict)) or (isinstance(obj, dict) and
+       (sorted(obj.keys()) != sorted(['units', 'ptype', 'pformat', 'z0'])))):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    if not ((obj['units'].lower() in ['ghz', 'mhz', 'khz', 'hz']) and
+       (obj['ptype'].lower() in ['s', 'y', 'z', 'h', 'g']) and
+       (obj['pformat'].lower() in ['db', 'ma', 'ri']) and
+       isinstance(obj['z0'], float) and (obj['z0'] >= 0)):
+        raise ValueError(putil.pcontracts.get_exdesc())
+    return None
+
+
+@putil.pcontracts.new_contract()
 def wave_interp_option(obj):
     r"""
     Validates if an object is a WaveInterpOption pseudo-type object
@@ -771,6 +862,7 @@ def wave_scale_option(obj):
     if obj.upper() in ['LINEAR', 'LOG']:
         return None
     raise ValueError(exdesc)
+
 
 @putil.pcontracts.new_contract()
 def wave_vectors(obj):
