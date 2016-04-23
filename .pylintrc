@@ -46,7 +46,8 @@ load-plugins=
 # R0801 Similar lines in X files
 # W0511 TODO:
 # W0142 Used * or ** magic
-disable=C0302,C0330,E0012,I0011,R0801,W0511,W0142
+# W0105 String statement has no effect
+disable=C0302,C0330,E0012,I0011,R0801,W0511,W0142,W0105
 
 [REPORTS]
 

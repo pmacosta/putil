@@ -368,8 +368,10 @@ def test_touchstone_data_contract():
     )
     freq = numpy.array([1, 2, 3])
     data = numpy.resize(numpy.arange(1, 1+(3*(2**2))), (3, 2, 2))
-    wdata = numpy.array([1, 2, -3, 4])
-    wfreq = numpy.array([1, 2, 'a'])
+    wdata1 = numpy.array([1, 2, -3, 4])
+    wdata2 = numpy.array([1, 'a', 3])
+    wfreq1 = numpy.array([1, 2, 'a'])
+    wfreq2 = numpy.array([1, 2, 3, 4])
     items = [
         45,
         {},
@@ -380,8 +382,10 @@ def test_touchstone_data_contract():
         {'points':3, 'freq':'a', 'data':data},
         {'points':3, 'freq':freq, 'data':'a'},
         {'points':3, 'freq':data, 'data':data},
-        {'points':3, 'freq':freq, 'data':wdata},
-        {'points':3, 'freq':wfreq, 'data':wdata},
+        {'points':3, 'freq':freq, 'data':wdata1},
+        {'points':3, 'freq':freq, 'data':wdata2},
+        {'points':3, 'freq':wfreq1, 'data':data},
+        {'points':3, 'freq':wfreq2, 'data':data},
     ]
     for item in items:
         AE(obj, ValueError, exmsg, item)

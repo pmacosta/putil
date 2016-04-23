@@ -1,7 +1,7 @@
 # wave_functions.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0103,C0111,W0105,W0212
+# pylint: disable=C0103,C0111,W0212
 
 # Standard library imports
 import copy
@@ -31,6 +31,7 @@ exobj_eng = trace_ex_eng_wave_functions.trace_module(no_print=True)
 ]]]
 [[[end]]]
 """
+
 
 
 ###
@@ -548,6 +549,7 @@ def find(wave, dep_var, der=0, inst=1, indep_min=None, indep_max=None):
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
+    # pylint: disable=C0325,W0613
     ret = copy.copy(wave)
     _bound_waveform(ret, indep_min, indep_max)
     close_min = numpy.isclose(min(ret._dep_vector), dep_var, FP_RTOL, FP_ATOL)

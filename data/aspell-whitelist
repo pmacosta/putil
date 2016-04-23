@@ -1039,9 +1039,11 @@ rb
 rbranch
 rc
 r'C
+rcangle
 rcdb
 rcfilter
 rchars
+rcmag
 rcols
 rcount
 rcParams
@@ -1077,6 +1079,7 @@ req
 reqdir
 reqs
 resize
+resized
 reStructuredText
 ret
 retcode
@@ -1128,6 +1131,7 @@ rpow
 r'putil
 rrows
 rrshift
+rsdata
 rshift
 rst
 RST

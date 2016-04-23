@@ -1,7 +1,7 @@
 # touchstone.py
 # Copyright (c) 2013-2016 Pablo Acosta-Serafini
 # See LICENSE for details
-# pylint: disable=C0111,R0914,W0611
+# pylint: disable=C0103,C0111,C0325,E1101,R0914,W0611
 
 # Standard library imports
 import copy
@@ -38,12 +38,25 @@ exobj = trace_ex_eng_touchstone.trace_module(no_print=True)
 ###
 # Functions
 ###
-def _chunk(freq_vector, data_matrix, pformat):
+def _chunk_noise(noise):
+    """ Chunk input noise data into valid Touchstone file rows """
+    data = zip(
+        noise['freq'],
+        noise['nf'],
+        numpy.abs(noise['rc']),
+        numpy.angle(noise['rc']),
+        noise['res']
+    )
+    for freq, nf, rcmag, rcangle, res in data:
+        yield  freq, nf, rcmag, rcangle, res
+
+
+def _chunk_pars(freq_vector, data_matrix, pformat):
     """ Chunk input data into valid Touchstone file rows """
     pformat = pformat.upper()
     length = 4
     for freq, data in zip(freq_vector, data_matrix):
-        data.resize(data.size)
+        data = data.flatten()
         for index in range(0, data.size, length):
             fpoint = [freq] if not index else [None]
             cdata = data[index:index+length]
@@ -70,8 +83,11 @@ def read_touchstone(fname):
     file. According to the specification a data line can have at most values
     for four complex parameters (plus potentially the frequency point), however
     this function is able to process malformed files as long as they have the
-    correct number of data points. Per the Touchstone specification noise data
-    is only supported for 2-port files
+    correct number of data points (:code:`points` x :code:`nports` x
+    :code:`nports` where :code:`points` represents the number of frequency
+    points and :code:`nports` represents the number of ports in the file).
+    Per the Touchstone specification noise data is only supported for two-port
+    files
 
     :param fname: Touchstone file name
     :type  fname: ref:`FileNameExists`
@@ -266,7 +282,11 @@ def read_touchstone(fname):
 def write_touchstone(fname, options, data, noise=None, frac_length=10,
     exp_length=2):
     r"""
-    Writes a `Touchstone`_ file. Data is written in scientific notation
+    Writes a `Touchstone`_ file. Parameter data is first resized to an
+    :code:`points` x :code:`nports` x :code:`nports` where :code:`points`
+    represents the number of frequency points and :code:`nports` represents
+    the number of ports in the file; then parameter data is written to file
+    in scientific notation
 
     :param fname: Touchstone file name
     :type  fname: ref:`FileName`
@@ -332,8 +352,12 @@ def write_touchstone(fname, options, data, noise=None, frac_length=10,
     nums_per_freq = nports**2
     expoints(data['points']*nums_per_freq != data['data'].size)
     #
+    npoints = data['points']
+    par_data = numpy.resize(
+        numpy.copy(data['data']), (npoints, nports, nports)
+    )
     if nports == 2:
-        data['data'] = numpy.transpose(data['data'], (0, 2, 1))
+        par_data = numpy.transpose(par_data, (0, 2, 1))
     units_dict = {'ghz':'GHz', 'mhz':'MHz', 'khz':'KHz', 'hz':'Hz'}
     options['units'] = units_dict[options['units'].lower()]
     fspace = 2+frac_length+(exp_length+2)
@@ -347,8 +371,8 @@ def write_touchstone(fname, options, data, noise=None, frac_length=10,
                 z0=options['z0']
             )
         )
-        for row in _chunk(data['freq'], data['data'], options['pformat']):
-            data = [
+        for row in _chunk_pars(data['freq'], par_data, options['pformat']):
+            row_data = [
                 putil.eng.to_scientific_string(
                     item, frac_length, exp_length, bool(num != 0)
                 )
@@ -356,4 +380,14 @@ def write_touchstone(fname, options, data, noise=None, frac_length=10,
                 fspace*' '
                 for num, item in enumerate(row)
             ]
-            fobj.write(' '.join(data)+'\n')
+            fobj.write(' '.join(row_data)+'\n')
+        if (nports == 2) and noise:
+            fobj.write('! Noise data\n')
+            for row in _chunk_noise(noise):
+                row_data = [
+                    putil.eng.to_scientific_string(
+                        item, frac_length, exp_length, bool(num != 0)
+                    )
+                    for num, item in enumerate(row)
+                ]
+                fobj.write(' '.join(row_data)+'\n')

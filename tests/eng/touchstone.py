@@ -6,6 +6,7 @@
 # Standard library imports
 import itertools
 import cmath
+import copy
 import os
 import platform
 import random
@@ -71,18 +72,20 @@ def roundtrip_touchstone(nports, options, data, noise=None):
     """
     with TmpFile('file.s{0}p'.format(nports)) as fname:
         putil.eng.write_touchstone(
-            fname, options, data, frac_length=10, exp_length=2
+            fname, options, data, noise, frac_length=10, exp_length=2
         )
         idict = putil.eng.read_touchstone(fname)
     assert idict['nports'] == nports
     assert idict['opts'] == options
     idata = idict['data']
-    assert idict['points'] == data['points']
+    npoints = data['freq'].size
+    assert npoints == idata['points']
+    rsdata = numpy.resize(numpy.copy(data['data']), (npoints, nports, nports))
     assert numpy.allclose(idata['freq'], data['freq'], FP_RTOL, FP_ATOL)
-    assert numpy.allclose(idata['data'], data['data'], FP_RTOL, FP_ATOL)
-    if noise:
-        idict = idict['noise']
-        assert idict['points'] == noise['points']
+    assert numpy.allclose(idata['data'], rsdata, FP_RTOL, FP_ATOL)
+    idata = idict['noise']
+    if idata:
+        assert idata['freq'].size == noise['points']
         assert numpy.allclose(idata['freq'], noise['freq'], FP_RTOL, FP_ATOL)
         assert numpy.allclose(idata['nf'], noise['nf'], FP_RTOL, FP_ATOL)
         assert numpy.allclose(idata['rc'], noise['rc'], FP_RTOL, FP_ATOL)
@@ -510,6 +513,13 @@ def test_write_touchstone():
     options['pformat'] = 'MA'
     roundtrip_touchstone(nports, options, data)
     options['pformat'] = 'DB'
+    # Check that data shape does not matter
+    data['data'] = numpy.resize(data['data'], data['data'].size)
+    rdata = numpy.copy(data['data'])
     roundtrip_touchstone(nports, options, data)
+    # Test data is not mutated in call
+    assert numpy.all(rdata == data['data'])
     nports, options, data, _ = ref_touchstone_data(2, 10)
     roundtrip_touchstone(nports, options, data)
+    nports, options, data, noise = ref_touchstone_data(2, 3)
+    roundtrip_touchstone(nports, options, data, noise)
