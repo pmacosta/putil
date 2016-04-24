@@ -12,12 +12,13 @@ import sys
 import time
 import types
 # PyPI imports
+import pmisc
+from pmisc import AE, AI, CS, GET_EXMSG, RE
 import pytest
 if sys.hexversion == 0x03000000:
     from putil.compat3 import _readlines
 # Putil imports
 import putil.pinspect
-from putil.test import AE, AI, CS, GET_EXMSG, RE
 
 
 ###
@@ -258,7 +259,7 @@ class TestCallables(object):
         mname = 'tests.support.pinspect_support_module_1'
         obj1.trace([modfile(mname)])
         obj2.trace([modfile(mname)])
-        obj3.trace([modfile('putil.test')])
+        obj3.trace([modfile('pmisc')])
         assert (obj1 == obj2) and (obj1 != obj3)
         assert obj1 != 5
 
@@ -282,7 +283,7 @@ class TestCallables(object):
 
     def test_refresh(self):
         """ Test refresh method behavior """
-        ref = modfile('putil.test')
+        ref = modfile('putil.pinspect')
         src = os.path.join(os.path.dirname(ref), 'pit.py')
         with open(src, 'w') as fobj:
             fobj.write(
@@ -296,30 +297,58 @@ class TestCallables(object):
         tmod = obj._fnames[src]
         obj.trace([src])
         assert obj._fnames[src] == tmod
+        cname1 = 'putil.pinspect.Callables'
+        cname2 = 'putil.pinspect._AstTreeScanner'
         rtext = (
-            'Modules:\n'
-            '   putil.pit\n'
-            '   putil.test\n'
-            'Classes:\n'
-            '   putil.pit.MyClass\n'
-            'putil.pit.MyClass: class (1-2)\n'
-            'putil.pit.func1: func (3-4)\n'
-            'putil.test._get_fargs: func (32-67)\n'
-            'putil.test._pcolor: func (68-82)\n'
-            'putil.test.assert_arg_invalid: func (83-115)\n'
-            'putil.test.assert_exception: func (116-199)\n'
-            'putil.test._invalid_frame: func (200-206)\n'
-            'putil.test.assert_prop: func (207-246)\n'
-            'putil.test.assert_ro_prop: func (247-266)\n'
-            'putil.test.compare_strings: func (267-356)\n'
-            'putil.test.compare_strings.colorize_lines: func (296-307)\n'
-            'putil.test.compare_strings.print_non_diff: func (308-312)\n'
-            'putil.test.compare_strings.print_diff: func (313-321)\n'
-            'putil.test.comp_list_of_dicts: func (357-371)\n'
-            'putil.test.exception_type_str: func (372-389)\n'
-            'putil.test.get_exmsg: func (390-404)'
+            'Modules:\n',
+            '   putil.pinspect\n',
+            '   putil.pit\n',
+            'Classes:\n',
+            '   putil.pinspect.Callables\n',
+            '   putil.pinspect._AstTreeScanner\n',
+            '   putil.pit.MyClass\n',
+            'putil.pinspect._get_module_name_from_fname: func (39-49)\n',
+            'putil.pinspect._validate_fname: func (50-61)\n',
+            'putil.pinspect.get_function_args: func (62-124)\n',
+            'putil.pinspect.get_module_name: func (125-154)\n',
+            'putil.pinspect.is_object_module: func (155-166)\n',
+            'putil.pinspect.is_special_method: func (167-179)\n',
+            'putil.pinspect.private_props: func (180-201)\n',
+            cname1+': class (202-774)\n',
+            cname1+'.__init__: meth (224-233)\n',
+            cname1+'.__add__: meth (234-279)\n',
+            cname1+'.__bool__: meth (280-301)\n',
+            cname1+'.__copy__: meth (302-318)\n',
+            cname1+'.__eq__: meth (319-344)\n',
+            cname1+'.__iadd__: meth (345-384)\n',
+            cname1+'.__nonzero__: meth (385-406)\n',
+            cname1+'.__repr__: meth (407-426)\n',
+            cname1+'.__str__: meth (427-475)\n',
+            cname1+'._check_intersection: meth (476-502)\n',
+            cname1+'._get_callables_db: meth (503-506)\n',
+            cname1+'.get_callable_from_line: meth (507-523)\n',
+            cname1+'._get_reverse_callables_db: meth (524-527)\n',
+            cname1+'.load: meth (528-576)\n',
+            cname1+'.refresh: meth (577-583)\n',
+            cname1+'.save: meth (584-611)\n',
+            cname1+'.trace: meth (612-697)\n',
+            cname1+'.callables_db: prop (698-732)\n',
+            cname1+'.reverse_callables_db: prop (733-774)\n',
+            cname2+': class (775-1098)\n',
+            cname2+'.__init__: meth (780-797)\n',
+            cname2+'._close_callable: meth (798-900)\n',
+            cname2+'._get_indent: meth (901-908)\n',
+            cname2+'._in_class: meth (909-917)\n',
+            cname2+'._pop_indent_stack: meth (918-950)\n',
+            cname2+'.generic_visit: meth (951-964)\n',
+            cname2+'.visit_arguments: meth (965-972)\n',
+            cname2+'.visit_Assign: meth (973-1013)\n',
+            cname2+'.visit_ClassDef: meth (1014-1048)\n',
+            cname2+'.visit_FunctionDef: meth (1049-1098)\n',
+            'putil.pit.MyClass: class (1-2)\n',
+            'putil.pit.func1: func (3-4)',
         )
-        CS(str(obj), rtext)
+        CS(str(obj), ''.join(rtext))
         ftime = int(os.path.getmtime(src))
         while int(time.time()) <= ftime:
             time.sleep(0.1)
@@ -330,26 +359,53 @@ class TestCallables(object):
         obj.refresh()
         assert obj._fnames[src] != tmod
         rtext = (
-            'Modules:\n'
-            '   putil.pit\n'
-            '   putil.test\n'
-            'putil.pit.my_func: func (1-2)\n'
-            'putil.test._get_fargs: func (32-67)\n'
-            'putil.test._pcolor: func (68-82)\n'
-            'putil.test.assert_arg_invalid: func (83-115)\n'
-            'putil.test.assert_exception: func (116-199)\n'
-            'putil.test._invalid_frame: func (200-206)\n'
-            'putil.test.assert_prop: func (207-246)\n'
-            'putil.test.assert_ro_prop: func (247-266)\n'
-            'putil.test.compare_strings: func (267-356)\n'
-            'putil.test.compare_strings.colorize_lines: func (296-307)\n'
-            'putil.test.compare_strings.print_non_diff: func (308-312)\n'
-            'putil.test.compare_strings.print_diff: func (313-321)\n'
-            'putil.test.comp_list_of_dicts: func (357-371)\n'
-            'putil.test.exception_type_str: func (372-389)\n'
-            'putil.test.get_exmsg: func (390-404)'
+            'Modules:\n',
+            '   putil.pinspect\n',
+            '   putil.pit\n',
+            'Classes:\n',
+            '   putil.pinspect.Callables\n',
+            '   putil.pinspect._AstTreeScanner\n',
+            'putil.pinspect._get_module_name_from_fname: func (39-49)\n',
+            'putil.pinspect._validate_fname: func (50-61)\n',
+            'putil.pinspect.get_function_args: func (62-124)\n',
+            'putil.pinspect.get_module_name: func (125-154)\n',
+            'putil.pinspect.is_object_module: func (155-166)\n',
+            'putil.pinspect.is_special_method: func (167-179)\n',
+            'putil.pinspect.private_props: func (180-201)\n',
+            cname1+': class (202-774)\n',
+            cname1+'.__init__: meth (224-233)\n',
+            cname1+'.__add__: meth (234-279)\n',
+            cname1+'.__bool__: meth (280-301)\n',
+            cname1+'.__copy__: meth (302-318)\n',
+            cname1+'.__eq__: meth (319-344)\n',
+            cname1+'.__iadd__: meth (345-384)\n',
+            cname1+'.__nonzero__: meth (385-406)\n',
+            cname1+'.__repr__: meth (407-426)\n',
+            cname1+'.__str__: meth (427-475)\n',
+            cname1+'._check_intersection: meth (476-502)\n',
+            cname1+'._get_callables_db: meth (503-506)\n',
+            cname1+'.get_callable_from_line: meth (507-523)\n',
+            cname1+'._get_reverse_callables_db: meth (524-527)\n',
+            cname1+'.load: meth (528-576)\n',
+            cname1+'.refresh: meth (577-583)\n',
+            cname1+'.save: meth (584-611)\n',
+            cname1+'.trace: meth (612-697)\n',
+            cname1+'.callables_db: prop (698-732)\n',
+            cname1+'.reverse_callables_db: prop (733-774)\n',
+            cname2+': class (775-1098)\n',
+            cname2+'.__init__: meth (780-797)\n',
+            cname2+'._close_callable: meth (798-900)\n',
+            cname2+'._get_indent: meth (901-908)\n',
+            cname2+'._in_class: meth (909-917)\n',
+            cname2+'._pop_indent_stack: meth (918-950)\n',
+            cname2+'.generic_visit: meth (951-964)\n',
+            cname2+'.visit_arguments: meth (965-972)\n',
+            cname2+'.visit_Assign: meth (973-1013)\n',
+            cname2+'.visit_ClassDef: meth (1014-1048)\n',
+            cname2+'.visit_FunctionDef: meth (1049-1098)\n',
+            'putil.pit.my_func: func (1-2)'
         )
-        CS(str(obj), rtext)
+        CS(str(obj), ''.join(rtext))
         ## Test malformed JSON file
         obj = putil.pinspect.Callables()
         json_src = os.path.join(os.path.dirname(ref), 'pit.json')
@@ -410,7 +466,7 @@ class TestCallables(object):
         import tests.support.exdoc_support_module_1
         # Empty object
         obj1 = putil.pinspect.Callables()
-        with putil.misc.TmpFile() as fname:
+        with pmisc.TmpFile() as fname:
             obj1.save(fname)
             obj2 = putil.pinspect.Callables()
             obj2.load(fname)
@@ -419,7 +475,7 @@ class TestCallables(object):
         mname = 'putil.pcsv.csv_file'
         cname = '{0}.CsvFile'.format(mname)
         obj1 = putil.pinspect.Callables([modfile(mname)])
-        with putil.misc.TmpFile() as fname:
+        with pmisc.TmpFile() as fname:
             obj1.save(fname)
             obj2 = putil.pinspect.Callables()
             assert not bool(obj2)
@@ -430,8 +486,8 @@ class TestCallables(object):
         obj1 = putil.pinspect.Callables([modfile(mname1)])
         mname2 = 'tests.support.exdoc_support_module_1'
         obj2 = putil.pinspect.Callables([modfile(mname2)])
-        with putil.misc.TmpFile() as fname1:
-            with putil.misc.TmpFile() as fname2:
+        with pmisc.TmpFile() as fname1:
+            with pmisc.TmpFile() as fname2:
                 obj1.save(fname1)
                 obj2.save(fname2)
                 obj3 = putil.pinspect.Callables(
@@ -467,40 +523,40 @@ class TestCallables(object):
         ref.append('   {0}'.format(mname))
         ref.append('Classes:')
         ref.append('   {0}'.format(cname))
-        ref.append('{0}._homogenize_data_filter: func (44-66)'.format(mname))
-        ref.append('{0}._tofloat: func (67-82)'.format(mname))
-        ref.append('{0}: class (83-958)'.format(cname))
-        ref.append('{0}.__init__: meth (134-207)'.format(cname))
-        ref.append('{0}.__eq__: meth (208-242)'.format(cname))
-        ref.append('{0}.__repr__: meth (243-276)'.format(cname))
-        ref.append('{0}.__str__: meth (277-321)'.format(cname))
-        ref.append('{0}._format_rfilter: meth (322-338)'.format(cname))
-        ref.append('{0}._gen_col_index: meth (339-351)'.format(cname))
-        ref.append('{0}._get_cfilter: meth (352-354)'.format(cname))
-        ref.append('{0}._get_dfilter: meth (355-357)'.format(cname))
-        ref.append('{0}._get_rfilter: meth (358-360)'.format(cname))
-        ref.append('{0}._reset_dfilter_int: meth (361-366)'.format(cname))
-        ref.append('{0}._in_header: meth (367-401)'.format(cname))
-        ref.append('{0}._set_cfilter: meth (402-406)'.format(cname))
-        ref.append('{0}._set_dfilter: meth (407-412)'.format(cname))
-        ref.append('{0}._set_rfilter: meth (413-417)'.format(cname))
-        ref.append('{0}._add_dfilter_int: meth (418-460)'.format(cname))
-        ref.append('{0}._apply_filter: meth (461-493)'.format(cname))
-        ref.append('{0}._set_has_header: meth (494-497)'.format(cname))
-        ref.append('{0}._validate_frow: meth (498-503)'.format(cname))
-        ref.append('{0}._validate_rfilter: meth (504-537)'.format(cname))
-        ref.append('{0}.add_dfilter: meth (538-561)'.format(cname))
-        ref.append('{0}.cols: meth (562-581)'.format(cname))
-        ref.append('{0}.data: meth (582-610)'.format(cname))
-        ref.append('{0}.dsort: meth (611-663)'.format(cname))
-        ref.append('{0}.header: meth (664-695)'.format(cname))
-        ref.append('{0}.replace: meth (696-766)'.format(cname))
-        ref.append('{0}.reset_dfilter: meth (767-784)'.format(cname))
-        ref.append('{0}.rows: meth (785-804)'.format(cname))
-        ref.append('{0}.write: meth (805-887)'.format(cname))
-        ref.append('{0}.cfilter: prop (888-910)'.format(cname))
-        ref.append('{0}.dfilter: prop (911-934)'.format(cname))
-        ref.append('{0}.rfilter: prop (935-958)'.format(cname))
+        ref.append('{0}._homogenize_data_filter: func (45-67)'.format(mname))
+        ref.append('{0}._tofloat: func (68-83)'.format(mname))
+        ref.append('{0}: class (84-959)'.format(cname))
+        ref.append('{0}.__init__: meth (135-208)'.format(cname))
+        ref.append('{0}.__eq__: meth (209-243)'.format(cname))
+        ref.append('{0}.__repr__: meth (244-277)'.format(cname))
+        ref.append('{0}.__str__: meth (278-322)'.format(cname))
+        ref.append('{0}._format_rfilter: meth (323-339)'.format(cname))
+        ref.append('{0}._gen_col_index: meth (340-352)'.format(cname))
+        ref.append('{0}._get_cfilter: meth (353-355)'.format(cname))
+        ref.append('{0}._get_dfilter: meth (356-358)'.format(cname))
+        ref.append('{0}._get_rfilter: meth (359-361)'.format(cname))
+        ref.append('{0}._reset_dfilter_int: meth (362-367)'.format(cname))
+        ref.append('{0}._in_header: meth (368-402)'.format(cname))
+        ref.append('{0}._set_cfilter: meth (403-407)'.format(cname))
+        ref.append('{0}._set_dfilter: meth (408-413)'.format(cname))
+        ref.append('{0}._set_rfilter: meth (414-418)'.format(cname))
+        ref.append('{0}._add_dfilter_int: meth (419-461)'.format(cname))
+        ref.append('{0}._apply_filter: meth (462-494)'.format(cname))
+        ref.append('{0}._set_has_header: meth (495-498)'.format(cname))
+        ref.append('{0}._validate_frow: meth (499-504)'.format(cname))
+        ref.append('{0}._validate_rfilter: meth (505-538)'.format(cname))
+        ref.append('{0}.add_dfilter: meth (539-562)'.format(cname))
+        ref.append('{0}.cols: meth (563-582)'.format(cname))
+        ref.append('{0}.data: meth (583-611)'.format(cname))
+        ref.append('{0}.dsort: meth (612-664)'.format(cname))
+        ref.append('{0}.header: meth (665-696)'.format(cname))
+        ref.append('{0}.replace: meth (697-767)'.format(cname))
+        ref.append('{0}.reset_dfilter: meth (768-785)'.format(cname))
+        ref.append('{0}.rows: meth (786-805)'.format(cname))
+        ref.append('{0}.write: meth (806-888)'.format(cname))
+        ref.append('{0}.cfilter: prop (889-911)'.format(cname))
+        ref.append('{0}.dfilter: prop (912-935)'.format(cname))
+        ref.append('{0}.rfilter: prop (936-959)'.format(cname))
         ref_txt = '\n'.join(ref)
         actual_txt = str(xobj)
         CS(actual_txt, ref_txt)
@@ -797,5 +853,5 @@ class TestGetFunctionArgs(object):
         """ Test __nonzero__() function """
         obj = putil.pinspect.Callables()
         assert not obj
-        obj.trace([modfile('putil.test')])
+        obj.trace([modfile('pmisc')])
         assert obj

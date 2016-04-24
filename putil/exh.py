@@ -72,7 +72,7 @@ def _invalid_frame(fobj):
 
 def _isiterable(obj):
     """
-    Copied from putil.misc module, not included to avoid recursive inclusion
+    Copied from pmisc module, not included to avoid recursive inclusion
     of putil.pcontracts module
     """
     try:

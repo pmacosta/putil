@@ -3,13 +3,16 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0212
 
+# Standard library imports
 from __future__ import print_function
 import collections
 import copy
 import datetime
 import os
+# PyPI imports
 import pytest
-
+import pmisc
+# Putil imports
 import putil.exdoc
 
 
@@ -86,7 +89,7 @@ def run_trace(
     stop_time = datetime.datetime.now()
     if not no_print:
         print('Auto-generation of exceptions documentation time: {0}'.format(
-            putil.misc.elapsed_time_string(start_time, stop_time)
+            pmisc.elapsed_time_string(start_time, stop_time)
         ))
         for callable_name in callable_names:
             callable_name = module_prefix+callable_name

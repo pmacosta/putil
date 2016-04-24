@@ -138,7 +138,7 @@ def _homogenize_data_filter(dfilter):
 
 def _isnumber(obj):
     """
-    Function copied from putil.misc module to avoid
+    Function copied from pmisc module to avoid
     import loops
     """
     return (
@@ -152,7 +152,7 @@ def _isnumber(obj):
 
 def _normalize_windows_fname(fname, _force=False):  # pragma: no cover
     """
-    Function copied from putil.misc module to avoid
+    Function copied from pmisc module to avoid
     import loops
     """
     if ((platform.system().lower() != 'windows')

@@ -209,5 +209,13 @@
 		"cat":["main"],
 		"ver":{"py26":">=1.0.0"},
 		"pos":22
+	},
+	"pmisc":{
+		"name":"Pmisc",
+		"optional":false,
+		"url":"http://pmisc.readthedocs.org",
+		"cat":["main"],
+		"ver":">=1.0.0",
+		"pos":23
 	}
 }

@@ -9,11 +9,12 @@ import functools
 import sys
 # PyPI imports
 import contracts
+import pmisc
+from pmisc import AE, AI, GET_EXMSG
 import pytest
 # Putil imports
 import putil.exh
 import putil.pcontracts
-from putil.test import AE, AI, GET_EXMSG
 
 
 ###
@@ -158,7 +159,7 @@ def test_parse_new_contract_args():
             'name':'default', 'msg':'xyz', 'type':ValueError
         }
     ]
-    assert putil.test.comp_list_of_dicts(
+    assert pmisc.comp_list_of_dicts(
         fobj(mycontract=('xyz', ValueError), othercontract=('abc', OSError)),
         [
             {'name':'othercontract', 'msg':'abc', 'type':OSError},
@@ -172,7 +173,7 @@ def test_parse_new_contract_args():
         {'name':'char', 'msg':'Desc1', 'type':RuntimeError},
         {'name':'other', 'msg':'a', 'type':ValueError}
     ]
-    assert putil.test.comp_list_of_dicts(
+    assert pmisc.comp_list_of_dicts(
         ref, fobj(char='Desc1', other=['a', ValueError])
     )
 
@@ -429,7 +430,7 @@ def test_contract():
             'msg':'The argument fname is wrong'
         }
     ]
-    assert putil.test.comp_list_of_dicts(pexlist, ref)
+    assert pmisc.comp_list_of_dicts(pexlist, ref)
     exmsg = 'The argument fname is wrong'
     AE(func4, RuntimeError, exmsg, fname='a', fnumber=5)
     AE(func4, OSError, 'File name `b` not found', fname='b', fnumber=5)

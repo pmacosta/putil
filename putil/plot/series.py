@@ -7,10 +7,10 @@
 import numpy
 import matplotlib.path
 import matplotlib.pyplot as plt
+import pmisc
 from scipy.stats import linregress
 from scipy.interpolate import InterpolatedUnivariateSpline
 # Putil imports
-import putil.misc
 import putil.pcontracts
 from .functions import _C
 from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
@@ -236,14 +236,14 @@ class Series(object):
         self._color = (
             color.lower().strip()
             if isinstance(color, str) else
-            (float(color) if putil.misc.isreal(color) else color)
+            (float(color) if pmisc.isreal(color) else color)
         )
         check_list = list()
         # No color specification
         check_list.append(self.color is None)
         # Gray scale color specification, checked by decorator
         check_list.append(
-            putil.misc.isreal(self.color) and (0.0 <= color <= 1.0)
+            pmisc.isreal(self.color) and (0.0 <= color <= 1.0)
         )
         # Basic built-in Matplotlib specification
         check_list.append(
@@ -260,7 +260,7 @@ class Series(object):
             isinstance(self.color, str) and
             (self.color[0] == '#') and
             (len(self.color) == 7) and
-            ((numpy.array([putil.misc.ishex(char)
+            ((numpy.array([pmisc.ishex(char)
                   for char in self.color[1:]]
                  ) == numpy.array([True]*6)).all())
         )
@@ -269,7 +269,7 @@ class Series(object):
             (isinstance(self.color, list) or isinstance(self.color, tuple)) and
             (len(self.color) in [3, 4]) and
             ((numpy.array([
-                putil.misc.isreal(comp) and (0.0 <= comp <= 1.0)
+                pmisc.isreal(comp) and (0.0 <= comp <= 1.0)
                 for comp in self.color
             ]) == numpy.array([True]*len(self.color))).all())
         )

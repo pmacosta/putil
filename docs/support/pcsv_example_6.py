@@ -3,10 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0410,W0104
 
-import putil.misc, putil.pcsv
+import pmisc, putil.pcsv
 
 def main():
-    ctx = putil.misc.TmpFile
+    ctx = pmisc.TmpFile
     with ctx() as ifname:
         with ctx() as ofname:
             # Create input data file

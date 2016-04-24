@@ -10,8 +10,8 @@ import sys
 import numpy
 import pytest
 import matplotlib
+from pmisc import AE, AI, AROPROP, RE, compare_strings
 # Putil imports
-from putil.test import AE, AI, AROPROP, RE, compare_strings
 import putil.plot
 from .fixtures import compare_image_set
 sys.path.append('..')

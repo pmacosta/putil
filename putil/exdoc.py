@@ -24,7 +24,6 @@ if sys.hexversion >= 0x03000000: # pragma: no cover
 else: # pragma: no cover
     from putil.compat2 import _rwtb
 import putil.exh
-import putil.misc
 import putil.tree
 
 

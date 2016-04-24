@@ -4,10 +4,10 @@
 # pylint: disable=C0103,C0111,R0201,R0903,W0621
 
 # PyPI imports
+from pmisc import AE, AI, GET_EXMSG
 import pytest
 # Putil imports
 import putil.plot
-from putil.test import AE, AI, GET_EXMSG
 
 
 ###

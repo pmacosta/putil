@@ -14,7 +14,7 @@ import sys
 ###
 # Functions
 ###
-# This is a sub-set of the putil.misc.pcolor function, repeated here because
+# This is a sub-set of the pmisc.pcolor function, repeated here because
 # this script may be run right after cloning and putil module may not be in
 # the Python search path
 def _os_cmd(cmd):

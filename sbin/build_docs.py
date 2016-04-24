@@ -208,7 +208,7 @@ def elapsed_time_string(start_time, stop_time):
 
 def insert_files_in_docstrings(src_dir, cog_exe):
     """ Cog-insert source files in docstrings """
-    modules = ['misc', 'pcontracts', 'plot', 'tree']
+    modules = ['pcontracts', 'plot', 'tree']
     for module in modules:
         if module == 'plot':
             module_dir = os.path.join(src_dir, 'plot')
@@ -292,7 +292,7 @@ def move_file(src, dest):
 
 def pcolor(text, color, indent=0):
     r"""
-    Returns a string that once printed is colorized (copied from putil.misc)
+    Returns a string that once printed is colorized (copied from pmisc module)
 
     :param text: Text to colorize
     :type  text: string

@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0410,E0611,F0401,R0903
 
-import sys, putil.misc, putil.pcsv
+import sys, pmisc, putil.pcsv
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
@@ -21,7 +21,7 @@ def proc_func2(indep_var, dep_var, par1, par2):
     return (indep_var/1E-12)+(2*par1), dep_var+sum(par2)
 
 def create_csv_source():
-    with putil.misc.TmpFile(write_csv_file) as fname:
+    with pmisc.TmpFile(write_csv_file) as fname:
         obj = putil.plot.CsvSource(
             fname=fname,
             indep_col_label='Col1',

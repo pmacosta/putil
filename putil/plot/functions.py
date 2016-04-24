@@ -13,10 +13,10 @@ import sys
 import six
 import numpy
 import matplotlib.pyplot as plt
+import pmisc
 # Putil imports
 import putil.exh
 import putil.eng
-import putil.misc
 import putil.pcontracts
 from .constants import PRECISION, MIN_TICKS, SUGGESTED_MAX_TICKS
 
@@ -115,7 +115,7 @@ def _intelligent_ticks(series, series_min, series_max,
                 # all the data point spacings is at most as big as the minimum
                 # data spacing
                 if (series_delta/data_spacing[0])+1 < SUGGESTED_MAX_TICKS:
-                    tick_spacing = putil.misc.gcd(data_spacing)
+                    tick_spacing = pmisc.gcd(data_spacing)
                     num_ticks = (
                         (series_delta/tick_spacing)+1
                         if tick_spacing else
@@ -386,7 +386,7 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
     color_dict = dict(zip(color_space_name_list, color_palette_list))
     return [
         color_dict[color_space](
-            putil.misc.normalize(value, param_list, offset)
+            pmisc.normalize(value, param_list, offset)
         )
         for value in param_list
     ]

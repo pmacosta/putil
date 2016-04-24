@@ -9,7 +9,7 @@ def module_enclosing_func(offset):
     def module_closure_func(self):
         """
         Actual closure function, should be reported as:
-        putil.tests.my_module.module_enclosing_func.module_closure_func
+        pmiscs.my_module.module_enclosing_func.module_closure_func
         """
         self._exobj.add_exception(
             exname='illegal_value',

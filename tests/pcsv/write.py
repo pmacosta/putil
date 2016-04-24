@@ -9,13 +9,13 @@ import sys
 if sys.hexversion >= 0x03000000:
     import unittest.mock as mock
 # PyPI imports
+import pmisc
+from pmisc import AE, AI
 import pytest
 if sys.hexversion < 0x03000000:
     import mock
 # Putil imports
-import putil.misc
 import putil.pcsv
-from putil.test import AE, AI
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _read
 else:
@@ -48,9 +48,9 @@ def test_write_function_exceptions():
     exmsg = 'File {0} could not be created: Permission denied'.format(
         some_fname
     )
-    with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir_io):
+    with mock.patch('pmisc.make_dir', side_effect=mock_make_dir_io):
         AE(obj, OSError, exmsg, fname=some_fname, data=data)
-    with mock.patch('putil.misc.make_dir', side_effect=mock_make_dir_os):
+    with mock.patch('pmisc.make_dir', side_effect=mock_make_dir_os):
         AE(obj, OSError, exmsg, fname=some_fname, data=data)
     AI(obj, 'data', fname='test.csv', data=[True, False])
     exmsg = 'There is no data to save to file'
@@ -60,13 +60,13 @@ def test_write_function_exceptions():
 def test_write_function_works():
     """ Test if write() method behaves properly """
     lsep = '\r\n'
-    with putil.misc.TmpFile() as fname:
+    with pmisc.TmpFile() as fname:
         putil.pcsv.write(
             fname, [['Input', 'Output'], [1, 2], [3, 4]], append=False
         )
         written_data = _read(fname)
     assert written_data == 'Input,Output{0}1,2{0}3,4{0}'.format(lsep)
-    with putil.misc.TmpFile() as fname:
+    with pmisc.TmpFile() as fname:
         putil.pcsv.write(
             fname, [['Input', 'Output'], [1, 2], [3, 4]], append=False
         )

@@ -16,9 +16,9 @@ import pytest
 if sys.hexversion < 0x03000000:
     import mock
 import matplotlib
+import pmisc
+from pmisc import AI, AE, AROPROP, RE
 # Putil imports
-from putil.test import AI, AE, AROPROP, RE
-import putil.misc
 import putil.plot
 from .fixtures import compare_image_set
 sys.path.append('..')
@@ -140,9 +140,9 @@ class TestFigure(object):
         obj = putil.plot.Figure(
             panels=default_panel
         )
-        with putil.misc.TmpFile() as fname:
+        with pmisc.TmpFile() as fname:
             obj.save(fname=fname, ftype='PNG')
-        with putil.misc.TmpFile() as fname:
+        with pmisc.TmpFile() as fname:
             obj.save(fname=fname, ftype='EPS')
         # Test extension handling
         # No exception
@@ -150,7 +150,7 @@ class TestFigure(object):
         obj.save(fname, ftype='PNG')
         fref = '{fname}.png'.format(fname=fname)
         assert os.path.exists(fref)
-        with putil.misc.ignored(OSError):
+        with pmisc.ignored(OSError):
             os.remove(fref)
         # No exception but trailing period
         fname = os.path.join(os.path.dirname(__file__), 'test_file2.')
@@ -159,14 +159,14 @@ class TestFigure(object):
             fname=os.path.join(os.path.dirname(__file__), 'test_file2')
         )
         assert os.path.exists(fref)
-        with putil.misc.ignored(OSError):
+        with pmisc.ignored(OSError):
             os.remove(fref)
         # Extension given, overrides file format
         fname = os.path.join(os.path.dirname(__file__), 'test_file3.ext')
         obj.save(fname, ftype='EPS')
         fref = fname
         assert os.path.exists(fref)
-        with putil.misc.ignored(OSError):
+        with pmisc.ignored(OSError):
             os.remove(fref)
 
     @pytest.mark.figure

@@ -177,7 +177,7 @@ def load_requirements(pkg_dir, pyver, cat='source'):
 
 def pcolor(text, color, indent=0):
     """
-    Returns a string that once printed is colorized (copied from putil.misc)
+    Returns a string that once printed is colorized (copied from pmisc module)
     """
     esc_dict = {
         'black':30, 'red':31, 'green':32, 'yellow':33, 'blue':34, 'magenta':35,

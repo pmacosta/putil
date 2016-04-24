@@ -3,10 +3,10 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0410,W0104
 
-import putil.misc, putil.pcsv
+import pmisc, putil.pcsv
 
 def main():
-    with putil.misc.TmpFile() as fname:
+    with pmisc.TmpFile() as fname:
         ref_data = [
             ['Item', 'Cost'],
             [1, 9.99],

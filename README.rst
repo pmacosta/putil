@@ -68,6 +68,7 @@ Putil Library
 .. _Nose: http://nose.readthedocs.org
 .. _Numpy: http://www.numpy.org
 .. _Pillow: https://python-pillow.github.io
+.. _Pmisc: http://pmisc.readthedocs.org
 .. _PyContracts: https://andreacensi.github.io/contracts
 .. _Pylint: http://www.pylint.org
 .. _PyParsing: http://pyparsing.wikispaces.com/
@@ -97,10 +98,6 @@ Python standard library. The modules provided are:
 
 * **exh**: register exceptions and then raise them if a given condition is true
 
-* **misc**: miscellaneous utility functions that can be applied in a variety
-  of circumstances; there are context managers, membership functions (test if
-  an argument is of a given type), numerical functions and string functions
-
 * **pcontracts**: thin wrapper around the
   `PyContracts`_ library that
   enables customization of the exception type raised and limited
@@ -117,9 +114,6 @@ Python standard library. The modules provided are:
 * **ptypes**: several pseudo-type definitions which can be enforced
   and/or validated with custom contracts defined using the
   pcontracts module
-
-* **test**: functions to aid in the unit testing of modules in the package
-  (`Py.test`_-based)
 
 * **tree**: build, handle, process and search
   `tries <http://wikipedia.org/wiki/Trie>`_
@@ -214,6 +208,8 @@ Contributing
     * `Numpy`_ (1.8.2 or newer)
 
     * `Pillow`_ (2.6.1 or newer)
+
+    * `Pmisc`_ (1.0.0 or newer)
 
     * `Py.test`_ (2.7.0 or newer)
 

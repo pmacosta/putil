@@ -7,8 +7,9 @@
 # Standard library imports
 import copy
 import pytest
+# PyPI imports
+from pmisc import AE, AI, AROPROP, RE
 # Putil imports
-from putil.test import AE, AI, AROPROP, RE
 import putil.tree
 
 

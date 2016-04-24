@@ -6,11 +6,11 @@
 # Standard library imports
 from itertools import product
 # PyPI imports
+import pmisc
+from pmisc import AE, AI, RE
 import pytest
 # Putil imports
-import putil.misc
 import putil.pcsv
-from putil.test import AE, AI, RE
 from tests.pcsv.fixtures import (
     common_exceptions,
     write_file,
@@ -26,8 +26,8 @@ from tests.pcsv.fixtures import (
 def test_replace_function():
     """ Test replace function behavior """
     # One-column replacement
-    with putil.misc.TmpFile(write_input_file) as fname1:
-        with putil.misc.TmpFile(write_replacement_file) as fname2:
+    with pmisc.TmpFile(write_input_file) as fname1:
+        with pmisc.TmpFile(write_replacement_file) as fname2:
             putil.pcsv.replace(fname1, fname2, ['Ref'], ['H4'])
             obj = putil.pcsv.CsvFile(fname=fname1)
             assert obj.header() == ['Ctrl', 'Ref', 'Data1', 'Data2']
@@ -35,8 +35,8 @@ def test_replace_function():
                 ['nom', 4, 20, 30], ['high', 8, 40, 60], ['low', 12, 300, 3000]
             ]
     # Two-column replacement
-    with putil.misc.TmpFile(write_input_file) as fname1:
-        with putil.misc.TmpFile(write_replacement_file) as fname2:
+    with pmisc.TmpFile(write_input_file) as fname1:
+        with pmisc.TmpFile(write_replacement_file) as fname2:
             putil.pcsv.replace(fname1, fname2, ['Data2', 'Ref'], ['H2', 'H4'])
             obj = putil.pcsv.CsvFile(fname=fname1)
             assert obj.header() == ['Ctrl', 'Ref', 'Data1', 'Data2']
@@ -45,8 +45,8 @@ def test_replace_function():
             ]
     # Two-column replacement with new column names of output file
     # "In place" replacement
-    with putil.misc.TmpFile(write_input_file) as fname1:
-        with putil.misc.TmpFile(write_replacement_file) as fname2:
+    with pmisc.TmpFile(write_input_file) as fname1:
+        with pmisc.TmpFile(write_replacement_file) as fname2:
             putil.pcsv.replace(
                 fname1, fname2,
                 ['Data2', 'Ref'], ['H2', 'H4'],
@@ -59,9 +59,9 @@ def test_replace_function():
             ]
     # Two-column replacement with new column names of output file
     # Separate output file generated
-    with putil.misc.TmpFile() as ofname:
-        with putil.misc.TmpFile(write_input_file) as fname1:
-            with putil.misc.TmpFile(write_replacement_file) as fname2:
+    with pmisc.TmpFile() as ofname:
+        with pmisc.TmpFile(write_input_file) as fname1:
+            with pmisc.TmpFile(write_replacement_file) as fname2:
                 putil.pcsv.replace(
                     fname1, fname2,
                     ['Data2', 'Ref'], ['H3', 'H4'],
@@ -73,9 +73,9 @@ def test_replace_function():
             ['nom', 4, 20, 3], ['high', 8, 40, 7], ['low', 12, 300, 11]
         ]
     # Input and replacement files row filtering
-    with putil.misc.TmpFile() as ofname:
-        with putil.misc.TmpFile(write_input_file) as fname1:
-            with putil.misc.TmpFile(write_replacement_file) as fname2:
+    with pmisc.TmpFile() as ofname:
+        with pmisc.TmpFile(write_input_file) as fname1:
+            with pmisc.TmpFile(write_replacement_file) as fname2:
                 putil.pcsv.replace(
                     fname1, fname2,
                     (['Data2', 'Ref'], {'Ref':[10, 30]}),
@@ -88,9 +88,9 @@ def test_replace_function():
             ['nom', 4, 20, 3], ['high', 20, 40, 60], ['low', 12, 300, 11]
         ]
     # No header option
-    with putil.misc.TmpFile() as ofname:
-        with putil.misc.TmpFile(write_input_file) as fname1:
-            with putil.misc.TmpFile(write_replacement_file) as fname2:
+    with pmisc.TmpFile() as ofname:
+        with pmisc.TmpFile(write_input_file) as fname1:
+            with pmisc.TmpFile(write_replacement_file) as fname2:
                 putil.pcsv.replace(
                     fname1, fname2,
                     ([3, 1], {1:[10, 30]}), ([2, 3], {0:[1, 9]}),
@@ -103,8 +103,8 @@ def test_replace_function():
             ['nom', 4, 20, 3], ['high', 20, 40, 60], ['low', 12, 300, 11]
         ]
     # Starting row
-    with putil.misc.TmpFile(write_input_file) as fname1:
-        with putil.misc.TmpFile(write_replacement_file) as fname2:
+    with pmisc.TmpFile(write_input_file) as fname1:
+        with pmisc.TmpFile(write_replacement_file) as fname2:
             putil.pcsv.replace(
                 fname1, fname2, ['Ref'], ['H4'], frow1=3, frow2=3
             )
@@ -120,8 +120,8 @@ def test_replace_function_exceptions():
     obj = putil.pcsv.replace
     common_exceptions(obj)
     dfilter = ['Ctrl']
-    with putil.misc.TmpFile(write_file) as fname1:
-        with putil.misc.TmpFile(write_file) as fname2:
+    with pmisc.TmpFile(write_file) as fname1:
+        with pmisc.TmpFile(write_file) as fname2:
             # Invalid row_start
             for item, par in product(['a', True, -1], ['frow1', 'frow2']):
                 AI(obj, par, fname1, fname2, dfilter, dfilter, **{par:item})
@@ -137,6 +137,6 @@ def test_replace_function_exceptions():
             AE(obj, RE, exmsg, fname1, fname2, ['Ctrl'], ['Ref'], ocols=ocols)
     # Number of rows do not match
     exmsg = 'Number of rows mismatch between input and replacement data'
-    with putil.misc.TmpFile(write_file) as fname1:
-        with putil.misc.TmpFile(write_str_cols_file) as fname2:
+    with pmisc.TmpFile(write_file) as fname1:
+        with pmisc.TmpFile(write_str_cols_file) as fname2:
             AE(obj, ValueError, exmsg, fname1, fname2, dfilter, ['Ref'])

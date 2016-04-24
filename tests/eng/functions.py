@@ -9,9 +9,9 @@ import sys
 # PyPI imports
 import pytest
 from numpy import array, ndarray
+from pmisc import AE, AI, CS
 # Putil imports
 import putil.eng
-from putil.test import AE, AI, CS
 
 
 ###

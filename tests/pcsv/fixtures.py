@@ -6,9 +6,10 @@
 # Standard library imports
 from itertools import product
 import sys
+# PyPI imports
+import pmisc
+from pmisc import AE, AI, RE
 # Putil imports
-import putil.misc
-from putil.test import AE, AI, RE
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
@@ -33,7 +34,7 @@ def common_exceptions(obj):
     ]
     for file_toggle in [False, True]:
         # File-related tests
-        with putil.misc.TmpFile(write_file) as real_file:
+        with pmisc.TmpFile(write_file) as real_file:
             fname1 = '_dummy_file_' if not file_toggle else real_file
             fname2 = real_file if not file_toggle else '_dummy_file_'
             exmsg = 'File _dummy_file_ could not be found'
@@ -44,21 +45,21 @@ def common_exceptions(obj):
                 par = 'fname1' if not file_toggle else 'fname2'
                 AI(obj, par, fname1, fname2, ['a'], ['b'])
         dfilter = ['Ctrl']
-        with putil.misc.TmpFile(write_file_empty) as empty_file:
-            with putil.misc.TmpFile(write_file) as real_file:
+        with pmisc.TmpFile(write_file_empty) as empty_file:
+            with pmisc.TmpFile(write_file) as real_file:
                 fname1 = empty_file if not file_toggle else real_file
                 fname2 = real_file if not file_toggle else empty_file
                 exmsg = r'File (.+) is empty'
                 AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter)
-        with putil.misc.TmpFile(write_cols_not_unique) as nuniq_file:
-            with putil.misc.TmpFile(write_file) as real_file:
+        with pmisc.TmpFile(write_cols_not_unique) as nuniq_file:
+            with pmisc.TmpFile(write_file) as real_file:
                 fname1 = nuniq_file if not file_toggle else real_file
                 fname2 = real_file if not file_toggle else nuniq_file
                 exmsg = 'Column headers are not unique in file (.+)'
                 AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter)
         # Filter-related exceptions
-        with putil.misc.TmpFile(write_file) as fname1:
-            with putil.misc.TmpFile(write_file) as fname2:
+        with pmisc.TmpFile(write_file) as fname1:
+            with pmisc.TmpFile(write_file) as fname2:
                 for item in dfilter_items:
                     dfilter1 = item if not file_toggle else ['Ctrl']
                     dfilter2 = ['Ctrl'] if not file_toggle else item
@@ -84,8 +85,8 @@ def common_exceptions(obj):
                     file_toggle, not file_toggle
                 )
     # Starting row
-    with putil.misc.TmpFile(write_file) as fname1:
-        with putil.misc.TmpFile(write_file) as fname2:
+    with pmisc.TmpFile(write_file) as fname1:
+        with pmisc.TmpFile(write_file) as fname2:
             # Invalid row_start
             for item, par in product(['a', True, -1], ['frow1', 'frow2']):
                 AI(obj, par, fname1, fname2, dfilter, dfilter, **{par:item})
@@ -94,8 +95,8 @@ def common_exceptions(obj):
             exmsg = 'File {0} has no valid data'.format(fname2)
             AE(obj, RE, exmsg, fname1, fname2, dfilter, dfilter, frow2=200)
     # Output file exceptions
-    with putil.misc.TmpFile(write_file) as fname1:
-        with putil.misc.TmpFile(write_file) as fname2:
+    with pmisc.TmpFile(write_file) as fname1:
+        with pmisc.TmpFile(write_file) as fname2:
             par = 'ofname'
             for item in [7, 'a_file\0']:
                 AI(obj, par, fname1, fname2, dfilter, ['Ref'], ofname=item)

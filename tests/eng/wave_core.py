@@ -12,9 +12,9 @@ import sys
 import numpy
 from numpy import array
 import pytest
+from pmisc import AE, AI, APROP, AROPROP, GET_EXMSG, compare_strings
 # Putil imports
 import putil.eng
-from putil.test import AE, AI, APROP, AROPROP, GET_EXMSG, compare_strings
 from .support import cmp_vectors, std_obj
 
 

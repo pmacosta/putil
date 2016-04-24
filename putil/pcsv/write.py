@@ -8,6 +8,8 @@ import csv
 import os
 import platform
 import sys
+# PyPI imports
+import pmisc
 # Putil imports
 import putil.exh
 import putil.pcontracts
@@ -45,7 +47,7 @@ def _write_int(fname, data, append=True):
     )
     data_ex((len(data) == 0) or ((len(data) == 1) and (len(data[0]) == 0)))
     try:
-        putil.misc.make_dir(fname)
+        pmisc.make_dir(fname)
         mode = 'w' if append is False else 'a'
         if sys.hexversion < 0x03000000: # pragma: no cover, no branch
             with open(fname, mode) as file_handle:

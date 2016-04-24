@@ -18,14 +18,14 @@ if sys.hexversion < 0x03000000:
 else:
     import builtins as __builtin__
 # PyPI imports
+import pmisc
+from pmisc import AE, AI, AROPROP, CS, GET_EXMSG
 import pytest
 if sys.hexversion < 0x03000000:
     import mock
 # Putil imports
 import putil.exdoc
 import putil.exh
-import putil.misc
-from putil.test import AE, AI, AROPROP, CS, GET_EXMSG
 import tests.support.exdoc_support_module_1
 import tests.support.exdoc_support_module_3
 import tests.support.exdoc_support_module_4
@@ -160,7 +160,7 @@ class TestExDocCxt(object):
             exmsg = 'Argument `{0}` is not valid'.format(name)
             with pytest.raises(RuntimeError) as excinfo:
                 with putil.exdoc.ExDocCxt(**kwargs):
-                    putil.misc.pcolor('a', 'red')
+                    pmisc.pcolor('a', 'red')
             assert GET_EXMSG(excinfo) == exmsg
         def check_ctx2(name=None, kwargs=None):
             exmsg = 'Argument `in_callables_fname` is not valid'
@@ -190,7 +190,7 @@ class TestExDocCxt(object):
         for item in [5, 'test\0']:
             check_ctx1('pickle_fname', dict(pickle_fname=item))
         #
-        with putil.misc.TmpFile() as fname:
+        with pmisc.TmpFile() as fname:
             with putil.exdoc.ExDocCxt(pickle_fname=fname):
                 func0()
             assert os.path.isfile(fname)
@@ -247,7 +247,7 @@ class TestExDocCxt(object):
         """ Test traced modules information storage """
         putil.exh.del_exh_obj()
         cobj = putil.exdoc.ExDocCxt
-        with putil.misc.TmpFile() as fname:
+        with pmisc.TmpFile() as fname:
             out_callables_fname = fname
             with cobj(out_callables_fname=out_callables_fname) as tobj:
                 tests.support.exdoc_support_module_4.func('John')
@@ -391,7 +391,7 @@ class TestExDoc(object):
             '├leaf1 (*)\n'
             '└leaf2 (*)'
         )
-        putil.test.compare_strings(str(exdocobj._tobj), ref)
+        pmisc.compare_strings(str(exdocobj._tobj), ref)
 
     def test_depth(self, simple_exobj):
         """ Test depth property behavior """

@@ -9,10 +9,11 @@ import os
 import sys
 # PyPI imports
 import numpy
+import pmisc
+from pmisc import AE, AI, APROP, AROPROP, GET_EXMSG, RE
 import pytest
 # Putil imports
-import putil.misc
-from putil.test import AE, AI, APROP, AROPROP, GET_EXMSG, RE
+import putil.plot
 if sys.hexversion < 0x03000000:
     from putil.compat2 import _write
 else:
@@ -49,7 +50,7 @@ class TestCsvSource(object):
             return indep_var*1e-3, dep_var+1
         def fproc2(indep_var, dep_var, par1, par2):
             return indep_var+par1, dep_var-par2
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # No rfilter
             obj = str(putil.plot.CsvSource(
                 fname=os.path.normpath(fname),
@@ -209,7 +210,7 @@ class TestCsvSource(object):
 
     def test_complete(self):
         """ Test _complete method behavior """
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             obj = putil.plot.CsvSource(
                 fname=fname,
                 indep_col_label='Col7',
@@ -228,7 +229,7 @@ class TestCsvSource(object):
     def test_indep_max(self):
         """ Tests indep_max property behavior """
         items = [1, 2.0]
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # __init__ path
             for item in items:
                 putil.plot.CsvSource(
@@ -250,7 +251,7 @@ class TestCsvSource(object):
     def test_indep_max_exceptions(self):
         """ Tests indep_max property exceptions """
         msg = 'Argument `indep_max` is not valid'
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # __init__ path
             items = ['a', False]
             for item in items:
@@ -266,7 +267,7 @@ class TestCsvSource(object):
     def test_indep_min(self):
         """ Tests indep_min property behavior """
         items = [1, 2.0]
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # __init__ path
             for item in items:
                 putil.plot.CsvSource(
@@ -290,7 +291,7 @@ class TestCsvSource(object):
     def test_indep_min_exceptions(self):
         """ Tests indep_min property exceptions """
         msg = 'Argument `indep_min` is not valid'
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # __init__ path
             items = ['a', False]
             for item in items:
@@ -314,7 +315,7 @@ class TestCsvSource(object):
         are incongruous
         """
         msg = 'Argument `indep_min` is greater than argument `indep_max`'
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # Assign indep_min first
             obj = putil.plot.CsvSource(
                 fname=fname,
@@ -338,7 +339,7 @@ class TestCsvSource(object):
 
     def test_fname(self):
         """ Test constructor fname argument behavior """
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             putil.plot.CsvSource(
                 fname=fname,
                 indep_col_label='Col7',
@@ -360,7 +361,7 @@ class TestCsvSource(object):
     def test_indep_col_label_exceptions(self):
         """ Test constructor indep_col_label argument exceptions """
         items = [None, 5]
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # These assignments should raise an exception
             for item in items:
                 AI(FOBJ, 'indep_col_label', fname, item, 'Col2')
@@ -374,7 +375,7 @@ class TestCsvSource(object):
     def test_dep_col_label_exceptions(self):
         """ Test constructor indep_col_label argument exceptions """
         items = [None, 5]
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # This assignment should raise an exception
             for item in items:
                 AI(FOBJ, 'dep_col_label', fname, 'Col7', item)
@@ -387,20 +388,20 @@ class TestCsvSource(object):
     @pytest.mark.csv_source
     def test_empty_indep_var_after_filter_exceptions(self):
         """ Test empty independent variable after rfilter exceptions """
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             exmsg = 'Filtered independent variable is empty'
             AE(FOBJ, ValueError, exmsg, fname, 'Col2', 'Col3', {'Col1':10})
 
     @pytest.mark.csv_source
     def test_empty_dep_var_after_filter_exceptions(self):
         """ Test empty dependent variable after rfilter exceptions """
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             exmsg = 'Filtered dependent variable is empty'
             AE(FOBJ, ValueError, exmsg, fname, 'Col2', 'Col5', {'Col1':0})
 
     def test_data_reversed(self):
         """ Test reordering when independent variable in descending order """
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             obj = putil.plot.CsvSource(
                 fname=fname,
                 indep_col_label='Col6',
@@ -422,7 +423,7 @@ class TestCsvSource(object):
             return [numpy.array([1, 2]), numpy.array([1, 2])]
         def fproc7(indep_var, dep_var):
             return [numpy.array([1, 2]), numpy.array([3, 1])]
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             obj = putil.plot.CsvSource(
                 fname=fname,
                 indep_col_label='Col2',
@@ -433,7 +434,7 @@ class TestCsvSource(object):
             )
         assert (obj.indep_var == numpy.array([4, 5, 6])).all()
         assert (obj.dep_var == numpy.array([102, 104, 101])).all()
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             putil.plot.CsvSource(
                 fname=fname,
                 indep_col_label='Col7',
@@ -466,7 +467,7 @@ class TestCsvSource(object):
         """ Test fproc property exceptions """
         def fproc1():
             return numpy.array([1]), numpy.array([1])
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             AI(FOBJ, 'fproc', fname, 'Col7', 'Col2', fproc=5)
             exmsg = (
                 'Argument `fproc` (function fproc1) does not have at least '
@@ -479,7 +480,7 @@ class TestCsvSource(object):
         def fproc3(indep_var, dep_var, **kwargs):
             return [numpy.array([1, 2]), numpy.array([1, 2])]
         items = [None, {'arg1':23}, {'par99':5}]
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             for item in items:
                 putil.plot.CsvSource(
                     fname=fname,
@@ -496,7 +497,7 @@ class TestCsvSource(object):
             return [numpy.array([1, 2]), numpy.array([1, 2])]
         def fproc2(indep_var, dep_var, par1, par2):
             return [numpy.array([1, 2]), numpy.array([1, 2])]
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             AI(FOBJ, 'fproc_eargs', fname, 'Col7', 'Col2', fproc_eargs=5)
             kwarg = dict(fproc=fproc1, fproc_eargs={'par1':5})
             exmsg = (
@@ -538,7 +539,7 @@ class TestCsvSource(object):
             raise RuntimeError('Test exception message #1')
         def fproc14(indep_var, dep_var, par1=None):
             raise RuntimeError('Test exception message #2')
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             # These assignments should raise an exception
             exmsg = (
                 'Argument `fproc` (function fproc1) return value is not valid'
@@ -605,7 +606,7 @@ class TestCsvSource(object):
         """ Test constructor rfilter argument behavior """
         items = [None, {'Col1':0}]
         for item in items:
-            with putil.misc.TmpFile(write_csv_file) as fname:
+            with pmisc.TmpFile(write_csv_file) as fname:
                 putil.plot.CsvSource(
                     fname=fname,
                     indep_col_label='Col7',
@@ -616,9 +617,9 @@ class TestCsvSource(object):
     @pytest.mark.csv_source
     def test_rfilter_exceptions(self):
         """ Test constructor rfilter argument exceptions """
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             AI(FOBJ, 'rfilter', fname, 'Col7', 'Col2', 5)
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             exmsg = (
                 'Column Col99 in row filter not found in '
                 'comma-separated file {0} header'.format(fname)
@@ -630,7 +631,7 @@ class TestCsvSource(object):
         """
         Test that del method raises an exception on all class attributes
         """
-        with putil.misc.TmpFile(write_csv_file) as fname:
+        with pmisc.TmpFile(write_csv_file) as fname:
             obj = putil.plot.CsvSource(
                 fname=fname,
                 indep_col_label='Col7',

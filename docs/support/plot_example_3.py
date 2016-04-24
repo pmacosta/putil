@@ -3,7 +3,7 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0410,R0903
 
-import putil.misc, putil.pcsv
+import pmisc, putil.pcsv
 
 def cwrite(fobj, data):
     fobj.write(data)
@@ -26,7 +26,7 @@ def proc_func1(indep_var, dep_var):
     return indep_var, dep_var
 
 def create_csv_source():
-    with putil.misc.TmpFile(write_csv_file) as fname:
+    with pmisc.TmpFile(write_csv_file) as fname:
         obj = putil.plot.CsvSource(
             fname=fname,
             indep_col_label='Col1',

@@ -5,10 +5,11 @@
 
 # Standard library imports
 import sys
+# PyPI imports
 import numpy
+from pmisc import AE, AI
 # Putil imports
 import putil.ptypes
-from putil.test import AE, AI
 
 
 ###

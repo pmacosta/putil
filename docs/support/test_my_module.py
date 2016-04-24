@@ -3,11 +3,11 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0410,C0411,R0903,W0104,W0105
 
-import pytest, docs.support.my_module, putil.test
+import pmisc, pytest, docs.support.my_module
 
 def test_func():
     """ Test func() function """
-    putil.test.assert_exception(
+    pmisc.assert_exception(
         docs.support.my_module.func,
         TypeError,
         'Argument `name` is not valid',
@@ -20,7 +20,7 @@ def test_my_class():
     obj = docs.support.my_module.MyClass()
     with pytest.raises(RuntimeError) as excinfo:
         obj.value
-    assert putil.test.get_exmsg(excinfo) == 'Attribute `value` not set'
+    assert pmisc.get_exmsg(excinfo) == 'Attribute `value` not set'
     with pytest.raises(RuntimeError) as excinfo:
         obj.value = 'a'
-    assert putil.test.get_exmsg(excinfo) == 'Argument `value` is not valid'
+    assert pmisc.get_exmsg(excinfo) == 'Argument `value` is not valid'

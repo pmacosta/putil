@@ -230,7 +230,7 @@ class CsvSource(DataSource):
         .. code-block:: python
 
             # plot_example_3.py
-            import putil.misc, putil.pcsv
+            import pmisc, putil.pcsv
 
             def cwrite(fobj, data):
                 fobj.write(data)
@@ -253,7 +253,7 @@ class CsvSource(DataSource):
                 return indep_var, dep_var
 
             def create_csv_source():
-                with putil.misc.TmpFile(write_csv_file) as fname:
+                with pmisc.TmpFile(write_csv_file) as fname:
                     obj = putil.plot.CsvSource(
                         fname=fname,
                         indep_col_label='Col1',
@@ -977,7 +977,7 @@ class CsvSource(DataSource):
     .. code-block:: python
 
         # plot_example_5.py
-        import sys, putil.misc, putil.pcsv
+        import sys, pmisc, putil.pcsv
         if sys.hexversion < 0x03000000:
             from putil.compat2 import _write
         else:
@@ -995,7 +995,7 @@ class CsvSource(DataSource):
             return (indep_var/1E-12)+(2*par1), dep_var+sum(par2)
 
         def create_csv_source():
-            with putil.misc.TmpFile(write_csv_file) as fname:
+            with pmisc.TmpFile(write_csv_file) as fname:
                 obj = putil.plot.CsvSource(
                     fname=fname,
                     indep_col_label='Col1',

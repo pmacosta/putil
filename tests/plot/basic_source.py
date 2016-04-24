@@ -5,10 +5,10 @@
 
 # PyPI imports
 from numpy import array
+from pmisc import AE, AI, APROP, AROPROP
 import pytest
 # Putil imports
 from putil.plot import BasicSource as FUT
-from putil.test import AE, AI, APROP, AROPROP
 
 
 ###

@@ -8,10 +8,10 @@ from __future__ import print_function
 import sys
 # PyPI imports
 import numpy
+from pmisc import AE, AI, APROP, AROPROP, RE
 import pytest
 # Putil imports
 import putil.plot
-from putil.test import AE, AI, APROP, AROPROP, RE
 from .fixtures import compare_image_set
 sys.path.append('..')
 from tests.plot.gen_ref_images import unittest_panel_images

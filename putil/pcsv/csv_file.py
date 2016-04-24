@@ -9,9 +9,10 @@ import operator
 import os
 import platform
 import sys
+# PyPI imports
+import pmisc
 # Putil imports
 import putil.exh
-import putil.misc
 import putil.pcontracts
 from putil.ptypes import (
     csv_col_filter,
@@ -160,7 +161,7 @@ class CsvFile(object):
         edata = {'field':'fname', 'value':self._fname}
         # Read data
         if sys.hexversion < 0x03000000: # pragma: no cover, no branch
-            fname = putil.misc.normalize_windows_fname(fname)
+            fname = pmisc.normalize_windows_fname(fname)
             with open(fname, 'r') as file_handle:
                 self._raw_data = [row for row in csv.reader(file_handle)]
         else: # pragma: no cover, no branch
@@ -182,7 +183,7 @@ class CsvFile(object):
             # Find start of data row. A data row is defined as one that has at
             # least one column with a number
             for num, row in enumerate(self._raw_data[1 if has_header else 0:]):
-                if any([putil.misc.isnumber(_tofloat(col)) for col in row]):
+                if any([pmisc.isnumber(_tofloat(col)) for col in row]):
                     break
             else:
                 nvdata_exobj(True, edata)
@@ -209,13 +210,13 @@ class CsvFile(object):
         """
         Tests object equality. For example:
 
-            >>> import putil.misc, putil.pcsv
-            >>> with putil.misc.TmpFile() as fname:
+            >>> import pmisc, putil.pcsv
+            >>> with pmisc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a'], [1]], append=False)
             ...     obj1 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...     obj2 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...
-            >>> with putil.misc.TmpFile() as fname:
+            >>> with pmisc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a'], [2]], append=False)
             ...     obj3 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...
@@ -229,8 +230,8 @@ class CsvFile(object):
         # pylint: disable=W0212
         if not isinstance(other, CsvFile):
             return False
-        sfname = putil.misc.normalize_windows_fname(self._fname)
-        ofname = putil.misc.normalize_windows_fname(other._fname)
+        sfname = pmisc.normalize_windows_fname(self._fname)
+        ofname = pmisc.normalize_windows_fname(other._fname)
         return all(
             [
                 sfname == ofname,
@@ -245,8 +246,8 @@ class CsvFile(object):
         Returns a string with the expression needed to re-create the object.
         For example:
 
-            >>> import putil.misc, putil.pcsv
-            >>> with putil.misc.TmpFile() as fname:
+            >>> import pmisc, putil.pcsv
+            >>> with pmisc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a'], [1]], append=False)
             ...     obj1 = putil.pcsv.CsvFile(fname, dfilter='a')
             ...     exec("obj2="+repr(obj1))
@@ -264,7 +265,7 @@ class CsvFile(object):
         has_header = self._has_header
         ret = [
             "putil.pcsv.CsvFile(fname=r'{0}'".format(
-                putil.misc.normalize_windows_fname(self._fname)
+                pmisc.normalize_windows_fname(self._fname)
             )
         ]
         if dfilter:
@@ -280,8 +281,8 @@ class CsvFile(object):
         For example:
 
             >>> from __future__ import print_function
-            >>> import putil.misc, putil.pcsv
-            >>> with putil.misc.TmpFile() as fname:
+            >>> import pmisc, putil.pcsv
+            >>> with pmisc.TmpFile() as fname:
             ...     putil.pcsv.write(fname, [['a', 'b'], [1, 2], [3, 4]])
             ...     obj = putil.pcsv.CsvFile(fname, dfilter='a')
             ...
@@ -329,7 +330,7 @@ class CsvFile(object):
                 ),
                 (
                     [value]
-                    if not putil.misc.isiterable(value) else
+                    if not pmisc.isiterable(value) else
                     [item for item in value]
                 )
             )
@@ -422,7 +423,7 @@ class CsvFile(object):
             if self._cfilter is None:
                 self._cfilter = []
             self._cfilter.append(cfilter)
-            cfilter = putil.misc.flatten_list(self._cfilter)
+            cfilter = pmisc.flatten_list(self._cfilter)
             col_indexes = (
                 [
                     item

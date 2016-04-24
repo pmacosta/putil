@@ -14,13 +14,11 @@ Contents
    eng
    exdoc
    exh
-   misc
    pcontracts
    pcsv
    pinspect
    plot
    ptypes
-   test
    tree
 
 Indices and tables

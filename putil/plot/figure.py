@@ -10,9 +10,9 @@ import os
 import numpy
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+import pmisc
 # Putil imports
 import putil.exh
-import putil.misc
 import putil.pcontracts
 from .panel import Panel
 from .constants import TITLE_FONT_SIZE
@@ -699,7 +699,7 @@ class Figure(object):
         self.fig.set_size_inches(self.fig_width, self.fig_height)
         # Matplotlib seems to have a problem with ~/, expand it to $HOME
         fname = os.path.expanduser(fname)
-        putil.misc.make_dir(fname)
+        pmisc.make_dir(fname)
         self._fig.savefig(
             fname, bbox_inches='tight', dpi=self._fig.dpi, format=ftype
         )

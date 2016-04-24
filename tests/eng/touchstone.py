@@ -13,9 +13,9 @@ import random
 # PyPI imports
 import numpy
 import pytest
+from pmisc import AE, AI
 # Putil imports
 import putil.eng
-from putil.test import AE, AI
 
 
 ###

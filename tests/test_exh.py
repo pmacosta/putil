@@ -16,15 +16,15 @@ from itertools import product
 if sys.hexversion >= 0x03000000:
     import unittest.mock as mock
 # PyPI imports
+import pmisc
+from pmisc import AE, AI, AROPROP, CLDICTS, GET_EXMSG
 import pytest
 if sys.hexversion < 0x03000000:
     import mock
 # Putil imports
 import putil.eng
 import putil.exh
-import putil.misc
 import putil.pcontracts
-from putil.test import AE, AI, AROPROP, CLDICTS, GET_EXMSG
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SUPPORT_DIR = os.path.join(TEST_DIR, 'support')
 sys.path.append(SUPPORT_DIR)
@@ -146,7 +146,7 @@ def test_star_exh_obj():
     new_exh_obj._exclude = ['putil.eng']
     putil.exh.del_exh_obj()
     # callables_fname parameter
-    with putil.misc.TmpFile() as fname:
+    with pmisc.TmpFile() as fname:
         pobj.save(fname)
         new_exh_obj = putil.exh.get_or_create_exh_obj(callables_fname=fname)
         assert pobj == new_exh_obj._callables_obj
@@ -198,7 +198,7 @@ class TestExHandle(object):
             sys.modules['putil.exh'].__file__.replace('.pyc', '.py')
         ]
         pobj = putil.pinspect.Callables([PENG_FNAME])
-        with putil.misc.TmpFile() as fname:
+        with pmisc.TmpFile() as fname:
             pobj.save(fname)
             exobj = putil.exh.ExHandle(callables_fname=fname)
         assert pobj == exobj._callables_obj
@@ -654,8 +654,8 @@ class TestExHandle(object):
     def test_save_callables(self):
         """ Test save_callables method behavior """
         obj1 = putil.pinspect.Callables([PENG_FNAME])
-        with putil.misc.TmpFile() as fname1:
-            with putil.misc.TmpFile() as fname2:
+        with pmisc.TmpFile() as fname1:
+            with pmisc.TmpFile() as fname2:
                 callables_fname1 = fname1
                 callables_fname2 = fname2
                 obj1.save(callables_fname1)
@@ -847,7 +847,7 @@ class TestExHandle(object):
         assert exdb[1]['name'].endswith(
             '{0}/{0}.funcb/{0}.exdef'.format(cname)
         )
-        str_in = putil.misc.flatten_list(
+        str_in = pmisc.flatten_list(
             [item.split('\n') for item in str(exobj).split('\n\n')]
         )
         fstring = cname+'/'+cname+'.func{0}/'+cname+'.exdef'

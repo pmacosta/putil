@@ -5,10 +5,10 @@
 
 # PyPI imports
 import numpy
+from pmisc import AE
 import pytest
 # Putil imports
 import putil.plot
-from putil.test import AE
 
 
 ###

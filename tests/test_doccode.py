@@ -11,9 +11,10 @@ import subprocess
 import sys
 # PyPI imports
 import matplotlib
+import pmisc
+from pmisc import AE
 # Putil imports
-import putil.misc
-from putil.test import AE
+import putil.pcontracts
 
 # Default to non-interactive PNG to avoid any
 # matplotlib back-end misconfiguration
@@ -127,7 +128,7 @@ def test_exdoc_doccode():
     script_name = os.path.join(script_dir, 'build-docs.sh')
     input_file = os.path.join(script_dir, 'my_module.py')
     output_file = os.path.join(script_dir, 'my_module_out.py')
-    with putil.misc.ignored(OSError):
+    with pmisc.ignored(OSError):
         os.remove(output_file)
     bin_dir = os.environ['BIN_DIR']
     proc = subprocess.Popen(
@@ -153,7 +154,7 @@ def test_exdoc_doccode():
     # Read generated output
     with open(output_file, 'r') as fobj:
         actual_text = fobj.readlines()
-    with putil.misc.ignored(OSError):
+    with pmisc.ignored(OSError):
         os.remove(output_file)
     # First line is the file name, which is different
     assert actual_text[1:] == ref_text[1:]
@@ -314,7 +315,7 @@ def test_plot_doccode(capsys):
         print('Actual image: file://{0}'.format(os.path.realpath(test_fname)))
         export_image(test_fname)
     assert result
-    with putil.misc.ignored(OSError):
+    with pmisc.ignored(OSError):
         os.remove(test_fname)
     # Test ABC example
     import numpy

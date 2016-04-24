@@ -13,7 +13,6 @@ import sys
 # PyPI imports
 import numpy
 # Putil imports
-import putil.misc
 import putil.plot
 
 
