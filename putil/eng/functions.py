@@ -1106,6 +1106,10 @@ def to_scientific_string(
         >>> putil.eng.to_scientific_string(99.999, 1, 2, True)
         '+1.0E+02'
     """
+    if (not isinstance(number, str)) and numpy.isneginf(number):
+        number = -1E+20
+    if (not isinstance(number, str)) and numpy.isposinf(number):
+        number = +1E+20
     exp_length = 0 if not exp_length else exp_length
     mant, exp = to_scientific_tuple(number)
     fmant = float(mant)

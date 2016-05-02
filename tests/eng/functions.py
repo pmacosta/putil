@@ -8,7 +8,7 @@ import functools
 import sys
 # PyPI imports
 import pytest
-from numpy import array, ndarray
+from numpy import array, inf, ndarray
 from pmisc import AE, AI, CS
 # Putil imports
 import putil.eng
@@ -29,6 +29,7 @@ o = lambda num: '1.'+('0'*num)
 pv = lambda py2arg, py3arg: py2arg if PY2 else py3arg
 sarg = lambda msg: 'Argument `{0}` is not valid'.format(msg)
 t = lambda num: '10.'+('0'*num)
+
 
 def to_sci_string(number):
     """
@@ -615,6 +616,8 @@ def test_peng_suffix_math(args, ref):
         (-500, 3, 2, True, '-5.000E+02'),
         (-4567.890, 8, 3, True, '-4.56789000E+003'),
         (-9999999999.999, 1, 1, True, '-1.0E+10'),
+        (inf, 1, 1, True, '+1.0E+20'),
+        (-inf, 1, 1, True, '-1.0E+20')
     ]
 )
 def test_to_scientific_string(num, frac_length, exp_length, sign_always, ref):
