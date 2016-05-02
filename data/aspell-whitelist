@@ -428,6 +428,7 @@ FigureCanvasAgg
 filecmp
 filename
 FileName
+filenameexists
 FileNameExists
 filenames
 fillvalue
@@ -602,7 +603,9 @@ ishex
 isinstance
 isint
 isiterable
+isneginf
 isnumber
+isposinf
 isreal
 issubclass
 itemgetter
@@ -835,7 +838,9 @@ nom
 NoNe
 None's
 NONINFRINGEMENT
+nonnegativeinteger
 NonNegativeInteger
+nonnullstring
 NonNullString
 noopt
 nops
@@ -883,6 +888,7 @@ odata
 odg
 odict
 odv
+offsetrange
 OffsetRange
 ofname
 ofobj
@@ -975,6 +981,7 @@ Popen
 pos
 posarg
 PosInteger
+positiverealnum
 PositiveRealNum
 PositiveRealNumber
 powderblue
@@ -1064,6 +1071,7 @@ readme
 README
 readouterr
 ReadTheDocs
+realnum
 RealNum
 RealNumber
 RealNumpyVector
