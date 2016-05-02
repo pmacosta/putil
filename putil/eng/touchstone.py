@@ -9,12 +9,12 @@ import os
 import re
 # PyPI imports
 import numpy
+import pexdoc.exh
+import pexdoc.pcontracts
+from pexdoc.ptypes import file_name, file_name_exists
 # Putil imports
-import putil.exh
-import putil.pcontracts
+import putil.eng.functions
 from putil.ptypes import (
-    file_name,
-    file_name_exists,
     touchstone_data,
     touchstone_noise_data,
     touchstone_options
@@ -76,7 +76,7 @@ def _chunk_pars(freq_vector, data_matrix, pformat):
             yield ret
 
 
-@putil.pcontracts.contract(fname='file_name_exists')
+@pexdoc.pcontracts.contract(fname='file_name_exists')
 def read_touchstone(fname):
     r"""
     Reads a `Touchstone <https://ibis.org/connector/touchstone_spec11.pdf>`_
@@ -134,19 +134,19 @@ def read_touchstone(fname):
     """
     # pylint: disable=R0912,R0915,W0702
     # Exceptions definitions
-    exnports = putil.exh.addex(
+    exnports = pexdoc.exh.addex(
         RuntimeError, 'File *[fname]* does not have a valid extension'
     )
-    exnoopt = putil.exh.addex(
+    exnoopt = pexdoc.exh.addex(
         RuntimeError, 'First non-comment line is not the option line'
     )
-    exopt = putil.exh.addex(RuntimeError, 'Illegal option line')
-    exline = putil.exh.addex(RuntimeError, 'Illegal data in line *[lineno]*')
-    exnodata = putil.exh.addex(RuntimeError, 'File *[fname]* has no data')
-    exdata = putil.exh.addex(RuntimeError, 'Malformed data')
-    exndata = putil.exh.addex(RuntimeError, 'Malformed noise data')
-    exfreq = putil.exh.addex(RuntimeError, 'Frequency must increase')
-    exnfreq = putil.exh.addex(RuntimeError, 'Noise frequency must increase')
+    exopt = pexdoc.exh.addex(RuntimeError, 'Illegal option line')
+    exline = pexdoc.exh.addex(RuntimeError, 'Illegal data in line *[lineno]*')
+    exnodata = pexdoc.exh.addex(RuntimeError, 'File *[fname]* has no data')
+    exdata = pexdoc.exh.addex(RuntimeError, 'Malformed data')
+    exndata = pexdoc.exh.addex(RuntimeError, 'Malformed noise data')
+    exfreq = pexdoc.exh.addex(RuntimeError, 'Frequency must increase')
+    exnfreq = pexdoc.exh.addex(RuntimeError, 'Noise frequency must increase')
     # Verify that file has correct extension format
     _, ext = os.path.splitext(fname)
     ext = ext.lower()
@@ -271,7 +271,7 @@ def read_touchstone(fname):
     )
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     fname='file_name',
     options='touchstone_options',
     data='touchstone_data',
@@ -334,13 +334,13 @@ def write_touchstone(fname, options, data, noise=None, frac_length=10,
     """
     # pylint: disable=R0913
     # Exceptions definitions
-    exnports = putil.exh.addex(
+    exnports = pexdoc.exh.addex(
         RuntimeError, 'File *[fname]* does not have a valid extension'
     )
-    exnoise = putil.exh.addex(
+    exnoise = pexdoc.exh.addex(
         RuntimeError, 'Noise data only supported in two-port files'
     )
-    expoints = putil.exh.addex(RuntimeError, 'Malformed data')
+    expoints = pexdoc.exh.addex(RuntimeError, 'Malformed data')
     # Data validation
     _, ext = os.path.splitext(fname)
     ext = ext.lower()
@@ -373,7 +373,7 @@ def write_touchstone(fname, options, data, noise=None, frac_length=10,
         )
         for row in _chunk_pars(data['freq'], par_data, options['pformat']):
             row_data = [
-                putil.eng.to_scientific_string(
+                putil.eng.functions.to_scientific_string(
                     item, frac_length, exp_length, bool(num != 0)
                 )
                 if item is not None else
@@ -385,7 +385,7 @@ def write_touchstone(fname, options, data, noise=None, frac_length=10,
             fobj.write('! Noise data\n')
             for row in _chunk_noise(noise):
                 row_data = [
-                    putil.eng.to_scientific_string(
+                    putil.eng.functions.to_scientific_string(
                         item, frac_length, exp_length, bool(num != 0)
                     )
                     for num, item in enumerate(row)

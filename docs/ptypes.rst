@@ -235,26 +235,6 @@ A single character string, one  of :code:`'y'`, :code:`'z'`, :code:`'a'`,
 :ref:`EngineeringNotationNumber` lists the correspondence between
 suffix and floating point exponent
 
-.. _FileName:
-
-FileName
---------
-
-String with a valid file name
-
-.. _FileNameExists:
-
-FileNameExists
---------------
-
-String with a file name that exists in the file system
-
-.. _Function:
-
-Function
---------
-Callable pointer or :code:`None`
-
 .. _IncreasingRealNumpyVector:
 
 IncreasingRealNumpyVector
@@ -278,72 +258,11 @@ LineStyleOption
 String representing a `Matplotlib`_ line style, one of :code:`'-'`,
 :code:`'--'`, :code:`'-.'`, :code:`':'` or :code:`None`
 
-.. _NodeName:
-
-NodeName
---------
-
-String where hierarchy levels are denoted by node separator characters
-(:code:`'.'` by default). Node names cannot contain spaces, empty hierarchy
-levels, start or end with a node separator character.
-
-For this example tree:
-
-.. include:: ./support/tree.txt
-
-The node names are ``'root'``, ``'root.branch1'``, ``'root.branch1.leaf1'``,
-``'root.branch1.leaf2'`` and ``'root.branch2'``
-
-.. _NodesWithData:
-
-NodesWithData
--------------
-
-Dictionary or list of dictionaries; each dictionary must contain exactly two
-keys:
-
-* **name** (*NodeName*) Node name. See `NodeName`_ pseudo-type specification
-
-* **data** (*any*) node data
-
-The node data should be an empty list to create a node without data, for
-example: :code:`{'name':'a.b.c', 'data':[]}`
-
 .. _NumberNumpyVector:
 
 NumberNumpyVector
 -----------------
 Numpy vector in which all elements are integers and/or floats and/or complex
-
-.. _NonNegativeInteger:
-
-NonNegativeInteger
-------------------
-Integer greater or equal to zero
-
-.. _NonNullString:
-
-NonNullString
--------------
-String of length 1 or higher
-
-.. _OffsetRange:
-
-OffsetRange
------------
-Number in the [0, 1] range
-
-.. _PositiveRealNum:
-
-PositiveRealNum
----------------
-Integer or float greater than zero or :code:`None`
-
-.. _RealNum:
-
-RealNum
--------
-Integer, float or :code:`None`
 
 .. _RealNumpyVector:
 
@@ -447,18 +366,10 @@ Contracts
 .. autofunction:: putil.ptypes.csv_row_filter
 .. autofunction:: putil.ptypes.engineering_notation_number
 .. autofunction:: putil.ptypes.engineering_notation_suffix
-.. autofunction:: putil.ptypes.file_name
-.. autofunction:: putil.ptypes.file_name_exists
-.. autofunction:: putil.ptypes.function
 .. autofunction:: putil.ptypes.increasing_real_numpy_vector
 .. autofunction:: putil.ptypes.interpolation_option
 .. autofunction:: putil.ptypes.line_style_option
-.. autofunction:: putil.ptypes.non_negative_integer
-.. autofunction:: putil.ptypes.non_null_string
 .. autofunction:: putil.ptypes.number_numpy_vector
-.. autofunction:: putil.ptypes.offset_range
-.. autofunction:: putil.ptypes.positive_real_num
-.. autofunction:: putil.ptypes.real_num
 .. autofunction:: putil.ptypes.real_numpy_vector
 .. autofunction:: putil.ptypes.wave_interp_option
 .. autofunction:: putil.ptypes.wave_scale_option

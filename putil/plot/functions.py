@@ -14,10 +14,10 @@ import six
 import numpy
 import matplotlib.pyplot as plt
 import pmisc
+import pexdoc.exh
+import pexdoc.pcontracts
 # Putil imports
-import putil.exh
 import putil.eng
-import putil.pcontracts
 from .constants import PRECISION, MIN_TICKS, SUGGESTED_MAX_TICKS
 
 
@@ -326,7 +326,7 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
     )
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     param_list='list(int|float)',
     offset='offset_range',
     color_space='color_space_option'
@@ -340,7 +340,8 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
     :type  param_list: list
 
     :param offset: Offset of the first (lightest) color
-    :type  offset: :ref:`OffsetRange`
+    :type  offset: `OffsetRange <http://pexdoc.readthedocs.io/en/stable/
+                   ptypes.html#offsetrange>`_
 
     :param color_space: Color palette (case sensitive)
     :type  color_space: :ref:`ColorSpaceOption`
@@ -374,7 +375,7 @@ def parameterized_color_space(param_list, offset=0, color_space='binary'):
         'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',
         'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd'
     ]
-    putil.exh.addex(
+    pexdoc.exh.addex(
         TypeError, 'Argument `param_list` is empty', len(param_list) == 0
     )
     color_palette_list = [
@@ -538,7 +539,7 @@ class DataSource(object):
         """
         Returns True if object is fully specified, otherwise returns False
         """
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Arguments `indep_var` and `dep_var` must have '
             'the same number of elements',

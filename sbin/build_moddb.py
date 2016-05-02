@@ -7,8 +7,7 @@
 # Standard library imports
 import glob
 import os
-# Putil imports
-import putil.pinspect
+import pexdoc.pinspect
 
 
 ###
@@ -21,7 +20,7 @@ def build_moddb():
     """
     pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     docs_dir = os.path.join(pkg_dir, 'docs')
-    obj = putil.pinspect.Callables()
+    obj = pexdoc.pinspect.Callables()
     db_file = os.path.join(docs_dir, 'moddb.json')
     for item in glob.glob(os.path.join(docs_dir, '*.json')):
         obj.load(item)

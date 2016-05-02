@@ -5,9 +5,10 @@
 
 # PyPI imports
 import numpy
+import pexdoc.exh
+import pexdoc.pcontracts
 # Putil imports
-import putil.exh
-import putil.pcontracts
+import putil.eng
 from .constants import PRECISION
 from .functions import _C, _SEL, DataSource
 
@@ -47,11 +48,13 @@ class BasicSource(DataSource):
 
     :param indep_min: Minimum independent variable value. If None no minimum
                       thresholding is applied to the data
-    :type  indep_min: :ref:`RealNum` *or None*
+    :type  indep_min: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+                      ptypes.html#realnum>`_ *or None*
 
     :param indep_max: Maximum independent variable value. If None no maximum
                       thresholding is applied to the data
-    :type  indep_max: :ref:`RealNum` *or None*
+    :type  indep_max: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+                      ptypes.html#realnum>`_ *or None*
 
     :rtype: :py:class:`putil.plot.BasicSource`
 
@@ -83,7 +86,7 @@ class BasicSource(DataSource):
     def __init__(self, indep_var, dep_var, indep_min=None, indep_max=None):
         # Private attributes
         super(BasicSource, self).__init__()
-        self._exh = putil.exh.get_or_create_exh_obj()
+        self._exh = pexdoc.exh.get_or_create_exh_obj()
         self._raw_indep_var = None
         self._raw_dep_var = None
         self._indep_var_indexes = None
@@ -151,9 +154,9 @@ class BasicSource(DataSource):
     def _get_indep_min(self):
         return self._indep_min
 
-    @putil.pcontracts.contract(dep_var='real_numpy_vector')
+    @pexdoc.pcontracts.contract(dep_var='real_numpy_vector')
     def _set_dep_var(self, dep_var):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Arguments `indep_var` and `dep_var` must have'
             ' the same number of elements',
@@ -163,9 +166,9 @@ class BasicSource(DataSource):
         self._raw_dep_var = putil.eng.round_mantissa(dep_var, PRECISION)
         self._update_dep_var()
 
-    @putil.pcontracts.contract(indep_max='real_num')
+    @pexdoc.pcontracts.contract(indep_max='real_num')
     def _set_indep_max(self, indep_max):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Argument `indep_min` is greater than argument `indep_max`',
             _C(self.indep_min, indep_max) and (indep_max < self.indep_min)
@@ -180,9 +183,9 @@ class BasicSource(DataSource):
         self._update_indep_var()
         self._update_dep_var()
 
-    @putil.pcontracts.contract(indep_min='real_num')
+    @pexdoc.pcontracts.contract(indep_min='real_num')
     def _set_indep_min(self, indep_min):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Argument `indep_min` is greater than argument `indep_max`',
             _C(self.indep_max, indep_min) and (self.indep_max < indep_min)
@@ -197,9 +200,9 @@ class BasicSource(DataSource):
         self._update_indep_var()
         self._update_dep_var()
 
-    @putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
+    @pexdoc.pcontracts.contract(indep_var='increasing_real_numpy_vector')
     def _set_indep_var(self, indep_var):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Arguments `indep_var` and `dep_var` must have the '
             'same number of elements',
@@ -227,7 +230,7 @@ class BasicSource(DataSource):
         """
         Update independent variable according to its minimum and maximum limits
         """
-        empty_ex = putil.exh.addex(
+        empty_ex = pexdoc.exh.addex(
             ValueError,
             'Argument `indep_var` is empty after `indep_min`/`indep_max`'
             ' range bounding'
@@ -275,7 +278,8 @@ class BasicSource(DataSource):
     Gets or sets the maximum independent variable limit. If :code:`None` no
     maximum thresholding is applied to the data
 
-    :type: :ref:`RealNum` or None
+    :type: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+           ptypes.html#realnum>`_ *or None*
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for
@@ -301,7 +305,8 @@ class BasicSource(DataSource):
     Gets or sets the minimum independent variable limit. If :code:`None` no
     minimum thresholding is applied to the data
 
-    :type: :ref:`RealNum` or None
+    :type: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+           ptypes.html#realnum>`_ *or None*
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for

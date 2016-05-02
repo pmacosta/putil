@@ -67,6 +67,7 @@ Putil Library
 .. _Mock: http://www.voidspace.org.uk/python/mock
 .. _Nose: http://nose.readthedocs.org
 .. _Numpy: http://www.numpy.org
+.. _Pexdoc: http://pexdoc.readthedocs.org
 .. _Pillow: https://python-pillow.github.io
 .. _Pmisc: http://pmisc.readthedocs.org
 .. _PyContracts: https://andreacensi.github.io/contracts
@@ -92,21 +93,8 @@ Python standard library. The modules provided are:
   represented in engineering or scientific notation, b) pretty printing
   Numpy vectors; and c) a waveform class
 
-* **exdoc**: automatically generate exceptions documentation marked up in
-  `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ with help from
-  `Cog`_ and the :py:mod:`exh <putil.exh>` module
-
-* **exh**: register exceptions and then raise them if a given condition is true
-
-* **pcontracts**: thin wrapper around the
-  `PyContracts`_ library that
-  enables customization of the exception type raised and limited
-  customization of the exception message
-
 * **pcsv**: handle comma-separated values (CSV) files and do lightweight
   processing of their data
-
-* **pinspect**: supplement Python's introspection capabilities
 
 * **plot**: create high-quality, presentation-ready X-Y graphs quickly and
   easily
@@ -114,9 +102,6 @@ Python standard library. The modules provided are:
 * **ptypes**: several pseudo-type definitions which can be enforced
   and/or validated with custom contracts defined using the
   :py:mod:`pcontracts <putil.pcontracts>` module
-
-* **tree**: build, handle, process and search
-  `tries <http://wikipedia.org/wiki/Trie>`_
 
 Interpreter
 ===========
@@ -206,6 +191,8 @@ Contributing
     * `Nose`_ (Python 2.6: 1.0.0 or newer)
 
     * `Numpy`_ (1.8.2 or newer)
+
+    * `Pexdoc`_ (1.0.0 or newer)
 
     * `Pillow`_ (2.6.1 or newer)
 

@@ -6,9 +6,9 @@
 # PyPI imports
 import numpy
 import matplotlib.pyplot as plt
+import pexdoc.exh
+import pexdoc.pcontracts
 # Putil imports
-import putil.exh
-import putil.pcontracts
 from .series import Series
 from .functions import _F, _intelligent_ticks, _uniquify_tick_labels
 from .constants import AXIS_LABEL_FONT_SIZE, AXIS_TICKS_FONT_SIZE, LEGEND_SCALE
@@ -187,8 +187,8 @@ class Panel(object):
             'UPPER CENTER', 'CENTER'
         ]
         # Exceptions definition
-        invalid_prim_ex = putil.exh.addai('primary_axis_ticks')
-        invalid_sec_ex = putil.exh.addai('secondary_axis_ticks')
+        invalid_prim_ex = pexdoc.exh.addai('primary_axis_ticks')
+        invalid_sec_ex = pexdoc.exh.addai('secondary_axis_ticks')
         invalid_prim_ex(
             (primary_axis_ticks is not None) and (
             (not isinstance(primary_axis_ticks, list)) and
@@ -639,35 +639,35 @@ class Panel(object):
     def _get_primary_axis_label(self):
         return self._primary_axis_label
 
-    @putil.pcontracts.contract(primary_axis_label='None|str')
+    @pexdoc.pcontracts.contract(primary_axis_label='None|str')
     def _set_primary_axis_label(self, primary_axis_label):
         self._primary_axis_label = primary_axis_label
 
     def _get_primary_axis_units(self):
         return self._primary_axis_units
 
-    @putil.pcontracts.contract(primary_axis_units='None|str')
+    @pexdoc.pcontracts.contract(primary_axis_units='None|str')
     def _set_primary_axis_units(self, primary_axis_units):
         self._primary_axis_units = primary_axis_units
 
     def _get_secondary_axis_label(self):
         return self._secondary_axis_label
 
-    @putil.pcontracts.contract(secondary_axis_label='None|str')
+    @pexdoc.pcontracts.contract(secondary_axis_label='None|str')
     def _set_secondary_axis_label(self, secondary_axis_label):
         self._secondary_axis_label = secondary_axis_label
 
     def _get_secondary_axis_units(self):
         return self._secondary_axis_units
 
-    @putil.pcontracts.contract(secondary_axis_units='None|str')
+    @pexdoc.pcontracts.contract(secondary_axis_units='None|str')
     def _set_secondary_axis_units(self, secondary_axis_units):
         self._secondary_axis_units = secondary_axis_units
 
     def _get_log_dep_axis(self):
         return self._log_dep_axis
 
-    @putil.pcontracts.contract(log_dep_axis='None|bool')
+    @pexdoc.pcontracts.contract(log_dep_axis='None|bool')
     def _set_log_dep_axis(self, log_dep_axis):
         self._recalculate_series = self.log_dep_axis != log_dep_axis
         self._log_dep_axis = log_dep_axis
@@ -677,26 +677,26 @@ class Panel(object):
     def _get_display_indep_axis(self):
         return self._display_indep_axis
 
-    @putil.pcontracts.contract(display_indep_axis='None|bool')
+    @pexdoc.pcontracts.contract(display_indep_axis='None|bool')
     def _set_display_indep_axis(self, display_indep_axis):
         self._display_indep_axis = display_indep_axis
 
     def _get_legend_props(self):
         return self._legend_props
 
-    @putil.pcontracts.contract(legend_props='None|dict')
+    @pexdoc.pcontracts.contract(legend_props='None|dict')
     def _set_legend_props(self, legend_props):
-        invalid_ex = putil.exh.addex(
+        invalid_ex = pexdoc.exh.addex(
             ValueError, 'Illegal legend property `*[prop_name]*`'
         )
-        illegal_ex = putil.exh.addex(
+        illegal_ex = pexdoc.exh.addex(
             TypeError,
             "Legend property `pos` is not one of ['BEST', 'UPPER RIGHT', "
             "'UPPER LEFT', 'LOWER LEFT', 'LOWER RIGHT', 'RIGHT', "
             "'CENTER LEFT', 'CENTER RIGHT', 'LOWER CENTER', "
             "'UPPER CENTER', 'CENTER'] (case insensitive)"
         )
-        cols_ex = putil.exh.addex(
+        cols_ex = pexdoc.exh.addex(
             RuntimeError, 'Legend property `cols` is not valid'
         )
         self._legend_props = (
@@ -806,11 +806,11 @@ class Panel(object):
         Verifies that elements of series list are of the right type and
         fully specified
         """
-        invalid_ex = putil.exh.addai('series')
-        incomplete_ex = putil.exh.addex(
+        invalid_ex = pexdoc.exh.addai('series')
+        incomplete_ex = pexdoc.exh.addex(
             RuntimeError, 'Series item *[number]* is not fully specified'
         )
-        log_ex = putil.exh.addex(
+        log_ex = pexdoc.exh.addex(
             ValueError,
             'Series item *[number]* cannot be plotted in a logarithmic '
             'axis because it contains negative data points'

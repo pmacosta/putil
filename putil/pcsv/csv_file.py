@@ -11,16 +11,18 @@ import platform
 import sys
 # PyPI imports
 import pmisc
+import pexdoc.exh
+import pexdoc.pcontracts
+from pexdoc.ptypes import (
+    file_name,
+    file_name_exists,
+    non_negative_integer
+)
 # Putil imports
-import putil.exh
-import putil.pcontracts
 from putil.ptypes import (
     csv_col_filter,
     csv_filtered,
     csv_row_filter,
-    file_name,
-    file_name_exists,
-    non_negative_integer
 )
 from .write import _write_int
 
@@ -86,7 +88,8 @@ class CsvFile(object):
     Processes comma-separated values (CSV) files
 
     :param fname: Name of the comma-separated values file to read
-    :type fname: :ref:`FileNameExists`
+    :type  fname: FileNameExists <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#filenameexists>`_
 
     :param dfilter: Row and/or column filter. If None no data filtering is
                     done
@@ -100,7 +103,8 @@ class CsvFile(object):
     :param frow: First data row (starting from 1). If 0 the row where data
                  starts is auto-detected as the first row that has a number
                  (integer of float) in at least one of its columns
-    :type  frow: :ref:`NonNegativeInteger`
+    :type  frow: `NonNegativeInteger <http://pexdoc.readthedocs.io/en/stable/
+                 ptypes.html#nonnegativeinteger>`_
 
     :rtype: :py:class:`putil.pcsv.CsvFile` object
 
@@ -132,7 +136,7 @@ class CsvFile(object):
     .. [[[end]]]
     """
     # pylint: disable=R0902,W0631
-    @putil.pcontracts.contract(
+    @pexdoc.pcontracts.contract(
         fname='file_name_exists'
     )
     def __init__(self, fname, dfilter=None, has_header=True, frow=0):
@@ -151,11 +155,11 @@ class CsvFile(object):
         self._fdata_cols = None
         self._set_has_header(has_header)
         # Register exceptions
-        empty_exobj = putil.exh.addex(RuntimeError, 'File *[fname]* is empty')
-        col_exobj = putil.exh.addex(
+        empty_exobj = pexdoc.exh.addex(RuntimeError, 'File *[fname]* is empty')
+        col_exobj = pexdoc.exh.addex(
             RuntimeError, 'Column headers are not unique in file *[fname]*'
         )
-        nvdata_exobj = putil.exh.addex(
+        nvdata_exobj = pexdoc.exh.addex(
             RuntimeError, 'File *[fname]* has no valid data'
         )
         edata = {'field':'fname', 'value':self._fname}
@@ -371,10 +375,10 @@ class CsvFile(object):
             # Conditionally register exceptions so that they do not appear
             # in situations where has_header is always True. In this way
             # they are not auto-documented by default
-            icol_ex = putil.exh.addex(
+            icol_ex = pexdoc.exh.addex(
                 RuntimeError, 'Invalid column specification'
             )
-        hnf_ex = putil.exh.addex(
+        hnf_ex = pexdoc.exh.addex(
             ValueError, 'Column *[column_identifier]* not found'
         )
         col_list = (
@@ -400,18 +404,18 @@ class CsvFile(object):
                 )
         return col_list
 
-    @putil.pcontracts.contract(cfilter='csv_col_filter')
+    @pexdoc.pcontracts.contract(cfilter='csv_col_filter')
     def _set_cfilter(self, cfilter):
         self._reset_dfilter_int('C')
         self._add_dfilter_int(cfilter)
 
-    @putil.pcontracts.contract(dfilter='csv_data_filter')
+    @pexdoc.pcontracts.contract(dfilter='csv_data_filter')
     def _set_dfilter(self, dfilter):
         dfilter = _homogenize_data_filter(dfilter)
         self._reset_dfilter_int()
         self._add_dfilter_int(dfilter)
 
-    @putil.pcontracts.contract(rfilter='csv_row_filter')
+    @pexdoc.pcontracts.contract(rfilter='csv_row_filter')
     def _set_rfilter(self, rfilter):
         self._reset_dfilter_int('R')
         self._add_dfilter_int(rfilter, letter='r')
@@ -492,20 +496,20 @@ class CsvFile(object):
         ffull = lambda row: not any([item is None for item in row])
         return list(filter(ffull, data)) if no_empty else data
 
-    @putil.pcontracts.contract(has_header=bool)
+    @pexdoc.pcontracts.contract(has_header=bool)
     def _set_has_header(self, has_header):
         self._has_header = has_header
 
     def _validate_frow(self, frow):
         """ Validate frow argument """
         is_int = isinstance(frow, int) and (not isinstance(frow, bool))
-        putil.exh.addai('frow', not (is_int and (frow >= 0)))
+        pexdoc.exh.addai('frow', not (is_int and (frow >= 0)))
         return frow
 
     def _validate_rfilter(self, rfilter, letter='d'):
         """ Validate that all columns in filter are in header """
         if letter == 'd':
-            putil.exh.addai(
+            pexdoc.exh.addai(
                 'dfilter', (
                     (not self._has_header)
                     and any(
@@ -517,7 +521,7 @@ class CsvFile(object):
                 )
             )
         else:
-            putil.exh.addai(
+            pexdoc.exh.addai(
                 'rfilter', (
                     (not self._has_header)
                     and any(
@@ -536,7 +540,7 @@ class CsvFile(object):
                 rfilter[key]
             )
 
-    @putil.pcontracts.contract(dfilter='csv_data_filter')
+    @pexdoc.pcontracts.contract(dfilter='csv_data_filter')
     def add_dfilter(self, dfilter):
         r"""
         Adds more row(s) or column(s) to the existing data filter.
@@ -560,7 +564,7 @@ class CsvFile(object):
         """
         self._add_dfilter_int(dfilter)
 
-    @putil.pcontracts.contract(filtered=bool)
+    @pexdoc.pcontracts.contract(filtered=bool)
     def cols(self, filtered=False):
         r"""
         Returns the number of data columns
@@ -580,7 +584,7 @@ class CsvFile(object):
         """
         return self._fdata_cols if filtered else self._data_cols
 
-    @putil.pcontracts.contract(filtered='csv_filtered', no_empty=bool)
+    @pexdoc.pcontracts.contract(filtered='csv_filtered', no_empty=bool)
     def data(self, filtered=False, no_empty=False):
         r"""
          Returns (filtered) file data. The returned object is a list, each item
@@ -609,7 +613,7 @@ class CsvFile(object):
         """
         return self._apply_filter(filtered, no_empty)
 
-    @putil.pcontracts.contract(order='csv_col_sort')
+    @pexdoc.pcontracts.contract(order='csv_col_sort')
     def dsort(self, order):
         r"""
         Sorts rows
@@ -662,7 +666,7 @@ class CsvFile(object):
             self._data.sort(key=fpointer, reverse=rvalue)
 
 
-    @putil.pcontracts.contract(filtered=bool)
+    @pexdoc.pcontracts.contract(filtered=bool)
     def header(self, filtered=False):
         r"""
         Returns the data header. When the raw (input) data is used the data
@@ -694,7 +698,7 @@ class CsvFile(object):
             self._cfilter
         )
 
-    @putil.pcontracts.contract(rdata='list(list)', filtered='csv_filtered')
+    @pexdoc.pcontracts.contract(rdata='list(list)', filtered='csv_filtered')
     def replace(self, rdata, filtered=False):
         r"""
         Replaces data
@@ -723,12 +727,12 @@ class CsvFile(object):
         .. [[[end]]]
         """
         # pylint: disable=R0914
-        rdata_ex = putil.exh.addai('rdata')
-        rows_ex = putil.exh.addex(
+        rdata_ex = pexdoc.exh.addai('rdata')
+        rows_ex = pexdoc.exh.addex(
             ValueError,
             'Number of rows mismatch between input and replacement data'
         )
-        cols_ex = putil.exh.addex(
+        cols_ex = pexdoc.exh.addex(
             ValueError,
             'Number of columns mismatch between input and replacement data'
         )
@@ -765,7 +769,7 @@ class CsvFile(object):
                     row[col_num] = new_data
                 rnum = rnum+1
 
-    @putil.pcontracts.contract(ftype='csv_filtered')
+    @pexdoc.pcontracts.contract(ftype='csv_filtered')
     def reset_dfilter(self, ftype=True):
         r"""
         Reset (clears) the data filter
@@ -783,7 +787,7 @@ class CsvFile(object):
         """
         self._reset_dfilter_int(ftype)
 
-    @putil.pcontracts.contract(filtered=bool)
+    @pexdoc.pcontracts.contract(filtered=bool)
     def rows(self, filtered=False):
         r"""
         Returns the number of data rows
@@ -803,7 +807,7 @@ class CsvFile(object):
         """
         return self._fdata_rows if filtered else self._data_rows
 
-    @putil.pcontracts.contract(
+    @pexdoc.pcontracts.contract(
             fname='None|file_name',
             filtered='csv_filtered',
             header='str|bool|list[>0](str)',
@@ -817,7 +821,8 @@ class CsvFile(object):
         :param fname: Name of the comma-separated values file to be
                       written. If None the file from which the data originated
                       is overwritten
-        :type  fname: :ref:`FileName`
+        :type  fname: FileName <http://pexdoc.readthedocs.io/en/stable/
+                      ptypes.html#filename>`_
 
         :param filtered: Filtering type
         :type  filtered: :ref:`CsvFiltered`
@@ -856,7 +861,7 @@ class CsvFile(object):
         .. [[[end]]]
         """
         # pylint: disable=R0913
-        write_ex = putil.exh.addex(
+        write_ex = pexdoc.exh.addex(
             ValueError, 'There is no data to save to file'
         )
         fname = self._fname if fname is None else fname

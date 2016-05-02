@@ -5,8 +5,10 @@
 
 # PyPI imports
 import numpy
+import pexdoc.exh
+import pexdoc.pcontracts
+import pexdoc.pinspect
 # Putil imports
-import putil.exh
 from putil.eng import pprint_vector as pprint
 from putil.eng import round_mantissa
 import putil.pcsv
@@ -61,7 +63,8 @@ class CsvSource(DataSource):
     function can be used for more general data pre-processing
 
     :param fname: Comma-separated values file name
-    :type  fname: :ref:`FileNameExists`
+    :type  fname: `FileNameExists <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#filenameexists>`_
 
     :param indep_col_label: Independent variable column label
                             (case insensitive)
@@ -77,15 +80,18 @@ class CsvSource(DataSource):
 
     :param indep_min: Minimum independent variable value. If None no minimum
                       thresholding is applied to the data
-    :type  indep_min: :ref:`RealNum` *or None*
+    :type  indep_min: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+                      ptypes.html#realnum>`_ *or None*
 
     :param indep_max: Maximum independent variable value. If None no maximum
                       thresholding is applied to the data
-    :type  indep_max: :ref:`RealNum` *or None*
+    :type  indep_max: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+                      ptypes.html#realnum>`_ *or None*
 
     :param fproc: Data processing function. If None no processing function is
                   used
-    :type  fproc: :ref:`Function` *or None*
+    :type  fproc: `Function <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#function>`_ *or None*
 
     :param fproc_eargs: Data processing function extra arguments. If None no
                         extra arguments are passed to the processing function
@@ -329,7 +335,7 @@ class CsvSource(DataSource):
         Check that dependent column label can be found in
         comma-separated file header
         """
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Column *[col_name]* (dependent column label) could not be'
             ' found in comma-separated file *[fname]* header',
@@ -343,7 +349,7 @@ class CsvSource(DataSource):
         Check that columns in filter specification can be found in
         comma-separated file header
         """
-        rfilter_ex = putil.exh.addex(
+        rfilter_ex = pexdoc.exh.addex(
             ValueError,
             'Column *[col_name]* in row filter not found '
             'in comma-separated file *[fname]* header'
@@ -360,7 +366,7 @@ class CsvSource(DataSource):
         Check that independent column label can be found in
         comma-separated file header
         """
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Column *[col_name]* (independent column label) could not'
             ' be found in comma-separated file *[fname]* header',
@@ -374,13 +380,13 @@ class CsvSource(DataSource):
         Checks that the extra arguments are in the processing
         function definition
         """
-        eargs_ex = putil.exh.addex(
+        eargs_ex = pexdoc.exh.addex(
             ValueError,
             'Extra argument `*[arg_name]*` not found in argument '
             '`fproc` (function *[func_name]*) definition',
         )
         if _C(self.fproc, self.fproc_eargs):
-            args = putil.pinspect.get_function_args(self._fproc)
+            args = pexdoc.pinspect.get_function_args(self._fproc)
             fname = self.fproc.__name__
             for key in self.fproc_eargs:
                 eargs_ex(
@@ -397,7 +403,7 @@ class CsvSource(DataSource):
         """
         Retrieve dependent data variable from comma-separated values file
         """
-        empty_ex = putil.exh.addex(
+        empty_ex = pexdoc.exh.addex(
             ValueError, 'Filtered dependent variable is empty'
         )
         if _C(self._csv_obj, self.dep_col_label):
@@ -433,7 +439,7 @@ class CsvSource(DataSource):
         """
         Retrieve independent data variable from comma-separated values file
         """
-        empty_ex = putil.exh.addex(
+        empty_ex = pexdoc.exh.addex(
             ValueError, 'Filtered independent variable is empty'
         )
         if _C(self._csv_obj, self.indep_col_label):
@@ -457,34 +463,34 @@ class CsvSource(DataSource):
     def _process_data(self):
         """ Process data through call-back function """
         # pylint: disable=R0914,W0110,W0141,W0703
-        invalid_ret_ex = putil.exh.addex(
+        invalid_ret_ex = pexdoc.exh.addex(
             TypeError,
             'Argument `fproc` (function *[func_name]*) '
             'return value is not valid'
         )
-        illegal_ret_ex = putil.exh.addex(
+        illegal_ret_ex = pexdoc.exh.addex(
             RuntimeError,
             'Argument `fproc` (function *[func_name]*) '
             'returned an illegal number of values'
         )
-        length_ex = putil.exh.addex(
+        length_ex = pexdoc.exh.addex(
             ValueError,
             'Processed independent and dependent variables '
             'are of different length'
         )
-        empty_indep_ex = putil.exh.addex(
+        empty_indep_ex = pexdoc.exh.addex(
             ValueError, 'Processed independent variable is empty'
         )
-        illegal_indep_ex = putil.exh.addex(
+        illegal_indep_ex = pexdoc.exh.addex(
             TypeError, 'Processed independent variable is not valid'
         )
-        empty_dep_ex = putil.exh.addex(
+        empty_dep_ex = pexdoc.exh.addex(
             ValueError, 'Processed dependent variable is empty'
         )
-        illegal_dep_ex = putil.exh.addex(
+        illegal_dep_ex = pexdoc.exh.addex(
             TypeError, 'Processed dependent variable is not valid'
         )
-        proc_fun_ex = putil.exh.addex(
+        proc_fun_ex = pexdoc.exh.addex(
             RuntimeError,
             'Processing function *[func_name]* raised an exception when '
             'called with the following arguments:\n'
@@ -545,16 +551,16 @@ class CsvSource(DataSource):
         self._set_indep_var(indep_var)
         self._set_dep_var(dep_var)
 
-    @putil.pcontracts.contract(dep_col_label=str)
+    @pexdoc.pcontracts.contract(dep_col_label=str)
     def _set_dep_col_label(self, dep_col_label):
         self._dep_col_label = dep_col_label
         self._check_dep_col_label()
         self._apply_rfilter()
         self._process_data()
 
-    @putil.pcontracts.contract(dep_var='real_numpy_vector')
+    @pexdoc.pcontracts.contract(dep_var='real_numpy_vector')
     def _set_dep_var(self, dep_var):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Arguments `indep_var` and `dep_var`'
             ' must have the same number of elements',
@@ -563,7 +569,7 @@ class CsvSource(DataSource):
         self._raw_dep_var = round_mantissa(dep_var, PRECISION)
         self._update_dep_var()
 
-    @putil.pcontracts.contract(fname='file_name_exists')
+    @pexdoc.pcontracts.contract(fname='file_name_exists')
     def _set_fname(self, fname):
         # Windows compatibility: repr() escapes the slashes, but need to take
         # out explicit quotes
@@ -572,15 +578,15 @@ class CsvSource(DataSource):
         self._apply_rfilter()   # This also gets indep_var,dep_var from file
         self._process_data()
 
-    @putil.pcontracts.contract(fproc='function')
+    @pexdoc.pcontracts.contract(fproc='function')
     def _set_fproc(self, fproc):
-        min_args_ex = putil.exh.addex(
+        min_args_ex = pexdoc.exh.addex(
             ValueError,
             'Argument `fproc` (function *[func_name]*) '
             'does not have at least 2 arguments'
         )
         if fproc is not None:
-            args = putil.pinspect.get_function_args(fproc)
+            args = pexdoc.pinspect.get_function_args(fproc)
             min_args_ex(
                 (len(args) < 2) and ('*args' not in args) and
                 ('**kwargs' not in args),
@@ -590,7 +596,7 @@ class CsvSource(DataSource):
         self._check_fproc_eargs()
         self._process_data()
 
-    @putil.pcontracts.contract(fproc_eargs='None|dict')
+    @pexdoc.pcontracts.contract(fproc_eargs='None|dict')
     def _set_fproc_eargs(self, fproc_eargs):
         # Check that extra arguments to see if
         # they are in the function definition
@@ -598,16 +604,16 @@ class CsvSource(DataSource):
         self._check_fproc_eargs()
         self._process_data()
 
-    @putil.pcontracts.contract(indep_col_label=str)
+    @pexdoc.pcontracts.contract(indep_col_label=str)
     def _set_indep_col_label(self, indep_col_label):
         self._indep_col_label = indep_col_label
         self._check_indep_col_label()
         self._apply_rfilter()
         self._process_data()
 
-    @putil.pcontracts.contract(indep_max='real_num')
+    @pexdoc.pcontracts.contract(indep_max='real_num')
     def _set_indep_max(self, indep_max):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Argument `indep_min` is greater than argument `indep_max`',
             _C(self.indep_min, indep_max) and (indep_max < self.indep_min)
@@ -622,9 +628,9 @@ class CsvSource(DataSource):
         self._update_indep_var()
         self._update_dep_var()
 
-    @putil.pcontracts.contract(indep_min='real_num')
+    @pexdoc.pcontracts.contract(indep_min='real_num')
     def _set_indep_min(self, indep_min):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Argument `indep_min` is greater than argument `indep_max`',
             _C(self.indep_max, indep_min) and (self.indep_max < indep_min)
@@ -639,9 +645,9 @@ class CsvSource(DataSource):
         self._update_indep_var()
         self._update_dep_var()
 
-    @putil.pcontracts.contract(indep_var='increasing_real_numpy_vector')
+    @pexdoc.pcontracts.contract(indep_var='increasing_real_numpy_vector')
     def _set_indep_var(self, indep_var):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'Arguments `indep_var` and `dep_var`'
             ' must have the same number of elements',
@@ -654,7 +660,7 @@ class CsvSource(DataSource):
         self._update_indep_var()
         self._update_dep_var()
 
-    @putil.pcontracts.contract(rfilter='csv_row_filter')
+    @pexdoc.pcontracts.contract(rfilter='csv_row_filter')
     def _set_rfilter(self, rfilter):
         # putil.pcsv is case insensitive and all caps
         self._rfilter = rfilter
@@ -676,7 +682,7 @@ class CsvSource(DataSource):
         """
         Update independent variable according to its minimum and maximum limits
         """
-        empty_ex = putil.exh.addex(
+        empty_ex = pexdoc.exh.addex(
             ValueError,
             'Argument `indep_var` is empty after '
             '`indep_min`/`indep_max` range bounding'
@@ -872,7 +878,8 @@ class CsvSource(DataSource):
 
     .. =[=end=]=
 
-    :type: :ref:`Function` or None
+    :type: `Function <http://pexdoc.readthedocs.io/en/stable/
+           ptypes.html#function>`_ or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -1086,7 +1093,8 @@ class CsvSource(DataSource):
     Gets or sets the maximum independent variable limit. If :code:`None` no
     maximum thresholding is applied to the data
 
-    :type: :ref:`RealNum` or None
+    :type: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+           ptypes.html#realnum>`_ *or None*
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -1112,7 +1120,8 @@ class CsvSource(DataSource):
     Gets or sets the minimum independent variable limit. If :code:`None` no
     minimum thresholding is applied to the data
 
-    :type: :ref:`RealNum` or None
+    :type: `RealNum <http://pexdoc.readthedocs.io/en/stable/
+           ptypes.html#realnum>`_ *or None*
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for

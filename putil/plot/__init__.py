@@ -3,6 +3,13 @@
 # See LICENSE for details
 # pylint: disable=C0111,C0302
 
+# PyPI imports
+from pexdoc.ptypes import (
+    real_num,
+    positive_real_num,
+    offset_range,
+    function,
+)
 # Putil imports
 from .basic_source import BasicSource
 from .csv_source import CsvSource
@@ -11,10 +18,6 @@ from .panel import Panel
 from .figure import Figure
 from .functions import parameterized_color_space, DataSource
 from putil.ptypes import (
-    real_num,
-    positive_real_num,
-    offset_range,
-    function,
     real_numpy_vector,
     increasing_real_numpy_vector,
     interpolation_option,

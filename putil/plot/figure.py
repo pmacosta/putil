@@ -11,9 +11,10 @@ import numpy
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import pmisc
+import pexdoc.exh
+import pexdoc.pcontracts
 # Putil imports
-import putil.exh
-import putil.pcontracts
+import putil.eng
 from .panel import Panel
 from .constants import TITLE_FONT_SIZE
 from .functions import _F, _MF, _intelligent_ticks
@@ -120,12 +121,14 @@ class Figure(object):
     :param fig_width: Hard copy plot width in inches. If None the width is
                       automatically calculated so that there is no horizontal
                       overlap between any two text elements in the figure
-    :type  fig_width: :ref:`PositiveRealNum` or None
+    :type  fig_width: `PositiveRealNum <http://pexdoc.readthedocs.io/en/
+                      stable/ptypes.html#positiverealnum>`_ or None
 
     :param fig_height: Hard copy plot height in inches. If None the height is
                        automatically calculated so that there is no vertical
                        overlap between any two text elements in the figure
-    :type  fig_height: :ref:`PositiveRealNum` or None
+    :type  fig_height: `PositiveRealNum <http://pexdoc.readthedocs.io/en/
+                       stable/ptypes.html#positiverealnum>`_ or None
 
     :param title: Plot title
     :type  title: string
@@ -172,7 +175,7 @@ class Figure(object):
     def __init__(self, panels=None, indep_var_label='', indep_var_units='',
         indep_axis_ticks=None, fig_width=None, fig_height=None, title='',
         log_indep_axis=False):
-        putil.exh.addai(
+        pexdoc.exh.addai(
             'indep_axis_ticks',
             (indep_axis_ticks is not None) and (
                 (not isinstance(indep_axis_ticks, list)) and
@@ -424,7 +427,7 @@ class Figure(object):
     def _get_indep_var_label(self):
         return self._indep_var_label
 
-    @putil.pcontracts.contract(indep_var_label='None|str')
+    @pexdoc.pcontracts.contract(indep_var_label='None|str')
     def _set_indep_var_label(self, indep_var_label):
         self._indep_var_label = indep_var_label
         self._draw(force_redraw=True)
@@ -432,7 +435,7 @@ class Figure(object):
     def _get_indep_var_units(self):
         return self._indep_var_units
 
-    @putil.pcontracts.contract(indep_var_units='None|str')
+    @pexdoc.pcontracts.contract(indep_var_units='None|str')
     def _set_indep_var_units(self, indep_var_units):
         self._indep_var_units = indep_var_units
         self._draw(force_redraw=True)
@@ -440,7 +443,7 @@ class Figure(object):
     def _get_title(self):
         return self._title
 
-    @putil.pcontracts.contract(title='None|str')
+    @pexdoc.pcontracts.contract(title='None|str')
     def _set_title(self, title):
         self._title = title
         self._draw(force_redraw=True)
@@ -448,7 +451,7 @@ class Figure(object):
     def _get_log_indep_axis(self):
         return self._log_indep_axis
 
-    @putil.pcontracts.contract(log_indep_axis='None|bool')
+    @pexdoc.pcontracts.contract(log_indep_axis='None|bool')
     def _set_log_indep_axis(self, log_indep_axis):
         self._log_indep_axis = log_indep_axis
         self._draw(force_redraw=True)
@@ -456,14 +459,14 @@ class Figure(object):
     def _get_fig_width(self):
         return self._fig_width
 
-    @putil.pcontracts.contract(fig_width='None|positive_real_num')
+    @pexdoc.pcontracts.contract(fig_width='None|positive_real_num')
     def _set_fig_width(self, fig_width):
         self._fig_width = fig_width
 
     def _get_fig_height(self):
         return self._fig_height
 
-    @putil.pcontracts.contract(fig_height='None|positive_real_num')
+    @pexdoc.pcontracts.contract(fig_height='None|positive_real_num')
     def _set_fig_height(self, fig_height):
         self._fig_height = fig_height
 
@@ -485,8 +488,8 @@ class Figure(object):
         Verifies that elements of panel list are of the right type and
         fully specified
         """
-        invalid_ex = putil.exh.addai('panels')
-        specified_ex = putil.exh.addex(
+        invalid_ex = pexdoc.exh.addai('panels')
+        specified_ex = pexdoc.exh.addex(
             TypeError, 'Panel *[panel_num]* is not fully specified'
         )
         for num, obj in enumerate(self.panels):
@@ -507,13 +510,13 @@ class Figure(object):
 
     def _draw(self, force_redraw=False, raise_exception=False):
         # pylint: disable=C0326,W0612
-        log_ex = putil.exh.addex(
+        log_ex = pexdoc.exh.addex(
             ValueError,
             'Figure cannot be plotted with a logarithmic '
             'independent axis because panel *[panel_num]*, series '
             '*[series_num]* contains negative independent data points'
         )
-        specified_ex = putil.exh.addex(
+        specified_ex = pexdoc.exh.addex(
             RuntimeError, 'Figure object is not fully specified'
         )
         if self._complete and force_redraw:
@@ -601,7 +604,7 @@ class Figure(object):
 
     def _calculate_figure_size(self):
         """ Calculates minimum panel and figure size """
-        small_ex = putil.exh.addex(
+        small_ex = pexdoc.exh.addex(
             RuntimeError,
             'Figure size is too small: minimum width *[min_width]*, '
             'minimum height *[min_height]*'
@@ -648,13 +651,14 @@ class Figure(object):
         self.fig_width = self.fig_width or  min_fig_width
         self.fig_height = self.fig_height or min_fig_height
 
-    @putil.pcontracts.contract(fname='file_name', ftype=str)
+    @pexdoc.pcontracts.contract(fname='file_name', ftype=str)
     def save(self, fname, ftype='PNG'):
         r"""
         Saves the figure to a file
 
         :param fname: File name
-        :type  fname: :ref:`FileName`
+        :type  fname: `FileName <http://pexdoc.readthedocs.io/en/stable/
+                      ptypes.html#filename>`_
 
         :param ftype: File type, either 'PNG' or 'EPS' (case insensitive). The
                       PNG format is a `raster
@@ -679,10 +683,10 @@ class Figure(object):
 
         .. [[[end]]]
         """
-        specified_ex = putil.exh.addex(
+        specified_ex = pexdoc.exh.addex(
             RuntimeError, 'Figure object is not fully specified'
         )
-        unsupported_ex = putil.exh.addex(
+        unsupported_ex = pexdoc.exh.addex(
             RuntimeError, 'Unsupported file type: *[file_type]*'
         )
         specified_ex(not self._complete)
@@ -765,7 +769,8 @@ class Figure(object):
     Gets or sets the height (in inches) of the hard copy plot, :code:`None` if
     figure is not fully specified.
 
-    :type: :ref:`PositiveRealNum` or None
+    :type: `PositiveRealNum <http://pexdoc.readthedocs.io/en/
+           stable/ptypes.html#positiverealnum>`_ or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for
@@ -784,7 +789,8 @@ class Figure(object):
     Gets or sets the width (in inches) of the hard copy plot, :code:`None` if
     figure is not fully specified
 
-    :type: :ref:`PositiveRealNum` or None
+    :type: `PositiveRealNum <http://pexdoc.readthedocs.io/en/
+           stable/ptypes.html#positiverealnum>`_ or None
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc()) ]]]
     .. Auto-generated exceptions documentation for

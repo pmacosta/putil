@@ -217,5 +217,13 @@
 		"cat":["main"],
 		"ver":">=1.0.0",
 		"pos":23
+	},
+	"pexdoc":{
+		"name":"Pexdoc",
+		"optional":false,
+		"url":"http://pexdoc.readthedocs.org",
+		"cat":["main"],
+		"ver":">=1.0.0",
+		"pos":23
 	}
 }

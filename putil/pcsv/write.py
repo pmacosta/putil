@@ -10,10 +10,9 @@ import platform
 import sys
 # PyPI imports
 import pmisc
-# Putil imports
-import putil.exh
-import putil.pcontracts
-from putil.ptypes import file_name
+import pexdoc.exh
+import pexdoc.pcontracts
+from pexdoc.ptypes import file_name
 
 
 ###
@@ -40,8 +39,8 @@ _MF = lambda *x: [_F(item1, item2) for item1, item2 in zip(x[::2], x[1::2])]
 def _write_int(fname, data, append=True):
     """ Write data to CSV file with validation """
     # pylint: disable=W0705
-    data_ex = putil.exh.addex(ValueError, 'There is no data to save to file')
-    fos_ex = putil.exh.addex(
+    data_ex = pexdoc.exh.addex(ValueError, 'There is no data to save to file')
+    fos_ex = pexdoc.exh.addex(
         OSError,
         'File *[fname]* could not be created: *[reason]*'
     )
@@ -59,7 +58,7 @@ def _write_int(fname, data, append=True):
         fos_ex(True, _MF('fname', fname, 'reason', eobj.strerror))
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     fname='file_name', data='list(list(str|int|float|None))', append=bool
 )
 def write(fname, data, append=True):
@@ -67,7 +66,8 @@ def write(fname, data, append=True):
     Writes data to a specified comma-separated values (CSV) file
 
     :param fname: Name of the comma-separated values file to be written
-    :type  fname: :ref:`FileName`
+    :type  fname: FileName <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#filename>`_
 
     :param data: Data to write to the file. Each item in this argument
                  should contain a sub-list corresponding to a row of data;

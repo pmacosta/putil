@@ -12,8 +12,7 @@ import os
 # PyPI imports
 import pytest
 import pmisc
-# Putil imports
-import putil.exdoc
+import pexdoc.exdoc
 
 
 ###
@@ -62,7 +61,7 @@ def run_trace(
     callable_exclude = [] if callable_exclude is None else callable_exclude
     par = trace_pars(mname)
     start_time = datetime.datetime.now()
-    with putil.exdoc.ExDocCxt(
+    with pexdoc.exdoc.ExDocCxt(
             exclude=par.exclude+module_exclude,
             pickle_fname=par.pickle_fname,
             in_callables_fname=par.in_callables_fname,

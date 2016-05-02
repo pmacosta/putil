@@ -34,7 +34,7 @@ PLOT_SUBMODULES = [
 PCSV_SUBMODULES = [
     'concatenate', 'csv_file', 'dsort', 'merge', 'replace', 'write'
 ]
-VALID_MODULES = ['eng', 'pcsv', 'plot', 'tree']
+VALID_MODULES = ['eng', 'pcsv', 'plot']
 
 
 ###
@@ -208,7 +208,7 @@ def elapsed_time_string(start_time, stop_time):
 
 def insert_files_in_docstrings(src_dir, cog_exe):
     """ Cog-insert source files in docstrings """
-    modules = ['pcontracts', 'plot', 'tree']
+    modules = ['plot']
     for module in modules:
         if module == 'plot':
             module_dir = os.path.join(src_dir, 'plot')
@@ -251,7 +251,6 @@ def insert_files_in_rsts(pkg_dir, cog_exe):
     """ Cog-insert source files in Sphinx files """
     fnames = [
         os.path.join(pkg_dir, 'docs', 'README.rst'),
-        os.path.join(pkg_dir, 'docs', 'pcontracts.rst')
     ]
     print('Inserting source files in documentation files')
     for fname in fnames:

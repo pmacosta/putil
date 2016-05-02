@@ -3,15 +3,18 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0105,W0611
 
-# Putil imports
-import putil.exh
-import putil.pcontracts
-from putil.ptypes import (
-    csv_col_filter,
-    csv_row_filter,
+# PyPI imports
+import pexdoc.exh
+import pexdoc.pcontracts
+from pexdoc.ptypes import (
     file_name,
     file_name_exists,
     non_negative_integer
+)
+# Putil imports
+from putil.ptypes import (
+    csv_col_filter,
+    csv_row_filter,
 )
 from .csv_file import CsvFile
 from .write import write
@@ -34,7 +37,7 @@ exobj = trace_ex_pcsv_replace.trace_module(no_print=True)
 ###
 # Functions
 ###
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     fname1='file_name_exists',
     fname2='file_name_exists',
     dfilter1='csv_data_filter',
@@ -57,11 +60,13 @@ def replace(
 
     :param fname1: Name of the input comma-separated values file, the file
                    that contains the columns to be replaced
-    :type  fname1: :ref:`FileNameExists`
+    :type  fname1: FileNameExists <http://pexdoc.readthedocs.io/en/stable/
+                   ptypes.html#filenameexists>`_
 
     :param fname2: Name of the replacement comma-separated values file, the
                    file that contains the replacement data
-    :type  fname2: :ref:`FileNameExists`
+    :type  fname2: FileNameExists <http://pexdoc.readthedocs.io/en/stable/
+                   ptypes.html#filenameexists>`_
 
     :param dfilter1: Row and/or column filter for the input file
     :type  dfilter1: :ref:`CsvDataFilter`
@@ -83,19 +88,22 @@ def replace(
                   from 1). If 0 the row where data starts is auto-detected as
                   the first row that has a number (integer of float) in at
                   least one of its columns
-    :type  frow1: :ref:`NonNegativeInteger`
+    :type  frow1: `NonNegativeInteger <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#nonnegativeinteger>`_
 
     :param frow2: Replacement comma-separated values file first data row
                   (starting from 1). If 0 the row where data starts is
                   auto-detected as the first row that has a number (integer of
                   float) in at least one of its columns
-    :type  frow2: :ref:`NonNegativeInteger`
+    :type  frow2: `NonNegativeInteger <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#nonnegativeinteger>`_
 
     :param ofname: Name of the output comma-separated values file, the file
                    that will contain the input file data but with some columns
                    replaced with data from the replacement file. If None the
                    input file is replaced "in place"
-    :type  ofname: :ref:`FileName` or None
+    :type  ofname: FileName <http://pexdoc.readthedocs.io/en/stable/
+                   ptypes.html#filename>`_ or None
 
     :param ocols: Names of the replaced columns in the output comma-separated
                   values file. If None the column names in the input file are
@@ -146,10 +154,10 @@ def replace(
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
-    irmm_ex = putil.exh.addex(
+    irmm_ex = pexdoc.exh.addex(
         RuntimeError, 'Number of input and replacement columns are different'
     )
-    iomm_ex = putil.exh.addex(
+    iomm_ex = pexdoc.exh.addex(
         RuntimeError, 'Number of input and output columns are different'
     )
     # Read and validate input data

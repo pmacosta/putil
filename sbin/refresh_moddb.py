@@ -6,8 +6,7 @@
 
 # Standard library imports
 import os
-# Putil imports
-import putil.pinspect
+import pexdoc.pinspect
 
 
 ###
@@ -21,7 +20,7 @@ def refresh_moddb():
     docs_dir = os.path.join(pkg_dir, 'docs')
     db_file = os.path.join(docs_dir, 'moddb.json')
     if os.path.exists(db_file):
-        obj = putil.pinspect.Callables()
+        obj = pexdoc.pinspect.Callables()
         obj.load(db_file)
         obj.refresh()
         obj.save(db_file)

@@ -7,9 +7,9 @@
 import copy
 # PyPI imports
 import numpy
+import pexdoc.exh
+import pexdoc.pcontracts
 # Putil imports
-import putil.exh
-import putil.pcontracts
 from .functions import remove_extra_delims
 from .constants import FP_ATOL, FP_RTOL
 from .wave_core import _interp_dep_vector, Waveform
@@ -107,11 +107,11 @@ def _validate_min_max(wave, indep_min, indep_max):
         imax = True
     if imin and imax:
         return indep_min, indep_max
-    exminmax = putil.exh.addex(
+    exminmax = pexdoc.exh.addex(
         RuntimeError, 'Incongruent `indep_min` and `indep_max` arguments'
     )
-    exmin = putil.exh.addai('indep_min')
-    exmax = putil.exh.addai('indep_max')
+    exmin = pexdoc.exh.addai('indep_min')
+    exmax = pexdoc.exh.addai('indep_max')
     exminmax(bool(indep_min >= indep_max))
     exmin(
         bool(
@@ -136,7 +136,7 @@ def _validate_min_max(wave, indep_min, indep_max):
     return indep_min, indep_max
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def acos(wave):
     r"""
     Returns the arc cosine of a waveform's dependent variable vector
@@ -157,7 +157,7 @@ def acos(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError, 'Math domain error', bool(
             (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
         )
@@ -165,7 +165,7 @@ def acos(wave):
     return _operation(wave, 'acos', 'rad', numpy.arccos)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def acosh(wave):
     r"""
     Returns the hyperbolic arc cosine of a waveform's dependent variable vector
@@ -186,13 +186,13 @@ def acosh(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError, 'Math domain error', bool(min(wave._dep_vector) < 1)
     )
     return _operation(wave, 'acosh', '', numpy.arccosh)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def asin(wave):
     r"""
     Returns the arc sine of a waveform's dependent variable vector
@@ -213,7 +213,7 @@ def asin(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError, 'Math domain error', bool(
             (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
         )
@@ -221,7 +221,7 @@ def asin(wave):
     return _operation(wave, 'asin', 'rad', numpy.arcsin)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def asinh(wave):
     r"""
     Returns the hyperbolic arc sine of a waveform's dependent variable vector
@@ -242,7 +242,7 @@ def asinh(wave):
     return _operation(wave, 'asinh', '', numpy.arcsinh)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def atan(wave):
     r"""
     Returns the arc tangent of a waveform's dependent variable vector
@@ -263,7 +263,7 @@ def atan(wave):
     return _operation(wave, 'atan', 'rad', numpy.arctan)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def atanh(wave):
     r"""
     Returns the hyperbolic arc tangent of a waveform's dependent variable
@@ -285,7 +285,7 @@ def atanh(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError, 'Math domain error', bool(
             (min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)
         )
@@ -293,7 +293,7 @@ def atanh(wave):
     return _operation(wave, 'atanh', '', numpy.arctanh)
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, indep_min='None|number', indep_max='None|number'
 )
 def average(wave, indep_min=None, indep_max=None):
@@ -338,7 +338,7 @@ def average(wave, indep_min=None, indep_max=None):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def ceil(wave):
     r"""
     Returns the ceiling of a waveform's dependent variable vector
@@ -359,7 +359,7 @@ def ceil(wave):
     return _operation(wave, 'ceil', wave.dep_units, numpy.ceil)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def cos(wave):
     r"""
     Returns the cosine of a waveform's dependent variable vector
@@ -380,7 +380,7 @@ def cos(wave):
     return _operation(wave, 'cos', '', numpy.cos)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def cosh(wave):
     r"""
     Returns the hyperbolic cosine of a waveform's dependent variable vector
@@ -401,7 +401,7 @@ def cosh(wave):
     return _operation(wave, 'cosh', '', numpy.cosh)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def db(wave):
     r"""
     Returns a waveform's dependent variable vector expressed in decibels
@@ -422,7 +422,7 @@ def db(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError, 'Math domain error', bool((min(wave._dep_vector) <= 0))
     )
     ret = copy.copy(wave)
@@ -432,7 +432,7 @@ def db(wave):
     return ret
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, indep_min='None|number', indep_max='None|number'
 )
 def derivative(wave, indep_min=None, indep_max=None):
@@ -485,7 +485,7 @@ def derivative(wave, indep_min=None, indep_max=None):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def exp(wave):
     r"""
     Returns the natural exponent of a waveform's dependent variable vector
@@ -506,7 +506,7 @@ def exp(wave):
     return _operation(wave, 'exp', '', numpy.exp)
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, dep_var='number', der='int,>=-1,<=+1', inst='int,>0',
     indep_min='None|number', indep_max='None|number')
 def find(wave, dep_var, der=0, inst=1, indep_min=None, indep_max=None):
@@ -582,7 +582,7 @@ def find(wave, dep_var, der=0, inst=1, indep_min=None, indep_max=None):
     print(indep_var)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def floor(wave):
     r"""
     Returns the floor of a waveform's dependent variable vector
@@ -603,7 +603,7 @@ def floor(wave):
     return _operation(wave, 'floor', wave.dep_units, numpy.floor)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def imag(wave):
     r"""
     Returns the imaginary part of a waveform's dependent variable vector
@@ -624,7 +624,7 @@ def imag(wave):
     return _operation(wave, 'imag', wave.dep_units, numpy.imag)
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, indep_min='None|number', indep_max='None|number'
 )
 def integral(wave, indep_min=None, indep_max=None):
@@ -668,7 +668,7 @@ def integral(wave, indep_min=None, indep_max=None):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def log(wave):
     r"""
     Returns the natural logarithm of a waveform's dependent variable vector
@@ -689,13 +689,13 @@ def log(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError, 'Math domain error', bool((min(wave._dep_vector) <= 0))
     )
     return _operation(wave, 'log', '', numpy.log)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def log10(wave):
     r"""
     Returns the base 10 logarithm of a waveform's dependent variable vector
@@ -716,13 +716,13 @@ def log10(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError, 'Math domain error', bool((min(wave._dep_vector) <= 0))
     )
     return _operation(wave, 'log10', '', numpy.log10)
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, indep_min='None|number', indep_max='None|number'
 )
 def naverage(wave, indep_min=None, indep_max=None):
@@ -762,7 +762,7 @@ def naverage(wave, indep_min=None, indep_max=None):
     return numpy.trapz(ret._dep_vector, x=ret._indep_vector)/delta_x
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, indep_min='None|number', indep_max='None|number'
 )
 def nintegral(wave, indep_min=None, indep_max=None):
@@ -803,7 +803,7 @@ def nintegral(wave, indep_min=None, indep_max=None):
     return numpy.trapz(ret._dep_vector, ret._indep_vector)
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, indep_min='None|number', indep_max='None|number'
 )
 def nmax(wave, indep_min=None, indep_max=None):
@@ -842,7 +842,7 @@ def nmax(wave, indep_min=None, indep_max=None):
     return numpy.max(ret._dep_vector)
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     wave=Waveform, indep_min='None|number', indep_max='None|number'
 )
 def nmin(wave, indep_min=None, indep_max=None):
@@ -881,7 +881,7 @@ def nmin(wave, indep_min=None, indep_max=None):
     return numpy.min(ret._dep_vector)
 
 
-@putil.pcontracts.contract(wave=Waveform, unwrap=bool, rad=bool)
+@pexdoc.pcontracts.contract(wave=Waveform, unwrap=bool, rad=bool)
 def phase(wave, unwrap=True, rad=True):
     r"""
     Returns the phase of a waveform's dependent variable vector
@@ -925,7 +925,7 @@ def phase(wave, unwrap=True, rad=True):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def real(wave):
     r"""
     Returns the real part of a waveform's dependent variable vector
@@ -947,7 +947,7 @@ def real(wave):
 
 
 
-@putil.pcontracts.contract(wave=Waveform, decimals='int,>=0')
+@pexdoc.pcontracts.contract(wave=Waveform, decimals='int,>=0')
 def round(wave, decimals=0):
     r"""
     Rounds a waveform's dependent variable vector to a given number of decimal
@@ -973,7 +973,7 @@ def round(wave, decimals=0):
     .. [[[end]]]
     """
     # pylint: disable=W0622
-    putil.exh.addex(
+    pexdoc.exh.addex(
         TypeError,
         'Cannot convert complex to integer',
         wave._dep_vector.dtype.name.startswith('complex')
@@ -984,7 +984,7 @@ def round(wave, decimals=0):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def sin(wave):
     r"""
     Returns the sine of a waveform's dependent variable vector
@@ -1005,7 +1005,7 @@ def sin(wave):
     return _operation(wave, 'sin', '', numpy.sin)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def sinh(wave):
     r"""
     Returns the hyperbolic sine of a waveform's dependent variable vector
@@ -1026,7 +1026,7 @@ def sinh(wave):
     return _operation(wave, 'sinh', '', numpy.sinh)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def sqrt(wave):
     r"""
     Returns the square root of a waveform's dependent variable vector
@@ -1048,7 +1048,7 @@ def sqrt(wave):
     return _operation(wave, 'sqrt', dep_units, numpy.sqrt)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def tan(wave):
     r"""
     Returns the tangent of a waveform's dependent variable vector
@@ -1069,7 +1069,7 @@ def tan(wave):
     return _operation(wave, 'tan', '', numpy.tan)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def tanh(wave):
     r"""
     Returns the hyperbolic tangent of a waveform's dependent variable vector
@@ -1090,7 +1090,7 @@ def tanh(wave):
     return _operation(wave, 'tanh', '', numpy.tanh)
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def wcomplex(wave):
     r"""
     Converts a waveform's dependent variable vector to complex
@@ -1113,7 +1113,7 @@ def wcomplex(wave):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def wfloat(wave):
     r"""
     Converts a waveform's dependent variable vector to float
@@ -1134,7 +1134,7 @@ def wfloat(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         TypeError,
         'Cannot convert complex to float',
         wave._dep_vector.dtype.name.startswith('complex')
@@ -1144,7 +1144,7 @@ def wfloat(wave):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform)
+@pexdoc.pcontracts.contract(wave=Waveform)
 def wint(wave):
     r"""
     Converts a waveform's dependent variable vector to integer
@@ -1165,7 +1165,7 @@ def wint(wave):
 
     .. [[[end]]]
     """
-    putil.exh.addex(
+    pexdoc.exh.addex(
         TypeError,
         'Cannot convert complex to integer',
         wave._dep_vector.dtype.name.startswith('complex')
@@ -1175,7 +1175,7 @@ def wint(wave):
     return ret
 
 
-@putil.pcontracts.contract(wave=Waveform, indep_var='number')
+@pexdoc.pcontracts.contract(wave=Waveform, indep_var='number')
 def wvalue(wave, indep_var):
     r"""
     Returns the dependent variable value at a given independent variable point.
@@ -1211,7 +1211,7 @@ def wvalue(wave, indep_var):
     close_max = numpy.isclose(
         indep_var, wave._indep_vector[-1], FP_RTOL, FP_ATOL
     )
-    putil.exh.addex(
+    pexdoc.exh.addex(
         ValueError,
         'Argument `indep_var` is not in the independent variable vector range',
         bool(((indep_var < wave._indep_vector[0]) and (not close_min))

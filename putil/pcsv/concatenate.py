@@ -3,15 +3,18 @@
 # See LICENSE for details
 # pylint: disable=C0111,W0105,W0611
 
-# Putil imports
-import putil.exh
-import putil.pcontracts
-from putil.ptypes import (
-    csv_col_filter,
-    csv_row_filter,
+# PyPI imports
+import pexdoc.exh
+import pexdoc.pcontracts
+from pexdoc.ptypes import (
     file_name,
     file_name_exists,
     non_negative_integer
+)
+# Putil imports
+from putil.ptypes import (
+    csv_col_filter,
+    csv_row_filter,
 )
 from .csv_file import CsvFile
 from .write import write
@@ -36,7 +39,7 @@ exobj = trace_ex_pcsv_concatenate.trace_module(no_print=True)
 ###
 _C = lambda *x: all([item is not None for item in x])
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     fname1='file_name_exists', fname2='file_name_exists',
     dfilter1='csv_data_filter', dfilter2='csv_data_filter',
     has_header1=bool, has_header2=bool,
@@ -55,11 +58,13 @@ def concatenate(
 
     :param fname1: Name of the first comma-separated values file, the file
                    whose data appears first in the output file
-    :type  fname1: :ref:`FileNameExists`
+    :type  fname1: FileNameExists <http://pexdoc.readthedocs.io/en/stable/
+                   ptypes.html#filenameexists>`_
 
     :param fname2: Name of the second comma-separated values file, the file
                    whose data appears last in the output file
-    :type  fname2: :ref:`FileNameExists`
+    :type  fname2: FileNameExists <http://pexdoc.readthedocs.io/en/stable/
+                   ptypes.html#filenameexists>`_
 
     :param dfilter1: Row and/or column filter for the first file. If None no
                      data filtering is done on the file
@@ -83,18 +88,21 @@ def concatenate(
                   from 1). If 0 the row where data starts is auto-detected as
                   the first row that has a number (integer of float) in at
                   least one of its columns
-    :type  frow1: :ref:`NonNegativeInteger`
+    :type  frow1: `NonNegativeInteger <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#nonnegativeinteger>`_
 
     :param frow2: Second comma-separated values file first data row (starting
                   from 1). If 0 the row where data starts is auto-detected as
                   the first row that has a number (integer of float) in at
                   least one of its columns
-    :type  frow2: :ref:`NonNegativeInteger`
+    :type  frow2: `NonNegativeInteger <http://pexdoc.readthedocs.io/en/stable/
+                  ptypes.html#nonnegativeinteger>`_
 
     :param ofname: Name of the output comma-separated values file, the file
                    that will contain the data from the first and second files.
                    If None the first file is replaced "in place"
-    :type  ofname: :ref:`FileName` or None
+    :type  ofname: FileName <http://pexdoc.readthedocs.io/en/stable/
+                   ptypes.html#filename>`_ or None
 
     :param ocols: Column names of the output comma-separated values file.
                   If None the column names in the first file are used if
@@ -144,10 +152,10 @@ def concatenate(
     .. [[[end]]]
     """
     # pylint: disable=R0913,R0914
-    iro = putil.exh.addex(
+    iro = pexdoc.exh.addex(
         RuntimeError, 'Files have different number of columns'
     )
-    iom = putil.exh.addex(
+    iom = pexdoc.exh.addex(
         RuntimeError,
         'Number of columns in data files and output columns are different'
     )

@@ -3,11 +3,9 @@
 # See LICENSE for details
 # pylint: disable=C0103,C0111,W0108
 
-# Standard library imports
-import sys
 # PyPI imports
 import numpy
-from pmisc import AE, AI
+from pmisc import AE
 # Putil imports
 import putil.ptypes
 
@@ -163,46 +161,6 @@ def test_engineering_notation_suffix():
     obj('u')
 
 
-def test_file_name_contract():
-    """ Test for file_name custom contract """
-    @putil.pcontracts.contract(sfn='file_name')
-    def func(sfn):
-        """ Sample function to test file_name custom contract """
-        return sfn
-    items = [3, 'test\0']
-    for item in items:
-        AI(func, 'sfn', sfn=item)
-    func('some_file.txt')
-    # Test with Python executable (should be portable across systems), file
-    # should be valid although not having permissions to write it
-    func(sys.executable)
-
-
-def test_file_name_exists_contract():
-    """ Test for file_name_exists custom contract """
-    @putil.pcontracts.contract(sfn='file_name_exists')
-    def func(sfn):
-        """ Sample function to test file_name_exists custom contract """
-        return sfn
-    items = [3, 'test\0']
-    for item in items:
-        AI(func, 'sfn', sfn=item)
-    exmsg = 'File _file_does_not_exist could not be found'
-    AE(func, OSError, exmsg, sfn='_file_does_not_exist')
-    # Test with Python executable (should be portable across systems)
-    func(sys.executable)
-
-
-def test_function_contract():
-    """ Tests for Function pseudo-type """
-    def func1():
-        pass
-    check_contract(putil.ptypes.function, 'function', 'a')
-    items = (func1, None)
-    for item in items:
-        putil.ptypes.function(item)
-
-
 def test_increasing_real_numpy_vector_contract():
     """ Tests for IncreasingRealNumpyVector pseudo-type """
     obj = putil.ptypes.increasing_real_numpy_vector
@@ -256,31 +214,6 @@ def test_line_style_option_contract():
         putil.ptypes.line_style_option(item)
 
 
-def test_non_negative_integer():
-    """ Test NonNegativeInteger pseudo-type """
-    obj = putil.ptypes.non_negative_integer
-    items = ['b', True, -3, 5.2]
-    for item in items:
-        check_contract(obj, 'non_negative_integer', item)
-    items = [0, 2]
-    for item in items:
-        obj(item)
-
-
-def test_non_null_string():
-    """ Test NonNullString pseudo-type """
-    exmsg = (
-        '[START CONTRACT MSG: non_null_string]'
-        'Argument `*[argument_name]*` is not valid[STOP CONTRACT MSG]'
-    )
-    items = ['', True, -3, 5.2]
-    for item in items:
-        AE(putil.ptypes.non_null_string, ValueError, exmsg, item)
-    items = ['a', 'hello']
-    for item in items:
-        putil.ptypes.non_null_string(item)
-
-
 def test_number_numpy_vector_contract():
     """ Tests for NumberNumpyVector pseudo-type """
     exmsg = (
@@ -305,37 +238,6 @@ def test_number_numpy_vector_contract():
     for item in items:
         putil.ptypes.number_numpy_vector(item)
 
-
-
-def test_offset_range_contract():
-    """ Tests for PositiveRealNumber pseudo-type """
-    items = ['a', [1, 2, 3], False, -0.1, -1.1]
-    for item in items:
-        check_contract(putil.ptypes.offset_range, 'offset_range', item)
-    items = [0, 0.5, 1]
-    for item in items:
-        putil.ptypes.offset_range(item)
-
-
-def test_positive_real_num_contract():
-    """ Tests for PositiveRealNumber pseudo-type """
-    obj = putil.ptypes.positive_real_num
-    items = ['a', [1, 2, 3], False, -0.1, -2.0]
-    for item in items:
-        check_contract(obj, 'positive_real_num', item)
-    items = [1, 2.0]
-    for item in items:
-        obj(item)
-
-
-def test_real_num_contract():
-    """ Tests for RealNumber pseudo-type """
-    items = ['a', [1, 2, 3], False]
-    for item in items:
-        check_contract(putil.ptypes.real_num, 'real_num', item)
-    items = [1, 2.0]
-    for item in items:
-        putil.ptypes.real_num(item)
 
 
 def test_real_numpy_vector_contract():

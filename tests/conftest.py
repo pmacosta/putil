@@ -13,8 +13,7 @@ else:
     import builtins as __builtin__
 # PyPI imports
 import pytest
-# Putil imports
-import putil.exh
+import pexdoc.exh
 
 
 ###
@@ -106,7 +105,7 @@ def exhobj(request):
         setattr(
             request.module.__builtin__,
             '_EXH',
-            putil.exh.ExHandle(
+            pexdoc.exh.ExHandle(
                 full_cname=full_cname,
                 exclude=exclude,
                 callables_fname=callables_fname

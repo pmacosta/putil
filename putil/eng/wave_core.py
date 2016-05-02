@@ -8,10 +8,10 @@ import collections
 import copy
 # PyPI imports
 import numpy
+import pexdoc.exh
+import pexdoc.pcontracts
 import scipy.interpolate
 # Putil imports
-import putil.exh
-import putil.pcontracts
 from .functions import pprint_vector, remove_extra_delims
 from .constants import FP_ATOL, FP_RTOL
 
@@ -114,7 +114,7 @@ def _interp_dep_vector(wave, indep_vector):
 
 def _get_indep_vector(wave_a, wave_b):
     """ Create new independent variable vector """
-    exobj = putil.exh.addex(
+    exobj = pexdoc.exh.addex(
         RuntimeError, 'Independent variable ranges do not overlap'
     )
     min_bound = max(
@@ -144,7 +144,7 @@ def _verify_compatibility(wave_a, wave_b, check_dep_units=True):
     Verify that two waveforms can be combined with various
     mathematical functions
     """
-    exobj = putil.exh.addex(RuntimeError, 'Waveforms are not compatible')
+    exobj = pexdoc.exh.addex(RuntimeError, 'Waveforms are not compatible')
     ctuple = (
         bool(wave_a.indep_scale != wave_b.indep_scale),
         bool(wave_a.dep_scale != wave_b.dep_scale),
@@ -189,7 +189,8 @@ class Waveform(object):
     :type  dep_vector: :ref:`NumberNumpyVector`
 
     :param  indep_name: Independent variable name
-    :type   indep_name: :ref:`NonNullString`
+    :type   indep_name: `NonNullString <http://pexdoc.readthedocs.io/en/stable/
+                        ptypes.html#nonnullstring>`_
 
     :param  indep_scale: Independent variable scale
     :type   indep_scale: :ref:`WaveScaleOption`
@@ -720,7 +721,7 @@ class Waveform(object):
 
         .. [[[end]]]
         """
-        putil.exh.addex(
+        pexdoc.exh.addex(
             TypeError,
             'Complex operand not supported',
             self._dep_vector.dtype.name.startswith('complex')
@@ -1484,9 +1485,9 @@ interp='CONTINUOUS')"
         cop_list = [
             '>', '>=', '<', '<=', '%', '<<', '>>', '&', '^', '|', 'fdiv'
         ]
-        extype = putil.exh.addex(TypeError, 'Data type not supported')
+        extype = pexdoc.exh.addex(TypeError, 'Data type not supported')
         if operand in cop_list:
-            exnosup = putil.exh.addex(
+            exnosup = pexdoc.exh.addex(
                 TypeError, 'Complex operands not supported'
             )
         scalar = (
@@ -1694,45 +1695,45 @@ interp='CONTINUOUS')"
             for iitem, ditem in zip(self._indep_vector, self._dep_vector)
         ]
 
-    @putil.pcontracts.contract(dep_scale='wave_scale_option')
+    @pexdoc.pcontracts.contract(dep_scale='wave_scale_option')
     def _set_dep_scale(self, dep_scale):
         self._dep_scale = dep_scale.upper()
 
-    @putil.pcontracts.contract(dep_units=str)
+    @pexdoc.pcontracts.contract(dep_units=str)
     def _set_dep_units(self, dep_units):
         self._dep_units = dep_units.strip()
 
-    @putil.pcontracts.contract(dep_vector='number_numpy_vector')
+    @pexdoc.pcontracts.contract(dep_vector='number_numpy_vector')
     def _set_dep_vector(self, dep_vector, check=True):
         self._set_vectors_int(dep_vector=dep_vector, check=check)
 
-    @putil.pcontracts.contract(indep_name='non_null_string')
+    @pexdoc.pcontracts.contract(indep_name='non_null_string')
     def _set_indep_name(self, indep_name):
         self._indep_name = indep_name
 
-    @putil.pcontracts.contract(indep_scale='wave_scale_option')
+    @pexdoc.pcontracts.contract(indep_scale='wave_scale_option')
     def _set_indep_scale(self, indep_scale):
         self._indep_scale = indep_scale.upper()
 
-    @putil.pcontracts.contract(indep_units=str)
+    @pexdoc.pcontracts.contract(indep_units=str)
     def _set_indep_units(self, indep_units):
         self._indep_units = indep_units.strip()
 
-    @putil.pcontracts.contract(indep_vector='increasing_real_numpy_vector')
+    @pexdoc.pcontracts.contract(indep_vector='increasing_real_numpy_vector')
     def _set_indep_vector(self, indep_vector, check=True):
         self._set_vectors_int(indep_vector=indep_vector, check=check)
 
-    @putil.pcontracts.contract(interp='wave_interp_option')
+    @pexdoc.pcontracts.contract(interp='wave_interp_option')
     def _set_interp(self, interp):
         self._interp = interp.upper()
 
-    @putil.pcontracts.contract(vectors='wave_vectors')
+    @pexdoc.pcontracts.contract(vectors='wave_vectors')
     def _set_vectors(self, vectors):
         indep_vector, dep_vector = zip(*copy.copy(vectors))
         self._set_vectors_int(indep_vector, dep_vector)
 
     def _set_vectors_int(self, indep_vector=None, dep_vector=None, check=True):
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             (
                 'Independent and dependent vectors must '

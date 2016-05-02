@@ -5,13 +5,9 @@
 
 # Standard library imports
 import math
-import os
-import platform
-import inspect
 # PyPI imports
 import numpy
-# Putil imports
-import putil.pcontracts
+import pexdoc.pcontracts
 
 
 ###
@@ -150,43 +146,7 @@ def _isnumber(obj):
     )
 
 
-def _normalize_windows_fname(fname, _force=False):  # pragma: no cover
-    """
-    Function copied from pmisc module to avoid
-    import loops
-    """
-    if ((platform.system().lower() != 'windows')
-       and (not _force)):   # pragma: no cover
-        return fname
-    # Replace unintended escape sequences that could be in
-    # the file name, like "C:\appdata"
-    rchars = {
-        '\x07': r'\\a',
-        '\x08': r'\\b',
-        '\x0C': r'\\f',
-        '\x0A': r'\\n',
-        '\x0D': r'\\r',
-        '\x09': r'\\t',
-        '\x0B': r'\\v',
-    }
-    ret = ''
-    for char in os.path.normpath(fname):
-        ret = ret+rchars.get(char, char)
-    # Remove superfluous double backslashes
-    network_share = False
-    tmp = None
-    while tmp != ret:
-        tmp, ret = ret, ret.replace('\\\\', '\\')
-        if ret.startswith(r'\\') and (len(ret) > 2) and (ret[2] != r'\\'):
-            network_share = True
-    ret = ret.replace('\\\\', '\\')
-    # Put back network share if needed
-    if network_share:
-        ret = r'\\'+ret.lstrip(r'\\')
-    return ret
-
-
-@putil.pcontracts.new_contract(
+@pexdoc.pcontracts.new_contract(
     argument_invalid='Argument `*[argument_name]*` is not valid',
     argument_bad_choice=(
         ValueError,
@@ -218,7 +178,7 @@ def color_space_option(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     if (obj is not None) and (not isinstance(obj, str)):
         raise ValueError(exdesc['argument_invalid'])
     if (obj is None) or (obj and any([
@@ -234,7 +194,7 @@ def color_space_option(obj):
     raise ValueError(exdesc['argument_bad_choice'])
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def csv_col_filter(obj):
     r"""
     Validates if an object is a CsvColFilter pseudo-type object
@@ -250,10 +210,10 @@ def csv_col_filter(obj):
     :rtype: None
     """
     if _check_csv_col_filter(obj):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def csv_col_sort(obj):
     r"""
     Validates if an object is a CsvColSort pseudo-type object
@@ -268,7 +228,7 @@ def csv_col_sort(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     obj = obj if isinstance(obj, list) else [obj]
     if len(obj) == 0:
         raise ValueError(exdesc)
@@ -291,7 +251,7 @@ def csv_col_sort(obj):
                 raise ValueError(exdesc)
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def csv_data_filter(obj):
     r"""
     Validates if an object is a CsvDataFilter pseudo-type object
@@ -307,16 +267,16 @@ def csv_data_filter(obj):
     :rtype: None
     """
     if isinstance(obj, tuple) and len(obj) > 2:
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     else:
         obj = _homogenize_data_filter(obj)
     row_value = _check_csv_row_filter(obj[0])
     col_value = _check_csv_col_filter(obj[1])
     if col_value or (row_value != 0):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def csv_filtered(obj):
     r"""
     Validates if an object is a CsvFilter pseudo-type object
@@ -333,10 +293,10 @@ def csv_filtered(obj):
     """
     if obj in [True, False, 'B', 'b', 'C', 'c', 'R', 'r', 'N', 'n']:
         return None
-    raise ValueError(putil.pcontracts.get_exdesc())
+    raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract(
+@pexdoc.pcontracts.new_contract(
     argument_invalid='Argument `*[argument_name]*` is not valid',
     argument_empty=(ValueError, 'Argument `*[argument_name]*` is empty')
 )
@@ -358,7 +318,7 @@ def csv_row_filter(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     ecode = _check_csv_row_filter(obj)
     if ecode == 1:
         raise ValueError(exdesc['argument_invalid'])
@@ -366,7 +326,7 @@ def csv_row_filter(obj):
         raise ValueError(exdesc['argument_empty'])
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def engineering_notation_number(obj):
     r"""
     Validates if an object is an EngineeringNotationNumber pseudo-type object
@@ -388,10 +348,10 @@ def engineering_notation_number(obj):
         # AttributeError: obj.rstrip(), object could not be a string
         # IndexError: obj[-1], when an empty string
         # ValueError: float(), when not a string representing a number
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def engineering_notation_suffix(obj):
     r"""
     Validates if an object is an EngineeringNotationSuffix pseudo-type object
@@ -408,102 +368,10 @@ def engineering_notation_suffix(obj):
     try:
         assert obj in _SUFFIX_TUPLE
     except AssertionError:
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract()
-def file_name(obj):
-    r"""
-    Validates if an object is a legal name for a file
-    (i.e. does not have extraneous characters, etc.)
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises: RuntimeError (Argument \`*[argument_name]*\` is not
-     valid). The token \*[argument_name]\* is replaced by the name
-     of the argument the contract is attached to
-
-    :rtype: None
-    """
-    msg = putil.pcontracts.get_exdesc()
-    # Check that argument is a string
-    if ((not isinstance(obj, str) or
-       (isinstance(obj, str) and ('\0' in obj)))):
-        raise ValueError(msg)
-    # If file exists, argument is a valid file name, otherwise test
-    # if file can be created. User may not have permission to
-    # write file, but call to os.access should not fail if the file
-    # name is correct
-    try:
-        if not os.path.exists(obj):
-            os.access(obj, os.W_OK)
-    except (TypeError, ValueError): # pragma: no cover
-        raise ValueError(msg)
-
-
-@putil.pcontracts.new_contract(
-    argument_invalid='Argument `*[argument_name]*` is not valid',
-    file_not_found=(OSError, 'File *[fname]* could not be found')
-)
-def file_name_exists(obj):
-    r"""
-    Validates if an object is a legal name for a file
-    (i.e. does not have extraneous characters, etc.) *and* that the
-    file exists
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises:
-     * OSError (File *[fname]* could not be found). The
-       token \*[fname]\* is replaced by the *value* of the
-       argument the contract is attached to
-
-     * RuntimeError (Argument \`*[argument_name]*\` is not valid).
-       The token \*[argument_name]\* is replaced by the name of
-       the argument the contract is attached to
-
-    :rtype: None
-    """
-    exdesc = putil.pcontracts.get_exdesc()
-    msg = exdesc['argument_invalid']
-    # Check that argument is a string
-    if ((not isinstance(obj, str) or
-       (isinstance(obj, str) and ('\0' in obj)))):
-        raise ValueError(msg)
-    # Check that file name is valid
-    try:
-        os.path.exists(obj)
-    except (TypeError, ValueError): # pragma: no cover
-        raise ValueError(msg)
-    # Check that file exists
-    obj = _normalize_windows_fname(obj)
-    if not os.path.exists(obj):
-        msg = exdesc['file_not_found']
-        raise ValueError(msg)
-
-
-@putil.pcontracts.new_contract()
-def function(obj):
-    r"""
-    Validates if an object is a function pointer or :code:`None`
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-     token \*[argument_name]\* is replaced by the name of the argument the
-     contract is attached to
-
-    :rtype: None
-    """
-    if (obj is None) or inspect.isfunction(obj):
-        return None
-    raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def increasing_real_numpy_vector(obj):
     r"""
     Validates if an object is IncreasingRealNumpyVector pseudo-type object
@@ -518,10 +386,10 @@ def increasing_real_numpy_vector(obj):
     :rtype: None
     """
     if _check_increasing_real_numpy_vector(obj):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract(
+@pexdoc.pcontracts.new_contract(
     argument_invalid='Argument `*[argument_name]*` is not valid',
     argument_bad_choice=(
         ValueError,
@@ -550,7 +418,7 @@ def interpolation_option(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     if (obj is not None) and (not isinstance(obj, str)):
         raise ValueError(exdesc['argument_invalid'])
     if ((obj is None) or
@@ -561,7 +429,7 @@ def interpolation_option(obj):
     raise ValueError(exdesc['argument_bad_choice'])
 
 
-@putil.pcontracts.new_contract(
+@pexdoc.pcontracts.new_contract(
     argument_invalid='Argument `*[argument_name]*` is not valid',
     argument_bad_choice=(
         ValueError,
@@ -586,7 +454,7 @@ def line_style_option(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     if (obj is not None) and (not isinstance(obj, str)):
         raise ValueError(exdesc['argument_invalid'])
     if obj in [None, '-', '--', '-.', ':']:
@@ -594,45 +462,7 @@ def line_style_option(obj):
     raise ValueError(exdesc['argument_bad_choice'])
 
 
-@putil.pcontracts.new_contract()
-def non_negative_integer(obj):
-    r"""
-    Validates if an object is a non-negative (zero or positive) integer
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-     token \*[argument_name]\* is replaced by the *name* of the argument the
-     contract is attached to
-
-    :rtype: None
-    """
-    if isinstance(obj, int) and (not isinstance(obj, bool)) and (obj >= 0):
-        return None
-    raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
-def non_null_string(obj):
-    r"""
-    Validates if an object is a non-null string
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-     token \*[argument_name]\* is replaced by the *name* of the argument the
-     contract is attached to
-
-    :rtype: None
-    """
-    if isinstance(obj, str) and (len(obj) > 0):
-        return None
-    raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def number_numpy_vector(obj):
     r"""
     Validates if an object is a NumberNumpyVector pseudo-type object
@@ -647,72 +477,10 @@ def number_numpy_vector(obj):
     :rtype: None
     """
     if _check_number_numpy_vector(obj):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract()
-def offset_range(obj):
-    r"""
-    Validates if an object is a number in the [0, 1] range
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-     token \*[argument_name]\* is replaced by the name of the argument the
-     contract is attached to
-
-    :rtype: None
-    """
-    if ((isinstance(obj, int) or isinstance(obj, float)) and
-       (not isinstance(obj, bool)) and (obj >= 0) and (obj <= 1)):
-        return None
-    raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
-def positive_real_num(obj):
-    r"""
-    Validates if an object is a positive integer, positive float
-    or :code:`None`
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-     token \*[argument_name]\* is replaced by the name of the argument the
-     contract is attached to
-
-    :rtype: None
-    """
-    if ((obj is None) or ((isinstance(obj, int) or
-       isinstance(obj, float)) and (obj > 0) and (not isinstance(obj, bool)))):
-        return None
-    raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
-def real_num(obj):
-    r"""
-    Validates if an object is an integer, float or :code:`None`
-
-    :param obj: Object
-    :type  obj: any
-
-    :raises: RuntimeError (Argument \`*[argument_name]*\` is not valid). The
-     token \*[argument_name]\* is replaced by the name of the argument the
-     contract is attached to
-
-    :rtype: None
-    """
-    if ((obj is None) or
-       ((isinstance(obj, int) or isinstance(obj, float)) and
-       (not isinstance(obj, bool)))):
-        return None
-    raise ValueError(putil.pcontracts.get_exdesc())
-
-
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def real_numpy_vector(obj):
     r"""
     Validates if an object is a RealNumpyVector pseudo-type object
@@ -727,10 +495,10 @@ def real_numpy_vector(obj):
     :rtype: None
     """
     if _check_real_numpy_vector(obj):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def touchstone_data(obj):
     r"""
     Validates if an object is an TouchstoneData pseudo-type object
@@ -746,25 +514,25 @@ def touchstone_data(obj):
     """
     if ((not isinstance(obj, dict)) or (isinstance(obj, dict) and
        (sorted(obj.keys()) != sorted(['points', 'freq', 'data'])))):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if not (isinstance(obj['points'], int) and (obj['points'] > 0)):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if _check_increasing_real_numpy_vector(obj['freq']):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if not isinstance(obj['data'], numpy.ndarray):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     vdata = ['int', 'float', 'complex']
     if not any([obj['data'].dtype.name.startswith(item) for item in vdata]):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if obj['freq'].size != obj['points']:
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     nports = int(math.sqrt(obj['data'].size/obj['freq'].size))
     if obj['points']*(nports**2) != obj['data'].size:
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     return None
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def touchstone_noise_data(obj):
     r"""
     Validates if an object is an TouchstoneNoiseData pseudo-type object
@@ -782,26 +550,26 @@ def touchstone_noise_data(obj):
         return None
     if ((not isinstance(obj, dict)) or (isinstance(obj, dict) and
        (sorted(obj.keys()) != sorted(['points', 'freq', 'nf', 'rc', 'res'])))):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if not (isinstance(obj['points'], int) and (obj['points'] > 0)):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if _check_increasing_real_numpy_vector(obj['freq']):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if _check_real_numpy_vector(obj['nf']):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if _check_number_numpy_vector(obj['rc']):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if not (isinstance(obj['res'], numpy.ndarray) and
        (len(obj['res'].shape) == 1) and (obj['res'].shape[0] > 0) and
        numpy.all(obj['res'] >= 0)):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     sizes = [obj['freq'].size, obj['nf'].size, obj['rc'].size, obj['res'].size]
     if set(sizes) != set([obj['points']]):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     return None
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def touchstone_options(obj):
     r"""
     Validates if an object is an TouchstoneOptions pseudo-type object
@@ -817,16 +585,16 @@ def touchstone_options(obj):
     """
     if ((not isinstance(obj, dict)) or (isinstance(obj, dict) and
        (sorted(obj.keys()) != sorted(['units', 'ptype', 'pformat', 'z0'])))):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     if not ((obj['units'].lower() in ['ghz', 'mhz', 'khz', 'hz']) and
        (obj['ptype'].lower() in ['s', 'y', 'z', 'h', 'g']) and
        (obj['pformat'].lower() in ['db', 'ma', 'ri']) and
        isinstance(obj['z0'], float) and (obj['z0'] >= 0)):
-        raise ValueError(putil.pcontracts.get_exdesc())
+        raise ValueError(pexdoc.pcontracts.get_exdesc())
     return None
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def wave_interp_option(obj):
     r"""
     Validates if an object is a WaveInterpOption pseudo-type object
@@ -840,7 +608,7 @@ def wave_interp_option(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     if not isinstance(obj, str):
         raise ValueError(exdesc)
     if obj.upper() in ['CONTINUOUS', 'STAIRCASE']:
@@ -848,7 +616,7 @@ def wave_interp_option(obj):
     raise ValueError(exdesc)
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def wave_scale_option(obj):
     r"""
     Validates if an object is a WaveScaleOption pseudo-type object
@@ -862,7 +630,7 @@ def wave_scale_option(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     if not isinstance(obj, str):
         raise ValueError(exdesc)
     if obj.upper() in ['LINEAR', 'LOG']:
@@ -870,7 +638,7 @@ def wave_scale_option(obj):
     raise ValueError(exdesc)
 
 
-@putil.pcontracts.new_contract()
+@pexdoc.pcontracts.new_contract()
 def wave_vectors(obj):
     r"""
     Validates if an object is a WaveVectors pseudo-type object
@@ -884,7 +652,7 @@ def wave_vectors(obj):
 
     :rtype: None
     """
-    exdesc = putil.pcontracts.get_exdesc()
+    exdesc = pexdoc.pcontracts.get_exdesc()
     if not isinstance(obj, list) or (isinstance(obj, list) and not len(obj)):
         raise ValueError(exdesc)
     if any([not (isinstance(item, tuple) and len(item) == 2) for item in obj]):

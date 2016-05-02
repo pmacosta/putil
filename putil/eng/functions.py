@@ -17,13 +17,13 @@ else: # pragma: no cover
     from itertools import zip_longest
 # PyPI imports
 import numpy
+import pexdoc.exh
+from pexdoc.ptypes import non_negative_integer
 import pyparsing
 # Putil imports
-import putil.exh
 from putil.ptypes import (
     engineering_notation_number,
     engineering_notation_suffix,
-    non_negative_integer
 )
 pyparsing.ParserElement.enablePackrat()
 
@@ -327,7 +327,7 @@ def _to_eng_tuple(number):
     return NumComp(new_mant, new_exp)
 
 
-@putil.pcontracts.contract(number='number')
+@pexdoc.pcontracts.contract(number='number')
 def no_exp(number):
     r"""
     Converts a number to a string guaranteeing that the result is not
@@ -361,7 +361,7 @@ def no_exp(number):
     return mant
 
 
-@putil.pcontracts.contract(
+@pexdoc.pcontracts.contract(
     number='int|float', frac_length='non_negative_integer', rjust=bool
 )
 def peng(number, frac_length, rjust=True):
@@ -374,7 +374,9 @@ def peng(number, frac_length, rjust=True):
     :type  number: integer or float
 
     :param frac_length: Number of digits of fractional part
-    :type  frac_length: :ref:`NonNegativeInteger`
+    :type  frac_length: `NonNegativeInteger
+                        <http://pexdoc.readthedocs.io/en/stable/
+                        ptypes.html#nonnegativeinteger>`_
 
     :param rjust: Flag that indicates whether the number is
                   right-justified (True) or not (False)
@@ -502,7 +504,7 @@ def peng(number, frac_length, rjust=True):
     return num
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
+@pexdoc.pcontracts.contract(snum='engineering_notation_number')
 def peng_float(snum):
     r"""
     Returns the floating point equivalent of a number represented
@@ -534,7 +536,7 @@ def peng_float(snum):
     return float(snum if snum[-1].isdigit() else snum[:-1])*power
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
+@pexdoc.pcontracts.contract(snum='engineering_notation_number')
 def peng_frac(snum):
     r"""
     Returns the fractional part of a number represented in engineering notation
@@ -591,7 +593,7 @@ def peng_int(snum):
     return int(peng_mant(snum))
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
+@pexdoc.pcontracts.contract(snum='engineering_notation_number')
 def peng_mant(snum):
     r"""
     Returns the mantissa of a number represented in engineering notation
@@ -619,7 +621,7 @@ def peng_mant(snum):
     return float(snum if snum[-1].isdigit() else snum[:-1])
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
+@pexdoc.pcontracts.contract(snum='engineering_notation_number')
 def peng_power(snum):
     r"""
     Returns  engineering suffix and floating point equivalent of the
@@ -653,7 +655,7 @@ def peng_power(snum):
     return EngPower(suffix, _SUFFIX_POWER_DICT[suffix])
 
 
-@putil.pcontracts.contract(snum='engineering_notation_number')
+@pexdoc.pcontracts.contract(snum='engineering_notation_number')
 def peng_suffix(snum):
     r"""
     Returns the suffix of a number represented in engineering notation
@@ -681,7 +683,7 @@ def peng_suffix(snum):
     return ' ' if snum[-1].isdigit() else snum[-1]
 
 
-@putil.pcontracts.contract(suffix='engineering_notation_suffix', offset=int)
+@pexdoc.pcontracts.contract(suffix='engineering_notation_suffix', offset=int)
 def peng_suffix_math(suffix, offset):
     r"""
     Returns an engineering suffix based on a starting suffix and an offset of
@@ -715,7 +717,7 @@ def peng_suffix_math(suffix, offset):
         'T'
     """
     # pylint: disable=W0212
-    eobj = putil.exh.addex(ValueError, 'Argument `offset` is not valid')
+    eobj = pexdoc.exh.addex(ValueError, 'Argument `offset` is not valid')
     try:
         return _POWER_TO_SUFFIX_DICT[_SUFFIX_TO_POWER_DICT[suffix]+3*offset]
     except KeyError:
@@ -909,15 +911,15 @@ def pprint_vector(vector, limit=False, width=None, indent=0,
             (
                 str(element)
                 if not eng else
-                putil.eng.peng(element, frac_length, True)
+                peng(element, frac_length, True)
             )
             if not isinstance(element, complex) else
             (
                 str(element).lstrip('(').rstrip(')')
                 if not eng else
                 '{real}{sign}{imag}j'.format(
-                    real=putil.eng.peng(element.real, frac_length, True),
-                    imag=putil.eng.peng(abs(element.imag), frac_length, True),
+                    real=peng(element.real, frac_length, True),
+                    imag=peng(abs(element.imag), frac_length, True),
                     sign='+' if element.imag >= 0 else '-'
                 )
             )

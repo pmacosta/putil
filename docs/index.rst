@@ -12,14 +12,9 @@ Contents
 
    README
    eng
-   exdoc
-   exh
-   pcontracts
    pcsv
-   pinspect
    plot
    ptypes
-   tree
 
 Indices and tables
 ==================

@@ -8,10 +8,11 @@ import numpy
 import matplotlib.path
 import matplotlib.pyplot as plt
 import pmisc
+import pexdoc.pcontracts
 from scipy.stats import linregress
 from scipy.interpolate import InterpolatedUnivariateSpline
 # Putil imports
-import putil.pcontracts
+import putil.eng
 from .functions import _C
 from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
 
@@ -163,15 +164,15 @@ class Series(object):
 
     def _set_data_source(self, data_source):
         # pylint: disable=W0212
-        indep_ex = putil.exh.addex(
+        indep_ex = pexdoc.exh.addex(
             RuntimeError,
             'Argument `data_source` does not have an `indep_var` attribute'
         )
-        dep_ex = putil.exh.addex(
+        dep_ex = pexdoc.exh.addex(
             RuntimeError,
             'Argument `data_source` does not have an `dep_var` attribute'
         )
-        specified_ex = putil.exh.addex(
+        specified_ex = pexdoc.exh.addex(
             RuntimeError, 'Argument `data_source` is not fully specified'
         )
         if data_source is not None:
@@ -190,16 +191,16 @@ class Series(object):
     def _get_label(self):
         return self._label
 
-    @putil.pcontracts.contract(label='None|str')
+    @pexdoc.pcontracts.contract(label='None|str')
     def _set_label(self, label):
         self._label = label
 
     def _get_color(self):
         return self._color
 
-    @putil.pcontracts.contract(color='real_num|str|list|tuple')
+    @pexdoc.pcontracts.contract(color='real_num|str|list|tuple')
     def _set_color(self, color):
-        invalid_ex = putil.exh.addex(
+        invalid_ex = pexdoc.exh.addex(
             TypeError, 'Invalid color specification'
         )
         valid_html_colors = [
@@ -279,7 +280,7 @@ class Series(object):
         return self._marker
 
     def _set_marker(self, marker):
-        putil.exh.addai('marker', not self._validate_marker(marker))
+        pexdoc.exh.addai('marker', not self._validate_marker(marker))
         self._marker = marker
         self._marker_spec = (
             self.marker if self.marker not in ["None", None, ' ', ''] else ''
@@ -288,7 +289,7 @@ class Series(object):
     def _get_interp(self):
         return self._interp
 
-    @putil.pcontracts.contract(interp='interpolation_option')
+    @pexdoc.pcontracts.contract(interp='interpolation_option')
     def _set_interp(self, interp):
         self._interp = (
             interp.upper().strip() if isinstance(interp, str) else interp
@@ -301,7 +302,7 @@ class Series(object):
     def _get_line_style(self):
         return self._line_style
 
-    @putil.pcontracts.contract(line_style='line_style_option')
+    @pexdoc.pcontracts.contract(line_style='line_style_option')
     def _set_line_style(self, line_style):
         self._line_style = line_style
         self._update_linestyle_spec()
@@ -310,7 +311,7 @@ class Series(object):
     def _get_secondary_axis(self):
         return self._secondary_axis
 
-    @putil.pcontracts.contract(secondary_axis='None|bool')
+    @pexdoc.pcontracts.contract(secondary_axis='None|bool')
     def _set_secondary_axis(self, secondary_axis):
         self._secondary_axis = secondary_axis
 
@@ -348,7 +349,7 @@ class Series(object):
         Test if data source has minimum length to calculate cubic interpolation
         """
         # pylint: disable=C0103
-        putil.exh.addex(
+        pexdoc.exh.addex(
             ValueError,
             'At least 4 data points are needed for CUBIC interpolation',
             (self.interp == 'CUBIC') and (self.indep_var is not None) and
