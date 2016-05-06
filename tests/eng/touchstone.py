@@ -53,7 +53,7 @@ def ref_touchstone_data(nports=5, points=3):
     data = dict(
         points=points,
         freq=numpy.arange(1, points+1),
-        data=numpy.resize(cdata, (points, nports, nports))
+        pars=numpy.resize(cdata, (points, nports, nports))
     )
     ndata = dict(
         points=points,
@@ -80,9 +80,9 @@ def roundtrip_touchstone(nports, options, data, noise=None):
     idata = idict['data']
     npoints = data['freq'].size
     assert npoints == idata['points']
-    rsdata = numpy.resize(numpy.copy(data['data']), (npoints, nports, nports))
+    rsdata = numpy.resize(numpy.copy(data['pars']), (npoints, nports, nports))
     assert numpy.allclose(idata['freq'], data['freq'], FP_RTOL, FP_ATOL)
-    assert numpy.allclose(idata['data'], rsdata, FP_RTOL, FP_ATOL)
+    assert numpy.allclose(idata['pars'], rsdata, FP_RTOL, FP_ATOL)
     idata = idict['noise']
     if idata:
         assert idata['freq'].size == noise['points']
@@ -191,7 +191,7 @@ def test_read_touchstone():
     assert ret['nports'] == 1
     assert ret['opts'] == dict(units='GHz', ptype='S', pformat='RI', z0=50)
     assert (ret['data']['freq'] == numpy.array([1.0])).all()
-    assert (ret['data']['data'] == numpy.array([2+3j])).all()
+    assert (ret['data']['pars'] == numpy.array([2+3j])).all()
     assert ret['noise'] == {}
     assert ret['data']['points'] == 1
     # Test 1-port data parsing (and end of line comments)
@@ -207,7 +207,7 @@ def test_read_touchstone():
     assert ret['opts'] == dict(units='GHz', ptype='S', pformat='RI', z0=50)
     assert (ret['data']['freq'] == numpy.array([1.0, 4.0, 7.0])).all()
     ref = numpy.array([2+3j, 5+6j, 8+9j])
-    assert (ret['data']['data'] == ref).all()
+    assert (ret['data']['pars'] == ref).all()
     assert ret['noise'] == {}
     assert ret['data']['points'] == 3
     # Test 2-port data parsing
@@ -234,7 +234,7 @@ def test_read_touchstone():
             ]
         ]
     )
-    assert (ret['data']['data'] == ref).all()
+    assert (ret['data']['pars'] == ref).all()
     assert ret['data']['points'] == 2
     assert ret['noise'] == {}
     # Magnitude and angle
@@ -255,7 +255,7 @@ def test_read_touchstone():
             ]
         ]
     )
-    assert (ret['data']['data'] == ref).all()
+    assert (ret['data']['pars'] == ref).all()
     assert ret['data']['points'] == 2
     assert ret['noise'] == {}
     # Decibel-angle
@@ -277,7 +277,7 @@ def test_read_touchstone():
             ]
         ]
     )
-    assert (ret['data']['data'] == ref).all()
+    assert (ret['data']['pars'] == ref).all()
     assert ret['data']['points'] == 2
     assert ret['noise'] == {}
     # Test 3-port data parsing
@@ -310,7 +310,7 @@ def test_read_touchstone():
             ]
         ]
     )
-    assert (ret['data']['data'] == ref).all()
+    assert (ret['data']['pars'] == ref).all()
     assert ret['data']['points'] == 2
     assert ret['noise'] == {}
     # Noise data
@@ -333,7 +333,7 @@ def test_read_touchstone():
             ]
         ]
     )
-    assert (ret['data']['data'] == ref).all()
+    assert (ret['data']['pars'] == ref).all()
     assert ret['data']['points'] == 1
     assert (ret['noise']['freq'] == numpy.array([0.5])).all()
     assert (ret['noise']['nf'] == numpy.array([1])).all()
@@ -372,7 +372,7 @@ def test_read_touchstone():
             ]
         ]
     )
-    assert (ret['data']['data'] == ref).all()
+    assert (ret['data']['pars'] == ref).all()
     assert ret['data']['points'] == 3
     assert (ret['noise']['freq'] == numpy.array([0.5, 1.5, 2.5, 3.5])).all()
     assert (ret['noise']['nf'] == numpy.array([1, 5, 9, 13.5])).all()
@@ -467,7 +467,7 @@ def test_write_touchstone_exceptions():
     AE(obj, RuntimeError, msg, 'sdata.s4p', options, data, noise)
     msg = 'Malformed data'
     data = dict(
-        points=1, freq=numpy.array([1]), data=numpy.array([1, 2, 3, 4])
+        points=1, freq=numpy.array([1]), pars=numpy.array([1, 2, 3, 4])
     )
     AE(obj, RuntimeError, msg, 'sdata.s1p', options, data)
 
@@ -514,11 +514,11 @@ def test_write_touchstone():
     roundtrip_touchstone(nports, options, data)
     options['pformat'] = 'DB'
     # Check that data shape does not matter
-    data['data'] = numpy.resize(data['data'], data['data'].size)
-    rdata = numpy.copy(data['data'])
+    data['pars'] = numpy.resize(data['pars'], data['pars'].size)
+    rdata = numpy.copy(data['pars'])
     roundtrip_touchstone(nports, options, data)
     # Test data is not mutated in call
-    assert numpy.all(rdata == data['data'])
+    assert numpy.all(rdata == data['pars'])
     nports, options, data, _ = ref_touchstone_data(2, 10)
     roundtrip_touchstone(nports, options, data)
     nports, options, data, noise = ref_touchstone_data(2, 3)

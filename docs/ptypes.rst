@@ -281,7 +281,7 @@ A dictionary with the following structure:
 
 * **freq** (:ref:`IncreasingRealNumpyVector`) -- Frequency vector
 
-* **data** (:ref:`NumberNumpyVector`) -- Parameter data, its size is equal to
+* **pars** (:ref:`NumberNumpyVector`) -- Parameter data, its size is equal to
   :code:`nports` x :code:`nports` x :code:`points` where :code:`nports`
   represents the number of ports in the file
 

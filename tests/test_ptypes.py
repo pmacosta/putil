@@ -280,19 +280,19 @@ def test_touchstone_data_contract():
         {},
         {'hello':5},
         {'points':1, 'freq':2},
-        {'points':1, 'freq':2, 'data':3, 'hello':4},
-        {'points':'a', 'freq':freq, 'data':data},
-        {'points':3, 'freq':'a', 'data':data},
-        {'points':3, 'freq':freq, 'data':'a'},
-        {'points':3, 'freq':data, 'data':data},
-        {'points':3, 'freq':freq, 'data':wdata1},
-        {'points':3, 'freq':freq, 'data':wdata2},
-        {'points':3, 'freq':wfreq1, 'data':data},
-        {'points':3, 'freq':wfreq2, 'data':data},
+        {'points':1, 'freq':2, 'pars':3, 'hello':4},
+        {'points':'a', 'freq':freq, 'pars':data},
+        {'points':3, 'freq':'a', 'pars':data},
+        {'points':3, 'freq':freq, 'pars':'a'},
+        {'points':3, 'freq':data, 'pars':data},
+        {'points':3, 'freq':freq, 'pars':wdata1},
+        {'points':3, 'freq':freq, 'pars':wdata2},
+        {'points':3, 'freq':wfreq1, 'pars':data},
+        {'points':3, 'freq':wfreq2, 'pars':data},
     ]
     for item in items:
         AE(obj, ValueError, exmsg, item)
-    obj({'points':3, 'freq':freq, 'data':data})
+    obj({'points':3, 'freq':freq, 'pars':data})
 
 
 def test_touchstone_noise_data_contract():

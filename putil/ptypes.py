@@ -513,21 +513,21 @@ def touchstone_data(obj):
     :rtype: None
     """
     if ((not isinstance(obj, dict)) or (isinstance(obj, dict) and
-       (sorted(obj.keys()) != sorted(['points', 'freq', 'data'])))):
+       (sorted(obj.keys()) != sorted(['points', 'freq', 'pars'])))):
         raise ValueError(pexdoc.pcontracts.get_exdesc())
     if not (isinstance(obj['points'], int) and (obj['points'] > 0)):
         raise ValueError(pexdoc.pcontracts.get_exdesc())
     if _check_increasing_real_numpy_vector(obj['freq']):
         raise ValueError(pexdoc.pcontracts.get_exdesc())
-    if not isinstance(obj['data'], numpy.ndarray):
+    if not isinstance(obj['pars'], numpy.ndarray):
         raise ValueError(pexdoc.pcontracts.get_exdesc())
     vdata = ['int', 'float', 'complex']
-    if not any([obj['data'].dtype.name.startswith(item) for item in vdata]):
+    if not any([obj['pars'].dtype.name.startswith(item) for item in vdata]):
         raise ValueError(pexdoc.pcontracts.get_exdesc())
     if obj['freq'].size != obj['points']:
         raise ValueError(pexdoc.pcontracts.get_exdesc())
-    nports = int(math.sqrt(obj['data'].size/obj['freq'].size))
-    if obj['points']*(nports**2) != obj['data'].size:
+    nports = int(math.sqrt(obj['pars'].size/obj['freq'].size))
+    if obj['points']*(nports**2) != obj['pars'].size:
         raise ValueError(pexdoc.pcontracts.get_exdesc())
     return None
 

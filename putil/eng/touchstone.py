@@ -257,15 +257,15 @@ def read_touchstone(fname):
     else: # if opts['pformat'] == 'DB':
         data = (10**(data[d1slice]/20.0))*numpy.exp(1j*data[d2slice])
     if nports > 1:
-        data_dict['data'] = numpy.resize(data, (npoints, nports, nports))
+        data_dict['pars'] = numpy.resize(data, (npoints, nports, nports))
     else:
-        data_dict['data'] = copy.copy(data)
+        data_dict['pars'] = copy.copy(data)
     del data
     data_dict['points'] = npoints
     if nports == 2:
         # The order of data for a two-port file is N11, N21, N12, N22 but for
         # m ports where m > 2, the order is N11, N12, N13, ..., N1m
-        data_dict['data'] = numpy.transpose(data_dict['data'], (0, 2, 1))
+        data_dict['pars'] = numpy.transpose(data_dict['pars'], (0, 2, 1))
     return dict(
         nports=nports, opts=opts, data=data_dict, noise=ndict
     )
@@ -350,11 +350,11 @@ def write_touchstone(fname, options, data, noise=None, frac_length=10,
     nports = int(match.groups()[0])
     exnoise(bool((nports != 2) and noise))
     nums_per_freq = nports**2
-    expoints(data['points']*nums_per_freq != data['data'].size)
+    expoints(data['points']*nums_per_freq != data['pars'].size)
     #
     npoints = data['points']
     par_data = numpy.resize(
-        numpy.copy(data['data']), (npoints, nports, nports)
+        numpy.copy(data['pars']), (npoints, nports, nports)
     )
     if nports == 2:
         par_data = numpy.transpose(par_data, (0, 2, 1))
