@@ -9,10 +9,10 @@ import matplotlib.path
 import matplotlib.pyplot as plt
 import pmisc
 import pexdoc.pcontracts
+import peng
 from scipy.stats import linregress
 from scipy.interpolate import InterpolatedUnivariateSpline
 # Putil imports
-import putil.eng
 from .functions import _C
 from .constants import LEGEND_SCALE, LINE_WIDTH, MARKER_SIZE
 
@@ -319,10 +319,10 @@ class Series(object):
         """ Print series object information """
         ret = ''
         ret += 'Independent variable: {0}\n'.format(
-            putil.eng.pprint_vector(self.indep_var, width=50)
+            peng.pprint_vector(self.indep_var, width=50)
         )
         ret += 'Dependent variable: {0}\n'.format(
-            putil.eng.pprint_vector(self.dep_var, width=50)
+            peng.pprint_vector(self.dep_var, width=50)
         )
         ret += 'Label: {0}\n'.format(self.label)
         ret += 'Color: {0}\n'.format(self.color)

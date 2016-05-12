@@ -18,7 +18,7 @@ def trace_module(no_print=True):
         'indep_var',
         'dep_var'
     )
-    module_exclude_list = ['putil.eng.functions']
+    module_exclude_list = ['peng.functions']
     return docs.support.trace_support.run_trace(
         mname,
         fname,

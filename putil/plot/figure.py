@@ -13,8 +13,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import pmisc
 import pexdoc.exh
 import pexdoc.pcontracts
+import peng
 # Putil imports
-import putil.eng
 from .panel import Panel
 from .constants import TITLE_FONT_SIZE
 from .functions import _F, _MF, _intelligent_ticks
@@ -543,7 +543,7 @@ class Figure(object):
                             glob_indep_var,
                             numpy.array(
                                 [
-                                    putil.eng.round_mantissa(element, 10)
+                                    peng.round_mantissa(element, 10)
                                     for element in series_obj.indep_var
                                 ]
                             )

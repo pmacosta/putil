@@ -8,9 +8,9 @@ import numpy
 import pexdoc.exh
 import pexdoc.pcontracts
 import pexdoc.pinspect
+from peng import pprint_vector as pprint
+from peng import round_mantissa
 # Putil imports
-from putil.eng import pprint_vector as pprint
-from putil.eng import round_mantissa
 import putil.pcsv
 from putil.ptypes import csv_row_filter
 from .constants import PRECISION
@@ -654,7 +654,7 @@ class CsvSource(DataSource):
             _C(indep_var, self._raw_dep_var) and
             (self._raw_dep_var.size != indep_var.size)
         )
-        self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
+        self._raw_indep_var = round_mantissa(indep_var, PRECISION)
         # Apply minimum and maximum range bounding and assign it to
         # self._indep_var and thus this is what self.indep_var returns
         self._update_indep_var()

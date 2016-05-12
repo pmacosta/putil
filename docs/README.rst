@@ -89,10 +89,6 @@ Putil Library
 This library provides a collection of utility modules to supplement the
 Python standard library. The modules provided are:
 
-* **eng**: engineering-related functions including a) handling numbers
-  represented in engineering or scientific notation, b) pretty printing
-  Numpy vectors; and c) a waveform class
-
 * **pcsv**: handle comma-separated values (CSV) files and do lightweight
   processing of their data
 
@@ -293,12 +289,12 @@ Contributing
 
 	.. code-block:: bash
 
-	    $ tox -e py34-test -- -x test_eng.py
+	    $ tox -e py34-test -- -x test_plot.py
             GLOB sdist-make: [...]/putil/setup.py
             py34-test inst-nodeps: [...]/putil/.tox/dist/putil-[...].zip
             py34-test runtests: PYTHONHASHSEED='680528711'
-            py34-test runtests: commands[0] | [...]py.test -x test_eng.py
-            ==================== test session starts ====================
+            py34-test runtests: commands[0] | [...]py.test -x test_plot.py
+            ==================== test session starts =====================
             platform linux -- Python 3.4.2 -- py-1.4.30 -- [...]
             ...
 

@@ -7,8 +7,8 @@
 import numpy
 import pexdoc.exh
 import pexdoc.pcontracts
+import peng
 # Putil imports
-import putil.eng
 from .constants import PRECISION
 from .functions import _C, _SEL, DataSource
 
@@ -163,7 +163,7 @@ class BasicSource(DataSource):
             _C(dep_var, self._raw_indep_var) and
             (self._raw_indep_var.size != dep_var.size)
         )
-        self._raw_dep_var = putil.eng.round_mantissa(dep_var, PRECISION)
+        self._raw_dep_var = peng.round_mantissa(dep_var, PRECISION)
         self._update_dep_var()
 
     @pexdoc.pcontracts.contract(indep_max='real_num')
@@ -174,7 +174,7 @@ class BasicSource(DataSource):
             _C(self.indep_min, indep_max) and (indep_max < self.indep_min)
         )
         self._indep_max = (
-            putil.eng.round_mantissa(indep_max, PRECISION)
+            peng.round_mantissa(indep_max, PRECISION)
             if not isinstance(indep_max, int) else
             indep_max
         )
@@ -191,7 +191,7 @@ class BasicSource(DataSource):
             _C(self.indep_max, indep_min) and (self.indep_max < indep_min)
         )
         self._indep_min = (
-            putil.eng.round_mantissa(indep_min, PRECISION)
+            peng.round_mantissa(indep_min, PRECISION)
             if not isinstance(indep_min, int) else
             indep_min
         )
@@ -209,7 +209,7 @@ class BasicSource(DataSource):
             _C(indep_var, self._raw_dep_var) and
             (self._raw_dep_var.size != indep_var.size)
         )
-        self._raw_indep_var = putil.eng.round_mantissa(indep_var, PRECISION)
+        self._raw_indep_var = peng.round_mantissa(indep_var, PRECISION)
         # Apply minimum and maximum range bounding and assign it to
         # self._indep_var and thus this is what self.indep_var returns
         self._update_indep_var()

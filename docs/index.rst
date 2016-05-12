@@ -11,7 +11,6 @@ Contents
 .. toctree::
 
    README
-   eng
    pcsv
    plot
    ptypes

@@ -10,6 +10,10 @@ from pexdoc.ptypes import (
     offset_range,
     function,
 )
+from peng.ptypes import (
+    real_numpy_vector,
+    increasing_real_numpy_vector,
+)
 # Putil imports
 from .basic_source import BasicSource
 from .csv_source import CsvSource
@@ -18,8 +22,6 @@ from .panel import Panel
 from .figure import Figure
 from .functions import parameterized_color_space, DataSource
 from putil.ptypes import (
-    real_numpy_vector,
-    increasing_real_numpy_vector,
     interpolation_option,
     line_style_option,
     color_space_option

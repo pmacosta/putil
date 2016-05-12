@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 import pmisc
 import pexdoc.exh
 import pexdoc.pcontracts
+import peng
 # Putil imports
-import putil.eng
 from .constants import PRECISION, MIN_TICKS, SUGGESTED_MAX_TICKS
 
 
@@ -69,17 +69,17 @@ def _intelligent_ticks(series, series_min, series_max,
     elif len(series) == 1:
         # Handle 1-point series
         series_min = series_max = series[0]
-        tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
+        tick_spacing = peng.round_mantissa(0.1*series[0], PRECISION)
         tick_list = numpy.array(
             [series[0]-tick_spacing, series[0], series[0]+tick_spacing]
         )
-        tick_spacing = putil.eng.round_mantissa(0.1*series[0], PRECISION)
+        tick_spacing = peng.round_mantissa(0.1*series[0], PRECISION)
         tight = tight_left = tight_right = log_axis = False
     else:
         min_series = min(series)
         max_series = max(series)
-        rounded_min_series = putil.eng.round_mantissa(min_series, PRECISION)
-        rounded_max_series = putil.eng.round_mantissa(max_series, PRECISION)
+        rounded_min_series = peng.round_mantissa(min_series, PRECISION)
+        rounded_max_series = peng.round_mantissa(max_series, PRECISION)
         if log_axis:
             dec_start = int(math.log10(min_series))
             dec_stop = int(math.ceil(math.log10(max_series)))
@@ -91,7 +91,7 @@ def _intelligent_ticks(series, series_min, series_max,
             # Try to find the tick spacing that will have the most number of
             # data points on grid. Otherwise, place max_ticks uniformly
             # distributed across the data rage
-            series_delta = putil.eng.round_mantissa(
+            series_delta = peng.round_mantissa(
                 max_series-min_series, PRECISION
             )
             working_series = numpy.array(series[:])
@@ -146,7 +146,7 @@ def _intelligent_ticks(series, series_min, series_max,
                     min_series, max_series, SUGGESTED_MAX_TICKS
                 ).tolist()
             )
-            tick_spacing = putil.eng.round_mantissa(
+            tick_spacing = peng.round_mantissa(
                 tick_list[1]-tick_list[0], PRECISION
             )
             # Account for interpolations, whose curves might have values above
@@ -189,13 +189,13 @@ def _intelligent_ticks(series, series_min, series_max,
     # label marks (aesthetic decision)
     if log_axis and not tight:
         if not tight_left:
-            opt['min'] = putil.eng.round_mantissa(
+            opt['min'] = peng.round_mantissa(
                 0.9*opt['loc'][0], PRECISION
             )
             opt['loc'].insert(0, opt['min'])
             opt['labels'].insert(0, '')
         if not tight_right:
-            opt['max'] = putil.eng.round_mantissa(
+            opt['max'] = peng.round_mantissa(
                 1.1*opt['loc'][-1], PRECISION
             )
             opt['loc'].append(opt['max'])
@@ -222,9 +222,9 @@ def _process_ticks(locs, min_lim, max_lim, mant):
            ((loc <= max_lim) or (abs(loc-max_lim) <= 1e-14))
     ]
     raw_labels = [
-        putil.eng.peng(float(loc), mant, rjust=False)
+        peng.peng(float(loc), mant, rjust=False)
         if ((abs(loc) >= 1) or (loc == 0)) else
-        str(putil.eng.round_mantissa(loc, mant))
+        str(peng.round_mantissa(loc, mant))
         for loc in bounded_locs
     ]
     return (
@@ -246,7 +246,7 @@ def _scale_ticks(tick_list, mode):
         if mode == 'MIN' else
         (tick_max if mode == 'MAX' else tick_delta)
     )
-    (unit, scale) = putil.eng.peng_power(putil.eng.peng(tick_ref, 3))
+    (unit, scale) = peng.peng_power(peng.peng(tick_ref, 3))
     # Move one engineering unit back if there are more ticks
     # below 1.0 than above it
     above_1k_sum = sum((tick_list/scale) >= 1000)
@@ -254,15 +254,15 @@ def _scale_ticks(tick_list, mode):
     last_tick_below_10k = tick_list[-1]/scale < 10000
     rollback = (above_1k_sum > below_1k_sum) and last_tick_below_10k
     scale = 1 if rollback else scale
-    unit = putil.eng.peng_suffix_math(unit, +1) if rollback else unit
+    unit = peng.peng_suffix_math(unit, +1) if rollback else unit
     tick_list = numpy.array(
         [
-            putil.eng.round_mantissa(element/scale, PRECISION)
+            peng.round_mantissa(element/scale, PRECISION)
             for element in tick_list
         ]
     )
-    tick_min = putil.eng.round_mantissa(tick_min/scale, PRECISION)
-    tick_max = putil.eng.round_mantissa(tick_max/scale, PRECISION)
+    tick_min = peng.round_mantissa(tick_min/scale, PRECISION)
+    tick_max = peng.round_mantissa(tick_max/scale, PRECISION)
     loc, labels = _uniquify_tick_labels(tick_list, tick_min, tick_max)
     count = len(''.join(labels))
     return {
@@ -289,10 +289,10 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
     mant = 10
     for mant in range(10, mant_min-1, -1):
         ldig = str(
-            putil.eng.peng_frac(putil.eng.peng(tick_list[-1], mant))
+            peng.peng_frac(peng.peng(tick_list[-1], mant))
         )[-1]
         nldig = str(
-            putil.eng.peng_frac(putil.eng.peng(tick_list[-2], mant))
+            peng.peng_frac(peng.peng(tick_list[-2], mant))
         )[-1]
         if (ldig != '0') or (nldig != '0'):
             break
@@ -308,8 +308,8 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
         )
         sum2 = sum(
             [
-                1 if (putil.eng.peng_float(label) != 0) or
-                     ((putil.eng.peng_float(label) == 0) and (num == 0)) else
+                1 if (peng.peng_float(label) != 0) or
+                     ((peng.peng_float(label) == 0) and (num == 0)) else
                 0
                 for num, label in zip(tick_list, labels)
             ]
@@ -321,7 +321,7 @@ def _uniquify_tick_labels(tick_list, tmin, tmax):
             loc, labels = _process_ticks(tick_list, tmin, tmax, mant)
             break
     return (
-        [putil.eng.round_mantissa(element, PRECISION) for element in loc],
+        [peng.round_mantissa(element, PRECISION) for element in loc],
         labels
     )
 
@@ -490,14 +490,14 @@ class DataSource(object):
         """
         ret = ''
         ret += 'Independent variable: {0}\n'.format(
-            putil.eng.pprint_vector(
+            peng.pprint_vector(
                 self.indep_var,
                 width=50,
                 indent=len('Independent variable: ')
             )
         )
         ret += 'Dependent variable: {0}'.format(
-            putil.eng.pprint_vector(
+            peng.pprint_vector(
                 self.dep_var,
                 width=50,
                 indent=len('Dependent variable: ')

@@ -9,6 +9,7 @@ import sys
 # PyPI imports
 import numpy
 from pmisc import AE, AI, APROP, AROPROP, RE
+import peng
 import pytest
 # Putil imports
 import putil.plot
@@ -132,7 +133,7 @@ class TestPanel(object):
             ]
         )
         obj = fut(vector, min(vector), max(vector), tight=True)
-        assert putil.eng.round_mantissa(numpy.array(obj[0]), 5).tolist() == [
+        assert peng.round_mantissa(numpy.array(obj[0]), 5).tolist() == [
             105.0, 193.889, 282.778, 371.667, 460.556,
             549.444, 638.333, 727.222, 816.111, 905.0
         ]
@@ -281,7 +282,7 @@ class TestPanel(object):
             ]
         )
         obj = fut(vector, min(vector), max(vector), tight=True)
-        assert putil.eng.round_mantissa(numpy.array(obj[0]), 7).tolist() == [
+        assert peng.round_mantissa(numpy.array(obj[0]), 7).tolist() == [
             0.0101, 2.2556444, 4.5011889, 6.7467333, 8.9922778, 11.237822,
             13.483367, 15.728911, 17.974456, 20.22
         ]

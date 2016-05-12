@@ -13,7 +13,7 @@ import sys
 ###
 # Global variables
 ###
-SUBMODULES_LIST = ['eng', 'plot', 'pcsv']
+SUBMODULES_LIST = ['plot', 'pcsv']
 
 
 ###
