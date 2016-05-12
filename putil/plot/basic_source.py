@@ -41,10 +41,12 @@ class BasicSource(DataSource):
     a source that does not export to a comma-separated values (CSV) file.
 
     :param indep_var: Independent variable vector
-    :type  indep_var: :ref:`IncreasingRealNumpyVector`
+    :type  indep_var: `IncreasingRealNumpyVector <https://peng.readthedocs.io/
+                      en/stable/api.html#increasingrealnumpyvector>`_
 
     :param dep_var: Dependent variable vector
-    :type  dep_var: :ref:`RealNumpyVector`
+    :type  dep_var: `RealNumpyVector <https://peng.readthedocs.io/en/stable/
+                    api.html#realnumpyvector>`_
 
     :param indep_min: Minimum independent variable value. If None no minimum
                       thresholding is applied to the data
@@ -255,7 +257,8 @@ class BasicSource(DataSource):
     r"""
     Gets or sets the dependent variable data
 
-    :type: :ref:`RealNumpyVector`
+    :type: `RealNumpyVector <https://peng.readthedocs.io/en/stable/
+           api.html#realnumpyvector>`_
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for
@@ -333,7 +336,8 @@ class BasicSource(DataSource):
     r"""
     Gets or sets the independent variable data
 
-    :type: :ref:`IncreasingRealNumpyVector`
+    :type: `IncreasingRealNumpyVector <https://peng.readthedocs.io/
+           en/stable/api.html#increasingrealnumpyvector>`_
 
     .. [[[cog cog.out(exobj_plot.get_sphinx_autodoc())]]]
     .. Auto-generated exceptions documentation for
