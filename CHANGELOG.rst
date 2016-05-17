@@ -5,6 +5,8 @@
 Changelog
 =========
 
+* 0.9.12 [2016-05-16]: Broke off package into smaller modules and packages
+
 * 0.9.11 [2016-04-15]:
 
   * Created new APIs in the exh module to simplify adding and conditionally

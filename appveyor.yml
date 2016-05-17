@@ -47,7 +47,6 @@ install:
   - set MAIN_REQUIREMENTS_FILE=%REPO_DIR%\requirements\main_%INTERP%.pip
   - set TESTS_REQUIREMENTS_FILE=%REPO_DIR%\requirements\tests_%INTERP%.pip
   - set CITMP=%REPO_DIR%\CITMP
-  - set PYTHONWARNINGS="ignore:a true SSLContext object"
   - if not exist "%CITMP%" mkdir %CITMP%
   - echo "PYTHONCMD=%PYTHONCMD%"
   - echo "PIPCMD=%PIPCMD%"
@@ -76,7 +75,7 @@ install:
   - .\anaconda\Anaconda2-2.4.0-Windows-x86.exe /S /D=C:\Anaconda
   - set PATH=C:\\Anaconda;C:\\Anaconda\\Scripts;%PATH%
   - conda update -y conda
-  - conda create -y --name %INTERP% python=%PYVER% numpy scipy matplotlib
+  - conda create -y --name %INTERP% python=%PYVER% numpy scipy!=0.17.0,!=0.17.1 matplotlib
   - activate %INTERP%
   ###
   # sbin/winsetup2.bat file
@@ -135,7 +134,7 @@ test_script:
   # - pylint --rcfile=%EXTRA_DIR%\.pylintrc -f colorized -r no %EXTRA_DIR%\sbin
   # - pylint --rcfile=%EXTRA_DIR%\.pylintrc -f colorized -r no %EXTRA_DIR%\tests
   # - pylint --rcfile=%EXTRA_DIR%\.pylintrc -f colorized -r no %EXTRA_DIR%\docs\support
-  - py.test --doctest-glob='*.rst' %EXTRA_DIR%\docs
+  - py.test --doctest-glob="*.rst" %EXTRA_DIR%\docs
   - py.test --doctest-modules %SOURCE_DIR%
   # Coverage tests runs all the unit tests, no need to run the non-coverage
   # tests since the report is not being used
