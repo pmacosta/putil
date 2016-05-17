@@ -17,7 +17,6 @@
 	{"dir":"docs", "file":"conf.py"},
 	{"dir":"docs", "file":"__init__.py"},
 	{"dir":"docs", "file":"*.rst"},
-	{"dir":"docs/_static", "file":".keepdir"},
 	{"dir":"docs/support", "file":"*.py"},
 	{"dir":"docs/support", "file":"*.csv"},
 	{"dir":"docs/support", "file":"*.png"},

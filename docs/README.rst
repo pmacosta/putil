@@ -67,6 +67,7 @@ Putil Library
 .. _Mock: http://www.voidspace.org.uk/python/mock
 .. _Nose: http://nose.readthedocs.org
 .. _Numpy: http://www.numpy.org
+.. _Peng: http://peng.readthedocs.org
 .. _Pexdoc: http://pexdoc.readthedocs.org
 .. _Pillow: https://python-pillow.github.io
 .. _Pmisc: http://pmisc.readthedocs.org
@@ -187,6 +188,8 @@ Contributing
     * `Nose`_ (Python 2.6: 1.0.0 or newer)
 
     * `Numpy`_ (1.8.2 or newer)
+
+    * `Peng`_ (1.0.0 or newer)
 
     * `Pexdoc`_ (1.0.0 or newer)
 
