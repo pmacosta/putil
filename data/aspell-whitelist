@@ -824,6 +824,7 @@ PENG
 peru
 peta
 pexceptions
+pexdoc
 pexlist
 pflag
 pgcd
@@ -840,6 +841,7 @@ plist
 plottable
 plst
 plt
+pmisc
 pmsg
 pname
 png
@@ -853,6 +855,7 @@ PositiveRealNum
 PositiveRealNumber
 powderblue
 ppar
+pplot
 pport
 ppos
 pprint
@@ -865,6 +868,7 @@ priv
 proc
 prt
 ps
+ptrie
 ptxt
 ptypes
 PuBu
